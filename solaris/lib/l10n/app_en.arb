@@ -1,0 +1,102 @@
+{
+  "appTitle": "Solaris",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+  "celestialControl": "CELESTIAL CONTROL",
+  "dashboard": "Dashboard",
+  "schedule": "Schedule",
+  "settings": "Settings",
+  "location": "Location",
+  "localTime": "LOCAL TIME",
+  "goldenHour": "Golden Hour",
+  "goldenHourMorning": "Golden Hour (Morning)",
+  "goldenHourEvening": "Golden Hour (Evening)",
+  "calculating": "CALCULATING...",
+  "comingIn": "COMING IN {time}",
+  "@comingIn": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "goldenHourActive": "GOLDEN HOUR ACTIVE",
+  "remaining": "{time} REMAINING",
+  "@remaining": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "night": "NIGHT",
+  "finished": "FINISHED",
+  "brightness": "BRIGHTNESS",
+  "remainingLower": "{time} Remaining",
+  "@remainingLower": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "activeLower": "{time} Active",
+  "@activeLower": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "sunSet": "Sun set",
+  "calculatingLower": "Calculating...",
+  "transitionNotice": "System will transition to warm spectrum 2700K in approximately {hours} hours.",
+  "@transitionNotice": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "goldenHourNotice": "System is currently in Golden Hour. Spectrum is shifted to warm 2700K.",
+  "solarCycleEnded": "Solar cycle for today has ended. System is in manual night mode.",
+  "updatingSolarData": "Updating solar data based on your location...",
+  "autoAdapt": "Auto-Adapt",
+  "active": "Active",
+  "nightShift": "Night Shift",
+  "disabled": "Disabled",
+  "panelTemperature": "Panel Temperature",
+  "efficiencyRate": "Efficiency Rate",
+  "atmosphericClarity": "Atmospheric Clarity",
+  "high": "High",
+  "sunriseLabel": "Sunrise",
+  "sunsetLabel": "Sunset",
+  "engineVersion": "Solaris Engine v{version}",
+  "@engineVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "allMonitors": "All Monitors",
+  "luminosityProfile": "Luminosity Profile",
+  "dragNodesToAdjust": "Drag nodes to adjust transition curves",
+  "view24h": "24h View",
+  "editCurve": "Edit Curve",
+  "liveLocation": "LIVE LOCATION",
+  "solarTelemetry": "Solar Telemetry",
+  "civilTwilight": "Civil Twilight",
+  "astronomicalNight": "Astronomical Night",
+  "surfaceTemp": "Surface Temp",
+  "spectralIntensity": "Spectral Intensity",
+  "uvIndex": "UV Index",
+  "extreme": "Extreme",
+  "azimuth": "AZIMUTH",
+  "elevation": "ELEVATION",
+  "zenith": "ZENITH",
+  "constant": "Constant",
+  "humidity": "Humidity",
+  "airTemp": "Air Temp"
+}

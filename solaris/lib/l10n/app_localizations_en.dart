@@ -1,0 +1,190 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for English (`en`).
+class AppLocalizationsEn extends AppLocalizations {
+  AppLocalizationsEn([String locale = 'en']) : super(locale);
+
+  @override
+  String get appTitle => 'Solaris';
+
+  @override
+  String get celestialControl => 'CELESTIAL CONTROL';
+
+  @override
+  String get dashboard => 'Dashboard';
+
+  @override
+  String get schedule => 'Schedule';
+
+  @override
+  String get settings => 'Settings';
+
+  @override
+  String get location => 'Location';
+
+  @override
+  String get localTime => 'LOCAL TIME';
+
+  @override
+  String get goldenHour => 'Golden Hour';
+
+  @override
+  String get goldenHourMorning => 'Golden Hour (Morning)';
+
+  @override
+  String get goldenHourEvening => 'Golden Hour (Evening)';
+
+  @override
+  String get calculating => 'CALCULATING...';
+
+  @override
+  String comingIn(String time) {
+    return 'COMING IN $time';
+  }
+
+  @override
+  String get goldenHourActive => 'GOLDEN HOUR ACTIVE';
+
+  @override
+  String remaining(String time) {
+    return '$time REMAINING';
+  }
+
+  @override
+  String get night => 'NIGHT';
+
+  @override
+  String get finished => 'FINISHED';
+
+  @override
+  String get brightness => 'BRIGHTNESS';
+
+  @override
+  String remainingLower(String time) {
+    return '$time Remaining';
+  }
+
+  @override
+  String activeLower(String time) {
+    return '$time Active';
+  }
+
+  @override
+  String get sunSet => 'Sun set';
+
+  @override
+  String get calculatingLower => 'Calculating...';
+
+  @override
+  String transitionNotice(int hours) {
+    return 'System will transition to warm spectrum 2700K in approximately $hours hours.';
+  }
+
+  @override
+  String get goldenHourNotice =>
+      'System is currently in Golden Hour. Spectrum is shifted to warm 2700K.';
+
+  @override
+  String get solarCycleEnded =>
+      'Solar cycle for today has ended. System is in manual night mode.';
+
+  @override
+  String get updatingSolarData =>
+      'Updating solar data based on your location...';
+
+  @override
+  String get autoAdapt => 'Auto-Adapt';
+
+  @override
+  String get active => 'Active';
+
+  @override
+  String get nightShift => 'Night Shift';
+
+  @override
+  String get disabled => 'Disabled';
+
+  @override
+  String get panelTemperature => 'Panel Temperature';
+
+  @override
+  String get efficiencyRate => 'Efficiency Rate';
+
+  @override
+  String get atmosphericClarity => 'Atmospheric Clarity';
+
+  @override
+  String get high => 'High';
+
+  @override
+  String get sunriseLabel => 'Sunrise';
+
+  @override
+  String get sunsetLabel => 'Sunset';
+
+  @override
+  String engineVersion(String version) {
+    return 'Solaris Engine v$version';
+  }
+
+  @override
+  String get allMonitors => 'All Monitors';
+
+  @override
+  String get luminosityProfile => 'Luminosity Profile';
+
+  @override
+  String get dragNodesToAdjust => 'Drag nodes to adjust transition curves';
+
+  @override
+  String get view24h => '24h View';
+
+  @override
+  String get editCurve => 'Edit Curve';
+
+  @override
+  String get liveLocation => 'LIVE LOCATION';
+
+  @override
+  String get solarTelemetry => 'Solar Telemetry';
+
+  @override
+  String get civilTwilight => 'Civil Twilight';
+
+  @override
+  String get astronomicalNight => 'Astronomical Night';
+
+  @override
+  String get surfaceTemp => 'Surface Temp';
+
+  @override
+  String get spectralIntensity => 'Spectral Intensity';
+
+  @override
+  String get uvIndex => 'UV Index';
+
+  @override
+  String get extreme => 'Extreme';
+
+  @override
+  String get azimuth => 'AZIMUTH';
+
+  @override
+  String get elevation => 'ELEVATION';
+
+  @override
+  String get zenith => 'ZENITH';
+
+  @override
+  String get constant => 'Constant';
+
+  @override
+  String get humidity => 'Humidity';
+
+  @override
+  String get airTemp => 'Air Temp';
+}

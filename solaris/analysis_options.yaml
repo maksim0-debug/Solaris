@@ -1,0 +1,25 @@
+# Подключаем строгие правила из пакета
+# include: package:very_good_analysis/analysis_options.yaml
+
+analyzer:
+  language:
+    # САМЫЕ ВАЖНЫЕ НАСТРОЙКИ ДЛЯ ИИ И СТРОГОГО КОДА:
+    strict-casts: true # Запрещает неявные приведения типов (например, из dynamic)
+    strict-inference: true # Запрещает выводить тип dynamic, если тип не указан явно
+    strict-raw-types: true # Требует указывать типы для дженериков (например, List<String> вместо просто List)
+
+  errors:
+    # Превращаем критические предупреждения в ошибки компиляции
+    missing_return: error
+    dead_code: error
+    always_declare_return_types: error
+
+    # Можно игнорировать некоторые вещи, чтобы не раздражали
+    todo: ignore
+    deprecated_member_use: ignore
+
+linter:
+  rules:
+    # Здесь можно точечно отключить правила из very_good_analysis, если они слишком душат.
+    # Например, если не хочешь писать документацию ко всем публичным методам:
+    public_member_api_docs: false
