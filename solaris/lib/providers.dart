@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:solaris/services/location_service.dart';
 import 'package:solaris/services/solar_service.dart';
@@ -20,6 +22,11 @@ final sunCalculatorServiceProvider = Provider((ref) => SunCalculatorService());
 final timeServiceProvider = Provider((ref) => TimeService());
 final monitorServiceProvider = Provider((ref) => MonitorService());
 final circadianServiceProvider = Provider((ref) => CircadianService());
+
+// Провайдер для SharedPreferences (переопределяется в main.dart)
+final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
+  throw UnimplementedError();
+});
 
 // 1. Провайдер самого сервиса
 final weatherServiceProvider = Provider((ref) => WeatherService());
@@ -238,7 +245,7 @@ class SettingsState {
   final double minBrightness;
   final double maxBrightness;
   final double transBrightness;
-  final double curveSharpness; // Keep for legacy/internal purposes if needed, but primary is curvePoints
+  final double curveSharpness;
   final List<FlSpot> curvePoints;
 
   SettingsState({
@@ -249,15 +256,14 @@ class SettingsState {
     List<FlSpot>? curvePoints,
   }) : curvePoints = curvePoints ?? _defaultPoints();
 
+  // Теперь точки базируются на угле солнца (от -20° до 90°)
   static List<FlSpot> _defaultPoints() => const [
-        FlSpot(0, 15),
-        FlSpot(6, 15),
-        FlSpot(8, 60), // Transition start morning
-        FlSpot(10, 100), // Day plateau start
-        FlSpot(17, 100), // Day plateau end
-        FlSpot(19, 60), // Transition evening
-        FlSpot(21, 15), // Night start
-        FlSpot(24, 15),
+        FlSpot(-20, 15),  // Глубокая ночь (Астрономические сумерки)
+        FlSpot(-6, 25),   // Начало гражданских сумерек (рассвет/закат)
+        FlSpot(0, 60),    // Солнце на горизонте
+        FlSpot(10, 85),   // Утро / Вечер (конец золотого часа)
+        FlSpot(30, 100),  // Яркий день
+        FlSpot(90, 100),  // Абсолютный зенит
       ];
 
   SettingsState copyWith({
@@ -278,38 +284,88 @@ class SettingsState {
 }
 
 class SettingsNotifier extends Notifier<SettingsState> {
+  static const _pointsKey = 'solar_curve_points';
+  static const _minBrightnessKey = 'solar_min_brightness';
+  static const _maxBrightnessKey = 'solar_max_brightness';
+  static const _transBrightnessKey = 'solar_trans_brightness';
+  static const _curveSharpnessKey = 'solar_curve_sharpness';
+
   @override
-  SettingsState build() => SettingsState();
+  SettingsState build() {
+    final prefs = ref.watch(sharedPreferencesProvider);
+    return _loadSettings(prefs);
+  }
+
+  // Загрузка всех настроек из памяти
+  SettingsState _loadSettings(SharedPreferences prefs) {
+    final String? jsonStr = prefs.getString(_pointsKey);
+    List<FlSpot>? points;
+    if (jsonStr != null) {
+      try {
+        final List<dynamic> decoded = jsonDecode(jsonStr) as List<dynamic>;
+        points = decoded.map((p) {
+          final map = p as Map<String, dynamic>;
+          return FlSpot((map['x'] as num).toDouble(), (map['y'] as num).toDouble());
+        }).toList();
+      } catch (e) {
+        print('Error loading points: $e');
+      }
+    }
+
+    return SettingsState(
+      minBrightness: prefs.getDouble(_minBrightnessKey) ?? 15.0,
+      maxBrightness: prefs.getDouble(_maxBrightnessKey) ?? 100.0,
+      transBrightness: prefs.getDouble(_transBrightnessKey) ?? 60.0,
+      curveSharpness: prefs.getDouble(_curveSharpnessKey) ?? 1.0,
+      curvePoints: points,
+    );
+  }
+
+  // Сохранение всех настроек в память
+  void _saveSettings() {
+    final prefs = ref.read(sharedPreferencesProvider);
+    final encoded = state.curvePoints.map((p) => {'x': p.x, 'y': p.y}).toList();
+    
+    prefs.setString(_pointsKey, jsonEncode(encoded));
+    prefs.setDouble(_minBrightnessKey, state.minBrightness);
+    prefs.setDouble(_maxBrightnessKey, state.maxBrightness);
+    prefs.setDouble(_transBrightnessKey, state.transBrightness);
+    prefs.setDouble(_curveSharpnessKey, state.curveSharpness);
+  }
 
   void updateMinBrightness(double value) {
     state = state.copyWith(minBrightness: value);
+    _saveSettings();
   }
 
   void updateMaxBrightness(double value) {
     state = state.copyWith(maxBrightness: value);
+    _saveSettings();
   }
 
   void updateTransBrightness(double value) {
     state = state.copyWith(transBrightness: value);
+    _saveSettings();
   }
 
   void updateCurveSharpness(double value) {
     state = state.copyWith(curveSharpness: value);
+    _saveSettings();
   }
 
   void updateCurvePoints(List<FlSpot> points) {
-    // Ensure points are sorted by X (hour)
     final sortedPoints = List<FlSpot>.from(points)..sort((a, b) => a.x.compareTo(b.x));
     
-    // Ensure 0 and 24 are present
-    if (sortedPoints.isEmpty || sortedPoints.first.x > 0) {
-      sortedPoints.insert(0, FlSpot(0, sortedPoints.isEmpty ? 15 : sortedPoints.first.y));
+    // Гарантируем, что края графика (-20 и 90) всегда присутствуют
+    if (sortedPoints.isEmpty || sortedPoints.first.x > -20) {
+      sortedPoints.insert(0, FlSpot(-20, sortedPoints.isEmpty ? 15 : sortedPoints.first.y));
     }
-    if (sortedPoints.last.x < 24) {
-      sortedPoints.add(FlSpot(24, sortedPoints.last.y));
+    if (sortedPoints.last.x < 90) {
+      sortedPoints.add(FlSpot(90, sortedPoints.last.y));
     }
 
     state = state.copyWith(curvePoints: sortedPoints);
+    _saveSettings(); // Сохраняем при каждом изменении
   }
 
   void addCurvePoint(FlSpot point) {
@@ -319,9 +375,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
 
   void removeCurvePoint(int index) {
     if (index >= 0 && index < state.curvePoints.length) {
-      // Don't allow removing 0 and 24 points if they are the only ones
-      if (state.curvePoints[index].x == 0 || state.curvePoints[index].x == 24) return;
-      
+      if (state.curvePoints[index].x == -20 || state.curvePoints[index].x == 90) return;
       final newPoints = List<FlSpot>.from(state.curvePoints)..removeAt(index);
       updateCurvePoints(newPoints);
     }

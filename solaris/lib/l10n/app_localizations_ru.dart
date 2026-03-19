@@ -187,4 +187,36 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get airTemp => 'Темп. воздуха';
+
+  @override
+  String get settingsSubtitle => 'Настройте параметры вашего циркадного ритма';
+
+  @override
+  String get circadianLimits => 'Циркадные пределы';
+
+  @override
+  String get circadianLimitsSubtitle => 'Определите границы для автояркости';
+
+  @override
+  String get minBrightness => 'Минимальная яркость';
+
+  @override
+  String get minBrightnessSubtitle => 'Самый низкий уровень яркости ночью';
+
+  @override
+  String get maxBrightness => 'Максимальная яркость';
+
+  @override
+  String get maxBrightnessSubtitle => 'Пиковая яркость, достигаемая в зените';
+
+  @override
+  String get transBrightness => 'Яркость перехода';
+
+  @override
+  String get transBrightnessSubtitle =>
+      'Целевой уровень во время Золотого часа и гражданских сумерек';
+
+  @override
+  String get realtimeApplyNotice =>
+      'Изменения применяются в реальном времени. Используйте панель управления для переключения между ручной и автоматической настройкой.';
 }

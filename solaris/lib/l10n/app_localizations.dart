@@ -427,6 +427,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Air Temp'**
   String get airTemp;
+
+  /// No description provided for @settingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure your circadian rhythm parameters'**
+  String get settingsSubtitle;
+
+  /// No description provided for @circadianLimits.
+  ///
+  /// In en, this message translates to:
+  /// **'Circadian Limits'**
+  String get circadianLimits;
+
+  /// No description provided for @circadianLimitsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Define the boundaries for auto-brightness'**
+  String get circadianLimitsSubtitle;
+
+  /// No description provided for @minBrightness.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum Brightness'**
+  String get minBrightness;
+
+  /// No description provided for @minBrightnessSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The lowest brightness level during the night'**
+  String get minBrightnessSubtitle;
+
+  /// No description provided for @maxBrightness.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum Brightness'**
+  String get maxBrightness;
+
+  /// No description provided for @maxBrightnessSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The peak brightness reached during solar zenith'**
+  String get maxBrightnessSubtitle;
+
+  /// No description provided for @transBrightness.
+  ///
+  /// In en, this message translates to:
+  /// **'Transition Brightness'**
+  String get transBrightness;
+
+  /// No description provided for @transBrightnessSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The target level during Golden Hour and Civil Twilight transitions'**
+  String get transBrightnessSubtitle;
+
+  /// No description provided for @realtimeApplyNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes are applied in real-time. Use the dashboard to toggle between manual and automatic adjustment.'**
+  String get realtimeApplyNotice;
 }
 
 class _AppLocalizationsDelegate

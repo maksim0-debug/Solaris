@@ -187,4 +187,39 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get airTemp => 'Air Temp';
+
+  @override
+  String get settingsSubtitle => 'Configure your circadian rhythm parameters';
+
+  @override
+  String get circadianLimits => 'Circadian Limits';
+
+  @override
+  String get circadianLimitsSubtitle =>
+      'Define the boundaries for auto-brightness';
+
+  @override
+  String get minBrightness => 'Minimum Brightness';
+
+  @override
+  String get minBrightnessSubtitle =>
+      'The lowest brightness level during the night';
+
+  @override
+  String get maxBrightness => 'Maximum Brightness';
+
+  @override
+  String get maxBrightnessSubtitle =>
+      'The peak brightness reached during solar zenith';
+
+  @override
+  String get transBrightness => 'Transition Brightness';
+
+  @override
+  String get transBrightnessSubtitle =>
+      'The target level during Golden Hour and Civil Twilight transitions';
+
+  @override
+  String get realtimeApplyNotice =>
+      'Changes are applied in real-time. Use the dashboard to toggle between manual and automatic adjustment.';
 }

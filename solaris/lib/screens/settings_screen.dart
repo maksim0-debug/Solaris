@@ -24,7 +24,7 @@ class SettingsScreen extends ConsumerWidget {
           _SectionHeader(
             icon: LucideIcons.settings,
             title: l10n.settings,
-            subtitle: 'Configure your circadian rhythm parameters',
+            subtitle: l10n.settingsSubtitle,
           ),
           const SizedBox(height: 24),
 
@@ -55,16 +55,16 @@ class SettingsScreen extends ConsumerWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Circadian Limits',
-                          style: TextStyle(
+                        Text(
+                          l10n.circadianLimits,
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
                         ),
                         Text(
-                          'Define the boundaries for auto-brightness',
+                          l10n.circadianLimitsSubtitle,
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.white.withOpacity(0.5),
@@ -77,9 +77,9 @@ class SettingsScreen extends ConsumerWidget {
                 const SizedBox(height: 32),
                 
                 // Min Brightness
-                const Text(
-                  'Minimum Brightness',
-                  style: TextStyle(
+                Text(
+                  l10n.minBrightness,
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Colors.white70,
@@ -87,7 +87,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'The lowest brightness level during the night',
+                  l10n.minBrightnessSubtitle,
                   style: TextStyle(
                     fontSize: 11,
                     color: Colors.white.withOpacity(0.3),
@@ -102,9 +102,9 @@ class SettingsScreen extends ConsumerWidget {
                 const SizedBox(height: 40),
                 
                 // Max Brightness
-                const Text(
-                  'Maximum Brightness',
-                  style: TextStyle(
+                Text(
+                  l10n.maxBrightness,
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Colors.white70,
@@ -112,7 +112,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'The peak brightness reached during solar zenith',
+                  l10n.maxBrightnessSubtitle,
                   style: TextStyle(
                     fontSize: 11,
                     color: Colors.white.withOpacity(0.3),
@@ -127,9 +127,9 @@ class SettingsScreen extends ConsumerWidget {
                 const SizedBox(height: 40),
 
                 // Transition Brightness
-                const Text(
-                  'Transition Brightness',
-                  style: TextStyle(
+                Text(
+                  l10n.transBrightness,
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Colors.white70,
@@ -137,7 +137,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'The target level during Golden Hour and Civil Twilight transitions',
+                  l10n.transBrightnessSubtitle,
                   style: TextStyle(
                     fontSize: 11,
                     color: Colors.white.withOpacity(0.3),
@@ -169,7 +169,7 @@ class SettingsScreen extends ConsumerWidget {
                 const SizedBox(width: 16),
                 Expanded(
                   child: Text(
-                    'Changes are applied in real-time. Use the dashboard to toggle between manual and automatic adjustment.',
+                    l10n.realtimeApplyNotice,
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.white.withOpacity(0.4),

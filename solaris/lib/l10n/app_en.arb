@@ -98,5 +98,15 @@
   "zenith": "ZENITH",
   "constant": "Constant",
   "humidity": "Humidity",
-  "airTemp": "Air Temp"
+  "airTemp": "Air Temp",
+  "settingsSubtitle": "Configure your circadian rhythm parameters",
+  "circadianLimits": "Circadian Limits",
+  "circadianLimitsSubtitle": "Define the boundaries for auto-brightness",
+  "minBrightness": "Minimum Brightness",
+  "minBrightnessSubtitle": "The lowest brightness level during the night",
+  "maxBrightness": "Maximum Brightness",
+  "maxBrightnessSubtitle": "The peak brightness reached during solar zenith",
+  "transBrightness": "Transition Brightness",
+  "transBrightnessSubtitle": "The target level during Golden Hour and Civil Twilight transitions",
+  "realtimeApplyNotice": "Changes are applied in real-time. Use the dashboard to toggle between manual and automatic adjustment."
 }
