@@ -20,16 +20,33 @@ void main() {
       astronomicalDusk: DateTime(2026, 3, 19, 19, 30),
     );
 
+    const minB = 15.0;
+    const maxB = 100.0;
+
     test('Deep Night should return minBrightness (15%)', () {
       final now = DateTime(2026, 3, 19, 2, 0); // 2 AM
-      final brightness = service.calculateTargetBrightness(phases, -30.0, now);
-      expect(brightness, CircadianService.minBrightness);
+      final brightness = service.calculateTargetBrightness(
+        phases,
+        -30.0,
+        now,
+        minBrightness: minB,
+        maxBrightness: maxB,
+        transBrightness: 60.0,
+      );
+      expect(brightness, minB);
     });
 
     test('Solar Zenith should return maxBrightness (100%)', () {
       final now = DateTime(2026, 3, 19, 12, 0); // Noon
-      final brightness = service.calculateTargetBrightness(phases, 60.0, now);
-      expect(brightness, CircadianService.maxBrightness);
+      final brightness = service.calculateTargetBrightness(
+        phases,
+        60.0,
+        now,
+        minBrightness: minB,
+        maxBrightness: maxB,
+        transBrightness: 60.0,
+      );
+      expect(brightness, maxB);
     });
 
     test(
@@ -37,18 +54,31 @@ void main() {
       () {
         final now = DateTime(2026, 3, 19, 17, 30);
         // Progress = 1800 / 3600 = 0.5. Eased: 1 - (-2 * 0.5 + 2)^2 / 2 = 1 - 1/2 = 0.5.
-        // Wait, 1 - (-2*0.5 + 2)^2 / 2 = 1 - (1)^2 / 2 = 0.5.
         // 60 + (100 - 60) * 0.5 = 80.
-        final brightness = service.calculateTargetBrightness(phases, 5.0, now);
+        final brightness = service.calculateTargetBrightness(
+          phases,
+          5.0,
+          now,
+          minBrightness: minB,
+          maxBrightness: maxB,
+          transBrightness: 60.0,
+        );
         expect(brightness, closeTo(80.0, 0.1));
       },
     );
 
-    test('Civil Twilight should return between 60% and 25%', () {
+    test('Civil Twilight should return between 60% and 15%', () {
       final now = DateTime(2026, 3, 19, 18, 15); // Middle of Civil Twilight
-      final brightness = service.calculateTargetBrightness(phases, -3.0, now);
-      // progress = -3 / -6 = 0.5. 60 - (60 - 25) * 0.5 = 42.5.
-      expect(brightness, closeTo(42.5, 0.1));
+      final brightness = service.calculateTargetBrightness(
+        phases,
+        -3.0,
+        now,
+        minBrightness: minB,
+        maxBrightness: maxB,
+        transBrightness: 60.0,
+      );
+      // progress = -3 / -6 = 0.5. 60 - (60 - 15) * 0.5 = 37.5.
+      expect(brightness, closeTo(37.5, 0.1));
     });
   });
 }

@@ -9,6 +9,7 @@ import 'package:solaris/services/sun_calculator_service.dart';
 import 'package:solaris/services/weather_service.dart';
 import 'package:solaris/models/solar_phase_model.dart';
 import 'package:solaris/models/current_day_phase.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'dart:async';
 
 final locationServiceProvider = Provider((ref) => LocationService());
@@ -233,6 +234,104 @@ final manualBrightnessProvider =
       ManualBrightnessNotifier.new,
     );
 
+class SettingsState {
+  final double minBrightness;
+  final double maxBrightness;
+  final double transBrightness;
+  final double curveSharpness; // Keep for legacy/internal purposes if needed, but primary is curvePoints
+  final List<FlSpot> curvePoints;
+
+  SettingsState({
+    this.minBrightness = 15.0,
+    this.maxBrightness = 100.0,
+    this.transBrightness = 60.0,
+    this.curveSharpness = 1.0,
+    List<FlSpot>? curvePoints,
+  }) : curvePoints = curvePoints ?? _defaultPoints();
+
+  static List<FlSpot> _defaultPoints() => const [
+        FlSpot(0, 15),
+        FlSpot(6, 15),
+        FlSpot(8, 60), // Transition start morning
+        FlSpot(10, 100), // Day plateau start
+        FlSpot(17, 100), // Day plateau end
+        FlSpot(19, 60), // Transition evening
+        FlSpot(21, 15), // Night start
+        FlSpot(24, 15),
+      ];
+
+  SettingsState copyWith({
+    double? minBrightness,
+    double? maxBrightness,
+    double? transBrightness,
+    double? curveSharpness,
+    List<FlSpot>? curvePoints,
+  }) {
+    return SettingsState(
+      minBrightness: minBrightness ?? this.minBrightness,
+      maxBrightness: maxBrightness ?? this.maxBrightness,
+      transBrightness: transBrightness ?? this.transBrightness,
+      curveSharpness: curveSharpness ?? this.curveSharpness,
+      curvePoints: curvePoints ?? this.curvePoints,
+    );
+  }
+}
+
+class SettingsNotifier extends Notifier<SettingsState> {
+  @override
+  SettingsState build() => SettingsState();
+
+  void updateMinBrightness(double value) {
+    state = state.copyWith(minBrightness: value);
+  }
+
+  void updateMaxBrightness(double value) {
+    state = state.copyWith(maxBrightness: value);
+  }
+
+  void updateTransBrightness(double value) {
+    state = state.copyWith(transBrightness: value);
+  }
+
+  void updateCurveSharpness(double value) {
+    state = state.copyWith(curveSharpness: value);
+  }
+
+  void updateCurvePoints(List<FlSpot> points) {
+    // Ensure points are sorted by X (hour)
+    final sortedPoints = List<FlSpot>.from(points)..sort((a, b) => a.x.compareTo(b.x));
+    
+    // Ensure 0 and 24 are present
+    if (sortedPoints.isEmpty || sortedPoints.first.x > 0) {
+      sortedPoints.insert(0, FlSpot(0, sortedPoints.isEmpty ? 15 : sortedPoints.first.y));
+    }
+    if (sortedPoints.last.x < 24) {
+      sortedPoints.add(FlSpot(24, sortedPoints.last.y));
+    }
+
+    state = state.copyWith(curvePoints: sortedPoints);
+  }
+
+  void addCurvePoint(FlSpot point) {
+    final newPoints = List<FlSpot>.from(state.curvePoints)..add(point);
+    updateCurvePoints(newPoints);
+  }
+
+  void removeCurvePoint(int index) {
+    if (index >= 0 && index < state.curvePoints.length) {
+      // Don't allow removing 0 and 24 points if they are the only ones
+      if (state.curvePoints[index].x == 0 || state.curvePoints[index].x == 24) return;
+      
+      final newPoints = List<FlSpot>.from(state.curvePoints)..removeAt(index);
+      updateCurvePoints(newPoints);
+    }
+  }
+}
+
+final settingsProvider = NotifierProvider<SettingsNotifier, SettingsState>(
+  SettingsNotifier.new,
+);
+
 class CurrentBrightnessNotifier extends Notifier<double> {
   @override
   double build() {
@@ -240,12 +339,18 @@ class CurrentBrightnessNotifier extends Notifier<double> {
     if (isAuto) {
       final solarStateAsync = ref.watch(solarStateStreamProvider);
       final circadianService = ref.watch(circadianServiceProvider);
+      final settings = ref.watch(settingsProvider);
 
       return solarStateAsync.maybeWhen(
         data: (state) => circadianService.calculateTargetBrightness(
           state.phases,
           state.sunElevation,
           DateTime.now(),
+          minBrightness: settings.minBrightness,
+          maxBrightness: settings.maxBrightness,
+          transBrightness: settings.transBrightness,
+          curveSharpness: settings.curveSharpness,
+          curvePoints: settings.curvePoints,
         ),
         orElse: () => ref.read(manualBrightnessProvider),
       );

@@ -9,6 +9,7 @@ import 'package:solaris/widgets/brightness_slider.dart';
 import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/sun_path_painter.dart';
 import 'package:solaris/models/current_day_phase.dart';
+import 'package:solaris/screens/settings_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -353,6 +354,8 @@ class _MainView extends ConsumerWidget {
         return const _DashboardView();
       case AppScreen.schedule:
         return const ScheduleScreen();
+      case AppScreen.settings:
+        return const SettingsScreen();
       default:
         return Center(child: Text('Screen $screen coming soon'));
     }
