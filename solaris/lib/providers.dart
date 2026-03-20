@@ -606,6 +606,7 @@ final currentBrightnessProvider =
 /// Mapbox style URLs
 const String kMapboxDayStyle = 'mapdezyk/cmmy53ap5001p01s92sw90jj9';
 const String kMapboxNightStyle = 'mapdezyk/cmmy4n1dw007q01r0dyd1f6fs';
+const String kMapboxLargeMapStyle = 'mapdezyk/cmmzahwi7005201r0fllj7v0r';
 
 /// Generates a Mapbox Static Image URL for the given coordinates and style.
 String getStaticMapUrl(

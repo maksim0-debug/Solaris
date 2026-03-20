@@ -50,6 +50,8 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   win32: ^5.15.0
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
 
   ffi: any
   fl_chart: ^1.2.0

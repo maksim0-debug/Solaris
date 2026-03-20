@@ -5,7 +5,7 @@ import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/stylish_location_card.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:solaris/widgets/solar_map.dart';
 
 class LocationScreen extends ConsumerStatefulWidget {
   const LocationScreen({super.key});
@@ -163,23 +163,10 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                           locationAsync.when(
                             data: (pos) => AspectRatio(
                               aspectRatio: 16 / 9,
-                              child: CachedNetworkImage(
-                                imageUrl: getStaticMapUrl(
-                                  pos.latitude,
-                                  pos.longitude,
-                                  zoom: 9.0,
-                                ),
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => Container(
-                                  color: Colors.white.withOpacity(0.05),
-                                  child: const Center(
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  ),
-                                ),
-                                errorWidget: (context, url, error) =>
-                                    const Center(child: Icon(LucideIcons.map)),
+                              child: SolarMap(
+                                latitude: pos.latitude,
+                                longitude: pos.longitude,
+                                zoom: 1.5, // Minimum zoom to avoid repetition and see enough area
                               ),
                             ),
                             loading: () => const AspectRatio(
