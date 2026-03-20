@@ -13,9 +13,8 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final settingsMap = ref.watch(settingsProvider);
+    final settingsAsync = ref.watch(settingsProvider);
     final monitorId = ref.watch(settingsMonitorIdProvider);
-    final settingsNotifier = ref.read(settingsProvider.notifier);
     final monitorsAsync = ref.watch(monitorListProvider);
 
     return SingleChildScrollView(
@@ -116,8 +115,11 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                     ),
                     Switch(
-                      value: settingsMap['all']!.isAutorunEnabled, // Autorun is global-ish, use 'all'
-                      onChanged: (val) => settingsNotifier.updateAutorun(val),
+                      value: settingsAsync.maybeWhen(
+                        data: (map) => map['all']?.isAutorunEnabled ?? false,
+                        orElse: () => false,
+                      ), // Autorun is global-ish, use 'all'
+                      onChanged: (val) => ref.read(settingsProvider.notifier).updateAutorun(val),
                       activeColor: const Color(0xFFFDBA74),
                     ),
                   ],

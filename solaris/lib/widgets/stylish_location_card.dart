@@ -12,7 +12,7 @@ class StylishLocationCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final locationAsync = ref.watch(locationStreamProvider);
+    final locationAsync = ref.watch(effectiveLocationProvider);
     final solarAsync = ref.watch(solarStateStreamProvider);
 
     return solarAsync.maybeWhen(
@@ -40,11 +40,12 @@ class StylishLocationCard extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(24),
                     child: locationAsync.maybeWhen(
                       data: (pos) => CachedNetworkImage(
-                        imageUrl: getStaticMapUrl(
-                          pos.latitude,
-                          pos.longitude,
-                          style: mapStyle,
-                        ),
+                          imageUrl: getStaticMapUrl(
+                            pos.latitude,
+                            pos.longitude,
+                            style: mapStyle,
+                            zoom: 13.3,
+                          ),
                         fit: BoxFit.cover,
                         fadeInDuration: const Duration(milliseconds: 500),
                         placeholder: (context, url) => Container(

@@ -42,12 +42,17 @@ void main(List<String> args) async {
   windowManager.addListener(WindowEventHandler());
 
   // Initialize storage
-  final prefs = await SharedPreferences.getInstance();
+  SharedPreferences? prefs;
+  try {
+    prefs = await SharedPreferences.getInstance();
+  } catch (e) {
+    debugPrint('Error initializing SharedPreferences: $e');
+  }
 
   runApp(
     ProviderScope(
       overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
+        if (prefs != null) sharedPreferencesProvider.overrideWithValue(prefs),
       ],
       child: const SolarisApp(),
     ),

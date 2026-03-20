@@ -16,6 +16,10 @@ import 'package:solaris/models/current_day_phase.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+import 'package:solaris/services/storage_service.dart';
+import 'package:solaris/models/location_settings.dart' as model;
+
 final locationServiceProvider = Provider((ref) => LocationService());
 final solarServiceProvider = Provider(
   (ref) => SolarService(),
@@ -25,18 +29,17 @@ final timeServiceProvider = Provider((ref) => TimeService());
 final monitorServiceProvider = Provider((ref) => MonitorService());
 final circadianServiceProvider = Provider((ref) => CircadianService());
 final brightnessServiceProvider = Provider((ref) => BrightnessService());
+final storageServiceProvider = Provider((ref) => StorageService());
 
 // Провайдер для SharedPreferences (переопределяется в main.dart)
-final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
-  throw UnimplementedError();
-});
+final sharedPreferencesProvider = Provider<SharedPreferences?>((ref) => null);
 
 // 1. Провайдер самого сервиса
 final weatherServiceProvider = Provider((ref) => WeatherService());
 
 // 2. Асинхронный провайдер данных о погоде
 final currentWeatherProvider = FutureProvider<WeatherData?>((ref) async {
-  final locationAsync = ref.watch(locationStreamProvider);
+  final locationAsync = ref.watch(effectiveLocationProvider);
   final weatherService = ref.watch(weatherServiceProvider);
 
   // Ждем, пока появится локация
@@ -89,6 +92,84 @@ final locationStreamProvider = StreamProvider<Position>((ref) {
   return service.getLocationStream();
 });
 
+class LocationSettingsNotifier extends AsyncNotifier<model.LocationSettings> {
+  static const _filename = 'location_settings.json';
+
+  @override
+  Future<model.LocationSettings> build() async {
+    final storage = ref.watch(storageServiceProvider);
+    final jsonStr = await storage.load(_filename);
+    if (jsonStr != null) {
+      try {
+        return model.LocationSettings.fromJson(
+          jsonDecode(jsonStr) as Map<String, dynamic>,
+        );
+      } catch (e) {
+        debugPrint('Error parsing location settings: $e');
+      }
+    }
+    return const model.LocationSettings();
+  }
+
+  Future<void> updateSettings(model.LocationSettings settings) async {
+    state = AsyncData(settings);
+    final storage = ref.read(storageServiceProvider);
+    await storage.save(_filename, jsonEncode(settings.toJson()));
+  }
+
+  Future<void> setManualLocation(double lat, double lon) async {
+    final current = state.value ?? const model.LocationSettings();
+    await updateSettings(
+      current.copyWith(
+        useManual: true,
+        manualLatitude: lat,
+        manualLongitude: lon,
+      ),
+    );
+  }
+
+  Future<void> setAutoLocation() async {
+    final current = state.value ?? const model.LocationSettings();
+    await updateSettings(current.copyWith(useManual: false));
+  }
+}
+
+final locationSettingsProvider =
+    AsyncNotifierProvider<LocationSettingsNotifier, model.LocationSettings>(
+      LocationSettingsNotifier.new,
+    );
+
+final effectiveLocationProvider = Provider<AsyncValue<Position>>((ref) {
+  final settingsAsync = ref.watch(locationSettingsProvider);
+  final streamAsync = ref.watch(locationStreamProvider);
+
+  return settingsAsync.when(
+    data: (settings) {
+      if (settings.useManual &&
+          settings.manualLatitude != null &&
+          settings.manualLongitude != null) {
+        return AsyncData(
+          Position(
+            latitude: settings.manualLatitude!,
+            longitude: settings.manualLongitude!,
+            timestamp: DateTime.now(),
+            accuracy: 0,
+            altitude: 0,
+            heading: 0,
+            speed: 0,
+            speedAccuracy: 0,
+            altitudeAccuracy: 0,
+            headingAccuracy: 0,
+          ),
+        );
+      }
+      return streamAsync;
+    },
+    loading: () => const AsyncLoading(),
+    error: (e, st) => AsyncError(e, st),
+  );
+});
+
 final currentTimeProvider = StreamProvider<DateTime>((ref) {
   final service = ref.watch(timeServiceProvider);
   return service.getTimeStream();
@@ -97,9 +178,9 @@ final currentTimeProvider = StreamProvider<DateTime>((ref) {
 /// Provider that emits the current solar state every second.
 final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
   final service = ref.watch(sunCalculatorServiceProvider);
-  final locationAsync = ref.watch(locationStreamProvider);
+  final locationAsync = ref.watch(effectiveLocationProvider);
 
-  // Use location from stream, or default to Kyiv if loading
+  // Use location from provider, or default to Kyiv if loading
   final pos = locationAsync.value;
   final lat = pos?.latitude ?? 50.45;
   final lon = pos?.longitude ?? 30.52;
@@ -287,10 +368,7 @@ class SettingsState {
     final List<dynamic>? pointsJson = json['curvePoints'] as List<dynamic>?;
     final points = pointsJson?.map((p) {
       final map = p as Map<String, dynamic>;
-      return FlSpot(
-        (map['x'] as num).toDouble(),
-        (map['y'] as num).toDouble(),
-      );
+      return FlSpot((map['x'] as num).toDouble(), (map['y'] as num).toDouble());
     }).toList();
 
     return SettingsState(
@@ -313,17 +391,19 @@ class SettingsState {
   }
 }
 
-class SettingsNotifier extends Notifier<Map<String, SettingsState>> {
-  static const _settingsKey = 'multi_monitor_settings';
+class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
+  static const _settingsFilename = 'monitor_settings.json';
 
   @override
-  Map<String, SettingsState> build() {
-    final prefs = ref.watch(sharedPreferencesProvider);
-    return _loadSettings(prefs);
+  Future<Map<String, SettingsState>> build() async {
+    final storage = ref.watch(storageServiceProvider);
+    return await _loadSettings(storage);
   }
 
-  Map<String, SettingsState> _loadSettings(SharedPreferences prefs) {
-    final String? jsonStr = prefs.getString(_settingsKey);
+  Future<Map<String, SettingsState>> _loadSettings(
+    StorageService storage,
+  ) async {
+    final String? jsonStr = await storage.load(_settingsFilename);
     final Map<String, SettingsState> map = {'all': SettingsState()};
 
     if (jsonStr != null) {
@@ -333,42 +413,50 @@ class SettingsNotifier extends Notifier<Map<String, SettingsState>> {
           map[key] = SettingsState.fromJson(value as Map<String, dynamic>);
         });
       } catch (e) {
-        print('Error loading settings: $e');
+        debugPrint('Error loading settings from file: $e');
       }
     }
     return map;
   }
 
-  void _saveSettings() {
-    final prefs = ref.read(sharedPreferencesProvider);
-    final encoded = state.map((key, value) => MapEntry(key, value.toJson()));
-    prefs.setString(_settingsKey, jsonEncode(encoded));
+  Future<void> _saveSettings() async {
+    state.whenData((currentMap) async {
+      final storage = ref.read(storageServiceProvider);
+      final encoded = currentMap.map(
+        (key, value) => MapEntry(key, value.toJson()),
+      );
+      await storage.save(_settingsFilename, jsonEncode(encoded));
+    });
   }
 
   SettingsState _getSettings(String? monitorId) {
-    final String id = (monitorId ?? ref.read(settingsMonitorIdProvider)).toString();
-    return state[id] ?? state['all']!;
+    final Map<String, SettingsState> currentMap =
+        state.value ?? {'all': SettingsState()};
+    final String id = (monitorId ?? ref.read(settingsMonitorIdProvider))
+        .toString();
+    return currentMap[id] ?? currentMap['all']!;
   }
 
-  void _updateSettings(String? monitorId, SettingsState newState) {
-    final String id = (monitorId ?? ref.read(settingsMonitorIdProvider)).toString();
-    final newStateMap = Map<String, SettingsState>.from(state)..[id] = newState;
-    
-    // If updating 'all', we might want to keep others in sync or just let them be overrides
-    // User request: "если выбрано 'все мониторы' то кривая и все остальные настройки должны применяться к 2 мониторам сразу"
+  Future<void> _updateSettings(
+    String? monitorId,
+    SettingsState newState,
+  ) async {
+    final currentMap = state.value ?? {'all': SettingsState()};
+    final String id = (monitorId ?? ref.read(settingsMonitorIdProvider))
+        .toString();
+    final newStateMap = Map<String, SettingsState>.from(currentMap)
+      ..[id] = newState;
+
     if (id == 'all') {
-      // Apply to all existing overrides too? Or just clear them?
-      // Let's clear specific overrides when 'all' is modified to ensure sync, 
-      // OR just update all existing keys with the new values from 'all'.
-      for (final key in state.keys) {
+      for (final key in newStateMap.keys.toList()) {
         if (key != 'all') {
           newStateMap[key] = newState;
         }
       }
     }
-    
-    state = newStateMap;
-    _saveSettings();
+
+    state = AsyncData(newStateMap);
+    await _saveSettings();
   }
 
   void updateCurveSharpness(double value, {String? monitorId}) {
@@ -377,8 +465,8 @@ class SettingsNotifier extends Notifier<Map<String, SettingsState>> {
   }
 
   void updateAutorun(bool enabled) {
-    // Autorun is app-wide, but we'll store it in 'all'
-    final current = state['all']!;
+    final currentMap = state.value ?? {'all': SettingsState()};
+    final current = currentMap['all']!;
     _updateSettings('all', current.copyWith(isAutorunEnabled: enabled));
     AutorunService.setEnabled(enabled);
   }
@@ -388,7 +476,10 @@ class SettingsNotifier extends Notifier<Map<String, SettingsState>> {
       ..sort((a, b) => a.x.compareTo(b.x));
 
     if (sortedPoints.isEmpty || sortedPoints.first.x > -20) {
-      sortedPoints.insert(0, FlSpot(-20, sortedPoints.isEmpty ? 15 : sortedPoints.first.y));
+      sortedPoints.insert(
+        0,
+        FlSpot(-20, sortedPoints.isEmpty ? 15 : sortedPoints.first.y),
+      );
     }
     if (sortedPoints.last.x < 90) {
       sortedPoints.add(FlSpot(90, sortedPoints.last.y));
@@ -407,16 +498,19 @@ class SettingsNotifier extends Notifier<Map<String, SettingsState>> {
   void removeCurvePoint(int index, {String? monitorId}) {
     final current = _getSettings(monitorId);
     if (index >= 0 && index < current.curvePoints.length) {
-      if (current.curvePoints[index].x == -20 || current.curvePoints[index].x == 90) return;
+      if (current.curvePoints[index].x == -20 ||
+          current.curvePoints[index].x == 90)
+        return;
       final newPoints = List<FlSpot>.from(current.curvePoints)..removeAt(index);
       updateCurvePoints(newPoints, monitorId: monitorId);
     }
   }
 }
 
-final settingsProvider = NotifierProvider<SettingsNotifier, Map<String, SettingsState>>(
-  SettingsNotifier.new,
-);
+final settingsProvider =
+    AsyncNotifierProvider<SettingsNotifier, Map<String, SettingsState>>(
+      SettingsNotifier.new,
+    );
 
 class CurrentBrightnessNotifier extends Notifier<double> {
   static const _lastBrightnessKey = 'last_known_brightness';
@@ -424,13 +518,13 @@ class CurrentBrightnessNotifier extends Notifier<double> {
   @override
   double build() {
     final prefs = ref.watch(sharedPreferencesProvider);
-    final lastBrightness = prefs.getDouble(_lastBrightnessKey) ?? 100.0;
+    final lastBrightness = prefs?.getDouble(_lastBrightnessKey) ?? 100.0;
 
     final isAuto = ref.watch(autoAdjustmentProvider);
     if (isAuto) {
       final solarStateAsync = ref.watch(solarStateStreamProvider);
       final circadianService = ref.watch(circadianServiceProvider);
-      final settingsMap = ref.watch(settingsProvider);
+      final settingsAsync = ref.watch(settingsProvider);
       final monitorsAsync = ref.watch(monitorListProvider);
       final currentSelection = ref.watch(selectedMonitorIdProvider);
 
@@ -438,38 +532,52 @@ class CurrentBrightnessNotifier extends Notifier<double> {
         data: (state) {
           // Apply brightness to ALL monitors in the background
           monitorsAsync.whenData((monitors) {
-            for (final monitor in monitors) {
-              final settings = settingsMap[monitor.deviceName] ?? settingsMap['all']!;
+            settingsAsync.whenData((settingsMap) {
+              for (final monitor in monitors) {
+                final settings =
+                    settingsMap[monitor.deviceName] ?? settingsMap['all']!;
+                final target = circadianService.calculateTargetBrightness(
+                  state.phases,
+                  state.sunElevation,
+                  DateTime.now(),
+                  curveSharpness: settings.curveSharpness,
+                  curvePoints: settings.curvePoints,
+                );
+                ref
+                    .read(brightnessServiceProvider)
+                    .applyBrightnessSmoothly(
+                      selection: monitor.deviceName,
+                      targetValue: target,
+                      monitors: monitors,
+                      monitorService: ref.read(monitorServiceProvider),
+                      updateBrightnessCallback: (id, val) => ref
+                          .read(monitorListProvider.notifier)
+                          .updateBrightness(id, val),
+                    );
+              }
+            });
+          });
+
+          // Return brightness for the CURRENTLY selected monitor in dashboard
+          return settingsAsync.maybeWhen(
+            data: (settingsMap) {
+              final settingsId = currentSelection == 'all'
+                  ? 'all'
+                  : currentSelection;
+              final selectedSettings =
+                  settingsMap[settingsId] ?? settingsMap['all']!;
               final target = circadianService.calculateTargetBrightness(
                 state.phases,
                 state.sunElevation,
                 DateTime.now(),
-                curveSharpness: settings.curveSharpness,
-                curvePoints: settings.curvePoints,
+                curveSharpness: selectedSettings.curveSharpness,
+                curvePoints: selectedSettings.curvePoints,
               );
-              ref.read(brightnessServiceProvider).applyBrightnessSmoothly(
-                selection: monitor.deviceName,
-                targetValue: target,
-                monitors: monitors,
-                monitorService: ref.read(monitorServiceProvider),
-                updateBrightnessCallback: (id, val) => 
-                    ref.read(monitorListProvider.notifier).updateBrightness(id, val),
-              );
-            }
-          });
-
-          // Return brightness for the CURRENTLY selected monitor in dashboard
-          final settingsId = currentSelection == 'all' ? 'all' : currentSelection;
-          final selectedSettings = settingsMap[settingsId] ?? settingsMap['all']!;
-          final target = circadianService.calculateTargetBrightness(
-            state.phases,
-            state.sunElevation,
-            DateTime.now(),
-            curveSharpness: selectedSettings.curveSharpness,
-            curvePoints: selectedSettings.curvePoints,
+              _saveBrightness(target);
+              return target;
+            },
+            orElse: () => lastBrightness,
           );
-          _saveBrightness(target);
-          return target;
         },
         orElse: () => lastBrightness,
       );
@@ -480,7 +588,7 @@ class CurrentBrightnessNotifier extends Notifier<double> {
 
   void _saveBrightness(double value) {
     final prefs = ref.read(sharedPreferencesProvider);
-    prefs.setDouble(_lastBrightnessKey, value);
+    prefs?.setDouble(_lastBrightnessKey, value);
   }
 
   void setManualBrightness(double value) {
@@ -504,9 +612,9 @@ String getStaticMapUrl(
   double lat,
   double lon, {
   String style = kMapboxNightStyle,
+  double zoom = 12.0,
 }) {
   const token = String.fromEnvironment('MAPBOX_TOKEN');
-  const zoom = 13.2; // Slightly closer zoom for better "city lights" effect
   const width = 600;
   const height = 600;
 

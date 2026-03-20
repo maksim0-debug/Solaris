@@ -5,8 +5,6 @@ import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/luminosity_graph.dart';
-import 'package:solaris/widgets/stylish_location_card.dart';
-
 
 class ScheduleScreen extends ConsumerWidget {
   const ScheduleScreen({super.key});
@@ -15,7 +13,7 @@ class ScheduleScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final solarAsync = ref.watch(solarStateStreamProvider);
-    final locationAsync = ref.watch(locationStreamProvider);
+    final locationAsync = ref.watch(effectiveLocationProvider);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -160,10 +158,6 @@ class ScheduleScreen extends ConsumerWidget {
                     width: 320,
                     child: Column(
                       children: [
-                        // Live Location Card (Dynamic Chameleon Style)
-                        const StylishLocationCard(),
-
-                        const SizedBox(height: 24),
                         // Solar Telemetry Card
                         solarAsync.maybeWhen(
                           data: (state) {
@@ -289,8 +283,6 @@ class ScheduleScreen extends ConsumerWidget {
     );
   }
 }
-
-
 
 class _HeaderButton extends StatelessWidget {
   final String label;
@@ -487,5 +479,3 @@ class _ProgressBar extends StatelessWidget {
     );
   }
 }
-
-

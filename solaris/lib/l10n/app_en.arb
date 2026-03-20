@@ -8,6 +8,26 @@
   "schedule": "Schedule",
   "settings": "Settings",
   "location": "Location",
+  "locationAutomation": "Location & Automation",
+  "locationSubtitle": "Sync your environment with your geographical position. Let the solar cycles dictate your workflow fluidity.",
+  "celestialMap": "Celestial Map",
+  "autoDetect": "AUTO-DETECT: {status}",
+  "@autoDetect": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "manualCoordinateEntry": "Manual Coordinate Entry",
+  "latitude": "LATITUDE",
+  "longitude": "LONGITUDE",
+  "updatePosition": "Update Position",
+  "precisionGps": "Precision GPS",
+  "gpsSubtitle": "High-precision location services for solar-tracking hardware integration.",
+  "statusConnected": "Status: Connected",
+  "currentAnchor": "CURRENT ANCHOR",
+  "reset": "Reset",
   "localTime": "LOCAL TIME",
   "goldenHour": "Golden Hour",
   "goldenHourMorning": "Golden Hour (Morning)",

@@ -27,6 +27,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get location => 'Location';
 
   @override
+  String get locationAutomation => 'Location & Automation';
+
+  @override
+  String get locationSubtitle =>
+      'Sync your environment with your geographical position. Let the solar cycles dictate your workflow fluidity.';
+
+  @override
+  String get celestialMap => 'Celestial Map';
+
+  @override
+  String autoDetect(String status) {
+    return 'AUTO-DETECT: $status';
+  }
+
+  @override
+  String get manualCoordinateEntry => 'Manual Coordinate Entry';
+
+  @override
+  String get latitude => 'LATITUDE';
+
+  @override
+  String get longitude => 'LONGITUDE';
+
+  @override
+  String get updatePosition => 'Update Position';
+
+  @override
+  String get precisionGps => 'Precision GPS';
+
+  @override
+  String get gpsSubtitle =>
+      'High-precision location services for solar-tracking hardware integration.';
+
+  @override
+  String get statusConnected => 'Status: Connected';
+
+  @override
+  String get currentAnchor => 'CURRENT ANCHOR';
+
+  @override
+  String get reset => 'Reset';
+
+  @override
   String get localTime => 'LOCAL TIME';
 
   @override

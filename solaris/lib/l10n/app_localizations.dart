@@ -134,6 +134,84 @@ abstract class AppLocalizations {
   /// **'Location'**
   String get location;
 
+  /// No description provided for @locationAutomation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location & Automation'**
+  String get locationAutomation;
+
+  /// No description provided for @locationSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync your environment with your geographical position. Let the solar cycles dictate your workflow fluidity.'**
+  String get locationSubtitle;
+
+  /// No description provided for @celestialMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Celestial Map'**
+  String get celestialMap;
+
+  /// No description provided for @autoDetect.
+  ///
+  /// In en, this message translates to:
+  /// **'AUTO-DETECT: {status}'**
+  String autoDetect(String status);
+
+  /// No description provided for @manualCoordinateEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual Coordinate Entry'**
+  String get manualCoordinateEntry;
+
+  /// No description provided for @latitude.
+  ///
+  /// In en, this message translates to:
+  /// **'LATITUDE'**
+  String get latitude;
+
+  /// No description provided for @longitude.
+  ///
+  /// In en, this message translates to:
+  /// **'LONGITUDE'**
+  String get longitude;
+
+  /// No description provided for @updatePosition.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Position'**
+  String get updatePosition;
+
+  /// No description provided for @precisionGps.
+  ///
+  /// In en, this message translates to:
+  /// **'Precision GPS'**
+  String get precisionGps;
+
+  /// No description provided for @gpsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'High-precision location services for solar-tracking hardware integration.'**
+  String get gpsSubtitle;
+
+  /// No description provided for @statusConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Status: Connected'**
+  String get statusConnected;
+
+  /// No description provided for @currentAnchor.
+  ///
+  /// In en, this message translates to:
+  /// **'CURRENT ANCHOR'**
+  String get currentAnchor;
+
+  /// No description provided for @reset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get reset;
+
   /// No description provided for @localTime.
   ///
   /// In en, this message translates to:

@@ -21,11 +21,20 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final settingsMap = ref.watch(settingsProvider);
+    final settingsAsync = ref.watch(settingsProvider);
     final monitorId = ref.watch(settingsMonitorIdProvider);
-    final selectedSettings = settingsMap[monitorId] ?? settingsMap['all']!;
-    final points = selectedSettings.curvePoints;
     
+    return settingsAsync.maybeWhen(
+      data: (settingsMap) {
+        final selectedSettings = settingsMap[monitorId] ?? settingsMap['all']!;
+        final points = selectedSettings.curvePoints;
+        return _buildChart(context, points);
+      },
+      orElse: () => const Center(child: CircularProgressIndicator()),
+    );
+  }
+
+  Widget _buildChart(BuildContext context, List<FlSpot> points) {
     final solarAsync = ref.watch(solarStateStreamProvider); // Получаем данные о солнце
 
     const dayColor = Color(0xFFFDBA74);
@@ -251,8 +260,9 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
     double y = chartCoords.dy.clamp(0.0, 100.0);
 
     final monitorId = ref.read(settingsMonitorIdProvider);
-    final currentPoints = ref.read(settingsProvider)[monitorId]?.curvePoints ?? 
-                         ref.read(settingsProvider)['all']!.curvePoints;
+    final settingsMap = ref.read(settingsProvider).value ?? {'all': SettingsState()};
+    final currentPoints = settingsMap[monitorId]?.curvePoints ?? 
+                         settingsMap['all']!.curvePoints;
     final newPoints = List<FlSpot>.from(currentPoints);
 
     if (index == 0 || index == newPoints.length - 1) {
@@ -277,7 +287,8 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
     double y = chartCoords.dy.clamp(0.0, 100.0);
 
     final monitorId = ref.read(settingsMonitorIdProvider);
-    final currentSettings = ref.read(settingsProvider)[monitorId] ?? ref.read(settingsProvider)['all']!;
+    final settingsMap = ref.read(settingsProvider).value ?? {'all': SettingsState()};
+    final currentSettings = settingsMap[monitorId] ?? settingsMap['all']!;
     final currentPoints = currentSettings.curvePoints;
     bool tooClose = currentPoints.any((p) => (p.x - x).abs() < 2.0); // Защита от спама точками
 
@@ -288,8 +299,9 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
 
   void _removePoint(int index) {
     final monitorId = ref.read(settingsMonitorIdProvider);
-    final currentPoints = ref.read(settingsProvider)[monitorId]?.curvePoints ?? 
-                         ref.read(settingsProvider)['all']!.curvePoints;
+    final settingsMap = ref.read(settingsProvider).value ?? {'all': SettingsState()};
+    final currentPoints = settingsMap[monitorId]?.curvePoints ?? 
+                         settingsMap['all']!.curvePoints;
     if (index == 0 || index == currentPoints.length - 1) return;
     ref.read(settingsProvider.notifier).removeCurvePoint(index, monitorId: monitorId);
   }

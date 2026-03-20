@@ -1,26 +1,84 @@
 {
   "appTitle": "Solaris",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
   "celestialControl": "НЕБЕСНЫЙ КОНТРОЛЬ",
   "dashboard": "Панель управления",
   "schedule": "Расписание",
   "settings": "Настройки",
   "location": "Местоположение",
+  "locationAutomation": "Местоположение и Автоматизация",
+  "locationSubtitle": "Синхронизируйте вашу среду с географическим положением. Пусть солнечные циклы диктуют плавность вашего рабочего процесса.",
+  "celestialMap": "Небесная карта",
+  "autoDetect": "АВТО-ОПРЕДЕЛЕНИЕ: {status}",
+  "@autoDetect": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "manualCoordinateEntry": "Ручной ввод координат",
+  "latitude": "ШИРОТА",
+  "longitude": "ДОЛГОТА",
+  "updatePosition": "Обновить позицию",
+  "precisionGps": "Прецизионный GPS",
+  "gpsSubtitle": "Высокоточное определение местоположения для интеграции с оборудованием слежения за солнцем.",
+  "statusConnected": "Статус: Подключено",
+  "currentAnchor": "ТЕКУЩИЙ ЯКОРЬ",
+  "reset": "Сбросить",
   "localTime": "МЕСТНОЕ ВРЕМЯ",
   "goldenHour": "Золотой час",
   "goldenHourMorning": "Золотой час (утро)",
   "goldenHourEvening": "Золотой час (вечер)",
   "calculating": "РАСЧЕТ...",
   "comingIn": "ЧЕРЕЗ {time}",
+  "@comingIn": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "goldenHourActive": "ЗОЛОТОЙ ЧАС АКТИВЕН",
   "remaining": "ОСТАЛОСЬ {time}",
+  "@remaining": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "night": "НОЧЬ",
   "finished": "ЗАВЕРШЕНО",
   "brightness": "ЯРКОСТЬ",
   "remainingLower": "Осталось {time}",
+  "@remainingLower": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "activeLower": "Активно {time}",
+  "@activeLower": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "sunSet": "Солнце зашло",
   "calculatingLower": "Расчет...",
   "transitionNotice": "Система перейдет на теплый спектр 2700K примерно через {hours} ч.",
+  "@transitionNotice": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
   "goldenHourNotice": "Сейчас Золотой час. Спектр смещен к теплому 2700K.",
   "solarCycleEnded": "Солнечный цикл на сегодня завершен. Система в ручном ночном режиме.",
   "updatingSolarData": "Обновление данных о солнце на основе вашего местоположения...",
@@ -32,13 +90,20 @@
   "efficiencyRate": "Эффективность",
   "atmosphericClarity": "Ясность атмосферы",
   "high": "Высокая",
-  "engineVersion": "Движок Solaris v{version}",
   "sunriseLabel": "Восход",
   "sunsetLabel": "Закат",
+  "engineVersion": "Движок Solaris v{version}",
+  "@engineVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "allMonitors": "Все мониторы",
   "luminosityProfile": "Профиль освещенности",
   "dragNodesToAdjust": "Перетаскивайте узлы для настройки кривых",
-  "view24h": "24ч",
+  "view24h": "24ч View",
   "editCurve": "Изм. кривую",
   "liveLocation": "ТЕКУЩЕЕ МЕСТО",
   "solarTelemetry": "Солнечная телеметрия",

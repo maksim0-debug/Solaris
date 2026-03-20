@@ -27,6 +27,49 @@ class AppLocalizationsRu extends AppLocalizations {
   String get location => 'Местоположение';
 
   @override
+  String get locationAutomation => 'Местоположение и Автоматизация';
+
+  @override
+  String get locationSubtitle =>
+      'Синхронизируйте вашу среду с географическим положением. Пусть солнечные циклы диктуют плавность вашего рабочего процесса.';
+
+  @override
+  String get celestialMap => 'Небесная карта';
+
+  @override
+  String autoDetect(String status) {
+    return 'АВТО-ОПРЕДЕЛЕНИЕ: $status';
+  }
+
+  @override
+  String get manualCoordinateEntry => 'Ручной ввод координат';
+
+  @override
+  String get latitude => 'ШИРОТА';
+
+  @override
+  String get longitude => 'ДОЛГОТА';
+
+  @override
+  String get updatePosition => 'Обновить позицию';
+
+  @override
+  String get precisionGps => 'Прецизионный GPS';
+
+  @override
+  String get gpsSubtitle =>
+      'Высокоточное определение местоположения для интеграции с оборудованием слежения за солнцем.';
+
+  @override
+  String get statusConnected => 'Статус: Подключено';
+
+  @override
+  String get currentAnchor => 'ТЕКУЩИЙ ЯКОРЬ';
+
+  @override
+  String get reset => 'Сбросить';
+
+  @override
   String get localTime => 'МЕСТНОЕ ВРЕМЯ';
 
   @override
@@ -141,7 +184,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get dragNodesToAdjust => 'Перетаскивайте узлы для настройки кривых';
 
   @override
-  String get view24h => '24ч';
+  String get view24h => '24ч View';
 
   @override
   String get editCurve => 'Изм. кривую';

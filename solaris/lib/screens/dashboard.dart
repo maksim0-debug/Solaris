@@ -11,6 +11,7 @@ import 'package:solaris/widgets/brightness_slider.dart';
 import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/sun_path_painter.dart';
 import 'package:solaris/models/current_day_phase.dart';
+import 'package:solaris/screens/location_screen.dart';
 import 'package:solaris/screens/settings_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -363,8 +364,8 @@ class _MainView extends ConsumerWidget {
         return const ScheduleScreen();
       case AppScreen.settings:
         return const SettingsScreen();
-      default:
-        return Center(child: Text('Screen $screen coming soon'));
+      case AppScreen.location:
+        return const LocationScreen();
     }
   }
 }
@@ -377,8 +378,7 @@ class _DashboardView extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final solarAsync = ref.watch(solarStateStreamProvider);
     final timeService = ref.watch(timeServiceProvider);
-
-    final double brightness = ref.watch<double>(currentBrightnessProvider);
+    final brightness = ref.watch(currentBrightnessProvider);
     final bool isAutoAdapt = ref.watch<bool>(autoAdjustmentProvider);
 
     return Row(
