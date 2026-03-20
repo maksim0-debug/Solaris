@@ -5,7 +5,8 @@ import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/luminosity_graph.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:solaris/widgets/stylish_location_card.dart';
+
 
 class ScheduleScreen extends ConsumerWidget {
   const ScheduleScreen({super.key});
@@ -159,172 +160,9 @@ class ScheduleScreen extends ConsumerWidget {
                     width: 320,
                     child: Column(
                       children: [
-                        // Live Location Card
-                        AspectRatio(
-                          aspectRatio: 1,
-                          child: GlassCard(
-                            padding: EdgeInsets.zero,
-                            child: Stack(
-                              children: [
-                                // Background Image (Stylized Mapbox)
-                                Positioned.fill(
-                                  child: Opacity(
-                                    opacity: 0.7, // Слегка приглушаем
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(24),
-                                      // Используем ColorFiltered, чтобы убить пестрые цвета спутника
-                                      // и подогнать под темную тему приложения
-                                      child: ColorFiltered(
-                                        colorFilter: const ColorFilter.matrix([
-                                          0.2126,
-                                          0.7152,
-                                          0.0722,
-                                          0,
-                                          0, // Переводим в ЧБ
-                                          0.2126, 0.7152, 0.0722, 0, 0,
-                                          0.2126, 0.7152, 0.0722, 0, 0,
-                                          0, 0, 0, 1, 0,
-                                        ]),
-                                        child: locationAsync.maybeWhen(
-                                          data: (pos) => CachedNetworkImage(
-                                            imageUrl: getStaticMapUrl(
-                                              pos.latitude,
-                                              pos.longitude,
-                                            ),
-                                            fit: BoxFit.cover,
-                                            fadeInDuration: const Duration(
-                                              milliseconds: 500,
-                                            ),
-                                            // Красивый плейсхолдер пока грузится карта
-                                            placeholder: (context, url) =>
-                                                Container(
-                                                  color: const Color(
-                                                    0xFF0F172A,
-                                                  ),
-                                                  child: const Center(
-                                                    child:
-                                                        CircularProgressIndicator(
-                                                          color: Color(
-                                                            0xFFFDBA74,
-                                                          ),
-                                                          strokeWidth: 2,
-                                                        ),
-                                                  ),
-                                                ),
-                                            errorWidget:
-                                                (context, url, error) =>
-                                                    Container(
-                                                      color: const Color(
-                                                        0xFF0F172A,
-                                                      ),
-                                                      child: const Icon(
-                                                        LucideIcons.map,
-                                                        color: Colors.white10,
-                                                        size: 48,
-                                                      ),
-                                                    ),
-                                          ),
-                                          orElse: () => Container(
-                                            color: const Color(0xFF0F172A),
-                                          ), // Состояние загрузки локации
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                // Gradient Overlay (усиленный для читаемости)
-                                Positioned.fill(
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(24),
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.bottomCenter,
-                                        colors: [
-                                          Colors.transparent,
-                                          Colors.black.withOpacity(0.9),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                // Pulsing Radar Marker
-                                Positioned.fill(
-                                  child: Center(
-                                    child: _PulsingLocationMarker(),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.all(20),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 10,
-                                              vertical: 4,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white.withOpacity(
-                                                0.2,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(20),
-                                            ),
-                                            child: Text(
-                                              l10n.liveLocation,
-                                              style: const TextStyle(
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.bold,
-                                                letterSpacing: 1,
-                                              ),
-                                            ),
-                                          ),
-                                          const Icon(
-                                            LucideIcons.compass,
-                                            size: 20,
-                                            color: Colors.white70,
-                                          ),
-                                        ],
-                                      ),
-                                      const Spacer(),
-                                      Text(
-                                        locationAsync.maybeWhen(
-                                          data: (pos) =>
-                                              'Lat: ${pos.latitude.toStringAsFixed(4)}, Lon: ${pos.longitude.toStringAsFixed(4)}',
-                                          orElse: () => 'Bila Tserkva, UA',
-                                        ),
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      Text(
-                                        locationAsync.maybeWhen(
-                                          data: (pos) => _formatDMS(
-                                            pos.latitude,
-                                            pos.longitude,
-                                          ),
-                                          orElse: () =>
-                                              '49.7900° N, 30.1300° E',
-                                        ),
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.white54,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                        // Live Location Card (Dynamic Chameleon Style)
+                        const StylishLocationCard(),
+
                         const SizedBox(height: 24),
                         // Solar Telemetry Card
                         solarAsync.maybeWhen(
@@ -450,24 +288,9 @@ class ScheduleScreen extends ConsumerWidget {
       },
     );
   }
-
-  String _formatDMS(double lat, double lon) {
-    String latDir = lat >= 0 ? "N" : "S";
-    String lonDir = lon >= 0 ? "E" : "W";
-
-    double absLat = lat.abs();
-    int latDeg = absLat.floor();
-    int latMin = ((absLat - latDeg) * 60).floor();
-    int latSec = (((absLat - latDeg) * 60 - latMin) * 60).floor();
-
-    double absLon = lon.abs();
-    int lonDeg = absLon.floor();
-    int lonMin = ((absLon - lonDeg) * 60).floor();
-    int lonSec = (((absLon - lonDeg) * 60 - lonMin) * 60).floor();
-
-    return '$latDeg° $latMin\' $latSec" $latDir, $lonDeg° $lonMin\' $lonSec" $lonDir';
-  }
 }
+
+
 
 class _HeaderButton extends StatelessWidget {
   final String label;
@@ -665,80 +488,4 @@ class _ProgressBar extends StatelessWidget {
   }
 }
 
-class _PulsingLocationMarker extends StatefulWidget {
-  @override
-  __PulsingLocationMarkerState createState() => __PulsingLocationMarkerState();
-}
 
-class __PulsingLocationMarkerState extends State<_PulsingLocationMarker>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            // Expanding circle (pulse)
-            Container(
-              width: 40 + (_controller.value * 40),
-              height: 40 + (_controller.value * 40),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: const Color(
-                    0xFFFDBA74,
-                  ).withOpacity(1.0 - _controller.value),
-                  width: 1.5,
-                ),
-              ),
-            ),
-            // Inner glow
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFFFDBA74).withOpacity(0.2),
-              ),
-            ),
-            // Solid center point
-            Container(
-              width: 8,
-              height: 8,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(0xFFFDBA74),
-                boxShadow: [
-                  BoxShadow(
-                    color: Color(0xFFFDBA74),
-                    blurRadius: 8,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}

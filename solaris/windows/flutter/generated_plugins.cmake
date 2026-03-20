@@ -5,6 +5,9 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   flutter_timezone
   geolocator_windows
+  screen_retriever_windows
+  tray_manager
+  window_manager
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

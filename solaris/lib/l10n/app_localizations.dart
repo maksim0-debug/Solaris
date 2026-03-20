@@ -487,6 +487,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Changes are applied in real-time. Use the dashboard to toggle between manual and automatic adjustment.'**
   String get realtimeApplyNotice;
+
+  /// No description provided for @autorun.
+  ///
+  /// In en, this message translates to:
+  /// **'Autorun at Startup'**
+  String get autorun;
+
+  /// No description provided for @autorunSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically start the application when you log into Windows'**
+  String get autorunSubtitle;
 }
 
 class _AppLocalizationsDelegate

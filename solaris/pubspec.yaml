@@ -54,6 +54,8 @@ dependencies:
   ffi: any
   fl_chart: ^1.2.0
   shared_preferences: ^2.5.4
+  window_manager: ^0.5.1
+  tray_manager: ^0.5.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

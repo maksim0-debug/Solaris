@@ -219,4 +219,11 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get realtimeApplyNotice =>
       'Изменения применяются в реальном времени. Используйте панель управления для переключения между ручной и автоматической настройкой.';
+
+  @override
+  String get autorun => 'Автозапуск при старте';
+
+  @override
+  String get autorunSubtitle =>
+      'Автоматически запускать приложение при входе в Windows';
 }

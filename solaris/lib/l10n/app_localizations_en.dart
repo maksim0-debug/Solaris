@@ -222,4 +222,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get realtimeApplyNotice =>
       'Changes are applied in real-time. Use the dashboard to toggle between manual and automatic adjustment.';
+
+  @override
+  String get autorun => 'Autorun at Startup';
+
+  @override
+  String get autorunSubtitle =>
+      'Automatically start the application when you log into Windows';
 }

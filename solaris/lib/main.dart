@@ -8,12 +8,40 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:solaris/providers.dart';
 
 import 'package:solaris/services/time_service.dart';
+import 'package:window_manager/window_manager.dart';
+import 'package:solaris/services/tray_service.dart';
 
-void main() async {
+void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
+  await windowManager.ensureInitialized();
   await TimeService.initialize();
 
-  // Инициализируем локальное хранилище до запуска UI
+  bool startMinimized = args.contains('--minimized');
+
+  WindowOptions windowOptions = const WindowOptions(
+    size: Size(1280, 800),
+    center: true,
+    backgroundColor: AppTheme.background,
+    skipTaskbar: false,
+    titleBarStyle: TitleBarStyle.hidden,
+  );
+
+  await windowManager.waitUntilReadyToShow(windowOptions, () async {
+    if (startMinimized) {
+      await windowManager.hide();
+    }
+    // We will show the window once the UI is ready in dashboard.dart
+  });
+
+  // Tray initialization
+  final trayService = TrayService();
+  await trayService.init();
+
+  // Prevent app from closing when clicking 'X'
+  await windowManager.setPreventClose(true);
+  windowManager.addListener(WindowEventHandler());
+
+  // Initialize storage
   final prefs = await SharedPreferences.getInstance();
 
   runApp(
@@ -45,5 +73,15 @@ class SolarisApp extends StatelessWidget {
       locale: const Locale('ru'),
       home: const DashboardScreen(),
     );
+  }
+}
+
+class WindowEventHandler extends WindowListener {
+  @override
+  void onWindowClose() async {
+    bool isPreventClose = await windowManager.isPreventClose();
+    if (isPreventClose) {
+      await windowManager.hide();
+    }
   }
 }

@@ -10,32 +10,57 @@ import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/sun_path_painter.dart';
 import 'package:solaris/models/current_day_phase.dart';
 import 'package:solaris/screens/settings_screen.dart';
+import 'package:solaris/services/brightness_service.dart';
+import 'package:solaris/widgets/window_title_bar.dart';
+import 'package:window_manager/window_manager.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Row(
-        children: [
-          // Sidebar
-          _Sidebar(),
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
 
-          // Main Content
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.all(32),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _Header(),
-                  SizedBox(height: 32),
-                  Expanded(child: _MainView()),
-                  SizedBox(height: 32),
-                  _Footer(),
-                ],
-              ),
+class _DashboardScreenState extends State<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Show window once the first frame is rendered to avoid white flash
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Column(
+        children: [
+          const WindowTitleBar(),
+          const Expanded(
+            child: Row(
+              children: [
+                // Sidebar
+                _Sidebar(),
+
+                // Main Content
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _Header(),
+                        SizedBox(height: 32),
+                        Expanded(child: _MainView()),
+                        SizedBox(height: 32),
+                        _Footer(),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -199,46 +224,17 @@ class _Header extends ConsumerWidget {
     // Apply brightness to monitors whenever it changes significantly
     ref.listen<double>(currentBrightnessProvider, (previous, next) {
       if (previous?.round() != next.round()) {
-        final monitorValue = ref.read(monitorListProvider).value;
-        if (monitorValue == null) return;
-
-        final monitors = monitorValue;
-        final monitorService = ref.read(monitorServiceProvider);
-        final monitorNotifier = ref.read(monitorListProvider.notifier);
-
         final selection = ref.read(selectedMonitorIdProvider);
-        for (final monitor in monitors) {
-          if (selection == 'all' || selection == monitor.deviceName) {
-            final targetBrightness = next.round();
-            // Update UI immediately for synchronization
-            monitorNotifier.updateBrightness(
-              monitor.deviceName,
-              targetBrightness,
-            );
-            // Apply to hardware
-            monitorService.setBrightness(monitor.deviceName, targetBrightness);
-          }
-        }
+        ref.read(brightnessServiceProvider).applyBrightnessSmoothly(selection, next);
       }
     });
 
     // Initial sync when monitors are detected
     ref.listen(monitorListProvider, (previous, next) {
       if (next.hasValue && !next.isLoading) {
-        final monitors = next.value!;
-        final target = ref.read(currentBrightnessProvider).round();
-        final monitorService = ref.read(monitorServiceProvider);
-        final monitorNotifier = ref.read(monitorListProvider.notifier);
+        final target = ref.read(currentBrightnessProvider);
         final selection = ref.read(selectedMonitorIdProvider);
-
-        for (final monitor in monitors) {
-          if (selection == 'all' || selection == monitor.deviceName) {
-            if (monitor.realBrightness != target) {
-              monitorNotifier.updateBrightness(monitor.deviceName, target);
-              monitorService.setBrightness(monitor.deviceName, target);
-            }
-          }
-        }
+        ref.read(brightnessServiceProvider).applyBrightnessSmoothly(selection, target);
       }
     });
     // Sync brightness when selection changes
@@ -246,29 +242,18 @@ class _Header extends ConsumerWidget {
       final monitorValue = ref.read(monitorListProvider).value;
       if (monitorValue == null) return;
 
-      final monitors = monitorValue;
-      final monitorService = ref.read(monitorServiceProvider);
-      final monitorNotifier = ref.read(monitorListProvider.notifier);
-
       if (next == 'all') {
-        // Sync all monitors to current dial for uniformity
-        final brightness = ref.read(currentBrightnessProvider).round();
-        for (final monitor in monitors) {
-          monitorNotifier.updateBrightness(monitor.deviceName, brightness);
-          monitorService.setBrightness(monitor.deviceName, brightness);
-        }
+        final brightness = ref.read(currentBrightnessProvider);
+        ref.read(brightnessServiceProvider).applyBrightnessSmoothly('all', brightness);
       } else {
-        // Update dial from the selected monitor's actual brightness
         try {
-          final monitor = monitors.firstWhere((m) => m.deviceName == next);
+          final monitor = monitorValue.firstWhere((m) => m.deviceName == next);
           if (monitor.realBrightness != null) {
             ref
                 .read(manualBrightnessProvider.notifier)
                 .update(monitor.realBrightness!.toDouble());
           }
-        } catch (_) {
-          // Monitor not found, ignore
-        }
+        } catch (_) {}
       }
     });
 

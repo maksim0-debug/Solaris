@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:solaris/services/circadian_service.dart';
 import 'package:solaris/models/solar_phase_model.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 void main() {
   group('CircadianService Tests', () {
@@ -22,6 +23,14 @@ void main() {
 
     const minB = 15.0;
     const maxB = 100.0;
+    final curvePoints = [
+      const FlSpot(-20, 15),
+      const FlSpot(-6, 25),
+      const FlSpot(0, 60),
+      const FlSpot(10, 85),
+      const FlSpot(30, 100),
+      const FlSpot(90, 100),
+    ];
 
     test('Deep Night should return minBrightness (15%)', () {
       final now = DateTime(2026, 3, 19, 2, 0); // 2 AM
@@ -53,8 +62,6 @@ void main() {
       'Golden Hour Evening (30 min before sunset) should return around 70-80%',
       () {
         final now = DateTime(2026, 3, 19, 17, 30);
-        // Progress = 1800 / 3600 = 0.5. Eased: 1 - (-2 * 0.5 + 2)^2 / 2 = 1 - 1/2 = 0.5.
-        // 60 + (100 - 60) * 0.5 = 80.
         final brightness = service.calculateTargetBrightness(
           phases,
           5.0,
@@ -62,8 +69,10 @@ void main() {
           minBrightness: minB,
           maxBrightness: maxB,
           transBrightness: 60.0,
+          curvePoints: curvePoints,
         );
-        expect(brightness, closeTo(80.0, 0.1));
+        // elevation 5 between 0 (60%) and 10 (85%) => 72.5%
+        expect(brightness, closeTo(72.5, 0.1));
       },
     );
 
@@ -76,9 +85,10 @@ void main() {
         minBrightness: minB,
         maxBrightness: maxB,
         transBrightness: 60.0,
+        curvePoints: curvePoints,
       );
-      // progress = -3 / -6 = 0.5. 60 - (60 - 15) * 0.5 = 37.5.
-      expect(brightness, closeTo(37.5, 0.1));
+      // elevation -3 between -6 (25%) and 0 (60%) => 42.5%
+      expect(brightness, closeTo(42.5, 0.1));
     });
   });
 }
