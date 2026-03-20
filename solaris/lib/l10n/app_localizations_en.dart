@@ -229,4 +229,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get autorunSubtitle =>
       'Automatically start the application when you log into Windows';
+
+  @override
+  String get selectMonitor => 'Select Monitor';
 }

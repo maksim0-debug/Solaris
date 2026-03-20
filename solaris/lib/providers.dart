@@ -8,6 +8,7 @@ import 'package:solaris/services/time_service.dart';
 import 'package:solaris/services/monitor_service.dart';
 import 'package:solaris/services/circadian_service.dart';
 import 'package:solaris/services/sun_calculator_service.dart';
+import 'package:solaris/services/brightness_service.dart';
 import 'package:solaris/services/weather_service.dart';
 import 'package:solaris/services/autorun_service.dart';
 import 'package:solaris/models/solar_phase_model.dart';
@@ -23,6 +24,7 @@ final sunCalculatorServiceProvider = Provider((ref) => SunCalculatorService());
 final timeServiceProvider = Provider((ref) => TimeService());
 final monitorServiceProvider = Provider((ref) => MonitorService());
 final circadianServiceProvider = Provider((ref) => CircadianService());
+final brightnessServiceProvider = Provider((ref) => BrightnessService());
 
 // Провайдер для SharedPreferences (переопределяется в main.dart)
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
@@ -209,6 +211,19 @@ final selectedMonitorIdProvider =
       SelectedMonitorIdNotifier.new,
     );
 
+/// Provider for the monitor currently being edited in the Settings tab.
+/// Default is 'all'.
+class SettingsMonitorIdNotifier extends Notifier<String> {
+  @override
+  String build() => 'all';
+  void select(String id) => state = id;
+}
+
+final settingsMonitorIdProvider =
+    NotifierProvider<SettingsMonitorIdNotifier, String>(
+      SettingsMonitorIdNotifier.new,
+    );
+
 enum AppScreen { dashboard, schedule, settings, location }
 
 class ActiveScreenNotifier extends Notifier<AppScreen> {
@@ -243,44 +258,54 @@ final manualBrightnessProvider =
     );
 
 class SettingsState {
-  final double minBrightness;
-  final double maxBrightness;
-  final double transBrightness;
   final double curveSharpness;
   final List<FlSpot> curvePoints;
   final bool isAutorunEnabled;
 
   SettingsState({
-    this.minBrightness = 15.0,
-    this.maxBrightness = 100.0,
-    this.transBrightness = 60.0,
     this.curveSharpness = 1.0,
     this.isAutorunEnabled = false,
     List<FlSpot>? curvePoints,
   }) : curvePoints = curvePoints ?? _defaultPoints();
 
-  // Теперь точки базируются на угле солнца (от -20° до 90°)
   static List<FlSpot> _defaultPoints() => const [
-    FlSpot(-20, 15), // Глубокая ночь (Астрономические сумерки)
-    FlSpot(-6, 25), // Начало гражданских сумерек (рассвет/закат)
-    FlSpot(0, 60), // Солнце на горизонте
-    FlSpot(10, 85), // Утро / Вечер (конец золотого часа)
-    FlSpot(30, 100), // Яркий день
-    FlSpot(90, 100), // Абсолютный зенит
+    FlSpot(-20, 15),
+    FlSpot(-6, 25),
+    FlSpot(0, 60),
+    FlSpot(10, 85),
+    FlSpot(30, 100),
+    FlSpot(90, 100),
   ];
 
+  Map<String, dynamic> toJson() => {
+    'curveSharpness': curveSharpness,
+    'isAutorunEnabled': isAutorunEnabled,
+    'curvePoints': curvePoints.map((p) => {'x': p.x, 'y': p.y}).toList(),
+  };
+
+  factory SettingsState.fromJson(Map<String, dynamic> json) {
+    final List<dynamic>? pointsJson = json['curvePoints'] as List<dynamic>?;
+    final points = pointsJson?.map((p) {
+      final map = p as Map<String, dynamic>;
+      return FlSpot(
+        (map['x'] as num).toDouble(),
+        (map['y'] as num).toDouble(),
+      );
+    }).toList();
+
+    return SettingsState(
+      curveSharpness: (json['curveSharpness'] as num?)?.toDouble() ?? 1.0,
+      isAutorunEnabled: json['isAutorunEnabled'] as bool? ?? false,
+      curvePoints: points,
+    );
+  }
+
   SettingsState copyWith({
-    double? minBrightness,
-    double? maxBrightness,
-    double? transBrightness,
     double? curveSharpness,
     List<FlSpot>? curvePoints,
     bool? isAutorunEnabled,
   }) {
     return SettingsState(
-      minBrightness: minBrightness ?? this.minBrightness,
-      maxBrightness: maxBrightness ?? this.maxBrightness,
-      transBrightness: transBrightness ?? this.transBrightness,
       curveSharpness: curveSharpness ?? this.curveSharpness,
       curvePoints: curvePoints ?? this.curvePoints,
       isAutorunEnabled: isAutorunEnabled ?? this.isAutorunEnabled,
@@ -288,123 +313,108 @@ class SettingsState {
   }
 }
 
-class SettingsNotifier extends Notifier<SettingsState> {
-  static const _pointsKey = 'solar_curve_points';
-  static const _minBrightnessKey = 'solar_min_brightness';
-  static const _maxBrightnessKey = 'solar_max_brightness';
-  static const _transBrightnessKey = 'solar_trans_brightness';
-  static const _curveSharpnessKey = 'solar_curve_sharpness';
-  static const _autorunKey = 'app_autorun_enabled';
+class SettingsNotifier extends Notifier<Map<String, SettingsState>> {
+  static const _settingsKey = 'multi_monitor_settings';
 
   @override
-  SettingsState build() {
+  Map<String, SettingsState> build() {
     final prefs = ref.watch(sharedPreferencesProvider);
     return _loadSettings(prefs);
   }
 
-  // Загрузка всех настроек из памяти
-  SettingsState _loadSettings(SharedPreferences prefs) {
-    final String? jsonStr = prefs.getString(_pointsKey);
-    List<FlSpot>? points;
+  Map<String, SettingsState> _loadSettings(SharedPreferences prefs) {
+    final String? jsonStr = prefs.getString(_settingsKey);
+    final Map<String, SettingsState> map = {'all': SettingsState()};
+
     if (jsonStr != null) {
       try {
-        final List<dynamic> decoded = jsonDecode(jsonStr) as List<dynamic>;
-        points = decoded.map((p) {
-          final map = p as Map<String, dynamic>;
-          return FlSpot(
-            (map['x'] as num).toDouble(),
-            (map['y'] as num).toDouble(),
-          );
-        }).toList();
+        final decoded = jsonDecode(jsonStr) as Map<String, dynamic>;
+        decoded.forEach((key, value) {
+          map[key] = SettingsState.fromJson(value as Map<String, dynamic>);
+        });
       } catch (e) {
-        print('Error loading points: $e');
+        print('Error loading settings: $e');
       }
     }
-
-    return SettingsState(
-      minBrightness: prefs.getDouble(_minBrightnessKey) ?? 15.0,
-      maxBrightness: prefs.getDouble(_maxBrightnessKey) ?? 100.0,
-      transBrightness: prefs.getDouble(_transBrightnessKey) ?? 60.0,
-      curveSharpness: prefs.getDouble(_curveSharpnessKey) ?? 1.0,
-      isAutorunEnabled: prefs.getBool(_autorunKey) ?? false,
-      curvePoints: points,
-    );
+    return map;
   }
 
-  // Сохранение всех настроек в память
   void _saveSettings() {
     final prefs = ref.read(sharedPreferencesProvider);
-    final encoded = state.curvePoints.map((p) => {'x': p.x, 'y': p.y}).toList();
-
-    prefs.setString(_pointsKey, jsonEncode(encoded));
-    prefs.setDouble(_minBrightnessKey, state.minBrightness);
-    prefs.setDouble(_maxBrightnessKey, state.maxBrightness);
-    prefs.setDouble(_transBrightnessKey, state.transBrightness);
-    prefs.setDouble(_curveSharpnessKey, state.curveSharpness);
-    prefs.setBool(_autorunKey, state.isAutorunEnabled);
+    final encoded = state.map((key, value) => MapEntry(key, value.toJson()));
+    prefs.setString(_settingsKey, jsonEncode(encoded));
   }
 
-  void updateMinBrightness(double value) {
-    state = state.copyWith(minBrightness: value);
+  SettingsState _getSettings(String? monitorId) {
+    final String id = (monitorId ?? ref.read(settingsMonitorIdProvider)).toString();
+    return state[id] ?? state['all']!;
+  }
+
+  void _updateSettings(String? monitorId, SettingsState newState) {
+    final String id = (monitorId ?? ref.read(settingsMonitorIdProvider)).toString();
+    final newStateMap = Map<String, SettingsState>.from(state)..[id] = newState;
+    
+    // If updating 'all', we might want to keep others in sync or just let them be overrides
+    // User request: "если выбрано 'все мониторы' то кривая и все остальные настройки должны применяться к 2 мониторам сразу"
+    if (id == 'all') {
+      // Apply to all existing overrides too? Or just clear them?
+      // Let's clear specific overrides when 'all' is modified to ensure sync, 
+      // OR just update all existing keys with the new values from 'all'.
+      for (final key in state.keys) {
+        if (key != 'all') {
+          newStateMap[key] = newState;
+        }
+      }
+    }
+    
+    state = newStateMap;
     _saveSettings();
   }
 
-  void updateMaxBrightness(double value) {
-    state = state.copyWith(maxBrightness: value);
-    _saveSettings();
-  }
-
-  void updateTransBrightness(double value) {
-    state = state.copyWith(transBrightness: value);
-    _saveSettings();
-  }
-
-  void updateCurveSharpness(double value) {
-    state = state.copyWith(curveSharpness: value);
-    _saveSettings();
+  void updateCurveSharpness(double value, {String? monitorId}) {
+    final current = _getSettings(monitorId);
+    _updateSettings(monitorId, current.copyWith(curveSharpness: value));
   }
 
   void updateAutorun(bool enabled) {
-    state = state.copyWith(isAutorunEnabled: enabled);
-    _saveSettings();
+    // Autorun is app-wide, but we'll store it in 'all'
+    final current = state['all']!;
+    _updateSettings('all', current.copyWith(isAutorunEnabled: enabled));
     AutorunService.setEnabled(enabled);
   }
 
-  void updateCurvePoints(List<FlSpot> points) {
+  void updateCurvePoints(List<FlSpot> points, {String? monitorId}) {
     final sortedPoints = List<FlSpot>.from(points)
       ..sort((a, b) => a.x.compareTo(b.x));
 
-    // Гарантируем, что края графика (-20 и 90) всегда присутствуют
     if (sortedPoints.isEmpty || sortedPoints.first.x > -20) {
-      sortedPoints.insert(
-        0,
-        FlSpot(-20, sortedPoints.isEmpty ? 15 : sortedPoints.first.y),
-      );
+      sortedPoints.insert(0, FlSpot(-20, sortedPoints.isEmpty ? 15 : sortedPoints.first.y));
     }
     if (sortedPoints.last.x < 90) {
       sortedPoints.add(FlSpot(90, sortedPoints.last.y));
     }
 
-    state = state.copyWith(curvePoints: sortedPoints);
-    _saveSettings(); // Сохраняем при каждом изменении
+    final current = _getSettings(monitorId);
+    _updateSettings(monitorId, current.copyWith(curvePoints: sortedPoints));
   }
 
-  void addCurvePoint(FlSpot point) {
-    final newPoints = List<FlSpot>.from(state.curvePoints)..add(point);
-    updateCurvePoints(newPoints);
+  void addCurvePoint(FlSpot point, {String? monitorId}) {
+    final current = _getSettings(monitorId);
+    final newPoints = List<FlSpot>.from(current.curvePoints)..add(point);
+    updateCurvePoints(newPoints, monitorId: monitorId);
   }
 
-  void removeCurvePoint(int index) {
-    if (index >= 0 && index < state.curvePoints.length) {
-      if (state.curvePoints[index].x == -20 || state.curvePoints[index].x == 90)
-        return;
-      final newPoints = List<FlSpot>.from(state.curvePoints)..removeAt(index);
-      updateCurvePoints(newPoints);
+  void removeCurvePoint(int index, {String? monitorId}) {
+    final current = _getSettings(monitorId);
+    if (index >= 0 && index < current.curvePoints.length) {
+      if (current.curvePoints[index].x == -20 || current.curvePoints[index].x == 90) return;
+      final newPoints = List<FlSpot>.from(current.curvePoints)..removeAt(index);
+      updateCurvePoints(newPoints, monitorId: monitorId);
     }
   }
 }
 
-final settingsProvider = NotifierProvider<SettingsNotifier, SettingsState>(
+final settingsProvider = NotifierProvider<SettingsNotifier, Map<String, SettingsState>>(
   SettingsNotifier.new,
 );
 
@@ -420,19 +430,43 @@ class CurrentBrightnessNotifier extends Notifier<double> {
     if (isAuto) {
       final solarStateAsync = ref.watch(solarStateStreamProvider);
       final circadianService = ref.watch(circadianServiceProvider);
-      final settings = ref.watch(settingsProvider);
+      final settingsMap = ref.watch(settingsProvider);
+      final monitorsAsync = ref.watch(monitorListProvider);
+      final currentSelection = ref.watch(selectedMonitorIdProvider);
 
       return solarStateAsync.maybeWhen(
         data: (state) {
+          // Apply brightness to ALL monitors in the background
+          monitorsAsync.whenData((monitors) {
+            for (final monitor in monitors) {
+              final settings = settingsMap[monitor.deviceName] ?? settingsMap['all']!;
+              final target = circadianService.calculateTargetBrightness(
+                state.phases,
+                state.sunElevation,
+                DateTime.now(),
+                curveSharpness: settings.curveSharpness,
+                curvePoints: settings.curvePoints,
+              );
+              ref.read(brightnessServiceProvider).applyBrightnessSmoothly(
+                selection: monitor.deviceName,
+                targetValue: target,
+                monitors: monitors,
+                monitorService: ref.read(monitorServiceProvider),
+                updateBrightnessCallback: (id, val) => 
+                    ref.read(monitorListProvider.notifier).updateBrightness(id, val),
+              );
+            }
+          });
+
+          // Return brightness for the CURRENTLY selected monitor in dashboard
+          final settingsId = currentSelection == 'all' ? 'all' : currentSelection;
+          final selectedSettings = settingsMap[settingsId] ?? settingsMap['all']!;
           final target = circadianService.calculateTargetBrightness(
             state.phases,
             state.sunElevation,
             DateTime.now(),
-            minBrightness: settings.minBrightness,
-            maxBrightness: settings.maxBrightness,
-            transBrightness: settings.transBrightness,
-            curveSharpness: settings.curveSharpness,
-            curvePoints: settings.curvePoints,
+            curveSharpness: selectedSettings.curveSharpness,
+            curvePoints: selectedSettings.curvePoints,
           );
           _saveBrightness(target);
           return target;

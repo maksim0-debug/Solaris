@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers.dart';
+import 'package:solaris/widgets/window_title_bar.dart';
+import 'package:window_manager/window_manager.dart';
 import 'package:solaris/screens/schedule_screen.dart';
 import 'package:solaris/widgets/brightness_dial.dart';
 import 'package:solaris/widgets/brightness_slider.dart';
@@ -10,9 +12,6 @@ import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/sun_path_painter.dart';
 import 'package:solaris/models/current_day_phase.dart';
 import 'package:solaris/screens/settings_screen.dart';
-import 'package:solaris/services/brightness_service.dart';
-import 'package:solaris/widgets/window_title_bar.dart';
-import 'package:window_manager/window_manager.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -225,7 +224,15 @@ class _Header extends ConsumerWidget {
     ref.listen<double>(currentBrightnessProvider, (previous, next) {
       if (previous?.round() != next.round()) {
         final selection = ref.read(selectedMonitorIdProvider);
-        ref.read(brightnessServiceProvider).applyBrightnessSmoothly(selection, next);
+        final monitors = ref.read(monitorListProvider).value ?? [];
+        ref.read(brightnessServiceProvider).applyBrightnessSmoothly(
+          selection: selection,
+          targetValue: next,
+          monitors: monitors,
+          monitorService: ref.read(monitorServiceProvider),
+          updateBrightnessCallback: (id, val) => 
+              ref.read(monitorListProvider.notifier).updateBrightness(id, val),
+        );
       }
     });
 
@@ -234,7 +241,15 @@ class _Header extends ConsumerWidget {
       if (next.hasValue && !next.isLoading) {
         final target = ref.read(currentBrightnessProvider);
         final selection = ref.read(selectedMonitorIdProvider);
-        ref.read(brightnessServiceProvider).applyBrightnessSmoothly(selection, target);
+        final monitors = next.value ?? [];
+        ref.read(brightnessServiceProvider).applyBrightnessSmoothly(
+          selection: selection,
+          targetValue: target,
+          monitors: monitors,
+          monitorService: ref.read(monitorServiceProvider),
+          updateBrightnessCallback: (id, val) => 
+              ref.read(monitorListProvider.notifier).updateBrightness(id, val),
+        );
       }
     });
     // Sync brightness when selection changes
@@ -244,7 +259,14 @@ class _Header extends ConsumerWidget {
 
       if (next == 'all') {
         final brightness = ref.read(currentBrightnessProvider);
-        ref.read(brightnessServiceProvider).applyBrightnessSmoothly('all', brightness);
+        ref.read(brightnessServiceProvider).applyBrightnessSmoothly(
+          selection: 'all',
+          targetValue: brightness,
+          monitors: monitorValue,
+          monitorService: ref.read(monitorServiceProvider),
+          updateBrightnessCallback: (id, val) => 
+              ref.read(monitorListProvider.notifier).updateBrightness(id, val),
+        );
       } else {
         try {
           final monitor = monitorValue.firstWhere((m) => m.deviceName == next);

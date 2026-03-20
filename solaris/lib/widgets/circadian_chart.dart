@@ -21,10 +21,12 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final settings = ref.watch(settingsProvider);
-    final solarAsync = ref.watch(solarStateStreamProvider); // Получаем данные о солнце
+    final settingsMap = ref.watch(settingsProvider);
+    final monitorId = ref.watch(settingsMonitorIdProvider);
+    final selectedSettings = settingsMap[monitorId] ?? settingsMap['all']!;
+    final points = selectedSettings.curvePoints;
     
-    final points = settings.curvePoints;
+    final solarAsync = ref.watch(solarStateStreamProvider); // Получаем данные о солнце
 
     const dayColor = Color(0xFFFDBA74);
     const nightColor = Colors.indigoAccent;
@@ -248,7 +250,9 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
     double x = chartCoords.dx;
     double y = chartCoords.dy.clamp(0.0, 100.0);
 
-    final currentPoints = ref.read(settingsProvider).curvePoints;
+    final monitorId = ref.read(settingsMonitorIdProvider);
+    final currentPoints = ref.read(settingsProvider)[monitorId]?.curvePoints ?? 
+                         ref.read(settingsProvider)['all']!.curvePoints;
     final newPoints = List<FlSpot>.from(currentPoints);
 
     if (index == 0 || index == newPoints.length - 1) {
@@ -262,7 +266,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
       newPoints[index] = FlSpot(x, y);
     }
 
-    ref.read(settingsProvider.notifier).updateCurvePoints(newPoints);
+    ref.read(settingsProvider.notifier).updateCurvePoints(newPoints, monitorId: monitorId);
   }
 
   void _addPointAt(Offset localPosition, BuildContext context) {
@@ -272,16 +276,21 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
     double x = chartCoords.dx.clamp(-20.0, 90.0);
     double y = chartCoords.dy.clamp(0.0, 100.0);
 
-    final currentPoints = ref.read(settingsProvider).curvePoints;
+    final monitorId = ref.read(settingsMonitorIdProvider);
+    final currentSettings = ref.read(settingsProvider)[monitorId] ?? ref.read(settingsProvider)['all']!;
+    final currentPoints = currentSettings.curvePoints;
     bool tooClose = currentPoints.any((p) => (p.x - x).abs() < 2.0); // Защита от спама точками
 
     if (!tooClose) {
-      ref.read(settingsProvider.notifier).addCurvePoint(FlSpot(x, y));
+      ref.read(settingsProvider.notifier).addCurvePoint(FlSpot(x, y), monitorId: monitorId);
     }
   }
 
   void _removePoint(int index) {
-    if (index == 0 || index == ref.read(settingsProvider).curvePoints.length - 1) return;
-    ref.read(settingsProvider.notifier).removeCurvePoint(index);
+    final monitorId = ref.read(settingsMonitorIdProvider);
+    final currentPoints = ref.read(settingsProvider)[monitorId]?.curvePoints ?? 
+                         ref.read(settingsProvider)['all']!.curvePoints;
+    if (index == 0 || index == currentPoints.length - 1) return;
+    ref.read(settingsProvider.notifier).removeCurvePoint(index, monitorId: monitorId);
   }
 }

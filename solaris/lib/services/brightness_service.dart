@@ -1,36 +1,51 @@
 import 'dart:async';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:solaris/providers.dart';
+import 'package:solaris/services/monitor_service.dart';
+
+// No import of providers.dart to avoid circular dependency
 
 class BrightnessService {
-  final Ref _ref;
   final Map<String, int> _currentHardwareBrightness = {};
   final Map<String, Timer?> _adjustmentTimers = {};
 
-  BrightnessService(this._ref);
-
-  void applyBrightnessSmoothly(String selection, double targetValue) {
+  void applyBrightnessSmoothly({
+    required String selection,
+    required double targetValue,
+    required List<MonitorInfo> monitors,
+    required MonitorService monitorService,
+    required void Function(String, int) updateBrightnessCallback,
+  }) {
     final target = targetValue.round();
-    final monitorsAsync = _ref.read(monitorListProvider);
     
-    monitorsAsync.whenData((monitors) {
-      for (final monitor in monitors) {
-        if (selection == 'all' || selection == monitor.deviceName) {
-          _startSmoothTransition(monitor.deviceName, target);
-        }
+    for (final monitor in monitors) {
+      if (selection == 'all' || selection == monitor.deviceName) {
+        _startSmoothTransition(
+          monitor.deviceName, 
+          target, 
+          monitors, 
+          monitorService, 
+          updateBrightnessCallback
+        );
       }
-    });
+    }
   }
 
-  void _startSmoothTransition(String deviceName, int target) {
+  void _startSmoothTransition(
+    String deviceName, 
+    int target, 
+    List<MonitorInfo> monitors,
+    MonitorService monitorService,
+    void Function(String, int) updateBrightnessCallback,
+  ) {
     _adjustmentTimers[deviceName]?.cancel();
     
-    final monitorService = _ref.read(monitorServiceProvider);
-    final monitorNotifier = _ref.read(monitorListProvider.notifier);
-    
-    // Get current brightness from our cache or from monitor list
+    // Find monitor in list to get its current brightness
+    int? currentFromList;
+    try {
+      currentFromList = monitors.firstWhere((m) => m.deviceName == deviceName).realBrightness;
+    } catch (_) {}
+
     int current = _currentHardwareBrightness[deviceName] ?? 
-              _ref.read(monitorListProvider).value?.firstWhere((m) => m.deviceName == deviceName).realBrightness ?? 
+              currentFromList ?? 
               target;
 
     if (current == target) return;
@@ -43,7 +58,7 @@ class BrightnessService {
       }
 
       _currentHardwareBrightness[deviceName] = current;
-      monitorNotifier.updateBrightness(deviceName, current);
+      updateBrightnessCallback(deviceName, current);
       monitorService.setBrightness(deviceName, current);
 
       if (current == target) {
@@ -53,5 +68,3 @@ class BrightnessService {
     });
   }
 }
-
-final brightnessServiceProvider = Provider((ref) => BrightnessService(ref));

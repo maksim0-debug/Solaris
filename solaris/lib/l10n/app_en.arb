@@ -110,5 +110,6 @@
   "transBrightnessSubtitle": "The target level during Golden Hour and Civil Twilight transitions",
   "realtimeApplyNotice": "Changes are applied in real-time. Use the dashboard to toggle between manual and automatic adjustment.",
   "autorun": "Autorun at Startup",
-  "autorunSubtitle": "Automatically start the application when you log into Windows"
+  "autorunSubtitle": "Automatically start the application when you log into Windows",
+  "selectMonitor": "Select Monitor"
 }

@@ -226,4 +226,7 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get autorunSubtitle =>
       'Автоматически запускать приложение при входе в Windows';
+
+  @override
+  String get selectMonitor => 'Выберите монитор';
 }

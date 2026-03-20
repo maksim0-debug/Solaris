@@ -21,8 +21,6 @@ void main() {
       astronomicalDusk: DateTime(2026, 3, 19, 19, 30),
     );
 
-    const minB = 15.0;
-    const maxB = 100.0;
     final curvePoints = [
       const FlSpot(-20, 15),
       const FlSpot(-6, 25),
@@ -32,43 +30,34 @@ void main() {
       const FlSpot(90, 100),
     ];
 
-    test('Deep Night should return minBrightness (15%)', () {
+    test('Deep Night should return default minBrightness (15%)', () {
       final now = DateTime(2026, 3, 19, 2, 0); // 2 AM
       final brightness = service.calculateTargetBrightness(
         phases,
         -30.0,
         now,
-        minBrightness: minB,
-        maxBrightness: maxB,
-        transBrightness: 60.0,
       );
-      expect(brightness, minB);
+      expect(brightness, 15.0);
     });
 
-    test('Solar Zenith should return maxBrightness (100%)', () {
+    test('Solar Zenith should return default maxBrightness (100%)', () {
       final now = DateTime(2026, 3, 19, 12, 0); // Noon
       final brightness = service.calculateTargetBrightness(
         phases,
         60.0,
         now,
-        minBrightness: minB,
-        maxBrightness: maxB,
-        transBrightness: 60.0,
       );
-      expect(brightness, maxB);
+      expect(brightness, 100.0);
     });
 
     test(
-      'Golden Hour Evening (30 min before sunset) should return around 70-80%',
+      'Golden Hour Evening (30 min before sunset) should return around 72.5% based on curve',
       () {
         final now = DateTime(2026, 3, 19, 17, 30);
         final brightness = service.calculateTargetBrightness(
           phases,
           5.0,
           now,
-          minBrightness: minB,
-          maxBrightness: maxB,
-          transBrightness: 60.0,
           curvePoints: curvePoints,
         );
         // elevation 5 between 0 (60%) and 10 (85%) => 72.5%
@@ -76,15 +65,12 @@ void main() {
       },
     );
 
-    test('Civil Twilight should return between 60% and 15%', () {
+    test('Civil Twilight should return between 60% and 15% based on curve', () {
       final now = DateTime(2026, 3, 19, 18, 15); // Middle of Civil Twilight
       final brightness = service.calculateTargetBrightness(
         phases,
         -3.0,
         now,
-        minBrightness: minB,
-        maxBrightness: maxB,
-        transBrightness: 60.0,
         curvePoints: curvePoints,
       );
       // elevation -3 between -6 (25%) and 0 (60%) => 42.5%

@@ -499,6 +499,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Automatically start the application when you log into Windows'**
   String get autorunSubtitle;
+
+  /// No description provided for @selectMonitor.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Monitor'**
+  String get selectMonitor;
 }
 
 class _AppLocalizationsDelegate

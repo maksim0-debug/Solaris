@@ -7,19 +7,17 @@ class CircadianService {
     SolarPhaseModel phases,
     double elevation,
     DateTime now, {
-    required double minBrightness,
-    required double maxBrightness,
-    required double transBrightness,
     double curveSharpness = 1.0,
     List<FlSpot>? curvePoints,
   }) {
     if (curvePoints != null && curvePoints.isNotEmpty) {
       return _calculateFromElevation(curvePoints, elevation);
     }
-    // Фолбэк, если точки не загрузились (почти никогда не сработает)
-    if (elevation < -6) return minBrightness;
-    if (elevation > 20) return maxBrightness;
-    return transBrightness;
+    // Фолбэк, если точки не загрузились - используем дефолтные значения из графика
+    // -20 elevation -> 15% brightness, 30+ elevation -> 100% brightness
+    if (elevation < -6) return 15.0;
+    if (elevation > 20) return 100.0;
+    return 60.0;
   }
 
   double _calculateFromElevation(List<FlSpot> points, double currentElevation) {
