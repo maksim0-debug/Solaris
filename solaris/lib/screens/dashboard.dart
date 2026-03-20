@@ -72,6 +72,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 class _Sidebar extends ConsumerWidget {
   const _Sidebar();
 
+  static const IconData insights =
+      IconData(0xe347, fontFamily: 'MaterialIcons');
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
@@ -131,7 +134,7 @@ class _Sidebar extends ConsumerWidget {
                 .setScreen(AppScreen.dashboard),
           ),
           _SidebarItem(
-            icon: LucideIcons.calendar,
+            icon: insights,
             label: l10n.schedule,
             isActive: ref.watch(activeScreenProvider) == AppScreen.schedule,
             onTap: () => ref
@@ -604,30 +607,47 @@ class _DashboardView extends ConsumerWidget {
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: GlassCard(
-                      child: Column(
-                        children: [
-                          const Icon(
-                            LucideIcons.moon,
-                            size: 20,
-                            color: Colors.white30,
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            l10n.nightShift,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white30,
+                    child: InkWell(
+                      onTap: () => ref.read(nightModeProvider.notifier).toggle(),
+                      borderRadius: BorderRadius.circular(16),
+                      child: GlassCard(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              LucideIcons.moon,
+                              size: 20,
+                              color: ref.watch(nightModeProvider)
+                                  ? const Color(0xFFFDBA74) // Or some night color
+                                  : Colors.white30,
                             ),
-                          ),
-                          Text(
-                            l10n.disabled,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: Colors.white30,
+                            const SizedBox(height: 12),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                l10n.nightShift,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: ref.watch(nightModeProvider)
+                                      ? Colors.white
+                                      : Colors.white30,
+                                ),
+                                maxLines: 1,
+                              ),
                             ),
-                          ),
-                        ],
+                            Text(
+                              ref.watch(nightModeProvider)
+                                  ? l10n.active
+                                  : l10n.disabled,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: ref.watch(nightModeProvider)
+                                    ? const Color(0xFFFDBA74)
+                                    : Colors.white30,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

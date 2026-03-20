@@ -18,7 +18,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get dashboard => 'Панель управления';
 
   @override
-  String get schedule => 'Расписание';
+  String get schedule => 'Солнечный цикл';
 
   @override
   String get settings => 'Настройки';
@@ -181,13 +181,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get luminosityProfile => 'Профиль освещенности';
 
   @override
-  String get dragNodesToAdjust => 'Перетаскивайте узлы для настройки кривых';
-
-  @override
-  String get view24h => '24ч View';
-
-  @override
-  String get editCurve => 'Изм. кривую';
+  String get sunPosition => 'Положение солнца';
 
   @override
   String get liveLocation => 'ТЕКУЩЕЕ МЕСТО';

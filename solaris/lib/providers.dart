@@ -603,6 +603,42 @@ final currentBrightnessProvider =
       CurrentBrightnessNotifier.new,
     );
 
+class NightModeNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    final isAuto = ref.watch(autoNightModeProvider);
+    if (isAuto) {
+      final solarStateAsync = ref.watch(solarStateStreamProvider);
+      return solarStateAsync.maybeWhen(
+        data: (state) => state.sunProgress < 0 || state.sunProgress > 1,
+        orElse: () => false,
+      );
+    }
+    return false;
+  }
+
+  void toggle() {
+    state = !state;
+    // If user toggles manually, we disable auto night mode
+    ref.read(autoNightModeProvider.notifier).state = false;
+  }
+}
+
+final nightModeProvider = NotifierProvider<NightModeNotifier, bool>(
+  NightModeNotifier.new,
+);
+
+class AutoNightModeNotifier extends Notifier<bool> {
+  @override
+  bool build() => true;
+  void toggle() => state = !state;
+  void setEnabled(bool value) => state = value;
+}
+
+final autoNightModeProvider = NotifierProvider<AutoNightModeNotifier, bool>(
+  AutoNightModeNotifier.new,
+);
+
 /// Mapbox style URLs
 const String kMapboxDayStyle = 'mapdezyk/cmmy53ap5001p01s92sw90jj9';
 const String kMapboxNightStyle = 'mapdezyk/cmmy4n1dw007q01r0dyd1f6fs';

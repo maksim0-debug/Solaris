@@ -404,23 +404,11 @@ abstract class AppLocalizations {
   /// **'Luminosity Profile'**
   String get luminosityProfile;
 
-  /// No description provided for @dragNodesToAdjust.
+  /// No description provided for @sunPosition.
   ///
   /// In en, this message translates to:
-  /// **'Drag nodes to adjust transition curves'**
-  String get dragNodesToAdjust;
-
-  /// No description provided for @view24h.
-  ///
-  /// In en, this message translates to:
-  /// **'24h View'**
-  String get view24h;
-
-  /// No description provided for @editCurve.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit Curve'**
-  String get editCurve;
+  /// **'Sun Position'**
+  String get sunPosition;
 
   /// No description provided for @liveLocation.
   ///

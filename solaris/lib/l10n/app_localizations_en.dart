@@ -181,13 +181,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get luminosityProfile => 'Luminosity Profile';
 
   @override
-  String get dragNodesToAdjust => 'Drag nodes to adjust transition curves';
-
-  @override
-  String get view24h => '24h View';
-
-  @override
-  String get editCurve => 'Edit Curve';
+  String get sunPosition => 'Sun Position';
 
   @override
   String get liveLocation => 'LIVE LOCATION';

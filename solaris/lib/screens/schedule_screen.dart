@@ -55,7 +55,7 @@ class ScheduleScreen extends ConsumerWidget {
                                           ),
                                         ),
                                         Text(
-                                          l10n.dragNodesToAdjust,
+                                          l10n.sunPosition,
                                           style: const TextStyle(
                                             fontSize: 12,
                                             color: Colors.white38,
@@ -63,16 +63,7 @@ class ScheduleScreen extends ConsumerWidget {
                                         ),
                                       ],
                                     ),
-                                    Row(
-                                      children: [
-                                        _HeaderButton(label: l10n.view24h),
-                                        const SizedBox(width: 8),
-                                        _HeaderButton(
-                                          label: l10n.editCurve,
-                                          isPrimary: true,
-                                        ),
-                                      ],
-                                    ),
+
                                   ],
                                 ),
                                 const SizedBox(height: 32),
@@ -284,33 +275,7 @@ class ScheduleScreen extends ConsumerWidget {
   }
 }
 
-class _HeaderButton extends StatelessWidget {
-  final String label;
-  final bool isPrimary;
 
-  const _HeaderButton({required this.label, this.isPrimary = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isPrimary
-            ? const Color(0xFFFDBA74)
-            : Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: isPrimary ? Colors.black : Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-}
 
 class _CoordinateCard extends StatelessWidget {
   final String label;
@@ -358,12 +323,16 @@ class _CoordinateCard extends StatelessWidget {
               if (trendIcon != null)
                 Icon(trendIcon, size: 14, color: trendColor),
               const SizedBox(width: 4),
-              Text(
-                trend,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: trendColor,
-                  fontWeight: FontWeight.bold,
+              Flexible(
+                child: Text(
+                  trend,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: trendColor,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
