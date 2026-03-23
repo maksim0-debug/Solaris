@@ -5,8 +5,7 @@ import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/circadian_chart.dart';
-import 'package:solaris/services/monitor_service.dart';
-
+import 'package:solaris/models/preset_type.dart';
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -14,8 +13,6 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final settingsAsync = ref.watch(settingsProvider);
-    final monitorId = ref.watch(settingsMonitorIdProvider);
-    final monitorsAsync = ref.watch(monitorListProvider);
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -29,15 +26,11 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           
-          // Monitor Selector
-          _MonitorSelector(
-            currentId: monitorId,
-            monitors: (monitorsAsync.value ?? []).cast<MonitorInfo>(),
-            onChanged: (id) => ref.read(settingsMonitorIdProvider.notifier).select(id),
-          ),
           const SizedBox(height: 24),
 
           // Chart Preview
+          const _PresetSelector(),
+          const SizedBox(height: 8),
           const CircadianChartWidget(),
           const SizedBox(height: 24),
 
@@ -154,9 +147,129 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
           ),
+          const SizedBox(height: 24),
         ],
       ),
     );
+  }
+}
+
+class _PresetSelector extends ConsumerWidget {
+  const _PresetSelector();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final settingsAsync = ref.watch(settingsProvider);
+    final selectedIds = ref.watch(selectedMonitorsProvider);
+
+    return settingsAsync.maybeWhen(
+      data: (settingsMap) {
+        final settings = settingsMap[selectedIds.first] ?? settingsMap['all']!;
+        final activePreset = settings.activePreset;
+
+        return GlassCard(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Row(
+                    children: PresetType.values.map((type) {
+                      final isActive = type == activePreset;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: TextButton(
+                          onPressed: () => ref
+                              .read(settingsProvider.notifier)
+                              .setActivePreset(type),
+                          style: TextButton.styleFrom(
+                            backgroundColor: isActive
+                                ? const Color(0xFFFDBA74).withOpacity(0.1)
+                                : Colors.transparent,
+                            foregroundColor: isActive
+                                ? const Color(0xFFFDBA74)
+                                : Colors.white24,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              side: BorderSide(
+                                color: isActive
+                                    ? const Color(0xFFFDBA74).withOpacity(0.5)
+                                    : Colors.transparent,
+                              ),
+                            ),
+                          ),
+                          child: Text(_getPresetName(context, type, l10n)),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              _ResetButton(settings: settings),
+            ],
+          ),
+        );
+      },
+      orElse: () => const SizedBox.shrink(),
+    );
+  }
+
+  String _getPresetName(
+      BuildContext context, PresetType type, AppLocalizations l10n) {
+    switch (type) {
+      case PresetType.brightest:
+        return l10n.presetBrightest;
+      case PresetType.bright:
+        return l10n.presetBright;
+      case PresetType.dim:
+        return l10n.presetDim;
+      case PresetType.dimmest:
+        return l10n.presetDimmest;
+      case PresetType.custom:
+        return l10n.presetCustom;
+    }
+  }
+}
+
+class _ResetButton extends ConsumerWidget {
+  final SettingsState settings;
+  const _ResetButton({required this.settings});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isModified = _isModified();
+
+    return IconButton(
+      icon: const Icon(LucideIcons.refreshCcw),
+      onPressed: isModified
+          ? () => ref.read(settingsProvider.notifier).resetCurrentPreset()
+          : null,
+      color: const Color(0xFFFDBA74),
+      disabledColor: Colors.white10,
+      tooltip: AppLocalizations.of(context)!.reset,
+    );
+  }
+
+  bool _isModified() {
+    final currentPoints = settings.curvePoints;
+    final defaultPoints =
+        PresetConstants.getDefaultPoints(settings.activePreset);
+
+    if (currentPoints.length != defaultPoints.length) return true;
+
+    for (int i = 0; i < currentPoints.length; i++) {
+        // Comparison with a small epsilon for floating point safety if needed, 
+        // but FlSpot values are usually exact from UI interaction.
+      if ((currentPoints[i].x - defaultPoints[i].x).abs() > 0.01 ||
+          (currentPoints[i].y - defaultPoints[i].y).abs() > 0.01) {
+        return true;
+      }
+    }
+    return false;
   }
 }
 
@@ -197,130 +310,6 @@ class _SectionHeader extends StatelessWidget {
           ],
         ),
       ],
-    );
-  }
-}
-
-class _MonitorSelector extends StatelessWidget {
-  final String currentId;
-  final List<MonitorInfo> monitors;
-  final void Function(String) onChanged;
-
-  const _MonitorSelector({
-    required this.currentId,
-    required this.monitors,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    
-    return GlassCard(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 8, top: 4),
-            child: Text(
-              l10n.selectMonitor,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.white.withOpacity(0.5),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _MonitorChip(
-                  label: l10n.allMonitors,
-                  isSelected: currentId == 'all',
-                  onTap: () => onChanged('all'),
-                  icon: LucideIcons.layers,
-                ),
-                ...monitors.map((m) => _MonitorChip(
-                  label: m.friendlyName,
-                  isSelected: currentId == m.deviceName,
-                  onTap: () => onChanged(m.deviceName),
-                  icon: LucideIcons.monitor,
-                )),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MonitorChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final IconData icon;
-
-  const _MonitorChip({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isSelected ? const Color(0xFFFDBA74) : Colors.white10;
-    
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected ? const Color(0xFFFDBA74).withOpacity(0.5) : Colors.white.withOpacity(0.05),
-                width: 1,
-              ),
-              boxShadow: isSelected ? [
-                BoxShadow(
-                  color: const Color(0xFFFDBA74).withOpacity(0.2),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                )
-              ] : null,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  size: 16,
-                  color: isSelected ? Colors.black87 : Colors.white60,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: isSelected ? Colors.black87 : Colors.white70,
-                    fontSize: 13,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

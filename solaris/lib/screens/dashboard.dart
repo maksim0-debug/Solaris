@@ -228,66 +228,71 @@ class _Header extends ConsumerWidget {
 
     // Apply brightness to monitors whenever it changes significantly
     ref.listen<double>(currentBrightnessProvider, (previous, next) {
+      if (ref.read(autoAdjustmentProvider)) return; // Already handled by background loop
+      
       if (previous?.round() != next.round()) {
-        final selection = ref.read(selectedMonitorIdProvider);
+        final selection = ref.read(selectedMonitorsProvider);
         final monitors = ref.read(monitorListProvider).value ?? [];
-        ref
-            .read(brightnessServiceProvider)
-            .applyBrightnessSmoothly(
-              selection: selection,
-              targetValue: next,
-              monitors: monitors,
-              monitorService: ref.read(monitorServiceProvider),
-              updateBrightnessCallback: (id, val) => ref
-                  .read(monitorListProvider.notifier)
-                  .updateBrightness(id, val),
-            );
+        
+        for (final id in selection) {
+          ref.read(brightnessServiceProvider).applyBrightnessSmoothly(
+            selection: id,
+            targetValue: next,
+            monitors: monitors,
+            monitorService: ref.read(monitorServiceProvider),
+            updateBrightnessCallback: (id, val) =>
+                ref.read(monitorListProvider.notifier).updateBrightness(id, val),
+          );
+        }
       }
     });
 
     // Initial sync when monitors are detected
     ref.listen(monitorListProvider, (previous, next) {
+      if (ref.read(autoAdjustmentProvider)) return; // Already handled by background loop
+      
       if (next.hasValue && !next.isLoading) {
         final target = ref.read(currentBrightnessProvider);
-        final selection = ref.read(selectedMonitorIdProvider);
+        final selection = ref.read(selectedMonitorsProvider);
         final monitors = next.value ?? [];
-        ref
-            .read(brightnessServiceProvider)
-            .applyBrightnessSmoothly(
-              selection: selection,
-              targetValue: target,
-              monitors: monitors,
-              monitorService: ref.read(monitorServiceProvider),
-              updateBrightnessCallback: (id, val) => ref
-                  .read(monitorListProvider.notifier)
-                  .updateBrightness(id, val),
-            );
+        
+        for (final id in selection) {
+          ref.read(brightnessServiceProvider).applyBrightnessSmoothly(
+            selection: id,
+            targetValue: target,
+            monitors: monitors,
+            monitorService: ref.read(monitorServiceProvider),
+            updateBrightnessCallback: (id, val) =>
+                ref.read(monitorListProvider.notifier).updateBrightness(id, val),
+          );
+        }
       }
     });
+
     // Sync brightness when selection changes
-    ref.listen<String>(selectedMonitorIdProvider, (previous, next) {
+    ref.listen<Set<String>>(selectedMonitorsProvider, (previous, next) {
+      if (ref.read(autoAdjustmentProvider)) return; // Already handled by background loop
+      
       final monitorValue = ref.read(monitorListProvider).value;
       if (monitorValue == null) return;
 
-      if (next == 'all') {
+      if (next.contains('all')) {
         final brightness = ref.read(currentBrightnessProvider);
-        ref
-            .read(brightnessServiceProvider)
-            .applyBrightnessSmoothly(
-              selection: 'all',
-              targetValue: brightness,
-              monitors: monitorValue,
-              monitorService: ref.read(monitorServiceProvider),
-              updateBrightnessCallback: (id, val) => ref
-                  .read(monitorListProvider.notifier)
-                  .updateBrightness(id, val),
-            );
-      } else {
+        ref.read(brightnessServiceProvider).applyBrightnessSmoothly(
+          selection: 'all',
+          targetValue: brightness,
+          monitors: monitorValue,
+          monitorService: ref.read(monitorServiceProvider),
+          updateBrightnessCallback: (id, val) =>
+              ref.read(monitorListProvider.notifier).updateBrightness(id, val),
+        );
+      } else if (next.length == 1) {
+        // If single monitor selected, sync UI to its current brightness
         try {
-          final monitor = monitorValue.firstWhere((m) => m.deviceName == next);
+          final id = next.first;
+          final monitor = monitorValue.firstWhere((m) => m.deviceName == id);
           if (monitor.realBrightness != null) {
-            ref
-                .read(manualBrightnessProvider.notifier)
+            ref.read(manualBrightnessProvider.notifier)
                 .update(monitor.realBrightness!.toDouble());
           }
         } catch (_) {}
@@ -772,17 +777,20 @@ class _Footer extends ConsumerWidget {
         children: [
           monitorsAsync.when(
             data: (monitors) {
-              final selectedId = ref.watch(selectedMonitorIdProvider);
+              final selectedIds = ref.watch(selectedMonitorsProvider);
+              final isAllEffectivelySelected = selectedIds.contains('all') ||
+                  (monitors.isNotEmpty &&
+                      monitors.every((m) => selectedIds.contains(m.deviceName)));
+
               return Row(
                 children: [
-                  // Multi-monitor select button
                   _DisplayInfo(
                     label: l10n.allMonitors.toUpperCase(),
                     icon: Icons.devices,
-                    isSelected: selectedId == 'all',
+                    isSelected: isAllEffectivelySelected,
                     onTap: () => ref
-                        .read(selectedMonitorIdProvider.notifier)
-                        .select('all'),
+                        .read(selectedMonitorsProvider.notifier)
+                        .toggle('all'),
                   ),
                   const SizedBox(width: 24),
                   ...monitors.asMap().entries.map((entry) {
@@ -791,8 +799,8 @@ class _Footer extends ConsumerWidget {
                     final brightnessStr = monitor.realBrightness != null
                         ? '${monitor.realBrightness}%'
                         : '--';
-                    final isSelected =
-                        selectedId == 'all' || selectedId == monitor.deviceName;
+                    final isSelected = selectedIds.contains('all') ||
+                        selectedIds.contains(monitor.deviceName);
 
                     return Padding(
                       padding: EdgeInsets.only(
@@ -803,8 +811,8 @@ class _Footer extends ConsumerWidget {
                             '${monitor.friendlyName.toUpperCase()}: $brightnessStr',
                         isSelected: isSelected,
                         onTap: () => ref
-                            .read(selectedMonitorIdProvider.notifier)
-                            .select(monitor.deviceName),
+                            .read(selectedMonitorsProvider.notifier)
+                            .toggle(monitor.deviceName),
                       ),
                     );
                   }),
@@ -864,38 +872,22 @@ class _DisplayInfo extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      onHover: (_) {},
       borderRadius: BorderRadius.circular(4),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-        decoration: BoxDecoration(
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: color.withOpacity(0.1),
-                    blurRadius: 8,
-                    spreadRadius: 2,
-                  ),
-                ]
-              : [],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: color),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: color,
-                letterSpacing: 0.5,
-              ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: color,
+              letterSpacing: 0.5,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

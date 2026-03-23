@@ -266,4 +266,19 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get selectMonitor => 'Выберите монитор';
+
+  @override
+  String get presetBrightest => 'Ярчайший';
+
+  @override
+  String get presetBright => 'Яркий';
+
+  @override
+  String get presetDim => 'Тусклый';
+
+  @override
+  String get presetDimmest => 'Темный';
+
+  @override
+  String get presetCustom => 'Свой';
 }

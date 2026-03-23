@@ -571,6 +571,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Select Monitor'**
   String get selectMonitor;
+
+  /// No description provided for @presetBrightest.
+  ///
+  /// In en, this message translates to:
+  /// **'Brightest'**
+  String get presetBrightest;
+
+  /// No description provided for @presetBright.
+  ///
+  /// In en, this message translates to:
+  /// **'Bright'**
+  String get presetBright;
+
+  /// No description provided for @presetDim.
+  ///
+  /// In en, this message translates to:
+  /// **'Dim'**
+  String get presetDim;
+
+  /// No description provided for @presetDimmest.
+  ///
+  /// In en, this message translates to:
+  /// **'Dimmest'**
+  String get presetDimmest;
+
+  /// No description provided for @presetCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get presetCustom;
 }
 
 class _AppLocalizationsDelegate

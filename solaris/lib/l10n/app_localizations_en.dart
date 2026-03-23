@@ -269,4 +269,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get selectMonitor => 'Select Monitor';
+
+  @override
+  String get presetBrightest => 'Brightest';
+
+  @override
+  String get presetBright => 'Bright';
+
+  @override
+  String get presetDim => 'Dim';
+
+  @override
+  String get presetDimmest => 'Dimmest';
+
+  @override
+  String get presetCustom => 'Custom';
 }

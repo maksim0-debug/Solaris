@@ -129,5 +129,10 @@
   "realtimeApplyNotice": "Changes are applied in real-time. Use the dashboard to toggle between manual and automatic adjustment.",
   "autorun": "Autorun at Startup",
   "autorunSubtitle": "Automatically start the application when you log into Windows",
-  "selectMonitor": "Select Monitor"
+  "selectMonitor": "Select Monitor",
+  "presetBrightest": "Brightest",
+  "presetBright": "Bright",
+  "presetDim": "Dim",
+  "presetDimmest": "Dimmest",
+  "presetCustom": "Custom"
 }

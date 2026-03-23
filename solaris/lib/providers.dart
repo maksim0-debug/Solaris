@@ -19,6 +19,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:solaris/services/storage_service.dart';
 import 'package:solaris/models/location_settings.dart' as model;
+import 'package:solaris/models/preset_type.dart';
 
 final locationServiceProvider = Provider((ref) => LocationService());
 final solarServiceProvider = Provider(
@@ -279,30 +280,34 @@ final monitorListProvider =
       MonitorListNotifier.new,
     );
 
-/// Provider for the currently selected monitor(s).
-/// Default is 'all'. Otherwise, it's the [deviceName] of a specific monitor.
-class SelectedMonitorIdNotifier extends Notifier<String> {
+/// Provider for the monitor(s) currently being edited or controlled.
+/// Default is {'all'}.
+class SelectedMonitorsNotifier extends Notifier<Set<String>> {
   @override
-  String build() => 'all';
-  void select(String id) => state = id;
+  Set<String> build() => {'all'};
+
+  void toggle(String id) {
+    if (id == 'all') {
+      state = {'all'};
+      return;
+    }
+    final newState = Set<String>.from(state);
+    newState.remove('all');
+    if (newState.contains(id)) {
+      newState.remove(id);
+      if (newState.isEmpty) newState.add('all');
+    } else {
+      newState.add(id);
+    }
+    state = newState;
+  }
+
+  void selectOnly(String id) => state = {id};
 }
 
-final selectedMonitorIdProvider =
-    NotifierProvider<SelectedMonitorIdNotifier, String>(
-      SelectedMonitorIdNotifier.new,
-    );
-
-/// Provider for the monitor currently being edited in the Settings tab.
-/// Default is 'all'.
-class SettingsMonitorIdNotifier extends Notifier<String> {
-  @override
-  String build() => 'all';
-  void select(String id) => state = id;
-}
-
-final settingsMonitorIdProvider =
-    NotifierProvider<SettingsMonitorIdNotifier, String>(
-      SettingsMonitorIdNotifier.new,
+final selectedMonitorsProvider =
+    NotifierProvider<SelectedMonitorsNotifier, Set<String>>(
+      SelectedMonitorsNotifier.new,
     );
 
 enum AppScreen { dashboard, schedule, settings, location }
@@ -339,53 +344,82 @@ final manualBrightnessProvider =
     );
 
 class SettingsState {
+  final PresetType activePreset;
+  final Map<PresetType, List<FlSpot>> curvesMap;
   final double curveSharpness;
-  final List<FlSpot> curvePoints;
   final bool isAutorunEnabled;
 
   SettingsState({
+    this.activePreset = PresetType.bright,
+    Map<PresetType, List<FlSpot>>? curvesMap,
     this.curveSharpness = 1.0,
     this.isAutorunEnabled = false,
-    List<FlSpot>? curvePoints,
-  }) : curvePoints = curvePoints ?? _defaultPoints();
+  }) : curvesMap = curvesMap ?? PresetConstants.getAllDefaults();
 
-  static List<FlSpot> _defaultPoints() => const [
-    FlSpot(-20, 15),
-    FlSpot(-6, 25),
-    FlSpot(0, 60),
-    FlSpot(10, 85),
-    FlSpot(30, 100),
-    FlSpot(90, 100),
-  ];
+  List<FlSpot> get curvePoints => curvesMap[activePreset]!;
 
   Map<String, dynamic> toJson() => {
-    'curveSharpness': curveSharpness,
-    'isAutorunEnabled': isAutorunEnabled,
-    'curvePoints': curvePoints.map((p) => {'x': p.x, 'y': p.y}).toList(),
-  };
+        'activePreset': activePreset.toJson(),
+        'curvesMap': curvesMap.map((key, value) => MapEntry(
+            key.name, value.map((p) => {'x': p.x, 'y': p.y}).toList())),
+        'curveSharpness': curveSharpness,
+        'isAutorunEnabled': isAutorunEnabled,
+      };
 
   factory SettingsState.fromJson(Map<String, dynamic> json) {
-    final List<dynamic>? pointsJson = json['curvePoints'] as List<dynamic>?;
-    final points = pointsJson?.map((p) {
-      final map = p as Map<String, dynamic>;
-      return FlSpot((map['x'] as num).toDouble(), (map['y'] as num).toDouble());
-    }).toList();
+    final activePreset = json.containsKey('activePreset')
+        ? PresetType.fromJson(json['activePreset'] as String)
+        : PresetType.bright;
+
+    Map<PresetType, List<FlSpot>>? curvesMap;
+    if (json.containsKey('curvesMap')) {
+      final mapData = json['curvesMap'] as Map<String, dynamic>;
+      curvesMap = {};
+      for (final type in PresetType.values) {
+        if (mapData.containsKey(type.name)) {
+          final pointsJson = mapData[type.name] as List<dynamic>;
+          curvesMap[type] = pointsJson.map((p) {
+            final map = p as Map<String, dynamic>;
+            return FlSpot(
+                (map['x'] as num).toDouble(), (map['y'] as num).toDouble());
+          }).toList();
+        } else {
+          curvesMap[type] = PresetConstants.getDefaultPoints(type);
+        }
+      }
+    } else if (json.containsKey('curvePoints')) {
+      // Migration from old format
+      final List<dynamic>? pointsJson = json['curvePoints'] as List<dynamic>?;
+      final points = pointsJson?.map((p) {
+        final map = p as Map<String, dynamic>;
+        return FlSpot(
+            (map['x'] as num).toDouble(), (map['y'] as num).toDouble());
+      }).toList();
+      
+      curvesMap = PresetConstants.getAllDefaults();
+      if (points != null) {
+        curvesMap[PresetType.bright] = points;
+      }
+    }
 
     return SettingsState(
+      activePreset: activePreset,
+      curvesMap: curvesMap,
       curveSharpness: (json['curveSharpness'] as num?)?.toDouble() ?? 1.0,
       isAutorunEnabled: json['isAutorunEnabled'] as bool? ?? false,
-      curvePoints: points,
     );
   }
 
   SettingsState copyWith({
+    PresetType? activePreset,
+    Map<PresetType, List<FlSpot>>? curvesMap,
     double? curveSharpness,
-    List<FlSpot>? curvePoints,
     bool? isAutorunEnabled,
   }) {
     return SettingsState(
+      activePreset: activePreset ?? this.activePreset,
+      curvesMap: curvesMap ?? this.curvesMap,
       curveSharpness: curveSharpness ?? this.curveSharpness,
-      curvePoints: curvePoints ?? this.curvePoints,
       isAutorunEnabled: isAutorunEnabled ?? this.isAutorunEnabled,
     );
   }
@@ -429,28 +463,27 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     });
   }
 
-  SettingsState _getSettings(String? monitorId) {
-    final Map<String, SettingsState> currentMap =
-        state.value ?? {'all': SettingsState()};
-    final String id = (monitorId ?? ref.read(settingsMonitorIdProvider))
-        .toString();
-    return currentMap[id] ?? currentMap['all']!;
+  SettingsState _getSettings(String monitorId) {
+    final currentMap = state.value ?? {'all': SettingsState()};
+    return currentMap[monitorId] ?? currentMap['all']!;
   }
 
   Future<void> _updateSettings(
-    String? monitorId,
+    Set<String> monitorIds,
     SettingsState newState,
   ) async {
     final currentMap = state.value ?? {'all': SettingsState()};
-    final String id = (monitorId ?? ref.read(settingsMonitorIdProvider))
-        .toString();
-    final newStateMap = Map<String, SettingsState>.from(currentMap)
-      ..[id] = newState;
+    final newStateMap = Map<String, SettingsState>.from(currentMap);
 
-    if (id == 'all') {
-      for (final key in newStateMap.keys.toList()) {
-        if (key != 'all') {
-          newStateMap[key] = newState;
+    for (final id in monitorIds) {
+      newStateMap[id] = newState;
+
+      if (id == 'all') {
+        // If updating 'all', replicate to all existing keys
+        for (final key in newStateMap.keys.toList()) {
+          if (key != 'all') {
+            newStateMap[key] = newState;
+          }
         }
       }
     }
@@ -459,19 +492,21 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     await _saveSettings();
   }
 
-  void updateCurveSharpness(double value, {String? monitorId}) {
-    final current = _getSettings(monitorId);
-    _updateSettings(monitorId, current.copyWith(curveSharpness: value));
+  void updateCurveSharpness(double value) {
+    final ids = ref.read(selectedMonitorsProvider);
+    // Use the first selected monitor's current settings as base
+    final current = _getSettings(ids.first);
+    _updateSettings(ids, current.copyWith(curveSharpness: value));
   }
 
   void updateAutorun(bool enabled) {
     final currentMap = state.value ?? {'all': SettingsState()};
     final current = currentMap['all']!;
-    _updateSettings('all', current.copyWith(isAutorunEnabled: enabled));
+    _updateSettings({'all'}, current.copyWith(isAutorunEnabled: enabled));
     AutorunService.setEnabled(enabled);
   }
 
-  void updateCurvePoints(List<FlSpot> points, {String? monitorId}) {
+  void updateCurvePoints(List<FlSpot> points) {
     final sortedPoints = List<FlSpot>.from(points)
       ..sort((a, b) => a.x.compareTo(b.x));
 
@@ -485,25 +520,48 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
       sortedPoints.add(FlSpot(90, sortedPoints.last.y));
     }
 
-    final current = _getSettings(monitorId);
-    _updateSettings(monitorId, current.copyWith(curvePoints: sortedPoints));
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.first);
+    
+    final newCurvesMap = Map<PresetType, List<FlSpot>>.from(current.curvesMap);
+    newCurvesMap[current.activePreset] = sortedPoints;
+
+    _updateSettings(ids, current.copyWith(curvesMap: newCurvesMap));
   }
 
-  void addCurvePoint(FlSpot point, {String? monitorId}) {
-    final current = _getSettings(monitorId);
+  void addCurvePoint(FlSpot point) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.first);
     final newPoints = List<FlSpot>.from(current.curvePoints)..add(point);
-    updateCurvePoints(newPoints, monitorId: monitorId);
+    updateCurvePoints(newPoints);
   }
 
-  void removeCurvePoint(int index, {String? monitorId}) {
-    final current = _getSettings(monitorId);
+  void removeCurvePoint(int index) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.first);
     if (index >= 0 && index < current.curvePoints.length) {
       if (current.curvePoints[index].x == -20 ||
-          current.curvePoints[index].x == 90)
-        return;
+          current.curvePoints[index].x == 90) return;
       final newPoints = List<FlSpot>.from(current.curvePoints)..removeAt(index);
-      updateCurvePoints(newPoints, monitorId: monitorId);
+      updateCurvePoints(newPoints);
     }
+  }
+
+  void setActivePreset(PresetType type) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.first);
+    _updateSettings(ids, current.copyWith(activePreset: type));
+  }
+
+  void resetCurrentPreset() {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.first);
+    final presetType = current.activePreset;
+
+    final newCurvesMap = Map<PresetType, List<FlSpot>>.from(current.curvesMap);
+    newCurvesMap[presetType] = PresetConstants.getDefaultPoints(presetType);
+
+    _updateSettings(ids, current.copyWith(curvesMap: newCurvesMap));
   }
 }
 
@@ -526,7 +584,7 @@ class CurrentBrightnessNotifier extends Notifier<double> {
       final circadianService = ref.watch(circadianServiceProvider);
       final settingsAsync = ref.watch(settingsProvider);
       final monitorsAsync = ref.watch(monitorListProvider);
-      final currentSelection = ref.watch(selectedMonitorIdProvider);
+      final currentSelection = ref.watch(selectedMonitorsProvider);
 
       return solarStateAsync.maybeWhen(
         data: (state) {
@@ -558,14 +616,12 @@ class CurrentBrightnessNotifier extends Notifier<double> {
             });
           });
 
-          // Return brightness for the CURRENTLY selected monitor in dashboard
+          // Return brightness for the FIRST selected monitor in dashboard
           return settingsAsync.maybeWhen(
             data: (settingsMap) {
-              final settingsId = currentSelection == 'all'
-                  ? 'all'
-                  : currentSelection;
+              final firstId = currentSelection.first;
               final selectedSettings =
-                  settingsMap[settingsId] ?? settingsMap['all']!;
+                  settingsMap[firstId] ?? settingsMap['all']!;
               final target = circadianService.calculateTargetBrightness(
                 state.phases,
                 state.sunElevation,

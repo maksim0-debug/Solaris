@@ -22,11 +22,12 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
   @override
   Widget build(BuildContext context) {
     final settingsAsync = ref.watch(settingsProvider);
-    final monitorId = ref.watch(settingsMonitorIdProvider);
+    final selectedIds = ref.watch(selectedMonitorsProvider);
     
     return settingsAsync.maybeWhen(
       data: (settingsMap) {
-        final selectedSettings = settingsMap[monitorId] ?? settingsMap['all']!;
+        final selectedSettings =
+            settingsMap[selectedIds.first] ?? settingsMap['all']!;
         final points = selectedSettings.curvePoints;
         return _buildChart(context, points);
       },
@@ -259,10 +260,12 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
     double x = chartCoords.dx;
     double y = chartCoords.dy.clamp(0.0, 100.0);
 
-    final monitorId = ref.read(settingsMonitorIdProvider);
-    final settingsMap = ref.read(settingsProvider).value ?? {'all': SettingsState()};
-    final currentPoints = settingsMap[monitorId]?.curvePoints ?? 
-                         settingsMap['all']!.curvePoints;
+    final selectedIds = ref.read(selectedMonitorsProvider);
+    final settingsMap =
+        ref.read(settingsProvider).value ?? {'all': SettingsState()};
+    final currentPoints =
+        settingsMap[selectedIds.first]?.curvePoints ??
+        settingsMap['all']!.curvePoints;
     final newPoints = List<FlSpot>.from(currentPoints);
 
     if (index == 0 || index == newPoints.length - 1) {
@@ -276,7 +279,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
       newPoints[index] = FlSpot(x, y);
     }
 
-    ref.read(settingsProvider.notifier).updateCurvePoints(newPoints, monitorId: monitorId);
+    ref.read(settingsProvider.notifier).updateCurvePoints(newPoints);
   }
 
   void _addPointAt(Offset localPosition, BuildContext context) {
@@ -286,23 +289,27 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
     double x = chartCoords.dx.clamp(-20.0, 90.0);
     double y = chartCoords.dy.clamp(0.0, 100.0);
 
-    final monitorId = ref.read(settingsMonitorIdProvider);
-    final settingsMap = ref.read(settingsProvider).value ?? {'all': SettingsState()};
-    final currentSettings = settingsMap[monitorId] ?? settingsMap['all']!;
+    final selectedIds = ref.read(selectedMonitorsProvider);
+    final settingsMap =
+        ref.read(settingsProvider).value ?? {'all': SettingsState()};
+    final currentSettings =
+        settingsMap[selectedIds.first] ?? settingsMap['all']!;
     final currentPoints = currentSettings.curvePoints;
     bool tooClose = currentPoints.any((p) => (p.x - x).abs() < 2.0); // Защита от спама точками
 
     if (!tooClose) {
-      ref.read(settingsProvider.notifier).addCurvePoint(FlSpot(x, y), monitorId: monitorId);
+      ref.read(settingsProvider.notifier).addCurvePoint(FlSpot(x, y));
     }
   }
 
   void _removePoint(int index) {
-    final monitorId = ref.read(settingsMonitorIdProvider);
-    final settingsMap = ref.read(settingsProvider).value ?? {'all': SettingsState()};
-    final currentPoints = settingsMap[monitorId]?.curvePoints ?? 
-                         settingsMap['all']!.curvePoints;
+    final selectedIds = ref.read(selectedMonitorsProvider);
+    final settingsMap =
+        ref.read(settingsProvider).value ?? {'all': SettingsState()};
+    final currentPoints =
+        settingsMap[selectedIds.first]?.curvePoints ??
+        settingsMap['all']!.curvePoints;
     if (index == 0 || index == currentPoints.length - 1) return;
-    ref.read(settingsProvider.notifier).removeCurvePoint(index, monitorId: monitorId);
+    ref.read(settingsProvider.notifier).removeCurvePoint(index);
   }
 }
