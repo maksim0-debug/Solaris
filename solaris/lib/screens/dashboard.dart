@@ -72,8 +72,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 class _Sidebar extends ConsumerWidget {
   const _Sidebar();
 
-  static const IconData insights =
-      IconData(0xe347, fontFamily: 'MaterialIcons');
+  static const IconData insights = IconData(
+    0xe347,
+    fontFamily: 'MaterialIcons',
+  );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -229,14 +231,17 @@ class _Header extends ConsumerWidget {
       if (previous?.round() != next.round()) {
         final selection = ref.read(selectedMonitorIdProvider);
         final monitors = ref.read(monitorListProvider).value ?? [];
-        ref.read(brightnessServiceProvider).applyBrightnessSmoothly(
-          selection: selection,
-          targetValue: next,
-          monitors: monitors,
-          monitorService: ref.read(monitorServiceProvider),
-          updateBrightnessCallback: (id, val) => 
-              ref.read(monitorListProvider.notifier).updateBrightness(id, val),
-        );
+        ref
+            .read(brightnessServiceProvider)
+            .applyBrightnessSmoothly(
+              selection: selection,
+              targetValue: next,
+              monitors: monitors,
+              monitorService: ref.read(monitorServiceProvider),
+              updateBrightnessCallback: (id, val) => ref
+                  .read(monitorListProvider.notifier)
+                  .updateBrightness(id, val),
+            );
       }
     });
 
@@ -246,14 +251,17 @@ class _Header extends ConsumerWidget {
         final target = ref.read(currentBrightnessProvider);
         final selection = ref.read(selectedMonitorIdProvider);
         final monitors = next.value ?? [];
-        ref.read(brightnessServiceProvider).applyBrightnessSmoothly(
-          selection: selection,
-          targetValue: target,
-          monitors: monitors,
-          monitorService: ref.read(monitorServiceProvider),
-          updateBrightnessCallback: (id, val) => 
-              ref.read(monitorListProvider.notifier).updateBrightness(id, val),
-        );
+        ref
+            .read(brightnessServiceProvider)
+            .applyBrightnessSmoothly(
+              selection: selection,
+              targetValue: target,
+              monitors: monitors,
+              monitorService: ref.read(monitorServiceProvider),
+              updateBrightnessCallback: (id, val) => ref
+                  .read(monitorListProvider.notifier)
+                  .updateBrightness(id, val),
+            );
       }
     });
     // Sync brightness when selection changes
@@ -263,14 +271,17 @@ class _Header extends ConsumerWidget {
 
       if (next == 'all') {
         final brightness = ref.read(currentBrightnessProvider);
-        ref.read(brightnessServiceProvider).applyBrightnessSmoothly(
-          selection: 'all',
-          targetValue: brightness,
-          monitors: monitorValue,
-          monitorService: ref.read(monitorServiceProvider),
-          updateBrightnessCallback: (id, val) => 
-              ref.read(monitorListProvider.notifier).updateBrightness(id, val),
-        );
+        ref
+            .read(brightnessServiceProvider)
+            .applyBrightnessSmoothly(
+              selection: 'all',
+              targetValue: brightness,
+              monitors: monitorValue,
+              monitorService: ref.read(monitorServiceProvider),
+              updateBrightnessCallback: (id, val) => ref
+                  .read(monitorListProvider.notifier)
+                  .updateBrightness(id, val),
+            );
       } else {
         try {
           final monitor = monitorValue.firstWhere((m) => m.deviceName == next);
@@ -608,7 +619,8 @@ class _DashboardView extends ConsumerWidget {
                   const SizedBox(width: 16),
                   Expanded(
                     child: InkWell(
-                      onTap: () => ref.read(nightModeProvider.notifier).toggle(),
+                      onTap: () =>
+                          ref.read(nightModeProvider.notifier).toggle(),
                       borderRadius: BorderRadius.circular(16),
                       child: GlassCard(
                         child: Column(
@@ -618,7 +630,9 @@ class _DashboardView extends ConsumerWidget {
                               LucideIcons.moon,
                               size: 20,
                               color: ref.watch(nightModeProvider)
-                                  ? const Color(0xFFFDBA74) // Or some night color
+                                  ? const Color(
+                                      0xFFFDBA74,
+                                    ) // Or some night color
                                   : Colors.white30,
                             ),
                             const SizedBox(height: 12),

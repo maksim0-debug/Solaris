@@ -63,7 +63,6 @@ class ScheduleScreen extends ConsumerWidget {
                                         ),
                                       ],
                                     ),
-
                                   ],
                                 ),
                                 const SizedBox(height: 32),
@@ -274,8 +273,6 @@ class ScheduleScreen extends ConsumerWidget {
     );
   }
 }
-
-
 
 class _CoordinateCard extends StatelessWidget {
   final String label;

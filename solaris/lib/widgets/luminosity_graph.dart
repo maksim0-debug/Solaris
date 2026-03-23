@@ -96,6 +96,8 @@ class LuminosityGraph extends StatelessWidget {
             spots: _generateSpots(),
             isCurved: true,
             gradient: const LinearGradient(
+              begin: Alignment.bottomCenter,
+              end: Alignment.topCenter,
               colors: [Color(0xFFFDBA74), Color(0xFFF97316)],
             ),
             barWidth: 3,
@@ -107,8 +109,8 @@ class LuminosityGraph extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  const Color(0xFFFDBA74).withOpacity(0.2),
-                  const Color(0xFFFDBA74).withOpacity(0),
+                  const Color(0xFFF97316).withOpacity(0.2),
+                  const Color(0xFFF97316).withOpacity(0),
                 ],
               ),
             ),
