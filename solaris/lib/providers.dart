@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:solaris/services/location_service.dart';
-import 'package:solaris/services/solar_service.dart';
+// import 'package:solaris/services/solar_service.dart'; // Removed
 import 'package:solaris/services/time_service.dart';
 import 'package:solaris/services/monitor_service.dart';
 import 'package:solaris/services/circadian_service.dart';
@@ -22,9 +22,7 @@ import 'package:solaris/models/location_settings.dart' as model;
 import 'package:solaris/models/preset_type.dart';
 
 final locationServiceProvider = Provider((ref) => LocationService());
-final solarServiceProvider = Provider(
-  (ref) => SolarService(),
-); // Keep for now or remove if unused elsewhere
+// Removed legacy solarServiceProvider
 final sunCalculatorServiceProvider = Provider((ref) => SunCalculatorService());
 final timeServiceProvider = Provider((ref) => TimeService());
 final monitorServiceProvider = Provider((ref) => MonitorService());
@@ -180,6 +178,7 @@ final currentTimeProvider = StreamProvider<DateTime>((ref) {
 final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
   final service = ref.watch(sunCalculatorServiceProvider);
   final locationAsync = ref.watch(effectiveLocationProvider);
+  final weatherAsync = ref.watch(currentWeatherProvider);
 
   // Use location from provider, or default to Kyiv if loading
   final pos = locationAsync.value;
@@ -222,6 +221,19 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
       if (diff < -0.001) elTrend = diff.toStringAsFixed(2);
     }
 
+    // Determine UV and Spectral Intensity
+    double uv;
+    double intensity;
+
+    final weather = weatherAsync.value;
+    if (weather != null) {
+      uv = weather.uvIndex;
+      intensity = weather.directRadiation + weather.diffuseRadiation;
+    } else {
+      uv = service.getUVIndex(currentElevation);
+      intensity = service.getSpectralIntensity(currentElevation);
+    }
+
     yield SolarState(
       phases: phases,
       currentPhase: service.getCurrentPhase(phases, now),
@@ -230,8 +242,8 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
       sunAzimuth: currentAzimuth,
       sunZenith: service.getSunZenith(lat, lon, now),
       sunProgress: service.getSunProgress(phases, now),
-      uvIndex: service.getUVIndex(currentElevation),
-      spectralIntensity: service.getSpectralIntensity(currentElevation),
+      uvIndex: uv,
+      spectralIntensity: intensity,
       azimuthTrend: azTrend,
       elevationTrend: elTrend,
     );
@@ -243,11 +255,8 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
   }
 });
 
-// Deprecated: use solarStateStreamProvider instead
-final solarDataProvider = Provider<AsyncValue<SolarData>>((ref) {
-  // Keeping it for backward compatibility if needed, but everything should migrate
-  return const AsyncValue.loading();
-});
+
+// Removed legacy solarDataProvider
 
 class MonitorListNotifier extends AsyncNotifier<List<MonitorInfo>> {
   @override

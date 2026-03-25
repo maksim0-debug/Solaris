@@ -11,8 +11,14 @@ class SolarPhaseModel extends Equatable {
   /// The start of the morning golden hour.
   final DateTime goldenHourMorning;
 
+  /// The end of the morning golden hour.
+  final DateTime goldenHourMorningEnd;
+
   /// The start of the evening golden hour.
   final DateTime goldenHourEvening;
+
+  /// The end of the evening golden hour.
+  final DateTime goldenHourEveningEnd;
 
   /// The start of the civil twilight (dawn).
   final DateTime civilTwilightBegin;
@@ -36,7 +42,9 @@ class SolarPhaseModel extends Equatable {
     required this.sunrise,
     required this.sunset,
     required this.goldenHourMorning,
+    required this.goldenHourMorningEnd,
     required this.goldenHourEvening,
+    required this.goldenHourEveningEnd,
     required this.civilTwilightBegin,
     required this.civilTwilightEnd,
     required this.astronomicalDawn,
@@ -50,7 +58,9 @@ class SolarPhaseModel extends Equatable {
     sunrise,
     sunset,
     goldenHourMorning,
+    goldenHourMorningEnd,
     goldenHourEvening,
+    goldenHourEveningEnd,
     civilTwilightBegin,
     civilTwilightEnd,
     astronomicalDawn,

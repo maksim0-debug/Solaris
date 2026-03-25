@@ -51,26 +51,44 @@ class SunCalculatorService {
     // The solar_calculator returns UTC times in Instant objects.
     // We convert them to DateTime (UTC) and then to Local time.
     // Golden Hour (morning): starts when sun is at -4 elevation (zenith 94.0)
-    // Golden Hour (evening): starts when sun is at 6.0 elevation (zenith 84.0)
-    final morningGolden = SunriseSunsetCalculator(
+    // and ends at +6 elevation (zenith 84.0).
+    final morningGoldenStart = SunriseSunsetCalculator(
       Instant.fromDateTime(targetDate),
       lat,
       lon,
       sunZenithDistance: 94.0,
     ).calculateSunrise();
 
-    final eveningGolden = SunriseSunsetCalculator(
+    final morningGoldenEnd = SunriseSunsetCalculator(
+      Instant.fromDateTime(targetDate),
+      lat,
+      lon,
+      sunZenithDistance: 84.0,
+    ).calculateSunrise();
+
+    // Golden Hour (evening): starts when sun is at +6 elevation (zenith 84.0)
+    // and ends at -4 elevation (zenith 94.0).
+    final eveningGoldenStart = SunriseSunsetCalculator(
       Instant.fromDateTime(targetDate),
       lat,
       lon,
       sunZenithDistance: 84.0,
     ).calculateSunset();
 
+    final eveningGoldenEnd = SunriseSunsetCalculator(
+      Instant.fromDateTime(targetDate),
+      lat,
+      lon,
+      sunZenithDistance: 94.0,
+    ).calculateSunset();
+
     final model = SolarPhaseModel(
       sunrise: solarCalc.sunriseTime.toUtcDateTime().toLocal(),
       sunset: solarCalc.sunsetTime.toUtcDateTime().toLocal(),
-      goldenHourMorning: morningGolden.toUtcDateTime().toLocal(),
-      goldenHourEvening: eveningGolden.toUtcDateTime().toLocal(),
+      goldenHourMorning: morningGoldenStart.toUtcDateTime().toLocal(),
+      goldenHourMorningEnd: morningGoldenEnd.toUtcDateTime().toLocal(),
+      goldenHourEvening: eveningGoldenStart.toUtcDateTime().toLocal(),
+      goldenHourEveningEnd: eveningGoldenEnd.toUtcDateTime().toLocal(),
       civilTwilightBegin: solarCalc.morningCivilTwilight.begining
           .toUtcDateTime()
           .toLocal(),
@@ -124,20 +142,13 @@ class SunCalculatorService {
     }
 
     // Golden Hour zones
-    final morningGoldenEnd = phases.goldenHourMorning.add(
-      const Duration(hours: 1),
-    );
-    final eveningGoldenEnd = phases.goldenHourEvening.add(
-      const Duration(hours: 1),
-    );
-
     if (currentTime.isAfter(phases.goldenHourMorning) &&
-        currentTime.isBefore(morningGoldenEnd)) {
+        currentTime.isBefore(phases.goldenHourMorningEnd)) {
       return CurrentDayPhase.goldenHour;
     }
 
     if (currentTime.isAfter(phases.goldenHourEvening) &&
-        currentTime.isBefore(eveningGoldenEnd)) {
+        currentTime.isBefore(phases.goldenHourEveningEnd)) {
       return CurrentDayPhase.goldenHour;
     }
 
@@ -150,7 +161,7 @@ class SunCalculatorService {
     }
 
     // Morning Spike (between morning golden hour and zenith)
-    if (currentTime.isAfter(morningGoldenEnd) &&
+    if (currentTime.isAfter(phases.goldenHourMorningEnd) &&
         currentTime.isBefore(zenithStart)) {
       return CurrentDayPhase.morningSpike;
     }
@@ -210,12 +221,12 @@ class SunCalculatorService {
       phases.civilTwilightBegin,
       phases.sunrise,
       phases.goldenHourMorning,
-      phases.goldenHourMorning.add(const Duration(hours: 1)),
+      phases.goldenHourMorningEnd,
       phases.solarNoon.subtract(const Duration(hours: 1)), // Zenith Start
       phases.solarNoon,
       phases.solarNoon.add(const Duration(hours: 1)), // Zenith End
       phases.goldenHourEvening,
-      phases.goldenHourEvening.add(const Duration(hours: 1)),
+      phases.goldenHourEveningEnd,
       phases.sunset,
       phases.civilTwilightEnd,
     ]..sort();
@@ -231,35 +242,46 @@ class SunCalculatorService {
     return Duration.zero;
   }
 
-  /// Estimates UV Index based on sun elevation.
+  /// Estimates clear-sky UV Index based on sun elevation using empirical approximations.
   double getUVIndex(double elevation) {
     if (elevation <= 0) return 0.0;
-    // Simple model: max 12 at 90 degrees
-    return 12.0 * math.sin(elevation * math.pi / 180.0);
+    // An empirical formula for clear-sky UVI: UVI is roughly proportional to (cos(zenith))^2.42
+    // Zenith angle = 90 - elevation. cos(zenith) = sin(elevation).
+    // Maximum UVI at the equator at sea level is roughly 11.5 - 12.5.
+    final elevationRad = elevation * math.pi / 180.0;
+    return 12.0 * math.pow(math.sin(elevationRad), 2.42);
   }
 
-  /// Estimates Spectral Intensity (W/m2) based on sun elevation.
+  /// Estimates clear-sky Spectral Intensity / Global Horizontal Irradiance (W/m2).
   double getSpectralIntensity(double elevation) {
     if (elevation <= 0) return 0.0;
-    // Simple model: max 1000 W/m2 at 90 degrees
-    return 1000.0 * math.sin(elevation * math.pi / 180.0);
+    // Meinel & Meinel clear sky approximation model.
+    final elevationRad = elevation * math.pi / 180.0;
+    // Approximated optical air mass (AM) using simple formula
+    final am = 1.0 / (math.sin(elevationRad) + 0.15 * math.pow(elevation + 3.885, -1.253));
+    // Solar constant roughly 1353 W/m2, attenuated by atmosphere (0.7 transmit factor)
+    return 1353.0 * math.pow(0.7, math.pow(am, 0.678)) * math.sin(elevationRad);
   }
 
-  /// Реалистичный расчет температуры поверхности солнечной панели (или земли)
-  /// Учитывает реальную температуру воздуха и нагрев от солнца.
-  double getEstimatedSurfaceTemp(double elevation, double airTemp) {
-    if (elevation <= 0) {
-      // Ночью поверхность обычно чуть холоднее воздуха из-за радиационного выхолаживания
-      return airTemp - 1.5;
+  /// Реалистичный расчет температуры поверхности (например, темного асфальта или почвы).
+  /// Учитывает реальную температуру воздуха и приток солнечной радиации.
+  double getEstimatedSurfaceTemp(
+    double elevation,
+    double airTemp, {
+    double? realIrradiance,
+  }) {
+    if (elevation <= 0 && (realIrradiance == null || realIrradiance <= 0)) {
+      // Ночью за счет радиационного выхолаживания открытая поверхность холоднее воздуха
+      return airTemp - 2.5;
     }
 
-    // Днем поверхность нагревается. Чем выше солнце, тем сильнее нагрев.
-    // Спектральная интенсивность может достигать 1000 Вт/м2.
-    final irradiance = getSpectralIntensity(elevation);
+    final irradiance = realIrradiance ?? getSpectralIntensity(elevation);
 
-    // Грубая физическая модель: каждые 100 Вт/м2 нагревают черную панель на ~3.5°C выше температуры воздуха
-    final heatingFactor = (irradiance / 100.0) * 3.5;
+    // Более точная физическая модель: каждые 100 Вт/м2 нагревают среднестатистическую темную 
+    // поверхность (асфальт/грунт) примерно на 2.5-3.0 градуса выше температуры воздуха в безветренную погоду.
+    final heatingFactor = (irradiance / 100.0) * 2.8;
 
     return airTemp + heatingFactor;
   }
+
 }

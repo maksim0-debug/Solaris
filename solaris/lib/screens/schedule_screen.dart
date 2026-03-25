@@ -221,7 +221,9 @@ class ScheduleScreen extends ConsumerWidget {
                                             .getEstimatedSurfaceTemp(
                                               state.sunElevation,
                                               w.temperature,
+                                              realIrradiance: state.spectralIntensity,
                                             );
+
                                         return '${surfTemp.toStringAsFixed(1)}°C';
                                       },
                                       orElse: () => '--°C',
