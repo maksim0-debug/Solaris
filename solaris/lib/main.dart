@@ -10,6 +10,7 @@ import 'package:solaris/providers.dart';
 import 'package:solaris/services/time_service.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:solaris/services/tray_service.dart';
+import 'package:solaris/providers/lifecycle_provider.dart';
 
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,10 +38,6 @@ void main(List<String> args) async {
   final trayService = TrayService();
   await trayService.init();
 
-  // Prevent app from closing when clicking 'X'
-  await windowManager.setPreventClose(true);
-  windowManager.addListener(WindowEventHandler());
-
   // Initialize storage
   SharedPreferences? prefs;
   try {
@@ -49,11 +46,20 @@ void main(List<String> args) async {
     debugPrint('Error initializing SharedPreferences: $e');
   }
 
+  // Provider container initialization for usage in main and window events
+  final container = ProviderContainer(
+    overrides: [
+      if (prefs != null) sharedPreferencesProvider.overrideWithValue(prefs),
+    ],
+  );
+
+  // Prevent app from closing when clicking 'X'
+  await windowManager.setPreventClose(true);
+  windowManager.addListener(WindowEventHandler(container));
+
   runApp(
-    ProviderScope(
-      overrides: [
-        if (prefs != null) sharedPreferencesProvider.overrideWithValue(prefs),
-      ],
+    UncontrolledProviderScope(
+      container: container,
       child: const SolarisApp(),
     ),
   );
@@ -82,11 +88,30 @@ class SolarisApp extends StatelessWidget {
 }
 
 class WindowEventHandler extends WindowListener {
+  final ProviderContainer container;
+  WindowEventHandler(this.container);
+
   @override
   void onWindowClose() async {
     bool isPreventClose = await windowManager.isPreventClose();
     if (isPreventClose) {
+      container.read(appLifecycleProvider.notifier).setHidden();
       await windowManager.hide();
     }
+  }
+
+  @override
+  void onWindowMinimize() {
+    container.read(appLifecycleProvider.notifier).setMinimized();
+  }
+
+  @override
+  void onWindowRestore() {
+    container.read(appLifecycleProvider.notifier).setVisible();
+  }
+
+  @override
+  void onWindowFocus() {
+    container.read(appLifecycleProvider.notifier).setVisible();
   }
 }

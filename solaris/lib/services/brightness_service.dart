@@ -13,58 +13,74 @@ class BrightnessService {
     required List<MonitorInfo> monitors,
     required MonitorService monitorService,
     required void Function(String, int) updateBrightnessCallback,
+    bool isUIVisible = true,
   }) {
     final target = targetValue.round();
-    
+
     for (final monitor in monitors) {
       if (selection == 'all' || selection == monitor.deviceName) {
         _startSmoothTransition(
-          monitor.deviceName, 
-          target, 
-          monitors, 
-          monitorService, 
-          updateBrightnessCallback
+          monitor.deviceName,
+          target,
+          monitors,
+          monitorService,
+          updateBrightnessCallback,
+          isUIVisible: isUIVisible,
         );
       }
     }
   }
 
   void _startSmoothTransition(
-    String deviceName, 
-    int target, 
+    String deviceName,
+    int target,
     List<MonitorInfo> monitors,
     MonitorService monitorService,
-    void Function(String, int) updateBrightnessCallback,
-  ) {
+    void Function(String, int) updateBrightnessCallback, {
+    bool isUIVisible = true,
+  }) {
     _adjustmentTimers[deviceName]?.cancel();
-    
+
     // Find monitor in list to get its current brightness
     int? currentFromList;
     try {
-      currentFromList = monitors.firstWhere((m) => m.deviceName == deviceName).realBrightness;
+      currentFromList = monitors
+          .firstWhere((m) => m.deviceName == deviceName)
+          .realBrightness;
     } catch (_) {}
 
-    int current = _currentHardwareBrightness[deviceName] ?? 
-              currentFromList ?? 
-              target;
+    int current =
+        _currentHardwareBrightness[deviceName] ?? currentFromList ?? target;
 
     if (current == target) return;
 
-    _adjustmentTimers[deviceName] = Timer.periodic(const Duration(milliseconds: 50), (timer) {
-      if (current < target) {
-        current++;
-      } else if (current > target) {
-        current--;
-      }
+    // If the UI is hidden, don't use high-frequency timers for smooth transitions.
+    // This dramatically reduces CPU usage by avoiding 20 DDC/CI commands per second.
+    if (!isUIVisible) {
+      _currentHardwareBrightness[deviceName] = target;
+      // We still use the callback to keep the provider in sync (though it's gated in the provider itself)
+      updateBrightnessCallback(deviceName, target);
+      monitorService.setBrightness(deviceName, target);
+      _adjustmentTimers[deviceName] = null;
+      return;
+    }
 
-      _currentHardwareBrightness[deviceName] = current;
-      updateBrightnessCallback(deviceName, current);
-      monitorService.setBrightness(deviceName, current);
+    _adjustmentTimers[deviceName] =
+        Timer.periodic(const Duration(milliseconds: 50), (timer) {
+          if (current < target) {
+            current++;
+          } else if (current > target) {
+            current--;
+          }
 
-      if (current == target) {
-        timer.cancel();
-        _adjustmentTimers[deviceName] = null;
-      }
-    });
+          _currentHardwareBrightness[deviceName] = current;
+          updateBrightnessCallback(deviceName, current);
+          monitorService.setBrightness(deviceName, current);
+
+          if (current == target) {
+            timer.cancel();
+            _adjustmentTimers[deviceName] = null;
+          }
+        });
   }
 }

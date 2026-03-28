@@ -59,5 +59,6 @@ class BrightnessDialPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant BrightnessDialPainter oldDelegate) =>
+      oldDelegate.brightness != brightness;
 }

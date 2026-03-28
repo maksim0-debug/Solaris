@@ -21,16 +21,25 @@ class MonitorInfo {
 
 class MonitorService {
   static const _channel = MethodChannel('com.solaris.monitor/names');
+  final Map<String, int> _lastSentBrightness = {};
 
   Future<bool> setBrightness(String deviceName, int brightness) async {
+    // Avoid redundant calls to slow native DDC/CI methods if brightness hasn't changed.
+    if (_lastSentBrightness[deviceName] == brightness) {
+      return true;
+    }
+
     try {
       final bool? success = await _channel.invokeMethod<bool>(
         'setMonitorBrightness',
         {'devicePath': deviceName, 'brightness': brightness},
       );
+      if (success == true) {
+        _lastSentBrightness[deviceName] = brightness;
+      }
       return success ?? false;
     } catch (e) {
-      print('Failed to set brightness: $e');
+      print('Failed to set brightness for $deviceName: $e');
       return false;
     }
   }

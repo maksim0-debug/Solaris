@@ -20,6 +20,7 @@ import 'package:flutter/foundation.dart';
 import 'package:solaris/services/storage_service.dart';
 import 'package:solaris/models/location_settings.dart' as model;
 import 'package:solaris/models/preset_type.dart';
+import 'package:solaris/providers/lifecycle_provider.dart';
 
 final locationServiceProvider = Provider((ref) => LocationService());
 // Removed legacy solarServiceProvider
@@ -169,16 +170,30 @@ final effectiveLocationProvider = Provider<AsyncValue<Position>>((ref) {
   );
 });
 
-final currentTimeProvider = StreamProvider<DateTime>((ref) {
-  final service = ref.watch(timeServiceProvider);
-  return service.getTimeStream();
+final currentTimeProvider = StreamProvider<DateTime>((ref) async* {
+  final visibility = ref.watch(appLifecycleProvider);
+  
+  // Adaptive delay for clock updates: 1s if visible, 1m if hidden
+  final delay = visibility == AppVisibilityState.visible
+      ? const Duration(seconds: 1)
+      : const Duration(minutes: 1);
+
+  while (true) {
+    yield DateTime.now();
+    await Future<void>.delayed(delay);
+  }
 });
 
-/// Provider that emits the current solar state every second.
+/// Provider that emits the current solar state.
+/// The frequency of updates is adaptive based on the app's visibility state:
+/// - Visible: 1 second
+/// - Minimized: 30 seconds
+/// - Hidden (Tray): 60 seconds
 final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
   final service = ref.watch(sunCalculatorServiceProvider);
   final locationAsync = ref.watch(effectiveLocationProvider);
   final weatherAsync = ref.watch(currentWeatherProvider);
+  final visibility = ref.watch(appLifecycleProvider);
 
   // Use location from provider, or default to Kyiv if loading
   final pos = locationAsync.value;
@@ -194,6 +209,13 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
   // Previous values for trend calculation
   double? prevAzimuth;
   double? prevElevation;
+
+  // Adaptive delay based on visibility
+  final delaySeconds = switch (visibility) {
+    AppVisibilityState.visible => 1,
+    AppVisibilityState.minimized => 30,
+    AppVisibilityState.hidden => 60,
+  };
 
   while (true) {
     final now = DateTime.now();
@@ -251,7 +273,7 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
     prevAzimuth = currentAzimuth;
     prevElevation = currentElevation;
 
-    await Future<void>.delayed(const Duration(seconds: 1));
+    await Future<void>.delayed(Duration(seconds: delaySeconds));
   }
 });
 
@@ -592,39 +614,10 @@ class CurrentBrightnessNotifier extends Notifier<double> {
       final solarStateAsync = ref.watch(solarStateStreamProvider);
       final circadianService = ref.watch(circadianServiceProvider);
       final settingsAsync = ref.watch(settingsProvider);
-      final monitorsAsync = ref.watch(monitorListProvider);
       final currentSelection = ref.watch(selectedMonitorsProvider);
 
       return solarStateAsync.maybeWhen(
         data: (state) {
-          // Apply brightness to ALL monitors in the background
-          monitorsAsync.whenData((monitors) {
-            settingsAsync.whenData((settingsMap) {
-              for (final monitor in monitors) {
-                final settings =
-                    settingsMap[monitor.deviceName] ?? settingsMap['all']!;
-                final target = circadianService.calculateTargetBrightness(
-                  state.phases,
-                  state.sunElevation,
-                  DateTime.now(),
-                  curveSharpness: settings.curveSharpness,
-                  curvePoints: settings.curvePoints,
-                );
-                ref
-                    .read(brightnessServiceProvider)
-                    .applyBrightnessSmoothly(
-                      selection: monitor.deviceName,
-                      targetValue: target,
-                      monitors: monitors,
-                      monitorService: ref.read(monitorServiceProvider),
-                      updateBrightnessCallback: (id, val) => ref
-                          .read(monitorListProvider.notifier)
-                          .updateBrightness(id, val),
-                    );
-              }
-            });
-          });
-
           // Return brightness for the FIRST selected monitor in dashboard
           return settingsAsync.maybeWhen(
             data: (settingsMap) {
@@ -667,6 +660,55 @@ final currentBrightnessProvider =
     NotifierProvider<CurrentBrightnessNotifier, double>(
       CurrentBrightnessNotifier.new,
     );
+
+/// Background provider that manages monitor brightness adjustments.
+/// It listens to solar state and applies brightness updates to hardware.
+/// If the app is minimized, it skips UI state updates to save resources.
+final circadianAdjustmentProvider = Provider<void>((ref) {
+  final isAuto = ref.watch(autoAdjustmentProvider);
+  if (!isAuto) return;
+
+  final solarStateAsync = ref.watch(solarStateStreamProvider);
+  final visibility = ref.watch(appLifecycleProvider);
+  
+  solarStateAsync.whenData((state) {
+    final monitorsAsync = ref.read(monitorListProvider);
+    final settingsAsync = ref.read(settingsProvider);
+    final circadianService = ref.read(circadianServiceProvider);
+    final brightnessService = ref.read(brightnessServiceProvider);
+    final monitorService = ref.read(monitorServiceProvider);
+
+    monitorsAsync.whenData((monitors) {
+      settingsAsync.whenData((settingsMap) {
+        for (final monitor in monitors) {
+          final settings =
+              settingsMap[monitor.deviceName] ?? settingsMap['all']!;
+          final target = circadianService.calculateTargetBrightness(
+            state.phases,
+            state.sunElevation,
+            DateTime.now(),
+            curveSharpness: settings.curveSharpness,
+            curvePoints: settings.curvePoints,
+          );
+
+    brightnessService.applyBrightnessSmoothly(
+            selection: monitor.deviceName,
+            targetValue: target,
+            monitors: monitors,
+            monitorService: monitorService,
+            isUIVisible: visibility == AppVisibilityState.visible,
+            updateBrightnessCallback: (id, val) {
+              // ONLY update the UI provider if the app is visible
+              if (visibility == AppVisibilityState.visible) {
+                ref.read(monitorListProvider.notifier).updateBrightness(id, val);
+              }
+            },
+          );
+        }
+      });
+    });
+  });
+});
 
 class NightModeNotifier extends Notifier<bool> {
   @override

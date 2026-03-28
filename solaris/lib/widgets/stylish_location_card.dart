@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers.dart';
+import 'package:solaris/providers/lifecycle_provider.dart';
 import 'package:solaris/widgets/glass_card.dart';
 
 class StylishLocationCard extends ConsumerWidget {
@@ -184,15 +185,16 @@ class StylishLocationCard extends ConsumerWidget {
   }
 }
 
-class PulsingLocationMarker extends StatefulWidget {
+class PulsingLocationMarker extends ConsumerStatefulWidget {
   final Color color;
   const PulsingLocationMarker({super.key, required this.color});
 
   @override
-  State<PulsingLocationMarker> createState() => _PulsingLocationMarkerState();
+  ConsumerState<PulsingLocationMarker> createState() =>
+      _PulsingLocationMarkerState();
 }
 
-class _PulsingLocationMarkerState extends State<PulsingLocationMarker>
+class _PulsingLocationMarkerState extends ConsumerState<PulsingLocationMarker>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
@@ -202,7 +204,9 @@ class _PulsingLocationMarkerState extends State<PulsingLocationMarker>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
-    )..repeat();
+    );
+    // Initial start if visible
+    _controller.repeat();
   }
 
   @override
@@ -213,6 +217,15 @@ class _PulsingLocationMarkerState extends State<PulsingLocationMarker>
 
   @override
   Widget build(BuildContext context) {
+    // Watch visibility to stop/start animation
+    final visibility = ref.watch(appLifecycleProvider);
+
+    if (visibility == AppVisibilityState.visible) {
+      if (!_controller.isAnimating) _controller.repeat();
+    } else {
+      if (_controller.isAnimating) _controller.stop();
+    }
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {

@@ -13,15 +13,16 @@ import 'package:solaris/widgets/sun_path_painter.dart';
 import 'package:solaris/models/current_day_phase.dart';
 import 'package:solaris/screens/location_screen.dart';
 import 'package:solaris/screens/settings_screen.dart';
+import 'package:solaris/providers/lifecycle_provider.dart';
 
-class DashboardScreen extends StatefulWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
-
+ 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
 }
-
-class _DashboardScreenState extends State<DashboardScreen> {
+ 
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   void initState() {
     super.initState();
@@ -34,6 +35,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Keep the background brightness adjustment logic alive
+    ref.watch(circadianAdjustmentProvider);
+
+    // Watch visibility state to prune the widget tree when not visible
+    final visibility = ref.watch(appLifecycleProvider);
+
+    // If the window is minimized or hidden, we return an empty widget.
+    // This stops all animations (Pulsing Radar, Dial, etc.) and all GPU-intensive
+    // rendering (BackdropFilter in GlassCard, Gradients).
+    if (visibility != AppVisibilityState.visible) {
+      return const SizedBox.shrink();
+    }
+
     return Scaffold(
       body: Column(
         children: [

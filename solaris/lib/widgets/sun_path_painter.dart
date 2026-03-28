@@ -161,5 +161,6 @@ class SunPathPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant SunPathPainter oldDelegate) =>
+      oldDelegate.progress != progress;
 }
