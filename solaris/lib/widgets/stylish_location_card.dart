@@ -6,6 +6,7 @@ import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/providers/lifecycle_provider.dart';
 import 'package:solaris/widgets/glass_card.dart';
+import 'package:solaris/widgets/weather_overlay.dart';
 
 class StylishLocationCard extends ConsumerWidget {
   const StylishLocationCard({super.key});
@@ -15,6 +16,7 @@ class StylishLocationCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final locationAsync = ref.watch(effectiveLocationProvider);
     final solarAsync = ref.watch(solarStateStreamProvider);
+    final weatherAsync = ref.watch(currentWeatherProvider);
 
     return solarAsync.maybeWhen(
       data: (solarState) {
@@ -45,7 +47,6 @@ class StylishLocationCard extends ConsumerWidget {
                             pos.latitude,
                             pos.longitude,
                             style: mapStyle,
-                            zoom: 13.3,
                           ),
                         fit: BoxFit.cover,
                         fadeInDuration: const Duration(milliseconds: 500),
@@ -71,6 +72,16 @@ class StylishLocationCard extends ConsumerWidget {
                     ),
                   ),
                 ),
+
+                if (weatherAsync.value != null)
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: WeatherOverlay(
+                        weatherCode: weatherAsync.value!.weatherCode,
+                      ),
+                    ),
+                  ),
 
                 // Gradient Overlay for contrast
                 Positioned.fill(

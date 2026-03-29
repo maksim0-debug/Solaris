@@ -766,7 +766,7 @@ final autoNightModeProvider = NotifierProvider<AutoNightModeNotifier, bool>(
 
 /// Mapbox style URLs
 const String kMapboxDayStyle = 'mapdezyk/cmmy53ap5001p01s92sw90jj9';
-const String kMapboxNightStyle = 'mapdezyk/cmmy4n1dw007q01r0dyd1f6fs';
+const String kMapboxNightStyle = 'mapdezyk/cmnc5qn0r005v01qtdh606sjs';
 const String kMapboxLargeMapStyle = 'mapdezyk/cmmzahwi7005201r0fllj7v0r';
 
 /// Generates a Mapbox Static Image URL for the given coordinates and style.
@@ -774,7 +774,7 @@ String getStaticMapUrl(
   double lat,
   double lon, {
   String style = kMapboxNightStyle,
-  double zoom = 12.0,
+  double zoom = 15.1,
 }) {
   const token = String.fromEnvironment('MAPBOX_TOKEN');
   const width = 600;
