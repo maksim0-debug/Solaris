@@ -86,6 +86,23 @@
   "active": "Active",
   "nightShift": "Night Shift",
   "disabled": "Disabled",
+  "statusAdaptive": "Adaptive Control",
+  "statusManual": "Manual Mode",
+  "phaseDeepNight": "DEEP NIGHT",
+  "phaseMorningSpike": "MORNING SPIKE",
+  "phaseZenith": "ZENITH",
+  "phaseGoldenHour": "GOLDEN HOUR",
+  "phaseTwilight": "TWILIGHT",
+  "descDeepNightAuto": "Night cycle. Adaptive control maintains minimum brightness.",
+  "descDeepNightManual": "Deep night. System is in manual mode waiting for sunrise.",
+  "descMorningSpikeAuto": "Pre-dawn spike. Brightness is gradually rising towards sunrise.",
+  "descMorningSpikeManual": "Pre-dawn rise. Manual brightness control is active.",
+  "descZenithAuto": "Zenith. Maximum light efficiency according to schedule.",
+  "descZenithManual": "Full day. You are using manual brightness settings.",
+  "descGoldenHourAuto": "Golden Hour. Spectrum shifted to warm 2700K for comfort.",
+  "descGoldenHourManual": "Golden Hour. Color correction is currently paused.",
+  "descTwilightAuto": "Civil Twilight. Smooth transition to night mode.",
+  "descTwilightManual": "Twilight. System is in manual mode with reduced intensity.",
   "panelTemperature": "Panel Temperature",
   "efficiencyRate": "Efficiency Rate",
   "atmosphericClarity": "Atmospheric Clarity",
@@ -129,6 +146,16 @@
   "realtimeApplyNotice": "Changes are applied in real-time. Use the dashboard to toggle between manual and automatic adjustment.",
   "autorun": "Autorun at Startup",
   "autorunSubtitle": "Automatically start the application when you log into Windows",
+  "weatherAdjustmentTitle": "Weather-based Adjustment",
+  "weatherAdjustmentSubtitle": "Reduce brightness in cloudy or rainy weather",
+  "weatherBrightnessReduction": "Weather: brightness reduced by {percent}%",
+  "@weatherBrightnessReduction": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "selectMonitor": "Select Monitor",
   "presetBrightest": "Brightest",
   "presetBright": "Bright",

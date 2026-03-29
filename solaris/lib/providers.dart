@@ -379,12 +379,14 @@ class SettingsState {
   final Map<PresetType, List<FlSpot>> curvesMap;
   final double curveSharpness;
   final bool isAutorunEnabled;
+  final bool isWeatherAdjustmentEnabled;
 
   SettingsState({
     this.activePreset = PresetType.bright,
     Map<PresetType, List<FlSpot>>? curvesMap,
     this.curveSharpness = 1.0,
     this.isAutorunEnabled = false,
+    this.isWeatherAdjustmentEnabled = true,
   }) : curvesMap = curvesMap ?? PresetConstants.getAllDefaults();
 
   List<FlSpot> get curvePoints => curvesMap[activePreset]!;
@@ -395,6 +397,7 @@ class SettingsState {
             key.name, value.map((p) => {'x': p.x, 'y': p.y}).toList())),
         'curveSharpness': curveSharpness,
         'isAutorunEnabled': isAutorunEnabled,
+        'isWeatherAdjustmentEnabled': isWeatherAdjustmentEnabled,
       };
 
   factory SettingsState.fromJson(Map<String, dynamic> json) {
@@ -438,6 +441,7 @@ class SettingsState {
       curvesMap: curvesMap,
       curveSharpness: (json['curveSharpness'] as num?)?.toDouble() ?? 1.0,
       isAutorunEnabled: json['isAutorunEnabled'] as bool? ?? false,
+      isWeatherAdjustmentEnabled: json['isWeatherAdjustmentEnabled'] as bool? ?? true,
     );
   }
 
@@ -446,12 +450,14 @@ class SettingsState {
     Map<PresetType, List<FlSpot>>? curvesMap,
     double? curveSharpness,
     bool? isAutorunEnabled,
+    bool? isWeatherAdjustmentEnabled,
   }) {
     return SettingsState(
       activePreset: activePreset ?? this.activePreset,
       curvesMap: curvesMap ?? this.curvesMap,
       curveSharpness: curveSharpness ?? this.curveSharpness,
       isAutorunEnabled: isAutorunEnabled ?? this.isAutorunEnabled,
+      isWeatherAdjustmentEnabled: isWeatherAdjustmentEnabled ?? this.isWeatherAdjustmentEnabled,
     );
   }
 }
@@ -537,6 +543,12 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     AutorunService.setEnabled(enabled);
   }
 
+  void updateWeatherAdjustment(bool enabled) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.first);
+    _updateSettings(ids, current.copyWith(isWeatherAdjustmentEnabled: enabled));
+  }
+
   void updateCurvePoints(List<FlSpot> points) {
     final sortedPoints = List<FlSpot>.from(points)
       ..sort((a, b) => a.x.compareTo(b.x));
@@ -615,6 +627,7 @@ class CurrentBrightnessNotifier extends Notifier<double> {
       final circadianService = ref.watch(circadianServiceProvider);
       final settingsAsync = ref.watch(settingsProvider);
       final currentSelection = ref.watch(selectedMonitorsProvider);
+      final weatherAsync = ref.watch(currentWeatherProvider);
 
       return solarStateAsync.maybeWhen(
         data: (state) {
@@ -630,6 +643,8 @@ class CurrentBrightnessNotifier extends Notifier<double> {
                 DateTime.now(),
                 curveSharpness: selectedSettings.curveSharpness,
                 curvePoints: selectedSettings.curvePoints,
+                weather: selectedSettings.isWeatherAdjustmentEnabled ? weatherAsync.value : null,
+                presetSensitivity: selectedSettings.activePreset.weatherSensitivity,
               );
               _saveBrightness(target);
               return target;
@@ -670,6 +685,7 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
 
   final solarStateAsync = ref.watch(solarStateStreamProvider);
   final visibility = ref.watch(appLifecycleProvider);
+  final weatherAsync = ref.watch(currentWeatherProvider);
   
   solarStateAsync.whenData((state) {
     final monitorsAsync = ref.read(monitorListProvider);
@@ -689,6 +705,8 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
             DateTime.now(),
             curveSharpness: settings.curveSharpness,
             curvePoints: settings.curvePoints,
+            weather: settings.isWeatherAdjustmentEnabled ? weatherAsync.value : null,
+            presetSensitivity: settings.activePreset.weatherSensitivity,
           );
 
     brightnessService.applyBrightnessSmoothly(

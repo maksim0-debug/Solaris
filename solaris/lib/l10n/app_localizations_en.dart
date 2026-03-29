@@ -152,6 +152,67 @@ class AppLocalizationsEn extends AppLocalizations {
   String get disabled => 'Disabled';
 
   @override
+  String get statusAdaptive => 'Adaptive Control';
+
+  @override
+  String get statusManual => 'Manual Mode';
+
+  @override
+  String get phaseDeepNight => 'DEEP NIGHT';
+
+  @override
+  String get phaseMorningSpike => 'MORNING SPIKE';
+
+  @override
+  String get phaseZenith => 'ZENITH';
+
+  @override
+  String get phaseGoldenHour => 'GOLDEN HOUR';
+
+  @override
+  String get phaseTwilight => 'TWILIGHT';
+
+  @override
+  String get descDeepNightAuto =>
+      'Night cycle. Adaptive control maintains minimum brightness.';
+
+  @override
+  String get descDeepNightManual =>
+      'Deep night. System is in manual mode waiting for sunrise.';
+
+  @override
+  String get descMorningSpikeAuto =>
+      'Pre-dawn spike. Brightness is gradually rising towards sunrise.';
+
+  @override
+  String get descMorningSpikeManual =>
+      'Pre-dawn rise. Manual brightness control is active.';
+
+  @override
+  String get descZenithAuto =>
+      'Zenith. Maximum light efficiency according to schedule.';
+
+  @override
+  String get descZenithManual =>
+      'Full day. You are using manual brightness settings.';
+
+  @override
+  String get descGoldenHourAuto =>
+      'Golden Hour. Spectrum shifted to warm 2700K for comfort.';
+
+  @override
+  String get descGoldenHourManual =>
+      'Golden Hour. Color correction is currently paused.';
+
+  @override
+  String get descTwilightAuto =>
+      'Civil Twilight. Smooth transition to night mode.';
+
+  @override
+  String get descTwilightManual =>
+      'Twilight. System is in manual mode with reduced intensity.';
+
+  @override
   String get panelTemperature => 'Panel Temperature';
 
   @override
@@ -266,6 +327,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get autorunSubtitle =>
       'Automatically start the application when you log into Windows';
+
+  @override
+  String get weatherAdjustmentTitle => 'Weather-based Adjustment';
+
+  @override
+  String get weatherAdjustmentSubtitle =>
+      'Reduce brightness in cloudy or rainy weather';
+
+  @override
+  String weatherBrightnessReduction(int percent) {
+    return 'Weather: brightness reduced by $percent%';
+  }
 
   @override
   String get selectMonitor => 'Select Monitor';

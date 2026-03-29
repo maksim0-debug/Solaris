@@ -1,7 +1,11 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:solaris/models/solar_phase_model.dart';
+import 'package:solaris/services/weather_service.dart';
+import 'package:solaris/services/weather_adjustment_service.dart';
 
 class CircadianService {
+  final WeatherAdjustmentService weatherAdjustmentService = WeatherAdjustmentService();
+
   /// Вычисляет целевую яркость исключительно на основе высоты солнца (elevation)
   double calculateTargetBrightness(
     SolarPhaseModel phases,
@@ -9,15 +13,39 @@ class CircadianService {
     DateTime now, {
     double curveSharpness = 1.0,
     List<FlSpot>? curvePoints,
+    WeatherData? weather,
+    double presetSensitivity = 1.0,
   }) {
+    double baseBrightness;
+    
     if (curvePoints != null && curvePoints.isNotEmpty) {
-      return _calculateFromElevation(curvePoints, elevation);
+      baseBrightness = _calculateFromElevation(curvePoints, elevation);
+    } else {
+      // Фолбэк, если точки не загрузились - используем дефолтные значения из графика
+      // -20 elevation -> 15% brightness, 30+ elevation -> 100% brightness
+      if (elevation < -6) baseBrightness = 15.0;
+      else if (elevation > 20) baseBrightness = 100.0;
+      else baseBrightness = 60.0;
     }
-    // Фолбэк, если точки не загрузились - используем дефолтные значения из графика
-    // -20 elevation -> 15% brightness, 30+ elevation -> 100% brightness
-    if (elevation < -6) return 15.0;
-    if (elevation > 20) return 100.0;
-    return 60.0;
+
+    if (weather != null && presetSensitivity > 0) {
+      final baseFactor = weatherAdjustmentService.calculateWeatherFactor(weather, elevation);
+      final finalFactor = 1.0 - ((1.0 - baseFactor) * presetSensitivity);
+      double targetBrightness = baseBrightness * finalFactor;
+
+      // Clamp target brightness to the minimum value of the preset
+      double minAllowed = 0.0;
+      if (curvePoints != null && curvePoints.isNotEmpty) {
+        // Мы предполагаем, что минимальное значение яркости ночью — это первая точка
+        minAllowed = curvePoints.first.y;
+      } else {
+        minAllowed = 15.0;
+      }
+
+      return targetBrightness.clamp(minAllowed, 100.0);
+    }
+
+    return baseBrightness;
   }
 
   double _calculateFromElevation(List<FlSpot> points, double currentElevation) {

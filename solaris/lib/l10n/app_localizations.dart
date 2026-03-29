@@ -350,6 +350,108 @@ abstract class AppLocalizations {
   /// **'Disabled'**
   String get disabled;
 
+  /// No description provided for @statusAdaptive.
+  ///
+  /// In en, this message translates to:
+  /// **'Adaptive Control'**
+  String get statusAdaptive;
+
+  /// No description provided for @statusManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual Mode'**
+  String get statusManual;
+
+  /// No description provided for @phaseDeepNight.
+  ///
+  /// In en, this message translates to:
+  /// **'DEEP NIGHT'**
+  String get phaseDeepNight;
+
+  /// No description provided for @phaseMorningSpike.
+  ///
+  /// In en, this message translates to:
+  /// **'MORNING SPIKE'**
+  String get phaseMorningSpike;
+
+  /// No description provided for @phaseZenith.
+  ///
+  /// In en, this message translates to:
+  /// **'ZENITH'**
+  String get phaseZenith;
+
+  /// No description provided for @phaseGoldenHour.
+  ///
+  /// In en, this message translates to:
+  /// **'GOLDEN HOUR'**
+  String get phaseGoldenHour;
+
+  /// No description provided for @phaseTwilight.
+  ///
+  /// In en, this message translates to:
+  /// **'TWILIGHT'**
+  String get phaseTwilight;
+
+  /// No description provided for @descDeepNightAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Night cycle. Adaptive control maintains minimum brightness.'**
+  String get descDeepNightAuto;
+
+  /// No description provided for @descDeepNightManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Deep night. System is in manual mode waiting for sunrise.'**
+  String get descDeepNightManual;
+
+  /// No description provided for @descMorningSpikeAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Pre-dawn spike. Brightness is gradually rising towards sunrise.'**
+  String get descMorningSpikeAuto;
+
+  /// No description provided for @descMorningSpikeManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Pre-dawn rise. Manual brightness control is active.'**
+  String get descMorningSpikeManual;
+
+  /// No description provided for @descZenithAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Zenith. Maximum light efficiency according to schedule.'**
+  String get descZenithAuto;
+
+  /// No description provided for @descZenithManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Full day. You are using manual brightness settings.'**
+  String get descZenithManual;
+
+  /// No description provided for @descGoldenHourAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Golden Hour. Spectrum shifted to warm 2700K for comfort.'**
+  String get descGoldenHourAuto;
+
+  /// No description provided for @descGoldenHourManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Golden Hour. Color correction is currently paused.'**
+  String get descGoldenHourManual;
+
+  /// No description provided for @descTwilightAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Civil Twilight. Smooth transition to night mode.'**
+  String get descTwilightAuto;
+
+  /// No description provided for @descTwilightManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Twilight. System is in manual mode with reduced intensity.'**
+  String get descTwilightManual;
+
   /// No description provided for @panelTemperature.
   ///
   /// In en, this message translates to:
@@ -565,6 +667,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Automatically start the application when you log into Windows'**
   String get autorunSubtitle;
+
+  /// No description provided for @weatherAdjustmentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather-based Adjustment'**
+  String get weatherAdjustmentTitle;
+
+  /// No description provided for @weatherAdjustmentSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduce brightness in cloudy or rainy weather'**
+  String get weatherAdjustmentSubtitle;
+
+  /// No description provided for @weatherBrightnessReduction.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather: brightness reduced by {percent}%'**
+  String weatherBrightnessReduction(int percent);
 
   /// No description provided for @selectMonitor.
   ///

@@ -86,6 +86,23 @@
   "active": "Активно",
   "nightShift": "Ночной режим",
   "disabled": "Выключено",
+  "statusAdaptive": "Адаптивный контроль",
+  "statusManual": "Ручной режим",
+  "phaseDeepNight": "ГЛУБОКАЯ НОЧЬ",
+  "phaseMorningSpike": "РАССВЕТНЫЙ ПИК",
+  "phaseZenith": "ЗЕНИТ",
+  "phaseGoldenHour": "ЗОЛОТОЙ ЧАС",
+  "phaseTwilight": "СУМЕРКИ",
+  "descDeepNightAuto": "Ночной цикл. Адаптивный контроль поддерживает минимальную яркость.",
+  "descDeepNightManual": "Глубокая ночь. Система в ручном режиме ожидания рассвета.",
+  "descMorningSpikeAuto": "Предрассветный пик. Яркость плавно растет к восходу.",
+  "descMorningSpikeManual": "Предрассветный подъем. Установлена фиксированная яркость.",
+  "descZenithAuto": "Зенит. Максимальная световая эффективность по расписанию.",
+  "descZenithManual": "Полный день. Вы используете ручные настройки яркости.",
+  "descGoldenHourAuto": "Золотой час. Спектр смещен к теплому 2700K для комфорта.",
+  "descGoldenHourManual": "Золотой час. Цветовая коррекция приостановлена.",
+  "descTwilightAuto": "Гражданские сумерки. Плавный переход к ночному режиму.",
+  "descTwilightManual": "Сумерки. Система в ручном режиме пониженной яркости.",
   "panelTemperature": "Температура панели",
   "efficiencyRate": "Эффективность",
   "atmosphericClarity": "Ясность атмосферы",
@@ -129,6 +146,16 @@
   "realtimeApplyNotice": "Изменения применяются в реальном времени. Используйте панель управления для переключения между ручной и автоматической настройкой.",
   "autorun": "Автозапуск при старте",
   "autorunSubtitle": "Автоматически запускать приложение при входе в Windows",
+  "weatherAdjustmentTitle": "Влияние погоды",
+  "weatherAdjustmentSubtitle": "Снижает яркость в облачную или дождливую погоду",
+  "weatherBrightnessReduction": "Погода: снижение яркости на {percent}%",
+  "@weatherBrightnessReduction": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "selectMonitor": "Выберите монитор",
   "presetBrightest": "Ярчайший",
   "presetBright": "Яркий",

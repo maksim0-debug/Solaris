@@ -13,6 +13,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final settingsAsync = ref.watch(settingsProvider);
+    final selectedIds = ref.watch(selectedMonitorsProvider);
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -113,6 +114,46 @@ class SettingsScreen extends ConsumerWidget {
                         orElse: () => false,
                       ), // Autorun is global-ish, use 'all'
                       onChanged: (val) => ref.read(settingsProvider.notifier).updateAutorun(val),
+                      activeColor: const Color(0xFFFDBA74),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Divider(color: Colors.white10),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.weatherAdjustmentTitle,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white70,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            l10n.weatherAdjustmentSubtitle,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.white.withOpacity(0.3),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: settingsAsync.maybeWhen(
+                        data: (map) =>
+                            map[selectedIds.first]?.isWeatherAdjustmentEnabled ?? true,
+                        orElse: () => true,
+                      ),
+                      onChanged: (val) => ref.read(settingsProvider.notifier).updateWeatherAdjustment(val),
                       activeColor: const Color(0xFFFDBA74),
                     ),
                   ],

@@ -37,6 +37,12 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
 
   Widget _buildChart(BuildContext context, List<FlSpot> points) {
     final solarAsync = ref.watch(solarStateStreamProvider); // Получаем данные о солнце
+    final weatherAsync = ref.watch(currentWeatherProvider);
+    final circadianService = ref.read(circadianServiceProvider);
+    
+    final selectedIds = ref.watch(selectedMonitorsProvider);
+    final settingsMap = ref.watch(settingsProvider).value;
+    final currentSettings = settingsMap?[selectedIds.first] ?? settingsMap?['all'] ?? SettingsState();
 
     const dayColor = Color(0xFFFDBA74);
     const nightColor = Colors.indigoAccent;
@@ -60,6 +66,104 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
           break;
         }
       }
+    }
+
+    double? adjustedBrightnessY;
+    if (currentSettings.isWeatherAdjustmentEnabled && weatherAsync.value != null) {
+      final baseFactor = circadianService.weatherAdjustmentService.calculateWeatherFactor(
+          weatherAsync.value, currentElevation);
+      
+      if (baseFactor < 0.99) {
+        final penalty = (1.0 - baseFactor) * currentSettings.activePreset.weatherSensitivity;
+        final finalFactor = 1.0 - penalty;
+        adjustedBrightnessY = (currentBrightnessY * finalFactor).clamp(points.first.y, 100.0);
+      }
+    }
+
+    // Линии бара
+    final List<LineChartBarData> lineBars = [
+      LineChartBarData(
+        spots: points,
+        isCurved: true,
+        curveSmoothness: 0.3,
+        gradient: const LinearGradient(
+          colors: [nightColor, twilightColor, dayColor],
+          stops: [0.0, 0.2, 0.8],
+        ),
+        barWidth: 3,
+        isStrokeCapRound: true,
+        dotData: FlDotData(
+          show: true,
+          getDotPainter: (spot, percent, barData, index) {
+            final isTouched = index == _touchedIndex;
+            return FlDotCirclePainter(
+              radius: isTouched ? 6 : 4,
+              color: isTouched ? Colors.white : Colors.white70,
+              strokeWidth: isTouched ? 3 : 1,
+              strokeColor: isTouched ? dayColor : Colors.white24,
+            );
+          },
+          checkToShowDot: (spot, barData) => true,
+        ),
+        belowBarData: BarAreaData(
+          show: true,
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              dayColor.withOpacity(0.2),
+              twilightColor.withOpacity(0.1),
+              nightColor.withOpacity(0.0),
+            ],
+            stops: const [0.1, 0.6, 1.0],
+          ),
+        ),
+      ),
+      // Пульсирующий маркер текущего положения солнца
+      LineChartBarData(
+        spots: [FlSpot(currentElevation.clamp(-20.0, 90.0), currentBrightnessY)],
+        dotData: FlDotData(
+          show: true,
+          getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
+            radius: adjustedBrightnessY != null ? 3 : 5,
+            color: adjustedBrightnessY != null ? Colors.white54 : Colors.white,
+            strokeWidth: 2,
+            strokeColor: adjustedBrightnessY != null ? dayColor.withOpacity(0.5) : dayColor,
+          ),
+        ),
+      ),
+    ];
+
+    if (adjustedBrightnessY != null) {
+      // Добавляем соединительную пунктирную линию
+      lineBars.add(
+        LineChartBarData(
+          spots: [
+            FlSpot(currentElevation.clamp(-20.0, 90.0), currentBrightnessY),
+            FlSpot(currentElevation.clamp(-20.0, 90.0), adjustedBrightnessY),
+          ],
+          isCurved: false,
+          color: Colors.white24,
+          barWidth: 1,
+          dashArray: [4, 4],
+          dotData: FlDotData(show: false),
+        )
+      );
+      // Добавляем актуальный маркер с учетом погоды
+      lineBars.add(
+        LineChartBarData(
+          spots: [FlSpot(currentElevation.clamp(-20.0, 90.0), adjustedBrightnessY)],
+          dotData: FlDotData(
+            show: true,
+            getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
+              radius: 5,
+              color: Colors.white,
+              strokeWidth: 2,
+              strokeColor: Colors.lightBlueAccent,
+            ),
+          ),
+        ),
+      );
     }
 
     return AspectRatio(
@@ -138,58 +242,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
             maxX: 90,  // До +90 градусов (зенит)
             minY: 0,
             maxY: 105,
-            lineBarsData: [
-              LineChartBarData(
-                spots: points,
-                isCurved: true,
-                curveSmoothness: 0.3,
-                gradient: const LinearGradient(
-                  colors: [nightColor, twilightColor, dayColor],
-                  stops: [0.0, 0.2, 0.8],
-                ),
-                barWidth: 3,
-                isStrokeCapRound: true,
-                dotData: FlDotData(
-                  show: true,
-                  getDotPainter: (spot, percent, barData, index) {
-                    final isTouched = index == _touchedIndex;
-                    return FlDotCirclePainter(
-                      radius: isTouched ? 6 : 4,
-                      color: isTouched ? Colors.white : Colors.white70,
-                      strokeWidth: isTouched ? 3 : 1,
-                      strokeColor: isTouched ? dayColor : Colors.white24,
-                    );
-                  },
-                  checkToShowDot: (spot, barData) => true,
-                ),
-                belowBarData: BarAreaData(
-                  show: true,
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      dayColor.withOpacity(0.2),
-                      twilightColor.withOpacity(0.1),
-                      nightColor.withOpacity(0.0),
-                    ],
-                    stops: const [0.1, 0.6, 1.0],
-                  ),
-                ),
-              ),
-              // Пульсирующий маркер текущего положения солнца
-              LineChartBarData(
-                spots: [FlSpot(currentElevation.clamp(-20.0, 90.0), currentBrightnessY)],
-                dotData: FlDotData(
-                  show: true,
-                  getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-                    radius: 5,
-                    color: Colors.white,
-                    strokeWidth: 2,
-                    strokeColor: dayColor,
-                  ),
-                ),
-              ),
-            ],
+            lineBarsData: lineBars,
             lineTouchData: LineTouchData(
               enabled: true,
               handleBuiltInTouches: false,

@@ -7,6 +7,8 @@ class WeatherData {
   final double uvIndex; // УФ-индекс
   final double directRadiation; // Прямая радиация (W/m²)
   final double diffuseRadiation; // Диффузная радиация (W/m²)
+  final double cloudCover; // Облачность (%)
+  final int weatherCode; // Код погоды WMO
 
   WeatherData({
     required this.temperature,
@@ -14,15 +16,17 @@ class WeatherData {
     required this.uvIndex,
     required this.directRadiation,
     required this.diffuseRadiation,
+    required this.cloudCover,
+    required this.weatherCode,
   });
 }
 
 class WeatherService {
   Future<WeatherData?> fetchCurrentWeather(double lat, double lon) async {
     try {
-      // Формируем URL. Запрашиваем текущую температуру, влажность, УФ-индекс и радиацию.
+      // Формируем URL. Запрашиваем текущую погоду, радиацию, облачность и код погоды.
       final url = Uri.parse(
-        'https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current=temperature_2m,relative_humidity_2m,uv_index,direct_radiation,diffuse_radiation',
+        'https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current=temperature_2m,relative_humidity_2m,uv_index,direct_radiation,diffuse_radiation,cloud_cover,weather_code',
       );
 
       final response = await http.get(url).timeout(const Duration(seconds: 10));
@@ -37,6 +41,8 @@ class WeatherService {
           uvIndex: (current['uv_index'] as num).toDouble(),
           directRadiation: (current['direct_radiation'] as num).toDouble(),
           diffuseRadiation: (current['diffuse_radiation'] as num).toDouble(),
+          cloudCover: (current['cloud_cover'] as num).toDouble(),
+          weatherCode: (current['weather_code'] as num).toInt(),
         );
       }
       return null;

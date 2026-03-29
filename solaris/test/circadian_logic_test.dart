@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:solaris/services/circadian_service.dart';
 import 'package:solaris/models/solar_phase_model.dart';
+import 'package:solaris/services/weather_service.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 void main() {
@@ -77,6 +78,63 @@ void main() {
       );
       // elevation -3 between -6 (25%) and 0 (60%) => 42.5%
       expect(brightness, closeTo(42.5, 0.1));
+    });
+
+    test('Weather adjustment applies preset sensitivity for daytime values', () {
+      final now = DateTime(2026, 3, 19, 13, 0);
+      final weather = WeatherData(
+        temperature: 20,
+        humidity: 50,
+        uvIndex: 5,
+        directRadiation: 500,
+        diffuseRadiation: 150,
+        cloudCover: 30,
+        weatherCode: 55, // rain => base weather factor 0.75 in daytime
+      );
+
+      final brightness = service.calculateTargetBrightness(
+        phases,
+        30.0,
+        now,
+        curvePoints: curvePoints,
+        weather: weather,
+        presetSensitivity: 0.6,
+      );
+
+      // base=100; finalFactor=1-((1-0.75)*0.6)=0.85 => 85
+      expect(brightness, closeTo(85.0, 0.1));
+    });
+
+    test('Weather adjustment respects minimum preset brightness clamp', () {
+      final now = DateTime(2026, 3, 19, 13, 0);
+      final weather = WeatherData(
+        temperature: 18,
+        humidity: 60,
+        uvIndex: 4,
+        directRadiation: 300,
+        diffuseRadiation: 120,
+        cloudCover: 95,
+        weatherCode: 95, // thunderstorm => strongest penalty
+      );
+
+      final pointsWithHighMinimum = [
+        const FlSpot(-20, 40),
+        const FlSpot(10, 20),
+        const FlSpot(90, 20),
+      ];
+
+      final brightness = service.calculateTargetBrightness(
+        phases,
+        20.0,
+        now,
+        curvePoints: pointsWithHighMinimum,
+        weather: weather,
+        presetSensitivity: 1.0,
+      );
+
+      // Computed value falls below the configured minimum (first point = 40),
+      // so the result must be clamped.
+      expect(brightness, 40.0);
     });
   });
 }

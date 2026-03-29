@@ -14,6 +14,7 @@ import 'package:solaris/models/current_day_phase.dart';
 import 'package:solaris/screens/location_screen.dart';
 import 'package:solaris/screens/settings_screen.dart';
 import 'package:solaris/providers/lifecycle_provider.dart';
+import 'package:solaris/utils/status_helper.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -500,92 +501,178 @@ class _DashboardView extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              GlassCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              solarAsync.when(
+                data: (state) {
+                  final status = StatusHelper.getStatus(
+                    state,
+                    l10n,
+                    isAutoAdapt,
+                    ref.watch(nightModeProvider),
+                  );
+
+                  return GlassCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  status.title.toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: status.color,
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                                Text(
+                                  status.subtitle,
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white24,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Icon(
+                              status.icon,
+                              size: 24,
+                              color: status.color,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
                         Text(
-                          solarAsync
-                              .maybeWhen(
-                                data: (state) {
-                                  final now = DateTime.now();
-                                  if (now.isBefore(state.phases.sunrise))
-                                    return l10n.night;
-                                  if (now.isBefore(state.phases.sunset))
-                                    return l10n.goldenHour;
-                                  return l10n.night;
-                                },
-                                orElse: () => l10n.calculating,
-                              )
-                              .toUpperCase(),
+                          solarAsync.maybeWhen(
+                            data: (state) {
+                              final now = DateTime.now();
+                              if (now.isBefore(state.phases.sunrise)) {
+                                return l10n.remainingLower(
+                                  timeService.formatCountdown(
+                                    state.phases.sunrise.difference(now),
+                                  ),
+                                );
+                              } else if (now.isBefore(state.phases.sunset)) {
+                                return l10n.activeLower(
+                                  timeService.formatCountdown(
+                                    state.phases.sunset.difference(now),
+                                  ),
+                                );
+                              } else {
+                                return l10n.finished;
+                              }
+                            },
+                            orElse: () => l10n.calculatingLower,
+                          ),
                           style: const TextStyle(
-                            fontSize: 20,
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFFFDBA74),
                           ),
                         ),
-                        const Icon(
-                          LucideIcons.sun,
-                          size: 20,
-                          color: Color(0xFFFDBA74),
+                        const SizedBox(height: 8),
+                        Text(
+                          status.description,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.white54,
+                            height: 1.4,
+                          ),
                         ),
+                        Builder(builder: (context) {
+                          final weather = ref.watch(currentWeatherProvider).value;
+                          final settingsMap = ref.watch(settingsProvider).value;
+                          final currentSelection = ref.watch(selectedMonitorsProvider);
+
+                          if (weather == null || settingsMap == null || !isAutoAdapt) {
+                            return const SizedBox.shrink();
+                          }
+
+                          final settings = settingsMap[currentSelection.first] ?? settingsMap['all']!;
+                          if (!settings.isWeatherAdjustmentEnabled) {
+                            return const SizedBox.shrink();
+                          }
+
+                          final circadianService = ref.read(circadianServiceProvider);
+                          final now = DateTime.now();
+
+                          final baseBrightness = circadianService.calculateTargetBrightness(
+                            state.phases,
+                            state.sunElevation,
+                            now,
+                            curveSharpness: settings.curveSharpness,
+                            curvePoints: settings.curvePoints,
+                            weather: null,
+                            presetSensitivity: settings.activePreset.weatherSensitivity,
+                          );
+
+                          final adjustedBrightness = circadianService.calculateTargetBrightness(
+                            state.phases,
+                            state.sunElevation,
+                            now,
+                            curveSharpness: settings.curveSharpness,
+                            curvePoints: settings.curvePoints,
+                            weather: weather,
+                            presetSensitivity: settings.activePreset.weatherSensitivity,
+                          );
+
+                          if (baseBrightness <= 0 || adjustedBrightness >= baseBrightness) {
+                            return const SizedBox.shrink();
+                          }
+
+                          final reductionPercent =
+                              (((baseBrightness - adjustedBrightness) / baseBrightness) * 100)
+                                  .round();
+
+                          if (reductionPercent <= 0) return const SizedBox.shrink();
+
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 12.0),
+                            child: Row(
+                              children: [
+                                const Text('⛅', style: TextStyle(fontSize: 14)),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    l10n.weatherBrightnessReduction(reductionPercent),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF93C5FD),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      solarAsync.maybeWhen(
-                        data: (state) {
-                          final now = DateTime.now();
-                          if (now.isBefore(state.phases.sunrise)) {
-                            return l10n.remainingLower(
-                              timeService.formatCountdown(
-                                state.phases.sunrise.difference(now),
-                              ),
-                            );
-                          } else if (now.isBefore(state.phases.sunset)) {
-                            return l10n.activeLower(
-                              timeService.formatCountdown(
-                                state.phases.sunset.difference(now),
-                              ),
-                            );
-                          } else {
-                            return l10n.finished;
-                          }
-                        },
-                        orElse: () => l10n.calculatingLower,
-                      ),
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
+                  );
+                },
+                loading: () => GlassCard(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: const Color(0xFFFDBA74),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      solarAsync.maybeWhen(
-                        data: (state) {
-                          final now = DateTime.now();
-                          if (now.isBefore(state.phases.sunrise)) {
-                            final hours = state.phases.sunrise
-                                .difference(now)
-                                .inHours;
-                            return l10n.transitionNotice(hours);
-                          } else if (now.isBefore(state.phases.sunset)) {
-                            return l10n.goldenHourNotice;
-                          } else {
-                            return l10n.solarCycleEnded;
-                          }
-                        },
-                        orElse: () => l10n.updatingSolarData,
-                      ),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.white54,
-                      ),
+                  ),
+                ),
+                error: (e, _) => GlassCard(
+                  child: Center(
+                    child: Text(
+                      'Error: $e',
+                      style: const TextStyle(color: Colors.redAccent, fontSize: 10),
                     ),
-                  ],
+                  ),
                 ),
               ),
               const SizedBox(height: 16),

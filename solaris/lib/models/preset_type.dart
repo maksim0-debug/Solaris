@@ -1,11 +1,15 @@
 import 'package:fl_chart/fl_chart.dart';
 
 enum PresetType {
-  brightest,
-  bright,
-  dim,
-  dimmest,
-  custom;
+  brightest(0.3),
+  bright(0.6),
+  dim(0.9),
+  dimmest(1.0),
+  custom(1.0);
+
+  final double weatherSensitivity;
+
+  const PresetType(this.weatherSensitivity);
 
   String toJson() => name;
   static PresetType fromJson(String json) =>

@@ -152,6 +152,67 @@ class AppLocalizationsRu extends AppLocalizations {
   String get disabled => 'Выключено';
 
   @override
+  String get statusAdaptive => 'Адаптивный контроль';
+
+  @override
+  String get statusManual => 'Ручной режим';
+
+  @override
+  String get phaseDeepNight => 'ГЛУБОКАЯ НОЧЬ';
+
+  @override
+  String get phaseMorningSpike => 'РАССВЕТНЫЙ ПИК';
+
+  @override
+  String get phaseZenith => 'ЗЕНИТ';
+
+  @override
+  String get phaseGoldenHour => 'ЗОЛОТОЙ ЧАС';
+
+  @override
+  String get phaseTwilight => 'СУМЕРКИ';
+
+  @override
+  String get descDeepNightAuto =>
+      'Ночной цикл. Адаптивный контроль поддерживает минимальную яркость.';
+
+  @override
+  String get descDeepNightManual =>
+      'Глубокая ночь. Система в ручном режиме ожидания рассвета.';
+
+  @override
+  String get descMorningSpikeAuto =>
+      'Предрассветный пик. Яркость плавно растет к восходу.';
+
+  @override
+  String get descMorningSpikeManual =>
+      'Предрассветный подъем. Установлена фиксированная яркость.';
+
+  @override
+  String get descZenithAuto =>
+      'Зенит. Максимальная световая эффективность по расписанию.';
+
+  @override
+  String get descZenithManual =>
+      'Полный день. Вы используете ручные настройки яркости.';
+
+  @override
+  String get descGoldenHourAuto =>
+      'Золотой час. Спектр смещен к теплому 2700K для комфорта.';
+
+  @override
+  String get descGoldenHourManual =>
+      'Золотой час. Цветовая коррекция приостановлена.';
+
+  @override
+  String get descTwilightAuto =>
+      'Гражданские сумерки. Плавный переход к ночному режиму.';
+
+  @override
+  String get descTwilightManual =>
+      'Сумерки. Система в ручном режиме пониженной яркости.';
+
+  @override
   String get panelTemperature => 'Температура панели';
 
   @override
@@ -263,6 +324,18 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get autorunSubtitle =>
       'Автоматически запускать приложение при входе в Windows';
+
+  @override
+  String get weatherAdjustmentTitle => 'Влияние погоды';
+
+  @override
+  String get weatherAdjustmentSubtitle =>
+      'Снижает яркость в облачную или дождливую погоду';
+
+  @override
+  String weatherBrightnessReduction(int percent) {
+    return 'Погода: снижение яркости на $percent%';
+  }
 
   @override
   String get selectMonitor => 'Выберите монитор';
