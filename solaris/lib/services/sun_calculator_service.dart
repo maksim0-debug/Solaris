@@ -133,18 +133,8 @@ class SunCalculatorService {
       return CurrentDayPhase.deepNight;
     }
 
-    // Twilight zones
-    if (currentTime.isAfter(phases.civilTwilightBegin) &&
-        currentTime.isBefore(phases.sunrise)) {
-      return CurrentDayPhase.dawn;
-    }
-
-    if (currentTime.isAfter(phases.sunset) &&
-        currentTime.isBefore(phases.civilTwilightEnd)) {
-      return CurrentDayPhase.twilight;
-    }
-
-    // Golden Hour zones
+    // Golden Hour zones (Morning and Evening)
+    // Morning Golden Hour: -4 to +6 elevation
     if (currentTime.isAfter(phases.goldenHourMorning) &&
         currentTime.isBefore(phases.goldenHourMorningEnd)) {
       return CurrentDayPhase.goldenHour;
@@ -153,6 +143,17 @@ class SunCalculatorService {
     if (currentTime.isAfter(phases.goldenHourEvening) &&
         currentTime.isBefore(phases.goldenHourEveningEnd)) {
       return CurrentDayPhase.goldenHour;
+    }
+
+    // Twilight zones (Civil)
+    if (currentTime.isAfter(phases.civilTwilightBegin) &&
+        currentTime.isBefore(phases.sunrise)) {
+      return CurrentDayPhase.dawn;
+    }
+
+    if (currentTime.isAfter(phases.sunset) &&
+        currentTime.isBefore(phases.civilTwilightEnd)) {
+      return CurrentDayPhase.twilight;
     }
 
     // Zenith zone (2 hours around solar noon)
@@ -240,9 +241,9 @@ class SunCalculatorService {
       }
     }
 
-    // If all events passed today, we could calculate next day's dawn,
-    // but returning zero is acceptable for a single-day model.
-    return Duration.zero;
+    // If all events passed today, calculate time until next day's first event (civil twilight begin)
+    final nextDayDawn = phases.civilTwilightBegin.add(const Duration(days: 1));
+    return nextDayDawn.difference(currentTime);
   }
 
   /// Estimates clear-sky UV Index based on sun elevation using empirical approximations.

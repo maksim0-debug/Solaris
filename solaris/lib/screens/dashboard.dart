@@ -412,18 +412,21 @@ class _Header extends ConsumerWidget {
 
     solarAsync.whenData((state) {
       final now = DateTime.now();
-      if (now.isBefore(state.phases.sunrise)) {
-        final diff = state.phases.sunrise.difference(now);
-        goldenHourTime = l10n.comingIn(timeService.formatCountdown(diff));
-      } else if (now.isBefore(state.phases.sunset)) {
-        final diff = state.phases.sunset.difference(now);
-        goldenHourStatus = state.currentPhase == CurrentDayPhase.goldenHour
-            ? l10n.goldenHourActive
-            : l10n.goldenHour;
-        goldenHourTime = l10n.remaining(timeService.formatCountdown(diff));
-      } else {
+      final timeStr = timeService.formatCountdown(state.timeUntilNextEvent);
+
+      if (state.currentPhase == CurrentDayPhase.goldenHour) {
+        goldenHourStatus = l10n.goldenHourActive;
+        goldenHourTime = l10n.remaining(timeStr);
+      } else if (now.isBefore(state.phases.sunrise)) {
+        goldenHourStatus = l10n.goldenHour;
+        goldenHourTime = l10n.comingIn(timeStr);
+      } else if (now.isAfter(state.phases.sunset)) {
         goldenHourStatus = l10n.night;
         goldenHourTime = l10n.finished;
+      } else {
+        // broad daylight
+        goldenHourStatus = l10n.goldenHour;
+        goldenHourTime = l10n.comingIn(timeStr);
       }
     });
 
@@ -662,21 +665,21 @@ class _DashboardView extends ConsumerWidget {
                           solarAsync.maybeWhen(
                             data: (state) {
                               final now = DateTime.now();
-                              if (now.isBefore(state.phases.sunrise)) {
-                                return l10n.remainingLower(
-                                  timeService.formatCountdown(
-                                    state.phases.sunrise.difference(now),
-                                  ),
-                                );
-                              } else if (now.isBefore(state.phases.sunset)) {
-                                return l10n.activeLower(
-                                  timeService.formatCountdown(
-                                    state.phases.sunset.difference(now),
-                                  ),
-                                );
-                              } else {
+                              final timeStr = timeService.formatCountdown(
+                                state.timeUntilNextEvent,
+                              );
+
+                              if (now.isAfter(state.phases.civilTwilightEnd)) {
                                 return l10n.finished;
                               }
+
+                              // If we are in the middle of a phase, show "Time remaining"
+                              // If we are before the sun cycle starts, show "Coming in"
+                              if (now.isBefore(state.phases.civilTwilightBegin)) {
+                                return l10n.remainingLower(timeStr);
+                              }
+                              
+                              return l10n.remainingLower(timeStr);
                             },
                             orElse: () => l10n.calculatingLower,
                           ),

@@ -31,8 +31,6 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
 
-          const SizedBox(height: 24),
-
           // Chart Preview
           const _PresetSelector(),
           const SizedBox(height: 8),
@@ -87,87 +85,33 @@ class SettingsScreen extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.autorun,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white70,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            l10n.autorunSubtitle,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.white.withOpacity(0.3),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Switch(
-                      value: settingsAsync.maybeWhen(
-                        data: (map) => map['all']?.isAutorunEnabled ?? false,
-                        orElse: () => false,
-                      ), // Autorun is global-ish, use 'all'
-                      onChanged: (val) => ref
-                          .read(settingsProvider.notifier)
-                          .updateAutorun(val),
-                      activeColor: const Color(0xFFFDBA74),
-                    ),
-                  ],
+                _SettingsRow(
+                  title: l10n.autorun,
+                  subtitle: l10n.autorunSubtitle,
+                  value: settingsAsync.maybeWhen(
+                    data: (map) => map['all']?.isAutorunEnabled ?? false,
+                    orElse: () => false,
+                  ),
+                  onChanged: (val) => ref
+                      .read(settingsProvider.notifier)
+                      .updateAutorun(val),
                 ),
                 const SizedBox(height: 16),
                 const Divider(color: Colors.white10),
                 const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.weatherAdjustmentTitle,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white70,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            l10n.weatherAdjustmentSubtitle,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.white.withOpacity(0.3),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Switch(
-                      value: settingsAsync.maybeWhen(
-                        data: (map) =>
-                            map[selectedIds.firstOrNull ?? 'all']
-                                ?.isWeatherAdjustmentEnabled ??
-                            true,
-                        orElse: () => true,
-                      ),
-                      onChanged: (val) => ref
-                          .read(settingsProvider.notifier)
-                          .updateWeatherAdjustment(val),
-                      activeColor: const Color(0xFFFDBA74),
-                    ),
-                  ],
+                _SettingsRow(
+                  title: l10n.weatherAdjustmentTitle,
+                  subtitle: l10n.weatherAdjustmentSubtitle,
+                  value: settingsAsync.maybeWhen(
+                    data: (map) =>
+                        map[selectedIds.firstOrNull ?? 'all']
+                            ?.isWeatherAdjustmentEnabled ??
+                        true,
+                    orElse: () => true,
+                  ),
+                  onChanged: (val) => ref
+                      .read(settingsProvider.notifier)
+                      .updateWeatherAdjustment(val),
                 ),
               ],
             ),
@@ -206,46 +150,95 @@ class SettingsScreen extends ConsumerWidget {
   }
 }
 
-String _getTempPresetName(
-  BuildContext context,
-  TemperaturePresetType type,
-  AppLocalizations l10n,
-) {
-  switch (type) {
-    case TemperaturePresetType.coolest:
-      return l10n.tempCoolest;
-    case TemperaturePresetType.cool:
-      return l10n.tempCool;
-    case TemperaturePresetType.warm:
-      return l10n.tempWarm;
-    case TemperaturePresetType.warmest:
-      return l10n.tempWarmest;
-    case TemperaturePresetType.custom:
-      return l10n.tempCustom;
+extension TemperaturePresetTypeExtension on TemperaturePresetType {
+  String getName(AppLocalizations l10n) {
+    switch (this) {
+      case TemperaturePresetType.coolest:
+        return l10n.tempCoolest;
+      case TemperaturePresetType.cool:
+        return l10n.tempCool;
+      case TemperaturePresetType.warm:
+        return l10n.tempWarm;
+      case TemperaturePresetType.warmest:
+        return l10n.tempWarmest;
+      case TemperaturePresetType.custom:
+        return l10n.tempCustom;
+    }
   }
 }
 
-String _getPresetName(
-  BuildContext context,
-  PresetType type,
-  AppLocalizations l10n,
-) {
-  switch (type) {
-    case PresetType.brightest:
-      return l10n.presetBrightest;
-    case PresetType.bright:
-      return l10n.presetBright;
-    case PresetType.dim:
-      return l10n.presetDim;
-    case PresetType.dimmest:
-      return l10n.presetDimmest;
-    case PresetType.custom:
-      return l10n.presetCustom;
+extension PresetTypeExtension on PresetType {
+  String getName(AppLocalizations l10n) {
+    switch (this) {
+      case PresetType.brightest:
+        return l10n.presetBrightest;
+      case PresetType.bright:
+        return l10n.presetBright;
+      case PresetType.dim:
+        return l10n.presetDim;
+      case PresetType.dimmest:
+        return l10n.presetDimmest;
+      case PresetType.custom:
+        return l10n.presetCustom;
+    }
   }
 }
 
 class _PresetSelector extends ConsumerWidget {
   const _PresetSelector();
+
+  Widget _buildSelector<T>({
+    required BuildContext context,
+    required List<T> values,
+    required T activeValue,
+    required String Function(T) getName,
+    required void Function(T) onSelected,
+    required Widget resetButton,
+  }) {
+    return GlassCard(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: values.map((type) {
+                  final isActive = type == activeValue;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: TextButton(
+                      onPressed: () => onSelected(type),
+                      style: TextButton.styleFrom(
+                        backgroundColor: isActive
+                            ? const Color(0xFFFDBA74).withOpacity(0.1)
+                            : Colors.transparent,
+                        foregroundColor: isActive
+                            ? const Color(0xFFFDBA74)
+                            : Colors.white24,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(
+                            color: isActive
+                                ? const Color(0xFFFDBA74).withOpacity(0.5)
+                                : Colors.transparent,
+                          ),
+                        ),
+                      ),
+                      child: Text(getName(type)),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          resetButton,
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -258,54 +251,15 @@ class _PresetSelector extends ConsumerWidget {
       return tempAsync.maybeWhen(
         data: (tempMap) {
           final settings = tempMap[selectedIds.firstOrNull ?? 'all'] ?? tempMap['all']!;
-          final activePreset = settings.activePreset;
-
-          return GlassCard(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    child: Row(
-                      children: TemperaturePresetType.values.map((type) {
-                        final isActive = type == activePreset;
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: TextButton(
-                            onPressed: () => ref
-                                .read(temperatureSettingsProvider.notifier)
-                                .setPreset(type),
-                            style: TextButton.styleFrom(
-                              backgroundColor: isActive
-                                  ? const Color(0xFFFDBA74).withOpacity(0.1)
-                                  : Colors.transparent,
-                              foregroundColor: isActive
-                                  ? const Color(0xFFFDBA74)
-                                  : Colors.white24,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                side: BorderSide(
-                                  color: isActive
-                                      ? const Color(0xFFFDBA74).withOpacity(0.5)
-                                      : Colors.transparent,
-                                ),
-                              ),
-                            ),
-                            child: Text(
-                              _getTempPresetName(context, type, l10n),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                _ResetTempButton(settings: settings),
-              ],
-            ),
+          return _buildSelector<TemperaturePresetType>(
+            context: context,
+            values: TemperaturePresetType.values,
+            activeValue: settings.activePreset,
+            getName: (type) => type.getName(l10n),
+            onSelected: (type) => ref
+                .read(temperatureSettingsProvider.notifier)
+                .setPreset(type),
+            resetButton: _ResetTempButton(settings: settings),
           );
         },
         orElse: () => const SizedBox(),
@@ -316,52 +270,15 @@ class _PresetSelector extends ConsumerWidget {
         data: (settingsMap) {
           final settings =
               settingsMap[selectedIds.firstOrNull ?? 'all'] ?? settingsMap['all']!;
-          final activePreset = settings.activePreset;
-
-          return GlassCard(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    child: Row(
-                      children: PresetType.values.map((type) {
-                        final isActive = type == activePreset;
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: TextButton(
-                            onPressed: () => ref
-                                .read(settingsProvider.notifier)
-                                .setActivePreset(type),
-                            style: TextButton.styleFrom(
-                              backgroundColor: isActive
-                                  ? const Color(0xFFFDBA74).withOpacity(0.1)
-                                  : Colors.transparent,
-                              foregroundColor: isActive
-                                  ? const Color(0xFFFDBA74)
-                                  : Colors.white24,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                side: BorderSide(
-                                  color: isActive
-                                      ? const Color(0xFFFDBA74).withOpacity(0.5)
-                                      : Colors.transparent,
-                                ),
-                              ),
-                            ),
-                            child: Text(_getPresetName(context, type, l10n)),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                _ResetButton(settings: settings),
-              ],
-            ),
+          return _buildSelector<PresetType>(
+            context: context,
+            values: PresetType.values,
+            activeValue: settings.activePreset,
+            getName: (type) => type.getName(l10n),
+            onSelected: (type) => ref
+                .read(settingsProvider.notifier)
+                .setActivePreset(type),
+            resetButton: _ResetButton(settings: settings),
           );
         },
         orElse: () => const SizedBox(),
@@ -568,6 +485,57 @@ class _TempToggleCard extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SettingsRow extends StatelessWidget {
+  const _SettingsRow({
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String title;
+  final String subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white70,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.white.withOpacity(0.3),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Switch(
+          value: value,
+          onChanged: onChanged,
+          activeColor: const Color(0xFFFDBA74),
+        ),
+      ],
     );
   }
 }
