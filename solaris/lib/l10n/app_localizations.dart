@@ -380,6 +380,12 @@ abstract class AppLocalizations {
   /// **'DEEP NIGHT'**
   String get phaseDeepNight;
 
+  /// No description provided for @phaseDawn.
+  ///
+  /// In en, this message translates to:
+  /// **'DAWN'**
+  String get phaseDawn;
+
   /// No description provided for @phaseMorningSpike.
   ///
   /// In en, this message translates to:
@@ -415,6 +421,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Deep night. System is in manual mode waiting for sunrise.'**
   String get descDeepNightManual;
+
+  /// No description provided for @descDawnAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Civil twilight. Smooth transition to day mode.'**
+  String get descDawnAuto;
+
+  /// No description provided for @descDawnManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Dawn. System is in manual mode waiting for sunrise.'**
+  String get descDawnManual;
 
   /// No description provided for @descMorningSpikeAuto.
   ///

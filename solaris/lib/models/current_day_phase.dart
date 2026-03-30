@@ -3,6 +3,9 @@ enum CurrentDayPhase {
   /// Middle of the night.
   deepNight,
 
+  /// Dawn (civil twilight before sunrise).
+  dawn,
+
   /// Morning rise (dawn to sunrise).
   morningSpike,
 

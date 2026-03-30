@@ -167,6 +167,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get phaseDeepNight => 'ГЛУБОКАЯ НОЧЬ';
 
   @override
+  String get phaseDawn => 'РАССВЕТ';
+
+  @override
   String get phaseMorningSpike => 'РАССВЕТНЫЙ ПИК';
 
   @override
@@ -185,6 +188,14 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get descDeepNightManual =>
       'Глубокая ночь. Система в ручном режиме ожидания рассвета.';
+
+  @override
+  String get descDawnAuto =>
+      'Гражданские сумерки. Плавный переход к дневному режиму.';
+
+  @override
+  String get descDawnManual =>
+      'Рассвет. Система в ручном режиме ожидания солнца.';
 
   @override
   String get descMorningSpikeAuto =>

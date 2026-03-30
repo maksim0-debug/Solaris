@@ -167,6 +167,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get phaseDeepNight => 'DEEP NIGHT';
 
   @override
+  String get phaseDawn => 'DAWN';
+
+  @override
   String get phaseMorningSpike => 'MORNING SPIKE';
 
   @override
@@ -185,6 +188,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get descDeepNightManual =>
       'Deep night. System is in manual mode waiting for sunrise.';
+
+  @override
+  String get descDawnAuto => 'Civil twilight. Smooth transition to day mode.';
+
+  @override
+  String get descDawnManual =>
+      'Dawn. System is in manual mode waiting for sunrise.';
 
   @override
   String get descMorningSpikeAuto =>

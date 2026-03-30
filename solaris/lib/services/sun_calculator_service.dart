@@ -134,10 +134,13 @@ class SunCalculatorService {
     }
 
     // Twilight zones
-    if ((currentTime.isAfter(phases.civilTwilightBegin) &&
-            currentTime.isBefore(phases.sunrise)) ||
-        (currentTime.isAfter(phases.sunset) &&
-            currentTime.isBefore(phases.civilTwilightEnd))) {
+    if (currentTime.isAfter(phases.civilTwilightBegin) &&
+        currentTime.isBefore(phases.sunrise)) {
+      return CurrentDayPhase.dawn;
+    }
+
+    if (currentTime.isAfter(phases.sunset) &&
+        currentTime.isBefore(phases.civilTwilightEnd)) {
       return CurrentDayPhase.twilight;
     }
 
