@@ -172,5 +172,7 @@
   "blueLightFilter": "Адаптивная цветовая температура",
   "blueLightFilterSubtitle": "Автоматически делает цвета теплее вечером для снижения нагрузки на глаза",
   "chartModeBrightness": "Яркость",
-  "chartModeTemperature": "Температура"
+  "chartModeTemperature": "Температура",
+  "disabledInSettings": "Отключено в настройках",
+  "enable": "Включить"
 }

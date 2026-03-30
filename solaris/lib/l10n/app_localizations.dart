@@ -787,6 +787,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Temperature'**
   String get chartModeTemperature;
+
+  /// No description provided for @disabledInSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled in settings'**
+  String get disabledInSettings;
+
+  /// No description provided for @enable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable'**
+  String get enable;
 }
 
 class _AppLocalizationsDelegate

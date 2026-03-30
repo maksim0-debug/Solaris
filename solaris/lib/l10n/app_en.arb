@@ -172,5 +172,7 @@
   "blueLightFilter": "Color Temperature (Blue Light Filter)",
   "blueLightFilterSubtitle": "Automatically warm screen colors at night to reduce eye strain",
   "chartModeBrightness": "Brightness",
-  "chartModeTemperature": "Temperature"
+  "chartModeTemperature": "Temperature",
+  "disabledInSettings": "Disabled in settings",
+  "enable": "Enable"
 }

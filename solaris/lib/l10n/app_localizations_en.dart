@@ -391,4 +391,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chartModeTemperature => 'Temperature';
+
+  @override
+  String get disabledInSettings => 'Disabled in settings';
+
+  @override
+  String get enable => 'Enable';
 }

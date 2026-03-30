@@ -504,6 +504,7 @@ class _DashboardView extends ConsumerWidget {
     final currentTemperature = ref.watch(currentTemperatureProvider);
     final bool isAutoBright = ref.watch<bool>(autoBrightnessAdjustmentProvider);
     final bool isAutoTemp = ref.watch<bool>(autoTemperatureAdjustmentProvider);
+    final bool isColorTempEnabled = ref.watch(isColorTemperatureEnabledProvider);
 
     return Row(
       children: [
@@ -816,100 +817,136 @@ class _DashboardView extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => ref
-                          .read(autoBrightnessAdjustmentProvider.notifier)
-                          .toggle(),
-                      borderRadius: BorderRadius.circular(16),
-                      child: GlassCard(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              LucideIcons.sunMedium,
-                              size: 20,
-                              color: isAutoBright
-                                  ? const Color(0xFFFDBA74)
-                                  : Colors.white30,
-                            ),
-                            const SizedBox(height: 12),
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                l10n.autoBrightness,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: isAutoBright
-                                      ? Colors.white
-                                      : Colors.white30,
-                                ),
-                                maxLines: 1,
-                              ),
-                            ),
-                            Text(
-                              isAutoBright ? l10n.active : l10n.disabled,
-                              style: TextStyle(
-                                fontSize: 10,
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => ref
+                            .read(autoBrightnessAdjustmentProvider.notifier)
+                            .toggle(),
+                        borderRadius: BorderRadius.circular(16),
+                        child: GlassCard(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                LucideIcons.sunMedium,
+                                size: 20,
                                 color: isAutoBright
                                     ? const Color(0xFFFDBA74)
                                     : Colors.white30,
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => ref
-                          .read(autoTemperatureAdjustmentProvider.notifier)
-                          .toggle(),
-                      borderRadius: BorderRadius.circular(16),
-                      child: GlassCard(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              LucideIcons.thermometer,
-                              size: 20,
-                              color: isAutoTemp
-                                  ? const Color(0xFFFDBA74)
-                                  : Colors.white30,
-                            ),
-                            const SizedBox(height: 12),
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                l10n.autoTemperature,
+                              const SizedBox(height: 12),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  l10n.autoBrightness,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: isAutoBright
+                                        ? Colors.white
+                                        : Colors.white30,
+                                  ),
+                                  maxLines: 1,
+                                ),
+                              ),
+                              Text(
+                                isAutoBright ? l10n.active : l10n.disabled,
                                 style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: isAutoTemp
-                                      ? Colors.white
+                                  fontSize: 10,
+                                  color: isAutoBright
+                                      ? const Color(0xFFFDBA74)
                                       : Colors.white30,
                                 ),
-                                maxLines: 1,
                               ),
-                            ),
-                            Text(
-                              isAutoTemp ? l10n.active : l10n.disabled,
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: isAutoTemp
-                                    ? const Color(0xFFFDBA74)
-                                    : Colors.white30,
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => ref
+                            .read(autoTemperatureAdjustmentProvider.notifier)
+                            .toggle(),
+                        borderRadius: BorderRadius.circular(16),
+                        child: GlassCard(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                LucideIcons.thermometer,
+                                size: 20,
+                                color: !isColorTempEnabled
+                                    ? Colors.white10
+                                    : isAutoTemp
+                                        ? const Color(0xFFFDBA74)
+                                        : Colors.white30,
+                              ),
+                              const SizedBox(height: 12),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  l10n.autoTemperature,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: !isColorTempEnabled
+                                        ? Colors.white10
+                                        : isAutoTemp
+                                            ? Colors.white
+                                            : Colors.white30,
+                                  ),
+                                  maxLines: 1,
+                                ),
+                              ),
+                              if (isColorTempEnabled) ...[
+                                Text(
+                                  isAutoTemp ? l10n.active : l10n.disabled,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: isAutoTemp
+                                        ? const Color(0xFFFDBA74)
+                                        : Colors.white30,
+                                  ),
+                                ),
+                              ] else ...[
+                                Text(
+                                  l10n.disabledInSettings,
+                                  style: const TextStyle(
+                                    fontSize: 9,
+                                    color: Colors.white24,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                ),
+                                const SizedBox(height: 4),
+                                MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: GestureDetector(
+                                    onTap: () => ref
+                                        .read(isColorTemperatureEnabledProvider.notifier)
+                                        .set(true),
+                                    child: Text(
+                                      l10n.enable.toUpperCase(),
+                                      style: const TextStyle(
+                                        fontSize: 8,
+                                        color: Color(0xFFFDBA74),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               GlassCard(

@@ -388,4 +388,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get chartModeTemperature => 'Температура';
+
+  @override
+  String get disabledInSettings => 'Отключено в настройках';
+
+  @override
+  String get enable => 'Включить';
 }
