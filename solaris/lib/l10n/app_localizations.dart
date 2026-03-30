@@ -871,6 +871,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Test Sync'**
   String get testSync;
+
+  /// No description provided for @sleep.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep'**
+  String get sleep;
+
+  /// No description provided for @sleepSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze your sleep regimes and sync data'**
+  String get sleepSubtitle;
+
+  /// No description provided for @googleFitSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Fit Sync'**
+  String get googleFitSync;
+
+  /// No description provided for @connectedStatusSmall.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get connectedStatusSmall;
+
+  /// No description provided for @lastFetchLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Last fetch:'**
+  String get lastFetchLabel;
+
+  /// No description provided for @never.
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get never;
+
+  /// No description provided for @syncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Now'**
+  String get syncNow;
+
+  /// No description provided for @hoursAbbreviation.
+  ///
+  /// In en, this message translates to:
+  /// **'h'**
+  String get hoursAbbreviation;
+
+  /// No description provided for @minutesAbbreviation.
+  ///
+  /// In en, this message translates to:
+  /// **'m'**
+  String get minutesAbbreviation;
+
+  /// No description provided for @sleepRegime.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep Regime'**
+  String get sleepRegime;
+
+  /// No description provided for @scatter.
+  ///
+  /// In en, this message translates to:
+  /// **'Scatter'**
+  String get scatter;
+
+  /// No description provided for @daysCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} days'**
+  String daysCount(int count);
+
+  /// No description provided for @sleepInDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep-in date'**
+  String get sleepInDate;
+
+  /// No description provided for @detectedRegimes.
+  ///
+  /// In en, this message translates to:
+  /// **'Detected Regimes'**
+  String get detectedRegimes;
+
+  /// No description provided for @outdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Outdated'**
+  String get outdated;
 }
 
 class _AppLocalizationsDelegate

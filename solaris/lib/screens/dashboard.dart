@@ -16,6 +16,7 @@ import 'package:solaris/widgets/sun_path_painter.dart';
 import 'package:solaris/models/current_day_phase.dart';
 import 'package:solaris/screens/location_screen.dart';
 import 'package:solaris/screens/settings_screen.dart';
+import 'package:solaris/screens/sleep_screen.dart';
 import 'package:solaris/providers/lifecycle_provider.dart';
 import 'package:solaris/utils/status_helper.dart';
 
@@ -176,6 +177,14 @@ class _Sidebar extends ConsumerWidget {
             onTap: () => ref
                 .read(activeScreenProvider.notifier)
                 .setScreen(AppScreen.location),
+          ),
+          _SidebarItem(
+            icon: LucideIcons.moon,
+            label: l10n.sleep,
+            isActive: ref.watch(activeScreenProvider) == AppScreen.sleep,
+            onTap: () => ref
+                .read(activeScreenProvider.notifier)
+                .setScreen(AppScreen.sleep),
           ),
         ],
       ),
@@ -487,6 +496,8 @@ class _MainView extends ConsumerWidget {
         return const _DashboardView();
       case AppScreen.schedule:
         return const ScheduleScreen();
+      case AppScreen.sleep:
+        return const SleepScreen();
       case AppScreen.settings:
         return const SettingsScreen();
       case AppScreen.location:

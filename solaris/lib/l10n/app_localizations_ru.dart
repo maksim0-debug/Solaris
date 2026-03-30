@@ -433,4 +433,52 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get testSync => 'Проверить синхронизацию';
+
+  @override
+  String get sleep => 'Сон';
+
+  @override
+  String get sleepSubtitle =>
+      'Анализируйте режимы сна и синхронизируйте данные';
+
+  @override
+  String get googleFitSync => 'Синхронизация Google Fit';
+
+  @override
+  String get connectedStatusSmall => 'Подключено';
+
+  @override
+  String get lastFetchLabel => 'Последнее обновление:';
+
+  @override
+  String get never => 'Никогда';
+
+  @override
+  String get syncNow => 'Синхронизировать';
+
+  @override
+  String get hoursAbbreviation => 'ч';
+
+  @override
+  String get minutesAbbreviation => 'м';
+
+  @override
+  String get sleepRegime => 'Режим сна';
+
+  @override
+  String get scatter => 'Разброс';
+
+  @override
+  String daysCount(int count) {
+    return '$count дн.';
+  }
+
+  @override
+  String get sleepInDate => 'Дата засыпания';
+
+  @override
+  String get detectedRegimes => 'Обнаруженные режимы';
+
+  @override
+  String get outdated => 'Устарело';
 }

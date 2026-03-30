@@ -435,4 +435,51 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get testSync => 'Test Sync';
+
+  @override
+  String get sleep => 'Sleep';
+
+  @override
+  String get sleepSubtitle => 'Analyze your sleep regimes and sync data';
+
+  @override
+  String get googleFitSync => 'Google Fit Sync';
+
+  @override
+  String get connectedStatusSmall => 'Connected';
+
+  @override
+  String get lastFetchLabel => 'Last fetch:';
+
+  @override
+  String get never => 'Never';
+
+  @override
+  String get syncNow => 'Sync Now';
+
+  @override
+  String get hoursAbbreviation => 'h';
+
+  @override
+  String get minutesAbbreviation => 'm';
+
+  @override
+  String get sleepRegime => 'Sleep Regime';
+
+  @override
+  String get scatter => 'Scatter';
+
+  @override
+  String daysCount(int count) {
+    return '$count days';
+  }
+
+  @override
+  String get sleepInDate => 'Sleep-in date';
+
+  @override
+  String get detectedRegimes => 'Detected Regimes';
+
+  @override
+  String get outdated => 'Outdated';
 }

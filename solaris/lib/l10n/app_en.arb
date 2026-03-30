@@ -186,5 +186,27 @@
   "googleFitDisconnected": "Not Connected",
   "lastSyncSuccess": "Last sync successful",
   "lastSyncFailed": "Last sync failed",
-  "testSync": "Test Sync"
+  "testSync": "Test Sync",
+  "sleep": "Sleep",
+  "sleepSubtitle": "Analyze your sleep regimes and sync data",
+  "googleFitSync": "Google Fit Sync",
+  "connectedStatusSmall": "Connected",
+  "lastFetchLabel": "Last fetch:",
+  "never": "Never",
+  "syncNow": "Sync Now",
+  "hoursAbbreviation": "h",
+  "minutesAbbreviation": "m",
+  "sleepRegime": "Sleep Regime",
+  "scatter": "Scatter",
+  "daysCount": "{count} days",
+  "@daysCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sleepInDate": "Sleep-in date",
+  "detectedRegimes": "Detected Regimes",
+  "outdated": "Outdated"
 }

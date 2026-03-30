@@ -120,10 +120,6 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
 
-          // Sleep Data Section
-          const _SleepDataSection(),
-          const SizedBox(height: 24),
-
           // Info Card
           GlassCard(
             padding: const EdgeInsets.all(20),

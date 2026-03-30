@@ -186,5 +186,27 @@
   "googleFitDisconnected": "Не подключено",
   "lastSyncSuccess": "Последняя синхронизация: успешно",
   "lastSyncFailed": "Последняя синхронизация: ошибка",
-  "testSync": "Проверить синхронизацию"
+  "testSync": "Проверить синхронизацию",
+  "sleep": "Сон",
+  "sleepSubtitle": "Анализируйте режимы сна и синхронизируйте данные",
+  "googleFitSync": "Синхронизация Google Fit",
+  "connectedStatusSmall": "Подключено",
+  "lastFetchLabel": "Последнее обновление:",
+  "never": "Никогда",
+  "syncNow": "Синхронизировать",
+  "hoursAbbreviation": "ч",
+  "minutesAbbreviation": "м",
+  "sleepRegime": "Режим сна",
+  "scatter": "Разброс",
+  "daysCount": "{count} дн.",
+  "@daysCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sleepInDate": "Дата засыпания",
+  "detectedRegimes": "Обнаруженные режимы",
+  "outdated": "Устарело"
 }

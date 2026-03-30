@@ -321,7 +321,7 @@ final selectedMonitorsProvider =
       SelectedMonitorsNotifier.new,
     );
 
-enum AppScreen { dashboard, schedule, settings, location }
+enum AppScreen { dashboard, schedule, sleep, settings, location }
 
 class ActiveScreenNotifier extends Notifier<AppScreen> {
   @override

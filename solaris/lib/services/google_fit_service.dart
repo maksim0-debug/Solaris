@@ -91,9 +91,42 @@ class GoogleFitService {
     required DateTime startTime,
     required DateTime endTime,
   }) async {
-    if (_fitnessApi == null) {
+    if (_fitnessApi == null || _client == null) {
       final initialized = await initialize();
       if (!initialized) return null;
+    }
+
+    // Refresh token if expired
+    try {
+      final credentials = _client!.credentials;
+      if (credentials.accessToken.expiry.isBefore(DateTime.now())) {
+        debugPrint('Google Fit token expired, attempting to refresh...');
+        final clientId = ClientId(
+          dotenv.get('GOOGLE_CLIENT_ID'),
+          dotenv.get('GOOGLE_CLIENT_SECRET'),
+        );
+        
+        // Use refreshCredentials instead of refreshAuthenticatedClient 
+        // as the later isn't a top-level function in this context
+        final refreshedCredentials = await refreshCredentials(
+          clientId,
+          credentials,
+          http.Client(),
+        );
+
+        _client = authenticatedClient(http.Client(), refreshedCredentials);
+        _fitnessApi = FitnessApi(_client!);
+        
+        await _storage.save(
+          _tokenFilename,
+          jsonEncode(refreshedCredentials.toJson()),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error refreshing Google Fit token: $e');
+      // If refresh fails, sign out and let user re-connect
+      await signOut();
+      return null;
     }
 
     try {
@@ -105,6 +138,9 @@ class GoogleFitService {
       return response.session;
     } catch (e) {
       debugPrint('Error fetching sleep sessions: $e');
+      if (e.toString().contains('invalid_token') || e.toString().contains('401')) {
+        await signOut();
+      }
       return null;
     }
   }
