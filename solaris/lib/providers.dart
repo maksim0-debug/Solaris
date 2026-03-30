@@ -14,12 +14,16 @@ import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/models/solar_state.dart';
 import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/models/solar_phase_model.dart';
+import 'package:solaris/models/smart_circadian_data.dart';
+import 'package:solaris/services/smart_circadian_service.dart';
+import 'package:solaris/providers/sleep_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:solaris/services/storage_service.dart';
 import 'package:solaris/models/location_settings.dart' as model;
+import 'package:solaris/models/temperature_state.dart';
 import 'package:solaris/models/preset_type.dart';
 import 'package:solaris/providers/lifecycle_provider.dart';
 
@@ -30,6 +34,72 @@ final monitorServiceProvider = Provider((ref) => MonitorService());
 final circadianServiceProvider = Provider((ref) => CircadianService());
 final brightnessServiceProvider = Provider((ref) => BrightnessService());
 final storageServiceProvider = Provider((ref) => StorageService());
+final smartCircadianServiceProvider = Provider((ref) => SmartCircadianService());
+
+final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((ref, monitorId) {
+  final sleepState = ref.watch(sleepProvider);
+  final service = ref.watch(smartCircadianServiceProvider);
+  final settingsAsync = ref.watch(settingsProvider);
+  final solarStateAsync = ref.watch(solarStateStreamProvider);
+  
+  // Use 'all' as fallback if monitorId not found
+  final settings = settingsAsync.value;
+  if (settings == null) return const SmartCircadianData.neutral();
+  
+  final monitorSettings = settings[monitorId] ?? settings['all'] ?? SettingsState();
+  if (sleepState.isLoading && sleepState.sessions.isEmpty) {
+    return const SmartCircadianData.neutral();
+  }
+
+
+  return solarStateAsync.maybeWhen(
+    data: (solar) => service.calculateSmartAdjustments(
+      sleepState: sleepState,
+      now: DateTime.now(),
+      astronomicalSunrise: solar.phases.sunrise,
+      useSleepDebt: monitorSettings.isSleepDebtEnabled && monitorSettings.isSleepDebtMasterEnabled,
+      useSleepPressure: monitorSettings.isSleepPressureEnabled && monitorSettings.isSleepPressureMasterEnabled,
+      useTimeShift: monitorSettings.isTimeShiftEnabled && monitorSettings.isTimeShiftMasterEnabled,
+      useWindDown: monitorSettings.isWindDownEnabled && monitorSettings.isWindDownMasterEnabled,
+    ),
+    orElse: () => const SmartCircadianData.neutral(),
+  );
+});
+
+final smartCircadianTemperatureDataProvider = Provider.family<SmartCircadianData, String>((ref, monitorId) {
+  final sleepState = ref.watch(sleepProvider);
+  final service = ref.watch(smartCircadianServiceProvider);
+  final tempSettingsAsync = ref.watch(temperatureSettingsProvider);
+  final solarStateAsync = ref.watch(solarStateStreamProvider);
+  
+  final settings = tempSettingsAsync.value;
+  if (settings == null) return const SmartCircadianData.neutral();
+  
+  final monitorSettings = settings[monitorId] ?? settings['all'] ?? TemperatureState();
+  if (sleepState.isLoading && sleepState.sessions.isEmpty) {
+    return const SmartCircadianData.neutral();
+  }
+
+
+  final globalSettingsAsync = ref.watch(settingsProvider);
+  final globalSettings = globalSettingsAsync.maybeWhen(
+    data: (map) => map[monitorId] ?? map['all'] ?? SettingsState(),
+    orElse: () => SettingsState(),
+  );
+
+  return solarStateAsync.maybeWhen(
+    data: (solar) => service.calculateSmartAdjustments(
+      sleepState: sleepState,
+      now: DateTime.now(),
+      astronomicalSunrise: solar.phases.sunrise,
+      useSleepDebt: monitorSettings.isSleepDebtEnabled && globalSettings.isSleepDebtMasterEnabled,
+      useSleepPressure: monitorSettings.isSleepPressureEnabled && globalSettings.isSleepPressureMasterEnabled,
+      useTimeShift: monitorSettings.isTimeShiftEnabled && globalSettings.isTimeShiftMasterEnabled,
+      useWindDown: monitorSettings.isWindDownEnabled && globalSettings.isWindDownMasterEnabled,
+    ),
+    orElse: () => const SmartCircadianData.neutral(),
+  );
+});
 
 // Провайдер для SharedPreferences (переопределяется в main.dart)
 final sharedPreferencesProvider = Provider<SharedPreferences?>((ref) => null);
@@ -525,6 +595,63 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     _updateSettings(ids, current.copyWith(isAutoBrightnessEnabled: enabled));
   }
 
+  void updateSmartCircadian(bool enabled) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(ids, current.copyWith(isSmartCircadianEnabled: enabled));
+    
+    // Sync with temperature settings
+    ref.read(temperatureSettingsProvider.notifier).updateSmartCircadian(enabled);
+  }
+
+  void updateWindDownMaster(bool enabled) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(ids, current.copyWith(isWindDownMasterEnabled: enabled));
+  }
+
+  void updateTimeShiftMaster(bool enabled) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(ids, current.copyWith(isTimeShiftMasterEnabled: enabled));
+  }
+
+  void updateSleepPressureMaster(bool enabled) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(ids, current.copyWith(isSleepPressureMasterEnabled: enabled));
+  }
+
+  void updateSleepDebtMaster(bool enabled) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(ids, current.copyWith(isSleepDebtMasterEnabled: enabled));
+  }
+
+  void updateSleepDebt(bool enabled) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(ids, current.copyWith(isSleepDebtEnabled: enabled));
+  }
+
+  void updateSleepPressure(bool enabled) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(ids, current.copyWith(isSleepPressureEnabled: enabled));
+  }
+
+  void updateTimeShift(bool enabled) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(ids, current.copyWith(isTimeShiftEnabled: enabled));
+  }
+
+  void updateWindDown(bool enabled) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(ids, current.copyWith(isWindDownEnabled: enabled));
+  }
+
   void updateCurvePoints(List<FlSpot> points) {
     final sortedPoints = List<FlSpot>.from(points)
       ..sort((a, b) => a.x.compareTo(b.x));
@@ -608,7 +735,6 @@ class CurrentBrightnessNotifier extends Notifier<double> {
 
       return solarStateAsync.maybeWhen(
         data: (state) {
-          // Return brightness for the FIRST selected monitor in dashboard
           return settingsAsync.maybeWhen(
             data: (settingsMap) {
               final firstId = currentSelection.firstOrNull ?? 'all';
@@ -619,9 +745,35 @@ class CurrentBrightnessNotifier extends Notifier<double> {
                 return ref.watch(manualBrightnessProvider);
               }
 
+              final smartData = selectedSettings.isSmartCircadianEnabled
+                  ? ref.watch(smartCircadianDataProvider(firstId))
+                  : const SmartCircadianData.neutral();
+
+              // Calculate Bio-Morning Shift (Shifted Elevation)
+              double effectiveElevation = state.sunElevation;
+              if (selectedSettings.isSmartCircadianEnabled &&
+                  smartData.timeOffset != Duration.zero) {
+                final locationAsync = ref.read(effectiveLocationProvider);
+                final pos = locationAsync.value;
+                if (pos != null) {
+                  final sunService = ref.read(sunCalculatorServiceProvider);
+                  final shiftedTime = DateTime.now().subtract(smartData.timeOffset);
+                  effectiveElevation = sunService.getSunElevation(
+                    pos.latitude,
+                    pos.longitude,
+                    shiftedTime,
+                  );
+
+                  // Blinding Protection
+                  if (state.sunElevation < 0 && effectiveElevation > 10) {
+                    effectiveElevation = effectiveElevation.clamp(-20.0, 10.0);
+                  }
+                }
+              }
+
               final target = circadianService.calculateTargetBrightness(
                 state.phases,
-                state.sunElevation,
+                effectiveElevation,
                 DateTime.now(),
                 curveSharpness: selectedSettings.curveSharpness,
                 curvePoints: selectedSettings.curvePoints,
@@ -630,6 +782,7 @@ class CurrentBrightnessNotifier extends Notifier<double> {
                     : null,
                 presetSensitivity:
                     selectedSettings.activePreset.weatherSensitivity,
+                smartData: smartData,
               );
               _saveBrightness(target);
               return target;
@@ -665,24 +818,22 @@ final currentBrightnessProvider =
 /// It listens to solar state and applies brightness updates to hardware.
 /// If the app is minimized, it skips UI state updates to save resources.
 final circadianAdjustmentProvider = Provider<void>((ref) {
-  // We don't watch the global toggles anymore because we handle each monitor separately.
-  // Instead, we watch the underlying settings streams.
-  
+  // Watch all required providers to ensure consistency and immediate reaction
   final solarStateAsync = ref.watch(solarStateStreamProvider);
+  final settingsAsync = ref.watch(settingsProvider);
+  final tempSettingsAsync = ref.watch(temperatureSettingsProvider);
+  final monitorsAsync = ref.watch(monitorListProvider);
   final visibility = ref.watch(appLifecycleProvider);
   final weatherAsync = ref.watch(currentWeatherProvider);
+  
+  final circadianService = ref.read(circadianServiceProvider);
+  final brightnessService = ref.read(brightnessServiceProvider);
+  final tempService = ref.read(temperatureServiceProvider);
+  final monitorService = ref.read(monitorServiceProvider);
+  final isTempEnabled = ref.read(isColorTemperatureEnabledProvider);
+  final monitorListNotifier = ref.read(monitorListProvider.notifier);
 
   solarStateAsync.whenData((state) {
-    final monitorsAsync = ref.read(monitorListProvider);
-    final settingsAsync = ref.read(settingsProvider);
-    final tempSettingsAsync = ref.read(temperatureSettingsProvider);
-    final circadianService = ref.read(circadianServiceProvider);
-    final brightnessService = ref.read(brightnessServiceProvider);
-    final tempService = ref.read(temperatureServiceProvider);
-    final monitorService = ref.read(monitorServiceProvider);
-    final isTempEnabled = ref.read(isColorTemperatureEnabledProvider);
-    final monitorListNotifier = ref.read(monitorListProvider.notifier);
-
     monitorsAsync.whenData((monitors) {
       settingsAsync.whenData((settingsMap) {
         tempSettingsAsync.whenData((tempSettingsMap) {
@@ -694,9 +845,33 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
 
             // Calculate and Apply Brightness
             if (settings.isAutoBrightnessEnabled) {
+              final smartData = settings.isSmartCircadianEnabled
+                  ? ref.read(smartCircadianDataProvider(monitor.deviceName))
+                  : const SmartCircadianData.neutral();
+
+              double effectiveElevation = state.sunElevation;
+              if (settings.isSmartCircadianEnabled &&
+                  smartData.timeOffset != Duration.zero) {
+                final locationAsync = ref.read(effectiveLocationProvider);
+                final pos = locationAsync.value;
+                if (pos != null) {
+                  final sunService = ref.read(sunCalculatorServiceProvider);
+                  final shiftedTime = DateTime.now().subtract(smartData.timeOffset);
+                  effectiveElevation = sunService.getSunElevation(
+                    pos.latitude,
+                    pos.longitude,
+                    shiftedTime,
+                  );
+
+                  if (state.sunElevation < 0 && effectiveElevation > 10) {
+                    effectiveElevation = effectiveElevation.clamp(-20.0, 10.0);
+                  }
+                }
+              }
+
               final targetBrightness = circadianService.calculateTargetBrightness(
                 state.phases,
-                state.sunElevation,
+                effectiveElevation,
                 DateTime.now(),
                 curveSharpness: settings.curveSharpness,
                 curvePoints: settings.curvePoints,
@@ -704,6 +879,7 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                     ? weatherAsync.value
                     : null,
                 presetSensitivity: settings.activePreset.weatherSensitivity,
+                smartData: smartData,
               );
 
               brightnessService.applyBrightnessSmoothly(
@@ -723,12 +899,37 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
 
             // Calculate and Apply Temperature
             if (tempSettings.isEnabled && isTempEnabled) {
+              final smartData = tempSettings.isSmartCircadianEnabled
+                  ? ref.read(smartCircadianTemperatureDataProvider(monitor.deviceName))
+                  : const SmartCircadianData.neutral();
+
+              double effectiveElevation = state.sunElevation;
+              if (tempSettings.isSmartCircadianEnabled &&
+                  smartData.timeOffset != Duration.zero) {
+                final locationAsync = ref.read(effectiveLocationProvider);
+                final pos = locationAsync.value;
+                if (pos != null) {
+                  final sunService = ref.read(sunCalculatorServiceProvider);
+                  final shiftedTime = DateTime.now().subtract(smartData.timeOffset);
+                  effectiveElevation = sunService.getSunElevation(
+                    pos.latitude,
+                    pos.longitude,
+                    shiftedTime,
+                  );
+
+                  if (state.sunElevation < 0 && effectiveElevation > 10) {
+                    effectiveElevation = effectiveElevation.clamp(-20.0, 10.0);
+                  }
+                }
+              }
+
               final targetTemp = circadianService.calculateTargetTemperature(
                 state.phases,
-                state.sunElevation,
+                effectiveElevation,
                 DateTime.now(),
                 curvePoints: tempSettings.curvePoints,
                 weather: weatherAsync.value,
+                smartData: smartData,
               );
 
               tempService.applyTemperatureSmoothly(

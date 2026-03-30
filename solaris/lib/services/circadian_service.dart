@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:solaris/models/solar_phase_model.dart';
 import 'package:solaris/services/weather_service.dart';
 import 'package:solaris/services/weather_adjustment_service.dart';
+import 'package:solaris/models/smart_circadian_data.dart';
 
 class CircadianService {
   final WeatherAdjustmentService weatherAdjustmentService =
@@ -16,6 +17,7 @@ class CircadianService {
     List<FlSpot>? curvePoints,
     WeatherData? weather,
     double presetSensitivity = 1.0,
+    SmartCircadianData smartData = const SmartCircadianData.neutral(),
   }) {
     double baseBrightness;
 
@@ -40,6 +42,9 @@ class CircadianService {
       final finalFactor = 1.0 - ((1.0 - baseFactor) * presetSensitivity);
       double targetBrightness = baseBrightness * finalFactor;
 
+      // Apply Smart Multipliers (Sleep Debt, Pressure, Wind-down)
+      targetBrightness *= smartData.brightnessMultiplier;
+
       // Clamp target brightness to the minimum value of the preset
       double minAllowed = 0.0;
       if (curvePoints != null && curvePoints.isNotEmpty) {
@@ -61,6 +66,7 @@ class CircadianService {
     DateTime now, {
     required List<FlSpot> curvePoints,
     WeatherData? weather,
+    SmartCircadianData smartData = const SmartCircadianData.neutral(),
   }) {
     if (curvePoints.isEmpty) return 6500;
 
@@ -77,7 +83,12 @@ class CircadianService {
     }
 
     // Typical clamping for Kelvin
-    return baseTemperature.clamp(1000.0, 10000.0).toInt();
+    int finalTemp = baseTemperature.clamp(1000.0, 10000.0).toInt();
+
+    // Apply Smart Offset (Wind-down, Sleep Debt)
+    finalTemp += smartData.temperatureOffset;
+
+    return finalTemp.clamp(1000, 10000);
   }
 
   double _calculateFromElevation(List<FlSpot> points, double currentElevation) {

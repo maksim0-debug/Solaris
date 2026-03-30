@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:solaris/models/temperature_state.dart';
 import 'package:solaris/models/preset_type.dart';
 import 'package:solaris/services/temperature_service.dart';
+import 'package:solaris/models/smart_circadian_data.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 final temperatureServiceProvider = Provider((ref) => TemperatureService());
@@ -160,6 +161,36 @@ class TemperatureSettingsNotifier
     _updateSettings(ids, current.copyWith(isEnabled: isEnabled));
   }
 
+  void updateSmartCircadian(bool enabled) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = currentSettings();
+    _updateSettings(ids, current.copyWith(isSmartCircadianEnabled: enabled));
+  }
+
+  void updateSleepDebt(bool enabled) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = currentSettings();
+    _updateSettings(ids, current.copyWith(isSleepDebtEnabled: enabled));
+  }
+
+  void updateSleepPressure(bool enabled) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = currentSettings();
+    _updateSettings(ids, current.copyWith(isSleepPressureEnabled: enabled));
+  }
+
+  void updateTimeShift(bool enabled) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = currentSettings();
+    _updateSettings(ids, current.copyWith(isTimeShiftEnabled: enabled));
+  }
+
+  void updateWindDown(bool enabled) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = currentSettings();
+    _updateSettings(ids, current.copyWith(isWindDownEnabled: enabled));
+  }
+
   void setPreset(TemperaturePresetType type) {
     final ids = ref.read(selectedMonitorsProvider);
     final current = currentSettings();
@@ -253,12 +284,37 @@ class CurrentTemperatureNotifier extends Notifier<int> {
                 return ref.watch(manualTemperatureProvider);
               }
 
+              final smartData = tempSettings.isSmartCircadianEnabled
+                  ? ref.watch(smartCircadianTemperatureDataProvider(id))
+                  : const SmartCircadianData.neutral();
+
+              double effectiveElevation = state.sunElevation;
+              if (tempSettings.isSmartCircadianEnabled &&
+                  smartData.timeOffset != Duration.zero) {
+                final locationAsync = ref.read(effectiveLocationProvider);
+                final pos = locationAsync.value;
+                if (pos != null) {
+                  final sunService = ref.read(sunCalculatorServiceProvider);
+                  final shiftedTime = DateTime.now().subtract(smartData.timeOffset);
+                  effectiveElevation = sunService.getSunElevation(
+                    pos.latitude,
+                    pos.longitude,
+                    shiftedTime,
+                  );
+
+                  if (state.sunElevation < 0 && effectiveElevation > 10) {
+                    effectiveElevation = effectiveElevation.clamp(-20.0, 10.0);
+                  }
+                }
+              }
+
               final target = circadianService.calculateTargetTemperature(
                 state.phases,
-                state.sunElevation,
+                effectiveElevation,
                 DateTime.now(),
                 curvePoints: tempSettings.curvePoints,
                 weather: weatherAsync.value,
+                smartData: smartData,
               );
               _saveTemperature(target);
               return target;

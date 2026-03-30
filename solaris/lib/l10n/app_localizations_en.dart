@@ -482,4 +482,64 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get outdated => 'Outdated';
+
+  @override
+  String get smartCircadianTitle => 'Smart Circadian Adjustment';
+
+  @override
+  String get smartCircadianSubtitle =>
+      'Dynamic correction based on Google Fit sleep data (wind-down, bio-morning, sleep debt)';
+
+  @override
+  String get circadianRegulation => 'Circadian Regulation';
+
+  @override
+  String get featureWindDown => 'Wind-down Phase';
+
+  @override
+  String get featureWindDownSubtitle =>
+      'Smooth brightness reduction and warming before sleep';
+
+  @override
+  String get featureTimeShift => 'Bio-Morning (Dynamic Anchor)';
+
+  @override
+  String get featureTimeShiftSubtitle =>
+      'Shifts the schedule based on actual wake time';
+
+  @override
+  String get featureSleepPressure => 'Sleep Pressure (Wake Time)';
+
+  @override
+  String get featureSleepPressureSubtitle =>
+      'Gradual dimming after long periods of wakefulness';
+
+  @override
+  String get featureSleepDebt => 'Sleep Debt Compensation';
+
+  @override
+  String get featureSleepDebtSubtitle =>
+      'Reduces load after short sleep (< 6.5h)';
+
+  @override
+  String get influenceBrightness => 'Brightness';
+
+  @override
+  String get influenceTemperature => 'Temperature';
+
+  @override
+  String get featureWindDownInfo =>
+      'Prepares your body for sleep by gradually reducing blue light and overall luminosity. This stimulates melatonin production and makes it easier to fall asleep.';
+
+  @override
+  String get featureTimeShiftInfo =>
+      'Adapts the circadian schedule to your actual wake-up time. If you wake up earlier or later than usual, the system will smoothly shift brightness and temperature peaks to sync with your current state.';
+
+  @override
+  String get featureSleepPressureInfo =>
+      'Accounts for time spent awake. If you stay awake for too long, the system starts to gently dim the screen to reduce cognitive load and signal your body it\'s time to rest.';
+
+  @override
+  String get featureSleepDebtInfo =>
+      'Activates if your last sleep was shorter than 6.5 hours. During the day, the system will maintain a more comfortable, muted lighting mode to reduce strain on tired eyes and the nervous system.';
 }

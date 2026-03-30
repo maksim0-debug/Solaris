@@ -8,6 +8,15 @@ class SettingsState {
   final bool isAutorunEnabled;
   final bool isWeatherAdjustmentEnabled;
   final bool isAutoBrightnessEnabled;
+  final bool isSmartCircadianEnabled;
+  final bool isSleepDebtEnabled;
+  final bool isSleepPressureEnabled;
+  final bool isTimeShiftEnabled;
+  final bool isWindDownEnabled;
+  final bool isWindDownMasterEnabled;
+  final bool isTimeShiftMasterEnabled;
+  final bool isSleepPressureMasterEnabled;
+  final bool isSleepDebtMasterEnabled;
 
   SettingsState({
     this.activePreset = PresetType.bright,
@@ -16,6 +25,15 @@ class SettingsState {
     this.isAutorunEnabled = false,
     this.isWeatherAdjustmentEnabled = true,
     this.isAutoBrightnessEnabled = true,
+    this.isSmartCircadianEnabled = false,
+    this.isSleepDebtEnabled = false,
+    this.isSleepPressureEnabled = false,
+    this.isTimeShiftEnabled = false,
+    this.isWindDownEnabled = false,
+    this.isWindDownMasterEnabled = false,
+    this.isTimeShiftMasterEnabled = false,
+    this.isSleepPressureMasterEnabled = false,
+    this.isSleepDebtMasterEnabled = false,
   }) : curvesMap = curvesMap ?? PresetConstants.getAllDefaults();
 
   List<FlSpot> get curvePoints => curvesMap[activePreset]!;
@@ -30,6 +48,15 @@ class SettingsState {
     'isAutorunEnabled': isAutorunEnabled,
     'isWeatherAdjustmentEnabled': isWeatherAdjustmentEnabled,
     'isAutoBrightnessEnabled': isAutoBrightnessEnabled,
+    'isSmartCircadianEnabled': isSmartCircadianEnabled,
+    'isSleepDebtEnabled': isSleepDebtEnabled,
+    'isSleepPressureEnabled': isSleepPressureEnabled,
+    'isTimeShiftEnabled': isTimeShiftEnabled,
+    'isWindDownEnabled': isWindDownEnabled,
+    'isWindDownMasterEnabled': isWindDownMasterEnabled,
+    'isTimeShiftMasterEnabled': isTimeShiftMasterEnabled,
+    'isSleepPressureMasterEnabled': isSleepPressureMasterEnabled,
+    'isSleepDebtMasterEnabled': isSleepDebtMasterEnabled,
   };
 
   factory SettingsState.fromJson(Map<String, dynamic> json) {
@@ -80,6 +107,15 @@ class SettingsState {
       isWeatherAdjustmentEnabled:
           json['isWeatherAdjustmentEnabled'] as bool? ?? true,
       isAutoBrightnessEnabled: json['isAutoBrightnessEnabled'] as bool? ?? true,
+      isSmartCircadianEnabled: json['isSmartCircadianEnabled'] as bool? ?? false,
+      isSleepDebtEnabled: json['isSleepDebtEnabled'] as bool? ?? true,
+      isSleepPressureEnabled: json['isSleepPressureEnabled'] as bool? ?? true,
+      isTimeShiftEnabled: json['isTimeShiftEnabled'] as bool? ?? true,
+      isWindDownEnabled: json['isWindDownEnabled'] as bool? ?? true,
+      isWindDownMasterEnabled: json['isWindDownMasterEnabled'] as bool? ?? true,
+      isTimeShiftMasterEnabled: json['isTimeShiftMasterEnabled'] as bool? ?? true,
+      isSleepPressureMasterEnabled: json['isSleepPressureMasterEnabled'] as bool? ?? true,
+      isSleepDebtMasterEnabled: json['isSleepDebtMasterEnabled'] as bool? ?? true,
     );
   }
 
@@ -90,6 +126,15 @@ class SettingsState {
     bool? isAutorunEnabled,
     bool? isWeatherAdjustmentEnabled,
     bool? isAutoBrightnessEnabled,
+    bool? isSmartCircadianEnabled,
+    bool? isSleepDebtEnabled,
+    bool? isSleepPressureEnabled,
+    bool? isTimeShiftEnabled,
+    bool? isWindDownEnabled,
+    bool? isWindDownMasterEnabled,
+    bool? isTimeShiftMasterEnabled,
+    bool? isSleepPressureMasterEnabled,
+    bool? isSleepDebtMasterEnabled,
   }) {
     return SettingsState(
       activePreset: activePreset ?? this.activePreset,
@@ -100,6 +145,16 @@ class SettingsState {
           isWeatherAdjustmentEnabled ?? this.isWeatherAdjustmentEnabled,
       isAutoBrightnessEnabled:
           isAutoBrightnessEnabled ?? this.isAutoBrightnessEnabled,
+      isSmartCircadianEnabled:
+          isSmartCircadianEnabled ?? this.isSmartCircadianEnabled,
+      isSleepDebtEnabled: isSleepDebtEnabled ?? this.isSleepDebtEnabled,
+      isSleepPressureEnabled: isSleepPressureEnabled ?? this.isSleepPressureEnabled,
+      isTimeShiftEnabled: isTimeShiftEnabled ?? this.isTimeShiftEnabled,
+      isWindDownEnabled: isWindDownEnabled ?? this.isWindDownEnabled,
+      isWindDownMasterEnabled: isWindDownMasterEnabled ?? this.isWindDownMasterEnabled,
+      isTimeShiftMasterEnabled: isTimeShiftMasterEnabled ?? this.isTimeShiftMasterEnabled,
+      isSleepPressureMasterEnabled: isSleepPressureMasterEnabled ?? this.isSleepPressureMasterEnabled,
+      isSleepDebtMasterEnabled: isSleepDebtMasterEnabled ?? this.isSleepDebtMasterEnabled,
     );
   }
 }

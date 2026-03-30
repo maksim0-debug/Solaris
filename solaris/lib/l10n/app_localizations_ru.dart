@@ -481,4 +481,64 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get outdated => 'Устарело';
+
+  @override
+  String get smartCircadianTitle => 'Умная циркадная подстройка';
+
+  @override
+  String get smartCircadianSubtitle =>
+      'Динамическая коррекция на основе данных о сне из Google Fit (фаза засыпания, био-утро, недосып)';
+
+  @override
+  String get circadianRegulation => 'Циркадная регуляция';
+
+  @override
+  String get featureWindDown => 'Фаза «Подготовки ко сну» (Wind-down)';
+
+  @override
+  String get featureWindDownSubtitle =>
+      'Плавное снижение яркости и потепление экрана перед сном';
+
+  @override
+  String get featureTimeShift => 'Био-утро (Динамический якорь)';
+
+  @override
+  String get featureTimeShiftSubtitle =>
+      'Смещение графика под реальное время пробуждения';
+
+  @override
+  String get featureSleepPressure => 'Давление сна (Время бодрствования)';
+
+  @override
+  String get featureSleepPressureSubtitle =>
+      'Плавное диммирование при длительном отсутствии сна';
+
+  @override
+  String get featureSleepDebt => 'Компенсация недосыпа';
+
+  @override
+  String get featureSleepDebtSubtitle =>
+      'Снижение нагрузки при коротком сне (< 6.5ч)';
+
+  @override
+  String get influenceBrightness => 'Яркость';
+
+  @override
+  String get influenceTemperature => 'Температура';
+
+  @override
+  String get featureWindDownInfo =>
+      'Готовит организм ко сну, постепенно уменьшая количество синего света и общую освещенность. Это стимулирует выработку мелатонина и облегчает засыпание.';
+
+  @override
+  String get featureTimeShiftInfo =>
+      'Адаптирует циркадный график под ваше реальное время пробуждения. Если вы проснулись раньше или позже обычного, система плавно сместит пики яркости и температуры, чтобы синхронизироваться с вашим текущим состоянием.';
+
+  @override
+  String get featureSleepPressureInfo =>
+      'Учитывает время, проведенное без сна. Если вы бодрствуете слишком долго, система начинает плавно снижать яркость, чтобы уменьшить когнитивную нагрузку и подать организму сигнал о необходимости отдыха.';
+
+  @override
+  String get featureSleepDebtInfo =>
+      'Активируется, если ваш последний сон был короче 6.5 часов. В течение дня система будет поддерживать более комфортный, приглушенный режим освещения, чтобы снизить нагрузку на уставшие глаза и нервную систему.';
 }

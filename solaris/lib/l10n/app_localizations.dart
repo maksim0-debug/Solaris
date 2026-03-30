@@ -961,6 +961,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Outdated'**
   String get outdated;
+
+  /// No description provided for @smartCircadianTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart Circadian Adjustment'**
+  String get smartCircadianTitle;
+
+  /// No description provided for @smartCircadianSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dynamic correction based on Google Fit sleep data (wind-down, bio-morning, sleep debt)'**
+  String get smartCircadianSubtitle;
+
+  /// No description provided for @circadianRegulation.
+  ///
+  /// In en, this message translates to:
+  /// **'Circadian Regulation'**
+  String get circadianRegulation;
+
+  /// No description provided for @featureWindDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Wind-down Phase'**
+  String get featureWindDown;
+
+  /// No description provided for @featureWindDownSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Smooth brightness reduction and warming before sleep'**
+  String get featureWindDownSubtitle;
+
+  /// No description provided for @featureTimeShift.
+  ///
+  /// In en, this message translates to:
+  /// **'Bio-Morning (Dynamic Anchor)'**
+  String get featureTimeShift;
+
+  /// No description provided for @featureTimeShiftSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shifts the schedule based on actual wake time'**
+  String get featureTimeShiftSubtitle;
+
+  /// No description provided for @featureSleepPressure.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep Pressure (Wake Time)'**
+  String get featureSleepPressure;
+
+  /// No description provided for @featureSleepPressureSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Gradual dimming after long periods of wakefulness'**
+  String get featureSleepPressureSubtitle;
+
+  /// No description provided for @featureSleepDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep Debt Compensation'**
+  String get featureSleepDebt;
+
+  /// No description provided for @featureSleepDebtSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduces load after short sleep (< 6.5h)'**
+  String get featureSleepDebtSubtitle;
+
+  /// No description provided for @influenceBrightness.
+  ///
+  /// In en, this message translates to:
+  /// **'Brightness'**
+  String get influenceBrightness;
+
+  /// No description provided for @influenceTemperature.
+  ///
+  /// In en, this message translates to:
+  /// **'Temperature'**
+  String get influenceTemperature;
+
+  /// No description provided for @featureWindDownInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepares your body for sleep by gradually reducing blue light and overall luminosity. This stimulates melatonin production and makes it easier to fall asleep.'**
+  String get featureWindDownInfo;
+
+  /// No description provided for @featureTimeShiftInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Adapts the circadian schedule to your actual wake-up time. If you wake up earlier or later than usual, the system will smoothly shift brightness and temperature peaks to sync with your current state.'**
+  String get featureTimeShiftInfo;
+
+  /// No description provided for @featureSleepPressureInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts for time spent awake. If you stay awake for too long, the system starts to gently dim the screen to reduce cognitive load and signal your body it\'s time to rest.'**
+  String get featureSleepPressureInfo;
+
+  /// No description provided for @featureSleepDebtInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Activates if your last sleep was shorter than 6.5 hours. During the day, the system will maintain a more comfortable, muted lighting mode to reduce strain on tired eyes and the nervous system.'**
+  String get featureSleepDebtInfo;
 }
 
 class _AppLocalizationsDelegate

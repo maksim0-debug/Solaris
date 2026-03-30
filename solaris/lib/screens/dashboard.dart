@@ -802,6 +802,58 @@ class _DashboardView extends ConsumerWidget {
                             );
                           },
                         ),
+                        Builder(
+                          builder: (context) {
+                            final settingsMap = ref.watch(settingsProvider).value;
+                            if (settingsMap == null) return const SizedBox.shrink();
+                            final monitorIds = ref.watch(selectedMonitorsProvider);
+                            final monitorId = monitorIds.firstOrNull ?? 'all';
+                            final settings = settingsMap[monitorId] ?? settingsMap['all']!;
+                            
+                            if (!settings.isSmartCircadianEnabled) return const SizedBox.shrink();
+                            
+                            final smartData = ref.watch(smartCircadianDataProvider(monitorId));
+                            final List<Widget> indicators = [];
+                            
+                            if (smartData.timeOffset != Duration.zero) {
+                              final offsetMins = smartData.timeOffset.inMinutes.abs();
+                              indicators.add(_SmartIndicator(
+                                icon: LucideIcons.sunrise,
+                                label: "Био-утро (${smartData.timeOffset.isNegative ? '-' : '+'}${offsetMins}м)",
+                                color: const Color(0xFF818CF8),
+                              ));
+                            }
+                            
+                            if (smartData.isWindDownActive) {
+                              indicators.add(_SmartIndicator(
+                                icon: LucideIcons.moon,
+                                label: "Подготовка ко сну (x${smartData.brightnessMultiplier.toStringAsFixed(1)})",
+                                color: const Color(0xFFF472B6),
+                              ));
+                            }
+                            
+                            if (smartData.sleepDebtFactor < 1.0) {
+                              final reduction = ((1.0 - smartData.sleepDebtFactor) * 100).round();
+                              indicators.add(_SmartIndicator(
+                                icon: LucideIcons.batteryCharging,
+                                label: "Недосып (-$reduction%)",
+                                color: const Color(0xFF34D399),
+                              ));
+                            }
+
+                            if (indicators.isEmpty) return const SizedBox.shrink();
+
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 12.0),
+                              child: Column(
+                                children: indicators.map((w) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 4.0),
+                                  child: w,
+                                )).toList(),
+                              ),
+                            );
+                          },
+                        ),
                       ],
                     ),
                   );
@@ -1006,6 +1058,36 @@ class _DashboardView extends ConsumerWidget {
                 ),
               ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SmartIndicator extends StatelessWidget {
+  const _SmartIndicator({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: color,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],

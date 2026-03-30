@@ -6,6 +6,10 @@ import 'package:solaris/providers/sleep_provider.dart';
 import 'package:solaris/providers/google_fit_provider.dart';
 import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/sleep_regime_card.dart';
+import 'package:solaris/providers.dart';
+import 'package:solaris/providers/temperature_provider.dart';
+import 'package:solaris/models/settings_state.dart';
+import 'package:solaris/models/temperature_state.dart';
 import 'package:intl/intl.dart';
 
 class SleepScreen extends ConsumerWidget {
@@ -31,7 +35,13 @@ class SleepScreen extends ConsumerWidget {
 
           // Google Fit Sync Card
           _GoogleFitSyncCard(googleFitState: googleFitState, isLoading: sleepState.isLoading, error: sleepState.error),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
+
+          // Circadian Regulation Section
+          if (googleFitState.status == GoogleFitStatus.connected) ...[
+            const _CircadianRegulationSection(),
+            const SizedBox(height: 32),
+          ],
 
           // Sleep Regimes / History
           if (sleepState.regimes.isEmpty && !sleepState.isLoading)
@@ -198,3 +208,280 @@ class _GoogleFitSyncCard extends ConsumerWidget {
   }
 }
 
+class _CircadianRegulationSection extends ConsumerWidget {
+  const _CircadianRegulationSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settingsAsync = ref.watch(settingsProvider);
+    final tempSettingsAsync = ref.watch(temperatureSettingsProvider);
+    final selectedIds = ref.watch(selectedMonitorsProvider);
+    final monitorId = selectedIds.firstOrNull ?? 'all';
+
+    final settings = settingsAsync.maybeWhen(
+      data: (map) => map[monitorId] ?? map['all'] ?? SettingsState(),
+      orElse: () => SettingsState(),
+    );
+
+    final tempSettings = tempSettingsAsync.maybeWhen(
+      data: (map) => map[monitorId] ?? map['all'] ?? TemperatureState(),
+      orElse: () => TemperatureState(),
+    );
+
+    final l10n = AppLocalizations.of(context)!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              l10n.circadianRegulation,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            Switch(
+              value: settings.isSmartCircadianEnabled,
+              onChanged: (val) => ref.read(settingsProvider.notifier).updateSmartCircadian(val),
+              activeColor: const Color(0xFF8B5CF6),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        GlassCard(
+          padding: const EdgeInsets.all(24),
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 300),
+            opacity: (settings.isSmartCircadianEnabled || tempSettings.isSmartCircadianEnabled) ? 1.0 : 0.4,
+            child: AbsorbPointer(
+              absorbing: !settings.isSmartCircadianEnabled && !tempSettings.isSmartCircadianEnabled,
+              child: Column(
+                children: [
+                  _RegulationToggle(
+                    title: l10n.featureWindDown,
+                    subtitle: l10n.featureWindDownSubtitle,
+                    info: l10n.featureWindDownInfo,
+                    masterValue: settings.isWindDownMasterEnabled,
+                    brightnessValue: settings.isWindDownEnabled,
+                    temperatureValue: tempSettings.isWindDownEnabled,
+                    onMasterChanged: (val) => ref.read(settingsProvider.notifier).updateWindDownMaster(val),
+                    onBrightnessChanged: (val) => ref.read(settingsProvider.notifier).updateWindDown(val),
+                    onTemperatureChanged: (val) => ref.read(temperatureSettingsProvider.notifier).updateWindDown(val),
+                    brightnessLabel: l10n.influenceBrightness,
+                    temperatureLabel: l10n.influenceTemperature,
+                  ),
+                  const Divider(height: 32, color: Colors.white10),
+                  _RegulationToggle(
+                    title: l10n.featureTimeShift,
+                    subtitle: l10n.featureTimeShiftSubtitle,
+                    info: l10n.featureTimeShiftInfo,
+                    masterValue: settings.isTimeShiftMasterEnabled,
+                    brightnessValue: settings.isTimeShiftEnabled,
+                    temperatureValue: tempSettings.isTimeShiftEnabled,
+                    onMasterChanged: (val) => ref.read(settingsProvider.notifier).updateTimeShiftMaster(val),
+                    onBrightnessChanged: (val) => ref.read(settingsProvider.notifier).updateTimeShift(val),
+                    onTemperatureChanged: (val) => ref.read(temperatureSettingsProvider.notifier).updateTimeShift(val),
+                    brightnessLabel: l10n.influenceBrightness,
+                    temperatureLabel: l10n.influenceTemperature,
+                  ),
+                  const Divider(height: 32, color: Colors.white10),
+                  _RegulationToggle(
+                    title: l10n.featureSleepPressure,
+                    subtitle: l10n.featureSleepPressureSubtitle,
+                    info: l10n.featureSleepPressureInfo,
+                    masterValue: settings.isSleepPressureMasterEnabled,
+                    brightnessValue: settings.isSleepPressureEnabled,
+                    temperatureValue: tempSettings.isSleepPressureEnabled,
+                    onMasterChanged: (val) => ref.read(settingsProvider.notifier).updateSleepPressureMaster(val),
+                    onBrightnessChanged: (val) => ref.read(settingsProvider.notifier).updateSleepPressure(val),
+                    onTemperatureChanged: (val) => ref.read(temperatureSettingsProvider.notifier).updateSleepPressure(val),
+                    brightnessLabel: l10n.influenceBrightness,
+                    temperatureLabel: l10n.influenceTemperature,
+                  ),
+                  const Divider(height: 32, color: Colors.white10),
+                  _RegulationToggle(
+                    title: l10n.featureSleepDebt,
+                    subtitle: l10n.featureSleepDebtSubtitle,
+                    info: l10n.featureSleepDebtInfo,
+                    masterValue: settings.isSleepDebtMasterEnabled,
+                    brightnessValue: settings.isSleepDebtEnabled,
+                    temperatureValue: tempSettings.isSleepDebtEnabled,
+                    onMasterChanged: (val) => ref.read(settingsProvider.notifier).updateSleepDebtMaster(val),
+                    onBrightnessChanged: (val) => ref.read(settingsProvider.notifier).updateSleepDebt(val),
+                    onTemperatureChanged: (val) => ref.read(temperatureSettingsProvider.notifier).updateSleepDebt(val),
+                    brightnessLabel: l10n.influenceBrightness,
+                    temperatureLabel: l10n.influenceTemperature,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RegulationToggle extends StatelessWidget {
+  const _RegulationToggle({
+    required this.title,
+    required this.subtitle,
+    required this.info,
+    required this.masterValue,
+    required this.brightnessValue,
+    required this.temperatureValue,
+    required this.onMasterChanged,
+    required this.onBrightnessChanged,
+    required this.onTemperatureChanged,
+    required this.brightnessLabel,
+    required this.temperatureLabel,
+  });
+
+  final String title;
+  final String subtitle;
+  final String info;
+  final bool masterValue;
+  final bool brightnessValue;
+  final bool temperatureValue;
+  final ValueChanged<bool> onMasterChanged;
+  final ValueChanged<bool> onBrightnessChanged;
+  final ValueChanged<bool> onTemperatureChanged;
+  final String brightnessLabel;
+  final String temperatureLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Tooltip(
+                         message: info,
+                         padding: const EdgeInsets.all(12),
+                         margin: const EdgeInsets.symmetric(horizontal: 24),
+                         decoration: BoxDecoration(
+                           color: const Color(0xFF1E1B4B),
+                           borderRadius: BorderRadius.circular(8),
+                           border: Border.all(color: Colors.white10),
+                         ),
+                         textStyle: const TextStyle(color: Colors.white70, fontSize: 12),
+                         preferBelow: false,
+                         child: Icon(
+                           LucideIcons.info,
+                           size: 14,
+                           color: Colors.white.withOpacity(0.3),
+                         ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white.withOpacity(0.4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Transform.scale(
+              scale: 0.9,
+              child: Switch(
+                value: masterValue,
+                onChanged: onMasterChanged,
+                activeColor: const Color(0xFF8B5CF6),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        AnimatedOpacity(
+          duration: const Duration(milliseconds: 200),
+          opacity: masterValue ? 1.0 : 0.3,
+          child: AbsorbPointer(
+            absorbing: !masterValue,
+            child: Row(
+              children: [
+                _SmallToggle(
+                  label: brightnessLabel,
+                  value: brightnessValue,
+                  onChanged: onBrightnessChanged,
+                  color: const Color(0xFFFDBA74),
+                ),
+                const SizedBox(width: 24),
+                _SmallToggle(
+                  label: temperatureLabel,
+                  value: temperatureValue,
+                  onChanged: onTemperatureChanged,
+                  color: const Color(0xFF818CF8),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SmallToggle extends StatelessWidget {
+  const _SmallToggle({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+    required this.color,
+  });
+
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Transform.scale(
+          scale: 0.8,
+          child: Switch(
+            value: value,
+            onChanged: onChanged,
+            activeColor: color,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: value ? Colors.white70 : Colors.white24,
+          ),
+        ),
+      ],
+    );
+  }
+}
