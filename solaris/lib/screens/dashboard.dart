@@ -622,7 +622,6 @@ class _DashboardView extends ConsumerWidget {
                     state,
                     l10n,
                     isAutoBright,
-                    ref.watch(nightModeProvider),
                   );
 
                   return GlassCard(

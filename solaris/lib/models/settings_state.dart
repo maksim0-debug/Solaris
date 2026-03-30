@@ -7,6 +7,7 @@ class SettingsState {
   final double curveSharpness;
   final bool isAutorunEnabled;
   final bool isWeatherAdjustmentEnabled;
+  final bool isAutoBrightnessEnabled;
 
   SettingsState({
     this.activePreset = PresetType.bright,
@@ -14,6 +15,7 @@ class SettingsState {
     this.curveSharpness = 1.0,
     this.isAutorunEnabled = false,
     this.isWeatherAdjustmentEnabled = true,
+    this.isAutoBrightnessEnabled = true,
   }) : curvesMap = curvesMap ?? PresetConstants.getAllDefaults();
 
   List<FlSpot> get curvePoints => curvesMap[activePreset]!;
@@ -27,6 +29,7 @@ class SettingsState {
     'curveSharpness': curveSharpness,
     'isAutorunEnabled': isAutorunEnabled,
     'isWeatherAdjustmentEnabled': isWeatherAdjustmentEnabled,
+    'isAutoBrightnessEnabled': isAutoBrightnessEnabled,
   };
 
   factory SettingsState.fromJson(Map<String, dynamic> json) {
@@ -76,6 +79,7 @@ class SettingsState {
       isAutorunEnabled: json['isAutorunEnabled'] as bool? ?? false,
       isWeatherAdjustmentEnabled:
           json['isWeatherAdjustmentEnabled'] as bool? ?? true,
+      isAutoBrightnessEnabled: json['isAutoBrightnessEnabled'] as bool? ?? true,
     );
   }
 
@@ -85,6 +89,7 @@ class SettingsState {
     double? curveSharpness,
     bool? isAutorunEnabled,
     bool? isWeatherAdjustmentEnabled,
+    bool? isAutoBrightnessEnabled,
   }) {
     return SettingsState(
       activePreset: activePreset ?? this.activePreset,
@@ -93,6 +98,8 @@ class SettingsState {
       isAutorunEnabled: isAutorunEnabled ?? this.isAutorunEnabled,
       isWeatherAdjustmentEnabled:
           isWeatherAdjustmentEnabled ?? this.isWeatherAdjustmentEnabled,
+      isAutoBrightnessEnabled:
+          isAutoBrightnessEnabled ?? this.isAutoBrightnessEnabled,
     );
   }
 }

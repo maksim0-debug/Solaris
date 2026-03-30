@@ -212,7 +212,7 @@ class ManualTemperatureNotifier extends Notifier<int> {
   int build() => 6500;
 
   void setTemperature(int val) {
-    ref.read(autoTemperatureAdjustmentProvider.notifier).state = false;
+    ref.read(temperatureSettingsProvider.notifier).toggleEnabled(false);
     state = val;
   }
 }
@@ -248,6 +248,11 @@ class CurrentTemperatureNotifier extends Notifier<int> {
             data: (tempSettingsMap) {
               final tempSettings =
                   tempSettingsMap[id] ?? tempSettingsMap['all']!;
+              
+              if (!tempSettings.isEnabled) {
+                return ref.watch(manualTemperatureProvider);
+              }
+
               final target = circadianService.calculateTargetTemperature(
                 state.phases,
                 state.sunElevation,

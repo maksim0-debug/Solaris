@@ -25,7 +25,6 @@ class StatusHelper {
     SolarState state,
     AppLocalizations l10n,
     bool isAuto,
-    bool isNightMode,
   ) {
     final phase = state.currentPhase;
     final modeTitle = isAuto ? l10n.statusAdaptive : l10n.statusManual;
@@ -88,11 +87,7 @@ class StatusHelper {
         break;
     }
 
-    // Override icon if manual night mode is forced
-    if (isNightMode && !isAuto) {
-      icon = LucideIcons.moon;
-      color = const Color(0xFF818CF8);
-    }
+
 
     return StatusConfig(
       title: title,
