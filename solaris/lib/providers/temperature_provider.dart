@@ -212,6 +212,7 @@ class ManualTemperatureNotifier extends Notifier<int> {
   int build() => 6500;
 
   void setTemperature(int val) {
+    ref.read(autoTemperatureAdjustmentProvider.notifier).state = false;
     state = val;
   }
 }
@@ -229,7 +230,7 @@ class CurrentTemperatureNotifier extends Notifier<int> {
     final prefs = ref.watch(sharedPreferencesProvider);
     final lastTemp = prefs?.getInt(_lastTempKey) ?? 6500;
 
-    final isAuto = ref.watch(autoAdjustmentProvider);
+    final isAuto = ref.watch(autoTemperatureAdjustmentProvider);
     final isTempEnabled = ref.watch(isColorTemperatureEnabledProvider);
 
     if (isAuto && isTempEnabled) {

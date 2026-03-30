@@ -85,9 +85,11 @@ bool FlutterWindow::OnCreate() {
                 auto device_path_it = arguments->find(flutter::EncodableValue("devicePath"));
                 if (device_path_it != arguments->end()) {
                   std::string device_path = std::get<std::string>(device_path_it->second);
-                  bool success = monitor_manager_.ResetTemperature(device_path);
-                    result->Success(flutter::EncodableValue(success));
-                    return;
+                  monitor_manager_.EnqueueTask([this, device_path]() {
+                    monitor_manager_.ResetTemperature(device_path);
+                  });
+                  result->Success(flutter::EncodableValue(true));
+                  return;
                 }
             }
               result->Error("invalid_arguments", "Expected devicePath");

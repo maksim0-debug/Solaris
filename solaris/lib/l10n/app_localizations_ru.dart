@@ -143,6 +143,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get autoAdapt => 'Автоподстройка';
 
   @override
+  String get autoBrightness => 'Автояркость';
+
+  @override
+  String get autoTemperature => 'Автотемпература';
+
+  @override
   String get active => 'Активно';
 
   @override

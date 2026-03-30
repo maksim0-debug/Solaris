@@ -246,7 +246,7 @@ class _Header extends ConsumerWidget {
 
     // Apply brightness to monitors whenever it changes significantly
     ref.listen<double>(currentBrightnessProvider, (previous, next) {
-      if (ref.read(autoAdjustmentProvider))
+      if (ref.read(autoBrightnessAdjustmentProvider))
         return; // Already handled by background loop
 
       if (previous?.round() != next.round()) {
@@ -271,7 +271,7 @@ class _Header extends ConsumerWidget {
 
     // Apply temperature to monitors whenever it changes significantly
     ref.listen<int>(currentTemperatureProvider, (previous, next) {
-      if (ref.read(autoAdjustmentProvider))
+      if (ref.read(autoTemperatureAdjustmentProvider))
         return; // Already handled by background loop
 
       if (previous != next) {
@@ -299,7 +299,8 @@ class _Header extends ConsumerWidget {
 
     // Initial sync when monitors are detected
     ref.listen(monitorListProvider, (previous, next) {
-      if (ref.read(autoAdjustmentProvider))
+      if (ref.read(autoBrightnessAdjustmentProvider) &&
+          ref.read(autoTemperatureAdjustmentProvider))
         return; // Already handled by background loop
 
       if (next.hasValue && !next.isLoading) {
@@ -344,7 +345,8 @@ class _Header extends ConsumerWidget {
 
     // Sync brightness and temperature when selection changes
     ref.listen<Set<String>>(selectedMonitorsProvider, (previous, next) {
-      if (ref.read(autoAdjustmentProvider))
+      if (ref.read(autoBrightnessAdjustmentProvider) &&
+          ref.read(autoTemperatureAdjustmentProvider))
         return; // Already handled by background loop
 
       final monitorValue = ref.read(monitorListProvider).value;
@@ -500,7 +502,8 @@ class _DashboardView extends ConsumerWidget {
     final timeService = ref.watch(timeServiceProvider);
     final brightness = ref.watch(currentBrightnessProvider);
     final currentTemperature = ref.watch(currentTemperatureProvider);
-    final bool isAutoAdapt = ref.watch<bool>(autoAdjustmentProvider);
+    final bool isAutoBright = ref.watch<bool>(autoBrightnessAdjustmentProvider);
+    final bool isAutoTemp = ref.watch<bool>(autoTemperatureAdjustmentProvider);
 
     return Row(
       children: [
@@ -617,7 +620,7 @@ class _DashboardView extends ConsumerWidget {
                   final status = StatusHelper.getStatus(
                     state,
                     l10n,
-                    isAutoAdapt,
+                    isAutoBright,
                     ref.watch(nightModeProvider),
                   );
 
@@ -705,7 +708,7 @@ class _DashboardView extends ConsumerWidget {
 
                             if (weather == null ||
                                 settingsMap == null ||
-                                !isAutoAdapt) {
+                                !isAutoBright) {
                               return const SizedBox.shrink();
                             }
 
@@ -817,17 +820,18 @@ class _DashboardView extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: InkWell(
-                      onTap: () =>
-                          ref.read(autoAdjustmentProvider.notifier).toggle(),
+                      onTap: () => ref
+                          .read(autoBrightnessAdjustmentProvider.notifier)
+                          .toggle(),
                       borderRadius: BorderRadius.circular(16),
                       child: GlassCard(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              LucideIcons.refreshCcw,
+                              LucideIcons.sunMedium,
                               size: 20,
-                              color: isAutoAdapt
+                              color: isAutoBright
                                   ? const Color(0xFFFDBA74)
                                   : Colors.white30,
                             ),
@@ -835,10 +839,10 @@ class _DashboardView extends ConsumerWidget {
                             FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Text(
-                                l10n.autoAdapt,
+                                l10n.autoBrightness,
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: isAutoAdapt
+                                  color: isAutoBright
                                       ? Colors.white
                                       : Colors.white30,
                                 ),
@@ -846,10 +850,10 @@ class _DashboardView extends ConsumerWidget {
                               ),
                             ),
                             Text(
-                              isAutoAdapt ? l10n.active : l10n.disabled,
+                              isAutoBright ? l10n.active : l10n.disabled,
                               style: TextStyle(
                                 fontSize: 10,
-                                color: isAutoAdapt
+                                color: isAutoBright
                                     ? const Color(0xFFFDBA74)
                                     : Colors.white30,
                               ),
@@ -862,30 +866,29 @@ class _DashboardView extends ConsumerWidget {
                   const SizedBox(width: 16),
                   Expanded(
                     child: InkWell(
-                      onTap: () =>
-                          ref.read(nightModeProvider.notifier).toggle(),
+                      onTap: () => ref
+                          .read(autoTemperatureAdjustmentProvider.notifier)
+                          .toggle(),
                       borderRadius: BorderRadius.circular(16),
                       child: GlassCard(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              LucideIcons.moon,
+                              LucideIcons.thermometer,
                               size: 20,
-                              color: ref.watch(nightModeProvider)
-                                  ? const Color(
-                                      0xFFFDBA74,
-                                    ) // Or some night color
+                              color: isAutoTemp
+                                  ? const Color(0xFFFDBA74)
                                   : Colors.white30,
                             ),
                             const SizedBox(height: 12),
                             FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Text(
-                                l10n.nightShift,
+                                l10n.autoTemperature,
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: ref.watch(nightModeProvider)
+                                  color: isAutoTemp
                                       ? Colors.white
                                       : Colors.white30,
                                 ),
@@ -893,12 +896,10 @@ class _DashboardView extends ConsumerWidget {
                               ),
                             ),
                             Text(
-                              ref.watch(nightModeProvider)
-                                  ? l10n.active
-                                  : l10n.disabled,
+                              isAutoTemp ? l10n.active : l10n.disabled,
                               style: TextStyle(
                                 fontSize: 10,
-                                color: ref.watch(nightModeProvider)
+                                color: isAutoTemp
                                     ? const Color(0xFFFDBA74)
                                     : Colors.white30,
                               ),

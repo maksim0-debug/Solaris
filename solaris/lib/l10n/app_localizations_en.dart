@@ -143,6 +143,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get autoAdapt => 'Auto-Adapt';
 
   @override
+  String get autoBrightness => 'Auto Brightness';
+
+  @override
+  String get autoTemperature => 'Auto Temperature';
+
+  @override
   String get active => 'Active';
 
   @override

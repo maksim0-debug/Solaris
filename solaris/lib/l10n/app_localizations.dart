@@ -332,6 +332,18 @@ abstract class AppLocalizations {
   /// **'Auto-Adapt'**
   String get autoAdapt;
 
+  /// No description provided for @autoBrightness.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Brightness'**
+  String get autoBrightness;
+
+  /// No description provided for @autoTemperature.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Temperature'**
+  String get autoTemperature;
+
   /// No description provided for @active.
   ///
   /// In en, this message translates to:

@@ -57,24 +57,36 @@ class TemperatureService {
     bool isUIVisible = true,
   }) {
     _adjustmentTimers[deviceName]?.cancel();
+    _adjustmentTimers[deviceName] = null;
 
     // Default to 6500 if unknown initially
     int current = _currentHardwareTemperature[deviceName] ?? 6500;
 
-    if (current == target) return;
+    // If we're already at the target and not transitioning, nothing to do.
+    // BUT if the target is 6500 and we were transitioning or just want to be sure,
+    // we send a final reset call.
+    if (current == target) {
+      if (target == 6500) {
+        monitorService.resetMonitorTemperature(deviceName);
+      }
+      return;
+    }
 
     if (!isUIVisible) {
       _currentHardwareTemperature[deviceName] = target;
       updateTemperatureCallback(deviceName, target);
-      monitorService.setMonitorTemperature(deviceName, target);
-      _adjustmentTimers[deviceName] = null;
+      if (target == 6500) {
+        monitorService.resetMonitorTemperature(deviceName);
+      } else {
+        monitorService.setMonitorTemperature(deviceName, target);
+      }
       return;
     }
 
     _adjustmentTimers[deviceName] = Timer.periodic(
-      const Duration(milliseconds: 50),
+      const Duration(milliseconds: 100),
       (timer) {
-        int step = 50; // Transition speed
+        int step = 100; // Transition speed: 1000K per second
         if ((current - target).abs() <= step) {
           current = target;
         } else if (current < target) {
@@ -85,7 +97,12 @@ class TemperatureService {
 
         _currentHardwareTemperature[deviceName] = current;
         updateTemperatureCallback(deviceName, current);
-        monitorService.setMonitorTemperature(deviceName, current);
+
+        if (current == target && target == 6500) {
+          monitorService.resetMonitorTemperature(deviceName);
+        } else {
+          monitorService.setMonitorTemperature(deviceName, current);
+        }
 
         if (current == target) {
           timer.cancel();

@@ -374,13 +374,12 @@ final activeScreenProvider = NotifierProvider<ActiveScreenNotifier, AppScreen>(
   ActiveScreenNotifier.new,
 );
 
-class AutoAdjustmentNotifier extends Notifier<bool> {
+class AutoBrightnessAdjustmentNotifier extends Notifier<bool> {
   @override
   bool build() => true;
   void toggle() {
     if (state) {
       // Transitioning from Auto to Manual
-      // Avoid reading currentBrightnessProvider to prevent CircularDependencyError
       final monitors = ref.read(monitorListProvider).value;
       if (monitors != null && monitors.isNotEmpty) {
         final selection = ref.read(selectedMonitorsProvider);
@@ -397,9 +396,35 @@ class AutoAdjustmentNotifier extends Notifier<bool> {
               .read(manualBrightnessProvider.notifier)
               .update(monitor.realBrightness!.toDouble());
         }
+      }
+    }
+    state = !state;
+  }
+}
 
-        if (ref.read(isColorTemperatureEnabledProvider) &&
-            monitor.realTemperature != null) {
+final autoBrightnessAdjustmentProvider =
+    NotifierProvider<AutoBrightnessAdjustmentNotifier, bool>(
+  AutoBrightnessAdjustmentNotifier.new,
+);
+
+class AutoTemperatureAdjustmentNotifier extends Notifier<bool> {
+  @override
+  bool build() => true;
+  void toggle() {
+    if (state) {
+      // Transitioning from Auto to Manual
+      final monitors = ref.read(monitorListProvider).value;
+      if (monitors != null && monitors.isNotEmpty) {
+        final selection = ref.read(selectedMonitorsProvider);
+        final firstId = selection.first;
+
+        // Find the monitor to use as a baseline for manual mode
+        final monitor = monitors.firstWhere(
+          (m) => m.deviceName == firstId,
+          orElse: () => monitors.first,
+        );
+
+        if (monitor.realTemperature != null) {
           ref
               .read(manualTemperatureProvider.notifier)
               .setTemperature(monitor.realTemperature!);
@@ -408,11 +433,11 @@ class AutoAdjustmentNotifier extends Notifier<bool> {
     }
     state = !state;
   }
-
 }
 
-final autoAdjustmentProvider = NotifierProvider<AutoAdjustmentNotifier, bool>(
-  AutoAdjustmentNotifier.new,
+final autoTemperatureAdjustmentProvider =
+    NotifierProvider<AutoTemperatureAdjustmentNotifier, bool>(
+  AutoTemperatureAdjustmentNotifier.new,
 );
 
 class ManualBrightnessNotifier extends Notifier<double> {
@@ -682,7 +707,7 @@ class CurrentBrightnessNotifier extends Notifier<double> {
     final prefs = ref.watch(sharedPreferencesProvider);
     final lastBrightness = prefs?.getDouble(_lastBrightnessKey) ?? 100.0;
 
-    final isAuto = ref.watch(autoAdjustmentProvider);
+    final isAuto = ref.watch(autoBrightnessAdjustmentProvider);
     if (isAuto) {
       final solarStateAsync = ref.watch(solarStateStreamProvider);
       final circadianService = ref.watch(circadianServiceProvider);
@@ -729,7 +754,7 @@ class CurrentBrightnessNotifier extends Notifier<double> {
   }
 
   void setManualBrightness(double value) {
-    ref.read(autoAdjustmentProvider.notifier).state = false;
+    ref.read(autoBrightnessAdjustmentProvider.notifier).state = false;
     ref.read(manualBrightnessProvider.notifier).update(value);
     _saveBrightness(value);
   }
@@ -744,8 +769,9 @@ final currentBrightnessProvider =
 /// It listens to solar state and applies brightness updates to hardware.
 /// If the app is minimized, it skips UI state updates to save resources.
 final circadianAdjustmentProvider = Provider<void>((ref) {
-  final isAuto = ref.watch(autoAdjustmentProvider);
-  if (!isAuto) return;
+  final isAutoBright = ref.watch(autoBrightnessAdjustmentProvider);
+  final isAutoTemp = ref.watch(autoTemperatureAdjustmentProvider);
+  if (!isAutoBright && !isAutoTemp) return;
 
   final solarStateAsync = ref.watch(solarStateStreamProvider);
   final visibility = ref.watch(appLifecycleProvider);
@@ -770,34 +796,36 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                 settingsMap[monitor.deviceName] ?? settingsMap['all']!;
 
             // Calculate and Apply Brightness
-            final targetBrightness = circadianService.calculateTargetBrightness(
-              state.phases,
-              state.sunElevation,
-              DateTime.now(),
-              curveSharpness: settings.curveSharpness,
-              curvePoints: settings.curvePoints,
-              weather: settings.isWeatherAdjustmentEnabled
-                  ? weatherAsync.value
-                  : null,
-              presetSensitivity: settings.activePreset.weatherSensitivity,
-            );
+            if (isAutoBright) {
+              final targetBrightness = circadianService.calculateTargetBrightness(
+                state.phases,
+                state.sunElevation,
+                DateTime.now(),
+                curveSharpness: settings.curveSharpness,
+                curvePoints: settings.curvePoints,
+                weather: settings.isWeatherAdjustmentEnabled
+                    ? weatherAsync.value
+                    : null,
+                presetSensitivity: settings.activePreset.weatherSensitivity,
+              );
 
-            brightnessService.applyBrightnessSmoothly(
-              selection: monitor.deviceName,
-              targetValue: targetBrightness,
-              monitors: monitors,
-              monitorService: monitorService,
-              isUIVisible: visibility == AppVisibilityState.visible,
-              updateBrightnessCallback: (id, val) {
-                // ONLY update the UI provider if the app is visible
-                if (visibility == AppVisibilityState.visible) {
-                  monitorListNotifier.updateBrightness(id, val);
-                }
-              },
-            );
+              brightnessService.applyBrightnessSmoothly(
+                selection: monitor.deviceName,
+                targetValue: targetBrightness,
+                monitors: monitors,
+                monitorService: monitorService,
+                isUIVisible: visibility == AppVisibilityState.visible,
+                updateBrightnessCallback: (id, val) {
+                  // ONLY update the UI provider if the app is visible
+                  if (visibility == AppVisibilityState.visible) {
+                    monitorListNotifier.updateBrightness(id, val);
+                  }
+                },
+              );
+            }
 
             // Calculate and Apply Temperature
-            if (isTempEnabled) {
+            if (isAutoTemp && isTempEnabled) {
               final tempSettings =
                   tempSettingsMap[monitor.deviceName] ??
                   tempSettingsMap['all']!;

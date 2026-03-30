@@ -83,6 +83,8 @@
   "solarCycleEnded": "Solar cycle for today has ended. System is in manual night mode.",
   "updatingSolarData": "Updating solar data based on your location...",
   "autoAdapt": "Auto-Adapt",
+  "autoBrightness": "Auto Brightness",
+  "autoTemperature": "Auto Temperature",
   "active": "Active",
   "nightShift": "Night Shift",
   "disabled": "Disabled",

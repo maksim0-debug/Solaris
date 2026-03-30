@@ -287,18 +287,25 @@ bool MonitorManager::SetTemperature(const std::string& device_path, int kelvins)
   double green = 1.0;
   double blue = 1.0;
 
-  if (temp <= 66.0) {
-      red = 255.0;
-      green = 99.4708025861 * std::log(temp) - 161.1195681661;
-      if (temp <= 19.0) {
-          blue = 0.0;
-      } else {
-          blue = 138.5177312231 * std::log(temp - 10.0) - 305.0447927307;
-      }
+  if (kelvins < 6500) {
+    if (temp <= 66.0) {
+        red = 255.0;
+        green = 99.4708025861 * std::log(temp) - 161.1195681661;
+        if (temp <= 19.0) {
+            blue = 0.0;
+        } else {
+            blue = 138.5177312231 * std::log(temp - 10.0) - 305.0447927307;
+        }
+    } else {
+        red = 329.698727446 * std::pow(temp - 60.0, -0.1332047592);
+        green = 288.1221695283 * std::pow(temp - 60.0, -0.0755148492);
+        blue = 255.0;
+    }
   } else {
-      red = 329.698727446 * std::pow(temp - 60.0, -0.1332047592);
-      green = 288.1221695283 * std::pow(temp - 60.0, -0.0755148492);
-      blue = 255.0;
+    // 6500K and above is treated as neutral (pure white multipliers)
+    red = 255.0;
+    green = 255.0;
+    blue = 255.0;
   }
 
   // Clamp to 0-255 and normalize to 0.0-1.0
