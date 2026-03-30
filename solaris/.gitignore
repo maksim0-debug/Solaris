@@ -48,3 +48,6 @@ app.*.map.json
 /design-system/
 .agent
 secrets.json
+credentials.json
+.env
+google_fit_token.json

@@ -405,4 +405,32 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get enable => 'Включить';
+
+  @override
+  String get sleepData => 'Данные о сне';
+
+  @override
+  String get sleepDataSubtitle =>
+      'Синхронизация с Google Fit для отслеживания циклов отдыха';
+
+  @override
+  String get connectGoogleFit => 'Подключить Google Fit';
+
+  @override
+  String get disconnectGoogleFit => 'Отключить';
+
+  @override
+  String get googleFitConnected => 'Подключено к Google Fit';
+
+  @override
+  String get googleFitDisconnected => 'Не подключено';
+
+  @override
+  String get lastSyncSuccess => 'Последняя синхронизация: успешно';
+
+  @override
+  String get lastSyncFailed => 'Последняя синхронизация: ошибка';
+
+  @override
+  String get testSync => 'Проверить синхронизацию';
 }

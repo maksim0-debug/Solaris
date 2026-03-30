@@ -817,6 +817,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enable'**
   String get enable;
+
+  /// No description provided for @sleepData.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep Data'**
+  String get sleepData;
+
+  /// No description provided for @sleepDataSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync with Google Fit to track your rest cycles'**
+  String get sleepDataSubtitle;
+
+  /// No description provided for @connectGoogleFit.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect Google Fit'**
+  String get connectGoogleFit;
+
+  /// No description provided for @disconnectGoogleFit.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get disconnectGoogleFit;
+
+  /// No description provided for @googleFitConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to Google Fit'**
+  String get googleFitConnected;
+
+  /// No description provided for @googleFitDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not Connected'**
+  String get googleFitDisconnected;
+
+  /// No description provided for @lastSyncSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Last sync successful'**
+  String get lastSyncSuccess;
+
+  /// No description provided for @lastSyncFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Last sync failed'**
+  String get lastSyncFailed;
+
+  /// No description provided for @testSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Test Sync'**
+  String get testSync;
 }
 
 class _AppLocalizationsDelegate

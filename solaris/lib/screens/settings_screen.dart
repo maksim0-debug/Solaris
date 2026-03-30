@@ -9,6 +9,8 @@ import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/circadian_chart.dart';
 import 'package:solaris/models/preset_type.dart';
 import 'package:solaris/models/temperature_state.dart';
+import 'package:solaris/providers/google_fit_provider.dart';
+import 'package:intl/intl.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -116,6 +118,10 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
           ),
+          const SizedBox(height: 24),
+
+          // Sleep Data Section
+          const _SleepDataSection(),
           const SizedBox(height: 24),
 
           // Info Card
@@ -536,6 +542,223 @@ class _SettingsRow extends StatelessWidget {
           activeColor: const Color(0xFFFDBA74),
         ),
       ],
+    );
+  }
+}
+
+class _SleepDataSection extends ConsumerWidget {
+  const _SleepDataSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final googleFitState = ref.watch(googleFitProvider);
+    final isConnected = googleFitState.status == GoogleFitStatus.connected;
+    final isConnecting = googleFitState.status == GoogleFitStatus.connecting;
+
+    return GlassCard(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            onTap: () => ref.read(googleFitProvider.notifier).toggleExpanded(),
+            borderRadius: BorderRadius.circular(12),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF60A5FA).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    LucideIcons.moon,
+                    color: Color(0xFF60A5FA),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.sleepData,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        l10n.sleepDataSubtitle,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withOpacity(0.5),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  googleFitState.isExpanded 
+                    ? LucideIcons.chevronUp 
+                    : LucideIcons.chevronDown,
+                  color: Colors.white24,
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isConnected ? l10n.googleFitConnected : l10n.googleFitDisconnected,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isConnected ? const Color(0xFF4ADE80) : Colors.white70,
+                    ),
+                  ),
+                  if (googleFitState.lastFetchTime != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      googleFitState.lastFetchSuccess == true 
+                        ? l10n.lastSyncSuccess 
+                        : l10n.lastSyncFailed,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: googleFitState.lastFetchSuccess == true 
+                          ? Colors.white.withOpacity(0.3)
+                          : const Color(0xFFF87171),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              isConnecting 
+                ? const SizedBox(
+                    width: 24, 
+                    height: 24, 
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF60A5FA)),
+                  )
+                : ElevatedButton(
+                    onPressed: () {
+                      if (isConnected) {
+                        ref.read(googleFitProvider.notifier).signOut();
+                      } else {
+                        ref.read(googleFitProvider.notifier).signIn();
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isConnected 
+                        ? Colors.white.withOpacity(0.05) 
+                        : const Color(0xFF60A5FA).withOpacity(0.1),
+                      foregroundColor: isConnected ? Colors.white70 : const Color(0xFF60A5FA),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        side: BorderSide(
+                          color: isConnected 
+                            ? Colors.white10 
+                            : const Color(0xFF60A5FA).withOpacity(0.5),
+                        ),
+                      ),
+                    ),
+                    child: Text(isConnected ? l10n.disconnectGoogleFit : l10n.connectGoogleFit),
+                  ),
+            ],
+          ),
+          
+          if (isConnected) ...[
+            const SizedBox(height: 16),
+            const Divider(color: Colors.white10),
+            
+            AnimatedCrossFade(
+              firstChild: const SizedBox(width: double.infinity),
+              secondChild: Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Column(
+                  children: [
+                    if (googleFitState.sessions != null && googleFitState.sessions!.isNotEmpty) ...[
+                      ...googleFitState.sessions!.take(5).map((session) {
+                        final start = DateTime.fromMillisecondsSinceEpoch(int.parse(session.startTimeMillis!));
+                        final end = DateTime.fromMillisecondsSinceEpoch(int.parse(session.endTimeMillis!));
+                        final duration = end.difference(start);
+                        
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    DateFormat('MMM dd, HH:mm').format(start),
+                                    style: const TextStyle(fontSize: 12, color: Colors.white70),
+                                  ),
+                                  Text(
+                                    'to ${DateFormat('HH:mm').format(end)}',
+                                    style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(0.3)),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.05),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  '${duration.inHours}h ${duration.inMinutes.remainder(60)}m',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF60A5FA),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ] else if (googleFitState.lastFetchTime != null) ...[
+                      const Center(
+                        child: Text(
+                          'No sleep sessions found in the last 7 days.',
+                          style: TextStyle(fontSize: 12, color: Colors.white24),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    TextButton.icon(
+                      onPressed: () => ref.read(googleFitProvider.notifier).testSync(),
+                      icon: const Icon(LucideIcons.refreshCcw, size: 14),
+                      label: Text(l10n.testSync),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.white24,
+                        textStyle: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              crossFadeState: googleFitState.isExpanded 
+                ? CrossFadeState.showSecond 
+                : CrossFadeState.showFirst,
+              duration: const Duration(milliseconds: 300),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

@@ -13,11 +13,18 @@ import 'package:solaris/services/time_service.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:solaris/services/tray_service.dart';
 import 'package:solaris/providers/lifecycle_provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
   await TimeService.initialize();
+  
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint('Error loading .env file: $e');
+  }
 
   bool startMinimized = args.contains('--minimized');
 

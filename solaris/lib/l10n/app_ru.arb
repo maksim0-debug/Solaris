@@ -177,5 +177,14 @@
   "chartModeBrightness": "Яркость",
   "chartModeTemperature": "Температура",
   "disabledInSettings": "Отключено в настройках",
-  "enable": "Включить"
+  "enable": "Включить",
+  "sleepData": "Данные о сне",
+  "sleepDataSubtitle": "Синхронизация с Google Fit для отслеживания циклов отдыха",
+  "connectGoogleFit": "Подключить Google Fit",
+  "disconnectGoogleFit": "Отключить",
+  "googleFitConnected": "Подключено к Google Fit",
+  "googleFitDisconnected": "Не подключено",
+  "lastSyncSuccess": "Последняя синхронизация: успешно",
+  "lastSyncFailed": "Последняя синхронизация: ошибка",
+  "testSync": "Проверить синхронизацию"
 }

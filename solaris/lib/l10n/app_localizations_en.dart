@@ -407,4 +407,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get enable => 'Enable';
+
+  @override
+  String get sleepData => 'Sleep Data';
+
+  @override
+  String get sleepDataSubtitle =>
+      'Sync with Google Fit to track your rest cycles';
+
+  @override
+  String get connectGoogleFit => 'Connect Google Fit';
+
+  @override
+  String get disconnectGoogleFit => 'Disconnect';
+
+  @override
+  String get googleFitConnected => 'Connected to Google Fit';
+
+  @override
+  String get googleFitDisconnected => 'Not Connected';
+
+  @override
+  String get lastSyncSuccess => 'Last sync successful';
+
+  @override
+  String get lastSyncFailed => 'Last sync failed';
+
+  @override
+  String get testSync => 'Test Sync';
 }

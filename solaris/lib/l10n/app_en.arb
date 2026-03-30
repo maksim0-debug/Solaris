@@ -177,5 +177,14 @@
   "chartModeBrightness": "Brightness",
   "chartModeTemperature": "Temperature",
   "disabledInSettings": "Disabled in settings",
-  "enable": "Enable"
+  "enable": "Enable",
+  "sleepData": "Sleep Data",
+  "sleepDataSubtitle": "Sync with Google Fit to track your rest cycles",
+  "connectGoogleFit": "Connect Google Fit",
+  "disconnectGoogleFit": "Disconnect",
+  "googleFitConnected": "Connected to Google Fit",
+  "googleFitDisconnected": "Not Connected",
+  "lastSyncSuccess": "Last sync successful",
+  "lastSyncFailed": "Last sync failed",
+  "testSync": "Test Sync"
 }
