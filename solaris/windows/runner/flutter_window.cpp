@@ -55,8 +55,10 @@ bool FlutterWindow::OnCreate() {
               std::string device_path = std::get<std::string>(device_path_it->second);
               int brightness = std::get<int>(brightness_it->second);
               
-              bool success = monitor_manager_.SetBrightness(device_path, brightness);
-              result->Success(flutter::EncodableValue(success));
+              monitor_manager_.EnqueueTask([this, device_path, brightness]() {
+                monitor_manager_.SetBrightness(device_path, brightness);
+              });
+              result->Success(flutter::EncodableValue(true));
               return;
             }
           }
@@ -69,8 +71,10 @@ bool FlutterWindow::OnCreate() {
                 if (device_path_it != arguments->end() && temp_it != arguments->end()) {
                     std::string device_path = std::get<std::string>(device_path_it->second);
                     int temperature = std::get<int>(temp_it->second);
-                  bool success = monitor_manager_.SetTemperature(device_path, temperature);
-                  result->Success(flutter::EncodableValue(success));
+                  monitor_manager_.EnqueueTask([this, device_path, temperature]() {
+                    monitor_manager_.SetTemperature(device_path, temperature);
+                  });
+                  result->Success(flutter::EncodableValue(true));
                   return;
                 }
               }

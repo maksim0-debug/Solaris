@@ -66,12 +66,23 @@ class BrightnessService {
     }
 
     _adjustmentTimers[deviceName] = Timer.periodic(
-      const Duration(milliseconds: 50),
+      const Duration(milliseconds: 100),
       (timer) {
+        final diff = (target - current).abs();
+        if (diff == 0) {
+          timer.cancel();
+          _adjustmentTimers[deviceName] = null;
+          return;
+        }
+
+        // Use slightly larger steps for large transitions to maintain perceived speed
+        // while respecting the 100ms hardware interval.
+        final step = diff > 20 ? 2 : 1;
+
         if (current < target) {
-          current++;
+          current = (current + step).clamp(0, target).toInt();
         } else if (current > target) {
-          current--;
+          current = (current - step).clamp(target, 100).toInt();
         }
 
         _currentHardwareBrightness[deviceName] = current;

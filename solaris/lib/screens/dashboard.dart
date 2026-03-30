@@ -274,8 +274,6 @@ class _Header extends ConsumerWidget {
       if (ref.read(autoAdjustmentProvider))
         return; // Already handled by background loop
 
-      if (!ref.read(isColorTemperatureEnabledProvider)) return;
-
       if (previous != next) {
         final selection = ref.read(selectedMonitorsProvider);
         final monitors = ref.read(monitorListProvider).value ?? [];
@@ -502,7 +500,6 @@ class _DashboardView extends ConsumerWidget {
     final timeService = ref.watch(timeServiceProvider);
     final brightness = ref.watch(currentBrightnessProvider);
     final currentTemperature = ref.watch(currentTemperatureProvider);
-    final isTempEnabled = ref.watch(isColorTemperatureEnabledProvider);
     final bool isAutoAdapt = ref.watch<bool>(autoAdjustmentProvider);
 
     return Row(
@@ -535,10 +532,9 @@ class _DashboardView extends ConsumerWidget {
                       },
                     ),
                     // Temperature Indicator (Outer)
-                    if (isTempEnabled)
-                      SizedBox(
-                        width: 280,
-                        height: 280,
+                    SizedBox(
+                      width: 280,
+                      height: 280,
                         child: CustomPaint(
                           painter: TemperatureDialPainter(
                             progress:
@@ -597,15 +593,13 @@ class _DashboardView extends ConsumerWidget {
                           .read(currentBrightnessProvider.notifier)
                           .setManualBrightness(val),
                     ),
-                    if (isTempEnabled) ...[
-                      const SizedBox(height: 24),
-                      TemperatureSlider(
-                        value: currentTemperature.toDouble(),
-                        onChanged: (val) => ref
-                            .read(manualTemperatureProvider.notifier)
-                            .setTemperature(val.round()),
-                      ),
-                    ],
+                    const SizedBox(height: 24),
+                    TemperatureSlider(
+                      value: currentTemperature.toDouble(),
+                      onChanged: (val) => ref
+                          .read(manualTemperatureProvider.notifier)
+                          .setTemperature(val.round()),
+                    ),
                   ],
                 ),
               ),

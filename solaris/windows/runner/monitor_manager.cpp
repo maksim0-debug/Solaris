@@ -4,7 +4,6 @@
 #include "monitor_manager.h"
 
 #include <cmath>
-#include <iostream>
 #include <initguid.h>
 #include <setupapi.h>
 #include <devguid.h>
@@ -21,8 +20,43 @@
 // GUID_DEVINTERFACE_MONITOR is usually {E6F07B5F-EE97-4a90-B076-33F57BF4EAA7}
 DEFINE_GUID(GUID_DEVINTERFACE_MONITOR_INTERNAL, 0xE6F07B5F, 0xEE97, 0x4a90, 0xB0, 0x76, 0x33, 0xF5, 0x7B, 0xF4, 0xEA, 0xA7);
 
-MonitorManager::MonitorManager() {}
-MonitorManager::~MonitorManager() {}
+MonitorManager::MonitorManager() {
+  worker_thread_ = std::thread(&MonitorManager::WorkerLoop, this);
+}
+
+MonitorManager::~MonitorManager() {
+  stop_worker_ = true;
+  condition_.notify_one();
+  if (worker_thread_.joinable()) {
+    worker_thread_.join();
+  }
+}
+
+void MonitorManager::EnqueueTask(std::function<void()> task) {
+  {
+    std::lock_guard<std::mutex> lock(queue_mutex_);
+    task_queue_.push(std::move(task));
+  }
+  condition_.notify_one();
+}
+
+void MonitorManager::WorkerLoop() {
+  while (!stop_worker_) {
+    std::function<void()> task;
+    {
+      std::unique_lock<std::mutex> lock(queue_mutex_);
+      condition_.wait(lock, [this] { return stop_worker_.load() || !task_queue_.empty(); });
+      if (stop_worker_ && task_queue_.empty()) return;
+      if (!task_queue_.empty()) {
+        task = std::move(task_queue_.front());
+        task_queue_.pop();
+      }
+    }
+    if (task) {
+      task();
+    }
+  }
+}
 
 std::map<std::string, std::string> MonitorManager::GetMonitorFriendlyNames() {
   std::map<std::string, std::string> friendly_names;
@@ -43,13 +77,13 @@ std::map<std::string, std::string> MonitorManager::GetMonitorFriendlyNames() {
     device_data.cbSize = sizeof(SP_DEVINFO_DATA);
 
     DWORD detail_size = 0;
-    SetupDiGetDeviceInterfaceDetail(dev_info, &interface_data, nullptr, 0, &detail_size, nullptr);
+    SetupDiGetDeviceInterfaceDetailW(dev_info, &interface_data, nullptr, 0, &detail_size, nullptr);
 
     std::vector<uint8_t> detail_buffer(detail_size);
-    auto detail_data = reinterpret_cast<PSP_DEVICE_INTERFACE_DETAIL_DATA>(detail_buffer.data());
-    detail_data->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA);
+    auto detail_data = reinterpret_cast<PSP_DEVICE_INTERFACE_DETAIL_DATA_W>(detail_buffer.data());
+    detail_data->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
 
-    if (SetupDiGetDeviceInterfaceDetail(dev_info, &interface_data, detail_data, detail_size, nullptr, &device_data)) {
+    if (SetupDiGetDeviceInterfaceDetailW(dev_info, &interface_data, detail_data, detail_size, nullptr, &device_data)) {
       // Get the device path (e.g., \\?\DISPLAY#...)
       std::wstring device_path_w(detail_data->DevicePath);
       std::string device_path;
@@ -272,29 +306,39 @@ bool MonitorManager::SetTemperature(const std::string& device_path, int kelvins)
   double gFactor = std::max(0.0, std::min(255.0, green)) / 255.0;
   double bFactor = std::max(0.0, std::min(255.0, blue)) / 255.0;
 
+  // Convert device_path to wstring
+  std::wstring target_device(device_path.begin(), device_path.end());
+
   // Apply to Gamma Ramp
-  HDC hDC = CreateDCA("DISPLAY", device_path.c_str(), NULL, NULL);
+  HDC hDC = CreateDCW(L"DISPLAY", target_device.c_str(), NULL, NULL);
   if (!hDC) return false;
 
   // Cache the original gamma ramp if not already cached
-  if (original_gamma_ramps_.find(device_path) == original_gamma_ramps_.end()) {
-      WORD orig_ramp[3][256];
-      if (GetDeviceGammaRamp(hDC, orig_ramp)) {
-          std::vector<WORD> flat_ramp(3 * 256);
-          std::memcpy(flat_ramp.data(), orig_ramp, sizeof(orig_ramp));
-          original_gamma_ramps_[device_path] = flat_ramp;
-      } else {
-          // If we fail to get original, we'll construct a linear one as fallback
-          std::vector<WORD> flat_ramp(3 * 256);
-          for (int i = 0; i < 256; i++) {
-              int val = i * 256;
-              flat_ramp[i] = flat_ramp[i + 256] = flat_ramp[i + 512] = (WORD)std::min(65535, val);
+  {
+      std::lock_guard<std::mutex> lock(gamma_mutex_);
+      if (original_gamma_ramps_.find(device_path) == original_gamma_ramps_.end()) {
+          WORD orig_ramp[3][256];
+          if (GetDeviceGammaRamp(hDC, orig_ramp)) {
+              std::vector<WORD> flat_ramp(3 * 256);
+              std::memcpy(flat_ramp.data(), orig_ramp, sizeof(orig_ramp));
+              original_gamma_ramps_[device_path] = flat_ramp;
+          } else {
+              // If we fail to get original, we'll construct a linear one as fallback
+              std::vector<WORD> flat_ramp(3 * 256);
+              for (int i = 0; i < 256; i++) {
+                  int val = i * 257;
+                  flat_ramp[i] = flat_ramp[i + 256] = flat_ramp[i + 512] = (WORD)std::min(65535, val);
+              }
+              original_gamma_ramps_[device_path] = flat_ramp;
           }
-          original_gamma_ramps_[device_path] = flat_ramp;
       }
   }
 
-  const std::vector<WORD>& base_ramp = original_gamma_ramps_[device_path];
+  std::vector<WORD> base_ramp;
+  {
+      std::lock_guard<std::mutex> lock(gamma_mutex_);
+      base_ramp = original_gamma_ramps_[device_path];
+  }
   
   WORD gammaArray[3][256];
   for (int i = 0; i < 256; i++) {
@@ -310,14 +354,24 @@ bool MonitorManager::SetTemperature(const std::string& device_path, int kelvins)
 }
 
 bool MonitorManager::ResetTemperature(const std::string& device_path) {
-  HDC hDC = CreateDCA("DISPLAY", device_path.c_str(), NULL, NULL);
+  std::wstring target_device(device_path.begin(), device_path.end());
+  HDC hDC = CreateDCW(L"DISPLAY", target_device.c_str(), NULL, NULL);
   if (!hDC) return false;
 
   WORD gammaArray[3][256];
-  auto it = original_gamma_ramps_.find(device_path);
+  std::vector<WORD> base_ramp;
+  bool found = false;
 
-  if (it != original_gamma_ramps_.end() && it->second.size() == (3 * 256)) {
-    const std::vector<WORD>& base_ramp = it->second;
+  {
+    std::lock_guard<std::mutex> lock(gamma_mutex_);
+    auto it = original_gamma_ramps_.find(device_path);
+    if (it != original_gamma_ramps_.end() && it->second.size() == (3 * 256)) {
+      base_ramp = it->second;
+      found = true;
+    }
+  }
+
+  if (found) {
     for (int i = 0; i < 256; i++) {
       gammaArray[0][i] = base_ramp[i];
       gammaArray[1][i] = base_ramp[i + 256];

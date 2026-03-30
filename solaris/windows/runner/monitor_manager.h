@@ -5,6 +5,12 @@
 #include <string>
 #include <vector>
 #include <windows.h>
+#include <mutex>
+#include <thread>
+#include <queue>
+#include <condition_variable>
+#include <functional>
+#include <atomic>
 
 class MonitorManager {
  public:
@@ -26,9 +32,22 @@ class MonitorManager {
   // Resets monitor gamma ramp to cached original (or linear neutral fallback).
   bool ResetTemperature(const std::string& device_path);
 
+  // Enqueues a task to be executed on the background worker thread.
+  void EnqueueTask(std::function<void()> task);
+
  private:
   // Caches the original gamma ramps for displays.
   std::map<std::string, std::vector<WORD>> original_gamma_ramps_;
+  std::mutex gamma_mutex_;
+
+  // Background worker state
+  std::thread worker_thread_;
+  std::queue<std::function<void()>> task_queue_;
+  std::mutex queue_mutex_;
+  std::condition_variable condition_;
+  std::atomic<bool> stop_worker_{false};
+
+  void WorkerLoop();
 
   std::string ParseEdid(const std::vector<uint8_t>& edid);
   std::string GetManufacturerName(uint16_t manufacturer_id);

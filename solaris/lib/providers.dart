@@ -377,7 +377,38 @@ final activeScreenProvider = NotifierProvider<ActiveScreenNotifier, AppScreen>(
 class AutoAdjustmentNotifier extends Notifier<bool> {
   @override
   bool build() => true;
-  void toggle() => state = !state;
+  void toggle() {
+    if (state) {
+      // Transitioning from Auto to Manual
+      // Avoid reading currentBrightnessProvider to prevent CircularDependencyError
+      final monitors = ref.read(monitorListProvider).value;
+      if (monitors != null && monitors.isNotEmpty) {
+        final selection = ref.read(selectedMonitorsProvider);
+        final firstId = selection.first;
+
+        // Find the monitor to use as a baseline for manual mode
+        final monitor = monitors.firstWhere(
+          (m) => m.deviceName == firstId,
+          orElse: () => monitors.first,
+        );
+
+        if (monitor.realBrightness != null) {
+          ref
+              .read(manualBrightnessProvider.notifier)
+              .update(monitor.realBrightness!.toDouble());
+        }
+
+        if (ref.read(isColorTemperatureEnabledProvider) &&
+            monitor.realTemperature != null) {
+          ref
+              .read(manualTemperatureProvider.notifier)
+              .setTemperature(monitor.realTemperature!);
+        }
+      }
+    }
+    state = !state;
+  }
+
 }
 
 final autoAdjustmentProvider = NotifierProvider<AutoAdjustmentNotifier, bool>(
