@@ -3,6 +3,7 @@ import 'package:solaris/models/sleep_session.dart';
 import 'package:solaris/models/sleep_regime.dart';
 import 'package:solaris/services/sleep_service.dart';
 import 'package:solaris/services/regime_analyzer.dart';
+import 'package:solaris/providers/google_fit_provider.dart';
 import 'package:equatable/equatable.dart';
 
 class SleepState extends Equatable {
@@ -53,7 +54,9 @@ class SleepNotifier extends Notifier<SleepState> {
   Future<void> loadSleepData() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final sessions = await _sleepService.fetchSleepData();
+      final result = await _sleepService.fetchSleepData();
+      final sessions = result.sessions;
+      
       if (sessions.isEmpty && state.sessions.isEmpty) {
         state = state.copyWith(
           isLoading: false,
@@ -61,6 +64,12 @@ class SleepNotifier extends Notifier<SleepState> {
         );
         return;
       }
+
+      if (result.isLive) {
+        // Notify GoogleFitProvider about successful live sync
+        ref.read(googleFitProvider.notifier).updateLastFetchTime(DateTime.now());
+      }
+
       final regimes = RegimeAnalyzer.analyze(sessions);
       
       state = state.copyWith(

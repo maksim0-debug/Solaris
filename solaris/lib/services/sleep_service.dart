@@ -15,8 +15,8 @@ class SleepService {
   final _cacheFilename = 'sleep_data_cache.json';
 
   /// Fetches sleep data from Google Fit for the specified number of [daysBack].
-  /// On failure, returns the last successfully cached data.
-  Future<List<SleepSession>> fetchSleepData({int daysBack = 14}) async {
+  /// Returns a record with the fetched sessions and a boolean indicating if it was a live sync.
+  Future<({List<SleepSession> sessions, bool isLive})> fetchSleepData({int daysBack = 14}) async {
     final endTime = DateTime.now();
     final startTime = endTime.subtract(Duration(days: daysBack));
 
@@ -29,14 +29,15 @@ class SleepService {
       if (googleFitSessions != null) {
         final sleepSessions = _mapToSleepSessions(googleFitSessions);
         await _cacheSleepData(sleepSessions);
-        return sleepSessions;
+        return (sessions: sleepSessions, isLive: true);
       }
     } catch (e) {
       debugPrint('Error fetching sleep data from Google Fit: $e');
     }
 
     // Attempt to load from cache on any failure
-    return await _loadCachedSleepData();
+    final cachedSessions = await _loadCachedSleepData();
+    return (sessions: cachedSessions, isLive: false);
   }
 
   List<SleepSession> _mapToSleepSessions(List<Session> sessions) {

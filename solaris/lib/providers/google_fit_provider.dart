@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solaris/services/google_fit_service.dart';
+import 'package:solaris/services/storage_service.dart';
+import 'package:solaris/providers/sleep_provider.dart';
 import 'package:equatable/equatable.dart';
 import 'package:googleapis/fitness/v1.dart';
 
@@ -52,6 +54,9 @@ class GoogleFitState extends Equatable {
 }
 
 class GoogleFitNotifier extends Notifier<GoogleFitState> {
+  final _storage = StorageService();
+  static const _lastSyncFilename = 'google_fit_last_sync.txt';
+
   @override
   GoogleFitState build() {
     // We can't do async work in build directly, but we can trigger it
@@ -61,11 +66,25 @@ class GoogleFitNotifier extends Notifier<GoogleFitState> {
 
   Future<void> _initialize() async {
     final service = ref.read(googleFitServiceProvider);
+    
+    // Load last sync time from storage
+    DateTime? lastSync;
+    final lastSyncStr = await _storage.load(_lastSyncFilename);
+    if (lastSyncStr != null) {
+      lastSync = DateTime.tryParse(lastSyncStr);
+    }
+
     final connected = await service.initialize();
     if (connected) {
-      state = state.copyWith(status: GoogleFitStatus.connected);
+      state = state.copyWith(
+        status: GoogleFitStatus.connected,
+        lastFetchTime: lastSync,
+      );
     } else {
-      state = state.copyWith(status: GoogleFitStatus.disconnected);
+      state = state.copyWith(
+        status: GoogleFitStatus.disconnected,
+        lastFetchTime: lastSync,
+      );
     }
   }
 
@@ -75,6 +94,8 @@ class GoogleFitNotifier extends Notifier<GoogleFitState> {
     final success = await service.signIn();
     if (success) {
       state = state.copyWith(status: GoogleFitStatus.connected);
+      // Trigger a sync after successful sign-in
+      ref.read(sleepProvider.notifier).loadSleepData();
     } else {
       state = state.copyWith(
         status: GoogleFitStatus.error,
@@ -97,6 +118,11 @@ class GoogleFitNotifier extends Notifier<GoogleFitState> {
     state = state.copyWith(isExpanded: !state.isExpanded);
   }
 
+  Future<void> updateLastFetchTime(DateTime time) async {
+    await _storage.save(_lastSyncFilename, time.toIso8601String());
+    state = state.copyWith(lastFetchTime: time);
+  }
+
   Future<void> testSync() async {
     final service = ref.read(googleFitServiceProvider);
     final now = DateTime.now();
@@ -107,8 +133,11 @@ class GoogleFitNotifier extends Notifier<GoogleFitState> {
       endTime: now,
     );
 
+    if (sessions != null) {
+      await updateLastFetchTime(now);
+    }
+
     state = state.copyWith(
-      lastFetchTime: now,
       lastFetchSuccess: sessions != null,
       sessions: sessions,
     );
