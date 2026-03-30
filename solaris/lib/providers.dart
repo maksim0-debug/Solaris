@@ -3,17 +3,17 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:solaris/services/location_service.dart';
-// import 'package:solaris/services/solar_service.dart'; // Removed
 import 'package:solaris/services/time_service.dart';
 import 'package:solaris/services/monitor_service.dart';
 import 'package:solaris/services/circadian_service.dart';
 import 'package:solaris/services/sun_calculator_service.dart';
 import 'package:solaris/services/brightness_service.dart';
 import 'package:solaris/services/weather_service.dart';
-import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/services/autorun_service.dart';
+import 'package:solaris/providers/temperature_provider.dart';
+import 'package:solaris/models/solar_state.dart';
+import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/models/solar_phase_model.dart';
-import 'package:solaris/models/current_day_phase.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'dart:async';
 
@@ -24,7 +24,6 @@ import 'package:solaris/models/preset_type.dart';
 import 'package:solaris/providers/lifecycle_provider.dart';
 
 final locationServiceProvider = Provider((ref) => LocationService());
-// Removed legacy solarServiceProvider
 final sunCalculatorServiceProvider = Provider((ref) => SunCalculatorService());
 final timeServiceProvider = Provider((ref) => TimeService());
 final monitorServiceProvider = Provider((ref) => MonitorService());
@@ -59,34 +58,7 @@ final currentWeatherProvider = FutureProvider<WeatherData?>((ref) async {
   return await weatherService.fetchCurrentWeather(pos.latitude, pos.longitude);
 });
 
-/// Data class representing the current solar state for the UI.
-class SolarState {
-  final SolarPhaseModel phases;
-  final CurrentDayPhase currentPhase;
-  final Duration timeUntilNextEvent;
-  final double sunElevation;
-  final double sunAzimuth;
-  final double sunZenith;
-  final double sunProgress;
-  final double uvIndex;
-  final double spectralIntensity;
-  final String azimuthTrend;
-  final String elevationTrend;
-
-  SolarState({
-    required this.phases,
-    required this.currentPhase,
-    required this.timeUntilNextEvent,
-    required this.sunElevation,
-    required this.sunAzimuth,
-    required this.sunZenith,
-    required this.sunProgress,
-    required this.uvIndex,
-    required this.spectralIntensity,
-    required this.azimuthTrend,
-    required this.elevationTrend,
-  });
-}
+// SolarState moved to lib/models/solar_state.dart
 
 final locationStreamProvider = StreamProvider<Position>((ref) {
   final service = ref.watch(locationServiceProvider);
@@ -278,7 +250,7 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
   }
 });
 
-// Removed legacy solarDataProvider
+// solarDataProvider logic unified into solarStateStreamProvider
 
 class MonitorListNotifier extends AsyncNotifier<List<MonitorInfo>> {
   @override
@@ -287,26 +259,14 @@ class MonitorListNotifier extends AsyncNotifier<List<MonitorInfo>> {
   }
 
   void updateBrightness(String deviceName, int brightness) {
-    state.whenData((monitors) {
-      state = AsyncData(
-        monitors.map((m) {
-          if (m.deviceName == deviceName) {
-            return MonitorInfo(
-              name: m.name,
-              friendlyName: m.friendlyName,
-              deviceName: m.deviceName,
-              isPrimary: m.isPrimary,
-              realBrightness: brightness,
-              realTemperature: m.realTemperature,
-            );
-          }
-          return m;
-        }).toList(),
-      );
-    });
+    _updateMonitor(deviceName, brightness, null);
   }
 
   void updateTemperature(String deviceName, int temperature) {
+    _updateMonitor(deviceName, null, temperature);
+  }
+
+  void _updateMonitor(String deviceName, int? brightness, int? temperature) {
     state.whenData((monitors) {
       state = AsyncData(
         monitors.map((m) {
@@ -316,8 +276,8 @@ class MonitorListNotifier extends AsyncNotifier<List<MonitorInfo>> {
               friendlyName: m.friendlyName,
               deviceName: m.deviceName,
               isPrimary: m.isPrimary,
-              realBrightness: m.realBrightness,
-              realTemperature: temperature,
+              realBrightness: brightness ?? m.realBrightness,
+              realTemperature: temperature ?? m.realTemperature,
             );
           }
           return m;
@@ -378,27 +338,29 @@ class AutoBrightnessAdjustmentNotifier extends Notifier<bool> {
   bool build() => true;
   void toggle() {
     if (state) {
-      // Transitioning from Auto to Manual
-      final monitors = ref.read(monitorListProvider).value;
-      if (monitors != null && monitors.isNotEmpty) {
-        final selection = ref.read(selectedMonitorsProvider);
-        final firstId = selection.firstOrNull ?? 'all';
-
-        // Find the monitor to use as a baseline for manual mode
-        final monitor = monitors.firstWhere(
-          (m) => m.deviceName == firstId,
-          orElse: () => monitors.first,
-        );
-
-        if (monitor.realBrightness != null) {
-          ref
-              .read(manualBrightnessProvider.notifier)
-              .update(monitor.realBrightness!.toDouble());
-        }
+      final monitor = _getBaselineMonitor(ref);
+      if (monitor?.realBrightness != null) {
+        ref
+            .read(manualBrightnessProvider.notifier)
+            .update(monitor!.realBrightness!.toDouble());
       }
     }
     state = !state;
   }
+}
+
+/// Finds the most relevant monitor to use as a baseline when switching modes.
+MonitorInfo? _getBaselineMonitor(Ref ref) {
+  final monitors = ref.read(monitorListProvider).value;
+  if (monitors == null || monitors.isEmpty) return null;
+
+  final selection = ref.read(selectedMonitorsProvider);
+  final firstId = selection.firstOrNull ?? 'all';
+
+  return monitors.firstWhere(
+    (m) => m.deviceName == firstId,
+    orElse: () => monitors.first,
+  );
 }
 
 final autoBrightnessAdjustmentProvider =
@@ -411,23 +373,11 @@ class AutoTemperatureAdjustmentNotifier extends Notifier<bool> {
   bool build() => true;
   void toggle() {
     if (state) {
-      // Transitioning from Auto to Manual
-      final monitors = ref.read(monitorListProvider).value;
-      if (monitors != null && monitors.isNotEmpty) {
-        final selection = ref.read(selectedMonitorsProvider);
-        final firstId = selection.firstOrNull ?? 'all';
-
-        // Find the monitor to use as a baseline for manual mode
-        final monitor = monitors.firstWhere(
-          (m) => m.deviceName == firstId,
-          orElse: () => monitors.first,
-        );
-
-        if (monitor.realTemperature != null) {
-          ref
-              .read(manualTemperatureProvider.notifier)
-              .setTemperature(monitor.realTemperature!);
-        }
+      final monitor = _getBaselineMonitor(ref);
+      if (monitor?.realTemperature != null) {
+        ref
+            .read(manualTemperatureProvider.notifier)
+            .setTemperature(monitor!.realTemperature!);
       }
     }
     state = !state;
@@ -450,101 +400,7 @@ final manualBrightnessProvider =
       ManualBrightnessNotifier.new,
     );
 
-class SettingsState {
-  final PresetType activePreset;
-  final Map<PresetType, List<FlSpot>> curvesMap;
-  final double curveSharpness;
-  final bool isAutorunEnabled;
-  final bool isWeatherAdjustmentEnabled;
-
-  SettingsState({
-    this.activePreset = PresetType.bright,
-    Map<PresetType, List<FlSpot>>? curvesMap,
-    this.curveSharpness = 1.0,
-    this.isAutorunEnabled = false,
-    this.isWeatherAdjustmentEnabled = true,
-  }) : curvesMap = curvesMap ?? PresetConstants.getAllDefaults();
-
-  List<FlSpot> get curvePoints => curvesMap[activePreset]!;
-
-  Map<String, dynamic> toJson() => {
-    'activePreset': activePreset.toJson(),
-    'curvesMap': curvesMap.map(
-      (key, value) =>
-          MapEntry(key.name, value.map((p) => {'x': p.x, 'y': p.y}).toList()),
-    ),
-    'curveSharpness': curveSharpness,
-    'isAutorunEnabled': isAutorunEnabled,
-    'isWeatherAdjustmentEnabled': isWeatherAdjustmentEnabled,
-  };
-
-  factory SettingsState.fromJson(Map<String, dynamic> json) {
-    final activePreset = json.containsKey('activePreset')
-        ? PresetType.fromJson(json['activePreset'] as String)
-        : PresetType.bright;
-
-    Map<PresetType, List<FlSpot>>? curvesMap;
-    if (json.containsKey('curvesMap')) {
-      final mapData = json['curvesMap'] as Map<String, dynamic>;
-      curvesMap = {};
-      for (final type in PresetType.values) {
-        if (mapData.containsKey(type.name)) {
-          final pointsJson = mapData[type.name] as List<dynamic>;
-          curvesMap[type] = pointsJson.map((p) {
-            final map = p as Map<String, dynamic>;
-            return FlSpot(
-              (map['x'] as num).toDouble(),
-              (map['y'] as num).toDouble(),
-            );
-          }).toList();
-        } else {
-          curvesMap[type] = PresetConstants.getDefaultPoints(type);
-        }
-      }
-    } else if (json.containsKey('curvePoints')) {
-      // Migration from old format
-      final List<dynamic>? pointsJson = json['curvePoints'] as List<dynamic>?;
-      final points = pointsJson?.map((p) {
-        final map = p as Map<String, dynamic>;
-        return FlSpot(
-          (map['x'] as num).toDouble(),
-          (map['y'] as num).toDouble(),
-        );
-      }).toList();
-
-      curvesMap = PresetConstants.getAllDefaults();
-      if (points != null) {
-        curvesMap[PresetType.bright] = points;
-      }
-    }
-
-    return SettingsState(
-      activePreset: activePreset,
-      curvesMap: curvesMap,
-      curveSharpness: (json['curveSharpness'] as num?)?.toDouble() ?? 1.0,
-      isAutorunEnabled: json['isAutorunEnabled'] as bool? ?? false,
-      isWeatherAdjustmentEnabled:
-          json['isWeatherAdjustmentEnabled'] as bool? ?? true,
-    );
-  }
-
-  SettingsState copyWith({
-    PresetType? activePreset,
-    Map<PresetType, List<FlSpot>>? curvesMap,
-    double? curveSharpness,
-    bool? isAutorunEnabled,
-    bool? isWeatherAdjustmentEnabled,
-  }) {
-    return SettingsState(
-      activePreset: activePreset ?? this.activePreset,
-      curvesMap: curvesMap ?? this.curvesMap,
-      curveSharpness: curveSharpness ?? this.curveSharpness,
-      isAutorunEnabled: isAutorunEnabled ?? this.isAutorunEnabled,
-      isWeatherAdjustmentEnabled:
-          isWeatherAdjustmentEnabled ?? this.isWeatherAdjustmentEnabled,
-    );
-  }
-}
+// SettingsState moved to lib/models/settings_state.dart
 
 class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   static const _settingsFilename = 'monitor_settings.json';

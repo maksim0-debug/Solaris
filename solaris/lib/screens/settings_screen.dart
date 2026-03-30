@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers.dart';
+import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/circadian_chart.dart';

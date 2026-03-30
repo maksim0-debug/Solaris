@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/providers/temperature_provider.dart';
+import 'package:solaris/models/settings_state.dart';
 
 class CircadianChartWidget extends ConsumerStatefulWidget {
   const CircadianChartWidget({super.key});
