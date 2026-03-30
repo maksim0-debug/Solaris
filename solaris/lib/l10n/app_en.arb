@@ -161,5 +161,14 @@
   "presetBright": "Bright",
   "presetDim": "Dim",
   "presetDimmest": "Dimmest",
-  "presetCustom": "Custom"
+  "presetCustom": "Custom",
+  "tempCoolest": "Coolest",
+  "tempCool": "Cool",
+  "tempWarm": "Warm",
+  "tempWarmest": "Warmest",
+  "tempCustom": "Custom",
+  "blueLightFilter": "Color Temperature (Blue Light Filter)",
+  "blueLightFilterSubtitle": "Automatically warm screen colors at night to reduce eye strain",
+  "chartModeBrightness": "Brightness",
+  "chartModeTemperature": "Temperature"
 }

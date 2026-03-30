@@ -721,6 +721,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Custom'**
   String get presetCustom;
+
+  /// No description provided for @tempCoolest.
+  ///
+  /// In en, this message translates to:
+  /// **'Coolest'**
+  String get tempCoolest;
+
+  /// No description provided for @tempCool.
+  ///
+  /// In en, this message translates to:
+  /// **'Cool'**
+  String get tempCool;
+
+  /// No description provided for @tempWarm.
+  ///
+  /// In en, this message translates to:
+  /// **'Warm'**
+  String get tempWarm;
+
+  /// No description provided for @tempWarmest.
+  ///
+  /// In en, this message translates to:
+  /// **'Warmest'**
+  String get tempWarmest;
+
+  /// No description provided for @tempCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get tempCustom;
+
+  /// No description provided for @blueLightFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Color Temperature (Blue Light Filter)'**
+  String get blueLightFilter;
+
+  /// No description provided for @blueLightFilterSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically warm screen colors at night to reduce eye strain'**
+  String get blueLightFilterSubtitle;
+
+  /// No description provided for @chartModeBrightness.
+  ///
+  /// In en, this message translates to:
+  /// **'Brightness'**
+  String get chartModeBrightness;
+
+  /// No description provided for @chartModeTemperature.
+  ///
+  /// In en, this message translates to:
+  /// **'Temperature'**
+  String get chartModeTemperature;
 }
 
 class _AppLocalizationsDelegate

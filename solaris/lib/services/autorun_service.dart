@@ -5,7 +5,8 @@ import 'package:win32/win32.dart';
 
 class AutorunService {
   static const String _keyName = 'Solaris';
-  static const String _runKeyPath = r'Software\Microsoft\Windows\CurrentVersion\Run';
+  static const String _runKeyPath =
+      r'Software\Microsoft\Windows\CurrentVersion\Run';
 
   /// Enables or disables autorun for the current application on Windows.
   static Future<bool> setEnabled(bool enabled) async {
@@ -35,7 +36,7 @@ class AutorunService {
         final executablePath = '${Platform.resolvedExecutable} --minimized';
         final dataPtr = executablePath.toNativeUtf16();
         final dataSize = (executablePath.length + 1) * 2;
-        
+
         final setStatus = RegSetValueEx(
           hKey,
           valueNamePtr,
@@ -45,7 +46,7 @@ class AutorunService {
           dataSize,
         );
         free(dataPtr);
-        
+
         if (setStatus != ERROR_SUCCESS) {
           print('Failed to set registry value: $setStatus');
           RegCloseKey(hKey);
@@ -54,7 +55,8 @@ class AutorunService {
         }
       } else {
         final deleteStatus = RegDeleteValue(hKey, valueNamePtr);
-        if (deleteStatus != ERROR_SUCCESS && deleteStatus != ERROR_FILE_NOT_FOUND) {
+        if (deleteStatus != ERROR_SUCCESS &&
+            deleteStatus != ERROR_FILE_NOT_FOUND) {
           print('Failed to delete registry value: $deleteStatus');
           RegCloseKey(hKey);
           free(valueNamePtr);
@@ -90,7 +92,7 @@ class AutorunService {
 
       final hKey = phkResult.value;
       final valueNamePtr = _keyName.toNativeUtf16();
-      
+
       final lpcbData = calloc<DWORD>();
       // First call to get the required buffer size
       var queryStatus = RegQueryValueEx(
@@ -113,7 +115,7 @@ class AutorunService {
           lpData,
           lpcbData,
         );
-        
+
         if (queryStatus == ERROR_SUCCESS) {
           final registeredPath = lpData.cast<Utf16>().toDartString();
           exists = registeredPath.contains(Platform.resolvedExecutable);

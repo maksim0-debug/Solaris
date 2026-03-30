@@ -3,11 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers.dart';
+import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/widgets/window_title_bar.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:solaris/screens/schedule_screen.dart';
 import 'package:solaris/widgets/brightness_dial.dart';
 import 'package:solaris/widgets/brightness_slider.dart';
+import 'package:solaris/widgets/temperature_dial.dart';
+import 'package:solaris/widgets/temperature_slider.dart';
 import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/sun_path_painter.dart';
 import 'package:solaris/models/current_day_phase.dart';
@@ -18,11 +21,11 @@ import 'package:solaris/utils/status_helper.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
- 
+
   @override
   ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
 }
- 
+
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   void initState() {
@@ -243,72 +246,157 @@ class _Header extends ConsumerWidget {
 
     // Apply brightness to monitors whenever it changes significantly
     ref.listen<double>(currentBrightnessProvider, (previous, next) {
-      if (ref.read(autoAdjustmentProvider)) return; // Already handled by background loop
-      
+      if (ref.read(autoAdjustmentProvider))
+        return; // Already handled by background loop
+
       if (previous?.round() != next.round()) {
         final selection = ref.read(selectedMonitorsProvider);
         final monitors = ref.read(monitorListProvider).value ?? [];
-        
+
         for (final id in selection) {
-          ref.read(brightnessServiceProvider).applyBrightnessSmoothly(
-            selection: id,
-            targetValue: next,
-            monitors: monitors,
-            monitorService: ref.read(monitorServiceProvider),
-            updateBrightnessCallback: (id, val) =>
-                ref.read(monitorListProvider.notifier).updateBrightness(id, val),
-          );
+          ref
+              .read(brightnessServiceProvider)
+              .applyBrightnessSmoothly(
+                selection: id,
+                targetValue: next,
+                monitors: monitors,
+                monitorService: ref.read(monitorServiceProvider),
+                updateBrightnessCallback: (id, val) => ref
+                    .read(monitorListProvider.notifier)
+                    .updateBrightness(id, val),
+              );
+        }
+      }
+    });
+
+    // Apply temperature to monitors whenever it changes significantly
+    ref.listen<int>(currentTemperatureProvider, (previous, next) {
+      if (ref.read(autoAdjustmentProvider))
+        return; // Already handled by background loop
+
+      if (!ref.read(isColorTemperatureEnabledProvider)) return;
+
+      if (previous != next) {
+        final selection = ref.read(selectedMonitorsProvider);
+        final monitors = ref.read(monitorListProvider).value ?? [];
+
+        for (final id in selection) {
+          ref
+              .read(temperatureServiceProvider)
+              .applyTemperatureSmoothly(
+                selection: id,
+                targetValue: next.toDouble(),
+                monitors: monitors,
+                monitorService: ref.read(monitorServiceProvider),
+                updateTemperatureCallback: (id, val) => ref
+                    .read(monitorListProvider.notifier)
+                    .updateTemperature(
+                      id,
+                      val,
+                    ), // Wait, does updateTemperature exist?
+              );
         }
       }
     });
 
     // Initial sync when monitors are detected
     ref.listen(monitorListProvider, (previous, next) {
-      if (ref.read(autoAdjustmentProvider)) return; // Already handled by background loop
-      
+      if (ref.read(autoAdjustmentProvider))
+        return; // Already handled by background loop
+
       if (next.hasValue && !next.isLoading) {
-        final target = ref.read(currentBrightnessProvider);
         final selection = ref.read(selectedMonitorsProvider);
         final monitors = next.value ?? [];
-        
+
+        // Sync brightness
+        final targetBright = ref.read(currentBrightnessProvider);
         for (final id in selection) {
-          ref.read(brightnessServiceProvider).applyBrightnessSmoothly(
-            selection: id,
-            targetValue: target,
-            monitors: monitors,
-            monitorService: ref.read(monitorServiceProvider),
-            updateBrightnessCallback: (id, val) =>
-                ref.read(monitorListProvider.notifier).updateBrightness(id, val),
-          );
+          ref
+              .read(brightnessServiceProvider)
+              .applyBrightnessSmoothly(
+                selection: id,
+                targetValue: targetBright,
+                monitors: monitors,
+                monitorService: ref.read(monitorServiceProvider),
+                updateBrightnessCallback: (id, val) => ref
+                    .read(monitorListProvider.notifier)
+                    .updateBrightness(id, val),
+              );
+        }
+
+        // Sync temperature
+        if (ref.read(isColorTemperatureEnabledProvider)) {
+          final targetTemp = ref.read(currentTemperatureProvider);
+          for (final id in selection) {
+            ref
+                .read(temperatureServiceProvider)
+                .applyTemperatureSmoothly(
+                  selection: id,
+                  targetValue: targetTemp.toDouble(),
+                  monitors: monitors,
+                  monitorService: ref.read(monitorServiceProvider),
+                  updateTemperatureCallback: (id, val) => ref
+                      .read(monitorListProvider.notifier)
+                      .updateTemperature(id, val),
+                );
+          }
         }
       }
     });
 
-    // Sync brightness when selection changes
+    // Sync brightness and temperature when selection changes
     ref.listen<Set<String>>(selectedMonitorsProvider, (previous, next) {
-      if (ref.read(autoAdjustmentProvider)) return; // Already handled by background loop
-      
+      if (ref.read(autoAdjustmentProvider))
+        return; // Already handled by background loop
+
       final monitorValue = ref.read(monitorListProvider).value;
       if (monitorValue == null) return;
 
       if (next.contains('all')) {
+        // Apply brightness
         final brightness = ref.read(currentBrightnessProvider);
-        ref.read(brightnessServiceProvider).applyBrightnessSmoothly(
-          selection: 'all',
-          targetValue: brightness,
-          monitors: monitorValue,
-          monitorService: ref.read(monitorServiceProvider),
-          updateBrightnessCallback: (id, val) =>
-              ref.read(monitorListProvider.notifier).updateBrightness(id, val),
-        );
+        ref
+            .read(brightnessServiceProvider)
+            .applyBrightnessSmoothly(
+              selection: 'all',
+              targetValue: brightness,
+              monitors: monitorValue,
+              monitorService: ref.read(monitorServiceProvider),
+              updateBrightnessCallback: (id, val) => ref
+                  .read(monitorListProvider.notifier)
+                  .updateBrightness(id, val),
+            );
+
+        // Apply temperature
+        if (ref.read(isColorTemperatureEnabledProvider)) {
+          final targetTemp = ref.read(currentTemperatureProvider);
+          ref
+              .read(temperatureServiceProvider)
+              .applyTemperatureSmoothly(
+                selection: 'all',
+                targetValue: targetTemp.toDouble(),
+                monitors: monitorValue,
+                monitorService: ref.read(monitorServiceProvider),
+                updateTemperatureCallback: (id, val) => ref
+                    .read(monitorListProvider.notifier)
+                    .updateTemperature(id, val),
+              );
+        }
       } else if (next.length == 1) {
-        // If single monitor selected, sync UI to its current brightness
+        // If single monitor selected, sync UI to its current levels
         try {
           final id = next.first;
           final monitor = monitorValue.firstWhere((m) => m.deviceName == id);
           if (monitor.realBrightness != null) {
-            ref.read(manualBrightnessProvider.notifier)
+            ref
+                .read(manualBrightnessProvider.notifier)
                 .update(monitor.realBrightness!.toDouble());
+          }
+          if (monitor.realTemperature != null &&
+              ref.read(isColorTemperatureEnabledProvider)) {
+            ref
+                .read(manualTemperatureProvider.notifier)
+                .setTemperature(monitor.realTemperature!);
           }
         } catch (_) {}
       }
@@ -413,6 +501,8 @@ class _DashboardView extends ConsumerWidget {
     final solarAsync = ref.watch(solarStateStreamProvider);
     final timeService = ref.watch(timeServiceProvider);
     final brightness = ref.watch(currentBrightnessProvider);
+    final currentTemperature = ref.watch(currentTemperatureProvider);
+    final isTempEnabled = ref.watch(isColorTemperatureEnabledProvider);
     final bool isAutoAdapt = ref.watch<bool>(autoAdjustmentProvider);
 
     return Row(
@@ -444,7 +534,21 @@ class _DashboardView extends ConsumerWidget {
                         );
                       },
                     ),
-                    // Brightness Indicator
+                    // Temperature Indicator (Outer)
+                    if (isTempEnabled)
+                      SizedBox(
+                        width: 280,
+                        height: 280,
+                        child: CustomPaint(
+                          painter: TemperatureDialPainter(
+                            progress:
+                                (6500.0 -
+                                    currentTemperature.clamp(2000, 6500)) /
+                                (6500.0 - 2000.0),
+                          ),
+                        ),
+                      ),
+                    // Brightness Indicator (Inner)
                     SizedBox(
                       width: 240,
                       height: 240,
@@ -485,11 +589,24 @@ class _DashboardView extends ConsumerWidget {
               const SizedBox(height: 48),
               SizedBox(
                 width: 320,
-                child: BrightnessSlider(
-                  value: brightness,
-                  onChanged: (val) => ref
-                      .read(currentBrightnessProvider.notifier)
-                      .setManualBrightness(val),
+                child: Column(
+                  children: [
+                    BrightnessSlider(
+                      value: brightness,
+                      onChanged: (val) => ref
+                          .read(currentBrightnessProvider.notifier)
+                          .setManualBrightness(val),
+                    ),
+                    if (isTempEnabled) ...[
+                      const SizedBox(height: 24),
+                      TemperatureSlider(
+                        value: currentTemperature.toDouble(),
+                        onChanged: (val) => ref
+                            .read(manualTemperatureProvider.notifier)
+                            .setTemperature(val.round()),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ],
@@ -540,11 +657,7 @@ class _DashboardView extends ConsumerWidget {
                                 ),
                               ],
                             ),
-                            Icon(
-                              status.icon,
-                              size: 24,
-                              color: status.color,
-                            ),
+                            Icon(status.icon, size: 24, color: status.color),
                           ],
                         ),
                         const SizedBox(height: 16),
@@ -584,73 +697,100 @@ class _DashboardView extends ConsumerWidget {
                             height: 1.4,
                           ),
                         ),
-                        Builder(builder: (context) {
-                          final weather = ref.watch(currentWeatherProvider).value;
-                          final settingsMap = ref.watch(settingsProvider).value;
-                          final currentSelection = ref.watch(selectedMonitorsProvider);
+                        Builder(
+                          builder: (context) {
+                            final weather = ref
+                                .watch(currentWeatherProvider)
+                                .value;
+                            final settingsMap = ref
+                                .watch(settingsProvider)
+                                .value;
+                            final currentSelection = ref.watch(
+                              selectedMonitorsProvider,
+                            );
 
-                          if (weather == null || settingsMap == null || !isAutoAdapt) {
-                            return const SizedBox.shrink();
-                          }
+                            if (weather == null ||
+                                settingsMap == null ||
+                                !isAutoAdapt) {
+                              return const SizedBox.shrink();
+                            }
 
-                          final settings = settingsMap[currentSelection.first] ?? settingsMap['all']!;
-                          if (!settings.isWeatherAdjustmentEnabled) {
-                            return const SizedBox.shrink();
-                          }
+                            final settings =
+                                settingsMap[currentSelection.first] ??
+                                settingsMap['all']!;
+                            if (!settings.isWeatherAdjustmentEnabled) {
+                              return const SizedBox.shrink();
+                            }
 
-                          final circadianService = ref.read(circadianServiceProvider);
-                          final now = DateTime.now();
+                            final circadianService = ref.read(
+                              circadianServiceProvider,
+                            );
+                            final now = DateTime.now();
 
-                          final baseBrightness = circadianService.calculateTargetBrightness(
-                            state.phases,
-                            state.sunElevation,
-                            now,
-                            curveSharpness: settings.curveSharpness,
-                            curvePoints: settings.curvePoints,
-                            weather: null,
-                            presetSensitivity: settings.activePreset.weatherSensitivity,
-                          );
+                            final baseBrightness = circadianService
+                                .calculateTargetBrightness(
+                                  state.phases,
+                                  state.sunElevation,
+                                  now,
+                                  curveSharpness: settings.curveSharpness,
+                                  curvePoints: settings.curvePoints,
+                                  weather: null,
+                                  presetSensitivity:
+                                      settings.activePreset.weatherSensitivity,
+                                );
 
-                          final adjustedBrightness = circadianService.calculateTargetBrightness(
-                            state.phases,
-                            state.sunElevation,
-                            now,
-                            curveSharpness: settings.curveSharpness,
-                            curvePoints: settings.curvePoints,
-                            weather: weather,
-                            presetSensitivity: settings.activePreset.weatherSensitivity,
-                          );
+                            final adjustedBrightness = circadianService
+                                .calculateTargetBrightness(
+                                  state.phases,
+                                  state.sunElevation,
+                                  now,
+                                  curveSharpness: settings.curveSharpness,
+                                  curvePoints: settings.curvePoints,
+                                  weather: weather,
+                                  presetSensitivity:
+                                      settings.activePreset.weatherSensitivity,
+                                );
 
-                          if (baseBrightness <= 0 || adjustedBrightness >= baseBrightness) {
-                            return const SizedBox.shrink();
-                          }
+                            if (baseBrightness <= 0 ||
+                                adjustedBrightness >= baseBrightness) {
+                              return const SizedBox.shrink();
+                            }
 
-                          final reductionPercent =
-                              (((baseBrightness - adjustedBrightness) / baseBrightness) * 100)
-                                  .round();
+                            final reductionPercent =
+                                (((baseBrightness - adjustedBrightness) /
+                                            baseBrightness) *
+                                        100)
+                                    .round();
 
-                          if (reductionPercent <= 0) return const SizedBox.shrink();
+                            if (reductionPercent <= 0)
+                              return const SizedBox.shrink();
 
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 12.0),
-                            child: Row(
-                              children: [
-                                const Text('⛅', style: TextStyle(fontSize: 14)),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    l10n.weatherBrightnessReduction(reductionPercent),
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Color(0xFF93C5FD),
-                                      fontWeight: FontWeight.w600,
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 12.0),
+                              child: Row(
+                                children: [
+                                  const Text(
+                                    '⛅',
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      l10n.weatherBrightnessReduction(
+                                        reductionPercent,
+                                      ),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF93C5FD),
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
                       ],
                     ),
                   );
@@ -670,7 +810,10 @@ class _DashboardView extends ConsumerWidget {
                   child: Center(
                     child: Text(
                       'Error: $e',
-                      style: const TextStyle(color: Colors.redAccent, fontSize: 10),
+                      style: const TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 10,
+                      ),
                     ),
                   ),
                 ),
@@ -879,9 +1022,12 @@ class _Footer extends ConsumerWidget {
           monitorsAsync.when(
             data: (monitors) {
               final selectedIds = ref.watch(selectedMonitorsProvider);
-              final isAllEffectivelySelected = selectedIds.contains('all') ||
+              final isAllEffectivelySelected =
+                  selectedIds.contains('all') ||
                   (monitors.isNotEmpty &&
-                      monitors.every((m) => selectedIds.contains(m.deviceName)));
+                      monitors.every(
+                        (m) => selectedIds.contains(m.deviceName),
+                      ));
 
               return Row(
                 children: [
@@ -900,7 +1046,8 @@ class _Footer extends ConsumerWidget {
                     final brightnessStr = monitor.realBrightness != null
                         ? '${monitor.realBrightness}%'
                         : '--';
-                    final isSelected = selectedIds.contains('all') ||
+                    final isSelected =
+                        selectedIds.contains('all') ||
                         selectedIds.contains(monitor.deviceName);
 
                     return Padding(

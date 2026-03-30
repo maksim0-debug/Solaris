@@ -32,7 +32,7 @@ class WeatherAdjustmentService {
     // Влияние погоды полностью работает когда солнце > 10°
     // А от 0° до 10° плавно сходит на нет (фактор стремится к 1.0)
     double elevationMultiplier = (sunElevation.clamp(0.0, 10.0)) / 10.0;
-    
+
     // Итоговый фактор
     final penalty = 1.0 - baseFactor;
     return 1.0 - (penalty * elevationMultiplier);

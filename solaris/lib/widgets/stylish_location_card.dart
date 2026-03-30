@@ -23,11 +23,12 @@ class StylishLocationCard extends ConsumerWidget {
         final elevation = solarState.sunElevation;
         // Determine style and colors based on elevation
         final bool isNight = elevation < -6;
-        
+
         final String mapStyle = isNight ? kMapboxNightStyle : kMapboxDayStyle;
 
-        
-        final Color accentColor = isNight ? Colors.blueAccent : const Color(0xFFFDBA74);
+        final Color accentColor = isNight
+            ? Colors.blueAccent
+            : const Color(0xFFFDBA74);
 
         return AspectRatio(
           aspectRatio: 1,
@@ -38,16 +39,15 @@ class StylishLocationCard extends ConsumerWidget {
               children: [
                 // Background Image (Stylized Mapbox)
                 Positioned.fill(
-
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(24),
                     child: locationAsync.maybeWhen(
                       data: (pos) => CachedNetworkImage(
-                          imageUrl: getStaticMapUrl(
-                            pos.latitude,
-                            pos.longitude,
-                            style: mapStyle,
-                          ),
+                        imageUrl: getStaticMapUrl(
+                          pos.latitude,
+                          pos.longitude,
+                          style: mapStyle,
+                        ),
                         fit: BoxFit.cover,
                         fadeInDuration: const Duration(milliseconds: 500),
                         placeholder: (context, url) => Container(
@@ -140,7 +140,8 @@ class StylishLocationCard extends ConsumerWidget {
                           Icon(
                             LucideIcons.compass,
                             size: 20,
-                            color: accentColor, // The compass icon now matches the theme
+                            color:
+                                accentColor, // The compass icon now matches the theme
                           ),
                         ],
                       ),
@@ -158,7 +159,8 @@ class StylishLocationCard extends ConsumerWidget {
                       ),
                       Text(
                         locationAsync.maybeWhen(
-                          data: (pos) => _formatDMS(pos.latitude, pos.longitude),
+                          data: (pos) =>
+                              _formatDMS(pos.latitude, pos.longitude),
                           orElse: () => 'Coordinates unavailable',
                         ),
                         style: const TextStyle(

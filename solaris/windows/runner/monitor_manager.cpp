@@ -3,6 +3,7 @@
 #endif
 #include "monitor_manager.h"
 
+#include <cmath>
 #include <iostream>
 #include <initguid.h>
 #include <setupapi.h>
@@ -242,3 +243,98 @@ bool MonitorManager::GetBrightness(const std::string& device_path, int& current,
   DestroyPhysicalMonitors(physical_count, physical_monitors.data());
   return success;
 }
+
+bool MonitorManager::SetTemperature(const std::string& device_path, int kelvins) {
+  // Convert Kelvin to RGB multipliers (0.0 to 1.0)
+  // Simplified Tanner Helland's algorithm adapted for 1000-40000K
+  double temp = std::max(1000, std::min(40000, kelvins)) / 100.0;
+  
+  double red = 1.0;
+  double green = 1.0;
+  double blue = 1.0;
+
+  if (temp <= 66.0) {
+      red = 255.0;
+      green = 99.4708025861 * std::log(temp) - 161.1195681661;
+      if (temp <= 19.0) {
+          blue = 0.0;
+      } else {
+          blue = 138.5177312231 * std::log(temp - 10.0) - 305.0447927307;
+      }
+  } else {
+      red = 329.698727446 * std::pow(temp - 60.0, -0.1332047592);
+      green = 288.1221695283 * std::pow(temp - 60.0, -0.0755148492);
+      blue = 255.0;
+  }
+
+  // Clamp to 0-255 and normalize to 0.0-1.0
+  double rFactor = std::max(0.0, std::min(255.0, red)) / 255.0;
+  double gFactor = std::max(0.0, std::min(255.0, green)) / 255.0;
+  double bFactor = std::max(0.0, std::min(255.0, blue)) / 255.0;
+
+  // Apply to Gamma Ramp
+  HDC hDC = CreateDCA("DISPLAY", device_path.c_str(), NULL, NULL);
+  if (!hDC) return false;
+
+  // Cache the original gamma ramp if not already cached
+  if (original_gamma_ramps_.find(device_path) == original_gamma_ramps_.end()) {
+      WORD orig_ramp[3][256];
+      if (GetDeviceGammaRamp(hDC, orig_ramp)) {
+          std::vector<WORD> flat_ramp(3 * 256);
+          std::memcpy(flat_ramp.data(), orig_ramp, sizeof(orig_ramp));
+          original_gamma_ramps_[device_path] = flat_ramp;
+      } else {
+          // If we fail to get original, we'll construct a linear one as fallback
+          std::vector<WORD> flat_ramp(3 * 256);
+          for (int i = 0; i < 256; i++) {
+              int val = i * 256;
+              flat_ramp[i] = flat_ramp[i + 256] = flat_ramp[i + 512] = (WORD)std::min(65535, val);
+          }
+          original_gamma_ramps_[device_path] = flat_ramp;
+      }
+  }
+
+  const std::vector<WORD>& base_ramp = original_gamma_ramps_[device_path];
+  
+  WORD gammaArray[3][256];
+  for (int i = 0; i < 256; i++) {
+      // Scale original ramp by our temperature factors
+      gammaArray[0][i] = (WORD)std::min(65535.0, base_ramp[i] * rFactor);
+      gammaArray[1][i] = (WORD)std::min(65535.0, base_ramp[i + 256] * gFactor);
+      gammaArray[2][i] = (WORD)std::min(65535.0, base_ramp[i + 512] * bFactor);
+  }
+
+  bool success = SetDeviceGammaRamp(hDC, gammaArray);
+  DeleteDC(hDC);
+  return success;
+}
+
+bool MonitorManager::ResetTemperature(const std::string& device_path) {
+  HDC hDC = CreateDCA("DISPLAY", device_path.c_str(), NULL, NULL);
+  if (!hDC) return false;
+
+  WORD gammaArray[3][256];
+  auto it = original_gamma_ramps_.find(device_path);
+
+  if (it != original_gamma_ramps_.end() && it->second.size() == (3 * 256)) {
+    const std::vector<WORD>& base_ramp = it->second;
+    for (int i = 0; i < 256; i++) {
+      gammaArray[0][i] = base_ramp[i];
+      gammaArray[1][i] = base_ramp[i + 256];
+      gammaArray[2][i] = base_ramp[i + 512];
+    }
+  } else {
+    // Fallback for fresh app starts without cached baseline.
+    for (int i = 0; i < 256; i++) {
+      WORD linear = static_cast<WORD>(i * 257);
+      gammaArray[0][i] = linear;
+      gammaArray[1][i] = linear;
+      gammaArray[2][i] = linear;
+    }
+  }
+
+  bool success = SetDeviceGammaRamp(hDC, gammaArray);
+  DeleteDC(hDC);
+  return success;
+}
+

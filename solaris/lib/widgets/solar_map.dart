@@ -41,7 +41,10 @@ class _SolarMapState extends State<SolarMap> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.latitude != widget.latitude ||
         oldWidget.longitude != widget.longitude) {
-      _mapController.move(LatLng(widget.latitude, widget.longitude), widget.zoom);
+      _mapController.move(
+        LatLng(widget.latitude, widget.longitude),
+        widget.zoom,
+      );
     }
   }
 
@@ -77,10 +80,7 @@ class _SolarMapState extends State<SolarMap> {
         minZoom: 1.5,
         maxZoom: 18.0,
         cameraConstraint: CameraConstraint.contain(
-          bounds: LatLngBounds(
-            const LatLng(-85, -180),
-            const LatLng(85, 180),
-          ),
+          bounds: LatLngBounds(const LatLng(-85, -180), const LatLng(85, 180)),
         ),
         interactionOptions: const InteractionOptions(
           flags: InteractiveFlag.all & ~InteractiveFlag.rotate,

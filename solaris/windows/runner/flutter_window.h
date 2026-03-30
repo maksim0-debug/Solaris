@@ -9,6 +9,7 @@
 #include <memory>
 
 #include "win32_window.h"
+#include "monitor_manager.h"
 
 // A window that does nothing but host a Flutter view.
 class FlutterWindow : public Win32Window {
@@ -33,6 +34,9 @@ class FlutterWindow : public Win32Window {
 
   // MethodChannel for monitor names.
   std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> monitor_channel_;
+
+  // Keep one manager instance alive to preserve cached original gamma ramps.
+  MonitorManager monitor_manager_;
 };
 
 #endif  // RUNNER_FLUTTER_WINDOW_H_

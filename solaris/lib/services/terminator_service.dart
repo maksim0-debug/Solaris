@@ -12,7 +12,8 @@ class TerminatorService {
     final gamma = (2 * math.pi / 365.0) * (dayOfYear - 1 + (hour - 12) / 24.0);
 
     // Equation of time in minutes
-    final eqTime = 229.18 *
+    final eqTime =
+        229.18 *
         (0.000075 +
             0.001868 * math.cos(gamma) -
             0.032077 * math.sin(gamma) -
@@ -20,7 +21,8 @@ class TerminatorService {
             0.040849 * math.sin(2 * gamma));
 
     // Declination in radians
-    final declination = 0.006918 -
+    final declination =
+        0.006918 -
         0.399912 * math.cos(gamma) +
         0.070257 * math.sin(gamma) -
         0.006758 * math.cos(2 * gamma) +
@@ -46,10 +48,10 @@ class TerminatorService {
 
     // Universal Time in minutes
     final utMinutes = time.hour * 60.0 + time.minute + time.second / 60.0;
-    
+
     // Solar longitude
     var lon = 180.0 - (utMinutes + eqTime) / 4.0;
-    
+
     // Normalize to [-180, 180]
     while (lon > 180) lon -= 360;
     while (lon < -180) lon += 360;

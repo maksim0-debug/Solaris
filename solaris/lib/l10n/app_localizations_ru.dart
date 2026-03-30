@@ -354,4 +354,32 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get presetCustom => 'Свой';
+
+  @override
+  String get tempCoolest => 'Во льдах';
+
+  @override
+  String get tempCool => 'Холодный';
+
+  @override
+  String get tempWarm => 'Теплый';
+
+  @override
+  String get tempWarmest => 'В огне!';
+
+  @override
+  String get tempCustom => 'Свой';
+
+  @override
+  String get blueLightFilter => 'Адаптивная цветовая температура';
+
+  @override
+  String get blueLightFilterSubtitle =>
+      'Автоматически делает цвета теплее вечером для снижения нагрузки на глаза';
+
+  @override
+  String get chartModeBrightness => 'Яркость';
+
+  @override
+  String get chartModeTemperature => 'Температура';
 }

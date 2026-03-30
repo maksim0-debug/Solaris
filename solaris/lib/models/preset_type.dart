@@ -12,8 +12,25 @@ enum PresetType {
   const PresetType(this.weatherSensitivity);
 
   String toJson() => name;
-  static PresetType fromJson(String json) =>
-      PresetType.values.firstWhere((e) => e.name == json, orElse: () => PresetType.custom);
+  static PresetType fromJson(String json) => PresetType.values.firstWhere(
+    (e) => e.name == json,
+    orElse: () => PresetType.custom,
+  );
+}
+
+enum TemperaturePresetType {
+  coolest,
+  cool,
+  warm,
+  warmest,
+  custom;
+
+  String toJson() => name;
+  static TemperaturePresetType fromJson(String json) =>
+      TemperaturePresetType.values.firstWhere(
+        (e) => e.name == json,
+        orElse: () => TemperaturePresetType.custom,
+      );
 }
 
 class PresetConstants {
@@ -68,8 +85,65 @@ class PresetConstants {
   }
 
   static Map<PresetType, List<FlSpot>> getAllDefaults() {
+    return {for (var type in PresetType.values) type: getDefaultPoints(type)};
+  }
+
+  static List<FlSpot> getTemperatureDefaultPoints(TemperaturePresetType type) {
+    // For temperature, higher sun usually means higher Kelvin (bluer),
+    // and lower sun means lower Kelvin (warmer/yellower).
+    switch (type) {
+      case TemperaturePresetType.coolest:
+        return const [
+          FlSpot(-20, 4500),
+          FlSpot(-6, 5000),
+          FlSpot(0, 5500),
+          FlSpot(10, 6000),
+          FlSpot(30, 6500),
+          FlSpot(90, 6500),
+        ];
+      case TemperaturePresetType.cool:
+        return const [
+          FlSpot(-20, 3500),
+          FlSpot(-6, 4000),
+          FlSpot(0, 4500),
+          FlSpot(10, 5500),
+          FlSpot(30, 6500),
+          FlSpot(90, 6500),
+        ];
+      case TemperaturePresetType.warm:
+        return const [
+          FlSpot(-20, 2700),
+          FlSpot(-6, 3200),
+          FlSpot(0, 4000),
+          FlSpot(10, 5000),
+          FlSpot(30, 6500),
+          FlSpot(90, 6500),
+        ];
+      case TemperaturePresetType.warmest:
+        return const [
+          FlSpot(-20, 2000),
+          FlSpot(-6, 2500),
+          FlSpot(0, 3000),
+          FlSpot(10, 4500),
+          FlSpot(30, 6000),
+          FlSpot(90, 6500),
+        ];
+      case TemperaturePresetType.custom:
+        return const [
+          FlSpot(-20, 3500),
+          FlSpot(-6, 3500),
+          FlSpot(0, 5000),
+          FlSpot(10, 5000),
+          FlSpot(30, 6500),
+          FlSpot(90, 6500),
+        ];
+    }
+  }
+
+  static Map<TemperaturePresetType, List<FlSpot>> getAllTemperatureDefaults() {
     return {
-      for (var type in PresetType.values) type: getDefaultPoints(type),
+      for (var type in TemperaturePresetType.values)
+        type: getTemperatureDefaultPoints(type),
     };
   }
 }

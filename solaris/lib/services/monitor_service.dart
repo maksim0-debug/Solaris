@@ -9,6 +9,7 @@ class MonitorInfo {
   final String deviceName;
   final bool isPrimary;
   final int? realBrightness;
+  final int? realTemperature;
 
   MonitorInfo({
     required this.name,
@@ -16,12 +17,39 @@ class MonitorInfo {
     required this.deviceName,
     required this.isPrimary,
     this.realBrightness,
+    this.realTemperature,
   });
 }
 
 class MonitorService {
   static const _channel = MethodChannel('com.solaris.monitor/names');
   final Map<String, int> _lastSentBrightness = {};
+
+  Future<bool> setMonitorTemperature(String deviceName, int temperature) async {
+    try {
+      final bool? success = await _channel.invokeMethod<bool>(
+        'setMonitorTemperature',
+        {'devicePath': deviceName, 'temperature': temperature},
+      );
+      return success ?? false;
+    } catch (e) {
+      print('Failed to set temperature for $deviceName: $e');
+      return false;
+    }
+  }
+
+  Future<bool> resetMonitorTemperature(String deviceName) async {
+    try {
+      final bool? success = await _channel.invokeMethod<bool>(
+        'resetMonitorTemperature',
+        {'devicePath': deviceName},
+      );
+      return success ?? false;
+    } catch (e) {
+      print('Failed to reset temperature for $deviceName: $e');
+      return false;
+    }
+  }
 
   Future<bool> setBrightness(String deviceName, int brightness) async {
     // Avoid redundant calls to slow native DDC/CI methods if brightness hasn't changed.

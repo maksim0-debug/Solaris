@@ -1,10 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum AppVisibilityState {
-  visible,
-  minimized,
-  hidden,
-}
+enum AppVisibilityState { visible, minimized, hidden }
 
 class AppLifecycleNotifier extends Notifier<AppVisibilityState> {
   @override
@@ -19,5 +15,5 @@ class AppLifecycleNotifier extends Notifier<AppVisibilityState> {
 
 final appLifecycleProvider =
     NotifierProvider<AppLifecycleNotifier, AppVisibilityState>(
-  AppLifecycleNotifier.new,
-);
+      AppLifecycleNotifier.new,
+    );

@@ -13,22 +13,14 @@ class TrayService with TrayListener {
 
     try {
       debugPrint('Initializing tray...');
-      await trayManager.setIcon(
-        'assets/icon/icon.ico',
-      );
+      await trayManager.setIcon('assets/icon/icon.ico');
       await trayManager.setToolTip('Solaris');
-      
+
       final Menu menu = Menu(
         items: [
-          MenuItem(
-            key: 'open_window',
-            label: 'Открыть',
-          ),
+          MenuItem(key: 'open_window', label: 'Открыть'),
           MenuItem.separator(),
-          MenuItem(
-            key: 'exit_app',
-            label: 'Выход',
-          ),
+          MenuItem(key: 'exit_app', label: 'Выход'),
         ],
       );
       await trayManager.setContextMenu(menu);

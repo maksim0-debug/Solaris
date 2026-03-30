@@ -33,7 +33,8 @@ class _Particle {
   });
 }
 
-class _WeatherOverlayState extends State<WeatherOverlay> with TickerProviderStateMixin {
+class _WeatherOverlayState extends State<WeatherOverlay>
+    with TickerProviderStateMixin {
   late Ticker _ticker;
   late AnimationController _thunderController;
   final Random _random = Random();
@@ -73,15 +74,27 @@ class _WeatherOverlayState extends State<WeatherOverlay> with TickerProviderStat
 
   void _updateWeatherFlags() {
     int code = widget.weatherCode;
-    _isRain = (code >= 50 && code <= 69) ||
+    _isRain =
+        (code >= 50 && code <= 69) ||
         (code >= 80 && code <= 82) ||
         (code >= 95 && code <= 99);
 
-    _isSnow = (code >= 70 && code <= 79) ||
-        (code >= 85 && code <= 86);
+    _isSnow = (code >= 70 && code <= 79) || (code >= 85 && code <= 86);
 
-    _isHeavy = code == 65 || code == 82 || code >= 95 || code == 75 || code == 77 || code == 86;
-    _isLight = code == 50 || code == 51 || code == 56 || code == 80 || code == 71 || code == 85;
+    _isHeavy =
+        code == 65 ||
+        code == 82 ||
+        code >= 95 ||
+        code == 75 ||
+        code == 77 ||
+        code == 86;
+    _isLight =
+        code == 50 ||
+        code == 51 ||
+        code == 56 ||
+        code == 80 ||
+        code == 71 ||
+        code == 85;
 
     if (_isRain || _isSnow) {
       if (_isHeavy) {
@@ -141,10 +154,14 @@ class _WeatherOverlayState extends State<WeatherOverlay> with TickerProviderStat
     setState(() {});
   }
 
-  _Particle _spawnParticle(double width, double height, {bool randomizeY = false}) {
+  _Particle _spawnParticle(
+    double width,
+    double height, {
+    bool randomizeY = false,
+  }) {
     double x = _random.nextDouble() * (width + 100) - 50;
     double y = randomizeY ? _random.nextDouble() * height : -50.0;
-    
+
     double speed;
     double size;
     double angle = 0.0;
@@ -153,15 +170,47 @@ class _WeatherOverlayState extends State<WeatherOverlay> with TickerProviderStat
     double thickness;
 
     if (_isSnow) {
-      speed = (_isHeavy ? 150.0 : _isLight ? 60.0 : 100.0) + _random.nextDouble() * 50.0;
-      size = (_isHeavy ? 3.0 : _isLight ? 1.5 : 2.5) + _random.nextDouble() * 1.5; 
+      speed =
+          (_isHeavy
+              ? 150.0
+              : _isLight
+              ? 60.0
+              : 100.0) +
+          _random.nextDouble() * 50.0;
+      size =
+          (_isHeavy
+              ? 3.0
+              : _isLight
+              ? 1.5
+              : 2.5) +
+          _random.nextDouble() * 1.5;
       wobbleSpeed = 1.0 + _random.nextDouble() * 2.0;
       thickness = 0.0;
     } else {
-      speed = (_isHeavy ? 700.0 : _isLight ? 300.0 : 500.0) + _random.nextDouble() * 200.0;
-      size = (_isHeavy ? 20.0 : _isLight ? 8.0 : 15.0) + _random.nextDouble() * 10.0; 
-      angle = _isHeavy ? (0.2 + _random.nextDouble() * 0.1) : _isLight ? (0.05 + _random.nextDouble() * 0.05) : (0.1 + _random.nextDouble() * 0.05);
-      thickness = _isHeavy ? 2.5 : _isLight ? 1.0 : 1.5;
+      speed =
+          (_isHeavy
+              ? 700.0
+              : _isLight
+              ? 300.0
+              : 500.0) +
+          _random.nextDouble() * 200.0;
+      size =
+          (_isHeavy
+              ? 20.0
+              : _isLight
+              ? 8.0
+              : 15.0) +
+          _random.nextDouble() * 10.0;
+      angle = _isHeavy
+          ? (0.2 + _random.nextDouble() * 0.1)
+          : _isLight
+          ? (0.05 + _random.nextDouble() * 0.05)
+          : (0.1 + _random.nextDouble() * 0.05);
+      thickness = _isHeavy
+          ? 2.5
+          : _isLight
+          ? 1.0
+          : 1.5;
     }
 
     return _Particle(
@@ -176,7 +225,12 @@ class _WeatherOverlayState extends State<WeatherOverlay> with TickerProviderStat
     );
   }
 
-  void _respawnParticle(_Particle p, double width, double height, {bool topOnly = false}) {
+  void _respawnParticle(
+    _Particle p,
+    double width,
+    double height, {
+    bool topOnly = false,
+  }) {
     final fresh = _spawnParticle(width, height, randomizeY: !topOnly);
     p.x = fresh.x;
     p.y = topOnly ? -50 : fresh.y;
@@ -217,7 +271,8 @@ class _WeatherOverlayState extends State<WeatherOverlay> with TickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    if (!_isRain && !_isSnow && !_isLightningStricking) return const SizedBox.shrink();
+    if (!_isRain && !_isSnow && !_isLightningStricking)
+      return const SizedBox.shrink();
 
     return Stack(
       children: [
@@ -240,7 +295,9 @@ class _WeatherOverlayState extends State<WeatherOverlay> with TickerProviderStat
                 animation: _thunderController,
                 builder: (context, child) {
                   return Container(
-                    color: Colors.white.withOpacity(_thunderController.value * 0.6),
+                    color: Colors.white.withOpacity(
+                      _thunderController.value * 0.6,
+                    ),
                   );
                 },
               ),

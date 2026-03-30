@@ -161,5 +161,14 @@
   "presetBright": "Яркий",
   "presetDim": "Тусклый",
   "presetDimmest": "Темный",
-  "presetCustom": "Свой"
+  "presetCustom": "Свой",
+  "tempCoolest": "Во льдах",
+  "tempCool": "Холодный",
+  "tempWarm": "Теплый",
+  "tempWarmest": "В огне!",
+  "tempCustom": "Свой",
+  "blueLightFilter": "Адаптивная цветовая температура",
+  "blueLightFilterSubtitle": "Автоматически делает цвета теплее вечером для снижения нагрузки на глаза",
+  "chartModeBrightness": "Яркость",
+  "chartModeTemperature": "Температура"
 }

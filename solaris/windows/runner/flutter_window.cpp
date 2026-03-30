@@ -35,11 +35,10 @@ bool FlutterWindow::OnCreate() {
       &flutter::StandardMethodCodec::GetInstance());
 
   monitor_channel_->SetMethodCallHandler(
-      [](const flutter::MethodCall<flutter::EncodableValue>& call,
+      [this](const flutter::MethodCall<flutter::EncodableValue>& call,
          std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
         if (call.method_name().compare("getMonitorNames") == 0) {
-          MonitorManager manager;
-          auto names = manager.GetMonitorFriendlyNames();
+          auto names = monitor_manager_.GetMonitorFriendlyNames();
           
           flutter::EncodableMap response;
           for (auto const& [path, name] : names) {
@@ -56,23 +55,47 @@ bool FlutterWindow::OnCreate() {
               std::string device_path = std::get<std::string>(device_path_it->second);
               int brightness = std::get<int>(brightness_it->second);
               
-              MonitorManager manager;
-              bool success = manager.SetBrightness(device_path, brightness);
+              bool success = monitor_manager_.SetBrightness(device_path, brightness);
               result->Success(flutter::EncodableValue(success));
               return;
             }
           }
           result->Error("invalid_arguments", "Expected devicePath and brightness");
+        } else if (call.method_name().compare("setMonitorTemperature") == 0) {
+            const auto* arguments = std::get_if<flutter::EncodableMap>(call.arguments());
+            if (arguments) {
+                auto device_path_it = arguments->find(flutter::EncodableValue("devicePath"));
+                auto temp_it = arguments->find(flutter::EncodableValue("temperature"));
+                if (device_path_it != arguments->end() && temp_it != arguments->end()) {
+                    std::string device_path = std::get<std::string>(device_path_it->second);
+                    int temperature = std::get<int>(temp_it->second);
+                  bool success = monitor_manager_.SetTemperature(device_path, temperature);
+                  result->Success(flutter::EncodableValue(success));
+                  return;
+                }
+              }
+              result->Error("invalid_arguments", "Expected devicePath and temperature");
+            } else if (call.method_name().compare("resetMonitorTemperature") == 0) {
+              const auto* arguments = std::get_if<flutter::EncodableMap>(call.arguments());
+              if (arguments) {
+                auto device_path_it = arguments->find(flutter::EncodableValue("devicePath"));
+                if (device_path_it != arguments->end()) {
+                  std::string device_path = std::get<std::string>(device_path_it->second);
+                  bool success = monitor_manager_.ResetTemperature(device_path);
+                    result->Success(flutter::EncodableValue(success));
+                    return;
+                }
+            }
+              result->Error("invalid_arguments", "Expected devicePath");
         } else if (call.method_name().compare("getMonitorBrightness") == 0) {
           const auto* arguments = std::get_if<flutter::EncodableMap>(call.arguments());
           if (arguments) {
             auto device_path_it = arguments->find(flutter::EncodableValue("devicePath"));
             if (device_path_it != arguments->end()) {
               std::string device_path = std::get<std::string>(device_path_it->second);
-              MonitorManager manager;
               int current = 0;
               int maximum = 100;
-              if (manager.GetBrightness(device_path, current, maximum)) {
+              if (monitor_manager_.GetBrightness(device_path, current, maximum)) {
                 result->Success(flutter::EncodableValue(current));
                 return;
               } else {

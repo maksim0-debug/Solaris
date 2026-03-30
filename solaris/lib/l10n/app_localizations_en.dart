@@ -357,4 +357,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get presetCustom => 'Custom';
+
+  @override
+  String get tempCoolest => 'Coolest';
+
+  @override
+  String get tempCool => 'Cool';
+
+  @override
+  String get tempWarm => 'Warm';
+
+  @override
+  String get tempWarmest => 'Warmest';
+
+  @override
+  String get tempCustom => 'Custom';
+
+  @override
+  String get blueLightFilter => 'Color Temperature (Blue Light Filter)';
+
+  @override
+  String get blueLightFilterSubtitle =>
+      'Automatically warm screen colors at night to reduce eye strain';
+
+  @override
+  String get chartModeBrightness => 'Brightness';
+
+  @override
+  String get chartModeTemperature => 'Temperature';
 }

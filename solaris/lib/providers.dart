@@ -10,6 +10,7 @@ import 'package:solaris/services/circadian_service.dart';
 import 'package:solaris/services/sun_calculator_service.dart';
 import 'package:solaris/services/brightness_service.dart';
 import 'package:solaris/services/weather_service.dart';
+import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/services/autorun_service.dart';
 import 'package:solaris/models/solar_phase_model.dart';
 import 'package:solaris/models/current_day_phase.dart';
@@ -172,7 +173,7 @@ final effectiveLocationProvider = Provider<AsyncValue<Position>>((ref) {
 
 final currentTimeProvider = StreamProvider<DateTime>((ref) async* {
   final visibility = ref.watch(appLifecycleProvider);
-  
+
   // Adaptive delay for clock updates: 1s if visible, 1m if hidden
   final delay = visibility == AppVisibilityState.visible
       ? const Duration(seconds: 1)
@@ -277,7 +278,6 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
   }
 });
 
-
 // Removed legacy solarDataProvider
 
 class MonitorListNotifier extends AsyncNotifier<List<MonitorInfo>> {
@@ -297,6 +297,27 @@ class MonitorListNotifier extends AsyncNotifier<List<MonitorInfo>> {
               deviceName: m.deviceName,
               isPrimary: m.isPrimary,
               realBrightness: brightness,
+              realTemperature: m.realTemperature,
+            );
+          }
+          return m;
+        }).toList(),
+      );
+    });
+  }
+
+  void updateTemperature(String deviceName, int temperature) {
+    state.whenData((monitors) {
+      state = AsyncData(
+        monitors.map((m) {
+          if (m.deviceName == deviceName) {
+            return MonitorInfo(
+              name: m.name,
+              friendlyName: m.friendlyName,
+              deviceName: m.deviceName,
+              isPrimary: m.isPrimary,
+              realBrightness: m.realBrightness,
+              realTemperature: temperature,
             );
           }
           return m;
@@ -392,13 +413,15 @@ class SettingsState {
   List<FlSpot> get curvePoints => curvesMap[activePreset]!;
 
   Map<String, dynamic> toJson() => {
-        'activePreset': activePreset.toJson(),
-        'curvesMap': curvesMap.map((key, value) => MapEntry(
-            key.name, value.map((p) => {'x': p.x, 'y': p.y}).toList())),
-        'curveSharpness': curveSharpness,
-        'isAutorunEnabled': isAutorunEnabled,
-        'isWeatherAdjustmentEnabled': isWeatherAdjustmentEnabled,
-      };
+    'activePreset': activePreset.toJson(),
+    'curvesMap': curvesMap.map(
+      (key, value) =>
+          MapEntry(key.name, value.map((p) => {'x': p.x, 'y': p.y}).toList()),
+    ),
+    'curveSharpness': curveSharpness,
+    'isAutorunEnabled': isAutorunEnabled,
+    'isWeatherAdjustmentEnabled': isWeatherAdjustmentEnabled,
+  };
 
   factory SettingsState.fromJson(Map<String, dynamic> json) {
     final activePreset = json.containsKey('activePreset')
@@ -415,7 +438,9 @@ class SettingsState {
           curvesMap[type] = pointsJson.map((p) {
             final map = p as Map<String, dynamic>;
             return FlSpot(
-                (map['x'] as num).toDouble(), (map['y'] as num).toDouble());
+              (map['x'] as num).toDouble(),
+              (map['y'] as num).toDouble(),
+            );
           }).toList();
         } else {
           curvesMap[type] = PresetConstants.getDefaultPoints(type);
@@ -427,9 +452,11 @@ class SettingsState {
       final points = pointsJson?.map((p) {
         final map = p as Map<String, dynamic>;
         return FlSpot(
-            (map['x'] as num).toDouble(), (map['y'] as num).toDouble());
+          (map['x'] as num).toDouble(),
+          (map['y'] as num).toDouble(),
+        );
       }).toList();
-      
+
       curvesMap = PresetConstants.getAllDefaults();
       if (points != null) {
         curvesMap[PresetType.bright] = points;
@@ -441,7 +468,8 @@ class SettingsState {
       curvesMap: curvesMap,
       curveSharpness: (json['curveSharpness'] as num?)?.toDouble() ?? 1.0,
       isAutorunEnabled: json['isAutorunEnabled'] as bool? ?? false,
-      isWeatherAdjustmentEnabled: json['isWeatherAdjustmentEnabled'] as bool? ?? true,
+      isWeatherAdjustmentEnabled:
+          json['isWeatherAdjustmentEnabled'] as bool? ?? true,
     );
   }
 
@@ -457,7 +485,8 @@ class SettingsState {
       curvesMap: curvesMap ?? this.curvesMap,
       curveSharpness: curveSharpness ?? this.curveSharpness,
       isAutorunEnabled: isAutorunEnabled ?? this.isAutorunEnabled,
-      isWeatherAdjustmentEnabled: isWeatherAdjustmentEnabled ?? this.isWeatherAdjustmentEnabled,
+      isWeatherAdjustmentEnabled:
+          isWeatherAdjustmentEnabled ?? this.isWeatherAdjustmentEnabled,
     );
   }
 }
@@ -565,7 +594,7 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
 
     final ids = ref.read(selectedMonitorsProvider);
     final current = _getSettings(ids.first);
-    
+
     final newCurvesMap = Map<PresetType, List<FlSpot>>.from(current.curvesMap);
     newCurvesMap[current.activePreset] = sortedPoints;
 
@@ -584,7 +613,8 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     final current = _getSettings(ids.first);
     if (index >= 0 && index < current.curvePoints.length) {
       if (current.curvePoints[index].x == -20 ||
-          current.curvePoints[index].x == 90) return;
+          current.curvePoints[index].x == 90)
+        return;
       final newPoints = List<FlSpot>.from(current.curvePoints)..removeAt(index);
       updateCurvePoints(newPoints);
     }
@@ -643,8 +673,11 @@ class CurrentBrightnessNotifier extends Notifier<double> {
                 DateTime.now(),
                 curveSharpness: selectedSettings.curveSharpness,
                 curvePoints: selectedSettings.curvePoints,
-                weather: selectedSettings.isWeatherAdjustmentEnabled ? weatherAsync.value : null,
-                presetSensitivity: selectedSettings.activePreset.weatherSensitivity,
+                weather: selectedSettings.isWeatherAdjustmentEnabled
+                    ? weatherAsync.value
+                    : null,
+                presetSensitivity:
+                    selectedSettings.activePreset.weatherSensitivity,
               );
               _saveBrightness(target);
               return target;
@@ -676,7 +709,7 @@ final currentBrightnessProvider =
       CurrentBrightnessNotifier.new,
     );
 
-/// Background provider that manages monitor brightness adjustments.
+/// Background provider that manages monitor brightness and temperature adjustments.
 /// It listens to solar state and applies brightness updates to hardware.
 /// If the app is minimized, it skips UI state updates to save resources.
 final circadianAdjustmentProvider = Provider<void>((ref) {
@@ -686,43 +719,79 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
   final solarStateAsync = ref.watch(solarStateStreamProvider);
   final visibility = ref.watch(appLifecycleProvider);
   final weatherAsync = ref.watch(currentWeatherProvider);
-  
+
   solarStateAsync.whenData((state) {
     final monitorsAsync = ref.read(monitorListProvider);
     final settingsAsync = ref.read(settingsProvider);
+    final tempSettingsAsync = ref.read(temperatureSettingsProvider);
     final circadianService = ref.read(circadianServiceProvider);
     final brightnessService = ref.read(brightnessServiceProvider);
+    final tempService = ref.read(temperatureServiceProvider);
     final monitorService = ref.read(monitorServiceProvider);
+    final isTempEnabled = ref.read(isColorTemperatureEnabledProvider);
+    final monitorListNotifier = ref.read(monitorListProvider.notifier);
 
     monitorsAsync.whenData((monitors) {
       settingsAsync.whenData((settingsMap) {
-        for (final monitor in monitors) {
-          final settings =
-              settingsMap[monitor.deviceName] ?? settingsMap['all']!;
-          final target = circadianService.calculateTargetBrightness(
-            state.phases,
-            state.sunElevation,
-            DateTime.now(),
-            curveSharpness: settings.curveSharpness,
-            curvePoints: settings.curvePoints,
-            weather: settings.isWeatherAdjustmentEnabled ? weatherAsync.value : null,
-            presetSensitivity: settings.activePreset.weatherSensitivity,
-          );
+        tempSettingsAsync.whenData((tempSettingsMap) {
+          for (final monitor in monitors) {
+            final settings =
+                settingsMap[monitor.deviceName] ?? settingsMap['all']!;
 
-    brightnessService.applyBrightnessSmoothly(
-            selection: monitor.deviceName,
-            targetValue: target,
-            monitors: monitors,
-            monitorService: monitorService,
-            isUIVisible: visibility == AppVisibilityState.visible,
-            updateBrightnessCallback: (id, val) {
-              // ONLY update the UI provider if the app is visible
-              if (visibility == AppVisibilityState.visible) {
-                ref.read(monitorListProvider.notifier).updateBrightness(id, val);
-              }
-            },
-          );
-        }
+            // Calculate and Apply Brightness
+            final targetBrightness = circadianService.calculateTargetBrightness(
+              state.phases,
+              state.sunElevation,
+              DateTime.now(),
+              curveSharpness: settings.curveSharpness,
+              curvePoints: settings.curvePoints,
+              weather: settings.isWeatherAdjustmentEnabled
+                  ? weatherAsync.value
+                  : null,
+              presetSensitivity: settings.activePreset.weatherSensitivity,
+            );
+
+            brightnessService.applyBrightnessSmoothly(
+              selection: monitor.deviceName,
+              targetValue: targetBrightness,
+              monitors: monitors,
+              monitorService: monitorService,
+              isUIVisible: visibility == AppVisibilityState.visible,
+              updateBrightnessCallback: (id, val) {
+                // ONLY update the UI provider if the app is visible
+                if (visibility == AppVisibilityState.visible) {
+                  monitorListNotifier.updateBrightness(id, val);
+                }
+              },
+            );
+
+            // Calculate and Apply Temperature
+            if (isTempEnabled) {
+              final tempSettings =
+                  tempSettingsMap[monitor.deviceName] ??
+                  tempSettingsMap['all']!;
+              final targetTemp = circadianService.calculateTargetTemperature(
+                state.phases,
+                state.sunElevation,
+                DateTime.now(),
+                curvePoints: tempSettings.curvePoints,
+                weather: weatherAsync.value,
+              );
+
+              tempService.applyTemperatureSmoothly(
+                selection: monitor.deviceName,
+                targetValue: targetTemp.toDouble(),
+                monitors: monitors,
+                monitorService: monitorService,
+                isUIVisible: visibility == AppVisibilityState.visible,
+                updateTemperatureCallback: (id, val) {},
+              );
+            } else {
+              // Disabled means no further temperature writes from circadian loop.
+              tempService.stopTemperatureControlForDevice(monitor.deviceName);
+            }
+          }
+        });
       });
     });
   });

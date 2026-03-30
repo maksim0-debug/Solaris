@@ -34,12 +34,13 @@ class LocationService {
     }
   }
 
-  Stream<Position> getLocationStream() {
-    return Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.low,
-        distanceFilter: 1000, // Update every 1km
-      ),
-    );
+  Stream<Position> getLocationStream() async* {
+    while (true) {
+      final pos = await getCurrentLocation();
+      if (pos != null) {
+        yield pos;
+      }
+      await Future<void>.delayed(const Duration(minutes: 5));
+    }
   }
 }

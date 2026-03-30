@@ -46,5 +46,10 @@ class LocationSettings extends Equatable {
   }
 
   @override
-  List<Object?> get props => [useManual, manualLatitude, manualLongitude, lastCityName];
+  List<Object?> get props => [
+    useManual,
+    manualLatitude,
+    manualLongitude,
+    lastCityName,
+  ];
 }

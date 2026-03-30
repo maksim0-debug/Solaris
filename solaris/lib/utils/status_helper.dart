@@ -29,7 +29,7 @@ class StatusHelper {
   ) {
     final phase = state.currentPhase;
     final modeTitle = isAuto ? l10n.statusAdaptive : l10n.statusManual;
-    
+
     // Default values
     String title = l10n.calculating;
     String description = l10n.updatingSolarData;
@@ -39,32 +39,38 @@ class StatusHelper {
     switch (phase) {
       case CurrentDayPhase.deepNight:
         title = l10n.phaseDeepNight;
-        description = isAuto ? l10n.descDeepNightAuto : l10n.descDeepNightManual;
+        description = isAuto
+            ? l10n.descDeepNightAuto
+            : l10n.descDeepNightManual;
         icon = LucideIcons.moon;
         color = const Color(0xFF818CF8); // Indigo-400
         break;
-      
+
       case CurrentDayPhase.morningSpike:
         title = l10n.phaseMorningSpike;
-        description = isAuto ? l10n.descMorningSpikeAuto : l10n.descMorningSpikeManual;
+        description = isAuto
+            ? l10n.descMorningSpikeAuto
+            : l10n.descMorningSpikeManual;
         icon = LucideIcons.sunrise;
         color = const Color(0xFFFB923C); // Orange-400
         break;
-      
+
       case CurrentDayPhase.zenith:
         title = l10n.phaseZenith;
         description = isAuto ? l10n.descZenithAuto : l10n.descZenithManual;
         icon = LucideIcons.sun;
         color = const Color(0xFFFDE047); // Yellow-300
         break;
-      
+
       case CurrentDayPhase.goldenHour:
         title = l10n.phaseGoldenHour;
-        description = isAuto ? l10n.descGoldenHourAuto : l10n.descGoldenHourManual;
+        description = isAuto
+            ? l10n.descGoldenHourAuto
+            : l10n.descGoldenHourManual;
         icon = LucideIcons.sparkles;
         color = const Color(0xFFFDBA74); // Amber-300
         break;
-      
+
       case CurrentDayPhase.twilight:
         title = l10n.phaseTwilight;
         description = isAuto ? l10n.descTwilightAuto : l10n.descTwilightManual;

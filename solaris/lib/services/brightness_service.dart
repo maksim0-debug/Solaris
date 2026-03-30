@@ -65,22 +65,24 @@ class BrightnessService {
       return;
     }
 
-    _adjustmentTimers[deviceName] =
-        Timer.periodic(const Duration(milliseconds: 50), (timer) {
-          if (current < target) {
-            current++;
-          } else if (current > target) {
-            current--;
-          }
+    _adjustmentTimers[deviceName] = Timer.periodic(
+      const Duration(milliseconds: 50),
+      (timer) {
+        if (current < target) {
+          current++;
+        } else if (current > target) {
+          current--;
+        }
 
-          _currentHardwareBrightness[deviceName] = current;
-          updateBrightnessCallback(deviceName, current);
-          monitorService.setBrightness(deviceName, current);
+        _currentHardwareBrightness[deviceName] = current;
+        updateBrightnessCallback(deviceName, current);
+        monitorService.setBrightness(deviceName, current);
 
-          if (current == target) {
-            timer.cancel();
-            _adjustmentTimers[deviceName] = null;
-          }
-        });
+        if (current == target) {
+          timer.cancel();
+          _adjustmentTimers[deviceName] = null;
+        }
+      },
+    );
   }
 }

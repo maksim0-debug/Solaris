@@ -258,7 +258,9 @@ class SunCalculatorService {
     // Meinel & Meinel clear sky approximation model.
     final elevationRad = elevation * math.pi / 180.0;
     // Approximated optical air mass (AM) using simple formula
-    final am = 1.0 / (math.sin(elevationRad) + 0.15 * math.pow(elevation + 3.885, -1.253));
+    final am =
+        1.0 /
+        (math.sin(elevationRad) + 0.15 * math.pow(elevation + 3.885, -1.253));
     // Solar constant roughly 1353 W/m2, attenuated by atmosphere (0.7 transmit factor)
     return 1353.0 * math.pow(0.7, math.pow(am, 0.678)) * math.sin(elevationRad);
   }
@@ -277,11 +279,10 @@ class SunCalculatorService {
 
     final irradiance = realIrradiance ?? getSpectralIntensity(elevation);
 
-    // Более точная физическая модель: каждые 100 Вт/м2 нагревают среднестатистическую темную 
+    // Более точная физическая модель: каждые 100 Вт/м2 нагревают среднестатистическую темную
     // поверхность (асфальт/грунт) примерно на 2.5-3.0 градуса выше температуры воздуха в безветренную погоду.
     final heatingFactor = (irradiance / 100.0) * 2.8;
 
     return airTemp + heatingFactor;
   }
-
 }

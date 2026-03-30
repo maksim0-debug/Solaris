@@ -14,29 +14,23 @@ class WindowTitleBar extends StatelessWidget {
       child: Stack(
         children: [
           // Drag area
-          const DragToMoveArea(
-            child: SizedBox.expand(),
-          ),
+          const DragToMoveArea(child: SizedBox.expand()),
           // Content
           Row(
             children: [
               const SizedBox(width: 16),
               // App Icon (Sun)
-              const Icon(
-                LucideIcons.sun,
-                color: AppTheme.accent,
-                size: 20,
-              ),
+              const Icon(LucideIcons.sun, color: AppTheme.accent, size: 20),
               const SizedBox(width: 12),
               // App Title
               Text(
                 'SOLARIS',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2,
-                      fontSize: 12,
-                      color: Colors.white,
-                    ),
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2,
+                  fontSize: 12,
+                  color: Colors.white,
+                ),
               ),
               const Spacer(),
               // Window Controls
@@ -48,10 +42,7 @@ class WindowTitleBar extends StatelessWidget {
             bottom: 0,
             left: 0,
             right: 0,
-            child: Container(
-              height: 1,
-              color: Colors.white.withOpacity(0.05),
-            ),
+            child: Container(height: 1, color: Colors.white.withOpacity(0.05)),
           ),
         ],
       ),
@@ -146,11 +137,7 @@ class _WindowButton extends StatelessWidget {
       width: 48,
       height: 48,
       child: IconButton(
-        icon: Icon(
-          icon,
-          size: 16,
-          color: Colors.white60,
-        ),
+        icon: Icon(icon, size: 16, color: Colors.white60),
         hoverColor: isClose ? Colors.red.withOpacity(0.8) : Colors.white10,
         splashRadius: 24,
         onPressed: onPressed,

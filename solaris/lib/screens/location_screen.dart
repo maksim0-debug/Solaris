@@ -166,7 +166,8 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                               child: SolarMap(
                                 latitude: pos.latitude,
                                 longitude: pos.longitude,
-                                zoom: 1.5, // Minimum zoom to avoid repetition and see enough area
+                                zoom:
+                                    1.5, // Minimum zoom to avoid repetition and see enough area
                               ),
                             ),
                             loading: () => const AspectRatio(

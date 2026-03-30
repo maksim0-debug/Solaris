@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:solaris/l10n/app_localizations.dart';
@@ -6,6 +7,7 @@ import 'package:solaris/screens/dashboard.dart';
 import 'package:solaris/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:solaris/providers.dart';
+import 'package:solaris/providers/temperature_provider.dart';
 
 import 'package:solaris/services/time_service.dart';
 import 'package:window_manager/window_manager.dart';
@@ -53,15 +55,31 @@ void main(List<String> args) async {
     ],
   );
 
+  // Keep monitor gamma neutral across restarts when the feature is disabled.
+  if (!container.read(isColorTemperatureEnabledProvider)) {
+    unawaited(
+      container
+          .read(isColorTemperatureEnabledProvider.notifier)
+          .resetToNeutralNow(),
+    );
+  }
+
+  container.listen<bool>(isColorTemperatureEnabledProvider, (prev, next) {
+    if (prev == true && next == false) {
+      unawaited(
+        container
+            .read(isColorTemperatureEnabledProvider.notifier)
+            .resetToNeutralNow(),
+      );
+    }
+  });
+
   // Prevent app from closing when clicking 'X'
   await windowManager.setPreventClose(true);
   windowManager.addListener(WindowEventHandler(container));
 
   runApp(
-    UncontrolledProviderScope(
-      container: container,
-      child: const SolarisApp(),
-    ),
+    UncontrolledProviderScope(container: container, child: const SolarisApp()),
   );
 }
 

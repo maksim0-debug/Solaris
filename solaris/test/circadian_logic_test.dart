@@ -35,21 +35,13 @@ void main() {
 
     test('Deep Night should return default minBrightness (15%)', () {
       final now = DateTime(2026, 3, 19, 2, 0); // 2 AM
-      final brightness = service.calculateTargetBrightness(
-        phases,
-        -30.0,
-        now,
-      );
+      final brightness = service.calculateTargetBrightness(phases, -30.0, now);
       expect(brightness, 15.0);
     });
 
     test('Solar Zenith should return default maxBrightness (100%)', () {
       final now = DateTime(2026, 3, 19, 12, 0); // Noon
-      final brightness = service.calculateTargetBrightness(
-        phases,
-        60.0,
-        now,
-      );
+      final brightness = service.calculateTargetBrightness(phases, 60.0, now);
       expect(brightness, 100.0);
     });
 
@@ -80,30 +72,33 @@ void main() {
       expect(brightness, closeTo(42.5, 0.1));
     });
 
-    test('Weather adjustment applies preset sensitivity for daytime values', () {
-      final now = DateTime(2026, 3, 19, 13, 0);
-      final weather = WeatherData(
-        temperature: 20,
-        humidity: 50,
-        uvIndex: 5,
-        directRadiation: 500,
-        diffuseRadiation: 150,
-        cloudCover: 30,
-        weatherCode: 55, // rain => base weather factor 0.75 in daytime
-      );
+    test(
+      'Weather adjustment applies preset sensitivity for daytime values',
+      () {
+        final now = DateTime(2026, 3, 19, 13, 0);
+        final weather = WeatherData(
+          temperature: 20,
+          humidity: 50,
+          uvIndex: 5,
+          directRadiation: 500,
+          diffuseRadiation: 150,
+          cloudCover: 30,
+          weatherCode: 55, // rain => base weather factor 0.75 in daytime
+        );
 
-      final brightness = service.calculateTargetBrightness(
-        phases,
-        30.0,
-        now,
-        curvePoints: curvePoints,
-        weather: weather,
-        presetSensitivity: 0.6,
-      );
+        final brightness = service.calculateTargetBrightness(
+          phases,
+          30.0,
+          now,
+          curvePoints: curvePoints,
+          weather: weather,
+          presetSensitivity: 0.6,
+        );
 
-      // base=100; finalFactor=1-((1-0.75)*0.6)=0.85 => 85
-      expect(brightness, closeTo(85.0, 0.1));
-    });
+        // base=100; finalFactor=1-((1-0.75)*0.6)=0.85 => 85
+        expect(brightness, closeTo(85.0, 0.1));
+      },
+    );
 
     test('Weather adjustment respects minimum preset brightness clamp', () {
       final now = DateTime(2026, 3, 19, 13, 0);

@@ -6,10 +6,7 @@ void main() {
   group('WeatherAdjustmentService', () {
     final service = WeatherAdjustmentService();
 
-    WeatherData weather({
-      double cloudCover = 0,
-      int weatherCode = 0,
-    }) {
+    WeatherData weather({double cloudCover = 0, int weatherCode = 0}) {
       return WeatherData(
         temperature: 20,
         humidity: 50,
