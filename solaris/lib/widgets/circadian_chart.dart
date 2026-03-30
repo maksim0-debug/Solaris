@@ -30,7 +30,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
       final tempAsync = ref.watch(temperatureSettingsProvider);
       return tempAsync.maybeWhen(
         data: (tempMap) {
-          final tempState = tempMap[selectedIds.first] ?? tempMap['all']!;
+          final tempState = tempMap[selectedIds.firstOrNull ?? 'all'] ?? tempMap['all']!;
           final points = tempState.curvePoints;
           return _buildChart(context, points, isTemp);
         },
@@ -41,7 +41,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
       return settingsAsync.maybeWhen(
         data: (settingsMap) {
           final selectedSettings =
-              settingsMap[selectedIds.first] ?? settingsMap['all']!;
+              settingsMap[selectedIds.firstOrNull ?? 'all'] ?? settingsMap['all']!;
           final points = selectedSettings.curvePoints;
           return _buildChart(context, points, isTemp);
         },
@@ -60,7 +60,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
     final selectedIds = ref.watch(selectedMonitorsProvider);
     final settingsMap = ref.watch(settingsProvider).value;
     final currentSettings =
-        settingsMap?[selectedIds.first] ??
+        settingsMap?[selectedIds.firstOrNull ?? 'all'] ??
         settingsMap?['all'] ??
         SettingsState();
 
@@ -400,14 +400,14 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
     final currentPoints = isTemp
         ? (ref
                   .read(temperatureSettingsProvider)
-                  .value?[selectedIds.first]
+                  .value?[selectedIds.firstOrNull ?? 'all']
                   ?.curvePoints ??
               ref
                   .read(temperatureSettingsProvider)
                   .value?['all']
                   ?.curvePoints ??
               [])
-        : (ref.read(settingsProvider).value?[selectedIds.first]?.curvePoints ??
+        : (ref.read(settingsProvider).value?[selectedIds.firstOrNull ?? 'all']?.curvePoints ??
               ref.read(settingsProvider).value?['all']?.curvePoints ??
               []);
 
@@ -455,14 +455,14 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
     final currentPoints = isTemp
         ? (ref
                   .read(temperatureSettingsProvider)
-                  .value?[selectedIds.first]
+                  .value?[selectedIds.firstOrNull ?? 'all']
                   ?.curvePoints ??
               ref
                   .read(temperatureSettingsProvider)
                   .value?['all']
                   ?.curvePoints ??
               [])
-        : (ref.read(settingsProvider).value?[selectedIds.first]?.curvePoints ??
+        : (ref.read(settingsProvider).value?[selectedIds.firstOrNull ?? 'all']?.curvePoints ??
               ref.read(settingsProvider).value?['all']?.curvePoints ??
               []);
 
@@ -490,14 +490,14 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
     final currentPoints = isTemp
         ? (ref
                   .read(temperatureSettingsProvider)
-                  .value?[selectedIds.first]
+                  .value?[selectedIds.firstOrNull ?? 'all']
                   ?.curvePoints ??
               ref
                   .read(temperatureSettingsProvider)
                   .value?['all']
                   ?.curvePoints ??
               [])
-        : (ref.read(settingsProvider).value?[selectedIds.first]?.curvePoints ??
+        : (ref.read(settingsProvider).value?[selectedIds.firstOrNull ?? 'all']?.curvePoints ??
               ref.read(settingsProvider).value?['all']?.curvePoints ??
               []);
 

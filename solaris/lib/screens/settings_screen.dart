@@ -156,7 +156,7 @@ class SettingsScreen extends ConsumerWidget {
                     Switch(
                       value: settingsAsync.maybeWhen(
                         data: (map) =>
-                            map[selectedIds.first]
+                            map[selectedIds.firstOrNull ?? 'all']
                                 ?.isWeatherAdjustmentEnabled ??
                             true,
                         orElse: () => true,
@@ -256,7 +256,7 @@ class _PresetSelector extends ConsumerWidget {
       final tempAsync = ref.watch(temperatureSettingsProvider);
       return tempAsync.maybeWhen(
         data: (tempMap) {
-          final settings = tempMap[selectedIds.first] ?? tempMap['all']!;
+          final settings = tempMap[selectedIds.firstOrNull ?? 'all'] ?? tempMap['all']!;
           final activePreset = settings.activePreset;
 
           return GlassCard(
@@ -314,7 +314,7 @@ class _PresetSelector extends ConsumerWidget {
       return settingsAsync.maybeWhen(
         data: (settingsMap) {
           final settings =
-              settingsMap[selectedIds.first] ?? settingsMap['all']!;
+              settingsMap[selectedIds.firstOrNull ?? 'all'] ?? settingsMap['all']!;
           final activePreset = settings.activePreset;
 
           return GlassCard(

@@ -347,7 +347,6 @@ class SelectedMonitorsNotifier extends Notifier<Set<String>> {
     newState.remove('all');
     if (newState.contains(id)) {
       newState.remove(id);
-      if (newState.isEmpty) newState.add('all');
     } else {
       newState.add(id);
     }
@@ -383,7 +382,7 @@ class AutoBrightnessAdjustmentNotifier extends Notifier<bool> {
       final monitors = ref.read(monitorListProvider).value;
       if (monitors != null && monitors.isNotEmpty) {
         final selection = ref.read(selectedMonitorsProvider);
-        final firstId = selection.first;
+        final firstId = selection.firstOrNull ?? 'all';
 
         // Find the monitor to use as a baseline for manual mode
         final monitor = monitors.firstWhere(
@@ -416,7 +415,7 @@ class AutoTemperatureAdjustmentNotifier extends Notifier<bool> {
       final monitors = ref.read(monitorListProvider).value;
       if (monitors != null && monitors.isNotEmpty) {
         final selection = ref.read(selectedMonitorsProvider);
-        final firstId = selection.first;
+        final firstId = selection.firstOrNull ?? 'all';
 
         // Find the monitor to use as a baseline for manual mode
         final monitor = monitors.firstWhere(
@@ -617,7 +616,7 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   void updateCurveSharpness(double value) {
     final ids = ref.read(selectedMonitorsProvider);
     // Use the first selected monitor's current settings as base
-    final current = _getSettings(ids.first);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
     _updateSettings(ids, current.copyWith(curveSharpness: value));
   }
 
@@ -630,7 +629,7 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
 
   void updateWeatherAdjustment(bool enabled) {
     final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.first);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
     _updateSettings(ids, current.copyWith(isWeatherAdjustmentEnabled: enabled));
   }
 
@@ -649,7 +648,7 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     }
 
     final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.first);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
 
     final newCurvesMap = Map<PresetType, List<FlSpot>>.from(current.curvesMap);
     newCurvesMap[current.activePreset] = sortedPoints;
@@ -659,14 +658,14 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
 
   void addCurvePoint(FlSpot point) {
     final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.first);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
     final newPoints = List<FlSpot>.from(current.curvePoints)..add(point);
     updateCurvePoints(newPoints);
   }
 
   void removeCurvePoint(int index) {
     final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.first);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
     if (index >= 0 && index < current.curvePoints.length) {
       if (current.curvePoints[index].x == -20 ||
           current.curvePoints[index].x == 90)
@@ -678,13 +677,13 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
 
   void setActivePreset(PresetType type) {
     final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.first);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
     _updateSettings(ids, current.copyWith(activePreset: type));
   }
 
   void resetCurrentPreset() {
     final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.first);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
     final presetType = current.activePreset;
 
     final newCurvesMap = Map<PresetType, List<FlSpot>>.from(current.curvesMap);
@@ -720,7 +719,7 @@ class CurrentBrightnessNotifier extends Notifier<double> {
           // Return brightness for the FIRST selected monitor in dashboard
           return settingsAsync.maybeWhen(
             data: (settingsMap) {
-              final firstId = currentSelection.first;
+              final firstId = currentSelection.firstOrNull ?? 'all';
               final selectedSettings =
                   settingsMap[firstId] ?? settingsMap['all']!;
               final target = circadianService.calculateTargetBrightness(

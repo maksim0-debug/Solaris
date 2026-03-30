@@ -131,7 +131,7 @@ class TemperatureSettingsNotifier
   TemperatureState currentSettings() {
     final ids = ref.read(selectedMonitorsProvider);
     final currentMap = state.value ?? {'all': TemperatureState()};
-    return currentMap[ids.first] ?? currentMap['all']!;
+    return currentMap[ids.firstOrNull ?? 'all'] ?? currentMap['all']!;
   }
 
   Future<void> _updateSettings(
@@ -240,7 +240,7 @@ class CurrentTemperatureNotifier extends Notifier<int> {
       final weatherAsync = ref.watch(currentWeatherProvider);
       final monitorIds = ref.watch(selectedMonitorsProvider);
 
-      final id = monitorIds.isNotEmpty ? monitorIds.first : 'all';
+      final id = monitorIds.firstOrNull ?? 'all';
 
       return solarStateAsync.maybeWhen(
         data: (state) {

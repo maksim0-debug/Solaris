@@ -713,7 +713,7 @@ class _DashboardView extends ConsumerWidget {
                             }
 
                             final settings =
-                                settingsMap[currentSelection.first] ??
+                                settingsMap[currentSelection.firstOrNull ?? 'all'] ??
                                 settingsMap['all']!;
                             if (!settings.isWeatherAdjustmentEnabled) {
                               return const SizedBox.shrink();
