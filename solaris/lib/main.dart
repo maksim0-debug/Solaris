@@ -14,6 +14,8 @@ import 'package:window_manager/window_manager.dart';
 import 'package:solaris/services/tray_service.dart';
 import 'package:solaris/providers/lifecycle_provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,6 +55,20 @@ void main(List<String> args) async {
     prefs = await SharedPreferences.getInstance();
   } catch (e) {
     debugPrint('Error initializing SharedPreferences: $e');
+    if (e is FormatException) {
+      debugPrint('Attempting to recover from corrupted SharedPreferences...');
+      try {
+        final supportDir = await getApplicationSupportDirectory();
+        final prefsFile = File('${supportDir.path}/shared_preferences.json');
+        if (await prefsFile.exists()) {
+          await prefsFile.delete();
+          debugPrint('Corrupted SharedPreferences deleted. Retrying...');
+          prefs = await SharedPreferences.getInstance();
+        }
+      } catch (recoveryError) {
+        debugPrint('Failed to recover SharedPreferences: $recoveryError');
+      }
+    }
   }
 
   // Provider container initialization for usage in main and window events

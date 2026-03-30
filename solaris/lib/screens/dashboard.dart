@@ -227,12 +227,15 @@ class _SidebarItem extends StatelessWidget {
                 size: 20,
               ),
               const SizedBox(width: 16),
-              Text(
-                label,
-                style: TextStyle(
-                  color: isActive ? Colors.white : Colors.white24,
-                  fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                  letterSpacing: 0.5,
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: isActive ? Colors.white : Colors.white24,
+                    fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                    letterSpacing: 0.5,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
             ],
@@ -252,6 +255,10 @@ class _Header extends ConsumerWidget {
     final timeAsync = ref.watch<AsyncValue<DateTime>>(currentTimeProvider);
     final solarAsync = ref.watch(solarStateStreamProvider);
     final timeService = ref.watch(timeServiceProvider);
+    final monitorListNotifier = ref.read(monitorListProvider.notifier);
+    final brightnessService = ref.read(brightnessServiceProvider);
+    final temperatureService = ref.read(temperatureServiceProvider);
+    final monitorService = ref.read(monitorServiceProvider);
 
     // Apply brightness to monitors whenever it changes significantly
     ref.listen<double>(currentBrightnessProvider, (previous, next) {
@@ -263,16 +270,14 @@ class _Header extends ConsumerWidget {
         final monitors = ref.read(monitorListProvider).value ?? [];
 
         for (final id in selection) {
-          ref
-              .read(brightnessServiceProvider)
+          brightnessService
               .applyBrightnessSmoothly(
                 selection: id,
                 targetValue: next,
                 monitors: monitors,
-                monitorService: ref.read(monitorServiceProvider),
-                updateBrightnessCallback: (id, val) => ref
-                    .read(monitorListProvider.notifier)
-                    .updateBrightness(id, val),
+                monitorService: monitorService,
+                updateBrightnessCallback: (id, val) =>
+                    monitorListNotifier.updateBrightness(id, val),
               );
         }
       }
@@ -288,19 +293,14 @@ class _Header extends ConsumerWidget {
         final monitors = ref.read(monitorListProvider).value ?? [];
 
         for (final id in selection) {
-          ref
-              .read(temperatureServiceProvider)
+          temperatureService
               .applyTemperatureSmoothly(
                 selection: id,
                 targetValue: next.toDouble(),
                 monitors: monitors,
-                monitorService: ref.read(monitorServiceProvider),
-                updateTemperatureCallback: (id, val) => ref
-                    .read(monitorListProvider.notifier)
-                    .updateTemperature(
-                      id,
-                      val,
-                    ), // Wait, does updateTemperature exist?
+                monitorService: monitorService,
+                updateTemperatureCallback: (id, val) =>
+                    monitorListNotifier.updateTemperature(id, val),
               );
         }
       }
@@ -318,34 +318,32 @@ class _Header extends ConsumerWidget {
 
         // Sync brightness
         final targetBright = ref.read(currentBrightnessProvider);
+        debugPrint('Initial sync: applying brightness $targetBright');
         for (final id in selection) {
-          ref
-              .read(brightnessServiceProvider)
+          brightnessService
               .applyBrightnessSmoothly(
                 selection: id,
                 targetValue: targetBright,
                 monitors: monitors,
-                monitorService: ref.read(monitorServiceProvider),
-                updateBrightnessCallback: (id, val) => ref
-                    .read(monitorListProvider.notifier)
-                    .updateBrightness(id, val),
+                monitorService: monitorService,
+                updateBrightnessCallback: (id, val) =>
+                    monitorListNotifier.updateBrightness(id, val),
               );
         }
 
         // Sync temperature
         if (ref.read(isColorTemperatureEnabledProvider)) {
           final targetTemp = ref.read(currentTemperatureProvider);
+          debugPrint('Initial sync: applying temperature $targetTemp');
           for (final id in selection) {
-            ref
-                .read(temperatureServiceProvider)
+            temperatureService
                 .applyTemperatureSmoothly(
                   selection: id,
                   targetValue: targetTemp.toDouble(),
                   monitors: monitors,
-                  monitorService: ref.read(monitorServiceProvider),
-                  updateTemperatureCallback: (id, val) => ref
-                      .read(monitorListProvider.notifier)
-                      .updateTemperature(id, val),
+                  monitorService: monitorService,
+                  updateTemperatureCallback: (id, val) =>
+                      monitorListNotifier.updateTemperature(id, val),
                 );
           }
         }
@@ -364,31 +362,27 @@ class _Header extends ConsumerWidget {
       if (next.contains('all')) {
         // Apply brightness
         final brightness = ref.read(currentBrightnessProvider);
-        ref
-            .read(brightnessServiceProvider)
+        brightnessService
             .applyBrightnessSmoothly(
               selection: 'all',
               targetValue: brightness,
               monitors: monitorValue,
-              monitorService: ref.read(monitorServiceProvider),
-              updateBrightnessCallback: (id, val) => ref
-                  .read(monitorListProvider.notifier)
-                  .updateBrightness(id, val),
+              monitorService: monitorService,
+              updateBrightnessCallback: (id, val) =>
+                  monitorListNotifier.updateBrightness(id, val),
             );
 
         // Apply temperature
         if (ref.read(isColorTemperatureEnabledProvider)) {
           final targetTemp = ref.read(currentTemperatureProvider);
-          ref
-              .read(temperatureServiceProvider)
+          temperatureService
               .applyTemperatureSmoothly(
                 selection: 'all',
                 targetValue: targetTemp.toDouble(),
                 monitors: monitorValue,
-                monitorService: ref.read(monitorServiceProvider),
-                updateTemperatureCallback: (id, val) => ref
-                    .read(monitorListProvider.notifier)
-                    .updateTemperature(id, val),
+                monitorService: monitorService,
+                updateTemperatureCallback: (id, val) =>
+                    monitorListNotifier.updateTemperature(id, val),
               );
         }
       } else if (next.length == 1) {
@@ -542,7 +536,14 @@ class _DashboardView extends ConsumerWidget {
                             painter: SunPathPainter(
                               progress: solarAsync.maybeWhen(
                                 data: (s) => s.sunProgress,
-                                orElse: () => 0.0,
+                                orElse: () {
+                                  // Safe approximate progress for startup to avoid "sun flash"
+                                  final hour = DateTime.now().hour;
+                                  if (hour >= 21 || hour < 5) return -0.5; // Night
+                                  if (hour >= 5 && hour < 7) return 0.0;   // Sunrise
+                                  if (hour >= 19 && hour < 21) return 1.0;  // Sunset
+                                  return 0.5; // Midday
+                                },
                               ),
                             ),
                           ),

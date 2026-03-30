@@ -155,10 +155,23 @@ class TemperatureSettingsNotifier
     await _saveSettingsMap(newStateMap);
   }
 
-  void toggleEnabled(bool isEnabled) {
+  void setEnabled(bool value) {
+    if (state.value != null) {
+      final ids = ref.read(selectedMonitorsProvider);
+      final firstId = ids.firstOrNull ?? 'all';
+      final currentMap = state.value!;
+      final current = currentMap[firstId] ?? currentMap['all']!;
+      if (current.isEnabled == value) return;
+    }
+
+    ref.read(sharedPreferencesProvider)?.setBool('auto_temperature_enabled', value);
     final ids = ref.read(selectedMonitorsProvider);
     final current = currentSettings();
-    _updateSettings(ids, current.copyWith(isEnabled: isEnabled));
+    _updateSettings(ids, current.copyWith(isEnabled: value));
+  }
+
+  void toggleEnabled(bool isEnabled) {
+    setEnabled(isEnabled);
   }
 
   void updateSmartCircadian(bool enabled) {
@@ -239,12 +252,18 @@ final temperatureSettingsProvider =
     >(TemperatureSettingsNotifier.new);
 
 class ManualTemperatureNotifier extends Notifier<int> {
+  static const _manualTemperatureKey = 'manual_temperature';
+
   @override
-  int build() => 6500;
+  int build() {
+    final prefs = ref.watch(sharedPreferencesProvider);
+    return prefs?.getInt(_manualTemperatureKey) ?? 6500;
+  }
 
   void setTemperature(int val) {
     ref.read(temperatureSettingsProvider.notifier).toggleEnabled(false);
     state = val;
+    ref.read(sharedPreferencesProvider)?.setInt(_manualTemperatureKey, val);
   }
 }
 

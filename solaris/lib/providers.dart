@@ -260,6 +260,26 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
     AppVisibilityState.hidden => 60,
   };
 
+  // Immediate rough calculation to avoid "sun flash" at startup
+  final initialNow = DateTime.now();
+  final roughElevation = service.getSunElevation(lat, lon, initialNow);
+  final roughAzimuth = service.getSunAzimuth(lat, lon, initialNow);
+  final roughProgress = service.getSunProgress(phases, initialNow);
+
+  yield SolarState(
+    phases: phases,
+    currentPhase: service.getCurrentPhase(phases, initialNow),
+    timeUntilNextEvent: service.getTimeUntilNextEvent(phases, initialNow),
+    sunElevation: roughElevation,
+    sunAzimuth: roughAzimuth,
+    sunZenith: service.getSunZenith(lat, lon, initialNow),
+    sunProgress: roughProgress,
+    uvIndex: service.getUVIndex(roughElevation),
+    spectralIntensity: service.getSpectralIntensity(roughElevation),
+    azimuthTrend: "constant",
+    elevationTrend: "constant",
+  );
+
   while (true) {
     final now = DateTime.now();
 
@@ -404,19 +424,38 @@ final activeScreenProvider = NotifierProvider<ActiveScreenNotifier, AppScreen>(
 );
 
 class AutoBrightnessAdjustmentNotifier extends Notifier<bool> {
+  static const _autoBrightnessEnabledKey = 'auto_brightness_enabled';
+
   @override
   bool build() {
+    final prefs = ref.watch(sharedPreferencesProvider);
+    final fastFlag = prefs?.getBool(_autoBrightnessEnabledKey);
+
     final settingsAsync = ref.watch(settingsProvider);
     final currentSelection = ref.watch(selectedMonitorsProvider);
+
     return settingsAsync.maybeWhen(
       data: (settingsMap) {
         final firstId = currentSelection.firstOrNull ?? 'all';
-        return settingsMap[firstId]?.isAutoBrightnessEnabled ??
+        final enabled = settingsMap[firstId]?.isAutoBrightnessEnabled ??
             settingsMap['all']?.isAutoBrightnessEnabled ??
             true;
+        
+        // Sync fast flag if different
+        if (fastFlag != enabled) {
+          prefs?.setBool(_autoBrightnessEnabledKey, enabled);
+        }
+        return enabled;
       },
-      orElse: () => true,
+      orElse: () => fastFlag ?? true,
     );
+  }
+
+  void setEnabled(bool value) {
+    if (state == value) return;
+    state = value;
+    ref.read(sharedPreferencesProvider)?.setBool(_autoBrightnessEnabledKey, value);
+    ref.read(settingsProvider.notifier).updateAutoBrightness(value);
   }
 
   void toggle() {
@@ -429,7 +468,8 @@ class AutoBrightnessAdjustmentNotifier extends Notifier<bool> {
             .update(monitor!.realBrightness!.toDouble());
       }
     }
-    ref.read(settingsProvider.notifier).updateAutoBrightness(!currentState);
+    
+    setEnabled(!currentState);
   }
 }
 
@@ -453,18 +493,30 @@ final autoBrightnessAdjustmentProvider =
 );
 
 class AutoTemperatureAdjustmentNotifier extends Notifier<bool> {
+  static const _autoTemperatureEnabledKey = 'auto_temperature_enabled';
+
   @override
   bool build() {
+    final prefs = ref.watch(sharedPreferencesProvider);
+    final fastFlag = prefs?.getBool(_autoTemperatureEnabledKey);
+
     final tempSettingsAsync = ref.watch(temperatureSettingsProvider);
     final currentSelection = ref.watch(selectedMonitorsProvider);
+
     return tempSettingsAsync.maybeWhen(
       data: (tempSettingsMap) {
         final firstId = currentSelection.firstOrNull ?? 'all';
-        return tempSettingsMap[firstId]?.isEnabled ??
+        final enabled = tempSettingsMap[firstId]?.isEnabled ??
             tempSettingsMap['all']?.isEnabled ??
             true;
+
+        // Sync fast flag if different
+        if (fastFlag != enabled) {
+          prefs?.setBool(_autoTemperatureEnabledKey, enabled);
+        }
+        return enabled;
       },
-      orElse: () => true,
+      orElse: () => fastFlag ?? true,
     );
   }
 
@@ -478,9 +530,12 @@ class AutoTemperatureAdjustmentNotifier extends Notifier<bool> {
             .setTemperature(monitor!.realTemperature!);
       }
     }
+
+    final newState = !currentState;
+    ref.read(sharedPreferencesProvider)?.setBool(_autoTemperatureEnabledKey, newState);
     ref
         .read(temperatureSettingsProvider.notifier)
-        .toggleEnabled(!currentState);
+        .toggleEnabled(newState);
   }
 }
 
@@ -490,9 +545,18 @@ final autoTemperatureAdjustmentProvider =
 );
 
 class ManualBrightnessNotifier extends Notifier<double> {
+  static const _manualBrightnessKey = 'manual_brightness';
+
   @override
-  double build() => 100.0;
-  void update(double value) => state = value;
+  double build() {
+    final prefs = ref.watch(sharedPreferencesProvider);
+    return prefs?.getDouble(_manualBrightnessKey) ?? 100.0;
+  }
+
+  void update(double value) {
+    state = value;
+    ref.read(sharedPreferencesProvider)?.setDouble(_manualBrightnessKey, value);
+  }
 }
 
 final manualBrightnessProvider =
@@ -590,6 +654,7 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   }
 
   void updateAutoBrightness(bool enabled) {
+    ref.read(sharedPreferencesProvider)?.setBool('auto_brightness_enabled', enabled);
     final ids = ref.read(selectedMonitorsProvider);
     final current = _getSettings(ids.firstOrNull ?? 'all');
     _updateSettings(ids, current.copyWith(isAutoBrightnessEnabled: enabled));

@@ -26,7 +26,25 @@ class StorageService {
       }
 
       // 3. Rename temp to original (Atomic on most filesystems)
-      await tempFile.rename(file.path);
+      // On Windows, rename often fails if the destination is recently read.
+      int retries = 0;
+      bool success = false;
+      while (retries < 3 && !success) {
+        try {
+          await tempFile.rename(file.path);
+          success = true;
+        } catch (e) {
+          retries++;
+          if (retries < 3) {
+            await Future<void>.delayed(Duration(milliseconds: 100 * retries));
+          } else {
+            // Final fallback: Try direct write if rename is permanently blocked
+            debugPrint('Rename failed after retries, falling back to direct write: $e');
+            await file.writeAsString(data, flush: true);
+            if (await tempFile.exists()) await tempFile.delete();
+          }
+        }
+      }
     } catch (e) {
       debugPrint('Error saving $filename: $e');
     }
