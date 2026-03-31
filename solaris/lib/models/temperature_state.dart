@@ -41,7 +41,8 @@ class TemperatureState {
       isSmartCircadianEnabled:
           isSmartCircadianEnabled ?? this.isSmartCircadianEnabled,
       isSleepDebtEnabled: isSleepDebtEnabled ?? this.isSleepDebtEnabled,
-      isSleepPressureEnabled: isSleepPressureEnabled ?? this.isSleepPressureEnabled,
+      isSleepPressureEnabled:
+          isSleepPressureEnabled ?? this.isSleepPressureEnabled,
       isTimeShiftEnabled: isTimeShiftEnabled ?? this.isTimeShiftEnabled,
       isWindDownEnabled: isWindDownEnabled ?? this.isWindDownEnabled,
     );

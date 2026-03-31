@@ -301,5 +301,8 @@
   "whitelist": "Белый список",
   "whitelistSubtitle": "Приложения, которые всегда включают игровой режим",
   "blacklist": "Черный список",
-  "blacklistSubtitle": "Игнорировать, даже если во весь экран"
+  "blacklistSubtitle": "Игнорировать, даже если во весь экран",
+  "sunBase": "База (Солнце)",
+  "finalValue": "Итог",
+  "brightnessReceipt": "Чек яркости"
 }

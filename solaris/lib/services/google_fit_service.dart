@@ -14,7 +14,7 @@ class GoogleFitService {
 
   final _storage = StorageService();
   final _tokenFilename = 'google_fit_token.json';
-  
+
   AuthClient? _client;
   FitnessApi? _fitnessApi;
 
@@ -33,13 +33,15 @@ class GoogleFitService {
             dotenv.get('GOOGLE_CLIENT_ID'),
             dotenv.get('GOOGLE_CLIENT_SECRET'),
           );
-          
+
           _client = authenticatedClient(http.Client(), credentials);
           _fitnessApi = FitnessApi(_client!);
-          
+
           // Use clientId to verify credentials if needed, but for now we just initialize
-          debugPrint('Google Fit initialized with client ID: ${clientId.identifier}');
-          
+          debugPrint(
+            'Google Fit initialized with client ID: ${clientId.identifier}',
+          );
+
           return true;
         }
       }
@@ -105,8 +107,8 @@ class GoogleFitService {
           dotenv.get('GOOGLE_CLIENT_ID'),
           dotenv.get('GOOGLE_CLIENT_SECRET'),
         );
-        
-        // Use refreshCredentials instead of refreshAuthenticatedClient 
+
+        // Use refreshCredentials instead of refreshAuthenticatedClient
         // as the later isn't a top-level function in this context
         final refreshedCredentials = await refreshCredentials(
           clientId,
@@ -116,7 +118,7 @@ class GoogleFitService {
 
         _client = authenticatedClient(http.Client(), refreshedCredentials);
         _fitnessApi = FitnessApi(_client!);
-        
+
         await _storage.save(
           _tokenFilename,
           jsonEncode(refreshedCredentials.toJson()),
@@ -138,7 +140,8 @@ class GoogleFitService {
       return response.session;
     } catch (e) {
       debugPrint('Error fetching sleep sessions: $e');
-      if (e.toString().contains('invalid_token') || e.toString().contains('401')) {
+      if (e.toString().contains('invalid_token') ||
+          e.toString().contains('401')) {
         await signOut();
       }
       return null;

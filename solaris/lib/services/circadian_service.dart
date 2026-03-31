@@ -4,12 +4,30 @@ import 'package:solaris/services/weather_service.dart';
 import 'package:solaris/services/weather_adjustment_service.dart';
 import 'package:solaris/models/smart_circadian_data.dart';
 
+class CircadianCalculationResult {
+  final double finalBrightness;
+  final double baseBrightness;
+  final double windDownImpact;
+  final double sleepPressureImpact;
+  final double sleepDebtImpact;
+  final double weatherImpact;
+
+  CircadianCalculationResult({
+    required this.finalBrightness,
+    required this.baseBrightness,
+    this.windDownImpact = 0,
+    this.sleepPressureImpact = 0,
+    this.sleepDebtImpact = 0,
+    this.weatherImpact = 0,
+  });
+}
+
 class CircadianService {
   final WeatherAdjustmentService weatherAdjustmentService =
       WeatherAdjustmentService();
 
-  /// Вычисляет целевую яркость исключительно на основе высоты солнца (elevation)
-  double calculateTargetBrightness(
+  /// Вычисляет целевую яркость и распределяет влияние факторов
+  CircadianCalculationResult calculateTargetBrightness(
     SolarPhaseModel phases,
     double elevation,
     DateTime now, {
@@ -24,8 +42,6 @@ class CircadianService {
     if (curvePoints != null && curvePoints.isNotEmpty) {
       baseBrightness = _calculateFromElevation(curvePoints, elevation);
     } else {
-      // Фолбэк, если точки не загрузились - используем дефолтные значения из графика
-      // -20 elevation -> 15% brightness, 30+ elevation -> 100% brightness
       if (elevation < -6)
         baseBrightness = 15.0;
       else if (elevation > 20)
@@ -34,30 +50,55 @@ class CircadianService {
         baseBrightness = 60.0;
     }
 
+    double weatherFactor = 1.0;
     if (weather != null && presetSensitivity > 0) {
       final baseFactor = weatherAdjustmentService.calculateWeatherFactor(
         weather,
         elevation,
       );
-      final finalFactor = 1.0 - ((1.0 - baseFactor) * presetSensitivity);
-      double targetBrightness = baseBrightness * finalFactor;
-
-      // Apply Smart Multipliers (Sleep Debt, Pressure, Wind-down)
-      targetBrightness *= smartData.brightnessMultiplier;
-
-      // Clamp target brightness to the minimum value of the preset
-      double minAllowed = 0.0;
-      if (curvePoints != null && curvePoints.isNotEmpty) {
-        // Мы предполагаем, что минимальное значение яркости ночью — это первая точка
-        minAllowed = curvePoints.first.y;
-      } else {
-        minAllowed = 15.0;
-      }
-
-      return targetBrightness.clamp(minAllowed, 100.0);
+      weatherFactor = 1.0 - ((1.0 - baseFactor) * presetSensitivity);
     }
 
-    return baseBrightness;
+    // Physical final brightness (multiplicative)
+    double theoreticalFinal =
+        baseBrightness * weatherFactor * smartData.brightnessMultiplier;
+
+    // Clamp to minimum allowed
+    double minAllowed = 15.0;
+    if (curvePoints != null && curvePoints.isNotEmpty) {
+      minAllowed = curvePoints.first.y;
+    }
+
+    double finalBrightness = theoreticalFinal.clamp(minAllowed, 100.0);
+
+    // Proportional distribution logic
+    if (finalBrightness < baseBrightness) {
+      final totalReduction = baseBrightness - finalBrightness;
+
+      // Weights based on reduction "strength" of each factor
+      final wWeather = 1.0 - weatherFactor;
+      final wWindDown = 1.0 - smartData.windDownFactor;
+      final wPressure = 1.0 - smartData.sleepPressureFactor;
+      final wDebt = 1.0 - smartData.sleepDebtFactor;
+
+      final sumOfWeights = wWeather + wWindDown + wPressure + wDebt;
+
+      if (sumOfWeights > 0) {
+        return CircadianCalculationResult(
+          finalBrightness: finalBrightness,
+          baseBrightness: baseBrightness,
+          weatherImpact: totalReduction * (wWeather / sumOfWeights),
+          windDownImpact: totalReduction * (wWindDown / sumOfWeights),
+          sleepPressureImpact: totalReduction * (wPressure / sumOfWeights),
+          sleepDebtImpact: totalReduction * (wDebt / sumOfWeights),
+        );
+      }
+    }
+
+    return CircadianCalculationResult(
+      finalBrightness: finalBrightness,
+      baseBrightness: baseBrightness,
+    );
   }
 
   int calculateTargetTemperature(

@@ -637,4 +637,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get blacklistSubtitle => 'Ignore even if fullscreen';
+
+  @override
+  String get sunBase => 'Sun Base';
+
+  @override
+  String get finalValue => 'Final';
+
+  @override
+  String get brightnessReceipt => 'Brightness Receipt';
 }

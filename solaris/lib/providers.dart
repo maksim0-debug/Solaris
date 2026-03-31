@@ -29,7 +29,6 @@ import 'package:solaris/models/preset_type.dart';
 import 'package:solaris/providers/lifecycle_provider.dart';
 import 'package:solaris/services/gaming_mode_service.dart';
 
-
 final locationServiceProvider = Provider((ref) => LocationService());
 final sunCalculatorServiceProvider = Provider((ref) => SunCalculatorService());
 final timeServiceProvider = Provider((ref) => TimeService());
@@ -44,7 +43,6 @@ final smartCircadianServiceProvider = Provider<SmartCircadianService>(
 final gamingModeServiceProvider = Provider<GamingModeService>((ref) {
   return ref.watch<GamingModeService>(gamingModeProvider.notifier);
 });
-
 
 final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
   ref,
@@ -84,71 +82,89 @@ final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
         useWindDown:
             monitorSettings.isWindDownEnabled &&
             monitorSettings.isWindDownMasterEnabled,
-        sleepDebtBrightnessIntensity: monitorSettings.sleepDebtBrightnessIntensity,
-        sleepDebtTemperatureIntensity: monitorSettings.sleepDebtTemperatureIntensity,
-        sleepPressureBrightnessIntensity: monitorSettings.sleepPressureBrightnessIntensity,
+        sleepDebtBrightnessIntensity:
+            monitorSettings.sleepDebtBrightnessIntensity,
+        sleepDebtTemperatureIntensity:
+            monitorSettings.sleepDebtTemperatureIntensity,
+        sleepPressureBrightnessIntensity:
+            monitorSettings.sleepPressureBrightnessIntensity,
         timeShiftIntensity: monitorSettings.timeShiftIntensity,
-        windDownBrightnessIntensity: monitorSettings.windDownBrightnessIntensity,
-        windDownTemperatureIntensity: monitorSettings.windDownTemperatureIntensity,
+        windDownBrightnessIntensity:
+            monitorSettings.windDownBrightnessIntensity,
+        windDownTemperatureIntensity:
+            monitorSettings.windDownTemperatureIntensity,
         windDownDurationMinutes: monitorSettings.windDownDurationMinutes,
         timeShiftDurationMinutes: monitorSettings.timeShiftDurationMinutes,
-        sleepPressureWakeLimitHours: monitorSettings.sleepPressureWakeLimitHours,
+        sleepPressureWakeLimitHours:
+            monitorSettings.sleepPressureWakeLimitHours,
         sleepDebtThresholdMinutes: monitorSettings.sleepDebtThresholdMinutes,
       );
 
-      // Calculate Time Shift Brightness Impact
+      final weatherAsync = ref.watch(currentWeatherProvider);
+      final circadianService = ref.watch(circadianServiceProvider);
+      final sunService = ref.read(sunCalculatorServiceProvider);
+
+      // Determine effective elevation for calculation (with time shift)
+      double effectiveElevation = solar.sunElevation;
+      double timeShiftImpact = 0;
+
       if (smartData.isTimeShiftActive) {
-        final now = DateTime.now();
         final shiftedTime = now.subtract(smartData.timeOffset);
         final locationAsync = ref.read(effectiveLocationProvider);
         final pos = locationAsync.value;
 
         if (pos != null) {
-          final sunService = ref.read(sunCalculatorServiceProvider);
-          final circadianService = ref.read(circadianServiceProvider);
-          
-          final shiftedElevation = sunService.getSunElevation(
+          effectiveElevation = sunService.getSunElevation(
             pos.latitude,
             pos.longitude,
             shiftedTime,
           );
 
-          final baseBrightness = circadianService.calculateTargetBrightness(
+          // Blinding Protection (similar to other providers)
+          if (solar.sunElevation < 0 && effectiveElevation > 10) {
+            effectiveElevation = effectiveElevation.clamp(-20.0, 10.0);
+          }
+
+          // Calculate time shift impact for reference
+          final baseResult = circadianService.calculateTargetBrightness(
             solar.phases,
             solar.sunElevation,
             now,
             curvePoints: monitorSettings.curvePoints,
           );
-
-          final shiftedBrightness = circadianService.calculateTargetBrightness(
+          final shiftedResult = circadianService.calculateTargetBrightness(
             solar.phases,
-            shiftedElevation,
+            effectiveElevation,
             now,
             curvePoints: monitorSettings.curvePoints,
           );
-
-          final impact = shiftedBrightness - baseBrightness;
-          
-          return SmartCircadianData(
-            brightnessMultiplier: smartData.brightnessMultiplier,
-            temperatureOffset: smartData.temperatureOffset,
-            timeOffset: smartData.timeOffset,
-            isWindDownActive: smartData.isWindDownActive,
-            isSleepPressureActive: smartData.isSleepPressureActive,
-            isSleepDebtActive: smartData.isSleepDebtActive,
-            isTimeShiftActive: smartData.isTimeShiftActive,
-            sleepDebtFactor: smartData.sleepDebtFactor,
-            sleepPressureFactor: smartData.sleepPressureFactor,
-            windDownFactor: smartData.windDownFactor,
-            timeShiftBrightnessImpact: impact,
-            timeShiftMinutesRemaining: smartData.timeShiftMinutesRemaining,
-            windDownMinutesRemaining: smartData.windDownMinutesRemaining,
-            minutesUntilSleep: smartData.minutesUntilSleep,
-          );
+          timeShiftImpact =
+              shiftedResult.finalBrightness - baseResult.finalBrightness;
         }
       }
 
-      return smartData;
+      // Calculate Full Proportional Result
+      final result = circadianService.calculateTargetBrightness(
+        solar.phases,
+        effectiveElevation,
+        now,
+        curvePoints: monitorSettings.curvePoints,
+        weather: monitorSettings.isWeatherAdjustmentEnabled
+            ? weatherAsync.value
+            : null,
+        presetSensitivity: monitorSettings.activePreset.weatherSensitivity,
+        smartData: smartData,
+      );
+
+      return smartData.copyWith(
+        baseBrightness: result.baseBrightness,
+        windDownAbsoluteImpact: result.windDownImpact,
+        sleepPressureAbsoluteImpact: result.sleepPressureImpact,
+        sleepDebtAbsoluteImpact: result.sleepDebtImpact,
+        weatherAbsoluteImpact: result.weatherImpact,
+        timeShiftBrightnessImpact: timeShiftImpact,
+        weatherCode: weatherAsync.value?.weatherCode,
+      );
     },
     orElse: () => const SmartCircadianData.neutral(),
   );
@@ -195,15 +211,21 @@ final smartCircadianTemperatureDataProvider =
           useWindDown:
               monitorSettings.isWindDownEnabled &&
               globalSettings.isWindDownMasterEnabled,
-          sleepDebtBrightnessIntensity: globalSettings.sleepDebtBrightnessIntensity,
-          sleepDebtTemperatureIntensity: globalSettings.sleepDebtTemperatureIntensity,
-          sleepPressureBrightnessIntensity: globalSettings.sleepPressureBrightnessIntensity,
+          sleepDebtBrightnessIntensity:
+              globalSettings.sleepDebtBrightnessIntensity,
+          sleepDebtTemperatureIntensity:
+              globalSettings.sleepDebtTemperatureIntensity,
+          sleepPressureBrightnessIntensity:
+              globalSettings.sleepPressureBrightnessIntensity,
           timeShiftIntensity: globalSettings.timeShiftIntensity,
-          windDownBrightnessIntensity: globalSettings.windDownBrightnessIntensity,
-          windDownTemperatureIntensity: globalSettings.windDownTemperatureIntensity,
+          windDownBrightnessIntensity:
+              globalSettings.windDownBrightnessIntensity,
+          windDownTemperatureIntensity:
+              globalSettings.windDownTemperatureIntensity,
           windDownDurationMinutes: globalSettings.windDownDurationMinutes,
           timeShiftDurationMinutes: globalSettings.timeShiftDurationMinutes,
-          sleepPressureWakeLimitHours: globalSettings.sleepPressureWakeLimitHours,
+          sleepPressureWakeLimitHours:
+              globalSettings.sleepPressureWakeLimitHours,
           sleepDebtThresholdMinutes: globalSettings.sleepDebtThresholdMinutes,
         ),
         orElse: () => const SmartCircadianData.neutral(),
@@ -791,7 +813,8 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     final ids = ref.read(selectedMonitorsProvider);
     final current = _getSettings(ids.firstOrNull ?? 'all');
     if (current.gameModeWhitelist.contains(item)) {
-      final newList = List<String>.from(current.gameModeWhitelist)..remove(item);
+      final newList = List<String>.from(current.gameModeWhitelist)
+        ..remove(item);
       _updateSettings(ids, current.copyWith(gameModeWhitelist: newList));
     }
   }
@@ -809,7 +832,8 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     final ids = ref.read(selectedMonitorsProvider);
     final current = _getSettings(ids.firstOrNull ?? 'all');
     if (current.gameModeBlacklist.contains(item)) {
-      final newList = List<String>.from(current.gameModeBlacklist)..remove(item);
+      final newList = List<String>.from(current.gameModeBlacklist)
+        ..remove(item);
       _updateSettings(ids, current.copyWith(gameModeBlacklist: newList));
     }
   }
@@ -1069,7 +1093,7 @@ class CurrentBrightnessNotifier extends Notifier<double> {
                 }
               }
 
-              final target = circadianService.calculateTargetBrightness(
+              final result = circadianService.calculateTargetBrightness(
                 state.phases,
                 effectiveElevation,
                 DateTime.now(),
@@ -1082,8 +1106,8 @@ class CurrentBrightnessNotifier extends Notifier<double> {
                     selectedSettings.activePreset.weatherSensitivity,
                 smartData: smartData,
               );
-              _saveBrightness(target);
-              return target;
+              _saveBrightness(result.finalBrightness);
+              return result.finalBrightness;
             },
             orElse: () => lastBrightness,
           );
@@ -1170,12 +1194,14 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
               }
 
               final isGamingMode = ref.watch<bool>(gamingModeProvider);
-              
+
               double targetBrightness;
+              CircadianCalculationResult? calculationResult;
+
               if (isGamingMode && settings.isGameModeEnabled) {
                 targetBrightness = settings.gameModeBrightness;
               } else {
-                targetBrightness = circadianService.calculateTargetBrightness(
+                calculationResult = circadianService.calculateTargetBrightness(
                   state.phases,
                   effectiveElevation,
                   DateTime.now(),
@@ -1187,6 +1213,14 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                   presetSensitivity: settings.activePreset.weatherSensitivity,
                   smartData: smartData,
                 );
+                targetBrightness = calculationResult.finalBrightness;
+              }
+
+              // Apply adjustments if smart circadian is enabled
+              if (calculationResult != null &&
+                  settings.isSmartCircadianEnabled) {
+                // The actual UI-serving provider (smartCircadianDataProvider)
+                // will perform the same calculation to show impacts in the UI.
               }
 
               brightnessService.applyBrightnessSmoothly(

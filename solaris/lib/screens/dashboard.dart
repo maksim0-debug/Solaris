@@ -626,462 +626,520 @@ class _DashboardView extends ConsumerWidget {
 
         // Stats and Toggles
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              solarAsync.when(
-                data: (state) {
-                  final status = StatusHelper.getStatus(
-                    state,
-                    l10n,
-                    isAutoBright,
-                  );
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.only(
+              right: 8,
+            ), // Small right padding for scrollbar
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                solarAsync.when(
+                  data: (state) {
+                    final status = StatusHelper.getStatus(
+                      state,
+                      l10n,
+                      isAutoBright,
+                    );
 
-                  return GlassCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  status.title.toUpperCase(),
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: status.color,
-                                    letterSpacing: -0.5,
-                                  ),
-                                ),
-                                Text(
-                                  status.subtitle,
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.white24,
-                                    letterSpacing: 1.2,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Icon(status.icon, size: 24, color: status.color),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          solarAsync.maybeWhen(
-                            data: (state) {
-                              final now = DateTime.now();
-                              final timeStr = timeService.formatCountdown(
-                                state.timeUntilNextEvent,
-                              );
-
-                              if (now.isAfter(state.phases.civilTwilightEnd)) {
-                                return l10n.finished;
-                              }
-
-                              // If we are in the middle of a phase, show "Time remaining"
-                              // If we are before the sun cycle starts, show "Coming in"
-                              if (now.isBefore(
-                                state.phases.civilTwilightBegin,
-                              )) {
-                                return l10n.remainingLower(timeStr);
-                              }
-
-                              return l10n.remainingLower(timeStr);
-                            },
-                            orElse: () => l10n.calculatingLower,
-                          ),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          status.description,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.white54,
-                            height: 1.4,
-                          ),
-                        ),
-                        // Smart Circadian Indicators
-                        Builder(
-                          builder: (context) {
-                            final currentSelection = ref.watch(selectedMonitorsProvider);
-                            final monitorId = currentSelection.firstOrNull ?? 'all';
-                            final smartData = ref.watch(smartCircadianDataProvider(monitorId));
-                            
-                            final activeAjustments = <Widget>[];
-                            
-                            if (smartData.isWindDownActive) {
-                              final impactPercent = ((1.0 - smartData.windDownFactor) * 100).round();
-                              final remaining = smartData.windDownMinutesRemaining;
-                              final untilWakeUp = smartData.minutesUntilWakeUp;
-                              
-                              activeAjustments.add(_SmartAdjustmentIndicator(
-                                icon: LucideIcons.moon,
-                                label: remaining != null 
-                                  ? l10n.circadianImpactWithTime(l10n.featureWindDownShort, -impactPercent, remaining, l10n.minutesAbbreviation)
-                                  : (untilWakeUp != null)
-                                    ? l10n.circadianImpactWithStatus(l10n.featureWindDownShort, -impactPercent, l10n.remainingUntilWakeUp)
-                                    : l10n.circadianImpact(l10n.featureWindDownShort, -impactPercent),
-                              ));
-                            }
-                            
-                            if (smartData.isTimeShiftActive) {
-                              final impactPercent = smartData.timeShiftBrightnessImpact.round();
-                              final remaining = smartData.timeShiftMinutesRemaining;
-                              activeAjustments.add(_SmartAdjustmentIndicator(
-                                icon: LucideIcons.sunrise,
-                                label: remaining != null 
-                                  ? l10n.circadianImpactWithTime(l10n.featureTimeShiftShort, impactPercent, remaining, l10n.minutesAbbreviation)
-                                  : l10n.circadianImpact(l10n.featureTimeShiftShort, impactPercent),
-                              ));
-                            }
-                            
-                            if (smartData.isSleepPressureActive) {
-                              final impactPercent = ((1.0 - smartData.sleepPressureFactor) * 100).round();
-                              activeAjustments.add(_SmartAdjustmentIndicator(
-                                icon: LucideIcons.brain,
-                                label: l10n.circadianImpact(l10n.featureSleepPressureShort, -impactPercent),
-                              ));
-                            }
-                            
-                            if (smartData.isSleepDebtActive) {
-                              final impactPercent = ((1.0 - smartData.sleepDebtFactor) * 100).round();
-                              activeAjustments.add(_SmartAdjustmentIndicator(
-                                icon: LucideIcons.battery,
-                                label: l10n.circadianImpact(l10n.featureSleepDebtShort, -impactPercent),
-                              ));
-                            }
-                            
-                            if (activeAjustments.isEmpty) return const SizedBox.shrink();
-                            
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 16.0),
-                              child: Column(
-                                children: activeAjustments.map((w) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 6.0),
-                                  child: w,
-                                )).toList(),
-                              ),
-                            );
-                          },
-                        ),
-                        Builder(
-                          builder: (context) {
-                            final weather = ref
-                                .watch(currentWeatherProvider)
-                                .value;
-                            final settingsMap = ref
-                                .watch(settingsProvider)
-                                .value;
-                            final currentSelection = ref.watch(
-                              selectedMonitorsProvider,
-                            );
-
-                            if (weather == null ||
-                                settingsMap == null ||
-                                !isAutoBright) {
-                              return const SizedBox.shrink();
-                            }
-
-                            final settings =
-                                settingsMap[currentSelection.firstOrNull ??
-                                    'all'] ??
-                                settingsMap['all']!;
-                            if (!settings.isWeatherAdjustmentEnabled) {
-                              return const SizedBox.shrink();
-                            }
-
-                            final circadianService = ref.read(
-                              circadianServiceProvider,
-                            );
-                            final now = DateTime.now();
-
-                            final baseBrightness = circadianService
-                                .calculateTargetBrightness(
-                                  state.phases,
-                                  state.sunElevation,
-                                  now,
-                                  curveSharpness: settings.curveSharpness,
-                                  curvePoints: settings.curvePoints,
-                                  weather: null,
-                                  presetSensitivity:
-                                      settings.activePreset.weatherSensitivity,
-                                );
-
-                            final adjustedBrightness = circadianService
-                                .calculateTargetBrightness(
-                                  state.phases,
-                                  state.sunElevation,
-                                  now,
-                                  curveSharpness: settings.curveSharpness,
-                                  curvePoints: settings.curvePoints,
-                                  weather: weather,
-                                  presetSensitivity:
-                                      settings.activePreset.weatherSensitivity,
-                                );
-
-                            if (baseBrightness <= 0 ||
-                                adjustedBrightness >= baseBrightness) {
-                              return const SizedBox.shrink();
-                            }
-
-                            final reductionPercent =
-                                (((baseBrightness - adjustedBrightness) /
-                                            baseBrightness) *
-                                        100)
-                                    .round();
-
-                            if (reductionPercent <= 0)
-                              return const SizedBox.shrink();
-
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 12.0),
-                              child: Row(
+                    return GlassCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    '⛅',
-                                    style: TextStyle(fontSize: 14),
+                                  Text(
+                                    status.title.toUpperCase(),
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: status.color,
+                                      letterSpacing: -0.5,
+                                    ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      l10n.weatherBrightnessReduction(
-                                        reductionPercent,
-                                      ),
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Color(0xFF93C5FD),
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                  Text(
+                                    status.subtitle,
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white24,
+                                      letterSpacing: 1.2,
                                     ),
                                   ),
                                 ],
                               ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  );
-                },
-                loading: () => GlassCard(
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: const Color(0xFFFDBA74),
-                      ),
-                    ),
-                  ),
-                ),
-                error: (e, _) => GlassCard(
-                  child: Center(
-                    child: Text(
-                      'Error: $e',
-                      style: const TextStyle(
-                        color: Colors.redAccent,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => ref
-                            .read(autoBrightnessAdjustmentProvider.notifier)
-                            .toggle(),
-                        borderRadius: BorderRadius.circular(16),
-                        child: GlassCard(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                LucideIcons.sunMedium,
-                                size: 20,
-                                color: isAutoBright
-                                    ? const Color(0xFFFDBA74)
-                                    : Colors.white30,
-                              ),
-                              const SizedBox(height: 12),
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  l10n.autoBrightness,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: isAutoBright
-                                        ? Colors.white
-                                        : Colors.white30,
+                              Icon(status.icon, size: 24, color: status.color),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            solarAsync.maybeWhen(
+                              data: (state) {
+                                final now = DateTime.now();
+                                final timeStr = timeService.formatCountdown(
+                                  state.timeUntilNextEvent,
+                                );
+
+                                if (now.isAfter(
+                                  state.phases.civilTwilightEnd,
+                                )) {
+                                  return l10n.finished;
+                                }
+
+                                // If we are in the middle of a phase, show "Time remaining"
+                                // If we are before the sun cycle starts, show "Coming in"
+                                if (now.isBefore(
+                                  state.phases.civilTwilightBegin,
+                                )) {
+                                  return l10n.remainingLower(timeStr);
+                                }
+
+                                return l10n.remainingLower(timeStr);
+                              },
+                              orElse: () => l10n.calculatingLower,
+                            ),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            status.description,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.white54,
+                              height: 1.4,
+                            ),
+                          ),
+                          // Smart Circadian Indicators
+                          Builder(
+                            builder: (context) {
+                              final currentSelection = ref.watch(
+                                selectedMonitorsProvider,
+                              );
+                              final monitorId =
+                                  currentSelection.firstOrNull ?? 'all';
+                              final smartData = ref.watch(
+                                smartCircadianDataProvider(monitorId),
+                              );
+
+                              final activeAjustments = <Widget>[];
+
+                              if (smartData.weatherAbsoluteImpact > 0.5) {
+                                final impactPercent = smartData
+                                    .weatherAbsoluteImpact
+                                    .round();
+                                activeAjustments.add(
+                                  _SmartAdjustmentIndicator(
+                                    icon: _getWeatherIcon(
+                                      smartData.weatherCode,
+                                    ),
+                                    label: l10n.weatherBrightnessReduction(
+                                      impactPercent,
+                                    ),
                                   ),
-                                  maxLines: 1,
+                                );
+                              }
+
+                              if (smartData.isWindDownActive) {
+                                final impactPercent = smartData
+                                    .windDownAbsoluteImpact
+                                    .round();
+                                final remaining =
+                                    smartData.windDownMinutesRemaining;
+                                final untilWakeUp =
+                                    smartData.minutesUntilWakeUp;
+
+                                activeAjustments.add(
+                                  _SmartAdjustmentIndicator(
+                                    icon: LucideIcons.moon,
+                                    label: remaining != null
+                                        ? l10n.circadianImpactWithTime(
+                                            l10n.featureWindDownShort,
+                                            -impactPercent,
+                                            remaining,
+                                            l10n.minutesAbbreviation,
+                                          )
+                                        : (untilWakeUp != null)
+                                        ? l10n.circadianImpactWithStatus(
+                                            l10n.featureWindDownShort,
+                                            -impactPercent,
+                                            l10n.remainingUntilWakeUp,
+                                          )
+                                        : l10n.circadianImpact(
+                                            l10n.featureWindDownShort,
+                                            -impactPercent,
+                                          ),
+                                  ),
+                                );
+                              }
+
+                              if (smartData.isTimeShiftActive) {
+                                final impactPercent = smartData
+                                    .timeShiftBrightnessImpact
+                                    .round();
+                                final remaining =
+                                    smartData.timeShiftMinutesRemaining;
+                                activeAjustments.add(
+                                  _SmartAdjustmentIndicator(
+                                    icon: LucideIcons.sunrise,
+                                    label: remaining != null
+                                        ? l10n.circadianImpactWithTime(
+                                            l10n.featureTimeShiftShort,
+                                            impactPercent,
+                                            remaining,
+                                            l10n.minutesAbbreviation,
+                                          )
+                                        : l10n.circadianImpact(
+                                            l10n.featureTimeShiftShort,
+                                            impactPercent,
+                                          ),
+                                  ),
+                                );
+                              }
+
+                              if (smartData.isSleepPressureActive) {
+                                final impactPercent = smartData
+                                    .sleepPressureAbsoluteImpact
+                                    .round();
+                                activeAjustments.add(
+                                  _SmartAdjustmentIndicator(
+                                    icon: LucideIcons.brain,
+                                    label: l10n.circadianImpact(
+                                      l10n.featureSleepPressureShort,
+                                      -impactPercent,
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              if (smartData.isSleepDebtActive) {
+                                final impactPercent = smartData
+                                    .sleepDebtAbsoluteImpact
+                                    .round();
+                                activeAjustments.add(
+                                  _SmartAdjustmentIndicator(
+                                    icon: LucideIcons.battery,
+                                    label: l10n.circadianImpact(
+                                      l10n.featureSleepDebtShort,
+                                      -impactPercent,
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              if (activeAjustments.isEmpty)
+                                return const SizedBox.shrink();
+
+                              final receiptText = [
+                                '${l10n.sunBase.toUpperCase()}: ${smartData.baseBrightness.round()}%',
+                                if (smartData.weatherAbsoluteImpact > 0.5)
+                                  '${l10n.weatherAdjustmentTitle}: -${smartData.weatherAbsoluteImpact.round()}%',
+                                if (smartData.windDownAbsoluteImpact > 0.5)
+                                  '${l10n.featureWindDownShort}: -${smartData.windDownAbsoluteImpact.round()}%',
+                                if (smartData.sleepPressureAbsoluteImpact > 0.5)
+                                  '${l10n.featureSleepPressureShort}: -${smartData.sleepPressureAbsoluteImpact.round()}%',
+                                if (smartData.sleepDebtAbsoluteImpact > 0.5)
+                                  '${l10n.featureSleepDebtShort}: -${smartData.sleepDebtAbsoluteImpact.round()}%',
+                                '-------------------',
+                                '${l10n.finalValue.toUpperCase()}: ${brightness.round()}%',
+                              ].join('\n');
+
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 16.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          l10n.circadianRegulation
+                                              .toUpperCase(),
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.white24,
+                                            letterSpacing: 1.2,
+                                          ),
+                                        ),
+                                        Tooltip(
+                                          message: receiptText,
+                                          padding: const EdgeInsets.all(12),
+                                          preferBelow: false,
+                                          child: const Icon(
+                                            LucideIcons.info,
+                                            size: 14,
+                                            color: Colors.white24,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    ...activeAjustments.map(
+                                      (w) => Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 6.0,
+                                        ),
+                                        child: w,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              Text(
-                                isAutoBright ? l10n.active : l10n.disabled,
-                                style: TextStyle(
-                                  fontSize: 10,
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  loading: () => GlassCard(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: const Color(0xFFFDBA74),
+                        ),
+                      ),
+                    ),
+                  ),
+                  error: (e, _) => GlassCard(
+                    child: Center(
+                      child: Text(
+                        'Error: $e',
+                        style: const TextStyle(
+                          color: Colors.redAccent,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => ref
+                              .read(autoBrightnessAdjustmentProvider.notifier)
+                              .toggle(),
+                          borderRadius: BorderRadius.circular(16),
+                          child: GlassCard(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  LucideIcons.sunMedium,
+                                  size: 20,
                                   color: isAutoBright
                                       ? const Color(0xFFFDBA74)
                                       : Colors.white30,
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => ref
-                            .read(autoTemperatureAdjustmentProvider.notifier)
-                            .toggle(),
-                        borderRadius: BorderRadius.circular(16),
-                        child: GlassCard(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                LucideIcons.thermometer,
-                                size: 20,
-                                color: !isColorTempEnabled
-                                    ? Colors.white10
-                                    : isAutoTemp
-                                    ? const Color(0xFFFDBA74)
-                                    : Colors.white30,
-                              ),
-                              const SizedBox(height: 12),
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  l10n.autoTemperature,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: !isColorTempEnabled
-                                        ? Colors.white10
-                                        : isAutoTemp
-                                        ? Colors.white
-                                        : Colors.white30,
+                                const SizedBox(height: 12),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    l10n.autoBrightness,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: isAutoBright
+                                          ? Colors.white
+                                          : Colors.white30,
+                                    ),
+                                    maxLines: 1,
                                   ),
-                                  maxLines: 1,
                                 ),
-                              ),
-                              if (isColorTempEnabled) ...[
                                 Text(
-                                  isAutoTemp ? l10n.active : l10n.disabled,
+                                  isAutoBright ? l10n.active : l10n.disabled,
                                   style: TextStyle(
                                     fontSize: 10,
-                                    color: isAutoTemp
+                                    color: isAutoBright
                                         ? const Color(0xFFFDBA74)
                                         : Colors.white30,
                                   ),
                                 ),
-                              ] else ...[
-                                Text(
-                                  l10n.disabledInSettings,
-                                  style: const TextStyle(
-                                    fontSize: 9,
-                                    color: Colors.white24,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                  maxLines: 2,
-                                ),
-                                const SizedBox(height: 4),
-                                MouseRegion(
-                                  cursor: SystemMouseCursors.click,
-                                  child: GestureDetector(
-                                    onTap: () => ref
-                                        .read(
-                                          isColorTemperatureEnabledProvider
-                                              .notifier,
-                                        )
-                                        .set(true),
-                                    child: Text(
-                                      l10n.enable.toUpperCase(),
-                                      style: const TextStyle(
-                                        fontSize: 8,
-                                        color: Color(0xFFFDBA74),
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
                               ],
-                            ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => ref
+                              .read(autoTemperatureAdjustmentProvider.notifier)
+                              .toggle(),
+                          borderRadius: BorderRadius.circular(16),
+                          child: GlassCard(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  LucideIcons.thermometer,
+                                  size: 20,
+                                  color: !isColorTempEnabled
+                                      ? Colors.white10
+                                      : isAutoTemp
+                                      ? const Color(0xFFFDBA74)
+                                      : Colors.white30,
+                                ),
+                                const SizedBox(height: 12),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    l10n.autoTemperature,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: !isColorTempEnabled
+                                          ? Colors.white10
+                                          : isAutoTemp
+                                          ? Colors.white
+                                          : Colors.white30,
+                                    ),
+                                    maxLines: 1,
+                                  ),
+                                ),
+                                if (isColorTempEnabled) ...[
+                                  Text(
+                                    isAutoTemp ? l10n.active : l10n.disabled,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: isAutoTemp
+                                          ? const Color(0xFFFDBA74)
+                                          : Colors.white30,
+                                    ),
+                                  ),
+                                ] else ...[
+                                  Text(
+                                    l10n.disabledInSettings,
+                                    style: const TextStyle(
+                                      fontSize: 9,
+                                      color: Colors.white24,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 2,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  MouseRegion(
+                                    cursor: SystemMouseCursors.click,
+                                    child: GestureDetector(
+                                      onTap: () => ref
+                                          .read(
+                                            isColorTemperatureEnabledProvider
+                                                .notifier,
+                                          )
+                                          .set(true),
+                                      child: Text(
+                                        l10n.enable.toUpperCase(),
+                                        style: const TextStyle(
+                                          fontSize: 8,
+                                          color: Color(0xFFFDBA74),
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              GlassCard(
-                child: Column(
-                  children: [
-                    _StatRow(
-                      icon: LucideIcons.sunrise,
-                      label: l10n.sunriseLabel,
-                      value: solarAsync.maybeWhen(
-                        data: (s) => timeService.formatTime(s.phases.sunrise),
-                        orElse: () => '--:--',
+                const SizedBox(height: 16),
+                GlassCard(
+                  child: Column(
+                    children: [
+                      _StatRow(
+                        icon: LucideIcons.sunrise,
+                        label: l10n.sunriseLabel,
+                        value: solarAsync.maybeWhen(
+                          data: (s) => timeService.formatTime(s.phases.sunrise),
+                          orElse: () => '--:--',
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    _StatRow(
-                      icon: LucideIcons.sunset,
-                      label: l10n.sunsetLabel,
-                      value: solarAsync.maybeWhen(
-                        data: (s) => timeService.formatTime(s.phases.sunset),
-                        orElse: () => '--:--',
+                      const SizedBox(height: 12),
+                      _StatRow(
+                        icon: LucideIcons.sunset,
+                        label: l10n.sunsetLabel,
+                        value: solarAsync.maybeWhen(
+                          data: (s) => timeService.formatTime(s.phases.sunset),
+                          orElse: () => '--:--',
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    _StatRow(
-                      icon: LucideIcons.sun,
-                      label: l10n.goldenHourMorning,
-                      value: solarAsync.maybeWhen(
-                        data: (s) =>
-                            timeService.formatTime(s.phases.goldenHourMorning),
-                        orElse: () => '--:--',
+                      const SizedBox(height: 12),
+                      _StatRow(
+                        icon: LucideIcons.sun,
+                        label: l10n.goldenHourMorning,
+                        value: solarAsync.maybeWhen(
+                          data: (s) => timeService.formatTime(
+                            s.phases.goldenHourMorning,
+                          ),
+                          orElse: () => '--:--',
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    _StatRow(
-                      icon: LucideIcons.sun,
-                      label: l10n.goldenHourEvening,
-                      value: solarAsync.maybeWhen(
-                        data: (s) =>
-                            timeService.formatTime(s.phases.goldenHourEvening),
-                        orElse: () => '--:--',
+                      const SizedBox(height: 12),
+                      _StatRow(
+                        icon: LucideIcons.sun,
+                        label: l10n.goldenHourEvening,
+                        value: solarAsync.maybeWhen(
+                          data: (s) => timeService.formatTime(
+                            s.phases.goldenHourEvening,
+                          ),
+                          orElse: () => '--:--',
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],
     );
   }
-}
 
+  IconData _getWeatherIcon(int? code) {
+    if (code == null) return LucideIcons.cloud;
+
+    // WMO Weather interpretation codes (WW)
+    // https://open-meteo.com/en/docs
+    if (code == 0) return LucideIcons.sun; // Clear sky
+    if (code >= 1 && code <= 2)
+      return LucideIcons.cloudSun; // Mainly clear, partly cloudy
+    if (code == 3) return LucideIcons.cloud; // Overcast
+    if (code == 45 || code == 48) return LucideIcons.cloudFog; // Fog
+    if (code >= 51 && code <= 55) return LucideIcons.cloudDrizzle; // Drizzle
+    if (code >= 56 && code <= 57)
+      return LucideIcons.snowflake; // Freezing Drizzle
+    if (code >= 61 && code <= 63)
+      return LucideIcons.cloudRain; // Rain: Slight, moderate
+    if (code == 65) return LucideIcons.cloudRainWind; // Rain: Heavy
+    if (code >= 66 && code <= 67) return LucideIcons.cloudRain; // Freezing Rain
+    if (code >= 71 && code <= 77)
+      return LucideIcons.snowflake; // Snow fall, grains
+    if (code >= 80 && code <= 81)
+      return LucideIcons.cloudRain; // Rain showers: Slight, moderate
+    if (code == 82) return LucideIcons.cloudRainWind; // Rain showers: Heavy
+    if (code >= 85 && code <= 86) return LucideIcons.snowflake; // Snow showers
+    if (code >= 95 && code <= 99)
+      return LucideIcons.cloudLightning; // Thunderstorm
+
+    return LucideIcons.cloud;
+  }
+}
 
 class _StatRow extends StatelessWidget {
   const _StatRow({
@@ -1257,10 +1315,7 @@ class _DisplayInfo extends StatelessWidget {
 }
 
 class _SmartAdjustmentIndicator extends StatelessWidget {
-  const _SmartAdjustmentIndicator({
-    required this.icon,
-    required this.label,
-  });
+  const _SmartAdjustmentIndicator({required this.icon, required this.label});
 
   final IconData icon;
   final String label;

@@ -38,7 +38,13 @@ class SleepState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [sessions, regimes, isLoading, error, lastFetchTime];
+  List<Object?> get props => [
+    sessions,
+    regimes,
+    isLoading,
+    error,
+    lastFetchTime,
+  ];
 }
 
 class SleepNotifier extends Notifier<SleepState> {
@@ -56,7 +62,7 @@ class SleepNotifier extends Notifier<SleepState> {
     try {
       final result = await _sleepService.fetchSleepData();
       final sessions = result.sessions;
-      
+
       if (sessions.isEmpty && state.sessions.isEmpty) {
         state = state.copyWith(
           isLoading: false,
@@ -67,11 +73,13 @@ class SleepNotifier extends Notifier<SleepState> {
 
       if (result.isLive) {
         // Notify GoogleFitProvider about successful live sync
-        ref.read(googleFitProvider.notifier).updateLastFetchTime(DateTime.now());
+        ref
+            .read(googleFitProvider.notifier)
+            .updateLastFetchTime(DateTime.now());
       }
 
       final regimes = RegimeAnalyzer.analyze(sessions);
-      
+
       state = state.copyWith(
         sessions: sessions,
         regimes: regimes,
@@ -80,15 +88,12 @@ class SleepNotifier extends Notifier<SleepState> {
         error: null,
       );
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
   Future<void> syncWithGoogleFit() async {
-     await loadSleepData();
+    await loadSleepData();
   }
 }
 

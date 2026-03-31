@@ -92,9 +92,8 @@ class SettingsScreen extends ConsumerWidget {
                     data: (map) => map['all']?.isAutorunEnabled ?? false,
                     orElse: () => false,
                   ),
-                  onChanged: (val) => ref
-                      .read(settingsProvider.notifier)
-                      .updateAutorun(val),
+                  onChanged: (val) =>
+                      ref.read(settingsProvider.notifier).updateAutorun(val),
                 ),
                 const SizedBox(height: 16),
                 const Divider(color: Colors.white10),
@@ -154,7 +153,6 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 }
-
 
 extension TemperaturePresetTypeExtension on TemperaturePresetType {
   String getName(AppLocalizations l10n) {
@@ -256,15 +254,15 @@ class _PresetSelector extends ConsumerWidget {
       final tempAsync = ref.watch(temperatureSettingsProvider);
       return tempAsync.maybeWhen(
         data: (tempMap) {
-          final settings = tempMap[selectedIds.firstOrNull ?? 'all'] ?? tempMap['all']!;
+          final settings =
+              tempMap[selectedIds.firstOrNull ?? 'all'] ?? tempMap['all']!;
           return _buildSelector<TemperaturePresetType>(
             context: context,
             values: TemperaturePresetType.values,
             activeValue: settings.activePreset,
             getName: (type) => type.getName(l10n),
-            onSelected: (type) => ref
-                .read(temperatureSettingsProvider.notifier)
-                .setPreset(type),
+            onSelected: (type) =>
+                ref.read(temperatureSettingsProvider.notifier).setPreset(type),
             resetButton: _ResetTempButton(settings: settings),
           );
         },
@@ -275,15 +273,15 @@ class _PresetSelector extends ConsumerWidget {
       return settingsAsync.maybeWhen(
         data: (settingsMap) {
           final settings =
-              settingsMap[selectedIds.firstOrNull ?? 'all'] ?? settingsMap['all']!;
+              settingsMap[selectedIds.firstOrNull ?? 'all'] ??
+              settingsMap['all']!;
           return _buildSelector<PresetType>(
             context: context,
             values: PresetType.values,
             activeValue: settings.activePreset,
             getName: (type) => type.getName(l10n),
-            onSelected: (type) => ref
-                .read(settingsProvider.notifier)
-                .setActivePreset(type),
+            onSelected: (type) =>
+                ref.read(settingsProvider.notifier).setActivePreset(type),
             resetButton: _ResetButton(settings: settings),
           );
         },
@@ -594,7 +592,7 @@ class _SmartExclusionsCard extends ConsumerWidget {
                         l10n.smartExclusionsSubtitle,
                         style: const TextStyle(
                           fontSize: 12,
-                           color: Colors.white54,
+                          color: Colors.white54,
                         ),
                       ),
                     ],
@@ -619,7 +617,10 @@ class _SmartExclusionsCard extends ConsumerWidget {
                   children: [
                     Text(
                       l10n.lockedBrightness,
-                      style: const TextStyle(color: Colors.white70, fontSize: 14),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
                     ),
                     Text(
                       '${settings.gameModeBrightness.round()}%',
@@ -648,8 +649,9 @@ class _SmartExclusionsCard extends ConsumerWidget {
                   title: l10n.whitelist,
                   subtitle: l10n.whitelistSubtitle,
                   items: settings.gameModeWhitelist,
-                  onAdd: (item) =>
-                      ref.read(settingsProvider.notifier).addWhitelistItem(item),
+                  onAdd: (item) => ref
+                      .read(settingsProvider.notifier)
+                      .addWhitelistItem(item),
                   onRemove: (item) => ref
                       .read(settingsProvider.notifier)
                       .removeWhitelistItem(item),
@@ -660,8 +662,9 @@ class _SmartExclusionsCard extends ConsumerWidget {
                   title: l10n.blacklist,
                   subtitle: l10n.blacklistSubtitle,
                   items: settings.gameModeBlacklist,
-                  onAdd: (item) =>
-                      ref.read(settingsProvider.notifier).addBlacklistItem(item),
+                  onAdd: (item) => ref
+                      .read(settingsProvider.notifier)
+                      .addBlacklistItem(item),
                   onRemove: (item) => ref
                       .read(settingsProvider.notifier)
                       .removeBlacklistItem(item),
@@ -735,10 +738,7 @@ class _AppListManagerState extends State<_AppListManager> {
         const SizedBox(height: 4),
         Text(
           widget.subtitle,
-          style: TextStyle(
-            fontSize: 11,
-            color: Colors.white.withOpacity(0.3),
-          ),
+          style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.3)),
         ),
         const SizedBox(height: 12),
         Row(
@@ -751,8 +751,10 @@ class _AppListManagerState extends State<_AppListManager> {
                   hintText: 'e.g. game.exe',
                   hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
                   isDense: true,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
                   filled: true,
                   fillColor: Colors.white.withOpacity(0.05),
                   border: OutlineInputBorder(
@@ -794,7 +796,10 @@ class _AppListManagerState extends State<_AppListManager> {
                   children: [
                     Text(
                       item,
-                      style: const TextStyle(color: Colors.white70, fontSize: 12),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
                     ),
                     IconButton(
                       icon: const Icon(LucideIcons.x, size: 14),
@@ -813,4 +818,3 @@ class _AppListManagerState extends State<_AppListManager> {
     );
   }
 }
-

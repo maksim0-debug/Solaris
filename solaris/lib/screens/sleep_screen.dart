@@ -28,13 +28,17 @@ class SleepScreen extends ConsumerWidget {
         children: [
           _SectionHeader(
             icon: LucideIcons.moon,
-            title: l10n.sleep, 
+            title: l10n.sleep,
             subtitle: l10n.sleepSubtitle,
           ),
           const SizedBox(height: 24),
 
           // Google Fit Sync Card
-          _GoogleFitSyncCard(googleFitState: googleFitState, isLoading: sleepState.isLoading, error: sleepState.error),
+          _GoogleFitSyncCard(
+            googleFitState: googleFitState,
+            isLoading: sleepState.isLoading,
+            error: sleepState.error,
+          ),
           const SizedBox(height: 24),
 
           // Circadian Regulation Section
@@ -45,14 +49,23 @@ class SleepScreen extends ConsumerWidget {
 
           // Sleep Regimes / History
           if (sleepState.regimes.isEmpty && !sleepState.isLoading)
-             Center(child: Text(l10n.sleepDataSubtitle, style: const TextStyle(color: Colors.white24)))
+            Center(
+              child: Text(
+                l10n.sleepDataSubtitle,
+                style: const TextStyle(color: Colors.white24),
+              ),
+            )
           else
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   l10n.detectedRegimes,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 ...sleepState.regimes.asMap().entries.map((entry) {
@@ -61,7 +74,8 @@ class SleepScreen extends ConsumerWidget {
                     padding: const EdgeInsets.only(bottom: 16),
                     child: SleepRegimeCard(
                       regime: regime,
-                      initiallyExpanded: false, // All collapsed by default as requested
+                      initiallyExpanded:
+                          false, // All collapsed by default as requested
                     ),
                   );
                 }),
@@ -122,7 +136,11 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _GoogleFitSyncCard extends ConsumerWidget {
-  const _GoogleFitSyncCard({required this.googleFitState, required this.isLoading, this.error});
+  const _GoogleFitSyncCard({
+    required this.googleFitState,
+    required this.isLoading,
+    this.error,
+  });
   final GoogleFitState googleFitState;
   final bool isLoading;
   final String? error;
@@ -137,28 +155,46 @@ class _GoogleFitSyncCard extends ConsumerWidget {
         children: [
           Row(
             children: [
-              const Icon(LucideIcons.refreshCw, color: Color(0xFF10B981), size: 20),
+              const Icon(
+                LucideIcons.refreshCw,
+                color: Color(0xFF10B981),
+                size: 20,
+              ),
               const SizedBox(width: 12),
               Text(
                 l10n.googleFitSync,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
               const Spacer(),
-              if (googleFitState.status == GoogleFitStatus.connected && !isLoading)
+              if (googleFitState.status == GoogleFitStatus.connected &&
+                  !isLoading)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.green.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text(l10n.connectedStatusSmall, style: const TextStyle(color: Colors.green, fontSize: 12)),
+                  child: Text(
+                    l10n.connectedStatusSmall,
+                    style: const TextStyle(color: Colors.green, fontSize: 12),
+                  ),
                 ),
               if (isLoading)
-                 const SizedBox(
-                    width: 16, 
-                    height: 16, 
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF8B5CF6)),
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Color(0xFF8B5CF6),
                   ),
+                ),
             ],
           ),
           const SizedBox(height: 20),
@@ -167,7 +203,10 @@ class _GoogleFitSyncCard extends ConsumerWidget {
               onPressed: () => ref.read(googleFitProvider.notifier).signIn(),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF8B5CF6),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
               child: Text(l10n.connectGoogleFit),
             )
@@ -178,20 +217,34 @@ class _GoogleFitSyncCard extends ConsumerWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(l10n.lastFetchLabel, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
                     Text(
-                      googleFitState.lastFetchTime != null 
-                        ? DateFormat('HH:mm, d MMM').format(googleFitState.lastFetchTime!)
-                        : l10n.never,
+                      l10n.lastFetchLabel,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: 12,
+                      ),
+                    ),
+                    Text(
+                      googleFitState.lastFetchTime != null
+                          ? DateFormat(
+                              'HH:mm, d MMM',
+                            ).format(googleFitState.lastFetchTime!)
+                          : l10n.never,
                       style: const TextStyle(color: Colors.white),
                     ),
                   ],
                 ),
                 ElevatedButton.icon(
-                  onPressed: isLoading ? null : () => ref.read(sleepProvider.notifier).syncWithGoogleFit(),
+                  onPressed: isLoading
+                      ? null
+                      : () => ref
+                            .read(sleepProvider.notifier)
+                            .syncWithGoogleFit(),
                   icon: const Icon(LucideIcons.refreshCw),
                   label: Text(l10n.syncNow),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.white10),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white10,
+                  ),
                 ),
               ],
             ),
@@ -235,7 +288,8 @@ class _CircadianRegulationSection extends ConsumerWidget {
       if (mins < 0) return "";
       final h = mins ~/ 60;
       final m = mins % 60;
-      if (h > 0) return "${h}${l10n.hoursAbbreviation} ${m}${l10n.minutesAbbreviation}";
+      if (h > 0)
+        return "${h}${l10n.hoursAbbreviation} ${m}${l10n.minutesAbbreviation}";
       return "${m}${l10n.minutesAbbreviation}";
     }
 
@@ -255,7 +309,8 @@ class _CircadianRegulationSection extends ConsumerWidget {
             ),
             Switch(
               value: settings.isSmartCircadianEnabled,
-              onChanged: (val) => ref.read(settingsProvider.notifier).updateSmartCircadian(val),
+              onChanged: (val) =>
+                  ref.read(settingsProvider.notifier).updateSmartCircadian(val),
               activeColor: const Color(0xFF8B5CF6),
             ),
           ],
@@ -265,9 +320,15 @@ class _CircadianRegulationSection extends ConsumerWidget {
           padding: const EdgeInsets.all(24),
           child: AnimatedOpacity(
             duration: const Duration(milliseconds: 300),
-            opacity: (settings.isSmartCircadianEnabled || tempSettings.isSmartCircadianEnabled) ? 1.0 : 0.4,
+            opacity:
+                (settings.isSmartCircadianEnabled ||
+                    tempSettings.isSmartCircadianEnabled)
+                ? 1.0
+                : 0.4,
             child: AbsorbPointer(
-              absorbing: !settings.isSmartCircadianEnabled && !tempSettings.isSmartCircadianEnabled,
+              absorbing:
+                  !settings.isSmartCircadianEnabled &&
+                  !tempSettings.isSmartCircadianEnabled,
               child: Column(
                 children: [
                   _RegulationToggle(
@@ -277,28 +338,48 @@ class _CircadianRegulationSection extends ConsumerWidget {
                     masterValue: settings.isWindDownMasterEnabled,
                     brightnessValue: settings.isWindDownEnabled,
                     temperatureValue: tempSettings.isWindDownEnabled,
-                    onMasterChanged: (val) => ref.read(settingsProvider.notifier).updateWindDownMaster(val),
-                    onBrightnessChanged: (val) => ref.read(settingsProvider.notifier).updateWindDown(val),
-                    onTemperatureChanged: (val) => ref.read(temperatureSettingsProvider.notifier).updateWindDown(val),
+                    onMasterChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateWindDownMaster(val),
+                    onBrightnessChanged: (val) =>
+                        ref.read(settingsProvider.notifier).updateWindDown(val),
+                    onTemperatureChanged: (val) => ref
+                        .read(temperatureSettingsProvider.notifier)
+                        .updateWindDown(val),
                     brightnessLabel: l10n.influenceBrightness,
                     temperatureLabel: l10n.influenceTemperature,
                     isActive: smartData.isWindDownActive,
                     timingText: smartData.isWindDownActive
-                        ? (smartData.minutesUntilSleep != null && smartData.minutesUntilSleep! > 0)
-                            ? l10n.remainingUntilSleep(formatMins(smartData.minutesUntilSleep!))
-                            : (smartData.minutesUntilWakeUp != null)
-                                ? l10n.remainingUntilWakeUp
-                                : l10n.active
+                        ? (smartData.minutesUntilSleep != null &&
+                                  smartData.minutesUntilSleep! > 0)
+                              ? l10n.remainingUntilSleep(
+                                  formatMins(smartData.minutesUntilSleep!),
+                                )
+                              : (smartData.minutesUntilWakeUp != null)
+                              ? l10n.remainingUntilWakeUp
+                              : l10n.active
                         : null,
                     brightnessIntensity: settings.windDownBrightnessIntensity,
                     temperatureIntensity: settings.windDownTemperatureIntensity,
-                    onBrightnessIntensityChanged: (val) => ref.read(settingsProvider.notifier).updateWindDownIntensity(val, settings.windDownTemperatureIntensity),
-                    onTemperatureIntensityChanged: (val) => ref.read(settingsProvider.notifier).updateWindDownIntensity(settings.windDownBrightnessIntensity, val),
+                    onBrightnessIntensityChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateWindDownIntensity(
+                          val,
+                          settings.windDownTemperatureIntensity,
+                        ),
+                    onTemperatureIntensityChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateWindDownIntensity(
+                          settings.windDownBrightnessIntensity,
+                          val,
+                        ),
                     durationValue: settings.windDownDurationMinutes.toDouble(),
                     durationMin: 30,
                     durationMax: 360,
                     durationLabel: l10n.windDownDuration,
-                    onDurationChanged: (val) => ref.read(settingsProvider.notifier).updateWindDownDuration(val.toInt()),
+                    onDurationChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateWindDownDuration(val.toInt()),
                   ),
                   const Divider(height: 32, color: Colors.white10),
                   _RegulationToggle(
@@ -308,20 +389,31 @@ class _CircadianRegulationSection extends ConsumerWidget {
                     masterValue: settings.isTimeShiftMasterEnabled,
                     brightnessValue: settings.isTimeShiftEnabled,
                     temperatureValue: tempSettings.isTimeShiftEnabled,
-                    onMasterChanged: (val) => ref.read(settingsProvider.notifier).updateTimeShiftMaster(val),
-                    onBrightnessChanged: (val) => ref.read(settingsProvider.notifier).updateTimeShift(val),
-                    onTemperatureChanged: (val) => ref.read(temperatureSettingsProvider.notifier).updateTimeShift(val),
+                    onMasterChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateTimeShiftMaster(val),
+                    onBrightnessChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateTimeShift(val),
+                    onTemperatureChanged: (val) => ref
+                        .read(temperatureSettingsProvider.notifier)
+                        .updateTimeShift(val),
                     brightnessLabel: l10n.influenceBrightness,
                     temperatureLabel: l10n.influenceTemperature,
                     isActive: smartData.isTimeShiftActive,
                     brightnessIntensity: settings.timeShiftIntensity,
-                    onBrightnessIntensityChanged: (val) => ref.read(settingsProvider.notifier).updateTimeShiftIntensity(val),
-                    showTemperatureIntensity: false, // Time shift is a single factor
+                    onBrightnessIntensityChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateTimeShiftIntensity(val),
+                    showTemperatureIntensity:
+                        false, // Time shift is a single factor
                     durationValue: settings.timeShiftDurationMinutes.toDouble(),
                     durationMin: 60,
                     durationMax: 720,
                     durationLabel: l10n.timeShiftDuration,
-                    onDurationChanged: (val) => ref.read(settingsProvider.notifier).updateTimeShiftDuration(val.toInt()),
+                    onDurationChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateTimeShiftDuration(val.toInt()),
                   ),
                   const Divider(height: 32, color: Colors.white10),
                   _RegulationToggle(
@@ -331,21 +423,33 @@ class _CircadianRegulationSection extends ConsumerWidget {
                     masterValue: settings.isSleepPressureMasterEnabled,
                     brightnessValue: settings.isSleepPressureEnabled,
                     temperatureValue: tempSettings.isSleepPressureEnabled,
-                    onMasterChanged: (val) => ref.read(settingsProvider.notifier).updateSleepPressureMaster(val),
-                    onBrightnessChanged: (val) => ref.read(settingsProvider.notifier).updateSleepPressure(val),
-                    onTemperatureChanged: (val) => ref.read(temperatureSettingsProvider.notifier).updateSleepPressure(val),
+                    onMasterChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateSleepPressureMaster(val),
+                    onBrightnessChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateSleepPressure(val),
+                    onTemperatureChanged: (val) => ref
+                        .read(temperatureSettingsProvider.notifier)
+                        .updateSleepPressure(val),
                     brightnessLabel: l10n.influenceBrightness,
                     temperatureLabel: l10n.influenceTemperature,
                     isActive: smartData.isSleepPressureActive,
-                    brightnessIntensity: settings.sleepPressureBrightnessIntensity,
-                    onBrightnessIntensityChanged: (val) => ref.read(settingsProvider.notifier).updateSleepPressureIntensity(val),
-                    showTemperatureIntensity: false, // Currently only brightness
+                    brightnessIntensity:
+                        settings.sleepPressureBrightnessIntensity,
+                    onBrightnessIntensityChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateSleepPressureIntensity(val),
+                    showTemperatureIntensity:
+                        false, // Currently only brightness
                     durationValue: settings.sleepPressureWakeLimitHours,
                     durationMin: 10,
                     durationMax: 20,
                     durationLabel: l10n.sleepPressureLimit,
                     durationUnit: l10n.hoursAbbreviation,
-                    onDurationChanged: (val) => ref.read(settingsProvider.notifier).updateSleepPressureLimit(val),
+                    onDurationChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateSleepPressureLimit(val),
                   ),
                   const Divider(height: 32, color: Colors.white10),
                   _RegulationToggle(
@@ -355,21 +459,41 @@ class _CircadianRegulationSection extends ConsumerWidget {
                     masterValue: settings.isSleepDebtMasterEnabled,
                     brightnessValue: settings.isSleepDebtEnabled,
                     temperatureValue: tempSettings.isSleepDebtEnabled,
-                    onMasterChanged: (val) => ref.read(settingsProvider.notifier).updateSleepDebtMaster(val),
-                    onBrightnessChanged: (val) => ref.read(settingsProvider.notifier).updateSleepDebt(val),
-                    onTemperatureChanged: (val) => ref.read(temperatureSettingsProvider.notifier).updateSleepDebt(val),
+                    onMasterChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateSleepDebtMaster(val),
+                    onBrightnessChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateSleepDebt(val),
+                    onTemperatureChanged: (val) => ref
+                        .read(temperatureSettingsProvider.notifier)
+                        .updateSleepDebt(val),
                     brightnessLabel: l10n.influenceBrightness,
                     temperatureLabel: l10n.influenceTemperature,
                     isActive: smartData.isSleepDebtActive,
                     brightnessIntensity: settings.sleepDebtBrightnessIntensity,
-                    temperatureIntensity: settings.sleepDebtTemperatureIntensity,
-                    onBrightnessIntensityChanged: (val) => ref.read(settingsProvider.notifier).updateSleepDebtIntensity(val, settings.sleepDebtTemperatureIntensity),
-                    onTemperatureIntensityChanged: (val) => ref.read(settingsProvider.notifier).updateSleepDebtIntensity(settings.sleepDebtBrightnessIntensity, val),
-                    durationValue: settings.sleepDebtThresholdMinutes.toDouble(),
+                    temperatureIntensity:
+                        settings.sleepDebtTemperatureIntensity,
+                    onBrightnessIntensityChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateSleepDebtIntensity(
+                          val,
+                          settings.sleepDebtTemperatureIntensity,
+                        ),
+                    onTemperatureIntensityChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateSleepDebtIntensity(
+                          settings.sleepDebtBrightnessIntensity,
+                          val,
+                        ),
+                    durationValue: settings.sleepDebtThresholdMinutes
+                        .toDouble(),
                     durationMin: 240,
                     durationMax: 540,
                     durationLabel: l10n.sleepDebtThreshold,
-                    onDurationChanged: (val) => ref.read(settingsProvider.notifier).updateSleepDebtThreshold(val.toInt()),
+                    onDurationChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateSleepDebtThreshold(val.toInt()),
                   ),
                 ],
               ),
@@ -444,22 +568,28 @@ class _RegulationToggleState extends ConsumerState<_RegulationToggle> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 500),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: widget.isActive ? Colors.white.withOpacity(0.03) : Colors.transparent,
+        color: widget.isActive
+            ? Colors.white.withOpacity(0.03)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: widget.isActive ? [
-           BoxShadow(
-             color: const Color(0xFF8B5CF6).withOpacity(0.15),
-             blurRadius: 20,
-             spreadRadius: -5,
-           )
-        ] : [],
+        boxShadow: widget.isActive
+            ? [
+                BoxShadow(
+                  color: const Color(0xFF8B5CF6).withOpacity(0.15),
+                  blurRadius: 20,
+                  spreadRadius: -5,
+                ),
+              ]
+            : [],
         border: Border.all(
-          color: widget.isActive ? const Color(0xFF8B5CF6).withOpacity(0.3) : Colors.transparent,
+          color: widget.isActive
+              ? const Color(0xFF8B5CF6).withOpacity(0.3)
+              : Colors.transparent,
           width: 1,
         ),
       ),
@@ -480,35 +610,43 @@ class _RegulationToggleState extends ConsumerState<_RegulationToggle> {
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: widget.isActive ? const Color(0xFFC4B5FD) : Colors.white,
+                            color: widget.isActive
+                                ? const Color(0xFFC4B5FD)
+                                : Colors.white,
                           ),
                         ),
                         const SizedBox(width: 8),
                         if (widget.isActive) ...[
-                           Container(
-                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                             decoration: BoxDecoration(
-                               color: const Color(0xFF8B5CF6).withOpacity(0.2),
-                               borderRadius: BorderRadius.circular(4),
-                             ),
-                             child: Text(
-                               widget.timingText ?? l10n.active,
-                               style: const TextStyle(
-                                 color: Color(0xFFC4B5FD),
-                                 fontSize: 10,
-                                 fontWeight: FontWeight.bold,
-                               ),
-                             ),
-                           ),
-                           const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF8B5CF6).withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              widget.timingText ?? l10n.active,
+                              style: const TextStyle(
+                                color: Color(0xFFC4B5FD),
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
                         ],
                         IconButton(
                           icon: Icon(
                             LucideIcons.settings,
                             size: 14,
-                            color: _isExpanded ? const Color(0xFF8B5CF6) : Colors.white.withOpacity(0.3),
+                            color: _isExpanded
+                                ? const Color(0xFF8B5CF6)
+                                : Colors.white.withOpacity(0.3),
                           ),
-                          onPressed: () => setState(() => _isExpanded = !_isExpanded),
+                          onPressed: () =>
+                              setState(() => _isExpanded = !_isExpanded),
                           constraints: const BoxConstraints(),
                           padding: EdgeInsets.zero,
                           splashRadius: 16,
@@ -516,106 +654,110 @@ class _RegulationToggleState extends ConsumerState<_RegulationToggle> {
                         ),
                         const SizedBox(width: 8),
                         Tooltip(
-                         message: widget.info,
-                         padding: const EdgeInsets.all(12),
-                         margin: const EdgeInsets.symmetric(horizontal: 24),
-                         decoration: BoxDecoration(
-                           color: const Color(0xFF1E1B4B),
-                           borderRadius: BorderRadius.circular(8),
-                           border: Border.all(color: Colors.white10),
-                         ),
-                         textStyle: const TextStyle(color: Colors.white70, fontSize: 12),
-                         preferBelow: false,
-                         child: Icon(
-                           LucideIcons.info,
-                           size: 14,
-                           color: Colors.white.withOpacity(0.3),
-                         ),
+                          message: widget.info,
+                          padding: const EdgeInsets.all(12),
+                          margin: const EdgeInsets.symmetric(horizontal: 24),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E1B4B),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.white10),
+                          ),
+                          textStyle: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                          preferBelow: false,
+                          child: Icon(
+                            LucideIcons.info,
+                            size: 14,
+                            color: Colors.white.withOpacity(0.3),
+                          ),
                         ),
                       ],
                     ),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.subtitle,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.white.withOpacity(0.4),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Transform.scale(
-              scale: 0.9,
-              child: Switch(
-                value: widget.masterValue,
-                onChanged: widget.onMasterChanged,
-                activeColor: const Color(0xFF8B5CF6),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        AnimatedOpacity(
-          duration: const Duration(milliseconds: 200),
-          opacity: widget.masterValue ? 1.0 : 0.3,
-          child: AbsorbPointer(
-            absorbing: !widget.masterValue,
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    _SmallToggle(
-                      label: widget.brightnessLabel,
-                      value: widget.brightnessValue,
-                      onChanged: widget.onBrightnessChanged,
-                      color: const Color(0xFFFDBA74),
-                    ),
-                    const SizedBox(width: 24),
-                    _SmallToggle(
-                      label: widget.temperatureLabel,
-                      value: widget.temperatureValue,
-                      onChanged: widget.onTemperatureChanged,
-                      color: const Color(0xFF818CF8),
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.subtitle,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white.withOpacity(0.4),
+                      ),
                     ),
                   ],
                 ),
-                if (_isExpanded) ...[
-                  const SizedBox(height: 16),
-                  if (widget.brightnessValue)
-                    _IntensitySlider(
-                      label: l10n.brightnessIntensity,
-                      value: widget.brightnessIntensity,
-                      onChanged: widget.onBrightnessIntensityChanged,
-                      color: const Color(0xFFFDBA74),
-                    ),
-                  if (widget.temperatureValue && widget.showTemperatureIntensity)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: _IntensitySlider(
-                        label: l10n.temperatureIntensity,
-                        value: widget.temperatureIntensity,
-                        onChanged: widget.onTemperatureIntensityChanged,
+              ),
+              Transform.scale(
+                scale: 0.9,
+                child: Switch(
+                  value: widget.masterValue,
+                  onChanged: widget.onMasterChanged,
+                  activeColor: const Color(0xFF8B5CF6),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          AnimatedOpacity(
+            duration: const Duration(milliseconds: 200),
+            opacity: widget.masterValue ? 1.0 : 0.3,
+            child: AbsorbPointer(
+              absorbing: !widget.masterValue,
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      _SmallToggle(
+                        label: widget.brightnessLabel,
+                        value: widget.brightnessValue,
+                        onChanged: widget.onBrightnessChanged,
+                        color: const Color(0xFFFDBA74),
+                      ),
+                      const SizedBox(width: 24),
+                      _SmallToggle(
+                        label: widget.temperatureLabel,
+                        value: widget.temperatureValue,
+                        onChanged: widget.onTemperatureChanged,
                         color: const Color(0xFF818CF8),
                       ),
-                    ),
-                  if (widget.durationValue != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: _DurationSlider(
-                        label: widget.durationLabel ?? "",
-                        value: widget.durationValue!,
-                        min: widget.durationMin,
-                        max: widget.durationMax,
-                        unit: widget.durationUnit,
-                        onChanged: widget.onDurationChanged,
+                    ],
+                  ),
+                  if (_isExpanded) ...[
+                    const SizedBox(height: 16),
+                    if (widget.brightnessValue)
+                      _IntensitySlider(
+                        label: l10n.brightnessIntensity,
+                        value: widget.brightnessIntensity,
+                        onChanged: widget.onBrightnessIntensityChanged,
+                        color: const Color(0xFFFDBA74),
                       ),
-                    ),
+                    if (widget.temperatureValue &&
+                        widget.showTemperatureIntensity)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: _IntensitySlider(
+                          label: l10n.temperatureIntensity,
+                          value: widget.temperatureIntensity,
+                          onChanged: widget.onTemperatureIntensityChanged,
+                          color: const Color(0xFF818CF8),
+                        ),
+                      ),
+                    if (widget.durationValue != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: _DurationSlider(
+                          label: widget.durationLabel ?? "",
+                          value: widget.durationValue!,
+                          min: widget.durationMin,
+                          max: widget.durationMax,
+                          unit: widget.durationUnit,
+                          onChanged: widget.onDurationChanged,
+                        ),
+                      ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
-        ),
         ],
       ),
     );
@@ -643,8 +785,18 @@ class _IntensitySlider extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(fontSize: 12, color: Colors.white60)),
-            Text('${(value * 100).toInt()}%', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 12, color: Colors.white60),
+            ),
+            Text(
+              '${(value * 100).toInt()}%',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 4),
@@ -658,12 +810,7 @@ class _IntensitySlider extends StatelessWidget {
             thumbColor: color,
             overlayColor: color.withOpacity(0.2),
           ),
-          child: Slider(
-            value: value,
-            min: 0.0,
-            max: 1.0,
-            onChanged: onChanged,
-          ),
+          child: Slider(value: value, min: 0.0, max: 1.0, onChanged: onChanged),
         ),
       ],
     );
@@ -730,15 +877,16 @@ class _DurationSlider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    
+
     // Format label for mins if no unit provided
     String formatValue(double val) {
       if (unit != null) return "${val.toStringAsFixed(1)}$unit";
-      
+
       final mins = val.toInt();
       final h = mins ~/ 60;
       final m = mins % 60;
-      if (h > 0) return "${h}${l10n.hoursAbbreviation} ${m}${l10n.minutesAbbreviation}";
+      if (h > 0)
+        return "${h}${l10n.hoursAbbreviation} ${m}${l10n.minutesAbbreviation}";
       return "${m}${l10n.minutesAbbreviation}";
     }
 
@@ -748,8 +896,18 @@ class _DurationSlider extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(fontSize: 12, color: Colors.white60)),
-            Text(formatValue(value), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFC4B5FD))),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 12, color: Colors.white60),
+            ),
+            Text(
+              formatValue(value),
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFC4B5FD),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 4),
@@ -763,12 +921,7 @@ class _DurationSlider extends StatelessWidget {
             thumbColor: const Color(0xFFC4B5FD),
             overlayColor: const Color(0xFF8B5CF6).withOpacity(0.2),
           ),
-          child: Slider(
-            value: value,
-            min: min,
-            max: max,
-            onChanged: onChanged,
-          ),
+          child: Slider(value: value, min: min, max: max, onChanged: onChanged),
         ),
       ],
     );

@@ -638,4 +638,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get blacklistSubtitle => 'Игнорировать, даже если во весь экран';
+
+  @override
+  String get sunBase => 'База (Солнце)';
+
+  @override
+  String get finalValue => 'Итог';
+
+  @override
+  String get brightnessReceipt => 'Чек яркости';
 }

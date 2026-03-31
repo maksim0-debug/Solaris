@@ -1230,6 +1230,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ignore even if fullscreen'**
   String get blacklistSubtitle;
+
+  /// No description provided for @sunBase.
+  ///
+  /// In en, this message translates to:
+  /// **'Sun Base'**
+  String get sunBase;
+
+  /// No description provided for @finalValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Final'**
+  String get finalValue;
+
+  /// No description provided for @brightnessReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Brightness Receipt'**
+  String get brightnessReceipt;
 }
 
 class _AppLocalizationsDelegate

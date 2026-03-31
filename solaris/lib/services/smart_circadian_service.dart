@@ -36,19 +36,25 @@ class SmartCircadianService {
 
     // 1. Get Quality Data from NightGroups
     final currentRegime = _getCurrentRegime(sleepState.regimes);
-    if (currentRegime == null || currentRegime.nights.isEmpty) return const SmartCircadianData.neutral();
+    if (currentRegime == null || currentRegime.nights.isEmpty)
+      return const SmartCircadianData.neutral();
 
     // Key Sleep Metric: The most recent "Night" (aggregated sessions)
-    final NightGroup lastNight = currentRegime.nights.first; // Reordered to show newest first in analysis
+    final NightGroup lastNight = currentRegime
+        .nights
+        .first; // Reordered to show newest first in analysis
     final SleepSession lastAggSession = lastNight.aggregatedSession;
 
     // 2. Dynamic Bedtime Anchor (Override for tonight)
     int effectiveBedtimeMinutes = currentRegime.averageBedtimeNormalized;
-    
-    // If the last bedtime deviated by more than 1.5 hours, shift tonight's target halfway 
+
+    // If the last bedtime deviated by more than 1.5 hours, shift tonight's target halfway
     // to accommodate "weekend mode" or schedule shifts without breaking the regime.
-    final lastBedtimeMinutes = BedtimeNormalization.minutesFromNoon(lastAggSession.startTime);
-    int bedtimeDev = lastBedtimeMinutes - currentRegime.averageBedtimeNormalized;
+    final lastBedtimeMinutes = BedtimeNormalization.minutesFromNoon(
+      lastAggSession.startTime,
+    );
+    int bedtimeDev =
+        lastBedtimeMinutes - currentRegime.averageBedtimeNormalized;
     while (bedtimeDev > 720) bedtimeDev -= 1440;
     while (bedtimeDev < -720) bedtimeDev += 1440;
 
@@ -63,32 +69,43 @@ class SmartCircadianService {
     if (useTimeShift) {
       final actualWakeTime = lastAggSession.endTime;
       final timeSinceWake = now.difference(actualWakeTime);
-      
+
       // Only shift if awake for less than 24h
       if (timeSinceWake.inHours < 24) {
         // Shift relative to average wake time, not sunset
         final avgWakeMin = currentRegime.averageWakeTimeNormalized;
-        final actualWakeMin = BedtimeNormalization.minutesFromNoon(actualWakeTime);
-        
+        final actualWakeMin = BedtimeNormalization.minutesFromNoon(
+          actualWakeTime,
+        );
+
         int diffMinutes = actualWakeMin - avgWakeMin;
         while (diffMinutes > 720) diffMinutes -= 1440;
         while (diffMinutes < -720) diffMinutes += 1440;
 
         // Apply intensity and cap (max 3 hours shift)
         final double maxBioShift = 180.0;
-        final double effectiveDiff = diffMinutes.clamp(-maxBioShift, maxBioShift).toDouble();
-        
+        final double effectiveDiff = diffMinutes
+            .clamp(-maxBioShift, maxBioShift)
+            .toDouble();
+
         // FADEOUT: Gradually reduce time shift over X minutes
         double fadeFactor = 1.0;
         if (timeSinceWake.inMinutes < timeShiftDur) {
-           fadeFactor = 1.0 - (timeSinceWake.inMinutes / (timeShiftDur > 0 ? timeShiftDur.toDouble() : 1.0));
-           timeShiftMinutesRemaining = timeShiftDur - timeSinceWake.inMinutes;
+          fadeFactor =
+              1.0 -
+              (timeSinceWake.inMinutes /
+                  (timeShiftDur > 0 ? timeShiftDur.toDouble() : 1.0));
+          timeShiftMinutesRemaining = timeShiftDur - timeSinceWake.inMinutes;
         } else {
-           fadeFactor = 0.0;
+          fadeFactor = 0.0;
         }
 
-        final double adjustedIntensity = math.pow(timeShiftIntensity, 2.0).toDouble();
-        timeOffset = Duration(minutes: (effectiveDiff * adjustedIntensity * fadeFactor).toInt());
+        final double adjustedIntensity = math
+            .pow(timeShiftIntensity, 2.0)
+            .toDouble();
+        timeOffset = Duration(
+          minutes: (effectiveDiff * adjustedIntensity * fadeFactor).toInt(),
+        );
       }
     }
 
@@ -96,10 +113,15 @@ class SmartCircadianService {
     double sleepDebtFactor = 1.0;
     int sleepDebtTempOffset = 0;
     // Use aggregated duration to avoid false alarms from fragmented sleep
-    if (useSleepDebt && lastAggSession.duration.inMinutes < sleepDebtThreshold) { 
-      final double adjBrightnessIntensity = math.pow(sleepDebtBrightnessIntensity, 1.5).toDouble();
-      final double adjTemperatureIntensity = math.pow(sleepDebtTemperatureIntensity, 1.5).toDouble();
-      
+    if (useSleepDebt &&
+        lastAggSession.duration.inMinutes < sleepDebtThreshold) {
+      final double adjBrightnessIntensity = math
+          .pow(sleepDebtBrightnessIntensity, 1.5)
+          .toDouble();
+      final double adjTemperatureIntensity = math
+          .pow(sleepDebtTemperatureIntensity, 1.5)
+          .toDouble();
+
       sleepDebtFactor = 1.0 - (0.2 * adjBrightnessIntensity);
       sleepDebtTempOffset = (-500 * adjTemperatureIntensity).toInt();
     }
@@ -109,15 +131,17 @@ class SmartCircadianService {
     if (useSleepPressure) {
       final actualWakeTime = lastAggSession.endTime;
       final timeSinceWake = now.difference(actualWakeTime);
-      
+
       // Ignore very short sleep sessions/naps for reset
       final isRealSleep = lastAggSession.duration.inMinutes >= 120;
-      
+
       if (isRealSleep && timeSinceWake.inHours >= sleepPressureLimit) {
         final hoursOver = timeSinceWake.inMinutes / 60.0 - sleepPressureLimit;
         final baseFactor = math.pow(0.95, hoursOver).toDouble();
-        final double adjIntensity = math.pow(sleepPressureBrightnessIntensity, 1.5).toDouble();
-        
+        final double adjIntensity = math
+            .pow(sleepPressureBrightnessIntensity, 1.5)
+            .toDouble();
+
         sleepPressureFactor = 1.0 - (1.0 - baseFactor) * adjIntensity;
       }
     }
@@ -130,7 +154,7 @@ class SmartCircadianService {
 
     if (useWindDown) {
       final nowMinutes = BedtimeNormalization.minutesFromNoon(now);
-      
+
       int minsLeft = effectiveBedtimeMinutes - nowMinutes;
       // Handle noon-based wrap
       while (minsLeft > 720) minsLeft -= 1440;
@@ -141,14 +165,21 @@ class SmartCircadianService {
       // Wind-down starts X minutes before bedtime
       if (minsLeft > 0 && minsLeft <= windDownDur) {
         isWindDownActive = true;
-        final progress = (windDownDur - minsLeft) / (windDownDur > 0 ? windDownDur.toDouble() : 1.0);
-        
-        final double adjBrightnessIntensity = math.pow(windDownBrightnessIntensity, 1.5).toDouble();
-        final double adjTemperatureIntensity = math.pow(windDownTemperatureIntensity, 1.5).toDouble();
-        
+        final progress =
+            (windDownDur - minsLeft) /
+            (windDownDur > 0 ? windDownDur.toDouble() : 1.0);
+
+        final double adjBrightnessIntensity = math
+            .pow(windDownBrightnessIntensity, 1.5)
+            .toDouble();
+        final double adjTemperatureIntensity = math
+            .pow(windDownTemperatureIntensity, 1.5)
+            .toDouble();
+
         windDownFactor = 1.0 - (progress * 0.75 * adjBrightnessIntensity);
-        windDownTempOffset = -(progress * 4000 * adjTemperatureIntensity).toInt();
-      } 
+        windDownTempOffset = -(progress * 4000 * adjTemperatureIntensity)
+            .toInt();
+      }
       // After bedtime: NO MORE SHARP CUTOFF
       // Stay in deep night mode until 4 AM (or 2 hours before avg wake)
       else if (minsLeft <= 0) {
@@ -161,19 +192,29 @@ class SmartCircadianService {
         if (minsUntilMorning > 0 && minsUntilMorning <= 60) {
           isWindDownActive = true;
           final morningProgress = 1.0 - (60 - minsUntilMorning) / 60.0;
-          
-          final double adjBrightnessIntensity = math.pow(windDownBrightnessIntensity, 1.5).toDouble();
-          final double adjTemperatureIntensity = math.pow(windDownTemperatureIntensity, 1.5).toDouble();
-          
-          windDownFactor = 1.0 - (morningProgress * 0.75 * adjBrightnessIntensity);
-          windDownTempOffset = -(morningProgress * 4000 * adjTemperatureIntensity).toInt();
-        } 
+
+          final double adjBrightnessIntensity = math
+              .pow(windDownBrightnessIntensity, 1.5)
+              .toDouble();
+          final double adjTemperatureIntensity = math
+              .pow(windDownTemperatureIntensity, 1.5)
+              .toDouble();
+
+          windDownFactor =
+              1.0 - (morningProgress * 0.75 * adjBrightnessIntensity);
+          windDownTempOffset =
+              -(morningProgress * 4000 * adjTemperatureIntensity).toInt();
+        }
         // If we're between bedtime and the morning transition, stay at max factor
         else if (minsUntilMorning > 60) {
           isWindDownActive = true;
-          final double adjBrightnessIntensity = math.pow(windDownBrightnessIntensity, 1.5).toDouble();
-          final double adjTemperatureIntensity = math.pow(windDownTemperatureIntensity, 1.5).toDouble();
-          
+          final double adjBrightnessIntensity = math
+              .pow(windDownBrightnessIntensity, 1.5)
+              .toDouble();
+          final double adjTemperatureIntensity = math
+              .pow(windDownTemperatureIntensity, 1.5)
+              .toDouble();
+
           windDownFactor = 1.0 - (0.75 * adjBrightnessIntensity);
           windDownTempOffset = -(4000 * adjTemperatureIntensity).toInt();
         }
@@ -192,7 +233,7 @@ class SmartCircadianService {
         int minsUntilMorning = avgWakeMinutes - nowMinutes;
         while (minsUntilMorning > 720) minsUntilMorning -= 1440;
         while (minsUntilMorning < -720) minsUntilMorning += 1440;
-        
+
         if (minsUntilMorning > 0) {
           minutesUntilWakeUpValue = minsUntilMorning;
         }
@@ -205,13 +246,19 @@ class SmartCircadianService {
 
     // 8. Combine
     return SmartCircadianData(
-      brightnessMultiplier: (sleepDebtFactor * sleepPressureFactor * windDownFactor).clamp(0.1, 1.0),
+      brightnessMultiplier:
+          (sleepDebtFactor * sleepPressureFactor * windDownFactor).clamp(
+            0.1,
+            1.0,
+          ),
       temperatureOffset: sleepDebtTempOffset + windDownTempOffset,
       timeOffset: timeOffset,
       isWindDownActive: isWindDownActive,
       isSleepPressureActive: sleepPressureFactor < 0.99,
       isSleepDebtActive: sleepDebtFactor < 0.99,
-      isTimeShiftActive: timeOffset.inMinutes.abs() > 5 && (timeShiftMinutesRemaining ?? 0) > 0,
+      isTimeShiftActive:
+          timeOffset.inMinutes.abs() > 5 &&
+          (timeShiftMinutesRemaining ?? 0) > 0,
       sleepDebtFactor: sleepDebtFactor,
       sleepPressureFactor: sleepPressureFactor,
       windDownFactor: windDownFactor,
@@ -220,7 +267,6 @@ class SmartCircadianService {
       minutesUntilSleep: minutesUntilSleep,
       minutesUntilWakeUp: minutesUntilWakeUpValue,
     );
-
   }
 
   SleepRegime? _getCurrentRegime(List<SleepRegime> regimes) {

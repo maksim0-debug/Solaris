@@ -3,11 +3,13 @@ import '../models/night_group.dart';
 
 class SessionGrouper {
   /// Groups a list of [SleepSession]s by "night".
-  /// 
+  ///
   /// A night is defined from 12:00 PM (noon) to 11:59 AM the next day.
   /// The representative date is the day on which the night *begins*.
-  static List<NightGroup> groupByNight(List<SleepSession> sessions,
-      {int mergeThresholdMinutes = 210}) {
+  static List<NightGroup> groupByNight(
+    List<SleepSession> sessions, {
+    int mergeThresholdMinutes = 210,
+  }) {
     if (sessions.isEmpty) return [];
 
     // 1. Deduplicate sessions by time to prevent UI doubling (even if IDs differ)
@@ -61,11 +63,13 @@ class SessionGrouper {
         title: 'Sleep on ${nightDate.year}-${nightDate.month}-${nightDate.day}',
       );
 
-      result.add(NightGroup(
-        date: nightDate,
-        aggregatedSession: aggregated,
-        allSessions: cluster,
-      ));
+      result.add(
+        NightGroup(
+          date: nightDate,
+          aggregatedSession: aggregated,
+          allSessions: cluster,
+        ),
+      );
     }
 
     return result;
@@ -77,7 +81,11 @@ class SessionGrouper {
       return DateTime(time.year, time.month, time.day);
     } else {
       // It belongs to the previous calendar day's night
-      return DateTime(time.year, time.month, time.day).subtract(const Duration(days: 1));
+      return DateTime(
+        time.year,
+        time.month,
+        time.day,
+      ).subtract(const Duration(days: 1));
     }
   }
 }

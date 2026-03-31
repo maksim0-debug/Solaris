@@ -21,7 +21,7 @@ void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
   await TimeService.initialize();
-  
+
   try {
     await dotenv.load(fileName: ".env");
   } catch (e) {

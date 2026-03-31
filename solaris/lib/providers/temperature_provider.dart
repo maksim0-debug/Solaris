@@ -164,7 +164,9 @@ class TemperatureSettingsNotifier
       if (current.isEnabled == value) return;
     }
 
-    ref.read(sharedPreferencesProvider)?.setBool('auto_temperature_enabled', value);
+    ref
+        .read(sharedPreferencesProvider)
+        ?.setBool('auto_temperature_enabled', value);
     final ids = ref.read(selectedMonitorsProvider);
     final current = currentSettings();
     _updateSettings(ids, current.copyWith(isEnabled: value));
@@ -298,7 +300,7 @@ class CurrentTemperatureNotifier extends Notifier<int> {
             data: (tempSettingsMap) {
               final tempSettings =
                   tempSettingsMap[id] ?? tempSettingsMap['all']!;
-              
+
               if (!tempSettings.isEnabled) {
                 return ref.watch(manualTemperatureProvider);
               }
@@ -314,7 +316,9 @@ class CurrentTemperatureNotifier extends Notifier<int> {
                 final pos = locationAsync.value;
                 if (pos != null) {
                   final sunService = ref.read(sunCalculatorServiceProvider);
-                  final shiftedTime = DateTime.now().subtract(smartData.timeOffset);
+                  final shiftedTime = DateTime.now().subtract(
+                    smartData.timeOffset,
+                  );
                   effectiveElevation = sunService.getSunElevation(
                     pos.latitude,
                     pos.longitude,

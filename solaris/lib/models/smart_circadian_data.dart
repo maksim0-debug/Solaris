@@ -16,6 +16,14 @@ class SmartCircadianData extends Equatable {
   final int? windDownMinutesRemaining;
   final int? minutesUntilSleep;
   final int? minutesUntilWakeUp;
+  final int? weatherCode;
+
+  // Absolute Impacts (as percentage points)
+  final double baseBrightness;
+  final double windDownAbsoluteImpact;
+  final double sleepPressureAbsoluteImpact;
+  final double sleepDebtAbsoluteImpact;
+  final double weatherAbsoluteImpact;
 
   const SmartCircadianData({
     this.brightnessMultiplier = 1.0,
@@ -33,42 +41,115 @@ class SmartCircadianData extends Equatable {
     this.windDownMinutesRemaining,
     this.minutesUntilSleep,
     this.minutesUntilWakeUp,
+    this.weatherCode,
+    this.baseBrightness = 100.0,
+    this.windDownAbsoluteImpact = 0.0,
+    this.sleepPressureAbsoluteImpact = 0.0,
+    this.sleepDebtAbsoluteImpact = 0.0,
+    this.weatherAbsoluteImpact = 0.0,
   });
 
   const SmartCircadianData.neutral()
-      : brightnessMultiplier = 1.0,
-        temperatureOffset = 0,
-        timeOffset = Duration.zero,
-        isWindDownActive = false,
-        isSleepPressureActive = false,
-        isSleepDebtActive = false,
-        isTimeShiftActive = false,
-        sleepDebtFactor = 1.0,
-        sleepPressureFactor = 1.0,
-        windDownFactor = 1.0,
-        timeShiftBrightnessImpact = 0.0,
-        timeShiftMinutesRemaining = null,
-        windDownMinutesRemaining = null,
-        minutesUntilSleep = null,
-        minutesUntilWakeUp = null;
+    : brightnessMultiplier = 1.0,
+      temperatureOffset = 0,
+      timeOffset = Duration.zero,
+      isWindDownActive = false,
+      isSleepPressureActive = false,
+      isSleepDebtActive = false,
+      isTimeShiftActive = false,
+      sleepDebtFactor = 1.0,
+      sleepPressureFactor = 1.0,
+      windDownFactor = 1.0,
+      timeShiftBrightnessImpact = 0.0,
+      timeShiftMinutesRemaining = null,
+      windDownMinutesRemaining = null,
+      minutesUntilSleep = null,
+      minutesUntilWakeUp = null,
+      weatherCode = null,
+      baseBrightness = 100.0,
+      windDownAbsoluteImpact = 0.0,
+      sleepPressureAbsoluteImpact = 0.0,
+      sleepDebtAbsoluteImpact = 0.0,
+      weatherAbsoluteImpact = 0.0;
 
   @override
   List<Object?> get props => [
-        brightnessMultiplier,
-        temperatureOffset,
-        timeOffset,
-        isWindDownActive,
-        isSleepPressureActive,
-        isSleepDebtActive,
-        isTimeShiftActive,
-        sleepDebtFactor,
-        sleepPressureFactor,
-        windDownFactor,
-        timeShiftBrightnessImpact,
-        timeShiftMinutesRemaining,
-        windDownMinutesRemaining,
-        minutesUntilSleep,
-        minutesUntilWakeUp,
-      ];
-}
+    brightnessMultiplier,
+    temperatureOffset,
+    timeOffset,
+    isWindDownActive,
+    isSleepPressureActive,
+    isSleepDebtActive,
+    isTimeShiftActive,
+    sleepDebtFactor,
+    sleepPressureFactor,
+    windDownFactor,
+    timeShiftBrightnessImpact,
+    timeShiftMinutesRemaining,
+    windDownMinutesRemaining,
+    minutesUntilSleep,
+    minutesUntilWakeUp,
+    baseBrightness,
+    windDownAbsoluteImpact,
+    sleepPressureAbsoluteImpact,
+    sleepDebtAbsoluteImpact,
+    weatherAbsoluteImpact,
+    weatherCode,
+  ];
 
+  SmartCircadianData copyWith({
+    double? brightnessMultiplier,
+    int? temperatureOffset,
+    Duration? timeOffset,
+    bool? isWindDownActive,
+    bool? isSleepPressureActive,
+    bool? isSleepDebtActive,
+    bool? isTimeShiftActive,
+    double? sleepDebtFactor,
+    double? sleepPressureFactor,
+    double? windDownFactor,
+    double? timeShiftBrightnessImpact,
+    int? timeShiftMinutesRemaining,
+    int? windDownMinutesRemaining,
+    int? minutesUntilSleep,
+    int? minutesUntilWakeUp,
+    double? baseBrightness,
+    double? windDownAbsoluteImpact,
+    double? sleepPressureAbsoluteImpact,
+    double? sleepDebtAbsoluteImpact,
+    double? weatherAbsoluteImpact,
+    int? weatherCode,
+  }) {
+    return SmartCircadianData(
+      brightnessMultiplier: brightnessMultiplier ?? this.brightnessMultiplier,
+      temperatureOffset: temperatureOffset ?? this.temperatureOffset,
+      timeOffset: timeOffset ?? this.timeOffset,
+      isWindDownActive: isWindDownActive ?? this.isWindDownActive,
+      isSleepPressureActive:
+          isSleepPressureActive ?? this.isSleepPressureActive,
+      isSleepDebtActive: isSleepDebtActive ?? this.isSleepDebtActive,
+      isTimeShiftActive: isTimeShiftActive ?? this.isTimeShiftActive,
+      sleepDebtFactor: sleepDebtFactor ?? this.sleepDebtFactor,
+      sleepPressureFactor: sleepPressureFactor ?? this.sleepPressureFactor,
+      windDownFactor: windDownFactor ?? this.windDownFactor,
+      timeShiftBrightnessImpact:
+          timeShiftBrightnessImpact ?? this.timeShiftBrightnessImpact,
+      timeShiftMinutesRemaining:
+          timeShiftMinutesRemaining ?? this.timeShiftMinutesRemaining,
+      windDownMinutesRemaining:
+          windDownMinutesRemaining ?? this.windDownMinutesRemaining,
+      minutesUntilSleep: minutesUntilSleep ?? this.minutesUntilSleep,
+      minutesUntilWakeUp: minutesUntilWakeUp ?? this.minutesUntilWakeUp,
+      baseBrightness: baseBrightness ?? this.baseBrightness,
+      windDownAbsoluteImpact:
+          windDownAbsoluteImpact ?? this.windDownAbsoluteImpact,
+      sleepPressureAbsoluteImpact:
+          sleepPressureAbsoluteImpact ?? this.sleepPressureAbsoluteImpact,
+      sleepDebtAbsoluteImpact:
+          sleepDebtAbsoluteImpact ?? this.sleepDebtAbsoluteImpact,
+      weatherAbsoluteImpact:
+          weatherAbsoluteImpact ?? this.weatherAbsoluteImpact,
+      weatherCode: weatherCode ?? this.weatherCode,
+    );
+  }
+}

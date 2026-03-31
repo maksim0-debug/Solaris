@@ -56,7 +56,10 @@ class _SleepRegimeCardState extends State<SleepRegimeCard> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF8B5CF6).withOpacity(0.15),
                         borderRadius: BorderRadius.circular(20),
@@ -74,7 +77,9 @@ class _SleepRegimeCardState extends State<SleepRegimeCard> {
                           ),
                           const SizedBox(width: 4),
                           Icon(
-                            _isExpanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
+                            _isExpanded
+                                ? LucideIcons.chevronUp
+                                : LucideIcons.chevronDown,
                             color: const Color(0xFFC4B5FD),
                             size: 14,
                           ),
@@ -84,7 +89,7 @@ class _SleepRegimeCardState extends State<SleepRegimeCard> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                
+
                 // Middle Row: Average Bedtime
                 Row(
                   children: [
@@ -105,9 +110,9 @@ class _SleepRegimeCardState extends State<SleepRegimeCard> {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 8),
-                
+
                 // Bottom Row: Scatter
                 Text(
                   '${l10n.scatter}: ${widget.regime.windowStart} — ${widget.regime.windowEnd}',
@@ -120,11 +125,13 @@ class _SleepRegimeCardState extends State<SleepRegimeCard> {
             ),
           ),
         ),
-        
+
         // Expanded Content: Sessions
         if (_isExpanded) ...[
           const SizedBox(height: 8),
-          ...widget.regime.nights.map((night) => _SessionDetailRow(night: night)),
+          ...widget.regime.nights.map(
+            (night) => _SessionDetailRow(night: night),
+          ),
         ],
       ],
     );
@@ -140,10 +147,10 @@ class _SessionDetailRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final session = night.aggregatedSession;
-    
+
     // Calculate total duration as sum of all sessions (excluding gaps)
     final totalDuration = night.allSessions.fold<Duration>(
-      Duration.zero, 
+      Duration.zero,
       (prev, s) => prev + s.duration,
     );
 
@@ -162,8 +169,10 @@ class _SessionDetailRow extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          DateFormat('d MMM, yyyy', l10n.localeName)
-                              .format(session.startTime),
+                          DateFormat(
+                            'd MMM, yyyy',
+                            l10n.localeName,
+                          ).format(session.startTime),
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -173,11 +182,16 @@ class _SessionDetailRow extends StatelessWidget {
                         if (night.isOutdated) ...[
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.red.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: Colors.red.withOpacity(0.3)),
+                              border: Border.all(
+                                color: Colors.red.withOpacity(0.3),
+                              ),
                             ),
                             child: Text(
                               l10n.outdated.toUpperCase(),
@@ -211,7 +225,7 @@ class _SessionDetailRow extends StatelessWidget {
                 ),
               ],
             ),
-            
+
             // Sub-sessions chips
             if (night.allSessions.length > 1) ...[
               const SizedBox(height: 12),
@@ -243,10 +257,7 @@ class _SessionChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.1),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
       ),
       child: Text(
         '${timeFormat.format(session.startTime)}–${timeFormat.format(session.endTime)}',

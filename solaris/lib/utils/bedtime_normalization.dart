@@ -1,6 +1,6 @@
 class BedtimeNormalization {
   /// Converts a [DateTime]'s time to minutes from the *preceding* 12:00 PM (noon).
-  /// 
+  ///
   /// Noon (12:00 PM) = 0
   /// 6:00 PM = 360
   /// Midnight (12:00 AM) = 720
@@ -23,11 +23,11 @@ class BedtimeNormalization {
   static String minutesFromNoonToString(int totalMinutes) {
     // Normalize to 0-1439
     int normalized = totalMinutes % 1440;
-    
+
     // Add 12 hours to shift back to midnight-based
     int hourFromMidnight = (normalized ~/ 60 + 12) % 24;
     int minute = normalized % 60;
-    
+
     return '${hourFromMidnight.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
   }
 }

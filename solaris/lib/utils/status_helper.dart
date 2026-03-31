@@ -44,12 +44,10 @@ class StatusHelper {
         icon = LucideIcons.moon;
         color = const Color(0xFF818CF8); // Indigo-400
         break;
-      
+
       case CurrentDayPhase.dawn:
         title = l10n.phaseDawn;
-        description = isAuto
-            ? l10n.descDawnAuto
-            : l10n.descDawnManual;
+        description = isAuto ? l10n.descDawnAuto : l10n.descDawnManual;
         icon = LucideIcons.sunrise;
         color = const Color(0xFF94A3B8); // Slate-400
         break;
@@ -86,8 +84,6 @@ class StatusHelper {
         color = const Color(0xFF94A3B8); // Slate-400
         break;
     }
-
-
 
     return StatusConfig(
       title: title,

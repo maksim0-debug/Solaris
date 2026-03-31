@@ -44,12 +44,12 @@ class GoogleFitState extends Equatable {
 
   @override
   List<Object?> get props => [
-    status, 
-    errorMessage, 
-    lastFetchTime, 
-    lastFetchSuccess, 
-    sessions, 
-    isExpanded
+    status,
+    errorMessage,
+    lastFetchTime,
+    lastFetchSuccess,
+    sessions,
+    isExpanded,
   ];
 }
 
@@ -66,7 +66,7 @@ class GoogleFitNotifier extends Notifier<GoogleFitState> {
 
   Future<void> _initialize() async {
     final service = ref.read(googleFitServiceProvider);
-    
+
     // Load last sync time from storage
     DateTime? lastSync;
     final lastSyncStr = await _storage.load(_lastSyncFilename);
@@ -127,7 +127,7 @@ class GoogleFitNotifier extends Notifier<GoogleFitState> {
     final service = ref.read(googleFitServiceProvider);
     final now = DateTime.now();
     final sevenDaysAgo = now.subtract(const Duration(days: 7));
-    
+
     final sessions = await service.fetchSleepSessions(
       startTime: sevenDaysAgo,
       endTime: now,

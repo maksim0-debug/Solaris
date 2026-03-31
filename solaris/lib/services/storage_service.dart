@@ -39,7 +39,9 @@ class StorageService {
             await Future<void>.delayed(Duration(milliseconds: 100 * retries));
           } else {
             // Final fallback: Try direct write if rename is permanently blocked
-            debugPrint('Rename failed after retries, falling back to direct write: $e');
+            debugPrint(
+              'Rename failed after retries, falling back to direct write: $e',
+            );
             await file.writeAsString(data, flush: true);
             if (await tempFile.exists()) await tempFile.delete();
           }

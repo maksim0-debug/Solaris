@@ -8,7 +8,7 @@ import 'package:solaris/models/settings_state.dart';
 class GamingModeService extends Notifier<bool> {
   static const _methodChannel = MethodChannel('com.solaris.monitor/names');
   static const _eventChannel = EventChannel('com.solaris.monitor/events');
-  
+
   StreamSubscription<dynamic>? _subscription;
 
   // Default Stage 4 Blacklist (Apps that might be fullscreen but aren't games)
@@ -16,7 +16,7 @@ class GamingModeService extends Notifier<bool> {
     'chrome.exe',
     'explorer.exe',
     'devenv.exe', // Visual Studio
-    'code.exe',   // VS Code
+    'code.exe', // VS Code
     'msedge.exe',
     'firefox.exe',
     'opera.exe',
@@ -25,7 +25,7 @@ class GamingModeService extends Notifier<bool> {
     'shellexperiencehost.exe',
     'searchhost.exe',
     'telegram.exe', // False positive (Media Player)
-    'sharex.exe',   // False positive
+    'sharex.exe', // False positive
     'vlc.exe',
     'mpc-hc64.exe',
     'potplayer64.exe',
@@ -39,10 +39,10 @@ class GamingModeService extends Notifier<bool> {
 
     settingsAsync.whenData((Map<String, SettingsState> settingsMap) {
       final settings = settingsMap['all'] ?? SettingsState();
-      
+
       // Sync Whitelist
       _updateWhitelistNative(settings.gameModeWhitelist);
-      
+
       // Sync Blacklist (Default + User)
       _updateBlacklistNative([
         ...defaultBlacklist,
@@ -51,7 +51,7 @@ class GamingModeService extends Notifier<bool> {
     });
 
     _init();
-    
+
     ref.onDispose(() {
       _subscription?.cancel();
     });
@@ -68,7 +68,10 @@ class GamingModeService extends Notifier<bool> {
         }
       },
       onError: (Object error) {
-        dev.log('Error in GamingMode EventChannel: $error', name: 'GamingModeService');
+        dev.log(
+          'Error in GamingMode EventChannel: $error',
+          name: 'GamingModeService',
+        );
       },
     );
   }

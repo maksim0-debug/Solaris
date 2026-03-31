@@ -52,13 +52,22 @@ class SleepSession extends Equatable {
     endTime: DateTime.parse(json['endTime'] as String),
     title: json['title'] as String?,
     description: json['description'] as String?,
-    segments: (json['segments'] as List?)
-        ?.map((s) => SleepSegment.fromJson(s as Map<String, dynamic>))
-        .toList() ?? [],
+    segments:
+        (json['segments'] as List?)
+            ?.map((s) => SleepSegment.fromJson(s as Map<String, dynamic>))
+            .toList() ??
+        [],
   );
 
   @override
-  List<Object?> get props => [id, startTime, endTime, title, description, segments];
+  List<Object?> get props => [
+    id,
+    startTime,
+    endTime,
+    title,
+    description,
+    segments,
+  ];
 }
 
 class SleepSegment extends Equatable {

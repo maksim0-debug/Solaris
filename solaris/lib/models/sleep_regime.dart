@@ -3,10 +3,10 @@ import 'night_group.dart';
 
 enum SleepRegimeType {
   earlyBird, // Morning person
-  nightOwl,  // Night person
+  nightOwl, // Night person
   consistent, // Balanced / Normal
-  irregular,  // No clear pattern
-  floating;   // Shift work / constantly changing
+  irregular, // No clear pattern
+  floating; // Shift work / constantly changing
 
   String get label => switch (this) {
     SleepRegimeType.earlyBird => 'Early Bird',
@@ -76,10 +76,7 @@ class RegimeShift extends Equatable {
   final bool isLater;
   final Duration shiftDuration;
 
-  const RegimeShift({
-    required this.isLater,
-    required this.shiftDuration,
-  });
+  const RegimeShift({required this.isLater, required this.shiftDuration});
 
   @override
   List<Object?> get props => [isLater, shiftDuration];

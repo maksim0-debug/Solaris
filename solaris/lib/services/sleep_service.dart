@@ -16,7 +16,9 @@ class SleepService {
 
   /// Fetches sleep data from Google Fit for the specified number of [daysBack].
   /// Returns a record with the fetched sessions and a boolean indicating if it was a live sync.
-  Future<({List<SleepSession> sessions, bool isLive})> fetchSleepData({int daysBack = 14}) async {
+  Future<({List<SleepSession> sessions, bool isLive})> fetchSleepData({
+    int daysBack = 14,
+  }) async {
     final endTime = DateTime.now();
     final startTime = endTime.subtract(Duration(days: daysBack));
 
@@ -55,9 +57,9 @@ class SleepService {
         endTime: endTime,
         title: s.name,
         description: s.description,
-        // Detailed segments could be fetched separately if needed, 
+        // Detailed segments could be fetched separately if needed,
         // using fitness/v1 response, but for base regime they are not vital.
-        segments: [], 
+        segments: [],
       );
     }).toList();
   }
@@ -78,7 +80,9 @@ class SleepService {
         final decoded = jsonDecode(jsonStr);
         if (decoded is List) {
           return decoded
-              .map((item) => SleepSession.fromJson(item as Map<String, dynamic>))
+              .map(
+                (item) => SleepSession.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
         }
       }

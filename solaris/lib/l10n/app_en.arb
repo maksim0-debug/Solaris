@@ -301,5 +301,8 @@
   "whitelist": "Whitelist",
   "whitelistSubtitle": "Apps that always trigger game mode",
   "blacklist": "Blacklist",
-  "blacklistSubtitle": "Ignore even if fullscreen"
+  "blacklistSubtitle": "Ignore even if fullscreen",
+  "sunBase": "Sun Base",
+  "finalValue": "Final",
+  "brightnessReceipt": "Brightness Receipt"
 }
