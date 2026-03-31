@@ -124,7 +124,7 @@
   },
   "allMonitors": "Все мониторы",
   "luminosityProfile": "Профиль освещенности",
-  "sunPosition": "Положение солнца",
+  "sunPosition": "Профиль освещенности",
   "liveLocation": "ТЕКУЩЕЕ МЕСТО",
   "solarTelemetry": "Солнечная телеметрия",
   "civilTwilight": "Гражданские сумерки",
@@ -266,5 +266,14 @@
   "windDownDuration": "Длительность подготовки ко сну",
   "timeShiftDuration": "Время адаптации био-утра",
   "sleepPressureLimit": "Порог бодрствования",
-  "sleepDebtThreshold": "Норма сна (порог недосыпа)"
+  "sleepDebtThreshold": "Норма сна (порог недосыпа)",
+  "smartExclusions": "Умные Исключения",
+  "smartExclusionsSubtitle": "Автоматическая блокировка яркости для игр",
+  "enableGameMode": "Включить игровой режим",
+  "enableGameModeSubtitle": "Блокировать яркость при обнаружении игры",
+  "lockedBrightness": "Заблокированная яркость",
+  "whitelist": "Белый список",
+  "whitelistSubtitle": "Приложения, которые всегда включают игровой режим",
+  "blacklist": "Черный список",
+  "blacklistSubtitle": "Игнорировать, даже если во весь экран"
 }

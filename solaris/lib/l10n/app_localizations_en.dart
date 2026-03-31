@@ -596,4 +596,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sleepDebtThreshold => 'Sleep Target (Debt threshold)';
+
+  @override
+  String get smartExclusions => 'Smart Exclusions';
+
+  @override
+  String get smartExclusionsSubtitle => 'Automatic brightness lock for games';
+
+  @override
+  String get enableGameMode => 'Enable Game Mode';
+
+  @override
+  String get enableGameModeSubtitle =>
+      'Lock brightness when a game is detected';
+
+  @override
+  String get lockedBrightness => 'Locked Brightness';
+
+  @override
+  String get whitelist => 'Whitelist';
+
+  @override
+  String get whitelistSubtitle => 'Apps that always trigger game mode';
+
+  @override
+  String get blacklist => 'Blacklist';
+
+  @override
+  String get blacklistSubtitle => 'Ignore even if fullscreen';
 }

@@ -266,5 +266,14 @@
   "windDownDuration": "Wind-down Duration",
   "timeShiftDuration": "Bio-Morning Adaptation",
   "sleepPressureLimit": "Wakefulness Limit",
-  "sleepDebtThreshold": "Sleep Target (Debt threshold)"
+  "sleepDebtThreshold": "Sleep Target (Debt threshold)",
+  "smartExclusions": "Smart Exclusions",
+  "smartExclusionsSubtitle": "Automatic brightness lock for games",
+  "enableGameMode": "Enable Game Mode",
+  "enableGameModeSubtitle": "Lock brightness when a game is detected",
+  "lockedBrightness": "Locked Brightness",
+  "whitelist": "Whitelist",
+  "whitelistSubtitle": "Apps that always trigger game mode",
+  "blacklist": "Blacklist",
+  "blacklistSubtitle": "Ignore even if fullscreen"
 }

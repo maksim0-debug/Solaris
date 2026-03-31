@@ -27,6 +27,10 @@ class SettingsState {
   final int timeShiftDurationMinutes;
   final double sleepPressureWakeLimitHours;
   final int sleepDebtThresholdMinutes;
+  final bool isGameModeEnabled;
+  final double gameModeBrightness;
+  final List<String> gameModeWhitelist;
+  final List<String> gameModeBlacklist;
 
   SettingsState({
     this.activePreset = PresetType.bright,
@@ -54,6 +58,16 @@ class SettingsState {
     this.timeShiftDurationMinutes = 360,
     this.sleepPressureWakeLimitHours = 16.0,
     this.sleepDebtThresholdMinutes = 390,
+    this.isGameModeEnabled = true,
+    this.gameModeBrightness = 80.0,
+    this.gameModeWhitelist = const [],
+    this.gameModeBlacklist = const [
+      'chrome.exe',
+      'idea64.exe',
+      'code.exe',
+      'devenv.exe',
+      'ShareX.exe',
+    ],
   }) : curvesMap = curvesMap ?? PresetConstants.getAllDefaults();
 
   List<FlSpot> get curvePoints => curvesMap[activePreset]!;
@@ -87,6 +101,10 @@ class SettingsState {
     'timeShiftDurationMinutes': timeShiftDurationMinutes,
     'sleepPressureWakeLimitHours': sleepPressureWakeLimitHours,
     'sleepDebtThresholdMinutes': sleepDebtThresholdMinutes,
+    'isGameModeEnabled': isGameModeEnabled,
+    'gameModeBrightness': gameModeBrightness,
+    'gameModeWhitelist': gameModeWhitelist,
+    'gameModeBlacklist': gameModeBlacklist,
   };
 
   factory SettingsState.fromJson(Map<String, dynamic> json) {
@@ -137,25 +155,51 @@ class SettingsState {
       isWeatherAdjustmentEnabled:
           json['isWeatherAdjustmentEnabled'] as bool? ?? true,
       isAutoBrightnessEnabled: json['isAutoBrightnessEnabled'] as bool? ?? true,
-      isSmartCircadianEnabled: json['isSmartCircadianEnabled'] as bool? ?? false,
+      isSmartCircadianEnabled:
+          json['isSmartCircadianEnabled'] as bool? ?? false,
       isSleepDebtEnabled: json['isSleepDebtEnabled'] as bool? ?? true,
       isSleepPressureEnabled: json['isSleepPressureEnabled'] as bool? ?? true,
       isTimeShiftEnabled: json['isTimeShiftEnabled'] as bool? ?? true,
       isWindDownEnabled: json['isWindDownEnabled'] as bool? ?? true,
       isWindDownMasterEnabled: json['isWindDownMasterEnabled'] as bool? ?? true,
-      isTimeShiftMasterEnabled: json['isTimeShiftMasterEnabled'] as bool? ?? true,
-      isSleepPressureMasterEnabled: json['isSleepPressureMasterEnabled'] as bool? ?? true,
-      isSleepDebtMasterEnabled: json['isSleepDebtMasterEnabled'] as bool? ?? true,
-      windDownBrightnessIntensity: (json['windDownBrightnessIntensity'] as num?)?.toDouble() ?? 1.0,
-      windDownTemperatureIntensity: (json['windDownTemperatureIntensity'] as num?)?.toDouble() ?? 1.0,
-      timeShiftIntensity: (json['timeShiftIntensity'] as num?)?.toDouble() ?? 1.0,
-      sleepPressureBrightnessIntensity: (json['sleepPressureBrightnessIntensity'] as num?)?.toDouble() ?? 1.0,
-      sleepDebtBrightnessIntensity: (json['sleepDebtBrightnessIntensity'] as num?)?.toDouble() ?? 1.0,
-      sleepDebtTemperatureIntensity: (json['sleepDebtTemperatureIntensity'] as num?)?.toDouble() ?? 1.0,
+      isTimeShiftMasterEnabled:
+          json['isTimeShiftMasterEnabled'] as bool? ?? true,
+      isSleepPressureMasterEnabled:
+          json['isSleepPressureMasterEnabled'] as bool? ?? true,
+      isSleepDebtMasterEnabled:
+          json['isSleepDebtMasterEnabled'] as bool? ?? true,
+      windDownBrightnessIntensity:
+          (json['windDownBrightnessIntensity'] as num?)?.toDouble() ?? 1.0,
+      windDownTemperatureIntensity:
+          (json['windDownTemperatureIntensity'] as num?)?.toDouble() ?? 1.0,
+      timeShiftIntensity:
+          (json['timeShiftIntensity'] as num?)?.toDouble() ?? 1.0,
+      sleepPressureBrightnessIntensity:
+          (json['sleepPressureBrightnessIntensity'] as num?)?.toDouble() ?? 1.0,
+      sleepDebtBrightnessIntensity:
+          (json['sleepDebtBrightnessIntensity'] as num?)?.toDouble() ?? 1.0,
+      sleepDebtTemperatureIntensity:
+          (json['sleepDebtTemperatureIntensity'] as num?)?.toDouble() ?? 1.0,
       windDownDurationMinutes: json['windDownDurationMinutes'] as int? ?? 120,
       timeShiftDurationMinutes: json['timeShiftDurationMinutes'] as int? ?? 360,
-      sleepPressureWakeLimitHours: (json['sleepPressureWakeLimitHours'] as num?)?.toDouble() ?? 16.0,
-      sleepDebtThresholdMinutes: json['sleepDebtThresholdMinutes'] as int? ?? 390,
+      sleepPressureWakeLimitHours:
+          (json['sleepPressureWakeLimitHours'] as num?)?.toDouble() ?? 16.0,
+      sleepDebtThresholdMinutes:
+          json['sleepDebtThresholdMinutes'] as int? ?? 390,
+      isGameModeEnabled: json['isGameModeEnabled'] as bool? ?? true,
+      gameModeBrightness:
+          (json['gameModeBrightness'] as num?)?.toDouble() ?? 80.0,
+      gameModeWhitelist:
+          (json['gameModeWhitelist'] as List<dynamic>?)?.cast<String>() ?? [],
+      gameModeBlacklist:
+          (json['gameModeBlacklist'] as List<dynamic>?)?.cast<String>() ??
+          [
+            'chrome.exe',
+            'idea64.exe',
+            'code.exe',
+            'visualstudio.exe',
+            'ShareX.exe',
+          ],
     );
   }
 
@@ -185,6 +229,10 @@ class SettingsState {
     int? timeShiftDurationMinutes,
     double? sleepPressureWakeLimitHours,
     int? sleepDebtThresholdMinutes,
+    bool? isGameModeEnabled,
+    double? gameModeBrightness,
+    List<String>? gameModeWhitelist,
+    List<String>? gameModeBlacklist,
   }) {
     return SettingsState(
       activePreset: activePreset ?? this.activePreset,
@@ -198,23 +246,42 @@ class SettingsState {
       isSmartCircadianEnabled:
           isSmartCircadianEnabled ?? this.isSmartCircadianEnabled,
       isSleepDebtEnabled: isSleepDebtEnabled ?? this.isSleepDebtEnabled,
-      isSleepPressureEnabled: isSleepPressureEnabled ?? this.isSleepPressureEnabled,
+      isSleepPressureEnabled:
+          isSleepPressureEnabled ?? this.isSleepPressureEnabled,
       isTimeShiftEnabled: isTimeShiftEnabled ?? this.isTimeShiftEnabled,
       isWindDownEnabled: isWindDownEnabled ?? this.isWindDownEnabled,
-      isWindDownMasterEnabled: isWindDownMasterEnabled ?? this.isWindDownMasterEnabled,
-      isTimeShiftMasterEnabled: isTimeShiftMasterEnabled ?? this.isTimeShiftMasterEnabled,
-      isSleepPressureMasterEnabled: isSleepPressureMasterEnabled ?? this.isSleepPressureMasterEnabled,
-      isSleepDebtMasterEnabled: isSleepDebtMasterEnabled ?? this.isSleepDebtMasterEnabled,
-      windDownBrightnessIntensity: windDownBrightnessIntensity ?? this.windDownBrightnessIntensity,
-      windDownTemperatureIntensity: windDownTemperatureIntensity ?? this.windDownTemperatureIntensity,
+      isWindDownMasterEnabled:
+          isWindDownMasterEnabled ?? this.isWindDownMasterEnabled,
+      isTimeShiftMasterEnabled:
+          isTimeShiftMasterEnabled ?? this.isTimeShiftMasterEnabled,
+      isSleepPressureMasterEnabled:
+          isSleepPressureMasterEnabled ?? this.isSleepPressureMasterEnabled,
+      isSleepDebtMasterEnabled:
+          isSleepDebtMasterEnabled ?? this.isSleepDebtMasterEnabled,
+      windDownBrightnessIntensity:
+          windDownBrightnessIntensity ?? this.windDownBrightnessIntensity,
+      windDownTemperatureIntensity:
+          windDownTemperatureIntensity ?? this.windDownTemperatureIntensity,
       timeShiftIntensity: timeShiftIntensity ?? this.timeShiftIntensity,
-      sleepPressureBrightnessIntensity: sleepPressureBrightnessIntensity ?? this.sleepPressureBrightnessIntensity,
-      sleepDebtBrightnessIntensity: sleepDebtBrightnessIntensity ?? this.sleepDebtBrightnessIntensity,
-      sleepDebtTemperatureIntensity: sleepDebtTemperatureIntensity ?? this.sleepDebtTemperatureIntensity,
-      windDownDurationMinutes: windDownDurationMinutes ?? this.windDownDurationMinutes,
-      timeShiftDurationMinutes: timeShiftDurationMinutes ?? this.timeShiftDurationMinutes,
-      sleepPressureWakeLimitHours: sleepPressureWakeLimitHours ?? this.sleepPressureWakeLimitHours,
-      sleepDebtThresholdMinutes: sleepDebtThresholdMinutes ?? this.sleepDebtThresholdMinutes,
+      sleepPressureBrightnessIntensity:
+          sleepPressureBrightnessIntensity ??
+          this.sleepPressureBrightnessIntensity,
+      sleepDebtBrightnessIntensity:
+          sleepDebtBrightnessIntensity ?? this.sleepDebtBrightnessIntensity,
+      sleepDebtTemperatureIntensity:
+          sleepDebtTemperatureIntensity ?? this.sleepDebtTemperatureIntensity,
+      windDownDurationMinutes:
+          windDownDurationMinutes ?? this.windDownDurationMinutes,
+      timeShiftDurationMinutes:
+          timeShiftDurationMinutes ?? this.timeShiftDurationMinutes,
+      sleepPressureWakeLimitHours:
+          sleepPressureWakeLimitHours ?? this.sleepPressureWakeLimitHours,
+      sleepDebtThresholdMinutes:
+          sleepDebtThresholdMinutes ?? this.sleepDebtThresholdMinutes,
+      isGameModeEnabled: isGameModeEnabled ?? this.isGameModeEnabled,
+      gameModeBrightness: gameModeBrightness ?? this.gameModeBrightness,
+      gameModeWhitelist: gameModeWhitelist ?? this.gameModeWhitelist,
+      gameModeBlacklist: gameModeBlacklist ?? this.gameModeBlacklist,
     );
   }
 }

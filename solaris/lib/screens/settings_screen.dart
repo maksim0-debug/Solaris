@@ -118,6 +118,9 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
 
+          const _SmartExclusionsCard(),
+          const SizedBox(height: 24),
+
           const SizedBox(height: 24),
 
           // Info Card
@@ -538,6 +541,274 @@ class _SettingsRow extends StatelessWidget {
           onChanged: onChanged,
           activeColor: const Color(0xFFFDBA74),
         ),
+      ],
+    );
+  }
+}
+
+class _SmartExclusionsCard extends ConsumerWidget {
+  const _SmartExclusionsCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settingsAsync = ref.watch(settingsProvider);
+    final selectedIds = ref.watch(selectedMonitorsProvider);
+    final monitorId = selectedIds.firstOrNull ?? 'all';
+    final l10n = AppLocalizations.of(context)!;
+
+    return settingsAsync.maybeWhen(
+      data: (map) {
+        final settings = map[monitorId] ?? map['all']!;
+        return GlassCard(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFA855F7).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      LucideIcons.gamepad2,
+                      color: Color(0xFFA855F7),
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.smartExclusions,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        l10n.smartExclusionsSubtitle,
+                        style: const TextStyle(
+                          fontSize: 12,
+                           color: Colors.white54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              _SettingsRow(
+                title: l10n.enableGameMode,
+                subtitle: l10n.enableGameModeSubtitle,
+                value: settings.isGameModeEnabled,
+                onChanged: (val) => ref
+                    .read(settingsProvider.notifier)
+                    .updateGameModeEnabled(val),
+              ),
+              if (settings.isGameModeEnabled) ...[
+                const SizedBox(height: 24),
+                const Divider(color: Colors.white10),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      l10n.lockedBrightness,
+                      style: const TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
+                    Text(
+                      '${settings.gameModeBrightness.round()}%',
+                      style: const TextStyle(
+                        color: Color(0xFFA855F7),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                Slider(
+                  value: settings.gameModeBrightness,
+                  min: 0,
+                  max: 100,
+                  activeColor: const Color(0xFFA855F7),
+                  onChanged: (val) {
+                    ref
+                        .read(settingsProvider.notifier)
+                        .updateGameModeBrightness(val);
+                  },
+                ),
+                const SizedBox(height: 24),
+                const Divider(color: Colors.white10),
+                const SizedBox(height: 24),
+                _AppListManager(
+                  title: l10n.whitelist,
+                  subtitle: l10n.whitelistSubtitle,
+                  items: settings.gameModeWhitelist,
+                  onAdd: (item) =>
+                      ref.read(settingsProvider.notifier).addWhitelistItem(item),
+                  onRemove: (item) => ref
+                      .read(settingsProvider.notifier)
+                      .removeWhitelistItem(item),
+                  accentColor: const Color(0xFFA855F7),
+                ),
+                const SizedBox(height: 24),
+                _AppListManager(
+                  title: l10n.blacklist,
+                  subtitle: l10n.blacklistSubtitle,
+                  items: settings.gameModeBlacklist,
+                  onAdd: (item) =>
+                      ref.read(settingsProvider.notifier).addBlacklistItem(item),
+                  onRemove: (item) => ref
+                      .read(settingsProvider.notifier)
+                      .removeBlacklistItem(item),
+                  accentColor: Colors.redAccent,
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+      orElse: () => const SizedBox(),
+    );
+  }
+}
+
+class _AppListManager extends StatefulWidget {
+  final String title;
+  final String subtitle;
+  final List<String> items;
+  final ValueChanged<String> onAdd;
+  final ValueChanged<String> onRemove;
+  final Color accentColor;
+
+  const _AppListManager({
+    required this.title,
+    required this.subtitle,
+    required this.items,
+    required this.onAdd,
+    required this.onRemove,
+    required this.accentColor,
+  });
+
+  @override
+  State<_AppListManager> createState() => _AppListManagerState();
+}
+
+class _AppListManagerState extends State<_AppListManager> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final text = _controller.text.trim().toLowerCase();
+    if (text.isNotEmpty) {
+      if (!text.endsWith('.exe') && !text.contains('.')) {
+        widget.onAdd('$text.exe');
+      } else {
+        widget.onAdd(text);
+      }
+      _controller.clear();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.title,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Colors.white70,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          widget.subtitle,
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.white.withOpacity(0.3),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _controller,
+                style: const TextStyle(color: Colors.white, fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: 'e.g. game.exe',
+                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
+                  isDense: true,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                onSubmitted: (_) => _submit(),
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              onPressed: _submit,
+              icon: const Icon(LucideIcons.plus, size: 18),
+              style: IconButton.styleFrom(
+                backgroundColor: widget.accentColor.withOpacity(0.1),
+                foregroundColor: widget.accentColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (widget.items.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: widget.items.map((item) {
+              return Container(
+                padding: const EdgeInsets.only(left: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      item,
+                      style: const TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                    IconButton(
+                      icon: const Icon(LucideIcons.x, size: 14),
+                      onPressed: () => widget.onRemove(item),
+                      color: Colors.white30,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ],
       ],
     );
   }

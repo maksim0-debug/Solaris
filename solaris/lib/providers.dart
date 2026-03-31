@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
@@ -26,6 +27,8 @@ import 'package:solaris/models/location_settings.dart' as model;
 import 'package:solaris/models/temperature_state.dart';
 import 'package:solaris/models/preset_type.dart';
 import 'package:solaris/providers/lifecycle_provider.dart';
+import 'package:solaris/services/gaming_mode_service.dart';
+
 
 final locationServiceProvider = Provider((ref) => LocationService());
 final sunCalculatorServiceProvider = Provider((ref) => SunCalculatorService());
@@ -34,9 +37,14 @@ final monitorServiceProvider = Provider((ref) => MonitorService());
 final circadianServiceProvider = Provider((ref) => CircadianService());
 final brightnessServiceProvider = Provider((ref) => BrightnessService());
 final storageServiceProvider = Provider((ref) => StorageService());
-final smartCircadianServiceProvider = Provider(
+final smartCircadianServiceProvider = Provider<SmartCircadianService>(
   (ref) => SmartCircadianService(),
 );
+
+final gamingModeServiceProvider = Provider<GamingModeService>((ref) {
+  return ref.watch<GamingModeService>(gamingModeProvider.notifier);
+});
+
 
 final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
   ref,
@@ -758,6 +766,64 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     _updateSettings(ids, current.copyWith(isWeatherAdjustmentEnabled: enabled));
   }
 
+  void updateGameModeEnabled(bool enabled) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(ids, current.copyWith(isGameModeEnabled: enabled));
+  }
+
+  void updateGameModeBrightness(double brightness) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(ids, current.copyWith(gameModeBrightness: brightness));
+  }
+
+  void addWhitelistItem(String item) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    if (!current.gameModeWhitelist.contains(item)) {
+      final newList = List<String>.from(current.gameModeWhitelist)..add(item);
+      _updateSettings(ids, current.copyWith(gameModeWhitelist: newList));
+      ref.read(gamingModeServiceProvider).updateWhitelist(newList);
+    }
+  }
+
+  void removeWhitelistItem(String item) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    if (current.gameModeWhitelist.contains(item)) {
+      final newList = List<String>.from(current.gameModeWhitelist)..remove(item);
+      _updateSettings(ids, current.copyWith(gameModeWhitelist: newList));
+      ref.read(gamingModeServiceProvider).updateWhitelist(newList);
+    }
+  }
+
+  void addBlacklistItem(String item) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    if (!current.gameModeBlacklist.contains(item)) {
+      final newList = List<String>.from(current.gameModeBlacklist)..add(item);
+      _updateSettings(ids, current.copyWith(gameModeBlacklist: newList));
+      ref.read(gamingModeServiceProvider).updateBlacklist([
+        ...GamingModeService.defaultBlacklist,
+        ...newList
+      ]);
+    }
+  }
+
+  void removeBlacklistItem(String item) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    if (current.gameModeBlacklist.contains(item)) {
+      final newList = List<String>.from(current.gameModeBlacklist)..remove(item);
+      _updateSettings(ids, current.copyWith(gameModeBlacklist: newList));
+      ref.read(gamingModeServiceProvider).updateBlacklist([
+        ...GamingModeService.defaultBlacklist,
+        ...newList
+      ]);
+    }
+  }
+
   void updateAutoBrightness(bool enabled) {
     ref
         .read(sharedPreferencesProvider)
@@ -1113,19 +1179,25 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                 }
               }
 
-              final targetBrightness = circadianService
-                  .calculateTargetBrightness(
-                    state.phases,
-                    effectiveElevation,
-                    DateTime.now(),
-                    curveSharpness: settings.curveSharpness,
-                    curvePoints: settings.curvePoints,
-                    weather: settings.isWeatherAdjustmentEnabled
-                        ? weatherAsync.value
-                        : null,
-                    presetSensitivity: settings.activePreset.weatherSensitivity,
-                    smartData: smartData,
-                  );
+              final isGamingMode = ref.watch<bool>(gamingModeProvider);
+              
+              double targetBrightness;
+              if (isGamingMode && settings.isGameModeEnabled) {
+                targetBrightness = settings.gameModeBrightness;
+              } else {
+                targetBrightness = circadianService.calculateTargetBrightness(
+                  state.phases,
+                  effectiveElevation,
+                  DateTime.now(),
+                  curveSharpness: settings.curveSharpness,
+                  curvePoints: settings.curvePoints,
+                  weather: settings.isWeatherAdjustmentEnabled
+                      ? weatherAsync.value
+                      : null,
+                  presetSensitivity: settings.activePreset.weatherSensitivity,
+                  smartData: smartData,
+                );
+              }
 
               brightnessService.applyBrightnessSmoothly(
                 selection: monitor.deviceName,

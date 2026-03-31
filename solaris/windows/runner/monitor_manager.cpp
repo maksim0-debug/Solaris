@@ -22,6 +22,7 @@ DEFINE_GUID(GUID_DEVINTERFACE_MONITOR_INTERNAL, 0xE6F07B5F, 0xEE97, 0x4a90, 0xB0
 
 MonitorManager::MonitorManager() {
   worker_thread_ = std::thread(&MonitorManager::WorkerLoop, this);
+  detector_thread_ = std::thread(&MonitorManager::DetectorLoop, this);
 }
 
 MonitorManager::~MonitorManager() {
@@ -29,6 +30,11 @@ MonitorManager::~MonitorManager() {
   condition_.notify_one();
   if (worker_thread_.joinable()) {
     worker_thread_.join();
+  }
+
+  stop_detector_ = true;
+  if (detector_thread_.joinable()) {
+    detector_thread_.join();
   }
 }
 
@@ -397,5 +403,114 @@ bool MonitorManager::ResetTemperature(const std::string& device_path) {
   bool success = SetDeviceGammaRamp(hDC, gammaArray);
   DeleteDC(hDC);
   return success;
+}
+
+void MonitorManager::SetGamingModeCallback(std::function<void(bool)> callback) {
+  on_gaming_mode_changed_ = callback;
+}
+
+void MonitorManager::UpdateWhitelist(const std::vector<std::string>& whitelist) {
+  std::lock_guard<std::mutex> lock(lists_mutex_);
+  whitelist_.clear();
+  for (const auto& app : whitelist) {
+    std::string lower_app = app;
+    std::transform(lower_app.begin(), lower_app.end(), lower_app.begin(), [](unsigned char c) -> char { return static_cast<char>(std::tolower(c)); });
+    whitelist_.insert(lower_app);
+  }
+}
+
+void MonitorManager::UpdateBlacklist(const std::vector<std::string>& blacklist) {
+  std::lock_guard<std::mutex> lock(lists_mutex_);
+  blacklist_.clear();
+  for (const auto& app : blacklist) {
+    std::string lower_app = app;
+    std::transform(lower_app.begin(), lower_app.end(), lower_app.begin(), [](unsigned char c) -> char { return static_cast<char>(std::tolower(c)); });
+    blacklist_.insert(lower_app);
+  }
+}
+
+void MonitorManager::DetectorLoop() {
+  while (!stop_detector_) {
+    bool current_gaming = CheckIsGamingMode();
+    if (current_gaming != is_gaming_mode_) {
+      is_gaming_mode_ = current_gaming;
+      if (on_gaming_mode_changed_) {
+        on_gaming_mode_changed_(is_gaming_mode_);
+      }
+    }
+    
+    for (int i = 0; i < 25 && !stop_detector_; i++) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+  }
+}
+
+bool MonitorManager::CheckIsGamingMode() {
+  HWND hwnd = GetForegroundWindow();
+  if (!hwnd) return false;
+
+  auto get_process_name = [](HWND target_hwnd) -> std::string {
+    DWORD processId;
+    GetWindowThreadProcessId(target_hwnd, &processId);
+    HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, processId);
+    if (hProcess) {
+      wchar_t buffer[MAX_PATH];
+      DWORD size = MAX_PATH;
+      if (QueryFullProcessImageNameW(hProcess, 0, buffer, &size)) {
+        std::wstring fullPath(buffer);
+        size_t lastSlash = fullPath.find_last_of(L"\\/");
+        std::wstring fileName = (lastSlash == std::wstring::npos) ? fullPath : fullPath.substr(lastSlash + 1);
+        
+        std::string result;
+        for (wchar_t wc : fileName) {
+          result += static_cast<char>(std::tolower(static_cast<unsigned char>(wc)));
+        }
+        CloseHandle(hProcess);
+        return result;
+      }
+      CloseHandle(hProcess);
+    }
+    return "";
+  };
+
+  std::string processName = get_process_name(hwnd);
+
+  {
+    std::lock_guard<std::mutex> lock(lists_mutex_);
+    if (whitelist_.count(processName)) return true;
+  }
+
+  QUERY_USER_NOTIFICATION_STATE notification_state;
+  if (SHQueryUserNotificationState(&notification_state) == S_OK) {
+    if (notification_state == QUNS_RUNNING_D3D_FULL_SCREEN) return true;
+  }
+
+  wchar_t className[256];
+  if (GetClassNameW(hwnd, className, 256)) {
+    std::wstring wsClassName(className);
+    if (wsClassName == L"WorkerW" || wsClassName == L"Progman" || wsClassName == L"Shell_TrayWnd") {
+      return false;
+    }
+  }
+
+  HMONITOR hMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
+  MONITORINFO mi = { sizeof(mi) };
+  mi.cbSize = sizeof(mi);
+  if (GetMonitorInfoW(hMonitor, &mi)) {
+    RECT wr;
+    if (GetWindowRect(hwnd, &wr)) {
+      if (wr.left <= mi.rcMonitor.left && wr.top <= mi.rcMonitor.top && 
+          wr.right >= mi.rcMonitor.right && wr.bottom >= mi.rcMonitor.bottom) {
+        
+        {
+          std::lock_guard<std::mutex> lock(lists_mutex_);
+          if (blacklist_.count(processName)) return false;
+        }
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 

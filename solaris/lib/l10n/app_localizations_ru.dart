@@ -259,7 +259,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get luminosityProfile => 'Профиль освещенности';
 
   @override
-  String get sunPosition => 'Положение солнца';
+  String get sunPosition => 'Профиль освещенности';
 
   @override
   String get liveLocation => 'ТЕКУЩЕЕ МЕСТО';
@@ -595,4 +595,34 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get sleepDebtThreshold => 'Норма сна (порог недосыпа)';
+
+  @override
+  String get smartExclusions => 'Умные Исключения';
+
+  @override
+  String get smartExclusionsSubtitle =>
+      'Автоматическая блокировка яркости для игр';
+
+  @override
+  String get enableGameMode => 'Включить игровой режим';
+
+  @override
+  String get enableGameModeSubtitle =>
+      'Блокировать яркость при обнаружении игры';
+
+  @override
+  String get lockedBrightness => 'Заблокированная яркость';
+
+  @override
+  String get whitelist => 'Белый список';
+
+  @override
+  String get whitelistSubtitle =>
+      'Приложения, которые всегда включают игровой режим';
+
+  @override
+  String get blacklist => 'Черный список';
+
+  @override
+  String get blacklistSubtitle => 'Игнорировать, даже если во весь экран';
 }

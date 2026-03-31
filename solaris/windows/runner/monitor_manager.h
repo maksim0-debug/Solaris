@@ -2,6 +2,7 @@
 #define RUNNER_MONITOR_MANAGER_H_
 
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 #include <windows.h>
@@ -11,6 +12,8 @@
 #include <condition_variable>
 #include <functional>
 #include <atomic>
+#include <shellapi.h>
+#include <psapi.h>
 
 class MonitorManager {
  public:
@@ -35,6 +38,12 @@ class MonitorManager {
   // Enqueues a task to be executed on the background worker thread.
   void EnqueueTask(std::function<void()> task);
 
+  // Game Detection
+  void SetGamingModeCallback(std::function<void(bool)> callback);
+  void UpdateWhitelist(const std::vector<std::string>& whitelist);
+  void UpdateBlacklist(const std::vector<std::string>& blacklist);
+  bool IsGamingMode() const { return is_gaming_mode_; }
+
  private:
   // Caches the original gamma ramps for displays.
   std::map<std::string, std::vector<WORD>> original_gamma_ramps_;
@@ -48,6 +57,19 @@ class MonitorManager {
   std::atomic<bool> stop_worker_{false};
 
   void WorkerLoop();
+
+  // Game Detection state
+  std::thread detector_thread_;
+  std::atomic<bool> stop_detector_{false};
+  std::atomic<bool> is_gaming_mode_{false};
+  std::function<void(bool)> on_gaming_mode_changed_;
+  
+  std::mutex lists_mutex_;
+  std::set<std::string> whitelist_;
+  std::set<std::string> blacklist_;
+
+  void DetectorLoop();
+  bool CheckIsGamingMode();
 
   std::string ParseEdid(const std::vector<uint8_t>& edid);
   std::string GetManufacturerName(uint16_t manufacturer_id);

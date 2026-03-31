@@ -5,7 +5,44 @@
 #include "flutter/generated_plugin_registrant.h"
 #include "monitor_manager.h"
 #include <flutter/method_channel.h>
+#include <flutter/event_channel.h>
 #include <flutter/standard_method_codec.h>
+
+// StreamHandler for Gaming Mode events
+class GamingModeStreamHandler : public flutter::StreamHandler<flutter::EncodableValue> {
+ public:
+  GamingModeStreamHandler(MonitorManager& manager) : manager_(manager) {}
+
+ protected:
+  std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> OnListenInternal(
+      const flutter::EncodableValue* arguments,
+      std::unique_ptr<flutter::EventSink<flutter::EncodableValue>>&& events) override {
+    event_sink_ = std::move(events);
+    
+    // Initial state
+    event_sink_->Success(flutter::EncodableValue(manager_.IsGamingMode()));
+
+    // Set callback for future changes
+    manager_.SetGamingModeCallback([this](bool is_gaming) {
+      if (event_sink_) {
+        event_sink_->Success(flutter::EncodableValue(is_gaming));
+      }
+    });
+
+    return nullptr;
+  }
+
+  std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> OnCancelInternal(
+      const flutter::EncodableValue* arguments) override {
+    manager_.SetGamingModeCallback(nullptr);
+    event_sink_ = nullptr;
+    return nullptr;
+  }
+
+ private:
+  MonitorManager& manager_;
+  std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> event_sink_;
+};
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -19,11 +56,9 @@ bool FlutterWindow::OnCreate() {
 
   RECT frame = GetClientArea();
 
-  // The size here must match the window dimensions to avoid unnecessary surface
-  // creation / destruction in the startup path.
   flutter_controller_ = std::make_unique<flutter::FlutterViewController>(
       frame.right - frame.left, frame.bottom - frame.top, project_);
-  // Ensure that basic setup of the controller was successful.
+  
   if (!flutter_controller_->engine() || !flutter_controller_->view()) {
     return false;
   }
@@ -64,35 +99,35 @@ bool FlutterWindow::OnCreate() {
           }
           result->Error("invalid_arguments", "Expected devicePath and brightness");
         } else if (call.method_name().compare("setMonitorTemperature") == 0) {
-            const auto* arguments = std::get_if<flutter::EncodableMap>(call.arguments());
-            if (arguments) {
-                auto device_path_it = arguments->find(flutter::EncodableValue("devicePath"));
-                auto temp_it = arguments->find(flutter::EncodableValue("temperature"));
-                if (device_path_it != arguments->end() && temp_it != arguments->end()) {
-                    std::string device_path = std::get<std::string>(device_path_it->second);
-                    int temperature = std::get<int>(temp_it->second);
-                  monitor_manager_.EnqueueTask([this, device_path, temperature]() {
-                    monitor_manager_.SetTemperature(device_path, temperature);
-                  });
-                  result->Success(flutter::EncodableValue(true));
-                  return;
-                }
-              }
-              result->Error("invalid_arguments", "Expected devicePath and temperature");
-            } else if (call.method_name().compare("resetMonitorTemperature") == 0) {
-              const auto* arguments = std::get_if<flutter::EncodableMap>(call.arguments());
-              if (arguments) {
-                auto device_path_it = arguments->find(flutter::EncodableValue("devicePath"));
-                if (device_path_it != arguments->end()) {
-                  std::string device_path = std::get<std::string>(device_path_it->second);
-                  monitor_manager_.EnqueueTask([this, device_path]() {
-                    monitor_manager_.ResetTemperature(device_path);
-                  });
-                  result->Success(flutter::EncodableValue(true));
-                  return;
-                }
+          const auto* arguments = std::get_if<flutter::EncodableMap>(call.arguments());
+          if (arguments) {
+            auto device_path_it = arguments->find(flutter::EncodableValue("devicePath"));
+            auto temp_it = arguments->find(flutter::EncodableValue("temperature"));
+            if (device_path_it != arguments->end() && temp_it != arguments->end()) {
+              std::string device_path = std::get<std::string>(device_path_it->second);
+              int temperature = std::get<int>(temp_it->second);
+              monitor_manager_.EnqueueTask([this, device_path, temperature]() {
+                monitor_manager_.SetTemperature(device_path, temperature);
+              });
+              result->Success(flutter::EncodableValue(true));
+              return;
             }
-              result->Error("invalid_arguments", "Expected devicePath");
+          }
+          result->Error("invalid_arguments", "Expected devicePath and temperature");
+        } else if (call.method_name().compare("resetMonitorTemperature") == 0) {
+          const auto* arguments = std::get_if<flutter::EncodableMap>(call.arguments());
+          if (arguments) {
+            auto device_path_it = arguments->find(flutter::EncodableValue("devicePath"));
+            if (device_path_it != arguments->end()) {
+              std::string device_path = std::get<std::string>(device_path_it->second);
+              monitor_manager_.EnqueueTask([this, device_path]() {
+                monitor_manager_.ResetTemperature(device_path);
+              });
+              result->Success(flutter::EncodableValue(true));
+              return;
+            }
+          }
+          result->Error("invalid_arguments", "Expected devicePath");
         } else if (call.method_name().compare("getMonitorBrightness") == 0) {
           const auto* arguments = std::get_if<flutter::EncodableMap>(call.arguments());
           if (arguments) {
@@ -105,16 +140,52 @@ bool FlutterWindow::OnCreate() {
                 result->Success(flutter::EncodableValue(current));
                 return;
               } else {
-                result->Success(flutter::EncodableValue()); // Return null if failed
+                result->Success(flutter::EncodableValue());
                 return;
               }
             }
           }
           result->Error("invalid_arguments", "Expected devicePath");
+        } else if (call.method_name().compare("updateWhitelist") == 0) {
+          const auto* arguments = std::get_if<flutter::EncodableList>(call.arguments());
+          if (arguments) {
+            std::vector<std::string> whitelist;
+            for (const auto& item : *arguments) {
+              if (auto* str = std::get_if<std::string>(&item)) {
+                whitelist.push_back(*str);
+              }
+            }
+            monitor_manager_.UpdateWhitelist(whitelist);
+            result->Success(flutter::EncodableValue(true));
+            return;
+          }
+          result->Error("invalid_arguments", "Expected list of strings");
+        } else if (call.method_name().compare("updateBlacklist") == 0) {
+          const auto* arguments = std::get_if<flutter::EncodableList>(call.arguments());
+          if (arguments) {
+            std::vector<std::string> blacklist;
+            for (const auto& item : *arguments) {
+              if (auto* str = std::get_if<std::string>(&item)) {
+                blacklist.push_back(*str);
+              }
+            }
+            monitor_manager_.UpdateBlacklist(blacklist);
+            result->Success(flutter::EncodableValue(true));
+            return;
+          }
+          result->Error("invalid_arguments", "Expected list of strings");
         } else {
           result->NotImplemented();
         }
       });
+
+  // Set up EventChannel
+  event_channel_ = std::make_unique<flutter::EventChannel<flutter::EncodableValue>>(
+      flutter_controller_->engine()->messenger(), "com.solaris.monitor/events",
+      &flutter::StandardMethodCodec::GetInstance());
+  
+  auto stream_handler = std::make_unique<GamingModeStreamHandler>(monitor_manager_);
+  event_channel_->SetStreamHandler(std::move(stream_handler));
 
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
@@ -122,9 +193,6 @@ bool FlutterWindow::OnCreate() {
     this->Show();
   });
 
-  // Flutter can complete the first frame before the "show window" callback is
-  // registered. The following call ensures a frame is pending to ensure the
-  // window is shown. It is a no-op if the first frame hasn't completed yet.
   flutter_controller_->ForceRedraw();
 
   return true;
@@ -142,7 +210,6 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
-  // Give Flutter, including plugins, an opportunity to handle window messages.
   if (flutter_controller_) {
     std::optional<LRESULT> result =
         flutter_controller_->HandleTopLevelWindowProc(hwnd, message, wparam,

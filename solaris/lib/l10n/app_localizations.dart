@@ -1158,6 +1158,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sleep Target (Debt threshold)'**
   String get sleepDebtThreshold;
+
+  /// No description provided for @smartExclusions.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart Exclusions'**
+  String get smartExclusions;
+
+  /// No description provided for @smartExclusionsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic brightness lock for games'**
+  String get smartExclusionsSubtitle;
+
+  /// No description provided for @enableGameMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable Game Mode'**
+  String get enableGameMode;
+
+  /// No description provided for @enableGameModeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock brightness when a game is detected'**
+  String get enableGameModeSubtitle;
+
+  /// No description provided for @lockedBrightness.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked Brightness'**
+  String get lockedBrightness;
+
+  /// No description provided for @whitelist.
+  ///
+  /// In en, this message translates to:
+  /// **'Whitelist'**
+  String get whitelist;
+
+  /// No description provided for @whitelistSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Apps that always trigger game mode'**
+  String get whitelistSubtitle;
+
+  /// No description provided for @blacklist.
+  ///
+  /// In en, this message translates to:
+  /// **'Blacklist'**
+  String get blacklist;
+
+  /// No description provided for @blacklistSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignore even if fullscreen'**
+  String get blacklistSubtitle;
 }
 
 class _AppLocalizationsDelegate

@@ -4,6 +4,7 @@
 #include <flutter/dart_project.h>
 #include <flutter/flutter_view_controller.h>
 #include <flutter/method_channel.h>
+#include <flutter/event_channel.h>
 #include <flutter/standard_method_codec.h>
 
 #include <memory>
@@ -32,8 +33,12 @@ class FlutterWindow : public Win32Window {
   // The Flutter instance hosted by this window.
   std::unique_ptr<flutter::FlutterViewController> flutter_controller_;
 
-  // MethodChannel for monitor names.
+  // MethodChannel for monitor control.
   std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> monitor_channel_;
+
+  // EventChannel for gaming mode status.
+  std::unique_ptr<flutter::EventChannel<flutter::EncodableValue>> event_channel_;
+  std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> event_sink_;
 
   // Keep one manager instance alive to preserve cached original gamma ramps.
   MonitorManager monitor_manager_;
