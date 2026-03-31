@@ -885,24 +885,60 @@ class _GlobalHotkeysCard extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
               _HotkeyRow(
-                label: l10n.brighterPreset,
-                hotKeyJson: settings.brighterHotKey,
+                label: l10n.nextPreset,
+                hotKeyJson: settings.nextPresetHotKey,
                 onChanged: (newHotKey) {
                   ref
                       .read(settingsProvider.notifier)
-                      .updateHotkey('brighter', newHotKey?.toJson());
+                      .updateHotkey('next_preset', newHotKey?.toJson());
                 },
               ),
               const SizedBox(height: 16),
               const Divider(color: Colors.white10),
               const SizedBox(height: 16),
               _HotkeyRow(
-                label: l10n.darkerPreset,
-                hotKeyJson: settings.darkerHotKey,
+                label: l10n.prevPreset,
+                hotKeyJson: settings.prevPresetHotKey,
                 onChanged: (newHotKey) {
                   ref
                       .read(settingsProvider.notifier)
-                      .updateHotkey('darker', newHotKey?.toJson());
+                      .updateHotkey('prev_preset', newHotKey?.toJson());
+                },
+              ),
+              const SizedBox(height: 16),
+              const Divider(color: Colors.white10),
+              const SizedBox(height: 16),
+              _HotkeyRow(
+                label: l10n.increaseBrightness,
+                hotKeyJson: settings.brightnessUpHotKey,
+                trailing: _StepAdjustmentControl(
+                  value: settings.brightnessStepUp,
+                  onChanged: (val) => ref
+                      .read(settingsProvider.notifier)
+                      .updateBrightnessStep(true, val),
+                ),
+                onChanged: (newHotKey) {
+                  ref
+                      .read(settingsProvider.notifier)
+                      .updateHotkey('brightness_up', newHotKey?.toJson());
+                },
+              ),
+              const SizedBox(height: 16),
+              const Divider(color: Colors.white10),
+              const SizedBox(height: 16),
+              _HotkeyRow(
+                label: l10n.decreaseBrightness,
+                hotKeyJson: settings.brightnessDownHotKey,
+                trailing: _StepAdjustmentControl(
+                  value: settings.brightnessStepDown,
+                  onChanged: (val) => ref
+                      .read(settingsProvider.notifier)
+                      .updateBrightnessStep(false, val),
+                ),
+                onChanged: (newHotKey) {
+                  ref
+                      .read(settingsProvider.notifier)
+                      .updateHotkey('brightness_down', newHotKey?.toJson());
                 },
               ),
             ],
@@ -914,15 +950,128 @@ class _GlobalHotkeysCard extends ConsumerWidget {
   }
 }
 
+class _StepAdjustmentControl extends StatefulWidget {
+  final double value;
+  final ValueChanged<double> onChanged;
+
+  const _StepAdjustmentControl({required this.value, required this.onChanged});
+
+  @override
+  State<_StepAdjustmentControl> createState() => _StepAdjustmentControlState();
+}
+
+class _StepAdjustmentControlState extends State<_StepAdjustmentControl> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return SizedBox(
+      height: 32, // Fixed height to prevent row height from jumping
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: Icon(
+              LucideIcons.settings,
+              size: 16,
+              color: _isExpanded ? const Color(0xFF60A5FA) : Colors.white24,
+            ),
+            onPressed: () => setState(() => _isExpanded = !_isExpanded),
+            tooltip: l10n.brightnessStep,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.centerLeft,
+            child: _isExpanded
+                ? Padding(
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: _PremiumSlider(
+                      value: widget.value,
+                      onChanged: widget.onChanged,
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PremiumSlider extends StatelessWidget {
+  final double value;
+  final ValueChanged<double> onChanged;
+
+  const _PremiumSlider({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 130, // Compact but clear
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Expanded(
+            child: SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                trackHeight: 2,
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                overlayShape: const RoundSliderOverlayShape(overlayRadius: 10),
+                activeTrackColor: const Color(0xFF60A5FA),
+                inactiveTrackColor: Colors.white10,
+                thumbColor: Colors.white,
+                overlayColor: const Color(0xFF60A5FA).withOpacity(0.1),
+              ),
+              child: Slider(
+                value: value,
+                min: 1,
+                max: 20,
+                divisions: 19,
+                onChanged: onChanged,
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          SizedBox(
+            width: 24,
+            child: Text(
+              '${value.round()}%',
+              style: const TextStyle(
+                color: Color(0xFF60A5FA),
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.end,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _HotkeyRow extends StatelessWidget {
   final String label;
   final Map<String, dynamic>? hotKeyJson;
   final ValueChanged<HotKey?> onChanged;
+  final Widget? trailing;
 
   const _HotkeyRow({
     required this.label,
     required this.hotKeyJson,
     required this.onChanged,
+    this.trailing,
   });
 
   @override
@@ -939,29 +1088,40 @@ class _HotkeyRow extends StatelessWidget {
     }
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+                  if (trailing != null) ...[
+                    const SizedBox(width: 8),
+                    trailing!,
+                  ],
+                ],
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              hotKey == null ? l10n.disabled : _formatHotKey(hotKey),
-              style: TextStyle(
-                fontSize: 11,
-                color: Colors.white.withOpacity(0.3),
+              const SizedBox(height: 2),
+              Text(
+                hotKey == null ? l10n.disabled : _formatHotKey(hotKey),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.white.withOpacity(0.3),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
+        const SizedBox(width: 16),
         Row(
           children: [
             _PremiumHotkeyRecorder(

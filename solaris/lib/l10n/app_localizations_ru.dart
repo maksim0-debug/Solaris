@@ -728,17 +728,38 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get globalHotkeysSubtitle =>
-      'Управляйте пресетами из любого приложения';
+      'Управляйте пресетами и яркостью из любого приложения';
 
   @override
-  String get brighterPreset => 'Ярче';
+  String get nextPreset => 'Следующий пресет';
 
   @override
-  String get darkerPreset => 'Темнее';
+  String get prevPreset => 'Предыдущий пресет';
+
+  @override
+  String get increaseBrightness => 'Ярче';
+
+  @override
+  String get decreaseBrightness => 'Темнее';
+
+  @override
+  String get brightnessStep => 'Шаг настройки яркости';
+
+  @override
+  String get brightnessStepUp => 'Шаг (увеличение)';
+
+  @override
+  String get brightnessStepDown => 'Шаг (уменьшение)';
 
   @override
   String get pressToRecord => 'Нажмите клавиши...';
 
   @override
   String get hotkeyRecording => 'Запись...';
+
+  @override
+  String get cancel => 'Отмена';
+
+  @override
+  String get save => 'Сохранить';
 }

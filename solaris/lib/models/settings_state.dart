@@ -36,8 +36,12 @@ class SettingsState {
   final double gameModeBrightness;
   final List<String> gameModeWhitelist;
   final List<String> gameModeBlacklist;
-  final Map<String, dynamic>? brighterHotKey;
-  final Map<String, dynamic>? darkerHotKey;
+  final Map<String, dynamic>? nextPresetHotKey;
+  final Map<String, dynamic>? prevPresetHotKey;
+  final Map<String, dynamic>? brightnessUpHotKey;
+  final Map<String, dynamic>? brightnessDownHotKey;
+  final double brightnessStepUp;
+  final double brightnessStepDown;
 
   SettingsState({
     this.activePreset = PresetType.bright,
@@ -65,7 +69,7 @@ class SettingsState {
     this.timeShiftDurationMinutes = 360,
     this.sleepPressureWakeLimitHours = 16.0,
     this.sleepDebtThresholdMinutes = 390,
-    this.sleepToleranceWindow = 90,
+    this.sleepToleranceWindow = 105,
     this.sleepMaxAnomalies = 2,
     this.sleepMinRegimeLength = 2,
     this.sleepAnchorSize = 2,
@@ -79,19 +83,21 @@ class SettingsState {
       'code.exe',
       'devenv.exe',
       'ShareX.exe',
-      'devenv.exe',
-      'ShareX.exe',
     ],
-    this.brighterHotKey = const {
+    this.nextPresetHotKey = const {
       'keyCode': 'arrowLeft',
       'modifiers': ['control', 'shift'],
-      'identifier': 'brighter_preset',
+      'identifier': 'next_preset',
     },
-    this.darkerHotKey = const {
+    this.prevPresetHotKey = const {
       'keyCode': 'arrowRight',
       'modifiers': ['control', 'shift'],
-      'identifier': 'darker_preset',
+      'identifier': 'prev_preset',
     },
+    this.brightnessUpHotKey,
+    this.brightnessDownHotKey,
+    this.brightnessStepUp = 5.0,
+    this.brightnessStepDown = 5.0,
   }) : curvesMap = curvesMap ?? PresetConstants.getAllDefaults();
 
   List<FlSpot> get curvePoints => curvesMap[activePreset]!;
@@ -134,8 +140,12 @@ class SettingsState {
     'gameModeBrightness': gameModeBrightness,
     'gameModeWhitelist': gameModeWhitelist,
     'gameModeBlacklist': gameModeBlacklist,
-    'brighterHotKey': brighterHotKey,
-    'darkerHotKey': darkerHotKey,
+    'nextPresetHotKey': nextPresetHotKey,
+    'prevPresetHotKey': prevPresetHotKey,
+    'brightnessUpHotKey': brightnessUpHotKey,
+    'brightnessDownHotKey': brightnessDownHotKey,
+    'brightnessStepUp': brightnessStepUp,
+    'brightnessStepDown': brightnessStepDown,
   };
 
   factory SettingsState.fromJson(Map<String, dynamic> json) {
@@ -229,43 +239,51 @@ class SettingsState {
           (json['gameModeWhitelist'] as List<dynamic>?)?.cast<String>() ?? [],
       gameModeBlacklist:
           (json['gameModeBlacklist'] as List<dynamic>?)?.cast<String>() ??
-          [
-            'chrome.exe',
-            'idea64.exe',
-            'code.exe',
-            'visualstudio.exe',
-            'ShareX.exe',
-          ],
-      brighterHotKey: (() {
-        if (!json.containsKey('brighterHotKey')) {
+          ['chrome.exe', 'idea64.exe', 'code.exe', 'devenv.exe', 'ShareX.exe'],
+      nextPresetHotKey: (() {
+        // Migration from brighterHotKey
+        final keyName = json.containsKey('nextPresetHotKey')
+            ? 'nextPresetHotKey'
+            : 'brighterHotKey';
+        if (!json.containsKey(keyName)) {
           return const {
             'keyCode': 'arrowLeft',
             'modifiers': ['control', 'shift'],
-            'identifier': 'brighter_preset',
+            'identifier': 'next_preset',
           };
         }
-        if (json['brighterHotKey'] == null) return null;
-        final map = json['brighterHotKey'] as Map<String, dynamic>;
+        if (json[keyName] == null) return null;
+        final map = json[keyName] as Map<String, dynamic>;
         return {
           ...map,
-          if (map['identifier'] == null) 'identifier': 'brighter_preset',
+          'identifier': 'next_preset',
         };
       })(),
-      darkerHotKey: (() {
-        if (!json.containsKey('darkerHotKey')) {
+      prevPresetHotKey: (() {
+        // Migration from darkerHotKey
+        final keyName = json.containsKey('prevPresetHotKey')
+            ? 'prevPresetHotKey'
+            : 'darkerHotKey';
+        if (!json.containsKey(keyName)) {
           return const {
             'keyCode': 'arrowRight',
             'modifiers': ['control', 'shift'],
-            'identifier': 'darker_preset',
+            'identifier': 'prev_preset',
           };
         }
-        if (json['darkerHotKey'] == null) return null;
-        final map = json['darkerHotKey'] as Map<String, dynamic>;
+        if (json[keyName] == null) return null;
+        final map = json[keyName] as Map<String, dynamic>;
         return {
           ...map,
-          if (map['identifier'] == null) 'identifier': 'darker_preset',
+          'identifier': 'prev_preset',
         };
       })(),
+      brightnessUpHotKey: json['brightnessUpHotKey'] as Map<String, dynamic>?,
+      brightnessDownHotKey:
+          json['brightnessDownHotKey'] as Map<String, dynamic>?,
+      brightnessStepUp: (json['brightnessStepUp'] as num?)?.toDouble() ?? 5.0,
+      brightnessStepDown:
+          (json['brightnessStepDown'] as num?)?.toDouble() ?? 5.0,
     );
   }
 
@@ -304,10 +322,16 @@ class SettingsState {
     double? gameModeBrightness,
     List<String>? gameModeWhitelist,
     List<String>? gameModeBlacklist,
-    Map<String, dynamic>? brighterHotKey,
-    Map<String, dynamic>? darkerHotKey,
-    bool clearBrighterHotKey = false,
-    bool clearDarkerHotKey = false,
+    Map<String, dynamic>? nextPresetHotKey,
+    Map<String, dynamic>? prevPresetHotKey,
+    Map<String, dynamic>? brightnessUpHotKey,
+    Map<String, dynamic>? brightnessDownHotKey,
+    double? brightnessStepUp,
+    double? brightnessStepDown,
+    bool clearNextPresetHotKey = false,
+    bool clearPrevPresetHotKey = false,
+    bool clearBrightnessUpHotKey = false,
+    bool clearBrightnessDownHotKey = false,
   }) {
     return SettingsState(
       activePreset: activePreset ?? this.activePreset,
@@ -362,12 +386,20 @@ class SettingsState {
       gameModeBrightness: gameModeBrightness ?? this.gameModeBrightness,
       gameModeWhitelist: gameModeWhitelist ?? this.gameModeWhitelist,
       gameModeBlacklist: gameModeBlacklist ?? this.gameModeBlacklist,
-      brighterHotKey: clearBrighterHotKey
+      nextPresetHotKey: clearNextPresetHotKey
           ? null
-          : (brighterHotKey ?? this.brighterHotKey),
-      darkerHotKey: clearDarkerHotKey
+          : (nextPresetHotKey ?? this.nextPresetHotKey),
+      prevPresetHotKey: clearPrevPresetHotKey
           ? null
-          : (darkerHotKey ?? this.darkerHotKey),
+          : (prevPresetHotKey ?? this.prevPresetHotKey),
+      brightnessUpHotKey: clearBrightnessUpHotKey
+          ? null
+          : (brightnessUpHotKey ?? this.brightnessUpHotKey),
+      brightnessDownHotKey: clearBrightnessDownHotKey
+          ? null
+          : (brightnessDownHotKey ?? this.brightnessDownHotKey),
+      brightnessStepUp: brightnessStepUp ?? this.brightnessStepUp,
+      brightnessStepDown: brightnessStepDown ?? this.brightnessStepDown,
     );
   }
 }

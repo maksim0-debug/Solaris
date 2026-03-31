@@ -1396,20 +1396,50 @@ abstract class AppLocalizations {
   /// No description provided for @globalHotkeysSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Control presets from any application'**
+  /// **'Control presets and brightness from any application'**
   String get globalHotkeysSubtitle;
 
-  /// No description provided for @brighterPreset.
+  /// No description provided for @nextPreset.
   ///
   /// In en, this message translates to:
-  /// **'Brighter Preset'**
-  String get brighterPreset;
+  /// **'Next Preset'**
+  String get nextPreset;
 
-  /// No description provided for @darkerPreset.
+  /// No description provided for @prevPreset.
   ///
   /// In en, this message translates to:
-  /// **'Darker Preset'**
-  String get darkerPreset;
+  /// **'Previous Preset'**
+  String get prevPreset;
+
+  /// No description provided for @increaseBrightness.
+  ///
+  /// In en, this message translates to:
+  /// **'Increase Brightness'**
+  String get increaseBrightness;
+
+  /// No description provided for @decreaseBrightness.
+  ///
+  /// In en, this message translates to:
+  /// **'Decrease Brightness'**
+  String get decreaseBrightness;
+
+  /// No description provided for @brightnessStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Brightness Adjustment Step'**
+  String get brightnessStep;
+
+  /// No description provided for @brightnessStepUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Step (Increase)'**
+  String get brightnessStepUp;
+
+  /// No description provided for @brightnessStepDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Step (Decrease)'**
+  String get brightnessStepDown;
 
   /// No description provided for @pressToRecord.
   ///
@@ -1422,6 +1452,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recording...'**
   String get hotkeyRecording;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
 }
 
 class _AppLocalizationsDelegate

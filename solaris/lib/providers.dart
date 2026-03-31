@@ -493,21 +493,30 @@ class MonitorListNotifier extends AsyncNotifier<List<MonitorInfo>> {
 
   void _updateMonitor(String deviceName, int? brightness, int? temperature) {
     state.whenData((monitors) {
-      state = AsyncData(
-        monitors.map((m) {
-          if (m.deviceName == deviceName) {
+      bool changed = false;
+      final newList = monitors.map((m) {
+        if (m.deviceName == deviceName) {
+          final newBrightness = brightness ?? m.realBrightness;
+          final newTemperature = temperature ?? m.realTemperature;
+          if (newBrightness != m.realBrightness ||
+              newTemperature != m.realTemperature) {
+            changed = true;
             return MonitorInfo(
               name: m.name,
               friendlyName: m.friendlyName,
               deviceName: m.deviceName,
               isPrimary: m.isPrimary,
-              realBrightness: brightness ?? m.realBrightness,
-              realTemperature: temperature ?? m.realTemperature,
+              realBrightness: newBrightness,
+              realTemperature: newTemperature,
             );
           }
-          return m;
-        }).toList(),
-      );
+        }
+        return m;
+      }).toList();
+
+      if (changed) {
+        state = AsyncData(newList);
+      }
     });
   }
 }
@@ -873,11 +882,25 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   }
 
   void updateAutoBrightness(bool enabled) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final firstId = ids.firstOrNull ?? 'all';
+    final current = _getSettings(firstId);
+
+    if (current.isAutoBrightnessEnabled == enabled) return;
+
+    // Transitioning from Auto to Manual: Sync current hardware brightness to manual provider
+    if (!enabled) {
+      final monitor = _getBaselineMonitor(ref);
+      if (monitor?.realBrightness != null) {
+        ref
+            .read(manualBrightnessProvider.notifier)
+            .update(monitor!.realBrightness!.toDouble());
+      }
+    }
+
     ref
         .read(sharedPreferencesProvider)
         ?.setBool('auto_brightness_enabled', enabled);
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
     _updateSettings(ids, current.copyWith(isAutoBrightnessEnabled: enabled));
   }
 
@@ -1127,25 +1150,63 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     }
   }
 
+  void adjustManualBrightness(double delta) {
+    updateAutoBrightness(false);
+    final currentManual = ref.read(manualBrightnessProvider);
+    final newVal = (currentManual + delta).clamp(0.0, 100.0);
+    ref.read(manualBrightnessProvider.notifier).update(newVal);
+
+    // Save to prefs as well (matches setManualBrightness in CurrentBrightnessNotifier)
+    ref
+        .read(sharedPreferencesProvider)
+        ?.setDouble('last_known_brightness', newVal);
+  }
+
+  void updateBrightnessStep(bool isUp, double value) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    if (isUp) {
+      _updateSettings(ids, current.copyWith(brightnessStepUp: value));
+    } else {
+      _updateSettings(ids, current.copyWith(brightnessStepDown: value));
+    }
+  }
+
   void updateHotkey(String field, Map<String, dynamic>? hotKeyJson) {
     // Hotkeys are global app settings, so we update 'all'
     final currentMap = state.value ?? {'all': SettingsState()};
     final current = currentMap['all']!;
 
-    if (field == 'brighter') {
+    if (field == 'next_preset') {
       _updateSettings(
         {'all'},
         current.copyWith(
-          brighterHotKey: hotKeyJson,
-          clearBrighterHotKey: hotKeyJson == null,
+          nextPresetHotKey: hotKeyJson,
+          clearNextPresetHotKey: hotKeyJson == null,
         ),
       );
-    } else if (field == 'darker') {
+    } else if (field == 'prev_preset') {
       _updateSettings(
         {'all'},
         current.copyWith(
-          darkerHotKey: hotKeyJson,
-          clearDarkerHotKey: hotKeyJson == null,
+          prevPresetHotKey: hotKeyJson,
+          clearPrevPresetHotKey: hotKeyJson == null,
+        ),
+      );
+    } else if (field == 'brightness_up') {
+      _updateSettings(
+        {'all'},
+        current.copyWith(
+          brightnessUpHotKey: hotKeyJson,
+          clearBrightnessUpHotKey: hotKeyJson == null,
+        ),
+      );
+    } else if (field == 'brightness_down') {
+      _updateSettings(
+        {'all'},
+        current.copyWith(
+          brightnessDownHotKey: hotKeyJson,
+          clearBrightnessDownHotKey: hotKeyJson == null,
         ),
       );
     }
@@ -1166,39 +1227,43 @@ class CurrentBrightnessNotifier extends Notifier<double> {
     final lastBrightness = prefs?.getDouble(_lastBrightnessKey) ?? 100.0;
 
     final isAuto = ref.watch(autoBrightnessAdjustmentProvider);
+    final currentSelection = ref.watch(selectedMonitorsProvider);
+    final manualBrightness = ref.watch(manualBrightnessProvider);
+    final firstId = currentSelection.firstOrNull ?? 'all';
+    final smartData = ref.watch(smartCircadianDataProvider(firstId));
+
     if (isAuto) {
       final solarStateAsync = ref.watch(solarStateStreamProvider);
       final circadianService = ref.watch(circadianServiceProvider);
       final settingsAsync = ref.watch(settingsProvider);
-      final currentSelection = ref.watch(selectedMonitorsProvider);
       final weatherAsync = ref.watch(currentWeatherProvider);
 
       return solarStateAsync.maybeWhen(
         data: (state) {
           return settingsAsync.maybeWhen(
             data: (settingsMap) {
-              final firstId = currentSelection.firstOrNull ?? 'all';
               final selectedSettings =
                   settingsMap[firstId] ?? settingsMap['all']!;
 
               if (!selectedSettings.isAutoBrightnessEnabled) {
-                return ref.watch(manualBrightnessProvider);
+                return manualBrightness;
               }
 
-              final smartData = selectedSettings.isSmartCircadianEnabled
-                  ? ref.watch(smartCircadianDataProvider(firstId))
-                  : const SmartCircadianData.neutral();
+              final effectiveSmartData =
+                  selectedSettings.isSmartCircadianEnabled
+                      ? smartData
+                      : const SmartCircadianData.neutral();
 
               // Calculate Bio-Morning Shift (Shifted Elevation)
               double effectiveElevation = state.sunElevation;
               if (selectedSettings.isSmartCircadianEnabled &&
-                  smartData.timeOffset != Duration.zero) {
+                  effectiveSmartData.timeOffset != Duration.zero) {
                 final locationAsync = ref.read(effectiveLocationProvider);
                 final pos = locationAsync.value;
                 if (pos != null) {
                   final sunService = ref.read(sunCalculatorServiceProvider);
                   final shiftedTime = DateTime.now().subtract(
-                    smartData.timeOffset,
+                    effectiveSmartData.timeOffset,
                   );
                   effectiveElevation = sunService.getSunElevation(
                     pos.latitude,
@@ -1224,7 +1289,7 @@ class CurrentBrightnessNotifier extends Notifier<double> {
                     : null,
                 presetSensitivity:
                     selectedSettings.activePreset.weatherSensitivity,
-                smartData: smartData,
+                smartData: effectiveSmartData,
               );
               _saveBrightness(result.finalBrightness);
               return result.finalBrightness;
@@ -1235,7 +1300,7 @@ class CurrentBrightnessNotifier extends Notifier<double> {
         orElse: () => lastBrightness,
       );
     } else {
-      return ref.watch(manualBrightnessProvider);
+      return manualBrightness;
     }
   }
 
@@ -1268,6 +1333,15 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
   final visibility = ref.watch(appLifecycleProvider);
   final weatherAsync = ref.watch(currentWeatherProvider);
 
+  // Watch extra providers that were previously illegal in callbacks
+  final primaryId = ref.watch(selectedMonitorsProvider).firstOrNull ?? 'all';
+  final smartDataProvider = smartCircadianDataProvider(primaryId);
+  final smartData = ref.watch(smartDataProvider);
+  final isGamingMode = ref.watch<bool>(gamingModeProvider);
+  final smartTempData = ref.watch(
+    smartCircadianTemperatureDataProvider(primaryId),
+  );
+
   final circadianService = ref.read(circadianServiceProvider);
   final brightnessService = ref.read(brightnessServiceProvider);
   final tempService = ref.read(temperatureServiceProvider);
@@ -1287,27 +1361,20 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
 
             // Calculate and Apply Brightness
             if (settings.isAutoBrightnessEnabled) {
-              // We watch the primary smart data at the top level of the provider (see below),
-              // but for individual monitor details we still need the correct one.
-              // HOWEVER, to avoid the Phantom Target bug, we must ensure these are also watched
-              // OR that the top-level watch causes a full provider refresh.
-              
-              // Implementation: We use the primary monitor's smart data for the loop to ensure 
-              // consistent, immediate response across all screens.
-              final primaryId = ref.watch(selectedMonitorsProvider).firstOrNull ?? 'all';
-              final smartData = settings.isSmartCircadianEnabled
-                  ? ref.watch(smartCircadianDataProvider(primaryId))
-                  : const SmartCircadianData.neutral();
+              final effectiveSmartData =
+                  settings.isSmartCircadianEnabled
+                      ? smartData
+                      : const SmartCircadianData.neutral();
 
               double effectiveElevation = state.sunElevation;
               if (settings.isSmartCircadianEnabled &&
-                  smartData.timeOffset != Duration.zero) {
+                  effectiveSmartData.timeOffset != Duration.zero) {
                 final locationAsync = ref.read(effectiveLocationProvider);
                 final pos = locationAsync.value;
                 if (pos != null) {
                   final sunService = ref.read(sunCalculatorServiceProvider);
                   final shiftedTime = DateTime.now().subtract(
-                    smartData.timeOffset,
+                    effectiveSmartData.timeOffset,
                   );
                   effectiveElevation = sunService.getSunElevation(
                     pos.latitude,
@@ -1320,8 +1387,6 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                   }
                 }
               }
-
-              final isGamingMode = ref.watch<bool>(gamingModeProvider);
 
               double targetBrightness;
               CircadianCalculationResult? calculationResult;
@@ -1339,16 +1404,9 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                       ? weatherAsync.value
                       : null,
                   presetSensitivity: settings.activePreset.weatherSensitivity,
-                  smartData: smartData,
+                  smartData: effectiveSmartData,
                 );
                 targetBrightness = calculationResult.finalBrightness;
-              }
-
-              // Apply adjustments if smart circadian is enabled
-              if (calculationResult != null &&
-                  settings.isSmartCircadianEnabled) {
-                // The actual UI-serving provider (smartCircadianDataProvider)
-                // will perform the same calculation to show impacts in the UI.
               }
 
               brightnessService.applyBrightnessSmoothly(
@@ -1368,22 +1426,20 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
 
             // Calculate and Apply Temperature
             if (tempSettings.isEnabled && isTempEnabled) {
-              final primaryId = ref.watch(selectedMonitorsProvider).firstOrNull ?? 'all';
-              final smartData = tempSettings.isSmartCircadianEnabled
-                  ? ref.watch(
-                      smartCircadianTemperatureDataProvider(primaryId),
-                    )
-                  : const SmartCircadianData.neutral();
+              final effectiveSmartTempData =
+                  tempSettings.isSmartCircadianEnabled
+                      ? smartTempData
+                      : const SmartCircadianData.neutral();
 
               double effectiveElevation = state.sunElevation;
               if (tempSettings.isSmartCircadianEnabled &&
-                  smartData.timeOffset != Duration.zero) {
+                  effectiveSmartTempData.timeOffset != Duration.zero) {
                 final locationAsync = ref.read(effectiveLocationProvider);
                 final pos = locationAsync.value;
                 if (pos != null) {
                   final sunService = ref.read(sunCalculatorServiceProvider);
                   final shiftedTime = DateTime.now().subtract(
-                    smartData.timeOffset,
+                    effectiveSmartTempData.timeOffset,
                   );
                   effectiveElevation = sunService.getSunElevation(
                     pos.latitude,
@@ -1403,7 +1459,7 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                 DateTime.now(),
                 curvePoints: tempSettings.curvePoints,
                 weather: weatherAsync.value,
-                smartData: smartData,
+                smartData: effectiveSmartTempData,
               );
 
               tempService.applyTemperatureSmoothly(

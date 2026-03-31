@@ -329,9 +329,16 @@
   "english": "Английский",
   "russian": "Русский",
   "globalHotkeys": "Глобальные горячие клавиши",
-  "globalHotkeysSubtitle": "Управляйте пресетами из любого приложения",
-  "brighterPreset": "Ярче",
-  "darkerPreset": "Темнее",
+  "globalHotkeysSubtitle": "Управляйте пресетами и яркостью из любого приложения",
+  "nextPreset": "Следующий пресет",
+  "prevPreset": "Предыдущий пресет",
+  "increaseBrightness": "Ярче",
+  "decreaseBrightness": "Темнее",
+  "brightnessStep": "Шаг настройки яркости",
+  "brightnessStepUp": "Шаг (увеличение)",
+  "brightnessStepDown": "Шаг (уменьшение)",
   "pressToRecord": "Нажмите клавиши...",
-  "hotkeyRecording": "Запись..."
+  "hotkeyRecording": "Запись...",
+  "cancel": "Отмена",
+  "save": "Сохранить"
 }

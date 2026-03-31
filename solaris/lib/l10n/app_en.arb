@@ -329,9 +329,16 @@
   "english": "English",
   "russian": "Russian",
   "globalHotkeys": "Global Hotkeys",
-  "globalHotkeysSubtitle": "Control presets from any application",
-  "brighterPreset": "Brighter Preset",
-  "darkerPreset": "Darker Preset",
+  "globalHotkeysSubtitle": "Control presets and brightness from any application",
+  "nextPreset": "Next Preset",
+  "prevPreset": "Previous Preset",
+  "increaseBrightness": "Increase Brightness",
+  "decreaseBrightness": "Decrease Brightness",
+  "brightnessStep": "Brightness Adjustment Step",
+  "brightnessStepUp": "Step (Increase)",
+  "brightnessStepDown": "Step (Decrease)",
   "pressToRecord": "Press keys to record...",
-  "hotkeyRecording": "Recording..."
+  "hotkeyRecording": "Recording...",
+  "cancel": "Cancel",
+  "save": "Save"
 }

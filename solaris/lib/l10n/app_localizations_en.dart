@@ -726,17 +726,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get globalHotkeys => 'Global Hotkeys';
 
   @override
-  String get globalHotkeysSubtitle => 'Control presets from any application';
+  String get globalHotkeysSubtitle =>
+      'Control presets and brightness from any application';
 
   @override
-  String get brighterPreset => 'Brighter Preset';
+  String get nextPreset => 'Next Preset';
 
   @override
-  String get darkerPreset => 'Darker Preset';
+  String get prevPreset => 'Previous Preset';
+
+  @override
+  String get increaseBrightness => 'Increase Brightness';
+
+  @override
+  String get decreaseBrightness => 'Decrease Brightness';
+
+  @override
+  String get brightnessStep => 'Brightness Adjustment Step';
+
+  @override
+  String get brightnessStepUp => 'Step (Increase)';
+
+  @override
+  String get brightnessStepDown => 'Step (Decrease)';
 
   @override
   String get pressToRecord => 'Press keys to record...';
 
   @override
   String get hotkeyRecording => 'Recording...';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get save => 'Save';
 }
