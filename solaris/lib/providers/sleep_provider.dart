@@ -7,12 +7,10 @@ import 'package:solaris/services/regime_analyzer.dart';
 import 'package:solaris/providers/google_fit_provider.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/models/regime_settings.dart';
-import 'package:solaris/models/settings_state.dart';
 import 'package:equatable/equatable.dart';
 
 class SleepState extends Equatable {
   final List<SleepSession> sessions;
-  final List<SleepRegime> regimes;
   final bool isLoading;
   final String? error;
   final bool isSyncing;
@@ -20,7 +18,6 @@ class SleepState extends Equatable {
 
   const SleepState({
     required this.sessions,
-    this.regimes = const [],
     this.isLoading = false,
     this.isSyncing = false,
     this.error,
@@ -29,7 +26,6 @@ class SleepState extends Equatable {
 
   SleepState copyWith({
     List<SleepSession>? sessions,
-    List<SleepRegime>? regimes,
     bool? isLoading,
     bool? isSyncing,
     String? error,
@@ -37,7 +33,6 @@ class SleepState extends Equatable {
   }) {
     return SleepState(
       sessions: sessions ?? this.sessions,
-      regimes: regimes ?? this.regimes,
       isLoading: isLoading ?? this.isLoading,
       isSyncing: isSyncing ?? this.isSyncing,
       error: error ?? this.error,
@@ -48,7 +43,6 @@ class SleepState extends Equatable {
   @override
   List<Object?> get props => [
     sessions,
-    regimes,
     isLoading,
     isSyncing,
     error,
@@ -61,34 +55,9 @@ class SleepNotifier extends Notifier<SleepState> {
 
   @override
   SleepState build() {
-    // Watch settings to re-trigger analysis when they change
-    final settingsAsync = ref.watch(settingsProvider);
-    final selectedMonitors = ref.watch(selectedMonitorsProvider);
-    final monitorId = selectedMonitors.firstOrNull ?? 'all';
-
-    settingsAsync.whenData((settingsMap) {
-      final settings = settingsMap[monitorId] ?? settingsMap['all'];
-      if (settings != null && state.sessions.isNotEmpty) {
-        final newRegimes = RegimeAnalyzer.analyze(
-          state.sessions,
-          settings: RegimeSettings(
-            toleranceWindow: settings.sleepToleranceWindow,
-            maxAnomalies: settings.sleepMaxAnomalies,
-            minRegimeLength: settings.sleepMinRegimeLength,
-            anchorSize: settings.sleepAnchorSize,
-            maxSpread: settings.sleepMaxSpread,
-          ),
-        );
-        // Only update if regimes actually changed to avoid cycles (though analysis is deterministic)
-        if (newRegimes != state.regimes) {
-          state = state.copyWith(regimes: newRegimes);
-        }
-      }
-    });
-
     // Attempt initial load from cache
     Future.microtask(() => loadSleepData());
-    return const SleepState(sessions: []);
+    return const SleepState(sessions: [], isLoading: true);
   }
 
   Future<void> loadSleepData() async {
@@ -98,11 +67,8 @@ class SleepNotifier extends Notifier<SleepState> {
       final sessions = result.sessions;
 
       if (sessions.isNotEmpty) {
-        final settings = _getCurrentRegimeSettings();
-        final regimes = RegimeAnalyzer.analyze(sessions, settings: settings);
         state = state.copyWith(
           sessions: sessions,
-          regimes: regimes,
           isLoading: false,
         );
       }
@@ -140,11 +106,8 @@ class SleepNotifier extends Notifier<SleepState> {
         final now = DateTime.now();
         ref.read(googleFitProvider.notifier).updateLastFetchTime(now);
 
-        final settings = _getCurrentRegimeSettings();
-        final regimes = RegimeAnalyzer.analyze(sessions, settings: settings);
         state = state.copyWith(
           sessions: sessions,
-          regimes: regimes,
           isSyncing: false,
           lastFetchTime: now,
           error: null,
@@ -159,26 +122,6 @@ class SleepNotifier extends Notifier<SleepState> {
       );
     }
   }
-
-  RegimeSettings _getCurrentRegimeSettings() {
-    final settingsAsync = ref.read(settingsProvider);
-    final selectedMonitors = ref.read(selectedMonitorsProvider);
-    final monitorId = selectedMonitors.firstOrNull ?? 'all';
-
-    return settingsAsync.maybeWhen(
-      data: (map) {
-        final s = map[monitorId] ?? map['all'] ?? SettingsState();
-        return RegimeSettings(
-          toleranceWindow: s.sleepToleranceWindow,
-          maxAnomalies: s.sleepMaxAnomalies,
-          minRegimeLength: s.sleepMinRegimeLength,
-          anchorSize: s.sleepAnchorSize,
-          maxSpread: s.sleepMaxSpread,
-        );
-      },
-      orElse: () => const RegimeSettings(),
-    );
-  }
 }
 
 final sleepProvider = NotifierProvider<SleepNotifier, SleepState>(
@@ -186,3 +129,33 @@ final sleepProvider = NotifierProvider<SleepNotifier, SleepState>(
 );
 
 final sleepServiceProvider = Provider((ref) => SleepService());
+
+/// Synchronous provider for analyzed sleep regimes.
+/// This prevents "Phantom Target" dips by ensuring regimes are recalculated 
+/// instantly in memory when settings change, without clearing the raw data.
+final sleepRegimesProvider = Provider<List<SleepRegime>>((ref) {
+  final sleepState = ref.watch(sleepProvider);
+  final settingsAsync = ref.watch(settingsProvider);
+  final selectedMonitors = ref.watch(selectedMonitorsProvider);
+  final monitorId = selectedMonitors.firstOrNull ?? 'all';
+
+  return settingsAsync.maybeWhen(
+    data: (settingsMap) {
+      final settings = settingsMap[monitorId] ?? settingsMap['all'];
+      if (settings != null && sleepState.sessions.isNotEmpty) {
+        return RegimeAnalyzer.analyze(
+          sleepState.sessions,
+          settings: RegimeSettings(
+            toleranceWindow: settings.sleepToleranceWindow,
+            maxAnomalies: settings.sleepMaxAnomalies,
+            minRegimeLength: settings.sleepMinRegimeLength,
+            anchorSize: settings.sleepAnchorSize,
+            maxSpread: settings.sleepMaxSpread,
+          ),
+        );
+      }
+      return [];
+    },
+    orElse: () => [],
+  );
+});

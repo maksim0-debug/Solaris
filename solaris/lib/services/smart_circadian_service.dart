@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'package:solaris/models/smart_circadian_data.dart';
-import 'package:solaris/providers/sleep_provider.dart';
 import 'package:solaris/models/sleep_session.dart';
 import 'package:solaris/models/sleep_regime.dart';
 import 'package:solaris/models/night_group.dart';
@@ -9,7 +8,7 @@ import 'package:solaris/utils/bedtime_normalization.dart';
 class SmartCircadianService {
   /// Calculates all biometric adjustments based on sleep data.
   SmartCircadianData calculateSmartAdjustments({
-    required SleepState sleepState,
+    required List<SleepRegime> regimes,
     required DateTime now,
     required DateTime astronomicalSunrise,
     bool useSleepDebt = true,
@@ -32,10 +31,10 @@ class SmartCircadianService {
     final double sleepPressureLimit = sleepPressureWakeLimitHours ?? 16.0;
     final int sleepDebtThreshold = sleepDebtThresholdMinutes ?? 390;
 
-    if (sleepState.regimes.isEmpty) return const SmartCircadianData.neutral();
+    if (regimes.isEmpty) return const SmartCircadianData.neutral();
 
     // 1. Get Quality Data from NightGroups
-    final currentRegime = _getCurrentRegime(sleepState.regimes);
+    final currentRegime = _getCurrentRegime(regimes);
     if (currentRegime == null || currentRegime.nights.isEmpty)
       return const SmartCircadianData.neutral();
 

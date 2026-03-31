@@ -50,7 +50,7 @@ final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
   ref,
   monitorId,
 ) {
-  final sleepState = ref.watch(sleepProvider);
+  final regimes = ref.watch(sleepRegimesProvider);
   final service = ref.watch(smartCircadianServiceProvider);
   final settingsAsync = ref.watch(settingsProvider);
   final solarStateAsync = ref.watch(solarStateStreamProvider);
@@ -62,14 +62,11 @@ final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
 
   final monitorSettings =
       settings[monitorId] ?? settings['all'] ?? SettingsState();
-  if (sleepState.isLoading && sleepState.sessions.isEmpty) {
-    return const SmartCircadianData.neutral();
-  }
 
   return solarStateAsync.maybeWhen(
     data: (solar) {
       final smartData = service.calculateSmartAdjustments(
-        sleepState: sleepState,
+        regimes: regimes,
         now: now,
         astronomicalSunrise: solar.phases.sunrise,
         useSleepDebt:
@@ -177,7 +174,7 @@ final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
 
 final smartCircadianTemperatureDataProvider =
     Provider.family<SmartCircadianData, String>((ref, monitorId) {
-      final sleepState = ref.watch(sleepProvider);
+      final regimes = ref.watch(sleepRegimesProvider);
       final service = ref.watch(smartCircadianServiceProvider);
       final tempSettingsAsync = ref.watch(temperatureSettingsProvider);
       final solarStateAsync = ref.watch(solarStateStreamProvider);
@@ -187,9 +184,6 @@ final smartCircadianTemperatureDataProvider =
 
       final monitorSettings =
           settings[monitorId] ?? settings['all'] ?? TemperatureState();
-      if (sleepState.isLoading && sleepState.sessions.isEmpty) {
-        return const SmartCircadianData.neutral();
-      }
 
       final globalSettingsAsync = ref.watch(settingsProvider);
       final globalSettings = globalSettingsAsync.maybeWhen(
@@ -201,7 +195,7 @@ final smartCircadianTemperatureDataProvider =
 
       return solarStateAsync.maybeWhen(
         data: (solar) => service.calculateSmartAdjustments(
-          sleepState: sleepState,
+          regimes: regimes,
           now: now,
           astronomicalSunrise: solar.phases.sunrise,
           useSleepDebt:
@@ -739,6 +733,7 @@ final manualBrightnessProvider =
 
 class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   static const _settingsFilename = 'monitor_settings.json';
+  Timer? _saveTimer;
 
   @override
   Future<Map<String, SettingsState>> build() async {
@@ -766,12 +761,15 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   }
 
   Future<void> _saveSettings() async {
-    state.whenData((currentMap) async {
-      final storage = ref.read(storageServiceProvider);
-      final encoded = currentMap.map(
-        (key, value) => MapEntry(key, value.toJson()),
-      );
-      await storage.save(_settingsFilename, jsonEncode(encoded));
+    _saveTimer?.cancel();
+    _saveTimer = Timer(const Duration(milliseconds: 300), () {
+      state.whenData((currentMap) async {
+        final storage = ref.read(storageServiceProvider);
+        final encoded = currentMap.map(
+          (key, value) => MapEntry(key, value.toJson()),
+        );
+        await storage.save(_settingsFilename, jsonEncode(encoded));
+      });
     });
   }
 
@@ -1289,8 +1287,16 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
 
             // Calculate and Apply Brightness
             if (settings.isAutoBrightnessEnabled) {
+              // We watch the primary smart data at the top level of the provider (see below),
+              // but for individual monitor details we still need the correct one.
+              // HOWEVER, to avoid the Phantom Target bug, we must ensure these are also watched
+              // OR that the top-level watch causes a full provider refresh.
+              
+              // Implementation: We use the primary monitor's smart data for the loop to ensure 
+              // consistent, immediate response across all screens.
+              final primaryId = ref.watch(selectedMonitorsProvider).firstOrNull ?? 'all';
               final smartData = settings.isSmartCircadianEnabled
-                  ? ref.read(smartCircadianDataProvider(monitor.deviceName))
+                  ? ref.watch(smartCircadianDataProvider(primaryId))
                   : const SmartCircadianData.neutral();
 
               double effectiveElevation = state.sunElevation;
@@ -1362,9 +1368,10 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
 
             // Calculate and Apply Temperature
             if (tempSettings.isEnabled && isTempEnabled) {
+              final primaryId = ref.watch(selectedMonitorsProvider).firstOrNull ?? 'all';
               final smartData = tempSettings.isSmartCircadianEnabled
-                  ? ref.read(
-                      smartCircadianTemperatureDataProvider(monitor.deviceName),
+                  ? ref.watch(
+                      smartCircadianTemperatureDataProvider(primaryId),
                     )
                   : const SmartCircadianData.neutral();
 

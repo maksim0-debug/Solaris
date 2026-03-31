@@ -19,6 +19,7 @@ class SleepScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final sleepState = ref.watch(sleepProvider);
+    final regimes = ref.watch(sleepRegimesProvider);
     final googleFitState = ref.watch(googleFitProvider);
 
     return SingleChildScrollView(
@@ -47,7 +48,7 @@ class SleepScreen extends ConsumerWidget {
           ],
 
           // Sleep Regimes / History
-          if (sleepState.regimes.isEmpty && !sleepState.isLoading)
+          if (regimes.isEmpty && !sleepState.isLoading)
             Center(
               child: Text(
                 l10n.sleepDataSubtitle,
@@ -67,7 +68,7 @@ class SleepScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                ...sleepState.regimes.asMap().entries.map((entry) {
+                ...regimes.asMap().entries.map((entry) {
                   final regime = entry.value;
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 16),
