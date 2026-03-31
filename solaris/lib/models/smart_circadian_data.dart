@@ -10,6 +10,10 @@ class SmartCircadianData extends Equatable {
   final bool isTimeShiftActive;
   final double sleepDebtFactor;
   final double sleepPressureFactor;
+  final double windDownFactor;
+  final double timeShiftBrightnessImpact;
+  final int? timeShiftMinutesRemaining;
+  final int? windDownMinutesRemaining;
   final int? minutesUntilSleep;
 
   const SmartCircadianData({
@@ -22,6 +26,10 @@ class SmartCircadianData extends Equatable {
     this.isTimeShiftActive = false,
     this.sleepDebtFactor = 1.0,
     this.sleepPressureFactor = 1.0,
+    this.windDownFactor = 1.0,
+    this.timeShiftBrightnessImpact = 0.0,
+    this.timeShiftMinutesRemaining,
+    this.windDownMinutesRemaining,
     this.minutesUntilSleep,
   });
 
@@ -35,6 +43,10 @@ class SmartCircadianData extends Equatable {
         isTimeShiftActive = false,
         sleepDebtFactor = 1.0,
         sleepPressureFactor = 1.0,
+        windDownFactor = 1.0,
+        timeShiftBrightnessImpact = 0.0,
+        timeShiftMinutesRemaining = null,
+        windDownMinutesRemaining = null,
         minutesUntilSleep = null;
 
   @override
@@ -48,6 +60,10 @@ class SmartCircadianData extends Equatable {
         isTimeShiftActive,
         sleepDebtFactor,
         sleepPressureFactor,
+        windDownFactor,
+        timeShiftBrightnessImpact,
+        timeShiftMinutesRemaining,
+        windDownMinutesRemaining,
         minutesUntilSleep,
       ];
 }

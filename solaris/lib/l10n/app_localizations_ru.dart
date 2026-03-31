@@ -541,4 +541,46 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get featureSleepDebtInfo =>
       'Активируется, если ваш последний сон был короче 6.5 часов. В течение дня система будет поддерживать более комфортный, приглушенный режим освещения, чтобы снизить нагрузку на уставшие глаза и нервную систему.';
+
+  @override
+  String get intensity => 'Интенсивность';
+
+  @override
+  String get strength => 'Сила';
+
+  @override
+  String get brightnessIntensity => 'Интенсивность (яркость)';
+
+  @override
+  String get temperatureIntensity => 'Интенсивность (температура)';
+
+  @override
+  String get shiftStrength => 'Сила смещения';
+
+  @override
+  String circadianImpact(String feature, int impact) {
+    return '$feature $impact% к яркости';
+  }
+
+  @override
+  String get featureWindDownShort => 'Подготовка ко сну';
+
+  @override
+  String get featureTimeShiftShort => 'Био-утро';
+
+  @override
+  String get featureSleepPressureShort => 'Давление сна';
+
+  @override
+  String get featureSleepDebtShort => 'Недосып';
+
+  @override
+  String circadianImpactWithTime(
+    String feature,
+    int impact,
+    int time,
+    String unit,
+  ) {
+    return '$feature $impact% к яркости ($time $unit)';
+  }
 }

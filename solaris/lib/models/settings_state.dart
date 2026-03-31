@@ -17,6 +17,12 @@ class SettingsState {
   final bool isTimeShiftMasterEnabled;
   final bool isSleepPressureMasterEnabled;
   final bool isSleepDebtMasterEnabled;
+  final double windDownBrightnessIntensity;
+  final double windDownTemperatureIntensity;
+  final double timeShiftIntensity;
+  final double sleepPressureBrightnessIntensity;
+  final double sleepDebtBrightnessIntensity;
+  final double sleepDebtTemperatureIntensity;
 
   SettingsState({
     this.activePreset = PresetType.bright,
@@ -34,6 +40,12 @@ class SettingsState {
     this.isTimeShiftMasterEnabled = false,
     this.isSleepPressureMasterEnabled = false,
     this.isSleepDebtMasterEnabled = false,
+    this.windDownBrightnessIntensity = 1.0,
+    this.windDownTemperatureIntensity = 1.0,
+    this.timeShiftIntensity = 1.0,
+    this.sleepPressureBrightnessIntensity = 1.0,
+    this.sleepDebtBrightnessIntensity = 1.0,
+    this.sleepDebtTemperatureIntensity = 1.0,
   }) : curvesMap = curvesMap ?? PresetConstants.getAllDefaults();
 
   List<FlSpot> get curvePoints => curvesMap[activePreset]!;
@@ -57,6 +69,12 @@ class SettingsState {
     'isTimeShiftMasterEnabled': isTimeShiftMasterEnabled,
     'isSleepPressureMasterEnabled': isSleepPressureMasterEnabled,
     'isSleepDebtMasterEnabled': isSleepDebtMasterEnabled,
+    'windDownBrightnessIntensity': windDownBrightnessIntensity,
+    'windDownTemperatureIntensity': windDownTemperatureIntensity,
+    'timeShiftIntensity': timeShiftIntensity,
+    'sleepPressureBrightnessIntensity': sleepPressureBrightnessIntensity,
+    'sleepDebtBrightnessIntensity': sleepDebtBrightnessIntensity,
+    'sleepDebtTemperatureIntensity': sleepDebtTemperatureIntensity,
   };
 
   factory SettingsState.fromJson(Map<String, dynamic> json) {
@@ -116,6 +134,12 @@ class SettingsState {
       isTimeShiftMasterEnabled: json['isTimeShiftMasterEnabled'] as bool? ?? true,
       isSleepPressureMasterEnabled: json['isSleepPressureMasterEnabled'] as bool? ?? true,
       isSleepDebtMasterEnabled: json['isSleepDebtMasterEnabled'] as bool? ?? true,
+      windDownBrightnessIntensity: (json['windDownBrightnessIntensity'] as num?)?.toDouble() ?? 1.0,
+      windDownTemperatureIntensity: (json['windDownTemperatureIntensity'] as num?)?.toDouble() ?? 1.0,
+      timeShiftIntensity: (json['timeShiftIntensity'] as num?)?.toDouble() ?? 1.0,
+      sleepPressureBrightnessIntensity: (json['sleepPressureBrightnessIntensity'] as num?)?.toDouble() ?? 1.0,
+      sleepDebtBrightnessIntensity: (json['sleepDebtBrightnessIntensity'] as num?)?.toDouble() ?? 1.0,
+      sleepDebtTemperatureIntensity: (json['sleepDebtTemperatureIntensity'] as num?)?.toDouble() ?? 1.0,
     );
   }
 
@@ -135,6 +159,12 @@ class SettingsState {
     bool? isTimeShiftMasterEnabled,
     bool? isSleepPressureMasterEnabled,
     bool? isSleepDebtMasterEnabled,
+    double? windDownBrightnessIntensity,
+    double? windDownTemperatureIntensity,
+    double? timeShiftIntensity,
+    double? sleepPressureBrightnessIntensity,
+    double? sleepDebtBrightnessIntensity,
+    double? sleepDebtTemperatureIntensity,
   }) {
     return SettingsState(
       activePreset: activePreset ?? this.activePreset,
@@ -155,6 +185,12 @@ class SettingsState {
       isTimeShiftMasterEnabled: isTimeShiftMasterEnabled ?? this.isTimeShiftMasterEnabled,
       isSleepPressureMasterEnabled: isSleepPressureMasterEnabled ?? this.isSleepPressureMasterEnabled,
       isSleepDebtMasterEnabled: isSleepDebtMasterEnabled ?? this.isSleepDebtMasterEnabled,
+      windDownBrightnessIntensity: windDownBrightnessIntensity ?? this.windDownBrightnessIntensity,
+      windDownTemperatureIntensity: windDownTemperatureIntensity ?? this.windDownTemperatureIntensity,
+      timeShiftIntensity: timeShiftIntensity ?? this.timeShiftIntensity,
+      sleepPressureBrightnessIntensity: sleepPressureBrightnessIntensity ?? this.sleepPressureBrightnessIntensity,
+      sleepDebtBrightnessIntensity: sleepDebtBrightnessIntensity ?? this.sleepDebtBrightnessIntensity,
+      sleepDebtTemperatureIntensity: sleepDebtTemperatureIntensity ?? this.sleepDebtTemperatureIntensity,
     );
   }
 }

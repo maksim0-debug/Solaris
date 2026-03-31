@@ -719,37 +719,40 @@ class _DashboardView extends ConsumerWidget {
                             final activeAjustments = <Widget>[];
                             
                             if (smartData.isWindDownActive) {
+                              final impactPercent = ((1.0 - smartData.windDownFactor) * 100).round();
+                              final remaining = smartData.windDownMinutesRemaining;
                               activeAjustments.add(_SmartAdjustmentIndicator(
                                 icon: LucideIcons.moon,
-                                label: l10n.featureWindDown,
-                                value: (smartData.brightnessMultiplier < 1.0) 
-                                  ? "-${((1.0 - smartData.brightnessMultiplier) * 100).round()}%" 
-                                  : null,
+                                label: remaining != null 
+                                  ? l10n.circadianImpactWithTime(l10n.featureWindDownShort, -impactPercent, remaining, l10n.minutesAbbreviation)
+                                  : l10n.circadianImpact(l10n.featureWindDownShort, -impactPercent),
                               ));
                             }
                             
                             if (smartData.isTimeShiftActive) {
-                              final offset = smartData.timeOffset.inMinutes;
+                              final impactPercent = smartData.timeShiftBrightnessImpact.round();
+                              final remaining = smartData.timeShiftMinutesRemaining;
                               activeAjustments.add(_SmartAdjustmentIndicator(
                                 icon: LucideIcons.sunrise,
-                                label: l10n.featureTimeShift,
-                                value: "${offset > 0 ? '+' : ''}${offset}${l10n.minutesAbbreviation}",
+                                label: remaining != null 
+                                  ? l10n.circadianImpactWithTime(l10n.featureTimeShiftShort, impactPercent, remaining, l10n.minutesAbbreviation)
+                                  : l10n.circadianImpact(l10n.featureTimeShiftShort, impactPercent),
                               ));
                             }
                             
                             if (smartData.isSleepPressureActive) {
+                              final impactPercent = ((1.0 - smartData.sleepPressureFactor) * 100).round();
                               activeAjustments.add(_SmartAdjustmentIndicator(
                                 icon: LucideIcons.brain,
-                                label: l10n.featureSleepPressure,
-                                value: "-${((1.0 - smartData.sleepPressureFactor) * 100).round()}%",
+                                label: l10n.circadianImpact(l10n.featureSleepPressureShort, -impactPercent),
                               ));
                             }
                             
                             if (smartData.isSleepDebtActive) {
+                              final impactPercent = ((1.0 - smartData.sleepDebtFactor) * 100).round();
                               activeAjustments.add(_SmartAdjustmentIndicator(
                                 icon: LucideIcons.battery,
-                                label: l10n.featureSleepDebt,
-                                value: "-${((1.0 - smartData.sleepDebtFactor) * 100).round()}%",
+                                label: l10n.circadianImpact(l10n.featureSleepDebtShort, -impactPercent),
                               ));
                             }
                             
@@ -1253,12 +1256,10 @@ class _SmartAdjustmentIndicator extends StatelessWidget {
   const _SmartAdjustmentIndicator({
     required this.icon,
     required this.label,
-    this.value,
   });
 
   final IconData icon;
   final String label;
-  final String? value;
 
   @override
   Widget build(BuildContext context) {
@@ -1276,15 +1277,6 @@ class _SmartAdjustmentIndicator extends StatelessWidget {
             ),
           ),
         ),
-        if (value != null)
-          Text(
-            '($value)',
-            style: TextStyle(
-              fontSize: 12,
-              color: const Color(0xFFC4B5FD).withOpacity(0.7),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
       ],
     );
   }

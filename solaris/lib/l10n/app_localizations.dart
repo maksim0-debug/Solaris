@@ -1063,6 +1063,77 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Activates if your last sleep was shorter than 6.5 hours. During the day, the system will maintain a more comfortable, muted lighting mode to reduce strain on tired eyes and the nervous system.'**
   String get featureSleepDebtInfo;
+
+  /// No description provided for @intensity.
+  ///
+  /// In en, this message translates to:
+  /// **'Intensity'**
+  String get intensity;
+
+  /// No description provided for @strength.
+  ///
+  /// In en, this message translates to:
+  /// **'Strength'**
+  String get strength;
+
+  /// No description provided for @brightnessIntensity.
+  ///
+  /// In en, this message translates to:
+  /// **'Brightness Intensity'**
+  String get brightnessIntensity;
+
+  /// No description provided for @temperatureIntensity.
+  ///
+  /// In en, this message translates to:
+  /// **'Temperature Intensity'**
+  String get temperatureIntensity;
+
+  /// No description provided for @shiftStrength.
+  ///
+  /// In en, this message translates to:
+  /// **'Shift Strength'**
+  String get shiftStrength;
+
+  /// No description provided for @circadianImpact.
+  ///
+  /// In en, this message translates to:
+  /// **'{feature} {impact}% brightness'**
+  String circadianImpact(String feature, int impact);
+
+  /// No description provided for @featureWindDownShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Wind-down'**
+  String get featureWindDownShort;
+
+  /// No description provided for @featureTimeShiftShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Bio-Morning'**
+  String get featureTimeShiftShort;
+
+  /// No description provided for @featureSleepPressureShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep Pressure'**
+  String get featureSleepPressureShort;
+
+  /// No description provided for @featureSleepDebtShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep Debt'**
+  String get featureSleepDebtShort;
+
+  /// No description provided for @circadianImpactWithTime.
+  ///
+  /// In en, this message translates to:
+  /// **'{feature} {impact}% brightness ({time}{unit})'**
+  String circadianImpactWithTime(
+    String feature,
+    int impact,
+    int time,
+    String unit,
+  );
 }
 
 class _AppLocalizationsDelegate

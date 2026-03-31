@@ -58,23 +58,85 @@ final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
   }
 
   return solarStateAsync.maybeWhen(
-    data: (solar) => service.calculateSmartAdjustments(
-      sleepState: sleepState,
-      now: DateTime.now(),
-      astronomicalSunrise: solar.phases.sunrise,
-      useSleepDebt:
-          monitorSettings.isSleepDebtEnabled &&
-          monitorSettings.isSleepDebtMasterEnabled,
-      useSleepPressure:
-          monitorSettings.isSleepPressureEnabled &&
-          monitorSettings.isSleepPressureMasterEnabled,
-      useTimeShift:
-          monitorSettings.isTimeShiftEnabled &&
-          monitorSettings.isTimeShiftMasterEnabled,
-      useWindDown:
-          monitorSettings.isWindDownEnabled &&
-          monitorSettings.isWindDownMasterEnabled,
-    ),
+    data: (solar) {
+      final smartData = service.calculateSmartAdjustments(
+        sleepState: sleepState,
+        now: DateTime.now(),
+        astronomicalSunrise: solar.phases.sunrise,
+        useSleepDebt:
+            monitorSettings.isSleepDebtEnabled &&
+            monitorSettings.isSleepDebtMasterEnabled,
+        useSleepPressure:
+            monitorSettings.isSleepPressureEnabled &&
+            monitorSettings.isSleepPressureMasterEnabled,
+        useTimeShift:
+            monitorSettings.isTimeShiftEnabled &&
+            monitorSettings.isTimeShiftMasterEnabled,
+        useWindDown:
+            monitorSettings.isWindDownEnabled &&
+            monitorSettings.isWindDownMasterEnabled,
+        sleepDebtBrightnessIntensity: monitorSettings.sleepDebtBrightnessIntensity,
+        sleepDebtTemperatureIntensity: monitorSettings.sleepDebtTemperatureIntensity,
+        sleepPressureBrightnessIntensity: monitorSettings.sleepPressureBrightnessIntensity,
+        timeShiftIntensity: monitorSettings.timeShiftIntensity,
+        windDownBrightnessIntensity: monitorSettings.windDownBrightnessIntensity,
+        windDownTemperatureIntensity: monitorSettings.windDownTemperatureIntensity,
+      );
+
+      // Calculate Time Shift Brightness Impact
+      if (smartData.isTimeShiftActive) {
+        final now = DateTime.now();
+        final shiftedTime = now.subtract(smartData.timeOffset);
+        final locationAsync = ref.read(effectiveLocationProvider);
+        final pos = locationAsync.value;
+
+        if (pos != null) {
+          final sunService = ref.read(sunCalculatorServiceProvider);
+          final circadianService = ref.read(circadianServiceProvider);
+          
+          final shiftedElevation = sunService.getSunElevation(
+            pos.latitude,
+            pos.longitude,
+            shiftedTime,
+          );
+
+          final baseBrightness = circadianService.calculateTargetBrightness(
+            solar.phases,
+            solar.sunElevation,
+            now,
+            curvePoints: monitorSettings.curvePoints,
+          );
+
+          final shiftedBrightness = circadianService.calculateTargetBrightness(
+            solar.phases,
+            shiftedElevation,
+            now,
+            curvePoints: monitorSettings.curvePoints,
+          );
+
+          final impact = shiftedBrightness - baseBrightness;
+          
+          return SmartCircadianData(
+            brightnessMultiplier: smartData.brightnessMultiplier,
+            temperatureOffset: smartData.temperatureOffset,
+            timeOffset: smartData.timeOffset,
+            isWindDownActive: smartData.isWindDownActive,
+            isSleepPressureActive: smartData.isSleepPressureActive,
+            isSleepDebtActive: smartData.isSleepDebtActive,
+            isTimeShiftActive: smartData.isTimeShiftActive,
+            sleepDebtFactor: smartData.sleepDebtFactor,
+            sleepPressureFactor: smartData.sleepPressureFactor,
+            windDownFactor: smartData.windDownFactor,
+            timeShiftBrightnessImpact: impact,
+            timeShiftMinutesRemaining: smartData.timeShiftMinutesRemaining,
+            windDownMinutesRemaining: smartData.windDownMinutesRemaining,
+            minutesUntilSleep: smartData.minutesUntilSleep,
+          );
+        }
+      }
+
+      return smartData;
+    },
     orElse: () => const SmartCircadianData.neutral(),
   );
 });
@@ -118,6 +180,12 @@ final smartCircadianTemperatureDataProvider =
           useWindDown:
               monitorSettings.isWindDownEnabled &&
               globalSettings.isWindDownMasterEnabled,
+          sleepDebtBrightnessIntensity: globalSettings.sleepDebtBrightnessIntensity,
+          sleepDebtTemperatureIntensity: globalSettings.sleepDebtTemperatureIntensity,
+          sleepPressureBrightnessIntensity: globalSettings.sleepPressureBrightnessIntensity,
+          timeShiftIntensity: globalSettings.timeShiftIntensity,
+          windDownBrightnessIntensity: globalSettings.windDownBrightnessIntensity,
+          windDownTemperatureIntensity: globalSettings.windDownTemperatureIntensity,
         ),
         orElse: () => const SmartCircadianData.neutral(),
       );
@@ -748,6 +816,45 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     final ids = ref.read(selectedMonitorsProvider);
     final current = _getSettings(ids.firstOrNull ?? 'all');
     _updateSettings(ids, current.copyWith(isWindDownEnabled: enabled));
+  }
+
+  void updateWindDownIntensity(double brightness, double temperature) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(
+      ids,
+      current.copyWith(
+        windDownBrightnessIntensity: brightness,
+        windDownTemperatureIntensity: temperature,
+      ),
+    );
+  }
+
+  void updateTimeShiftIntensity(double intensity) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(ids, current.copyWith(timeShiftIntensity: intensity));
+  }
+
+  void updateSleepPressureIntensity(double intensity) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(
+      ids,
+      current.copyWith(sleepPressureBrightnessIntensity: intensity),
+    );
+  }
+
+  void updateSleepDebtIntensity(double brightness, double temperature) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(
+      ids,
+      current.copyWith(
+        sleepDebtBrightnessIntensity: brightness,
+        sleepDebtTemperatureIntensity: temperature,
+      ),
+    );
   }
 
   void updateCurvePoints(List<FlSpot> points) {

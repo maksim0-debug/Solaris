@@ -542,4 +542,46 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get featureSleepDebtInfo =>
       'Activates if your last sleep was shorter than 6.5 hours. During the day, the system will maintain a more comfortable, muted lighting mode to reduce strain on tired eyes and the nervous system.';
+
+  @override
+  String get intensity => 'Intensity';
+
+  @override
+  String get strength => 'Strength';
+
+  @override
+  String get brightnessIntensity => 'Brightness Intensity';
+
+  @override
+  String get temperatureIntensity => 'Temperature Intensity';
+
+  @override
+  String get shiftStrength => 'Shift Strength';
+
+  @override
+  String circadianImpact(String feature, int impact) {
+    return '$feature $impact% brightness';
+  }
+
+  @override
+  String get featureWindDownShort => 'Wind-down';
+
+  @override
+  String get featureTimeShiftShort => 'Bio-Morning';
+
+  @override
+  String get featureSleepPressureShort => 'Sleep Pressure';
+
+  @override
+  String get featureSleepDebtShort => 'Sleep Debt';
+
+  @override
+  String circadianImpactWithTime(
+    String feature,
+    int impact,
+    int time,
+    String unit,
+  ) {
+    return '$feature $impact% brightness ($time$unit)';
+  }
 }

@@ -225,5 +225,42 @@
   "featureWindDownInfo": "Prepares your body for sleep by gradually reducing blue light and overall luminosity. This stimulates melatonin production and makes it easier to fall asleep.",
   "featureTimeShiftInfo": "Adapts the circadian schedule to your actual wake-up time. If you wake up earlier or later than usual, the system will smoothly shift brightness and temperature peaks to sync with your current state.",
   "featureSleepPressureInfo": "Accounts for time spent awake. If you stay awake for too long, the system starts to gently dim the screen to reduce cognitive load and signal your body it's time to rest.",
-  "featureSleepDebtInfo": "Activates if your last sleep was shorter than 6.5 hours. During the day, the system will maintain a more comfortable, muted lighting mode to reduce strain on tired eyes and the nervous system."
+  "featureSleepDebtInfo": "Activates if your last sleep was shorter than 6.5 hours. During the day, the system will maintain a more comfortable, muted lighting mode to reduce strain on tired eyes and the nervous system.",
+  "intensity": "Intensity",
+  "strength": "Strength",
+  "brightnessIntensity": "Brightness Intensity",
+  "temperatureIntensity": "Temperature Intensity",
+  "shiftStrength": "Shift Strength",
+  "circadianImpact": "{feature} {impact}% brightness",
+  "featureWindDownShort": "Wind-down",
+  "featureTimeShiftShort": "Bio-Morning",
+  "featureSleepPressureShort": "Sleep Pressure",
+  "featureSleepDebtShort": "Sleep Debt",
+  "circadianImpactWithTime": "{feature} {impact}% brightness ({time}{unit})",
+  "@circadianImpactWithTime": {
+    "placeholders": {
+      "feature": {
+        "type": "String"
+      },
+      "impact": {
+        "type": "int"
+      },
+      "time": {
+        "type": "int"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "@circadianImpact": {
+    "placeholders": {
+      "feature": {
+        "type": "String"
+      },
+      "impact": {
+        "type": "int"
+      }
+    }
+  }
 }

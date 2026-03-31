@@ -286,6 +286,10 @@ class _CircadianRegulationSection extends ConsumerWidget {
                     timingText: (smartData.isWindDownActive && smartData.minutesUntilSleep != null) 
                         ? l10n.remainingLower(formatMins(smartData.minutesUntilSleep!))
                         : null,
+                    brightnessIntensity: settings.windDownBrightnessIntensity,
+                    temperatureIntensity: settings.windDownTemperatureIntensity,
+                    onBrightnessIntensityChanged: (val) => ref.read(settingsProvider.notifier).updateWindDownIntensity(val, settings.windDownTemperatureIntensity),
+                    onTemperatureIntensityChanged: (val) => ref.read(settingsProvider.notifier).updateWindDownIntensity(settings.windDownBrightnessIntensity, val),
                   ),
                   const Divider(height: 32, color: Colors.white10),
                   _RegulationToggle(
@@ -301,6 +305,9 @@ class _CircadianRegulationSection extends ConsumerWidget {
                     brightnessLabel: l10n.influenceBrightness,
                     temperatureLabel: l10n.influenceTemperature,
                     isActive: smartData.isTimeShiftActive,
+                    brightnessIntensity: settings.timeShiftIntensity,
+                    onBrightnessIntensityChanged: (val) => ref.read(settingsProvider.notifier).updateTimeShiftIntensity(val),
+                    showTemperatureIntensity: false, // Time shift is a single factor
                   ),
                   const Divider(height: 32, color: Colors.white10),
                   _RegulationToggle(
@@ -316,6 +323,9 @@ class _CircadianRegulationSection extends ConsumerWidget {
                     brightnessLabel: l10n.influenceBrightness,
                     temperatureLabel: l10n.influenceTemperature,
                     isActive: smartData.isSleepPressureActive,
+                    brightnessIntensity: settings.sleepPressureBrightnessIntensity,
+                    onBrightnessIntensityChanged: (val) => ref.read(settingsProvider.notifier).updateSleepPressureIntensity(val),
+                    showTemperatureIntensity: false, // Currently only brightness
                   ),
                   const Divider(height: 32, color: Colors.white10),
                   _RegulationToggle(
@@ -331,6 +341,10 @@ class _CircadianRegulationSection extends ConsumerWidget {
                     brightnessLabel: l10n.influenceBrightness,
                     temperatureLabel: l10n.influenceTemperature,
                     isActive: smartData.isSleepDebtActive,
+                    brightnessIntensity: settings.sleepDebtBrightnessIntensity,
+                    temperatureIntensity: settings.sleepDebtTemperatureIntensity,
+                    onBrightnessIntensityChanged: (val) => ref.read(settingsProvider.notifier).updateSleepDebtIntensity(val, settings.sleepDebtTemperatureIntensity),
+                    onTemperatureIntensityChanged: (val) => ref.read(settingsProvider.notifier).updateSleepDebtIntensity(settings.sleepDebtBrightnessIntensity, val),
                   ),
                 ],
               ),
@@ -342,7 +356,7 @@ class _CircadianRegulationSection extends ConsumerWidget {
   }
 }
 
-class _RegulationToggle extends StatelessWidget {
+class _RegulationToggle extends ConsumerStatefulWidget {
   const _RegulationToggle({
     required this.title,
     required this.subtitle,
@@ -357,6 +371,11 @@ class _RegulationToggle extends StatelessWidget {
     required this.temperatureLabel,
     this.isActive = false,
     this.timingText,
+    this.brightnessIntensity = 1.0,
+    this.temperatureIntensity = 1.0,
+    this.onBrightnessIntensityChanged,
+    this.onTemperatureIntensityChanged,
+    this.showTemperatureIntensity = true,
   });
 
   final String title;
@@ -372,16 +391,30 @@ class _RegulationToggle extends StatelessWidget {
   final String temperatureLabel;
   final bool isActive;
   final String? timingText;
+  final double brightnessIntensity;
+  final double temperatureIntensity;
+  final ValueChanged<double>? onBrightnessIntensityChanged;
+  final ValueChanged<double>? onTemperatureIntensityChanged;
+  final bool showTemperatureIntensity;
+
+  @override
+  ConsumerState<_RegulationToggle> createState() => _RegulationToggleState();
+}
+
+class _RegulationToggleState extends ConsumerState<_RegulationToggle> {
+  bool _isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return AnimatedContainer(
       duration: const Duration(milliseconds: 500),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isActive ? Colors.white.withOpacity(0.03) : Colors.transparent,
+        color: widget.isActive ? Colors.white.withOpacity(0.03) : Colors.transparent,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: isActive ? [
+        boxShadow: widget.isActive ? [
            BoxShadow(
              color: const Color(0xFF8B5CF6).withOpacity(0.15),
              blurRadius: 20,
@@ -389,7 +422,7 @@ class _RegulationToggle extends StatelessWidget {
            )
         ] : [],
         border: Border.all(
-          color: isActive ? const Color(0xFF8B5CF6).withOpacity(0.3) : Colors.transparent,
+          color: widget.isActive ? const Color(0xFF8B5CF6).withOpacity(0.3) : Colors.transparent,
           width: 1,
         ),
       ),
@@ -406,15 +439,15 @@ class _RegulationToggle extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          title,
+                          widget.title,
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: isActive ? const Color(0xFFC4B5FD) : Colors.white,
+                            color: widget.isActive ? const Color(0xFFC4B5FD) : Colors.white,
                           ),
                         ),
                         const SizedBox(width: 8),
-                        if (isActive) ...[
+                        if (widget.isActive) ...[
                            Container(
                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                              decoration: BoxDecoration(
@@ -422,7 +455,7 @@ class _RegulationToggle extends StatelessWidget {
                                borderRadius: BorderRadius.circular(4),
                              ),
                              child: Text(
-                               timingText ?? AppLocalizations.of(context)!.active,
+                               widget.timingText ?? l10n.active,
                                style: const TextStyle(
                                  color: Color(0xFFC4B5FD),
                                  fontSize: 10,
@@ -432,8 +465,21 @@ class _RegulationToggle extends StatelessWidget {
                            ),
                            const SizedBox(width: 8),
                         ],
+                        IconButton(
+                          icon: Icon(
+                            LucideIcons.settings,
+                            size: 14,
+                            color: _isExpanded ? const Color(0xFF8B5CF6) : Colors.white.withOpacity(0.3),
+                          ),
+                          onPressed: () => setState(() => _isExpanded = !_isExpanded),
+                          constraints: const BoxConstraints(),
+                          padding: EdgeInsets.zero,
+                          splashRadius: 16,
+                          tooltip: l10n.settings,
+                        ),
+                        const SizedBox(width: 8),
                         Tooltip(
-                         message: info,
+                         message: widget.info,
                          padding: const EdgeInsets.all(12),
                          margin: const EdgeInsets.symmetric(horizontal: 24),
                          decoration: BoxDecoration(
@@ -453,7 +499,7 @@ class _RegulationToggle extends StatelessWidget {
                     ),
                   const SizedBox(height: 4),
                   Text(
-                    subtitle,
+                    widget.subtitle,
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.white.withOpacity(0.4),
@@ -465,8 +511,8 @@ class _RegulationToggle extends StatelessWidget {
             Transform.scale(
               scale: 0.9,
               child: Switch(
-                value: masterValue,
-                onChanged: onMasterChanged,
+                value: widget.masterValue,
+                onChanged: widget.onMasterChanged,
                 activeColor: const Color(0xFF8B5CF6),
               ),
             ),
@@ -475,30 +521,102 @@ class _RegulationToggle extends StatelessWidget {
         const SizedBox(height: 16),
         AnimatedOpacity(
           duration: const Duration(milliseconds: 200),
-          opacity: masterValue ? 1.0 : 0.3,
+          opacity: widget.masterValue ? 1.0 : 0.3,
           child: AbsorbPointer(
-            absorbing: !masterValue,
-            child: Row(
+            absorbing: !widget.masterValue,
+            child: Column(
               children: [
-                _SmallToggle(
-                  label: brightnessLabel,
-                  value: brightnessValue,
-                  onChanged: onBrightnessChanged,
-                  color: const Color(0xFFFDBA74),
+                Row(
+                  children: [
+                    _SmallToggle(
+                      label: widget.brightnessLabel,
+                      value: widget.brightnessValue,
+                      onChanged: widget.onBrightnessChanged,
+                      color: const Color(0xFFFDBA74),
+                    ),
+                    const SizedBox(width: 24),
+                    _SmallToggle(
+                      label: widget.temperatureLabel,
+                      value: widget.temperatureValue,
+                      onChanged: widget.onTemperatureChanged,
+                      color: const Color(0xFF818CF8),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 24),
-                _SmallToggle(
-                  label: temperatureLabel,
-                  value: temperatureValue,
-                  onChanged: onTemperatureChanged,
-                  color: const Color(0xFF818CF8),
-                ),
+                if (_isExpanded) ...[
+                  const SizedBox(height: 16),
+                  if (widget.brightnessValue)
+                    _IntensitySlider(
+                      label: l10n.brightnessIntensity,
+                      value: widget.brightnessIntensity,
+                      onChanged: widget.onBrightnessIntensityChanged,
+                      color: const Color(0xFFFDBA74),
+                    ),
+                  if (widget.temperatureValue && widget.showTemperatureIntensity)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: _IntensitySlider(
+                        label: l10n.temperatureIntensity,
+                        value: widget.temperatureIntensity,
+                        onChanged: widget.onTemperatureIntensityChanged,
+                        color: const Color(0xFF818CF8),
+                      ),
+                    ),
+                ],
               ],
             ),
           ),
         ),
         ],
       ),
+    );
+  }
+}
+
+class _IntensitySlider extends StatelessWidget {
+  const _IntensitySlider({
+    required this.label,
+    required this.value,
+    this.onChanged,
+    required this.color,
+  });
+
+  final String label;
+  final double value;
+  final ValueChanged<double>? onChanged;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: const TextStyle(fontSize: 12, color: Colors.white60)),
+            Text('${(value * 100).toInt()}%', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 2,
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+            overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+            activeTrackColor: color.withOpacity(0.5),
+            inactiveTrackColor: Colors.white10,
+            thumbColor: color,
+            overlayColor: color.withOpacity(0.2),
+          ),
+          child: Slider(
+            value: value,
+            min: 0.0,
+            max: 1.0,
+            onChanged: onChanged,
+          ),
+        ),
+      ],
     );
   }
 }
