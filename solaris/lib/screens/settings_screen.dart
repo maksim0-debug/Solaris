@@ -41,6 +41,10 @@ class SettingsScreen extends ConsumerWidget {
           const _TempToggleCard(),
           const SizedBox(height: 24),
 
+          // Language Selection
+          const _LanguageSelectorCard(),
+          const SizedBox(height: 24),
+
           // App Settings (Autorun)
           GlassCard(
             padding: const EdgeInsets.all(24),
@@ -815,6 +819,75 @@ class _AppListManagerState extends State<_AppListManager> {
           ),
         ],
       ],
+    );
+  }
+}
+
+class _LanguageSelectorCard extends ConsumerWidget {
+  const _LanguageSelectorCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final currentLocale = ref.watch(localeProvider);
+
+    return GlassCard(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF60A5FA).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              LucideIcons.languages,
+              color: Color(0xFF60A5FA),
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              l10n.language,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          SegmentedButton<String>(
+            segments: [
+              ButtonSegment<String>(
+                value: 'en',
+                label: Text(l10n.english),
+              ),
+              ButtonSegment<String>(
+                value: 'ru',
+                label: Text(l10n.russian),
+              ),
+            ],
+            selected: {currentLocale.languageCode},
+            onSelectionChanged: (Set<String> newSelection) {
+              ref.read(localeProvider.notifier).setLocale(newSelection.first);
+            },
+            showSelectedIcon: false,
+            style: SegmentedButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              backgroundColor: Colors.transparent,
+              selectedBackgroundColor: const Color(0xFF60A5FA).withOpacity(0.2),
+              selectedForegroundColor: const Color(0xFF60A5FA),
+              foregroundColor: Colors.white24,
+              side: BorderSide(color: Colors.white.withOpacity(0.05)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

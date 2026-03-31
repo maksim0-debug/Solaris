@@ -121,9 +121,9 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                const Text(
-                                  "Drag to anchor your primary observation point",
-                                  style: TextStyle(
+                                Text(
+                                  l10n.celestialMapSubtitle,
+                                  style: const TextStyle(
                                     fontSize: 12,
                                     color: Colors.white38,
                                   ),
@@ -194,9 +194,9 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      "CURRENT ANCHOR",
-                                      style: TextStyle(
+                                    Text(
+                                      l10n.currentAnchor,
+                                      style: const TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
                                         color: Color(0xFFFDBA74),
@@ -402,7 +402,7 @@ class _AutoDetectToggle extends StatelessWidget {
           ),
         ),
         child: Text(
-          l10n.autoDetect(isActive ? "ON" : "OFF"),
+          l10n.autoDetect(isActive ? l10n.active.toUpperCase() : l10n.disabled.toUpperCase()),
           style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.bold,

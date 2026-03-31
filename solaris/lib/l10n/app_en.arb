@@ -11,6 +11,7 @@
   "locationAutomation": "Location & Automation",
   "locationSubtitle": "Sync your environment with your geographical position. Let the solar cycles dictate your workflow fluidity.",
   "celestialMap": "Celestial Map",
+  "celestialMapSubtitle": "Drag to anchor your primary observation point",
   "autoDetect": "AUTO-DETECT: {status}",
   "@autoDetect": {
     "placeholders": {
@@ -223,7 +224,11 @@
   "connectedStatusSmall": "Connected",
   "lastFetchLabel": "Last fetch:",
   "never": "Never",
+  "signOut": "Sign Out",
   "syncNow": "Sync Now",
+  "syncing": "Syncing...",
+  "verifyingConnection": "Verifying connection...",
+  "connectionError": "Connection error",
   "hoursAbbreviation": "h",
   "minutesAbbreviation": "m",
   "sleepRegime": "Sleep Regime",
@@ -319,5 +324,8 @@
   "anchorSize": "Anchor window size",
   "anchorSizeDesc": "Number of first days for forming the anchor average value.",
   "maxSpread": "Maximum regime spread",
-  "maxSpreadDesc": "Maximum difference (max - min) in the sleep onset graph in minutes. If exceeded, the regime is split."
+  "maxSpreadDesc": "Maximum difference (max - min) in the sleep onset graph in minutes. If exceeded, the regime is split.",
+  "language": "Language",
+  "english": "English",
+  "russian": "Russian"
 }

@@ -37,6 +37,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get celestialMap => 'Небесная карта';
 
   @override
+  String get celestialMapSubtitle =>
+      'Перетащите, чтобы закрепить основную точку наблюдения';
+
+  @override
   String autoDetect(String status) {
     return 'АВТО-ОПРЕДЕЛЕНИЕ: $status';
   }
@@ -479,7 +483,19 @@ class AppLocalizationsRu extends AppLocalizations {
   String get never => 'Никогда';
 
   @override
+  String get signOut => 'Выйти';
+
+  @override
   String get syncNow => 'Синхронизировать';
+
+  @override
+  String get syncing => 'Синхронизация...';
+
+  @override
+  String get verifyingConnection => 'Проверка подключения...';
+
+  @override
+  String get connectionError => 'Ошибка подключения';
 
   @override
   String get hoursAbbreviation => 'ч';
@@ -697,4 +713,13 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get maxSpreadDesc =>
       'Максимальная разница (максимум — минимум) в графике отхода ко сну в минутах. Если превышена, режим разбивается.';
+
+  @override
+  String get language => 'Язык';
+
+  @override
+  String get english => 'Английский';
+
+  @override
+  String get russian => 'Русский';
 }

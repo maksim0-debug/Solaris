@@ -283,17 +283,18 @@ class RegimeAnalyzer {
           .length;
       final dayCount = uniqueDays;
 
-      // Fix: Exclude outdated sessions from average bedtime calculation
-      final normalEntriesForAvg = raw.normalEntries
-          .where((e) => !e.isOutdated)
-          .toList();
+      // Fix: Exclude outdated sessions from average bedtime calculation.
+      // We prioritize "fresh" (not outdated) entries, even if they are currently
+      // marked as anomalies, to ensure the UI header reflects current shifts.
+      final allEntries = [...raw.normalEntries, ...raw.anomalyEntries];
+      final freshEntries = allEntries.where((e) => !e.isOutdated).toList();
 
-      // Fallback to all normal entries if all are outdated (shouldn't happen in a current regime)
-      final effectiveNormalEntries = normalEntriesForAvg.isNotEmpty
-          ? normalEntriesForAvg
+      // Fallback to normal entries only if all data in the regime is outdated
+      final effectiveEntries = freshEntries.isNotEmpty
+          ? freshEntries
           : raw.normalEntries;
 
-      final normalMins = effectiveNormalEntries
+      final normalMins = effectiveEntries
           .map((e) => e.normalizedMinutes)
           .toList();
       if (normalMins.isEmpty) continue;
@@ -303,7 +304,7 @@ class RegimeAnalyzer {
       final avgBedtimeMin =
           (normalMins.reduce((a, b) => a + b) / normalMins.length).round();
 
-      final wakeMins = effectiveNormalEntries
+      final wakeMins = effectiveEntries
           .map(
             (e) => BedtimeNormalization.minutesFromNoon(
               e.nightGroup.aggregatedSession.endTime,

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:ui';
 
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -557,6 +558,32 @@ class ActiveScreenNotifier extends Notifier<AppScreen> {
 
 final activeScreenProvider = NotifierProvider<ActiveScreenNotifier, AppScreen>(
   ActiveScreenNotifier.new,
+);
+
+class LocaleNotifier extends Notifier<Locale> {
+  static const _localeKey = 'app_locale';
+
+  @override
+  Locale build() {
+    final prefs = ref.watch(sharedPreferencesProvider);
+    final languageCode = prefs?.getString(_localeKey);
+    
+    // Default to 'ru' to maintain previous behavior, but check if user saved 'en'
+    if (languageCode == 'en') {
+      return const Locale('en');
+    }
+    return const Locale('ru');
+  }
+
+  void setLocale(String languageCode) {
+    if (languageCode != 'en' && languageCode != 'ru') return;
+    state = Locale(languageCode);
+    ref.read(sharedPreferencesProvider)?.setString(_localeKey, languageCode);
+  }
+}
+
+final localeProvider = NotifierProvider<LocaleNotifier, Locale>(
+  LocaleNotifier.new,
 );
 
 class AutoBrightnessAdjustmentNotifier extends Notifier<bool> {

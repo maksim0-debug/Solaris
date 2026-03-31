@@ -106,11 +106,13 @@ void main(List<String> args) async {
   );
 }
 
-class SolarisApp extends StatelessWidget {
+class SolarisApp extends ConsumerWidget {
   const SolarisApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
+
     return MaterialApp(
       title: 'Solaris',
       debugShowCheckedModeBanner: false,
@@ -122,7 +124,7 @@ class SolarisApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [Locale('en'), Locale('ru')],
-      locale: const Locale('ru'),
+      locale: locale,
       home: const DashboardScreen(),
     );
   }

@@ -220,16 +220,16 @@ class _GoogleFitSyncCard extends ConsumerWidget {
               child: Text(l10n.connectGoogleFit),
             )
           else if (googleFitState.status == GoogleFitStatus.connecting)
-            const Text(
-              "Verifying connection...", // TODO: Localize
-              style: TextStyle(color: Colors.white70, fontSize: 14),
+            Text(
+              l10n.verifyingConnection,
+              style: const TextStyle(color: Colors.white70, fontSize: 14),
             )
           else if (googleFitState.status == GoogleFitStatus.error)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  googleFitState.errorMessage ?? "Connection error",
+                  googleFitState.errorMessage ?? l10n.connectionError,
                   style:
                       const TextStyle(color: Color(0xFFF87171), fontSize: 14),
                 ),
@@ -273,9 +273,9 @@ class _GoogleFitSyncCard extends ConsumerWidget {
                           : () =>
                               ref.read(googleFitProvider.notifier).signOut(),
                       icon: const Icon(LucideIcons.logOut, size: 14),
-                      label: const Text(
-                        "Sign Out", // TODO: Localize if needed
-                        style: TextStyle(fontSize: 12),
+                      label: Text(
+                        l10n.signOut,
+                        style: const TextStyle(fontSize: 12),
                       ),
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.white38,
@@ -303,7 +303,7 @@ class _GoogleFitSyncCard extends ConsumerWidget {
                         )
                       : const Icon(LucideIcons.refreshCw),
                   label: Text(
-                    sleepState.isSyncing ? "Syncing..." : l10n.syncNow,
+                    sleepState.isSyncing ? l10n.syncing : l10n.syncNow,
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white10,

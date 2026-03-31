@@ -37,6 +37,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get celestialMap => 'Celestial Map';
 
   @override
+  String get celestialMapSubtitle =>
+      'Drag to anchor your primary observation point';
+
+  @override
   String autoDetect(String status) {
     return 'AUTO-DETECT: $status';
   }
@@ -480,7 +484,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get never => 'Never';
 
   @override
+  String get signOut => 'Sign Out';
+
+  @override
   String get syncNow => 'Sync Now';
+
+  @override
+  String get syncing => 'Syncing...';
+
+  @override
+  String get verifyingConnection => 'Verifying connection...';
+
+  @override
+  String get connectionError => 'Connection error';
 
   @override
   String get hoursAbbreviation => 'h';
@@ -696,4 +712,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get maxSpreadDesc =>
       'Maximum difference (max - min) in the sleep onset graph in minutes. If exceeded, the regime is split.';
+
+  @override
+  String get language => 'Language';
+
+  @override
+  String get english => 'English';
+
+  @override
+  String get russian => 'Russian';
 }

@@ -152,6 +152,12 @@ abstract class AppLocalizations {
   /// **'Celestial Map'**
   String get celestialMap;
 
+  /// No description provided for @celestialMapSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to anchor your primary observation point'**
+  String get celestialMapSubtitle;
+
   /// No description provided for @autoDetect.
   ///
   /// In en, this message translates to:
@@ -950,11 +956,35 @@ abstract class AppLocalizations {
   /// **'Never'**
   String get never;
 
+  /// No description provided for @signOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign Out'**
+  String get signOut;
+
   /// No description provided for @syncNow.
   ///
   /// In en, this message translates to:
   /// **'Sync Now'**
   String get syncNow;
+
+  /// No description provided for @syncing.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing...'**
+  String get syncing;
+
+  /// No description provided for @verifyingConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Verifying connection...'**
+  String get verifyingConnection;
+
+  /// No description provided for @connectionError.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection error'**
+  String get connectionError;
 
   /// No description provided for @hoursAbbreviation.
   ///
@@ -1338,6 +1368,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Maximum difference (max - min) in the sleep onset graph in minutes. If exceeded, the regime is split.'**
   String get maxSpreadDesc;
+
+  /// No description provided for @language.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get language;
+
+  /// No description provided for @english.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get english;
+
+  /// No description provided for @russian.
+  ///
+  /// In en, this message translates to:
+  /// **'Russian'**
+  String get russian;
 }
 
 class _AppLocalizationsDelegate
