@@ -65,6 +65,7 @@ class GoogleFitNotifier extends Notifier<GoogleFitState> {
   }
 
   Future<void> _initialize() async {
+    state = state.copyWith(status: GoogleFitStatus.connecting);
     final service = ref.read(googleFitServiceProvider);
 
     // Load last sync time from storage
@@ -74,15 +75,24 @@ class GoogleFitNotifier extends Notifier<GoogleFitState> {
       lastSync = DateTime.tryParse(lastSyncStr);
     }
 
-    final connected = await service.initialize();
-    if (connected) {
+    try {
+      final connected = await service.initialize();
+      if (connected) {
+        state = state.copyWith(
+          status: GoogleFitStatus.connected,
+          lastFetchTime: lastSync,
+        );
+      } else {
+        // If not connected, but there was a token, it might be an error or expired without refresh token
+        state = state.copyWith(
+          status: GoogleFitStatus.disconnected,
+          lastFetchTime: lastSync,
+        );
+      }
+    } catch (e) {
       state = state.copyWith(
-        status: GoogleFitStatus.connected,
-        lastFetchTime: lastSync,
-      );
-    } else {
-      state = state.copyWith(
-        status: GoogleFitStatus.disconnected,
+        status: GoogleFitStatus.error,
+        errorMessage: e.toString(),
         lastFetchTime: lastSync,
       );
     }
@@ -93,9 +103,12 @@ class GoogleFitNotifier extends Notifier<GoogleFitState> {
     final service = ref.read(googleFitServiceProvider);
     final success = await service.signIn();
     if (success) {
-      state = state.copyWith(status: GoogleFitStatus.connected);
+      state = state.copyWith(
+        status: GoogleFitStatus.connected,
+        errorMessage: null,
+      );
       // Trigger a sync after successful sign-in
-      ref.read(sleepProvider.notifier).loadSleepData();
+      ref.read(sleepProvider.notifier).syncWithGoogleFit(forceSync: true);
     } else {
       state = state.copyWith(
         status: GoogleFitStatus.error,

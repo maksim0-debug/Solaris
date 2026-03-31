@@ -18,6 +18,7 @@ class SleepService {
   /// Returns a record with the fetched sessions and a boolean indicating if it was a live sync.
   Future<({List<SleepSession> sessions, bool isLive})> fetchSleepData({
     int daysBack = 14,
+    bool forceNetwork = false,
   }) async {
     final endTime = DateTime.now();
     final startTime = endTime.subtract(Duration(days: daysBack));
@@ -32,12 +33,16 @@ class SleepService {
         final sleepSessions = _mapToSleepSessions(googleFitSessions);
         await _cacheSleepData(sleepSessions);
         return (sessions: sleepSessions, isLive: true);
+      } else if (forceNetwork) {
+        // If forceNetwork is true, we should not fall back to cache quietly
+        throw Exception('Failed to fetch data from Google Fit');
       }
     } catch (e) {
       debugPrint('Error fetching sleep data from Google Fit: $e');
+      if (forceNetwork) rethrow;
     }
 
-    // Attempt to load from cache on any failure
+    // Attempt to load from cache on any failure (if not forced)
     final cachedSessions = await _loadCachedSleepData();
     return (sessions: cachedSessions, isLive: false);
   }

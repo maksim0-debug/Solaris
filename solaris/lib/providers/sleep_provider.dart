@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solaris/models/sleep_session.dart';
 import 'package:solaris/models/sleep_regime.dart';
@@ -11,12 +12,14 @@ class SleepState extends Equatable {
   final List<SleepRegime> regimes;
   final bool isLoading;
   final String? error;
+  final bool isSyncing;
   final DateTime? lastFetchTime;
 
   const SleepState({
     required this.sessions,
     this.regimes = const [],
     this.isLoading = false,
+    this.isSyncing = false,
     this.error,
     this.lastFetchTime,
   });
@@ -25,6 +28,7 @@ class SleepState extends Equatable {
     List<SleepSession>? sessions,
     List<SleepRegime>? regimes,
     bool? isLoading,
+    bool? isSyncing,
     String? error,
     DateTime? lastFetchTime,
   }) {
@@ -32,6 +36,7 @@ class SleepState extends Equatable {
       sessions: sessions ?? this.sessions,
       regimes: regimes ?? this.regimes,
       isLoading: isLoading ?? this.isLoading,
+      isSyncing: isSyncing ?? this.isSyncing,
       error: error ?? this.error,
       lastFetchTime: lastFetchTime ?? this.lastFetchTime,
     );
@@ -42,6 +47,7 @@ class SleepState extends Equatable {
     sessions,
     regimes,
     isLoading,
+    isSyncing,
     error,
     lastFetchTime,
   ];
@@ -58,42 +64,74 @@ class SleepNotifier extends Notifier<SleepState> {
   }
 
   Future<void> loadSleepData() async {
+    // 1. First, load from cache immediately to show something in the UI
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final result = await _sleepService.fetchSleepData();
+      final result = await _sleepService.fetchSleepData(forceNetwork: false);
+      final sessions = result.sessions;
+
+      if (sessions.isNotEmpty) {
+        final regimes = RegimeAnalyzer.analyze(sessions);
+        state = state.copyWith(
+          sessions: sessions,
+          regimes: regimes,
+          isLoading: false,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error loading initial sleep data: $e');
+    }
+
+    // 2. Then, trigger a background sync if we are connected
+    final gState = ref.read(googleFitProvider);
+    if (gState.status == GoogleFitStatus.connected) {
+      syncWithGoogleFit(forceSync: false);
+    } else {
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
+  Future<void> syncWithGoogleFit({bool forceSync = true}) async {
+    if (state.isSyncing) return;
+
+    state = state.copyWith(isSyncing: true, error: null);
+    try {
+      final result = await _sleepService.fetchSleepData(
+        forceNetwork: forceSync,
+      );
       final sessions = result.sessions;
 
       if (sessions.isEmpty && state.sessions.isEmpty) {
         state = state.copyWith(
-          isLoading: false,
-          error: "No sleep data found. Check connection or data availability.",
+          isSyncing: false,
+          error: "No sleep data found.",
         );
         return;
       }
 
       if (result.isLive) {
+        final now = DateTime.now();
         // Notify GoogleFitProvider about successful live sync
-        ref
-            .read(googleFitProvider.notifier)
-            .updateLastFetchTime(DateTime.now());
+        ref.read(googleFitProvider.notifier).updateLastFetchTime(now);
+        
+        final regimes = RegimeAnalyzer.analyze(sessions);
+        state = state.copyWith(
+          sessions: sessions,
+          regimes: regimes,
+          isSyncing: false,
+          lastFetchTime: now,
+          error: null,
+        );
+      } else {
+        // If not live, but we weren't forcing it, just stop syncing
+        state = state.copyWith(isSyncing: false);
       }
-
-      final regimes = RegimeAnalyzer.analyze(sessions);
-
-      state = state.copyWith(
-        sessions: sessions,
-        regimes: regimes,
-        isLoading: false,
-        lastFetchTime: DateTime.now(),
-        error: null,
-      );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(
+        isSyncing: false,
+        error: forceSync ? "Sync failed: ${e.toString()}" : null,
+      );
     }
-  }
-
-  Future<void> syncWithGoogleFit() async {
-    await loadSleepData();
   }
 }
 

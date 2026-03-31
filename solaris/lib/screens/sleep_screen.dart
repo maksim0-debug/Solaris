@@ -36,8 +36,7 @@ class SleepScreen extends ConsumerWidget {
           // Google Fit Sync Card
           _GoogleFitSyncCard(
             googleFitState: googleFitState,
-            isLoading: sleepState.isLoading,
-            error: sleepState.error,
+            sleepState: sleepState,
           ),
           const SizedBox(height: 24),
 
@@ -138,16 +137,18 @@ class _SectionHeader extends StatelessWidget {
 class _GoogleFitSyncCard extends ConsumerWidget {
   const _GoogleFitSyncCard({
     required this.googleFitState,
-    required this.isLoading,
-    this.error,
+    required this.sleepState,
   });
+
   final GoogleFitState googleFitState;
-  final bool isLoading;
-  final String? error;
+  final SleepState sleepState;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final isSyncing = sleepState.isSyncing ||
+        googleFitState.status == GoogleFitStatus.connecting;
+
     return GlassCard(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -171,7 +172,7 @@ class _GoogleFitSyncCard extends ConsumerWidget {
               ),
               const Spacer(),
               if (googleFitState.status == GoogleFitStatus.connected &&
-                  !isLoading)
+                  !isSyncing)
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
@@ -186,7 +187,7 @@ class _GoogleFitSyncCard extends ConsumerWidget {
                     style: const TextStyle(color: Colors.green, fontSize: 12),
                   ),
                 ),
-              if (isLoading)
+              if (isSyncing)
                 const SizedBox(
                   width: 16,
                   height: 16,
@@ -198,9 +199,12 @@ class _GoogleFitSyncCard extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 20),
-          if (googleFitState.status != GoogleFitStatus.connected)
+          if (googleFitState.status == GoogleFitStatus.disconnected ||
+              googleFitState.status == GoogleFitStatus.initial)
             ElevatedButton(
-              onPressed: () => ref.read(googleFitProvider.notifier).signIn(),
+              onPressed: isSyncing
+                  ? null
+                  : () => ref.read(googleFitProvider.notifier).signIn(),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF8B5CF6),
                 padding: const EdgeInsets.symmetric(
@@ -209,6 +213,31 @@ class _GoogleFitSyncCard extends ConsumerWidget {
                 ),
               ),
               child: Text(l10n.connectGoogleFit),
+            )
+          else if (googleFitState.status == GoogleFitStatus.connecting)
+            const Text(
+              "Verifying connection...", // TODO: Localize
+              style: TextStyle(color: Colors.white70, fontSize: 14),
+            )
+          else if (googleFitState.status == GoogleFitStatus.error)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  googleFitState.errorMessage ?? "Connection error",
+                  style:
+                      const TextStyle(color: Color(0xFFF87171), fontSize: 14),
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: () =>
+                      ref.read(googleFitProvider.notifier).signIn(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF8B5CF6),
+                  ),
+                  child: Text(l10n.connectGoogleFit),
+                ),
+              ],
             )
           else
             Row(
@@ -232,26 +261,55 @@ class _GoogleFitSyncCard extends ConsumerWidget {
                           : l10n.never,
                       style: const TextStyle(color: Colors.white),
                     ),
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      onPressed: isSyncing
+                          ? null
+                          : () =>
+                              ref.read(googleFitProvider.notifier).signOut(),
+                      icon: const Icon(LucideIcons.logOut, size: 14),
+                      label: const Text(
+                        "Sign Out", // TODO: Localize if needed
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.white38,
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
                   ],
                 ),
                 ElevatedButton.icon(
-                  onPressed: isLoading
+                  onPressed: isSyncing
                       ? null
                       : () => ref
-                            .read(sleepProvider.notifier)
-                            .syncWithGoogleFit(),
-                  icon: const Icon(LucideIcons.refreshCw),
-                  label: Text(l10n.syncNow),
+                          .read(sleepProvider.notifier)
+                          .syncWithGoogleFit(forceSync: true),
+                  icon: isSyncing
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white70,
+                          ),
+                        )
+                      : const Icon(LucideIcons.refreshCw),
+                  label: Text(
+                    sleepState.isSyncing ? "Syncing..." : l10n.syncNow,
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white10,
                   ),
                 ),
               ],
             ),
-          if (error != null) ...[
+          if (sleepState.error != null) ...[
             const SizedBox(height: 12),
             Text(
-              error!,
+              sleepState.error!,
               style: const TextStyle(color: Color(0xFFF87171), fontSize: 12),
             ),
           ],

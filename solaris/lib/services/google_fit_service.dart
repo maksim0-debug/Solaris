@@ -28,16 +28,34 @@ class GoogleFitService {
       if (tokenJson != null) {
         final decoded = jsonDecode(tokenJson);
         if (decoded is Map<String, dynamic>) {
-          final credentials = AccessCredentials.fromJson(decoded);
+          var credentials = AccessCredentials.fromJson(decoded);
           final clientId = ClientId(
             dotenv.get('GOOGLE_CLIENT_ID'),
             dotenv.get('GOOGLE_CLIENT_SECRET'),
           );
 
+          // Check if token is expired and refresh it proactively
+          if (credentials.accessToken.expiry.isBefore(DateTime.now())) {
+            debugPrint('Google Fit token expired on init, attempting refresh...');
+            try {
+              credentials = await refreshCredentials(
+                clientId,
+                credentials,
+                http.Client(),
+              );
+              await _storage.save(
+                _tokenFilename,
+                jsonEncode(credentials.toJson()),
+              );
+            } catch (e) {
+              debugPrint('Error refreshing token during initialization: $e');
+              return false;
+            }
+          }
+
           _client = authenticatedClient(http.Client(), credentials);
           _fitnessApi = FitnessApi(_client!);
 
-          // Use clientId to verify credentials if needed, but for now we just initialize
           debugPrint(
             'Google Fit initialized with client ID: ${clientId.identifier}',
           );
@@ -58,13 +76,28 @@ class GoogleFitService {
         dotenv.get('GOOGLE_CLIENT_SECRET'),
       );
 
-      final client = await clientViaUserConsent(clientId, _scopes, (url) async {
-        if (await canLaunchUrl(Uri.parse(url))) {
-          await launchUrl(Uri.parse(url));
-        } else {
-          throw 'Could not launch $url';
-        }
-      });
+      final client = await clientViaUserConsent(
+        clientId,
+        _scopes,
+        (url) async {
+          // Append offline access parameters to the URL to ensure we get a refresh token
+          final uri = Uri.parse(url);
+          final updatedUri = uri.replace(
+            queryParameters: {
+              ...uri.queryParameters,
+              'access_type': 'offline',
+              'prompt': 'consent',
+            },
+          );
+          final updatedUrl = updatedUri.toString();
+
+          if (await canLaunchUrl(Uri.parse(updatedUrl))) {
+            await launchUrl(Uri.parse(updatedUrl));
+          } else {
+            throw 'Could not launch $updatedUrl';
+          }
+        },
+      );
 
       _client = client;
       _fitnessApi = FitnessApi(_client!);
