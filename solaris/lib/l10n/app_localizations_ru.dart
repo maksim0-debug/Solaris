@@ -112,6 +112,19 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String remainingUntilSleep(String time) {
+    return 'До сна: $time';
+  }
+
+  @override
+  String get remainingUntilWakeUp => 'До пробуждения';
+
+  @override
+  String circadianImpactWithStatus(String feature, int impact, String status) {
+    return '$feature $impact% к яркости ($status)';
+  }
+
+  @override
   String activeLower(String time) {
     return 'Активно $time';
   }

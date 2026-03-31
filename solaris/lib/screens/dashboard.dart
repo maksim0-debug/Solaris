@@ -721,11 +721,15 @@ class _DashboardView extends ConsumerWidget {
                             if (smartData.isWindDownActive) {
                               final impactPercent = ((1.0 - smartData.windDownFactor) * 100).round();
                               final remaining = smartData.windDownMinutesRemaining;
+                              final untilWakeUp = smartData.minutesUntilWakeUp;
+                              
                               activeAjustments.add(_SmartAdjustmentIndicator(
                                 icon: LucideIcons.moon,
                                 label: remaining != null 
                                   ? l10n.circadianImpactWithTime(l10n.featureWindDownShort, -impactPercent, remaining, l10n.minutesAbbreviation)
-                                  : l10n.circadianImpact(l10n.featureWindDownShort, -impactPercent),
+                                  : (untilWakeUp != null)
+                                    ? l10n.circadianImpactWithStatus(l10n.featureWindDownShort, -impactPercent, l10n.remainingUntilWakeUp)
+                                    : l10n.circadianImpact(l10n.featureWindDownShort, -impactPercent),
                               ));
                             }
                             

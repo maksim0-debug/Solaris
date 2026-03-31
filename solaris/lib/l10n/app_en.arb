@@ -61,6 +61,32 @@
       }
     }
   },
+  "remainingUntilSleep": "{time} until sleep",
+  "@remainingUntilSleep": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "remainingUntilWakeUp": "Until wake-up",
+  "@remainingUntilWakeUp": {
+    "description": "Text shown during the rest period when the timer is no longer needed"
+  },
+  "circadianImpactWithStatus": "{feature} {impact}% brightness ({status})",
+  "@circadianImpactWithStatus": {
+    "placeholders": {
+      "feature": {
+        "type": "String"
+      },
+      "impact": {
+        "type": "int"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
   "activeLower": "{time} Active",
   "@activeLower": {
     "placeholders": {

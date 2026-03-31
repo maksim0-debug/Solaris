@@ -15,6 +15,7 @@ class SmartCircadianData extends Equatable {
   final int? timeShiftMinutesRemaining;
   final int? windDownMinutesRemaining;
   final int? minutesUntilSleep;
+  final int? minutesUntilWakeUp;
 
   const SmartCircadianData({
     this.brightnessMultiplier = 1.0,
@@ -31,6 +32,7 @@ class SmartCircadianData extends Equatable {
     this.timeShiftMinutesRemaining,
     this.windDownMinutesRemaining,
     this.minutesUntilSleep,
+    this.minutesUntilWakeUp,
   });
 
   const SmartCircadianData.neutral()
@@ -47,7 +49,8 @@ class SmartCircadianData extends Equatable {
         timeShiftBrightnessImpact = 0.0,
         timeShiftMinutesRemaining = null,
         windDownMinutesRemaining = null,
-        minutesUntilSleep = null;
+        minutesUntilSleep = null,
+        minutesUntilWakeUp = null;
 
   @override
   List<Object?> get props => [
@@ -65,6 +68,7 @@ class SmartCircadianData extends Equatable {
         timeShiftMinutesRemaining,
         windDownMinutesRemaining,
         minutesUntilSleep,
+        minutesUntilWakeUp,
       ];
 }
 

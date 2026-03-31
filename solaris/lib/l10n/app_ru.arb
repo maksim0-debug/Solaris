@@ -61,6 +61,32 @@
       }
     }
   },
+  "remainingUntilSleep": "До сна: {time}",
+  "@remainingUntilSleep": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "remainingUntilWakeUp": "До пробуждения",
+  "@remainingUntilWakeUp": {
+    "description": "Текст во время фазы сна, когда таймер не нужен"
+  },
+  "circadianImpactWithStatus": "{feature} {impact}% к яркости ({status})",
+  "@circadianImpactWithStatus": {
+    "placeholders": {
+      "feature": {
+        "type": "String"
+      },
+      "impact": {
+        "type": "int"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
   "activeLower": "Активно {time}",
   "@activeLower": {
     "placeholders": {

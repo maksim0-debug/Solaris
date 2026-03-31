@@ -283,8 +283,12 @@ class _CircadianRegulationSection extends ConsumerWidget {
                     brightnessLabel: l10n.influenceBrightness,
                     temperatureLabel: l10n.influenceTemperature,
                     isActive: smartData.isWindDownActive,
-                    timingText: (smartData.isWindDownActive && smartData.minutesUntilSleep != null) 
-                        ? l10n.remainingLower(formatMins(smartData.minutesUntilSleep!))
+                    timingText: smartData.isWindDownActive
+                        ? (smartData.minutesUntilSleep != null && smartData.minutesUntilSleep! > 0)
+                            ? l10n.remainingUntilSleep(formatMins(smartData.minutesUntilSleep!))
+                            : (smartData.minutesUntilWakeUp != null)
+                                ? l10n.remainingUntilWakeUp
+                                : l10n.active
                         : null,
                     brightnessIntensity: settings.windDownBrightnessIntensity,
                     temperatureIntensity: settings.windDownTemperatureIntensity,

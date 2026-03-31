@@ -284,6 +284,24 @@ abstract class AppLocalizations {
   /// **'{time} Remaining'**
   String remainingLower(String time);
 
+  /// No description provided for @remainingUntilSleep.
+  ///
+  /// In en, this message translates to:
+  /// **'{time} until sleep'**
+  String remainingUntilSleep(String time);
+
+  /// Text shown during the rest period when the timer is no longer needed
+  ///
+  /// In en, this message translates to:
+  /// **'Until wake-up'**
+  String get remainingUntilWakeUp;
+
+  /// No description provided for @circadianImpactWithStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'{feature} {impact}% brightness ({status})'**
+  String circadianImpactWithStatus(String feature, int impact, String status);
+
   /// No description provided for @activeLower.
   ///
   /// In en, this message translates to:

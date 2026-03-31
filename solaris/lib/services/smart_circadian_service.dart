@@ -181,12 +181,21 @@ class SmartCircadianService {
     }
 
     int? windDownMinutesRemaining;
-    if (isWindDownActive && minutesUntilSleep != null) {
-      if (minutesUntilSleep > 0) {
+    int? minutesUntilWakeUpValue;
+    if (isWindDownActive) {
+      if (minutesUntilSleep != null && minutesUntilSleep > 0) {
         windDownMinutesRemaining = minutesUntilSleep;
       } else {
-        // Technically we're past bedtime, show countdown to expectation of morning
-        // but for UI consistency, we can just show active status.
+        // We're past bedtime, calculate minutes until the expected wake-up
+        final nowMinutes = BedtimeNormalization.minutesFromNoon(now);
+        final avgWakeMinutes = currentRegime.averageWakeTimeNormalized;
+        int minsUntilMorning = avgWakeMinutes - nowMinutes;
+        while (minsUntilMorning > 720) minsUntilMorning -= 1440;
+        while (minsUntilMorning < -720) minsUntilMorning += 1440;
+        
+        if (minsUntilMorning > 0) {
+          minutesUntilWakeUpValue = minsUntilMorning;
+        }
       }
     }
 
@@ -209,6 +218,7 @@ class SmartCircadianService {
       timeShiftMinutesRemaining: timeShiftMinutesRemaining,
       windDownMinutesRemaining: windDownMinutesRemaining,
       minutesUntilSleep: minutesUntilSleep,
+      minutesUntilWakeUp: minutesUntilWakeUpValue,
     );
 
   }
