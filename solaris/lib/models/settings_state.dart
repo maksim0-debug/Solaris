@@ -27,6 +27,11 @@ class SettingsState {
   final int timeShiftDurationMinutes;
   final double sleepPressureWakeLimitHours;
   final int sleepDebtThresholdMinutes;
+  final int sleepToleranceWindow;
+  final int sleepMaxAnomalies;
+  final int sleepMinRegimeLength;
+  final int sleepAnchorSize;
+  final int sleepMaxSpread;
   final bool isGameModeEnabled;
   final double gameModeBrightness;
   final List<String> gameModeWhitelist;
@@ -58,6 +63,11 @@ class SettingsState {
     this.timeShiftDurationMinutes = 360,
     this.sleepPressureWakeLimitHours = 16.0,
     this.sleepDebtThresholdMinutes = 390,
+    this.sleepToleranceWindow = 90,
+    this.sleepMaxAnomalies = 2,
+    this.sleepMinRegimeLength = 2,
+    this.sleepAnchorSize = 2,
+    this.sleepMaxSpread = 105,
     this.isGameModeEnabled = true,
     this.gameModeBrightness = 80.0,
     this.gameModeWhitelist = const [],
@@ -101,6 +111,11 @@ class SettingsState {
     'timeShiftDurationMinutes': timeShiftDurationMinutes,
     'sleepPressureWakeLimitHours': sleepPressureWakeLimitHours,
     'sleepDebtThresholdMinutes': sleepDebtThresholdMinutes,
+    'sleepToleranceWindow': sleepToleranceWindow,
+    'sleepMaxAnomalies': sleepMaxAnomalies,
+    'sleepMinRegimeLength': sleepMinRegimeLength,
+    'sleepAnchorSize': sleepAnchorSize,
+    'sleepMaxSpread': sleepMaxSpread,
     'isGameModeEnabled': isGameModeEnabled,
     'gameModeBrightness': gameModeBrightness,
     'gameModeWhitelist': gameModeWhitelist,
@@ -186,6 +201,11 @@ class SettingsState {
           (json['sleepPressureWakeLimitHours'] as num?)?.toDouble() ?? 16.0,
       sleepDebtThresholdMinutes:
           json['sleepDebtThresholdMinutes'] as int? ?? 390,
+      sleepToleranceWindow: json['sleepToleranceWindow'] as int? ?? 105,
+      sleepMaxAnomalies: json['sleepMaxAnomalies'] as int? ?? 2,
+      sleepMinRegimeLength: json['sleepMinRegimeLength'] as int? ?? 2,
+      sleepAnchorSize: json['sleepAnchorSize'] as int? ?? 2,
+      sleepMaxSpread: json['sleepMaxSpread'] as int? ?? 105,
       isGameModeEnabled: json['isGameModeEnabled'] as bool? ?? true,
       gameModeBrightness:
           (json['gameModeBrightness'] as num?)?.toDouble() ?? 80.0,
@@ -229,6 +249,11 @@ class SettingsState {
     int? timeShiftDurationMinutes,
     double? sleepPressureWakeLimitHours,
     int? sleepDebtThresholdMinutes,
+    int? sleepToleranceWindow,
+    int? sleepMaxAnomalies,
+    int? sleepMinRegimeLength,
+    int? sleepAnchorSize,
+    int? sleepMaxSpread,
     bool? isGameModeEnabled,
     double? gameModeBrightness,
     List<String>? gameModeWhitelist,
@@ -278,6 +303,11 @@ class SettingsState {
           sleepPressureWakeLimitHours ?? this.sleepPressureWakeLimitHours,
       sleepDebtThresholdMinutes:
           sleepDebtThresholdMinutes ?? this.sleepDebtThresholdMinutes,
+      sleepToleranceWindow: sleepToleranceWindow ?? this.sleepToleranceWindow,
+      sleepMaxAnomalies: sleepMaxAnomalies ?? this.sleepMaxAnomalies,
+      sleepMinRegimeLength: sleepMinRegimeLength ?? this.sleepMinRegimeLength,
+      sleepAnchorSize: sleepAnchorSize ?? this.sleepAnchorSize,
+      sleepMaxSpread: sleepMaxSpread ?? this.sleepMaxSpread,
       isGameModeEnabled: isGameModeEnabled ?? this.isGameModeEnabled,
       gameModeBrightness: gameModeBrightness ?? this.gameModeBrightness,
       gameModeWhitelist: gameModeWhitelist ?? this.gameModeWhitelist,

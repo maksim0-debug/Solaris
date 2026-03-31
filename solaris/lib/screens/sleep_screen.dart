@@ -80,6 +80,11 @@ class SleepScreen extends ConsumerWidget {
                 }),
               ],
             ),
+          const SizedBox(height: 32),
+          if (googleFitState.status == GoogleFitStatus.connected) ...[
+            const _SleepAnalysisSettingsSection(),
+            const SizedBox(height: 48),
+          ],
         ],
       ),
     );
@@ -980,6 +985,237 @@ class _DurationSlider extends StatelessWidget {
             overlayColor: const Color(0xFF8B5CF6).withOpacity(0.2),
           ),
           child: Slider(value: value, min: min, max: max, onChanged: onChanged),
+        ),
+      ],
+    );
+  }
+}
+
+class _SleepAnalysisSettingsSection extends ConsumerStatefulWidget {
+  const _SleepAnalysisSettingsSection();
+
+  @override
+  ConsumerState<_SleepAnalysisSettingsSection> createState() =>
+      _SleepAnalysisSettingsSectionState();
+}
+
+class _SleepAnalysisSettingsSectionState
+    extends ConsumerState<_SleepAnalysisSettingsSection> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final settingsAsync = ref.watch(settingsProvider);
+    final selectedMonitors = ref.watch(selectedMonitorsProvider);
+    final monitorId = selectedMonitors.firstOrNull ?? 'all';
+
+    final settings = settingsAsync.maybeWhen(
+      data: (map) => map[monitorId] ?? map['all'] ?? SettingsState(),
+      orElse: () => SettingsState(),
+    );
+
+    final notifier = ref.read(settingsProvider.notifier);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: () => setState(() => _isExpanded = !_isExpanded),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                Text(
+                  l10n.sleepAnalysisSettings,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  _isExpanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
+                  color: Colors.white60,
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        AnimatedCrossFade(
+          firstChild: const SizedBox(width: double.infinity),
+          secondChild: Column(
+            children: [
+              const SizedBox(height: 8),
+              GlassCard(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    _AnalysisSlider(
+                      title: l10n.toleranceWindow,
+                      subtitle: l10n.toleranceWindowDesc,
+                      value: settings.sleepToleranceWindow.toDouble(),
+                      min: 30,
+                      max: 180,
+                      unit: l10n.minutesAbbreviation,
+                      onChanged: (val) =>
+                          notifier.updateSleepToleranceWindow(val.toInt()),
+                    ),
+                    const Divider(height: 32, color: Colors.white10),
+                    _AnalysisSlider(
+                      title: l10n.maxAnomalies,
+                      subtitle: l10n.maxAnomaliesDesc,
+                      value: settings.sleepMaxAnomalies.toDouble(),
+                      min: 1,
+                      max: 7,
+                      unit: l10n.daysCount(1)
+                          .replaceAll(RegExp(r'[0-9]'), '')
+                          .trim(),
+                      onChanged: (val) =>
+                          notifier.updateSleepMaxAnomalies(val.toInt()),
+                    ),
+                    const Divider(height: 32, color: Colors.white10),
+                    _AnalysisSlider(
+                      title: l10n.minRegimeLength,
+                      subtitle: l10n.minRegimeLengthDesc,
+                      value: settings.sleepMinRegimeLength.toDouble(),
+                      min: 1,
+                      max: 7,
+                      unit: l10n.daysCount(1)
+                          .replaceAll(RegExp(r'[0-9]'), '')
+                          .trim(),
+                      onChanged: (val) =>
+                          notifier.updateSleepMinRegimeLength(val.toInt()),
+                    ),
+                    const Divider(height: 32, color: Colors.white10),
+                    _AnalysisSlider(
+                      title: l10n.anchorSize,
+                      subtitle: l10n.anchorSizeDesc,
+                      value: settings.sleepAnchorSize.toDouble(),
+                      min: 1,
+                      max: 7,
+                      unit: l10n.daysCount(1)
+                          .replaceAll(RegExp(r'[0-9]'), '')
+                          .trim(),
+                      onChanged: (val) =>
+                          notifier.updateSleepAnchorSize(val.toInt()),
+                    ),
+                    const Divider(height: 32, color: Colors.white10),
+                    _AnalysisSlider(
+                      title: l10n.maxSpread,
+                      subtitle: l10n.maxSpreadDesc,
+                      value: settings.sleepMaxSpread.toDouble(),
+                      min: 30,
+                      max: 240,
+                      unit: l10n.minutesAbbreviation,
+                      onChanged: (val) =>
+                          notifier.updateSleepMaxSpread(val.toInt()),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          crossFadeState:
+              _isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+          duration: const Duration(milliseconds: 300),
+          sizeCurve: Curves.easeInOut,
+        ),
+      ],
+    );
+  }
+}
+
+class _AnalysisSlider extends StatelessWidget {
+  const _AnalysisSlider({
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.onChanged,
+    this.unit = '',
+  });
+
+  final String title;
+  final String subtitle;
+  final double value;
+  final double min;
+  final double max;
+  final ValueChanged<double> onChanged;
+  final String unit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                   Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white.withOpacity(0.4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF8B5CF6).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${value.toInt()} $unit',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFFC4B5FD),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 2,
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+            overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
+            activeTrackColor: const Color(0xFF818CF8),
+            inactiveTrackColor: Colors.white10,
+            thumbColor: Colors.white,
+            overlayColor: const Color(0xFF8B5CF6).withOpacity(0.2),
+          ),
+          child: Slider(
+            value: value,
+            min: min,
+            max: max,
+            divisions: (max - min).toInt() > 0 ? (max - min).toInt() : null,
+            onChanged: onChanged,
+          ),
         ),
       ],
     );

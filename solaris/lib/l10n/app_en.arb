@@ -308,5 +308,16 @@
   "blacklistSubtitle": "Ignore even if fullscreen",
   "sunBase": "Sun Base",
   "finalValue": "Final",
-  "brightnessReceipt": "Brightness Receipt"
+  "brightnessReceipt": "Brightness Receipt",
+  "sleepAnalysisSettings": "Sleep Analysis Settings",
+  "toleranceWindow": "Window of allowable deviations",
+  "toleranceWindowDesc": "How much the sleep onset time can deviate from the 'anchor' value before it's counted as an anomaly.",
+  "maxAnomalies": "Maximum anomalies",
+  "maxAnomaliesDesc": "Number of consecutive 'anomalous' days allowed by the algorithm before the current regime is broken.",
+  "minRegimeLength": "Minimum number of days",
+  "minRegimeLengthDesc": "Minimum duration of a regime for it not to be merged with a neighbor.",
+  "anchorSize": "Anchor window size",
+  "anchorSizeDesc": "Number of first days for forming the anchor average value.",
+  "maxSpread": "Maximum regime spread",
+  "maxSpreadDesc": "Maximum difference (max - min) in the sleep onset graph in minutes. If exceeded, the regime is split."
 }

@@ -5,6 +5,9 @@ import 'package:solaris/models/sleep_regime.dart';
 import 'package:solaris/services/sleep_service.dart';
 import 'package:solaris/services/regime_analyzer.dart';
 import 'package:solaris/providers/google_fit_provider.dart';
+import 'package:solaris/providers.dart';
+import 'package:solaris/models/regime_settings.dart';
+import 'package:solaris/models/settings_state.dart';
 import 'package:equatable/equatable.dart';
 
 class SleepState extends Equatable {
@@ -58,20 +61,45 @@ class SleepNotifier extends Notifier<SleepState> {
 
   @override
   SleepState build() {
+    // Watch settings to re-trigger analysis when they change
+    final settingsAsync = ref.watch(settingsProvider);
+    final selectedMonitors = ref.watch(selectedMonitorsProvider);
+    final monitorId = selectedMonitors.firstOrNull ?? 'all';
+
+    settingsAsync.whenData((settingsMap) {
+      final settings = settingsMap[monitorId] ?? settingsMap['all'];
+      if (settings != null && state.sessions.isNotEmpty) {
+        final newRegimes = RegimeAnalyzer.analyze(
+          state.sessions,
+          settings: RegimeSettings(
+            toleranceWindow: settings.sleepToleranceWindow,
+            maxAnomalies: settings.sleepMaxAnomalies,
+            minRegimeLength: settings.sleepMinRegimeLength,
+            anchorSize: settings.sleepAnchorSize,
+            maxSpread: settings.sleepMaxSpread,
+          ),
+        );
+        // Only update if regimes actually changed to avoid cycles (though analysis is deterministic)
+        if (newRegimes != state.regimes) {
+          state = state.copyWith(regimes: newRegimes);
+        }
+      }
+    });
+
     // Attempt initial load from cache
     Future.microtask(() => loadSleepData());
     return const SleepState(sessions: []);
   }
 
   Future<void> loadSleepData() async {
-    // 1. First, load from cache immediately to show something in the UI
     state = state.copyWith(isLoading: true, error: null);
     try {
       final result = await _sleepService.fetchSleepData(forceNetwork: false);
       final sessions = result.sessions;
 
       if (sessions.isNotEmpty) {
-        final regimes = RegimeAnalyzer.analyze(sessions);
+        final settings = _getCurrentRegimeSettings();
+        final regimes = RegimeAnalyzer.analyze(sessions, settings: settings);
         state = state.copyWith(
           sessions: sessions,
           regimes: regimes,
@@ -82,7 +110,6 @@ class SleepNotifier extends Notifier<SleepState> {
       debugPrint('Error loading initial sleep data: $e');
     }
 
-    // 2. Then, trigger a background sync if we are connected
     final gState = ref.read(googleFitProvider);
     if (gState.status == GoogleFitStatus.connected) {
       syncWithGoogleFit(forceSync: false);
@@ -111,10 +138,10 @@ class SleepNotifier extends Notifier<SleepState> {
 
       if (result.isLive) {
         final now = DateTime.now();
-        // Notify GoogleFitProvider about successful live sync
         ref.read(googleFitProvider.notifier).updateLastFetchTime(now);
-        
-        final regimes = RegimeAnalyzer.analyze(sessions);
+
+        final settings = _getCurrentRegimeSettings();
+        final regimes = RegimeAnalyzer.analyze(sessions, settings: settings);
         state = state.copyWith(
           sessions: sessions,
           regimes: regimes,
@@ -123,7 +150,6 @@ class SleepNotifier extends Notifier<SleepState> {
           error: null,
         );
       } else {
-        // If not live, but we weren't forcing it, just stop syncing
         state = state.copyWith(isSyncing: false);
       }
     } catch (e) {
@@ -132,6 +158,26 @@ class SleepNotifier extends Notifier<SleepState> {
         error: forceSync ? "Sync failed: ${e.toString()}" : null,
       );
     }
+  }
+
+  RegimeSettings _getCurrentRegimeSettings() {
+    final settingsAsync = ref.read(settingsProvider);
+    final selectedMonitors = ref.read(selectedMonitorsProvider);
+    final monitorId = selectedMonitors.firstOrNull ?? 'all';
+
+    return settingsAsync.maybeWhen(
+      data: (map) {
+        final s = map[monitorId] ?? map['all'] ?? SettingsState();
+        return RegimeSettings(
+          toleranceWindow: s.sleepToleranceWindow,
+          maxAnomalies: s.sleepMaxAnomalies,
+          minRegimeLength: s.sleepMinRegimeLength,
+          anchorSize: s.sleepAnchorSize,
+          maxSpread: s.sleepMaxSpread,
+        );
+      },
+      orElse: () => const RegimeSettings(),
+    );
   }
 }
 

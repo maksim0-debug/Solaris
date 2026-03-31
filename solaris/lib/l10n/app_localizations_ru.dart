@@ -659,4 +659,42 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get brightnessReceipt => 'Чек яркости';
+
+  @override
+  String get sleepAnalysisSettings => 'Настройки анализа сна';
+
+  @override
+  String get toleranceWindow => 'Окно допустимых отклонений';
+
+  @override
+  String get toleranceWindowDesc =>
+      'Насколько может отклоняться время отхода ко сну от «опорного» значения, прежде чем будет засчитана аномалия.';
+
+  @override
+  String get maxAnomalies => 'Максимум аномалий';
+
+  @override
+  String get maxAnomaliesDesc =>
+      'Количество последовательных «аномальных» дней, которое допускается алгоритмом до разрыва текущего режима.';
+
+  @override
+  String get minRegimeLength => 'Минимальное количество дней';
+
+  @override
+  String get minRegimeLengthDesc =>
+      'Минимальная продолжительность режима, чтобы он не был объединен с соседним.';
+
+  @override
+  String get anchorSize => 'Размер опорного окна';
+
+  @override
+  String get anchorSizeDesc =>
+      'Количество первых дней для формирования якорного среднего значения.';
+
+  @override
+  String get maxSpread => 'Максимальный разброс режима';
+
+  @override
+  String get maxSpreadDesc =>
+      'Максимальная разница (максимум — минимум) в графике отхода ко сну в минутах. Если превышена, режим разбивается.';
 }

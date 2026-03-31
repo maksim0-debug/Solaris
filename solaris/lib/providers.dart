@@ -950,6 +950,36 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     _updateSettings(ids, current.copyWith(sleepDebtThresholdMinutes: minutes));
   }
 
+  void updateSleepToleranceWindow(int value) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(ids, current.copyWith(sleepToleranceWindow: value));
+  }
+
+  void updateSleepMaxAnomalies(int value) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(ids, current.copyWith(sleepMaxAnomalies: value));
+  }
+
+  void updateSleepMinRegimeLength(int value) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(ids, current.copyWith(sleepMinRegimeLength: value));
+  }
+
+  void updateSleepAnchorSize(int value) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(ids, current.copyWith(sleepAnchorSize: value));
+  }
+
+  void updateSleepMaxSpread(int value) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(ids, current.copyWith(sleepMaxSpread: value));
+  }
+
   void updateTimeShiftIntensity(double intensity) {
     final ids = ref.read(selectedMonitorsProvider);
     final current = _getSettings(ids.firstOrNull ?? 'all');

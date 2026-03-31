@@ -1272,6 +1272,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Brightness Receipt'**
   String get brightnessReceipt;
+
+  /// No description provided for @sleepAnalysisSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep Analysis Settings'**
+  String get sleepAnalysisSettings;
+
+  /// No description provided for @toleranceWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Window of allowable deviations'**
+  String get toleranceWindow;
+
+  /// No description provided for @toleranceWindowDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'How much the sleep onset time can deviate from the \'anchor\' value before it\'s counted as an anomaly.'**
+  String get toleranceWindowDesc;
+
+  /// No description provided for @maxAnomalies.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum anomalies'**
+  String get maxAnomalies;
+
+  /// No description provided for @maxAnomaliesDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of consecutive \'anomalous\' days allowed by the algorithm before the current regime is broken.'**
+  String get maxAnomaliesDesc;
+
+  /// No description provided for @minRegimeLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum number of days'**
+  String get minRegimeLength;
+
+  /// No description provided for @minRegimeLengthDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum duration of a regime for it not to be merged with a neighbor.'**
+  String get minRegimeLengthDesc;
+
+  /// No description provided for @anchorSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Anchor window size'**
+  String get anchorSize;
+
+  /// No description provided for @anchorSizeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of first days for forming the anchor average value.'**
+  String get anchorSizeDesc;
+
+  /// No description provided for @maxSpread.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum regime spread'**
+  String get maxSpread;
+
+  /// No description provided for @maxSpreadDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum difference (max - min) in the sleep onset graph in minutes. If exceeded, the regime is split.'**
+  String get maxSpreadDesc;
 }
 
 class _AppLocalizationsDelegate

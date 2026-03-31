@@ -11,11 +11,11 @@ class RegimeSettings extends Equatable {
   final int recencyTolerance; // minutes difference from latest to be "outdated"
 
   const RegimeSettings({
-    this.toleranceWindow = 60,
-    this.maxSpread = 120,
+    this.toleranceWindow = 75,
+    this.maxSpread = 105,
     this.maxAnomalies = 2,
-    this.minRegimeLength = 3,
-    this.anchorSize = 3,
+    this.minRegimeLength = 2,
+    this.anchorSize = 2,
     this.floatingThreshold = 45,
     this.mergeThresholdMinutes = 210, // 3.5 hours
     this.recencyTolerance = 75, // 1 hour 15 minutes

@@ -658,4 +658,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get brightnessReceipt => 'Brightness Receipt';
+
+  @override
+  String get sleepAnalysisSettings => 'Sleep Analysis Settings';
+
+  @override
+  String get toleranceWindow => 'Window of allowable deviations';
+
+  @override
+  String get toleranceWindowDesc =>
+      'How much the sleep onset time can deviate from the \'anchor\' value before it\'s counted as an anomaly.';
+
+  @override
+  String get maxAnomalies => 'Maximum anomalies';
+
+  @override
+  String get maxAnomaliesDesc =>
+      'Number of consecutive \'anomalous\' days allowed by the algorithm before the current regime is broken.';
+
+  @override
+  String get minRegimeLength => 'Minimum number of days';
+
+  @override
+  String get minRegimeLengthDesc =>
+      'Minimum duration of a regime for it not to be merged with a neighbor.';
+
+  @override
+  String get anchorSize => 'Anchor window size';
+
+  @override
+  String get anchorSizeDesc =>
+      'Number of first days for forming the anchor average value.';
+
+  @override
+  String get maxSpread => 'Maximum regime spread';
+
+  @override
+  String get maxSpreadDesc =>
+      'Maximum difference (max - min) in the sleep onset graph in minutes. If exceeded, the regime is split.';
 }
