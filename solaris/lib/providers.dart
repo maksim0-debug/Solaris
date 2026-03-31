@@ -784,7 +784,6 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     if (!current.gameModeWhitelist.contains(item)) {
       final newList = List<String>.from(current.gameModeWhitelist)..add(item);
       _updateSettings(ids, current.copyWith(gameModeWhitelist: newList));
-      ref.read(gamingModeServiceProvider).updateWhitelist(newList);
     }
   }
 
@@ -794,7 +793,6 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     if (current.gameModeWhitelist.contains(item)) {
       final newList = List<String>.from(current.gameModeWhitelist)..remove(item);
       _updateSettings(ids, current.copyWith(gameModeWhitelist: newList));
-      ref.read(gamingModeServiceProvider).updateWhitelist(newList);
     }
   }
 
@@ -804,10 +802,6 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     if (!current.gameModeBlacklist.contains(item)) {
       final newList = List<String>.from(current.gameModeBlacklist)..add(item);
       _updateSettings(ids, current.copyWith(gameModeBlacklist: newList));
-      ref.read(gamingModeServiceProvider).updateBlacklist([
-        ...GamingModeService.defaultBlacklist,
-        ...newList
-      ]);
     }
   }
 
@@ -817,10 +811,6 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     if (current.gameModeBlacklist.contains(item)) {
       final newList = List<String>.from(current.gameModeBlacklist)..remove(item);
       _updateSettings(ids, current.copyWith(gameModeBlacklist: newList));
-      ref.read(gamingModeServiceProvider).updateBlacklist([
-        ...GamingModeService.defaultBlacklist,
-        ...newList
-      ]);
     }
   }
 

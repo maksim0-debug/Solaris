@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:developer' as dev;
+import 'package:solaris/providers.dart';
+import 'package:solaris/models/settings_state.dart';
 
 class GamingModeService extends Notifier<bool> {
   static const _methodChannel = MethodChannel('com.solaris.monitor/names');
@@ -22,14 +24,34 @@ class GamingModeService extends Notifier<bool> {
     'applicationframehost.exe', // Windows UI elements
     'shellexperiencehost.exe',
     'searchhost.exe',
+    'telegram.exe', // False positive (Media Player)
+    'sharex.exe',   // False positive
+    'vlc.exe',
+    'mpc-hc64.exe',
+    'potplayer64.exe',
+    'zoom.exe',
   ];
 
   @override
   bool build() {
-    // Standard initialization
+    // Watch settings to automatically sync blacklist/whitelist to native code
+    final settingsAsync = ref.watch(settingsProvider);
+
+    settingsAsync.whenData((Map<String, SettingsState> settingsMap) {
+      final settings = settingsMap['all'] ?? SettingsState();
+      
+      // Sync Whitelist
+      _updateWhitelistNative(settings.gameModeWhitelist);
+      
+      // Sync Blacklist (Default + User)
+      _updateBlacklistNative([
+        ...defaultBlacklist,
+        ...settings.gameModeBlacklist,
+      ]);
+    });
+
     _init();
     
-    // Automatically cancel subscription when provider is disposed
     ref.onDispose(() {
       _subscription?.cancel();
     });
@@ -37,11 +59,7 @@ class GamingModeService extends Notifier<bool> {
     return false;
   }
 
-  Future<void> _init() async {
-    // 1. Initialize native blacklist
-    await updateBlacklist(defaultBlacklist);
-    
-    // 2. Listen to gaming mode changes
+  void _init() {
     _subscription = _eventChannel.receiveBroadcastStream().listen(
       (dynamic event) {
         if (event is bool) {
@@ -55,22 +73,30 @@ class GamingModeService extends Notifier<bool> {
     );
   }
 
-  /// Updates the user-defined whitelist in native code (Stage 3).
-  Future<void> updateWhitelist(List<String> whitelist) async {
+  Future<void> _updateWhitelistNative(List<String> whitelist) async {
     try {
       await _methodChannel.invokeMethod('updateWhitelist', whitelist);
-    } on PlatformException catch (e) {
-      dev.log('Failed to update whitelist: ${e.message}', name: 'GamingModeService');
+    } catch (e) {
+      dev.log('Failed to update whitelist: $e', name: 'GamingModeService');
     }
   }
 
-  /// Updates the Stage 4 blacklist in native code.
-  Future<void> updateBlacklist(List<String> blacklist) async {
+  Future<void> _updateBlacklistNative(List<String> blacklist) async {
     try {
       await _methodChannel.invokeMethod('updateBlacklist', blacklist);
-    } on PlatformException catch (e) {
-      dev.log('Failed to update blacklist: ${e.message}', name: 'GamingModeService');
+    } catch (e) {
+      dev.log('Failed to update blacklist: $e', name: 'GamingModeService');
     }
+  }
+
+  /// Manually update whitelist (e.g. from UI)
+  Future<void> updateWhitelist(List<String> whitelist) async {
+    await _updateWhitelistNative(whitelist);
+  }
+
+  /// Manually update blacklist (e.g. from UI)
+  Future<void> updateBlacklist(List<String> blacklist) async {
+    await _updateBlacklistNative(blacklist);
   }
 }
 

@@ -11,16 +11,21 @@
 #include <cfgmgr32.h>
 #include <algorithm>
 #include <cctype>
+#include <cwctype>
 #include <highlevelmonitorconfigurationapi.h>
 #include <physicalmonitorenumerationapi.h>
 
 #pragma comment(lib, "setupapi.lib")
 #pragma comment(lib, "dxva2.lib")
+#pragma comment(lib, "Psapi.lib")
 
 // GUID_DEVINTERFACE_MONITOR is usually {E6F07B5F-EE97-4a90-B076-33F57BF4EAA7}
 DEFINE_GUID(GUID_DEVINTERFACE_MONITOR_INTERNAL, 0xE6F07B5F, 0xEE97, 0x4a90, 0xB0, 0x76, 0x33, 0xF5, 0x7B, 0xF4, 0xEA, 0xA7);
 
 MonitorManager::MonitorManager() {
+  last_gaming_match_time_ = std::chrono::steady_clock::now() - std::chrono::seconds(10);
+  candidate_start_time_ = last_gaming_match_time_;
+  
   worker_thread_ = std::thread(&MonitorManager::WorkerLoop, this);
   detector_thread_ = std::thread(&MonitorManager::DetectorLoop, this);
 }
@@ -431,86 +436,234 @@ void MonitorManager::UpdateBlacklist(const std::vector<std::string>& blacklist) 
 
 void MonitorManager::DetectorLoop() {
   while (!stop_detector_) {
-    bool current_gaming = CheckIsGamingMode();
-    if (current_gaming != is_gaming_mode_) {
-      is_gaming_mode_ = current_gaming;
+    HWND hwnd = GetForegroundWindow();
+    bool is_match = false;
+    
+    if (hwnd) {
+      DWORD processId;
+      GetWindowThreadProcessId(hwnd, &processId);
+      int score = EvaluateGamingScore(hwnd, processId);
+      is_match = (score >= SCORE_THRESHOLD);
+    }
+
+    auto now = std::chrono::steady_clock::now();
+    bool target_gaming_mode = false;
+
+    if (is_match) {
+        if (!is_gaming_candidate_) {
+            is_gaming_candidate_ = true;
+            candidate_start_time_ = now;
+        }
+        
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - candidate_start_time_).count();
+        if (duration >= ENTRY_DELAY_MS) {
+            last_gaming_match_time_ = now;
+            target_gaming_mode = true;
+        }
+    } else {
+        is_gaming_candidate_ = false;
+        
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_gaming_match_time_).count();
+        if (duration < EXIT_DELAY_MS) {
+            target_gaming_mode = true; // Hysteresis: Keep active
+        } else {
+            target_gaming_mode = false;
+        }
+    }
+
+    if (target_gaming_mode != is_gaming_mode_) {
+      is_gaming_mode_ = target_gaming_mode;
       if (on_gaming_mode_changed_) {
         on_gaming_mode_changed_(is_gaming_mode_);
       }
     }
     
-    for (int i = 0; i < 25 && !stop_detector_; i++) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    for (int i = 0; i < 10 && !stop_detector_; i++) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
   }
 }
 
-bool MonitorManager::CheckIsGamingMode() {
-  HWND hwnd = GetForegroundWindow();
-  if (!hwnd) return false;
+int MonitorManager::EvaluateGamingScore(HWND hwnd, DWORD processId) {
+  if (!hwnd) return 0;
 
-  auto get_process_name = [](HWND target_hwnd) -> std::string {
-    DWORD processId;
-    GetWindowThreadProcessId(target_hwnd, &processId);
-    HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, processId);
-    if (hProcess) {
-      wchar_t buffer[MAX_PATH];
-      DWORD size = MAX_PATH;
-      if (QueryFullProcessImageNameW(hProcess, 0, buffer, &size)) {
-        std::wstring fullPath(buffer);
-        size_t lastSlash = fullPath.find_last_of(L"\\/");
-        std::wstring fileName = (lastSlash == std::wstring::npos) ? fullPath : fullPath.substr(lastSlash + 1);
-        
-        std::string result;
-        for (wchar_t wc : fileName) {
-          result += static_cast<char>(std::tolower(static_cast<unsigned char>(wc)));
-        }
-        CloseHandle(hProcess);
-        return result;
-      }
-      CloseHandle(hProcess);
-    }
-    return "";
-  };
-
-  std::string processName = get_process_name(hwnd);
-
-  {
-    std::lock_guard<std::mutex> lock(lists_mutex_);
-    if (whitelist_.count(processName)) return true;
-  }
-
-  QUERY_USER_NOTIFICATION_STATE notification_state;
-  if (SHQueryUserNotificationState(&notification_state) == S_OK) {
-    if (notification_state == QUNS_RUNNING_D3D_FULL_SCREEN) return true;
-  }
-
+  // --- Early Exit: Class Check ---
   wchar_t className[256];
   if (GetClassNameW(hwnd, className, 256)) {
     std::wstring wsClassName(className);
-    if (wsClassName == L"WorkerW" || wsClassName == L"Progman" || wsClassName == L"Shell_TrayWnd") {
-      return false;
+    if (wsClassName == L"WorkerW" || wsClassName == L"Progman" || wsClassName == L"Shell_TrayWnd" || 
+        wsClassName == L"MultitaskingViewFrame" || wsClassName == L"NotifyIconOverflowWindow" || 
+        wsClassName == L"SimplePopupMenu" || wsClassName == L"RainmeterMeterWindow") {
+      return 0;
     }
   }
 
+  // --- Size Check ---
   HMONITOR hMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
   MONITORINFO mi = { sizeof(mi) };
-  mi.cbSize = sizeof(mi);
-  if (GetMonitorInfoW(hMonitor, &mi)) {
-    RECT wr;
-    if (GetWindowRect(hwnd, &wr)) {
-      if (wr.left <= mi.rcMonitor.left && wr.top <= mi.rcMonitor.top && 
-          wr.right >= mi.rcMonitor.right && wr.bottom >= mi.rcMonitor.bottom) {
-        
-        {
-          std::lock_guard<std::mutex> lock(lists_mutex_);
-          if (blacklist_.count(processName)) return false;
-        }
-        return true;
+  if (!GetMonitorInfoW(hMonitor, &mi)) return 0;
+
+  RECT wr;
+  if (!GetWindowRect(hwnd, &wr)) return 0;
+
+  bool isFullscreen = (wr.left <= mi.rcMonitor.left + 1 && wr.top <= mi.rcMonitor.top + 1 &&
+                       wr.right >= mi.rcMonitor.right - 1 && wr.bottom >= mi.rcMonitor.bottom - 1);
+
+  if (!isFullscreen) return 0;
+
+  // --- Style Analysis ---
+  LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
+  // Real games don't have systemic frames or captions in fullscreen. 
+  // If they have them, it's likely an app (Telegram viewer, etc)
+  if ((style & WS_CAPTION) || (style & WS_THICKFRAME)) {
+    return 0; 
+  }
+
+  int score = 0;
+  std::string processName = "";
+  std::wstring fullPathW = L"";
+  
+  HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, processId);
+  if (hProcess) {
+    wchar_t buffer[MAX_PATH];
+    DWORD size = MAX_PATH;
+    if (QueryFullProcessImageNameW(hProcess, 0, buffer, &size)) {
+      fullPathW = buffer;
+      std::wstring fullPathLower = fullPathW;
+      std::transform(fullPathLower.begin(), fullPathLower.end(), fullPathLower.begin(), ::towlower);
+      
+      size_t lastSlash = fullPathW.find_last_of(L"\\/");
+      std::wstring fileName = (lastSlash == std::wstring::npos) ? fullPathW : fullPathW.substr(lastSlash + 1);
+      for (wchar_t wc : fileName) {
+        processName += static_cast<char>(std::tolower(static_cast<unsigned char>(wc)));
       }
+
+      // --- Path Heuristics ---
+      if (fullPathLower.find(L"\\steamapps\\common\\") != std::wstring::npos ||
+          fullPathLower.find(L"\\epic games\\") != std::wstring::npos ||
+          fullPathLower.find(L"\\origin games\\") != std::wstring::npos ||
+          fullPathLower.find(L"\\gog galaxy\\games\\") != std::wstring::npos ||
+          fullPathLower.find(L"\\xboxgames\\") != std::wstring::npos) {
+        score += 100;
+      }
+
+      // Penalty for system paths
+      if (fullPathLower.find(L"c:\\windows\\") != std::wstring::npos) {
+          score -= 200;
+      }
+    }
+    CloseHandle(hProcess);
+  }
+
+  // --- Whitelist / Blacklist ---
+  {
+    std::lock_guard<std::mutex> lock(lists_mutex_);
+    if (whitelist_.count(processName)) return 1000; // Absolute match
+    if (blacklist_.count(processName)) return -1000; // Absolute mismatch
+  }
+
+  // --- Parent Process Check ---
+  std::string parentName = GetParentProcessName(processId);
+  if (parentName == "steam.exe" || parentName == "epicgameslauncher.exe" || 
+      parentName == "galaxyclient.exe" || parentName == "origin.exe") {
+    score += 100;
+  }
+
+  // --- DLL Scanning (More permissive access) ---
+  hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
+  if (hProcess) {
+    HMODULE hMods[1024];
+    DWORD cbNeeded;
+    if (EnumProcessModules(hProcess, hMods, sizeof(hMods), &cbNeeded)) {
+      for (unsigned int i = 0; i < (cbNeeded / sizeof(HMODULE)); i++) {
+        wchar_t szModName[MAX_PATH];
+        if (GetModuleBaseNameW(hProcess, hMods[i], szModName, sizeof(szModName) / sizeof(wchar_t))) {
+            std::wstring modName(szModName);
+            std::transform(modName.begin(), modName.end(), modName.begin(), ::towlower);
+            
+            // Controller APIs (High confidence)
+            if (modName.find(L"xinput") != std::wstring::npos) score += 60;
+            if (modName == L"dinput8.dll") score += 50;
+
+            // Audio engine (Medium confidence)
+            if (modName.find(L"xaudio2") != std::wstring::npos) score += 30;
+
+            // Graphics engines (Low confidence, apps use them too)
+            if (modName == L"d3d11.dll" || modName == L"d3d12.dll" || modName == L"vulkan-1.dll") {
+                score += 10;
+            }
+        }
+      }
+    }
+    CloseHandle(hProcess);
+  }
+
+  // --- Cursor Behavior ---
+  CURSORINFO ci = { sizeof(ci) };
+  if (GetCursorInfo(&ci)) {
+      if (!(ci.flags & CURSOR_SHOWING)) {
+          score += 40; // Hidden cursor is very common in games
+      }
+  }
+
+  RECT clipRect;
+  if (GetClipCursor(&clipRect)) {
+      // If the clip rect matches the window exactly or is significantly smaller than monitor
+      if (abs(clipRect.left - wr.left) < 5 && abs(clipRect.top - wr.top) < 5 &&
+          abs(clipRect.right - wr.right) < 5 && abs(clipRect.bottom - wr.bottom) < 5) {
+          
+          if ((clipRect.right - clipRect.left) < (mi.rcMonitor.right - mi.rcMonitor.left - 10)) {
+              score += 60; // Isolated to small area
+          } else {
+              score += 30; // Exactly window size
+          }
+      }
+  }
+
+  // --- Shell notification flag ---
+  QUERY_USER_NOTIFICATION_STATE notification_state;
+  if (SHQueryUserNotificationState(&notification_state) == S_OK) {
+    if (notification_state == QUNS_RUNNING_D3D_FULL_SCREEN) {
+        score += 20;
     }
   }
 
-  return false;
+  return score;
+}
+
+std::string MonitorManager::GetParentProcessName(DWORD processId) {
+  DWORD ppid = 0;
+  HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  if (hSnapshot != INVALID_HANDLE_VALUE) {
+    PROCESSENTRY32W pe32;
+    pe32.dwSize = sizeof(PROCESSENTRY32W);
+    if (Process32FirstW(hSnapshot, &pe32)) {
+      do {
+        if (pe32.th32ProcessID == processId) {
+          ppid = pe32.th32ParentProcessID;
+          break;
+        }
+      } while (Process32NextW(hSnapshot, &pe32));
+    }
+    
+    if (ppid != 0) {
+      // Reuse snapshot or close/re-open? Toolhelp says we can reuse.
+      if (Process32FirstW(hSnapshot, &pe32)) {
+        do {
+          if (pe32.th32ProcessID == ppid) {
+            std::wstring wsParent(pe32.szExeFile);
+            std::string parentName = "";
+            for (wchar_t wc : wsParent) {
+              parentName += static_cast<char>(std::tolower(static_cast<unsigned char>(wc)));
+            }
+            CloseHandle(hSnapshot);
+            return parentName;
+          }
+        } while (Process32NextW(hSnapshot, &pe32));
+      }
+    }
+    CloseHandle(hSnapshot);
+  }
+  return "";
 }
 

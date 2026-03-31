@@ -14,6 +14,8 @@
 #include <atomic>
 #include <shellapi.h>
 #include <psapi.h>
+#include <tlhelp32.h>
+#include <chrono>
 
 class MonitorManager {
  public:
@@ -69,10 +71,19 @@ class MonitorManager {
   std::set<std::string> blacklist_;
 
   void DetectorLoop();
-  bool CheckIsGamingMode();
-
+  int EvaluateGamingScore(HWND hwnd, DWORD processId);
+  std::string GetParentProcessName(DWORD processId);
   std::string ParseEdid(const std::vector<uint8_t>& edid);
   std::string GetManufacturerName(uint16_t manufacturer_id);
+
+  // Hysteresis constants & state
+  const int SCORE_THRESHOLD = 75;
+  const int ENTRY_DELAY_MS = 500;
+  const int EXIT_DELAY_MS = 3000;
+
+  std::chrono::steady_clock::time_point last_gaming_match_time_;
+  bool is_gaming_candidate_ = false;
+  std::chrono::steady_clock::time_point candidate_start_time_;
 };
 
 #endif  // RUNNER_MONITOR_MANAGER_H_
