@@ -118,7 +118,7 @@
   "autoTemperature": "Автотемпература",
   "active": "Активно",
   "nightShift": "Ночной режим",
-  "disabled": "Выключено",
+  "disabled": "Выкл.",
   "statusAdaptive": "Адаптивный контроль",
   "statusManual": "Ручной режим",
   "phaseDeepNight": "ГЛУБОКАЯ НОЧЬ",
@@ -327,5 +327,11 @@
   "maxSpreadDesc": "Максимальная разница (максимум — минимум) в графике отхода ко сну в минутах. Если превышена, режим разбивается.",
   "language": "Язык",
   "english": "Английский",
-  "russian": "Русский"
+  "russian": "Русский",
+  "globalHotkeys": "Глобальные горячие клавиши",
+  "globalHotkeysSubtitle": "Управляйте пресетами из любого приложения",
+  "brighterPreset": "Ярче",
+  "darkerPreset": "Темнее",
+  "pressToRecord": "Нажмите клавиши...",
+  "hotkeyRecording": "Запись..."
 }

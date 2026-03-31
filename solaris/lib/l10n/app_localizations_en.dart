@@ -721,4 +721,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get russian => 'Russian';
+
+  @override
+  String get globalHotkeys => 'Global Hotkeys';
+
+  @override
+  String get globalHotkeysSubtitle => 'Control presets from any application';
+
+  @override
+  String get brighterPreset => 'Brighter Preset';
+
+  @override
+  String get darkerPreset => 'Darker Preset';
+
+  @override
+  String get pressToRecord => 'Press keys to record...';
+
+  @override
+  String get hotkeyRecording => 'Recording...';
 }

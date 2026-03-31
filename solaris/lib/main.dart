@@ -16,11 +16,16 @@ import 'package:solaris/providers/lifecycle_provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
+import 'package:hotkey_manager/hotkey_manager.dart';
+import 'package:solaris/services/hotkey_service.dart';
 
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
   await TimeService.initialize();
+  
+  // Must unregister all hotkeys at startup to avoid conflicts
+  await hotKeyManager.unregisterAll();
 
   try {
     await dotenv.load(fileName: ".env");
@@ -100,6 +105,9 @@ void main(List<String> args) async {
   // Prevent app from closing when clicking 'X'
   await windowManager.setPreventClose(true);
   windowManager.addListener(WindowEventHandler(container));
+
+  // Initialize Hotkey Service
+  await container.read(hotkeyServiceProvider).init();
 
   runApp(
     UncontrolledProviderScope(container: container, child: const SolarisApp()),

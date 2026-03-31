@@ -184,7 +184,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get nightShift => 'Ночной режим';
 
   @override
-  String get disabled => 'Выключено';
+  String get disabled => 'Выкл.';
 
   @override
   String get statusAdaptive => 'Адаптивный контроль';
@@ -722,4 +722,23 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get russian => 'Русский';
+
+  @override
+  String get globalHotkeys => 'Глобальные горячие клавиши';
+
+  @override
+  String get globalHotkeysSubtitle =>
+      'Управляйте пресетами из любого приложения';
+
+  @override
+  String get brighterPreset => 'Ярче';
+
+  @override
+  String get darkerPreset => 'Темнее';
+
+  @override
+  String get pressToRecord => 'Нажмите клавиши...';
+
+  @override
+  String get hotkeyRecording => 'Запись...';
 }

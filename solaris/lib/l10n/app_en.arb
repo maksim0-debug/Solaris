@@ -327,5 +327,11 @@
   "maxSpreadDesc": "Maximum difference (max - min) in the sleep onset graph in minutes. If exceeded, the regime is split.",
   "language": "Language",
   "english": "English",
-  "russian": "Russian"
+  "russian": "Russian",
+  "globalHotkeys": "Global Hotkeys",
+  "globalHotkeysSubtitle": "Control presets from any application",
+  "brighterPreset": "Brighter Preset",
+  "darkerPreset": "Darker Preset",
+  "pressToRecord": "Press keys to record...",
+  "hotkeyRecording": "Recording..."
 }

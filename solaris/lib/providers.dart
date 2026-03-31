@@ -1092,6 +1092,62 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
 
     _updateSettings(ids, current.copyWith(curvesMap: newCurvesMap));
   }
+
+  void cyclePreset({required bool brighter}) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final id = ids.firstOrNull ?? 'all';
+    final current = _getSettings(id);
+    final currentPreset = current.activePreset;
+
+    // Use specific order for cycling (excluding custom)
+    const cycleOrder = [
+      PresetType.brightest,
+      PresetType.bright,
+      PresetType.dim,
+      PresetType.dimmest,
+    ];
+
+    int currentIndex = cycleOrder.indexOf(currentPreset);
+    if (currentIndex == -1) {
+      // If we are on 'custom' or something else, start from a sensible place
+      setActivePreset(brighter ? PresetType.bright : PresetType.dim);
+      return;
+    }
+
+    if (brighter) {
+      if (currentIndex > 0) {
+        setActivePreset(cycleOrder[currentIndex - 1]);
+      }
+    } else {
+      if (currentIndex < cycleOrder.length - 1) {
+        setActivePreset(cycleOrder[currentIndex + 1]);
+      }
+    }
+  }
+
+  void updateHotkey(String field, Map<String, dynamic>? hotKeyJson) {
+    // Hotkeys are global app settings, so we update 'all'
+    final currentMap = state.value ?? {'all': SettingsState()};
+    final current = currentMap['all']!;
+
+    if (field == 'brighter') {
+      _updateSettings(
+        {'all'},
+        current.copyWith(
+          brighterHotKey: hotKeyJson,
+          clearBrighterHotKey: hotKeyJson == null,
+        ),
+      );
+    } else if (field == 'darker') {
+      _updateSettings(
+        {'all'},
+        current.copyWith(
+          darkerHotKey: hotKeyJson,
+          clearDarkerHotKey: hotKeyJson == null,
+        ),
+      );
+    }
+  }
 }
 
 final settingsProvider =

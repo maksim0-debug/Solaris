@@ -36,6 +36,8 @@ class SettingsState {
   final double gameModeBrightness;
   final List<String> gameModeWhitelist;
   final List<String> gameModeBlacklist;
+  final Map<String, dynamic>? brighterHotKey;
+  final Map<String, dynamic>? darkerHotKey;
 
   SettingsState({
     this.activePreset = PresetType.bright,
@@ -77,7 +79,19 @@ class SettingsState {
       'code.exe',
       'devenv.exe',
       'ShareX.exe',
+      'devenv.exe',
+      'ShareX.exe',
     ],
+    this.brighterHotKey = const {
+      'keyCode': 'arrowLeft',
+      'modifiers': ['control', 'shift'],
+      'identifier': 'brighter_preset',
+    },
+    this.darkerHotKey = const {
+      'keyCode': 'arrowRight',
+      'modifiers': ['control', 'shift'],
+      'identifier': 'darker_preset',
+    },
   }) : curvesMap = curvesMap ?? PresetConstants.getAllDefaults();
 
   List<FlSpot> get curvePoints => curvesMap[activePreset]!;
@@ -120,6 +134,8 @@ class SettingsState {
     'gameModeBrightness': gameModeBrightness,
     'gameModeWhitelist': gameModeWhitelist,
     'gameModeBlacklist': gameModeBlacklist,
+    'brighterHotKey': brighterHotKey,
+    'darkerHotKey': darkerHotKey,
   };
 
   factory SettingsState.fromJson(Map<String, dynamic> json) {
@@ -220,6 +236,36 @@ class SettingsState {
             'visualstudio.exe',
             'ShareX.exe',
           ],
+      brighterHotKey: (() {
+        if (!json.containsKey('brighterHotKey')) {
+          return const {
+            'keyCode': 'arrowLeft',
+            'modifiers': ['control', 'shift'],
+            'identifier': 'brighter_preset',
+          };
+        }
+        if (json['brighterHotKey'] == null) return null;
+        final map = json['brighterHotKey'] as Map<String, dynamic>;
+        return {
+          ...map,
+          if (map['identifier'] == null) 'identifier': 'brighter_preset',
+        };
+      })(),
+      darkerHotKey: (() {
+        if (!json.containsKey('darkerHotKey')) {
+          return const {
+            'keyCode': 'arrowRight',
+            'modifiers': ['control', 'shift'],
+            'identifier': 'darker_preset',
+          };
+        }
+        if (json['darkerHotKey'] == null) return null;
+        final map = json['darkerHotKey'] as Map<String, dynamic>;
+        return {
+          ...map,
+          if (map['identifier'] == null) 'identifier': 'darker_preset',
+        };
+      })(),
     );
   }
 
@@ -258,6 +304,10 @@ class SettingsState {
     double? gameModeBrightness,
     List<String>? gameModeWhitelist,
     List<String>? gameModeBlacklist,
+    Map<String, dynamic>? brighterHotKey,
+    Map<String, dynamic>? darkerHotKey,
+    bool clearBrighterHotKey = false,
+    bool clearDarkerHotKey = false,
   }) {
     return SettingsState(
       activePreset: activePreset ?? this.activePreset,
@@ -312,6 +362,12 @@ class SettingsState {
       gameModeBrightness: gameModeBrightness ?? this.gameModeBrightness,
       gameModeWhitelist: gameModeWhitelist ?? this.gameModeWhitelist,
       gameModeBlacklist: gameModeBlacklist ?? this.gameModeBlacklist,
+      brighterHotKey: clearBrighterHotKey
+          ? null
+          : (brighterHotKey ?? this.brighterHotKey),
+      darkerHotKey: clearDarkerHotKey
+          ? null
+          : (darkerHotKey ?? this.darkerHotKey),
     );
   }
 }

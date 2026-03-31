@@ -1386,6 +1386,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Russian'**
   String get russian;
+
+  /// No description provided for @globalHotkeys.
+  ///
+  /// In en, this message translates to:
+  /// **'Global Hotkeys'**
+  String get globalHotkeys;
+
+  /// No description provided for @globalHotkeysSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Control presets from any application'**
+  String get globalHotkeysSubtitle;
+
+  /// No description provided for @brighterPreset.
+  ///
+  /// In en, this message translates to:
+  /// **'Brighter Preset'**
+  String get brighterPreset;
+
+  /// No description provided for @darkerPreset.
+  ///
+  /// In en, this message translates to:
+  /// **'Darker Preset'**
+  String get darkerPreset;
+
+  /// No description provided for @pressToRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Press keys to record...'**
+  String get pressToRecord;
+
+  /// No description provided for @hotkeyRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording...'**
+  String get hotkeyRecording;
 }
 
 class _AppLocalizationsDelegate

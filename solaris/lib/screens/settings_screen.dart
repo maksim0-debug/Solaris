@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:solaris/l10n/app_localizations.dart';
@@ -9,6 +10,7 @@ import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/circadian_chart.dart';
 import 'package:solaris/models/preset_type.dart';
 import 'package:solaris/models/temperature_state.dart';
+import 'package:hotkey_manager/hotkey_manager.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -124,6 +126,10 @@ class SettingsScreen extends ConsumerWidget {
           const _SmartExclusionsCard(),
           const SizedBox(height: 24),
 
+          const _GlobalHotkeysCard(),
+          const SizedBox(height: 24),
+
+          const _LanguageSelectorCard(),
           const SizedBox(height: 24),
 
           // Info Card
@@ -823,6 +829,550 @@ class _AppListManagerState extends State<_AppListManager> {
   }
 }
 
+class _GlobalHotkeysCard extends ConsumerWidget {
+  const _GlobalHotkeysCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final settingsAsync = ref.watch(settingsProvider);
+    final selectedIds = ref.watch(selectedMonitorsProvider);
+    final monitorId = selectedIds.firstOrNull ?? 'all';
+
+    return settingsAsync.maybeWhen(
+      data: (map) {
+        final settings = map[monitorId] ?? map['all']!;
+
+        return GlassCard(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF60A5FA).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      LucideIcons.keyboard,
+                      color: Color(0xFF60A5FA),
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.globalHotkeys,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        l10n.globalHotkeysSubtitle,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.white54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              _HotkeyRow(
+                label: l10n.brighterPreset,
+                hotKeyJson: settings.brighterHotKey,
+                onChanged: (newHotKey) {
+                  ref
+                      .read(settingsProvider.notifier)
+                      .updateHotkey('brighter', newHotKey?.toJson());
+                },
+              ),
+              const SizedBox(height: 16),
+              const Divider(color: Colors.white10),
+              const SizedBox(height: 16),
+              _HotkeyRow(
+                label: l10n.darkerPreset,
+                hotKeyJson: settings.darkerHotKey,
+                onChanged: (newHotKey) {
+                  ref
+                      .read(settingsProvider.notifier)
+                      .updateHotkey('darker', newHotKey?.toJson());
+                },
+              ),
+            ],
+          ),
+        );
+      },
+      orElse: () => const SizedBox(),
+    );
+  }
+}
+
+class _HotkeyRow extends StatelessWidget {
+  final String label;
+  final Map<String, dynamic>? hotKeyJson;
+  final ValueChanged<HotKey?> onChanged;
+
+  const _HotkeyRow({
+    required this.label,
+    required this.hotKeyJson,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    HotKey? hotKey;
+    if (hotKeyJson != null) {
+      try {
+        hotKey = HotKey.fromJson(hotKeyJson!);
+      } catch (e) {
+        debugPrint('Error parsing hotkey: $e');
+        hotKey = null;
+      }
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              hotKey == null ? l10n.disabled : _formatHotKey(hotKey),
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.white.withOpacity(0.3),
+              ),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            _PremiumHotkeyRecorder(
+              initialHotKey: hotKey,
+              onHotKeyRecorded: onChanged,
+            ),
+            if (hotKey != null) ...[
+              const SizedBox(width: 12),
+              IconButton(
+                icon: const Icon(LucideIcons.x, size: 16),
+                onPressed: () => onChanged(null),
+                color: Colors.white24,
+                hoverColor: Colors.red.withOpacity(0.1),
+                tooltip: l10n.reset,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+
+  String _formatHotKey(HotKey hotKey) {
+    final List<String> parts = [];
+    if (hotKey.modifiers != null) {
+      for (final modifier in hotKey.modifiers!) {
+        switch (modifier) {
+          case HotKeyModifier.control:
+            parts.add('Ctrl');
+            break;
+          case HotKeyModifier.shift:
+            parts.add('Shift');
+            break;
+          case HotKeyModifier.alt:
+            parts.add('Alt');
+            break;
+          case HotKeyModifier.meta:
+            parts.add('Win');
+            break;
+          case HotKeyModifier.capsLock:
+            parts.add('Caps');
+            break;
+          case HotKeyModifier.fn:
+            parts.add('Fn');
+            break;
+        }
+      }
+    }
+
+    String keyLabel = hotKey.logicalKey.keyLabel;
+    if (hotKey.logicalKey == LogicalKeyboardKey.arrowUp) {
+      keyLabel = '\u2191';
+    } else if (hotKey.logicalKey == LogicalKeyboardKey.arrowDown) {
+      keyLabel = '\u2193';
+    } else if (hotKey.logicalKey == LogicalKeyboardKey.arrowLeft) {
+      keyLabel = '\u2190';
+    } else if (hotKey.logicalKey == LogicalKeyboardKey.arrowRight) {
+      keyLabel = '\u2192';
+    } else if (keyLabel.isEmpty) {
+      keyLabel = hotKey.logicalKey.debugName ?? 'Key';
+      if (keyLabel.startsWith('Key ')) keyLabel = keyLabel.substring(4);
+    }
+
+    parts.add(keyLabel.toUpperCase());
+    return parts.join(' + ');
+  }
+}
+
+class _PremiumHotkeyRecorder extends StatefulWidget {
+  final HotKey? initialHotKey;
+  final ValueChanged<HotKey?> onHotKeyRecorded;
+
+  const _PremiumHotkeyRecorder({
+    required this.initialHotKey,
+    required this.onHotKeyRecorded,
+  });
+
+  @override
+  State<_PremiumHotkeyRecorder> createState() => _PremiumHotkeyRecorderState();
+}
+
+class _PremiumHotkeyRecorderState extends State<_PremiumHotkeyRecorder>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pulseController;
+  bool _isRecording = false;
+  final FocusNode _focusNode = FocusNode();
+  final Set<LogicalKeyboardKey> _pressedKeys = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _startRecording() {
+    setState(() {
+      _isRecording = true;
+      _pressedKeys.clear();
+    });
+    _focusNode.requestFocus();
+  }
+
+  void _stopRecording(HotKey? hotKey) {
+    setState(() {
+      _isRecording = false;
+      _pressedKeys.clear();
+    });
+    _focusNode.unfocus();
+    if (hotKey != null) {
+      widget.onHotKeyRecorded(hotKey);
+    }
+  }
+
+  void _handleKeyEvent(KeyEvent event) {
+    if (!_isRecording) return;
+
+    if (event is KeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.escape) {
+        _stopRecording(null);
+        return;
+      }
+
+      setState(() {
+        _pressedKeys.add(event.logicalKey);
+      });
+
+      // Check if it's a non-modifier key
+      if (!_isModifier(event.logicalKey)) {
+        final modifiers = _currentModifiers();
+        final key = event.physicalKey;
+
+        final hotKey = HotKey(key: key, modifiers: modifiers);
+        _stopRecording(hotKey);
+      }
+    } else if (event is KeyUpEvent) {
+      setState(() {
+        _pressedKeys.remove(event.logicalKey);
+      });
+    }
+  }
+
+  bool _isModifier(LogicalKeyboardKey key) {
+    return key == LogicalKeyboardKey.controlLeft ||
+        key == LogicalKeyboardKey.controlRight ||
+        key == LogicalKeyboardKey.shiftLeft ||
+        key == LogicalKeyboardKey.shiftRight ||
+        key == LogicalKeyboardKey.altLeft ||
+        key == LogicalKeyboardKey.altRight ||
+        key == LogicalKeyboardKey.metaLeft ||
+        key == LogicalKeyboardKey.metaRight;
+  }
+
+  List<HotKeyModifier> _currentModifiers() {
+    final modifiers = <HotKeyModifier>[];
+    if (_pressedKeys.contains(LogicalKeyboardKey.controlLeft) ||
+        _pressedKeys.contains(LogicalKeyboardKey.controlRight)) {
+      modifiers.add(HotKeyModifier.control);
+    }
+    if (_pressedKeys.contains(LogicalKeyboardKey.shiftLeft) ||
+        _pressedKeys.contains(LogicalKeyboardKey.shiftRight)) {
+      modifiers.add(HotKeyModifier.shift);
+    }
+    if (_pressedKeys.contains(LogicalKeyboardKey.altLeft) ||
+        _pressedKeys.contains(LogicalKeyboardKey.altRight)) {
+      modifiers.add(HotKeyModifier.alt);
+    }
+    if (_pressedKeys.contains(LogicalKeyboardKey.metaLeft) ||
+        _pressedKeys.contains(LogicalKeyboardKey.metaRight)) {
+      modifiers.add(HotKeyModifier.meta);
+    }
+    return modifiers;
+  }
+
+  // Helper removed as direct access to physicalKey/logicalKey is easier
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Focus(
+      focusNode: _focusNode,
+      onKeyEvent: (node, event) {
+        _handleKeyEvent(event);
+        return KeyEventResult.handled;
+      },
+      child: GestureDetector(
+        onTap: _startRecording,
+        child: AnimatedBuilder(
+          animation: _pulseController,
+          builder: (context, child) {
+            final glowColor = const Color(0xFF60A5FA).withOpacity(
+              _isRecording ? 0.2 + (0.1 * _pulseController.value) : 0,
+            );
+
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: _isRecording
+                    ? Colors.white.withOpacity(0.08)
+                    : Colors.white.withOpacity(0.03),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: _isRecording
+                      ? const Color(0xFF60A5FA).withOpacity(0.5)
+                      : Colors.white.withOpacity(0.05),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  if (_isRecording)
+                    BoxShadow(
+                      color: glowColor,
+                      blurRadius: 15,
+                      spreadRadius: 2,
+                    ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: _buildContent(l10n),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildContent(AppLocalizations l10n) {
+    if (_isRecording) {
+      if (_pressedKeys.isEmpty) {
+        return [
+          const Icon(LucideIcons.circle, size: 10, color: Color(0xFF60A5FA)),
+          const SizedBox(width: 10),
+          Text(
+            l10n.pressToRecord,
+            style: const TextStyle(
+              fontSize: 13,
+              color: Colors.white70,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ];
+      }
+
+      return _pressedKeys.map((key) => _buildKeyBadge(key)).toList();
+    }
+
+    if (widget.initialHotKey == null) {
+      return [
+        Text(
+          l10n.disabled,
+          style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.2)),
+        ),
+      ];
+    }
+
+    // Display current hotkey nicely
+    final hotKey = widget.initialHotKey!;
+    final List<Widget> widgets = [];
+
+    for (final modifier in hotKey.modifiers ?? <HotKeyModifier>[]) {
+      widgets.add(_buildModifierBadge(modifier));
+      widgets.add(const SizedBox(width: 4));
+    }
+
+    widgets.add(_buildKeyBadge(hotKey.logicalKey));
+
+    return widgets;
+  }
+
+  Widget _buildKeyBadge(LogicalKeyboardKey key) {
+    String? label = key.keyLabel;
+    IconData? icon;
+
+    if (key == LogicalKeyboardKey.controlLeft ||
+        key == LogicalKeyboardKey.controlRight) {
+      label = 'Ctrl';
+    } else if (key == LogicalKeyboardKey.shiftLeft ||
+        key == LogicalKeyboardKey.shiftRight) {
+      label = 'Shift';
+      icon = LucideIcons.arrowUp;
+    } else if (key == LogicalKeyboardKey.altLeft ||
+        key == LogicalKeyboardKey.altRight) {
+      label = 'Alt';
+      icon = LucideIcons.option;
+    } else if (key == LogicalKeyboardKey.metaLeft ||
+        key == LogicalKeyboardKey.metaRight) {
+      label = 'Win';
+      icon = LucideIcons.command;
+    } else if (key == LogicalKeyboardKey.arrowUp) {
+      label = null;
+      icon = LucideIcons.arrowBigUp;
+    } else if (key == LogicalKeyboardKey.arrowDown) {
+      label = null;
+      icon = LucideIcons.arrowBigDown;
+    } else if (key == LogicalKeyboardKey.arrowLeft) {
+      label = null;
+      icon = LucideIcons.arrowBigLeft;
+    } else if (key == LogicalKeyboardKey.arrowRight) {
+      label = null;
+      icon = LucideIcons.arrowBigRight;
+    } else if (key == LogicalKeyboardKey.space) {
+      label = 'Space';
+    } else if (key == LogicalKeyboardKey.enter) {
+      label = 'Enter';
+    } else {
+      // For character keys (A-Z, 0-9), keyLabel is exactly what we want.
+      // We capitalize it for consistency.
+      if (label.isEmpty) {
+        label = key.debugName ?? '';
+        if (label.startsWith('Key ')) label = label.substring(4);
+      }
+      label = label.toUpperCase();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: _Badge(label: label, icon: icon, isModifier: _isModifier(key)),
+    );
+  }
+
+  Widget _buildModifierBadge(HotKeyModifier modifier) {
+    String label = modifier.name;
+    IconData? icon;
+    switch (modifier) {
+      case HotKeyModifier.control:
+        label = 'Ctrl';
+        break;
+      case HotKeyModifier.shift:
+        label = 'Shift';
+        icon = LucideIcons.arrowUp;
+        break;
+      case HotKeyModifier.alt:
+        label = 'Alt';
+        icon = LucideIcons.option;
+        break;
+      case HotKeyModifier.meta:
+        label = 'Win';
+        icon = LucideIcons.command;
+        break;
+      default:
+        break;
+    }
+    return _Badge(label: label, icon: icon, isModifier: true);
+  }
+
+  // consolidated into _buildKeyBadge
+}
+
+class _Badge extends StatelessWidget {
+  final String? label;
+  final IconData? icon;
+  final bool isModifier;
+
+  const _Badge({this.label, this.icon, this.isModifier = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: isModifier
+            ? const Color(0xFF60A5FA).withOpacity(0.15)
+            : Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: isModifier
+              ? const Color(0xFF60A5FA).withOpacity(0.3)
+              : Colors.white.withOpacity(0.1),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(
+              icon,
+              size: 10,
+              color: isModifier ? const Color(0xFF60A5FA) : Colors.white70,
+            ),
+            if (label != null) const SizedBox(width: 4),
+          ],
+          if (label != null)
+            Text(
+              label!,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: isModifier ? const Color(0xFF60A5FA) : Colors.white70,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _LanguageSelectorCard extends ConsumerWidget {
   const _LanguageSelectorCard();
 
@@ -860,14 +1410,8 @@ class _LanguageSelectorCard extends ConsumerWidget {
           ),
           SegmentedButton<String>(
             segments: [
-              ButtonSegment<String>(
-                value: 'en',
-                label: Text(l10n.english),
-              ),
-              ButtonSegment<String>(
-                value: 'ru',
-                label: Text(l10n.russian),
-              ),
+              ButtonSegment<String>(value: 'en', label: Text(l10n.english)),
+              ButtonSegment<String>(value: 'ru', label: Text(l10n.russian)),
             ],
             selected: {currentLocale.languageCode},
             onSelectionChanged: (Set<String> newSelection) {
