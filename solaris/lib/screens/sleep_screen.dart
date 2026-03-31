@@ -229,6 +229,15 @@ class _CircadianRegulationSection extends ConsumerWidget {
     );
 
     final l10n = AppLocalizations.of(context)!;
+    final smartData = ref.watch(smartCircadianDataProvider(monitorId));
+
+    String formatMins(int mins) {
+      if (mins < 0) return "";
+      final h = mins ~/ 60;
+      final m = mins % 60;
+      if (h > 0) return "${h}${l10n.hoursAbbreviation} ${m}${l10n.minutesAbbreviation}";
+      return "${m}${l10n.minutesAbbreviation}";
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,6 +282,10 @@ class _CircadianRegulationSection extends ConsumerWidget {
                     onTemperatureChanged: (val) => ref.read(temperatureSettingsProvider.notifier).updateWindDown(val),
                     brightnessLabel: l10n.influenceBrightness,
                     temperatureLabel: l10n.influenceTemperature,
+                    isActive: smartData.isWindDownActive,
+                    timingText: (smartData.isWindDownActive && smartData.minutesUntilSleep != null) 
+                        ? l10n.remainingLower(formatMins(smartData.minutesUntilSleep!))
+                        : null,
                   ),
                   const Divider(height: 32, color: Colors.white10),
                   _RegulationToggle(
@@ -287,6 +300,7 @@ class _CircadianRegulationSection extends ConsumerWidget {
                     onTemperatureChanged: (val) => ref.read(temperatureSettingsProvider.notifier).updateTimeShift(val),
                     brightnessLabel: l10n.influenceBrightness,
                     temperatureLabel: l10n.influenceTemperature,
+                    isActive: smartData.isTimeShiftActive,
                   ),
                   const Divider(height: 32, color: Colors.white10),
                   _RegulationToggle(
@@ -301,6 +315,7 @@ class _CircadianRegulationSection extends ConsumerWidget {
                     onTemperatureChanged: (val) => ref.read(temperatureSettingsProvider.notifier).updateSleepPressure(val),
                     brightnessLabel: l10n.influenceBrightness,
                     temperatureLabel: l10n.influenceTemperature,
+                    isActive: smartData.isSleepPressureActive,
                   ),
                   const Divider(height: 32, color: Colors.white10),
                   _RegulationToggle(
@@ -315,6 +330,7 @@ class _CircadianRegulationSection extends ConsumerWidget {
                     onTemperatureChanged: (val) => ref.read(temperatureSettingsProvider.notifier).updateSleepDebt(val),
                     brightnessLabel: l10n.influenceBrightness,
                     temperatureLabel: l10n.influenceTemperature,
+                    isActive: smartData.isSleepDebtActive,
                   ),
                 ],
               ),
@@ -339,6 +355,8 @@ class _RegulationToggle extends StatelessWidget {
     required this.onTemperatureChanged,
     required this.brightnessLabel,
     required this.temperatureLabel,
+    this.isActive = false,
+    this.timingText,
   });
 
   final String title;
@@ -352,31 +370,69 @@ class _RegulationToggle extends StatelessWidget {
   final ValueChanged<bool> onTemperatureChanged;
   final String brightnessLabel;
   final String temperatureLabel;
+  final bool isActive;
+  final String? timingText;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 500),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isActive ? Colors.white.withOpacity(0.03) : Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: isActive ? [
+           BoxShadow(
+             color: const Color(0xFF8B5CF6).withOpacity(0.15),
+             blurRadius: 20,
+             spreadRadius: -5,
+           )
+        ] : [],
+        border: Border.all(
+          color: isActive ? const Color(0xFF8B5CF6).withOpacity(0.3) : Colors.transparent,
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: isActive ? const Color(0xFFC4B5FD) : Colors.white,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Tooltip(
+                        const SizedBox(width: 8),
+                        if (isActive) ...[
+                           Container(
+                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                             decoration: BoxDecoration(
+                               color: const Color(0xFF8B5CF6).withOpacity(0.2),
+                               borderRadius: BorderRadius.circular(4),
+                             ),
+                             child: Text(
+                               timingText ?? AppLocalizations.of(context)!.active,
+                               style: const TextStyle(
+                                 color: Color(0xFFC4B5FD),
+                                 fontSize: 10,
+                                 fontWeight: FontWeight.bold,
+                               ),
+                             ),
+                           ),
+                           const SizedBox(width: 8),
+                        ],
+                        Tooltip(
                          message: info,
                          padding: const EdgeInsets.all(12),
                          margin: const EdgeInsets.symmetric(horizontal: 24),
@@ -392,9 +448,9 @@ class _RegulationToggle extends StatelessWidget {
                            size: 14,
                            color: Colors.white.withOpacity(0.3),
                          ),
-                      ),
-                    ],
-                  ),
+                        ),
+                      ],
+                    ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
@@ -441,7 +497,8 @@ class _RegulationToggle extends StatelessWidget {
             ),
           ),
         ),
-      ],
+        ],
+      ),
     );
   }
 }

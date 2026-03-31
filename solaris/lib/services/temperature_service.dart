@@ -5,9 +5,12 @@ class TemperatureService {
   final Map<String, int> _currentHardwareTemperature = {};
   final Map<String, Timer?> _adjustmentTimers = {};
 
+  final Map<String, int> _targetTemperatures = {};
+
   void stopTemperatureControlForDevice(String deviceName) {
     _adjustmentTimers[deviceName]?.cancel();
     _adjustmentTimers[deviceName] = null;
+    _targetTemperatures.remove(deviceName);
   }
 
   Future<void> resetTemperatureNow({
@@ -26,6 +29,8 @@ class TemperatureService {
     }
   }
 
+  final Map<String, bool> _isLoopRunning = {};
+
   void applyTemperatureSmoothly({
     required String selection,
     required double targetValue,
@@ -38,77 +43,123 @@ class TemperatureService {
 
     for (final monitor in monitors) {
       if (selection == 'all' || selection == monitor.deviceName) {
-        _startSmoothTransition(
-          monitor.deviceName,
-          target,
-          monitorService,
-          updateTemperatureCallback,
-          isUIVisible: isUIVisible,
-        );
+        _targetTemperatures[monitor.deviceName] = target;
+
+        // If no loop is running, start one.
+        if (_isLoopRunning[monitor.deviceName] != true) {
+          _runTransitionLoop(
+            monitor.deviceName,
+            target,
+            monitors,
+            monitorService,
+            updateTemperatureCallback,
+            isUIVisible: isUIVisible,
+          );
+        }
       }
     }
   }
 
-  void _startSmoothTransition(
+  Future<void> _runTransitionLoop(
     String deviceName,
-    int target,
+    int initialTarget,
+    List<MonitorInfo> monitors,
     MonitorService monitorService,
     void Function(String, int) updateTemperatureCallback, {
     bool isUIVisible = true,
-  }) {
-    _adjustmentTimers[deviceName]?.cancel();
-    _adjustmentTimers[deviceName] = null;
+  }) async {
+    if (_isLoopRunning[deviceName] == true) return;
+    _isLoopRunning[deviceName] = true;
 
-    // Default to 6500 if unknown initially
-    int current = _currentHardwareTemperature[deviceName] ?? 6500;
+    try {
+      int? currentFromList;
+      try {
+        currentFromList = monitors
+            .firstWhere((m) => m.deviceName == deviceName)
+            .realTemperature;
+      } catch (_) {}
 
-    // If we're already at the target and not transitioning, nothing to do.
-    // BUT if the target is 6500 and we were transitioning or just want to be sure,
-    // we send a final reset call.
-    if (current == target) {
-      if (target == 6500) {
-        monitorService.resetMonitorTemperature(deviceName);
-      }
-      return;
-    }
+      // Start from known hardware state or provided target
+      bool isFirstIteration = true;
+      int current =
+          _currentHardwareTemperature[deviceName] ??
+          currentFromList ??
+          initialTarget;
 
-    if (!isUIVisible) {
-      _currentHardwareTemperature[deviceName] = target;
-      updateTemperatureCallback(deviceName, target);
-      if (target == 6500) {
-        monitorService.resetMonitorTemperature(deviceName);
-      } else {
-        monitorService.setMonitorTemperature(deviceName, target);
-      }
-      return;
-    }
+      while (true) {
+        final targetSnapshot = _targetTemperatures[deviceName];
+        // Safety exit if control stopped or device removed
+        if (targetSnapshot == null) break;
 
-    _adjustmentTimers[deviceName] = Timer.periodic(
-      const Duration(milliseconds: 100),
-      (timer) {
-        int step = 100; // Transition speed: 1000K per second
-        if ((current - target).abs() <= step) {
+        final target = targetSnapshot;
+        final diff = (target - current).abs();
+
+        // If we are at the target, check if any new target was set while we were waiting.
+        // On the first iteration, we always proceed once to ensure alignment.
+        if (diff == 0 && !isFirstIteration) {
+          if (_targetTemperatures[deviceName] == target) break;
+
+          // New target arrived but diff is 0?
+          // Add a small yield to prevent main isolate freeze.
+          await Future<void>.delayed(const Duration(milliseconds: 20));
+          continue;
+        }
+
+        if (!isUIVisible) {
           current = target;
-        } else if (current < target) {
-          current += step;
         } else {
-          current -= step;
+          // Adaptive step size: smoother for small changes
+          int step = 80;
+          if (diff > 1500)
+            step = 400;
+          else if (diff > 800)
+            step = 250;
+          else if (diff > 300)
+            step = 120;
+          else if (diff < 30)
+            step = diff;
+
+          if (diff <= step) {
+            current = target;
+          } else if (current < target) {
+            current += step;
+          } else {
+            current -= step;
+          }
         }
 
         _currentHardwareTemperature[deviceName] = current;
-        updateTemperatureCallback(deviceName, current);
 
-        if (current == target && target == 6500) {
-          monitorService.resetMonitorTemperature(deviceName);
+        // Wrap callback to prevent "update during build/notify" errors
+        final int valToReport = current;
+        Future.delayed(
+          Duration.zero,
+          () => updateTemperatureCallback(deviceName, valToReport),
+        );
+
+        // Use the hardware command
+        if (current == 6500) {
+          await monitorService.resetMonitorTemperature(deviceName);
         } else {
-          monitorService.setMonitorTemperature(deviceName, current);
+          await monitorService.setMonitorTemperature(deviceName, current);
         }
+
+        isFirstIteration = false;
 
         if (current == target) {
-          timer.cancel();
-          _adjustmentTimers[deviceName] = null;
+          // Double check if target changed during the await.
+          // If null, it means stopTemperatureControl was called.
+          if (_targetTemperatures[deviceName] == target ||
+              _targetTemperatures[deviceName] == null)
+            break;
         }
-      },
-    );
+
+        // Wait between commands for monitor stability.
+        // 130ms for even better compatibility with slow DDC/CI controllers.
+        await Future<void>.delayed(const Duration(milliseconds: 130));
+      }
+    } finally {
+      _isLoopRunning[deviceName] = false;
+    }
   }
 }

@@ -347,6 +347,12 @@ class CurrentTemperatureNotifier extends Notifier<int> {
     return ref.watch(manualTemperatureProvider);
   }
 
+  void setManualTemperature(int val) {
+    ref.read(temperatureSettingsProvider.notifier).setEnabled(false);
+    ref.read(manualTemperatureProvider.notifier).setTemperature(val);
+    _saveTemperature(val);
+  }
+
   void _saveTemperature(int val) {
     ref.read(sharedPreferencesProvider)?.setInt(_lastTempKey, val);
   }

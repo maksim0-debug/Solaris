@@ -5,16 +5,24 @@ class SmartCircadianData extends Equatable {
   final int temperatureOffset;
   final Duration timeOffset;
   final bool isWindDownActive;
+  final bool isSleepPressureActive;
+  final bool isSleepDebtActive;
+  final bool isTimeShiftActive;
   final double sleepDebtFactor;
   final double sleepPressureFactor;
+  final int? minutesUntilSleep;
 
   const SmartCircadianData({
     this.brightnessMultiplier = 1.0,
     this.temperatureOffset = 0,
     this.timeOffset = Duration.zero,
     this.isWindDownActive = false,
+    this.isSleepPressureActive = false,
+    this.isSleepDebtActive = false,
+    this.isTimeShiftActive = false,
     this.sleepDebtFactor = 1.0,
     this.sleepPressureFactor = 1.0,
+    this.minutesUntilSleep,
   });
 
   const SmartCircadianData.neutral()
@@ -22,8 +30,12 @@ class SmartCircadianData extends Equatable {
         temperatureOffset = 0,
         timeOffset = Duration.zero,
         isWindDownActive = false,
+        isSleepPressureActive = false,
+        isSleepDebtActive = false,
+        isTimeShiftActive = false,
         sleepDebtFactor = 1.0,
-        sleepPressureFactor = 1.0;
+        sleepPressureFactor = 1.0,
+        minutesUntilSleep = null;
 
   @override
   List<Object?> get props => [
@@ -31,7 +43,12 @@ class SmartCircadianData extends Equatable {
         temperatureOffset,
         timeOffset,
         isWindDownActive,
+        isSleepPressureActive,
+        isSleepDebtActive,
+        isTimeShiftActive,
         sleepDebtFactor,
         sleepPressureFactor,
+        minutesUntilSleep,
       ];
 }
+

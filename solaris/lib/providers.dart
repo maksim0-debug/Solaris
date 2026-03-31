@@ -34,72 +34,94 @@ final monitorServiceProvider = Provider((ref) => MonitorService());
 final circadianServiceProvider = Provider((ref) => CircadianService());
 final brightnessServiceProvider = Provider((ref) => BrightnessService());
 final storageServiceProvider = Provider((ref) => StorageService());
-final smartCircadianServiceProvider = Provider((ref) => SmartCircadianService());
+final smartCircadianServiceProvider = Provider(
+  (ref) => SmartCircadianService(),
+);
 
-final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((ref, monitorId) {
+final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
+  ref,
+  monitorId,
+) {
   final sleepState = ref.watch(sleepProvider);
   final service = ref.watch(smartCircadianServiceProvider);
   final settingsAsync = ref.watch(settingsProvider);
   final solarStateAsync = ref.watch(solarStateStreamProvider);
-  
+
   // Use 'all' as fallback if monitorId not found
   final settings = settingsAsync.value;
   if (settings == null) return const SmartCircadianData.neutral();
-  
-  final monitorSettings = settings[monitorId] ?? settings['all'] ?? SettingsState();
+
+  final monitorSettings =
+      settings[monitorId] ?? settings['all'] ?? SettingsState();
   if (sleepState.isLoading && sleepState.sessions.isEmpty) {
     return const SmartCircadianData.neutral();
   }
-
 
   return solarStateAsync.maybeWhen(
     data: (solar) => service.calculateSmartAdjustments(
       sleepState: sleepState,
       now: DateTime.now(),
       astronomicalSunrise: solar.phases.sunrise,
-      useSleepDebt: monitorSettings.isSleepDebtEnabled && monitorSettings.isSleepDebtMasterEnabled,
-      useSleepPressure: monitorSettings.isSleepPressureEnabled && monitorSettings.isSleepPressureMasterEnabled,
-      useTimeShift: monitorSettings.isTimeShiftEnabled && monitorSettings.isTimeShiftMasterEnabled,
-      useWindDown: monitorSettings.isWindDownEnabled && monitorSettings.isWindDownMasterEnabled,
+      useSleepDebt:
+          monitorSettings.isSleepDebtEnabled &&
+          monitorSettings.isSleepDebtMasterEnabled,
+      useSleepPressure:
+          monitorSettings.isSleepPressureEnabled &&
+          monitorSettings.isSleepPressureMasterEnabled,
+      useTimeShift:
+          monitorSettings.isTimeShiftEnabled &&
+          monitorSettings.isTimeShiftMasterEnabled,
+      useWindDown:
+          monitorSettings.isWindDownEnabled &&
+          monitorSettings.isWindDownMasterEnabled,
     ),
     orElse: () => const SmartCircadianData.neutral(),
   );
 });
 
-final smartCircadianTemperatureDataProvider = Provider.family<SmartCircadianData, String>((ref, monitorId) {
-  final sleepState = ref.watch(sleepProvider);
-  final service = ref.watch(smartCircadianServiceProvider);
-  final tempSettingsAsync = ref.watch(temperatureSettingsProvider);
-  final solarStateAsync = ref.watch(solarStateStreamProvider);
-  
-  final settings = tempSettingsAsync.value;
-  if (settings == null) return const SmartCircadianData.neutral();
-  
-  final monitorSettings = settings[monitorId] ?? settings['all'] ?? TemperatureState();
-  if (sleepState.isLoading && sleepState.sessions.isEmpty) {
-    return const SmartCircadianData.neutral();
-  }
+final smartCircadianTemperatureDataProvider =
+    Provider.family<SmartCircadianData, String>((ref, monitorId) {
+      final sleepState = ref.watch(sleepProvider);
+      final service = ref.watch(smartCircadianServiceProvider);
+      final tempSettingsAsync = ref.watch(temperatureSettingsProvider);
+      final solarStateAsync = ref.watch(solarStateStreamProvider);
 
+      final settings = tempSettingsAsync.value;
+      if (settings == null) return const SmartCircadianData.neutral();
 
-  final globalSettingsAsync = ref.watch(settingsProvider);
-  final globalSettings = globalSettingsAsync.maybeWhen(
-    data: (map) => map[monitorId] ?? map['all'] ?? SettingsState(),
-    orElse: () => SettingsState(),
-  );
+      final monitorSettings =
+          settings[monitorId] ?? settings['all'] ?? TemperatureState();
+      if (sleepState.isLoading && sleepState.sessions.isEmpty) {
+        return const SmartCircadianData.neutral();
+      }
 
-  return solarStateAsync.maybeWhen(
-    data: (solar) => service.calculateSmartAdjustments(
-      sleepState: sleepState,
-      now: DateTime.now(),
-      astronomicalSunrise: solar.phases.sunrise,
-      useSleepDebt: monitorSettings.isSleepDebtEnabled && globalSettings.isSleepDebtMasterEnabled,
-      useSleepPressure: monitorSettings.isSleepPressureEnabled && globalSettings.isSleepPressureMasterEnabled,
-      useTimeShift: monitorSettings.isTimeShiftEnabled && globalSettings.isTimeShiftMasterEnabled,
-      useWindDown: monitorSettings.isWindDownEnabled && globalSettings.isWindDownMasterEnabled,
-    ),
-    orElse: () => const SmartCircadianData.neutral(),
-  );
-});
+      final globalSettingsAsync = ref.watch(settingsProvider);
+      final globalSettings = globalSettingsAsync.maybeWhen(
+        data: (map) => map[monitorId] ?? map['all'] ?? SettingsState(),
+        orElse: () => SettingsState(),
+      );
+
+      return solarStateAsync.maybeWhen(
+        data: (solar) => service.calculateSmartAdjustments(
+          sleepState: sleepState,
+          now: DateTime.now(),
+          astronomicalSunrise: solar.phases.sunrise,
+          useSleepDebt:
+              monitorSettings.isSleepDebtEnabled &&
+              globalSettings.isSleepDebtMasterEnabled,
+          useSleepPressure:
+              monitorSettings.isSleepPressureEnabled &&
+              globalSettings.isSleepPressureMasterEnabled,
+          useTimeShift:
+              monitorSettings.isTimeShiftEnabled &&
+              globalSettings.isTimeShiftMasterEnabled,
+          useWindDown:
+              monitorSettings.isWindDownEnabled &&
+              globalSettings.isWindDownMasterEnabled,
+        ),
+        orElse: () => const SmartCircadianData.neutral(),
+      );
+    });
 
 // Провайдер для SharedPreferences (переопределяется в main.dart)
 final sharedPreferencesProvider = Provider<SharedPreferences?>((ref) => null);
@@ -437,10 +459,11 @@ class AutoBrightnessAdjustmentNotifier extends Notifier<bool> {
     return settingsAsync.maybeWhen(
       data: (settingsMap) {
         final firstId = currentSelection.firstOrNull ?? 'all';
-        final enabled = settingsMap[firstId]?.isAutoBrightnessEnabled ??
+        final enabled =
+            settingsMap[firstId]?.isAutoBrightnessEnabled ??
             settingsMap['all']?.isAutoBrightnessEnabled ??
             true;
-        
+
         // Sync fast flag if different
         if (fastFlag != enabled) {
           prefs?.setBool(_autoBrightnessEnabledKey, enabled);
@@ -454,7 +477,9 @@ class AutoBrightnessAdjustmentNotifier extends Notifier<bool> {
   void setEnabled(bool value) {
     if (state == value) return;
     state = value;
-    ref.read(sharedPreferencesProvider)?.setBool(_autoBrightnessEnabledKey, value);
+    ref
+        .read(sharedPreferencesProvider)
+        ?.setBool(_autoBrightnessEnabledKey, value);
     ref.read(settingsProvider.notifier).updateAutoBrightness(value);
   }
 
@@ -468,7 +493,7 @@ class AutoBrightnessAdjustmentNotifier extends Notifier<bool> {
             .update(monitor!.realBrightness!.toDouble());
       }
     }
-    
+
     setEnabled(!currentState);
   }
 }
@@ -489,8 +514,8 @@ MonitorInfo? _getBaselineMonitor(Ref ref) {
 
 final autoBrightnessAdjustmentProvider =
     NotifierProvider<AutoBrightnessAdjustmentNotifier, bool>(
-  AutoBrightnessAdjustmentNotifier.new,
-);
+      AutoBrightnessAdjustmentNotifier.new,
+    );
 
 class AutoTemperatureAdjustmentNotifier extends Notifier<bool> {
   static const _autoTemperatureEnabledKey = 'auto_temperature_enabled';
@@ -506,7 +531,8 @@ class AutoTemperatureAdjustmentNotifier extends Notifier<bool> {
     return tempSettingsAsync.maybeWhen(
       data: (tempSettingsMap) {
         final firstId = currentSelection.firstOrNull ?? 'all';
-        final enabled = tempSettingsMap[firstId]?.isEnabled ??
+        final enabled =
+            tempSettingsMap[firstId]?.isEnabled ??
             tempSettingsMap['all']?.isEnabled ??
             true;
 
@@ -532,17 +558,17 @@ class AutoTemperatureAdjustmentNotifier extends Notifier<bool> {
     }
 
     final newState = !currentState;
-    ref.read(sharedPreferencesProvider)?.setBool(_autoTemperatureEnabledKey, newState);
     ref
-        .read(temperatureSettingsProvider.notifier)
-        .toggleEnabled(newState);
+        .read(sharedPreferencesProvider)
+        ?.setBool(_autoTemperatureEnabledKey, newState);
+    ref.read(temperatureSettingsProvider.notifier).toggleEnabled(newState);
   }
 }
 
 final autoTemperatureAdjustmentProvider =
     NotifierProvider<AutoTemperatureAdjustmentNotifier, bool>(
-  AutoTemperatureAdjustmentNotifier.new,
-);
+      AutoTemperatureAdjustmentNotifier.new,
+    );
 
 class ManualBrightnessNotifier extends Notifier<double> {
   static const _manualBrightnessKey = 'manual_brightness';
@@ -654,7 +680,9 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   }
 
   void updateAutoBrightness(bool enabled) {
-    ref.read(sharedPreferencesProvider)?.setBool('auto_brightness_enabled', enabled);
+    ref
+        .read(sharedPreferencesProvider)
+        ?.setBool('auto_brightness_enabled', enabled);
     final ids = ref.read(selectedMonitorsProvider);
     final current = _getSettings(ids.firstOrNull ?? 'all');
     _updateSettings(ids, current.copyWith(isAutoBrightnessEnabled: enabled));
@@ -664,9 +692,11 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     final ids = ref.read(selectedMonitorsProvider);
     final current = _getSettings(ids.firstOrNull ?? 'all');
     _updateSettings(ids, current.copyWith(isSmartCircadianEnabled: enabled));
-    
+
     // Sync with temperature settings
-    ref.read(temperatureSettingsProvider.notifier).updateSmartCircadian(enabled);
+    ref
+        .read(temperatureSettingsProvider.notifier)
+        .updateSmartCircadian(enabled);
   }
 
   void updateWindDownMaster(bool enabled) {
@@ -684,7 +714,10 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   void updateSleepPressureMaster(bool enabled) {
     final ids = ref.read(selectedMonitorsProvider);
     final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(isSleepPressureMasterEnabled: enabled));
+    _updateSettings(
+      ids,
+      current.copyWith(isSleepPressureMasterEnabled: enabled),
+    );
   }
 
   void updateSleepDebtMaster(bool enabled) {
@@ -822,7 +855,9 @@ class CurrentBrightnessNotifier extends Notifier<double> {
                 final pos = locationAsync.value;
                 if (pos != null) {
                   final sunService = ref.read(sunCalculatorServiceProvider);
-                  final shiftedTime = DateTime.now().subtract(smartData.timeOffset);
+                  final shiftedTime = DateTime.now().subtract(
+                    smartData.timeOffset,
+                  );
                   effectiveElevation = sunService.getSunElevation(
                     pos.latitude,
                     pos.longitude,
@@ -890,7 +925,7 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
   final monitorsAsync = ref.watch(monitorListProvider);
   final visibility = ref.watch(appLifecycleProvider);
   final weatherAsync = ref.watch(currentWeatherProvider);
-  
+
   final circadianService = ref.read(circadianServiceProvider);
   final brightnessService = ref.read(brightnessServiceProvider);
   final tempService = ref.read(temperatureServiceProvider);
@@ -921,7 +956,9 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                 final pos = locationAsync.value;
                 if (pos != null) {
                   final sunService = ref.read(sunCalculatorServiceProvider);
-                  final shiftedTime = DateTime.now().subtract(smartData.timeOffset);
+                  final shiftedTime = DateTime.now().subtract(
+                    smartData.timeOffset,
+                  );
                   effectiveElevation = sunService.getSunElevation(
                     pos.latitude,
                     pos.longitude,
@@ -934,18 +971,19 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                 }
               }
 
-              final targetBrightness = circadianService.calculateTargetBrightness(
-                state.phases,
-                effectiveElevation,
-                DateTime.now(),
-                curveSharpness: settings.curveSharpness,
-                curvePoints: settings.curvePoints,
-                weather: settings.isWeatherAdjustmentEnabled
-                    ? weatherAsync.value
-                    : null,
-                presetSensitivity: settings.activePreset.weatherSensitivity,
-                smartData: smartData,
-              );
+              final targetBrightness = circadianService
+                  .calculateTargetBrightness(
+                    state.phases,
+                    effectiveElevation,
+                    DateTime.now(),
+                    curveSharpness: settings.curveSharpness,
+                    curvePoints: settings.curvePoints,
+                    weather: settings.isWeatherAdjustmentEnabled
+                        ? weatherAsync.value
+                        : null,
+                    presetSensitivity: settings.activePreset.weatherSensitivity,
+                    smartData: smartData,
+                  );
 
               brightnessService.applyBrightnessSmoothly(
                 selection: monitor.deviceName,
@@ -965,7 +1003,9 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
             // Calculate and Apply Temperature
             if (tempSettings.isEnabled && isTempEnabled) {
               final smartData = tempSettings.isSmartCircadianEnabled
-                  ? ref.read(smartCircadianTemperatureDataProvider(monitor.deviceName))
+                  ? ref.read(
+                      smartCircadianTemperatureDataProvider(monitor.deviceName),
+                    )
                   : const SmartCircadianData.neutral();
 
               double effectiveElevation = state.sunElevation;
@@ -975,7 +1015,9 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                 final pos = locationAsync.value;
                 if (pos != null) {
                   final sunService = ref.read(sunCalculatorServiceProvider);
-                  final shiftedTime = DateTime.now().subtract(smartData.timeOffset);
+                  final shiftedTime = DateTime.now().subtract(
+                    smartData.timeOffset,
+                  );
                   effectiveElevation = sunService.getSunElevation(
                     pos.latitude,
                     pos.longitude,

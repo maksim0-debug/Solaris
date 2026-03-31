@@ -27,7 +27,33 @@ class SmartCircadianService {
     Duration timeOffset = Duration.zero;
     if (useTimeShift) {
       final actualWakeTime = lastSession.endTime;
-      timeOffset = actualWakeTime.difference(astronomicalSunrise);
+      
+      // Calculate only if the session is recent (ended within last 24h)
+      // This supports completely irregular/broken schedules.
+      final timeSinceWake = now.difference(actualWakeTime);
+      
+      if (timeSinceWake.inHours < 24) {
+        // Normalize wake time to the same day as sunrise for comparison of "clock time"
+        final normalizedWake = DateTime(
+          astronomicalSunrise.year,
+          astronomicalSunrise.month,
+          astronomicalSunrise.day,
+          actualWakeTime.hour,
+          actualWakeTime.minute,
+        );
+        
+        var diffMinutes = normalizedWake.difference(astronomicalSunrise).inMinutes;
+        
+        // Handle day wraps (e.g. wake up at 1 AM, sunrise at 6 AM -> -5h offset, not +19h)
+        if (diffMinutes > 720) diffMinutes -= 1440;
+        if (diffMinutes < -720) diffMinutes += 1440;
+
+        // Cap the offset to 12 hours (half a day)
+        // This allows for inverted schedules (night shifts).
+        if (diffMinutes.abs() <= 720) {
+          timeOffset = Duration(minutes: diffMinutes);
+        }
+      }
     }
 
     // 3. Sleep Debt Compensation
@@ -53,21 +79,24 @@ class SmartCircadianService {
     double windDownFactor = 1.0;
     int windDownTempOffset = 0;
     bool isWindDownActive = false;
+    int? minutesUntilSleep;
 
     if (useWindDown && currentRegime != null) {
       final avgBedtimeMinutes = currentRegime.averageBedtimeNormalized;
       final nowMinutes = now.hour * 60 + now.minute;
       
-      int minutesUntilSleep = avgBedtimeMinutes - nowMinutes;
-      if (minutesUntilSleep < -720) minutesUntilSleep += 1440;
-      if (minutesUntilSleep > 720) minutesUntilSleep -= 1440;
+      int minsLeft = avgBedtimeMinutes - nowMinutes;
+      if (minsLeft < -720) minsLeft += 1440;
+      if (minsLeft > 720) minsLeft -= 1440;
 
-      if (minutesUntilSleep > 0 && minutesUntilSleep <= 120) {
+      minutesUntilSleep = minsLeft;
+
+      if (minsLeft > 0 && minsLeft <= 120) {
         isWindDownActive = true;
-        final progress = (120 - minutesUntilSleep) / 120.0;
+        final progress = (120 - minsLeft) / 120.0;
         windDownFactor = 1.0 - (progress * 0.75);
         windDownTempOffset = -(progress * 4000).toInt();
-      } else if (minutesUntilSleep <= 0 && minutesUntilSleep > -120) {
+      } else if (minsLeft <= 0 && minsLeft > -120) {
         isWindDownActive = true;
         windDownFactor = 0.25;
         windDownTempOffset = -4000;
@@ -80,9 +109,14 @@ class SmartCircadianService {
       temperatureOffset: sleepDebtTempOffset + windDownTempOffset,
       timeOffset: timeOffset,
       isWindDownActive: isWindDownActive,
+      isSleepPressureActive: sleepPressureFactor < 0.99,
+      isSleepDebtActive: sleepDebtFactor < 0.99,
+      isTimeShiftActive: timeOffset.inMinutes.abs() > 5,
       sleepDebtFactor: sleepDebtFactor,
       sleepPressureFactor: sleepPressureFactor,
+      minutesUntilSleep: minutesUntilSleep,
     );
+
   }
 
   SleepSession? _getLatestSession(List<SleepSession> sessions) {

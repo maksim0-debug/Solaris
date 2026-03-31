@@ -270,15 +270,14 @@ class _Header extends ConsumerWidget {
         final monitors = ref.read(monitorListProvider).value ?? [];
 
         for (final id in selection) {
-          brightnessService
-              .applyBrightnessSmoothly(
-                selection: id,
-                targetValue: next,
-                monitors: monitors,
-                monitorService: monitorService,
-                updateBrightnessCallback: (id, val) =>
-                    monitorListNotifier.updateBrightness(id, val),
-              );
+          brightnessService.applyBrightnessSmoothly(
+            selection: id,
+            targetValue: next,
+            monitors: monitors,
+            monitorService: monitorService,
+            updateBrightnessCallback: (id, val) =>
+                monitorListNotifier.updateBrightness(id, val),
+          );
         }
       }
     });
@@ -293,15 +292,14 @@ class _Header extends ConsumerWidget {
         final monitors = ref.read(monitorListProvider).value ?? [];
 
         for (final id in selection) {
-          temperatureService
-              .applyTemperatureSmoothly(
-                selection: id,
-                targetValue: next.toDouble(),
-                monitors: monitors,
-                monitorService: monitorService,
-                updateTemperatureCallback: (id, val) =>
-                    monitorListNotifier.updateTemperature(id, val),
-              );
+          temperatureService.applyTemperatureSmoothly(
+            selection: id,
+            targetValue: next.toDouble(),
+            monitors: monitors,
+            monitorService: monitorService,
+            updateTemperatureCallback: (id, val) =>
+                monitorListNotifier.updateTemperature(id, val),
+          );
         }
       }
     });
@@ -320,15 +318,14 @@ class _Header extends ConsumerWidget {
         final targetBright = ref.read(currentBrightnessProvider);
         debugPrint('Initial sync: applying brightness $targetBright');
         for (final id in selection) {
-          brightnessService
-              .applyBrightnessSmoothly(
-                selection: id,
-                targetValue: targetBright,
-                monitors: monitors,
-                monitorService: monitorService,
-                updateBrightnessCallback: (id, val) =>
-                    monitorListNotifier.updateBrightness(id, val),
-              );
+          brightnessService.applyBrightnessSmoothly(
+            selection: id,
+            targetValue: targetBright,
+            monitors: monitors,
+            monitorService: monitorService,
+            updateBrightnessCallback: (id, val) =>
+                monitorListNotifier.updateBrightness(id, val),
+          );
         }
 
         // Sync temperature
@@ -336,15 +333,14 @@ class _Header extends ConsumerWidget {
           final targetTemp = ref.read(currentTemperatureProvider);
           debugPrint('Initial sync: applying temperature $targetTemp');
           for (final id in selection) {
-            temperatureService
-                .applyTemperatureSmoothly(
-                  selection: id,
-                  targetValue: targetTemp.toDouble(),
-                  monitors: monitors,
-                  monitorService: monitorService,
-                  updateTemperatureCallback: (id, val) =>
-                      monitorListNotifier.updateTemperature(id, val),
-                );
+            temperatureService.applyTemperatureSmoothly(
+              selection: id,
+              targetValue: targetTemp.toDouble(),
+              monitors: monitors,
+              monitorService: monitorService,
+              updateTemperatureCallback: (id, val) =>
+                  monitorListNotifier.updateTemperature(id, val),
+            );
           }
         }
       }
@@ -362,28 +358,26 @@ class _Header extends ConsumerWidget {
       if (next.contains('all')) {
         // Apply brightness
         final brightness = ref.read(currentBrightnessProvider);
-        brightnessService
-            .applyBrightnessSmoothly(
-              selection: 'all',
-              targetValue: brightness,
-              monitors: monitorValue,
-              monitorService: monitorService,
-              updateBrightnessCallback: (id, val) =>
-                  monitorListNotifier.updateBrightness(id, val),
-            );
+        brightnessService.applyBrightnessSmoothly(
+          selection: 'all',
+          targetValue: brightness,
+          monitors: monitorValue,
+          monitorService: monitorService,
+          updateBrightnessCallback: (id, val) =>
+              monitorListNotifier.updateBrightness(id, val),
+        );
 
         // Apply temperature
         if (ref.read(isColorTemperatureEnabledProvider)) {
           final targetTemp = ref.read(currentTemperatureProvider);
-          temperatureService
-              .applyTemperatureSmoothly(
-                selection: 'all',
-                targetValue: targetTemp.toDouble(),
-                monitors: monitorValue,
-                monitorService: monitorService,
-                updateTemperatureCallback: (id, val) =>
-                    monitorListNotifier.updateTemperature(id, val),
-              );
+          temperatureService.applyTemperatureSmoothly(
+            selection: 'all',
+            targetValue: targetTemp.toDouble(),
+            monitors: monitorValue,
+            monitorService: monitorService,
+            updateTemperatureCallback: (id, val) =>
+                monitorListNotifier.updateTemperature(id, val),
+          );
         }
       } else if (next.length == 1) {
         // If single monitor selected, sync UI to its current levels
@@ -512,7 +506,9 @@ class _DashboardView extends ConsumerWidget {
     final currentTemperature = ref.watch(currentTemperatureProvider);
     final bool isAutoBright = ref.watch<bool>(autoBrightnessAdjustmentProvider);
     final bool isAutoTemp = ref.watch<bool>(autoTemperatureAdjustmentProvider);
-    final bool isColorTempEnabled = ref.watch(isColorTemperatureEnabledProvider);
+    final bool isColorTempEnabled = ref.watch(
+      isColorTemperatureEnabledProvider,
+    );
 
     return Row(
       children: [
@@ -539,9 +535,12 @@ class _DashboardView extends ConsumerWidget {
                                 orElse: () {
                                   // Safe approximate progress for startup to avoid "sun flash"
                                   final hour = DateTime.now().hour;
-                                  if (hour >= 21 || hour < 5) return -0.5; // Night
-                                  if (hour >= 5 && hour < 7) return 0.0;   // Sunrise
-                                  if (hour >= 19 && hour < 21) return 1.0;  // Sunset
+                                  if (hour >= 21 || hour < 5)
+                                    return -0.5; // Night
+                                  if (hour >= 5 && hour < 7)
+                                    return 0.0; // Sunrise
+                                  if (hour >= 19 && hour < 21)
+                                    return 1.0; // Sunset
                                   return 0.5; // Midday
                                 },
                               ),
@@ -554,15 +553,14 @@ class _DashboardView extends ConsumerWidget {
                     SizedBox(
                       width: 280,
                       height: 280,
-                        child: CustomPaint(
-                          painter: TemperatureDialPainter(
-                            progress:
-                                (6500.0 -
-                                    currentTemperature.clamp(2000, 6500)) /
-                                (6500.0 - 2000.0),
-                          ),
+                      child: CustomPaint(
+                        painter: TemperatureDialPainter(
+                          progress:
+                              (6500.0 - currentTemperature.clamp(2000, 6500)) /
+                              (6500.0 - 2000.0),
                         ),
                       ),
+                    ),
                     // Brightness Indicator (Inner)
                     SizedBox(
                       width: 240,
@@ -616,8 +614,8 @@ class _DashboardView extends ConsumerWidget {
                     TemperatureSlider(
                       value: currentTemperature.toDouble(),
                       onChanged: (val) => ref
-                          .read(manualTemperatureProvider.notifier)
-                          .setTemperature(val.round()),
+                          .read(currentTemperatureProvider.notifier)
+                          .setManualTemperature(val.round()),
                     ),
                   ],
                 ),
@@ -687,10 +685,12 @@ class _DashboardView extends ConsumerWidget {
 
                               // If we are in the middle of a phase, show "Time remaining"
                               // If we are before the sun cycle starts, show "Coming in"
-                              if (now.isBefore(state.phases.civilTwilightBegin)) {
+                              if (now.isBefore(
+                                state.phases.civilTwilightBegin,
+                              )) {
                                 return l10n.remainingLower(timeStr);
                               }
-                              
+
                               return l10n.remainingLower(timeStr);
                             },
                             orElse: () => l10n.calculatingLower,
@@ -708,6 +708,63 @@ class _DashboardView extends ConsumerWidget {
                             color: Colors.white54,
                             height: 1.4,
                           ),
+                        ),
+                        // Smart Circadian Indicators
+                        Builder(
+                          builder: (context) {
+                            final currentSelection = ref.watch(selectedMonitorsProvider);
+                            final monitorId = currentSelection.firstOrNull ?? 'all';
+                            final smartData = ref.watch(smartCircadianDataProvider(monitorId));
+                            
+                            final activeAjustments = <Widget>[];
+                            
+                            if (smartData.isWindDownActive) {
+                              activeAjustments.add(_SmartAdjustmentIndicator(
+                                icon: LucideIcons.moon,
+                                label: l10n.featureWindDown,
+                                value: (smartData.brightnessMultiplier < 1.0) 
+                                  ? "-${((1.0 - smartData.brightnessMultiplier) * 100).round()}%" 
+                                  : null,
+                              ));
+                            }
+                            
+                            if (smartData.isTimeShiftActive) {
+                              final offset = smartData.timeOffset.inMinutes;
+                              activeAjustments.add(_SmartAdjustmentIndicator(
+                                icon: LucideIcons.sunrise,
+                                label: l10n.featureTimeShift,
+                                value: "${offset > 0 ? '+' : ''}${offset}${l10n.minutesAbbreviation}",
+                              ));
+                            }
+                            
+                            if (smartData.isSleepPressureActive) {
+                              activeAjustments.add(_SmartAdjustmentIndicator(
+                                icon: LucideIcons.brain,
+                                label: l10n.featureSleepPressure,
+                                value: "-${((1.0 - smartData.sleepPressureFactor) * 100).round()}%",
+                              ));
+                            }
+                            
+                            if (smartData.isSleepDebtActive) {
+                              activeAjustments.add(_SmartAdjustmentIndicator(
+                                icon: LucideIcons.battery,
+                                label: l10n.featureSleepDebt,
+                                value: "-${((1.0 - smartData.sleepDebtFactor) * 100).round()}%",
+                              ));
+                            }
+                            
+                            if (activeAjustments.isEmpty) return const SizedBox.shrink();
+                            
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 16.0),
+                              child: Column(
+                                children: activeAjustments.map((w) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 6.0),
+                                  child: w,
+                                )).toList(),
+                              ),
+                            );
+                          },
                         ),
                         Builder(
                           builder: (context) {
@@ -728,7 +785,8 @@ class _DashboardView extends ConsumerWidget {
                             }
 
                             final settings =
-                                settingsMap[currentSelection.firstOrNull ?? 'all'] ??
+                                settingsMap[currentSelection.firstOrNull ??
+                                    'all'] ??
                                 settingsMap['all']!;
                             if (!settings.isWeatherAdjustmentEnabled) {
                               return const SizedBox.shrink();
@@ -799,58 +857,6 @@ class _DashboardView extends ConsumerWidget {
                                     ),
                                   ),
                                 ],
-                              ),
-                            );
-                          },
-                        ),
-                        Builder(
-                          builder: (context) {
-                            final settingsMap = ref.watch(settingsProvider).value;
-                            if (settingsMap == null) return const SizedBox.shrink();
-                            final monitorIds = ref.watch(selectedMonitorsProvider);
-                            final monitorId = monitorIds.firstOrNull ?? 'all';
-                            final settings = settingsMap[monitorId] ?? settingsMap['all']!;
-                            
-                            if (!settings.isSmartCircadianEnabled) return const SizedBox.shrink();
-                            
-                            final smartData = ref.watch(smartCircadianDataProvider(monitorId));
-                            final List<Widget> indicators = [];
-                            
-                            if (smartData.timeOffset != Duration.zero) {
-                              final offsetMins = smartData.timeOffset.inMinutes.abs();
-                              indicators.add(_SmartIndicator(
-                                icon: LucideIcons.sunrise,
-                                label: "Био-утро (${smartData.timeOffset.isNegative ? '-' : '+'}${offsetMins}м)",
-                                color: const Color(0xFF818CF8),
-                              ));
-                            }
-                            
-                            if (smartData.isWindDownActive) {
-                              indicators.add(_SmartIndicator(
-                                icon: LucideIcons.moon,
-                                label: "Подготовка ко сну (x${smartData.brightnessMultiplier.toStringAsFixed(1)})",
-                                color: const Color(0xFFF472B6),
-                              ));
-                            }
-                            
-                            if (smartData.sleepDebtFactor < 1.0) {
-                              final reduction = ((1.0 - smartData.sleepDebtFactor) * 100).round();
-                              indicators.add(_SmartIndicator(
-                                icon: LucideIcons.batteryCharging,
-                                label: "Недосып (-$reduction%)",
-                                color: const Color(0xFF34D399),
-                              ));
-                            }
-
-                            if (indicators.isEmpty) return const SizedBox.shrink();
-
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 12.0),
-                              child: Column(
-                                children: indicators.map((w) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 4.0),
-                                  child: w,
-                                )).toList(),
                               ),
                             );
                           },
@@ -949,8 +955,8 @@ class _DashboardView extends ConsumerWidget {
                                 color: !isColorTempEnabled
                                     ? Colors.white10
                                     : isAutoTemp
-                                        ? const Color(0xFFFDBA74)
-                                        : Colors.white30,
+                                    ? const Color(0xFFFDBA74)
+                                    : Colors.white30,
                               ),
                               const SizedBox(height: 12),
                               FittedBox(
@@ -962,8 +968,8 @@ class _DashboardView extends ConsumerWidget {
                                     color: !isColorTempEnabled
                                         ? Colors.white10
                                         : isAutoTemp
-                                            ? Colors.white
-                                            : Colors.white30,
+                                        ? Colors.white
+                                        : Colors.white30,
                                   ),
                                   maxLines: 1,
                                 ),
@@ -993,7 +999,10 @@ class _DashboardView extends ConsumerWidget {
                                   cursor: SystemMouseCursors.click,
                                   child: GestureDetector(
                                     onTap: () => ref
-                                        .read(isColorTemperatureEnabledProvider.notifier)
+                                        .read(
+                                          isColorTemperatureEnabledProvider
+                                              .notifier,
+                                        )
                                         .set(true),
                                     child: Text(
                                       l10n.enable.toUpperCase(),
@@ -1066,35 +1075,6 @@ class _DashboardView extends ConsumerWidget {
   }
 }
 
-class _SmartIndicator extends StatelessWidget {
-  const _SmartIndicator({
-    required this.icon,
-    required this.label,
-    required this.color,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: color),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: color,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 class _StatRow extends StatelessWidget {
   const _StatRow({
@@ -1265,6 +1245,47 @@ class _DisplayInfo extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SmartAdjustmentIndicator extends StatelessWidget {
+  const _SmartAdjustmentIndicator({
+    required this.icon,
+    required this.label,
+    this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String? value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: const Color(0xFF818CF8)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFFC4B5FD),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        if (value != null)
+          Text(
+            '($value)',
+            style: TextStyle(
+              fontSize: 12,
+              color: const Color(0xFFC4B5FD).withOpacity(0.7),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+      ],
     );
   }
 }
