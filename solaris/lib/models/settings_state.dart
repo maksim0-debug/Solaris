@@ -23,6 +23,10 @@ class SettingsState {
   final double sleepPressureBrightnessIntensity;
   final double sleepDebtBrightnessIntensity;
   final double sleepDebtTemperatureIntensity;
+  final int windDownDurationMinutes;
+  final int timeShiftDurationMinutes;
+  final double sleepPressureWakeLimitHours;
+  final int sleepDebtThresholdMinutes;
 
   SettingsState({
     this.activePreset = PresetType.bright,
@@ -46,6 +50,10 @@ class SettingsState {
     this.sleepPressureBrightnessIntensity = 1.0,
     this.sleepDebtBrightnessIntensity = 1.0,
     this.sleepDebtTemperatureIntensity = 1.0,
+    this.windDownDurationMinutes = 120,
+    this.timeShiftDurationMinutes = 360,
+    this.sleepPressureWakeLimitHours = 16.0,
+    this.sleepDebtThresholdMinutes = 390,
   }) : curvesMap = curvesMap ?? PresetConstants.getAllDefaults();
 
   List<FlSpot> get curvePoints => curvesMap[activePreset]!;
@@ -75,6 +83,10 @@ class SettingsState {
     'sleepPressureBrightnessIntensity': sleepPressureBrightnessIntensity,
     'sleepDebtBrightnessIntensity': sleepDebtBrightnessIntensity,
     'sleepDebtTemperatureIntensity': sleepDebtTemperatureIntensity,
+    'windDownDurationMinutes': windDownDurationMinutes,
+    'timeShiftDurationMinutes': timeShiftDurationMinutes,
+    'sleepPressureWakeLimitHours': sleepPressureWakeLimitHours,
+    'sleepDebtThresholdMinutes': sleepDebtThresholdMinutes,
   };
 
   factory SettingsState.fromJson(Map<String, dynamic> json) {
@@ -140,6 +152,10 @@ class SettingsState {
       sleepPressureBrightnessIntensity: (json['sleepPressureBrightnessIntensity'] as num?)?.toDouble() ?? 1.0,
       sleepDebtBrightnessIntensity: (json['sleepDebtBrightnessIntensity'] as num?)?.toDouble() ?? 1.0,
       sleepDebtTemperatureIntensity: (json['sleepDebtTemperatureIntensity'] as num?)?.toDouble() ?? 1.0,
+      windDownDurationMinutes: json['windDownDurationMinutes'] as int? ?? 120,
+      timeShiftDurationMinutes: json['timeShiftDurationMinutes'] as int? ?? 360,
+      sleepPressureWakeLimitHours: (json['sleepPressureWakeLimitHours'] as num?)?.toDouble() ?? 16.0,
+      sleepDebtThresholdMinutes: json['sleepDebtThresholdMinutes'] as int? ?? 390,
     );
   }
 
@@ -165,6 +181,10 @@ class SettingsState {
     double? sleepPressureBrightnessIntensity,
     double? sleepDebtBrightnessIntensity,
     double? sleepDebtTemperatureIntensity,
+    int? windDownDurationMinutes,
+    int? timeShiftDurationMinutes,
+    double? sleepPressureWakeLimitHours,
+    int? sleepDebtThresholdMinutes,
   }) {
     return SettingsState(
       activePreset: activePreset ?? this.activePreset,
@@ -191,6 +211,10 @@ class SettingsState {
       sleepPressureBrightnessIntensity: sleepPressureBrightnessIntensity ?? this.sleepPressureBrightnessIntensity,
       sleepDebtBrightnessIntensity: sleepDebtBrightnessIntensity ?? this.sleepDebtBrightnessIntensity,
       sleepDebtTemperatureIntensity: sleepDebtTemperatureIntensity ?? this.sleepDebtTemperatureIntensity,
+      windDownDurationMinutes: windDownDurationMinutes ?? this.windDownDurationMinutes,
+      timeShiftDurationMinutes: timeShiftDurationMinutes ?? this.timeShiftDurationMinutes,
+      sleepPressureWakeLimitHours: sleepPressureWakeLimitHours ?? this.sleepPressureWakeLimitHours,
+      sleepDebtThresholdMinutes: sleepDebtThresholdMinutes ?? this.sleepDebtThresholdMinutes,
     );
   }
 }

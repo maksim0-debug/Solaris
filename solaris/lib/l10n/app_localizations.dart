@@ -1134,6 +1134,30 @@ abstract class AppLocalizations {
     int time,
     String unit,
   );
+
+  /// No description provided for @windDownDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Wind-down Duration'**
+  String get windDownDuration;
+
+  /// No description provided for @timeShiftDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Bio-Morning Adaptation'**
+  String get timeShiftDuration;
+
+  /// No description provided for @sleepPressureLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Wakefulness Limit'**
+  String get sleepPressureLimit;
+
+  /// No description provided for @sleepDebtThreshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep Target (Debt threshold)'**
+  String get sleepDebtThreshold;
 }
 
 class _AppLocalizationsDelegate

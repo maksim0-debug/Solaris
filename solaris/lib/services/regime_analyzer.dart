@@ -257,6 +257,9 @@ class RegimeAnalyzer {
       final windowEndMin = normalMins.reduce((a, b) => a > b ? a : b);
       final avgBedtimeMin = (normalMins.reduce((a, b) => a + b) / normalMins.length).round();
 
+      final wakeMins = effectiveNormalEntries.map((e) => BedtimeNormalization.minutesFromNoon(e.nightGroup.aggregatedSession.endTime)).toList();
+      final avgWakeTimeMin = (wakeMins.reduce((a, b) => a + b) / wakeMins.length).round();
+
       final isFloating = _isFloatingSchedule(raw, settings);
 
       RegimeShift? shift;
@@ -276,6 +279,8 @@ class RegimeAnalyzer {
         endDate: endDate,
         averageBedtimeNormalized: avgBedtimeMin,
         averageBedtimeFormatted: BedtimeNormalization.minutesFromNoonToString(avgBedtimeMin),
+        averageWakeTimeNormalized: avgWakeTimeMin,
+        averageWakeTimeFormatted: BedtimeNormalization.minutesFromNoonToString(avgWakeTimeMin),
         windowStart: BedtimeNormalization.minutesFromNoonToString(windowStartMin),
         windowEnd: BedtimeNormalization.minutesFromNoonToString(windowEndMin),
         anomalyDates: raw.anomalyEntries.map((e) => e.date).toList(),

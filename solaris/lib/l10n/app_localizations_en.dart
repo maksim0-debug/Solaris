@@ -584,4 +584,16 @@ class AppLocalizationsEn extends AppLocalizations {
   ) {
     return '$feature $impact% brightness ($time$unit)';
   }
+
+  @override
+  String get windDownDuration => 'Wind-down Duration';
+
+  @override
+  String get timeShiftDuration => 'Bio-Morning Adaptation';
+
+  @override
+  String get sleepPressureLimit => 'Wakefulness Limit';
+
+  @override
+  String get sleepDebtThreshold => 'Sleep Target (Debt threshold)';
 }

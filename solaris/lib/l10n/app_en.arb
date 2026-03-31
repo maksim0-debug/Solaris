@@ -262,5 +262,9 @@
         "type": "int"
       }
     }
-  }
+  },
+  "windDownDuration": "Wind-down Duration",
+  "timeShiftDuration": "Bio-Morning Adaptation",
+  "sleepPressureLimit": "Wakefulness Limit",
+  "sleepDebtThreshold": "Sleep Target (Debt threshold)"
 }

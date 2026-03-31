@@ -583,4 +583,16 @@ class AppLocalizationsRu extends AppLocalizations {
   ) {
     return '$feature $impact% к яркости ($time $unit)';
   }
+
+  @override
+  String get windDownDuration => 'Длительность подготовки ко сну';
+
+  @override
+  String get timeShiftDuration => 'Время адаптации био-утра';
+
+  @override
+  String get sleepPressureLimit => 'Порог бодрствования';
+
+  @override
+  String get sleepDebtThreshold => 'Норма сна (порог недосыпа)';
 }

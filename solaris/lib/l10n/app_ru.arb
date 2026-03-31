@@ -262,5 +262,9 @@
         "type": "String"
       }
     }
-  }
+  },
+  "windDownDuration": "Длительность подготовки ко сну",
+  "timeShiftDuration": "Время адаптации био-утра",
+  "sleepPressureLimit": "Порог бодрствования",
+  "sleepDebtThreshold": "Норма сна (порог недосыпа)"
 }

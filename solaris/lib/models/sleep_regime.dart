@@ -23,6 +23,8 @@ class SleepRegime extends Equatable {
   final DateTime endDate;
   final int averageBedtimeNormalized;
   final String averageBedtimeFormatted;
+  final int averageWakeTimeNormalized;
+  final String averageWakeTimeFormatted;
   final String windowStart;
   final String windowEnd;
   final List<DateTime> anomalyDates;
@@ -38,6 +40,8 @@ class SleepRegime extends Equatable {
     required this.endDate,
     required this.averageBedtimeNormalized,
     required this.averageBedtimeFormatted,
+    required this.averageWakeTimeNormalized,
+    required this.averageWakeTimeFormatted,
     required this.windowStart,
     required this.windowEnd,
     required this.anomalyDates,
@@ -55,6 +59,8 @@ class SleepRegime extends Equatable {
     endDate,
     averageBedtimeNormalized,
     averageBedtimeFormatted,
+    averageWakeTimeNormalized,
+    averageWakeTimeFormatted,
     windowStart,
     windowEnd,
     anomalyDates,

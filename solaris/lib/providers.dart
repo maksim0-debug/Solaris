@@ -46,6 +46,7 @@ final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
   final service = ref.watch(smartCircadianServiceProvider);
   final settingsAsync = ref.watch(settingsProvider);
   final solarStateAsync = ref.watch(solarStateStreamProvider);
+  final now = ref.watch(currentTimeProvider).value ?? DateTime.now();
 
   // Use 'all' as fallback if monitorId not found
   final settings = settingsAsync.value;
@@ -61,7 +62,7 @@ final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
     data: (solar) {
       final smartData = service.calculateSmartAdjustments(
         sleepState: sleepState,
-        now: DateTime.now(),
+        now: now,
         astronomicalSunrise: solar.phases.sunrise,
         useSleepDebt:
             monitorSettings.isSleepDebtEnabled &&
@@ -81,6 +82,10 @@ final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
         timeShiftIntensity: monitorSettings.timeShiftIntensity,
         windDownBrightnessIntensity: monitorSettings.windDownBrightnessIntensity,
         windDownTemperatureIntensity: monitorSettings.windDownTemperatureIntensity,
+        windDownDurationMinutes: monitorSettings.windDownDurationMinutes,
+        timeShiftDurationMinutes: monitorSettings.timeShiftDurationMinutes,
+        sleepPressureWakeLimitHours: monitorSettings.sleepPressureWakeLimitHours,
+        sleepDebtThresholdMinutes: monitorSettings.sleepDebtThresholdMinutes,
       );
 
       // Calculate Time Shift Brightness Impact
@@ -163,10 +168,12 @@ final smartCircadianTemperatureDataProvider =
         orElse: () => SettingsState(),
       );
 
+      final now = ref.watch(currentTimeProvider).value ?? DateTime.now();
+
       return solarStateAsync.maybeWhen(
         data: (solar) => service.calculateSmartAdjustments(
           sleepState: sleepState,
-          now: DateTime.now(),
+          now: now,
           astronomicalSunrise: solar.phases.sunrise,
           useSleepDebt:
               monitorSettings.isSleepDebtEnabled &&
@@ -186,6 +193,10 @@ final smartCircadianTemperatureDataProvider =
           timeShiftIntensity: globalSettings.timeShiftIntensity,
           windDownBrightnessIntensity: globalSettings.windDownBrightnessIntensity,
           windDownTemperatureIntensity: globalSettings.windDownTemperatureIntensity,
+          windDownDurationMinutes: globalSettings.windDownDurationMinutes,
+          timeShiftDurationMinutes: globalSettings.timeShiftDurationMinutes,
+          sleepPressureWakeLimitHours: globalSettings.sleepPressureWakeLimitHours,
+          sleepDebtThresholdMinutes: globalSettings.sleepDebtThresholdMinutes,
         ),
         orElse: () => const SmartCircadianData.neutral(),
       );
@@ -828,6 +839,30 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
         windDownTemperatureIntensity: temperature,
       ),
     );
+  }
+
+  void updateWindDownDuration(int minutes) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(ids, current.copyWith(windDownDurationMinutes: minutes));
+  }
+
+  void updateTimeShiftDuration(int minutes) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(ids, current.copyWith(timeShiftDurationMinutes: minutes));
+  }
+
+  void updateSleepPressureLimit(double hours) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(ids, current.copyWith(sleepPressureWakeLimitHours: hours));
+  }
+
+  void updateSleepDebtThreshold(int minutes) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(ids, current.copyWith(sleepDebtThresholdMinutes: minutes));
   }
 
   void updateTimeShiftIntensity(double intensity) {

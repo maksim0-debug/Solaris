@@ -290,6 +290,11 @@ class _CircadianRegulationSection extends ConsumerWidget {
                     temperatureIntensity: settings.windDownTemperatureIntensity,
                     onBrightnessIntensityChanged: (val) => ref.read(settingsProvider.notifier).updateWindDownIntensity(val, settings.windDownTemperatureIntensity),
                     onTemperatureIntensityChanged: (val) => ref.read(settingsProvider.notifier).updateWindDownIntensity(settings.windDownBrightnessIntensity, val),
+                    durationValue: settings.windDownDurationMinutes.toDouble(),
+                    durationMin: 30,
+                    durationMax: 360,
+                    durationLabel: l10n.windDownDuration,
+                    onDurationChanged: (val) => ref.read(settingsProvider.notifier).updateWindDownDuration(val.toInt()),
                   ),
                   const Divider(height: 32, color: Colors.white10),
                   _RegulationToggle(
@@ -308,6 +313,11 @@ class _CircadianRegulationSection extends ConsumerWidget {
                     brightnessIntensity: settings.timeShiftIntensity,
                     onBrightnessIntensityChanged: (val) => ref.read(settingsProvider.notifier).updateTimeShiftIntensity(val),
                     showTemperatureIntensity: false, // Time shift is a single factor
+                    durationValue: settings.timeShiftDurationMinutes.toDouble(),
+                    durationMin: 60,
+                    durationMax: 720,
+                    durationLabel: l10n.timeShiftDuration,
+                    onDurationChanged: (val) => ref.read(settingsProvider.notifier).updateTimeShiftDuration(val.toInt()),
                   ),
                   const Divider(height: 32, color: Colors.white10),
                   _RegulationToggle(
@@ -326,6 +336,12 @@ class _CircadianRegulationSection extends ConsumerWidget {
                     brightnessIntensity: settings.sleepPressureBrightnessIntensity,
                     onBrightnessIntensityChanged: (val) => ref.read(settingsProvider.notifier).updateSleepPressureIntensity(val),
                     showTemperatureIntensity: false, // Currently only brightness
+                    durationValue: settings.sleepPressureWakeLimitHours,
+                    durationMin: 10,
+                    durationMax: 20,
+                    durationLabel: l10n.sleepPressureLimit,
+                    durationUnit: l10n.hoursAbbreviation,
+                    onDurationChanged: (val) => ref.read(settingsProvider.notifier).updateSleepPressureLimit(val),
                   ),
                   const Divider(height: 32, color: Colors.white10),
                   _RegulationToggle(
@@ -345,6 +361,11 @@ class _CircadianRegulationSection extends ConsumerWidget {
                     temperatureIntensity: settings.sleepDebtTemperatureIntensity,
                     onBrightnessIntensityChanged: (val) => ref.read(settingsProvider.notifier).updateSleepDebtIntensity(val, settings.sleepDebtTemperatureIntensity),
                     onTemperatureIntensityChanged: (val) => ref.read(settingsProvider.notifier).updateSleepDebtIntensity(settings.sleepDebtBrightnessIntensity, val),
+                    durationValue: settings.sleepDebtThresholdMinutes.toDouble(),
+                    durationMin: 240,
+                    durationMax: 540,
+                    durationLabel: l10n.sleepDebtThreshold,
+                    onDurationChanged: (val) => ref.read(settingsProvider.notifier).updateSleepDebtThreshold(val.toInt()),
                   ),
                 ],
               ),
@@ -376,6 +397,12 @@ class _RegulationToggle extends ConsumerStatefulWidget {
     this.onBrightnessIntensityChanged,
     this.onTemperatureIntensityChanged,
     this.showTemperatureIntensity = true,
+    this.durationValue,
+    this.onDurationChanged,
+    this.durationMin = 0,
+    this.durationMax = 100,
+    this.durationLabel,
+    this.durationUnit,
   });
 
   final String title;
@@ -396,6 +423,12 @@ class _RegulationToggle extends ConsumerStatefulWidget {
   final ValueChanged<double>? onBrightnessIntensityChanged;
   final ValueChanged<double>? onTemperatureIntensityChanged;
   final bool showTemperatureIntensity;
+  final double? durationValue;
+  final ValueChanged<double>? onDurationChanged;
+  final double durationMin;
+  final double durationMax;
+  final String? durationLabel;
+  final String? durationUnit;
 
   @override
   ConsumerState<_RegulationToggle> createState() => _RegulationToggleState();
@@ -562,6 +595,18 @@ class _RegulationToggleState extends ConsumerState<_RegulationToggle> {
                         color: const Color(0xFF818CF8),
                       ),
                     ),
+                  if (widget.durationValue != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: _DurationSlider(
+                        label: widget.durationLabel ?? "",
+                        value: widget.durationValue!,
+                        min: widget.durationMin,
+                        max: widget.durationMax,
+                        unit: widget.durationUnit,
+                        onChanged: widget.onDurationChanged,
+                      ),
+                    ),
                 ],
               ],
             ),
@@ -654,6 +699,71 @@ class _SmallToggle extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             color: value ? Colors.white70 : Colors.white24,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DurationSlider extends StatelessWidget {
+  const _DurationSlider({
+    required this.label,
+    required this.value,
+    required this.min,
+    required this.max,
+    this.unit,
+    this.onChanged,
+  });
+
+  final String label;
+  final double value;
+  final double min;
+  final double max;
+  final String? unit;
+  final ValueChanged<double>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
+    // Format label for mins if no unit provided
+    String formatValue(double val) {
+      if (unit != null) return "${val.toStringAsFixed(1)}$unit";
+      
+      final mins = val.toInt();
+      final h = mins ~/ 60;
+      final m = mins % 60;
+      if (h > 0) return "${h}${l10n.hoursAbbreviation} ${m}${l10n.minutesAbbreviation}";
+      return "${m}${l10n.minutesAbbreviation}";
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: const TextStyle(fontSize: 12, color: Colors.white60)),
+            Text(formatValue(value), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFC4B5FD))),
+          ],
+        ),
+        const SizedBox(height: 4),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 2,
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+            overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+            activeTrackColor: const Color(0xFF8B5CF6).withOpacity(0.5),
+            inactiveTrackColor: Colors.white10,
+            thumbColor: const Color(0xFFC4B5FD),
+            overlayColor: const Color(0xFF8B5CF6).withOpacity(0.2),
+          ),
+          child: Slider(
+            value: value,
+            min: min,
+            max: max,
+            onChanged: onChanged,
           ),
         ),
       ],
