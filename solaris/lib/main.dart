@@ -31,7 +31,7 @@ void main(List<String> args) async {
   bool startMinimized = args.contains('--minimized');
 
   WindowOptions windowOptions = const WindowOptions(
-    size: Size(1280, 800),
+    size: Size(1300, 890),
     center: true,
     backgroundColor: AppTheme.background,
     skipTaskbar: false,

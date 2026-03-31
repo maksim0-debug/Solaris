@@ -833,7 +833,7 @@ class _DashboardView extends ConsumerWidget {
                                 );
                               }
 
-                              if (activeAjustments.isEmpty)
+                              if (!isAutoBright || activeAjustments.isEmpty)
                                 return const SizedBox.shrink();
 
                               final receiptText = [
