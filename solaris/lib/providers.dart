@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:ui';
+import 'dart:math' as math;
 
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -111,7 +112,7 @@ final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
 
       if (smartData.isTimeShiftActive) {
         final shiftedTime = now.subtract(smartData.timeOffset);
-        final locationAsync = ref.read(effectiveLocationProvider);
+        final locationAsync = ref.watch(effectiveLocationProvider);
         final pos = locationAsync.value;
 
         if (pos != null) {
@@ -120,6 +121,9 @@ final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
             pos.longitude,
             shiftedTime,
           );
+
+          // Bio-morning is a bonus: never dim below natural sun level (for late risers)
+          effectiveElevation = math.max(effectiveElevation, solar.sunElevation);
 
           // Blinding Protection (similar to other providers)
           if (solar.sunElevation < 0 && effectiveElevation > 10) {
@@ -567,7 +571,7 @@ class LocaleNotifier extends Notifier<Locale> {
   Locale build() {
     final prefs = ref.watch(sharedPreferencesProvider);
     final languageCode = prefs?.getString(_localeKey);
-    
+
     // Default to 'ru' to maintain previous behavior, but check if user saved 'en'
     if (languageCode == 'en') {
       return const Locale('en');

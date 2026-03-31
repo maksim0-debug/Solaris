@@ -51,7 +51,10 @@ class CircadianService {
     }
 
     double weatherFactor = 1.0;
-    if (weather != null && presetSensitivity > 0) {
+    final bool isWeatherActiveWindow =
+        now.isAfter(phases.sunrise) && now.isBefore(phases.astronomicalDusk);
+
+    if (weather != null && presetSensitivity > 0 && isWeatherActiveWindow) {
       final baseFactor = weatherAdjustmentService.calculateWeatherFactor(
         weather,
         elevation,
@@ -114,7 +117,10 @@ class CircadianService {
     double baseTemperature = _calculateFromElevation(curvePoints, elevation);
 
     // Weather impact on temperature: make it slightly cooler/warmer
-    if (weather != null) {
+    final bool isWeatherActiveWindow =
+        now.isAfter(phases.sunrise) && now.isBefore(phases.astronomicalDusk);
+
+    if (weather != null && isWeatherActiveWindow) {
       if (weather.weatherCode >= 50 || weather.cloudCover > 50) {
         // Less blue light during dark/cloudy conditions
         // Drop temperature depending on how heavy the cloud cover is, by up to ~500K.

@@ -70,39 +70,43 @@ class SmartCircadianService {
       final actualWakeTime = lastAggSession.endTime;
       final timeSinceWake = now.difference(actualWakeTime);
 
-      // Only shift if awake for less than 24h
+      // Работаем только если с момента пробуждения прошло меньше 24 часов
       if (timeSinceWake.inHours < 24) {
-        // Shift relative to average wake time, not sunset
-        final avgWakeMin = currentRegime.averageWakeTimeNormalized;
-        final actualWakeMin = BedtimeNormalization.minutesFromNoon(
-          actualWakeTime,
-        );
+        // ИСПРАВЛЕНИЕ 1: Привязываемся к астрономическому рассвету, а не к среднему времени.
+        // Это гарантирует, что в момент пробуждения система сымитирует утреннее солнце.
+        int diffMinutes = actualWakeTime
+            .difference(astronomicalSunrise)
+            .inMinutes;
 
-        int diffMinutes = actualWakeMin - avgWakeMin;
+        // Нормализуем разницу в пределах суток (чтобы не было сдвигов больше 12 часов в одну сторону)
         while (diffMinutes > 720) diffMinutes -= 1440;
         while (diffMinutes < -720) diffMinutes += 1440;
 
-        // Apply intensity and cap (max 3 hours shift)
-        final double maxBioShift = 180.0;
-        final double effectiveDiff = diffMinutes
-            .clamp(-maxBioShift, maxBioShift)
-            .toDouble();
+        // ИСПРАВЛЕНИЕ 2: Убрано жесткое ограничение в 3 часа (clamp).
+        // Если ты встал ночью, системе разрешено сдвинуть время на 8-10 часов,
+        // чтобы вытащить солнце из-за горизонта на твой график.
+        final double effectiveDiff = diffMinutes.toDouble();
 
-        // FADEOUT: Gradually reduce time shift over X minutes
-        double fadeFactor = 1.0;
+        // FADEOUT: Плавно сводим смещение к нулю за заданное время (твои 6 часов)
+        double fadeFactor = 0.0;
         if (timeSinceWake.inMinutes < timeShiftDur) {
-          fadeFactor =
-              1.0 -
-              (timeSinceWake.inMinutes /
-                  (timeShiftDur > 0 ? timeShiftDur.toDouble() : 1.0));
+          final progress =
+              timeSinceWake.inMinutes /
+              (timeShiftDur > 0 ? timeShiftDur.toDouble() : 1.0);
+
+          // NON-LINEAR CONVEX FADE:
+          // At high intensities, we hold the bonus for much longer.
+          // Power 20 at 100% intensity means bonus stays >90% for ~4.5 hours and >30% until last 10 mins.
+          final double fadePower = 1.0 + (19.0 * timeShiftIntensity);
+          fadeFactor = 1.0 - math.pow(progress, fadePower);
+
           timeShiftMinutesRemaining = timeShiftDur - timeSinceWake.inMinutes;
         } else {
           fadeFactor = 0.0;
         }
 
-        final double adjustedIntensity = math
-            .pow(timeShiftIntensity, 2.0)
-            .toDouble();
+        final double adjustedIntensity = timeShiftIntensity;
+
         timeOffset = Duration(
           minutes: (effectiveDiff * adjustedIntensity * fadeFactor).toInt(),
         );

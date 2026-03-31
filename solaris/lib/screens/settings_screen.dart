@@ -129,8 +129,6 @@ class SettingsScreen extends ConsumerWidget {
           const _GlobalHotkeysCard(),
           const SizedBox(height: 24),
 
-          const _LanguageSelectorCard(),
-          const SizedBox(height: 24),
 
           // Info Card
           GlassCard(
