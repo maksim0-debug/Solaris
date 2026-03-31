@@ -18,3 +18,18 @@ enum CurrentDayPhase {
   /// Twilight (civil twilight).
   twilight,
 }
+
+/// Specific solar transition points for the "Next Event" indicator.
+enum SolarEventType {
+  civilTwilightBegin,
+  sunrise,
+  goldenHourMorning,
+  goldenHourMorningEnd,
+  zenithStart,
+  solarNoon,
+  zenithEnd,
+  goldenHourEvening,
+  goldenHourEveningEnd,
+  sunset,
+  civilTwilightEnd,
+}

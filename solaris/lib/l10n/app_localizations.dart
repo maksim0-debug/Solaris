@@ -236,6 +236,30 @@ abstract class AppLocalizations {
   /// **'Golden Hour (Evening)'**
   String get goldenHourEvening;
 
+  /// No description provided for @eventZenithStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Zenith Start'**
+  String get eventZenithStart;
+
+  /// No description provided for @eventZenithEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Zenith End'**
+  String get eventZenithEnd;
+
+  /// No description provided for @eventSolarNoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Solar Noon'**
+  String get eventSolarNoon;
+
+  /// No description provided for @eventGoldenHourEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Golden Hour End'**
+  String get eventGoldenHourEnd;
+
   /// No description provided for @calculating.
   ///
   /// In en, this message translates to:

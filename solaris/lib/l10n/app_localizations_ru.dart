@@ -82,6 +82,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get goldenHourEvening => 'Золотой час (вечер)';
 
   @override
+  String get eventZenithStart => 'Начало зенита';
+
+  @override
+  String get eventZenithEnd => 'Конец зенита';
+
+  @override
+  String get eventSolarNoon => 'Солнечный полдень';
+
+  @override
+  String get eventGoldenHourEnd => 'Конец золотого часа';
+
+  @override
   String get calculating => 'РАСЧЕТ...';
 
   @override

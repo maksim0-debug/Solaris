@@ -218,32 +218,58 @@ class SunCalculatorService {
     }
   }
 
-  /// Calculates the duration until the next solar event.
-  Duration getTimeUntilNextEvent(SolarPhaseModel phases, DateTime currentTime) {
-    // Collect all significant transition points
+  /// Calculates the duration and type of the next solar event.
+  ({Duration duration, SolarEventType type}) getNextEvent(
+    SolarPhaseModel phases,
+    DateTime currentTime,
+  ) {
+    // Collect all significant transition points with their types
     final events = [
-      phases.civilTwilightBegin,
-      phases.sunrise,
-      phases.goldenHourMorning,
-      phases.goldenHourMorningEnd,
-      phases.solarNoon.subtract(const Duration(hours: 1)), // Zenith Start
-      phases.solarNoon,
-      phases.solarNoon.add(const Duration(hours: 1)), // Zenith End
-      phases.goldenHourEvening,
-      phases.goldenHourEveningEnd,
-      phases.sunset,
-      phases.civilTwilightEnd,
-    ]..sort();
+      (time: phases.civilTwilightBegin, type: SolarEventType.civilTwilightBegin),
+      (time: phases.sunrise, type: SolarEventType.sunrise),
+      (time: phases.goldenHourMorning, type: SolarEventType.goldenHourMorning),
+      (
+        time: phases.goldenHourMorningEnd,
+        type: SolarEventType.goldenHourMorningEnd,
+      ),
+      (
+        time: phases.solarNoon.subtract(const Duration(hours: 1)),
+        type: SolarEventType.zenithStart,
+      ),
+      (time: phases.solarNoon, type: SolarEventType.solarNoon),
+      (
+        time: phases.solarNoon.add(const Duration(hours: 1)),
+        type: SolarEventType.zenithEnd,
+      ),
+      (time: phases.goldenHourEvening, type: SolarEventType.goldenHourEvening),
+      (
+        time: phases.goldenHourEveningEnd,
+        type: SolarEventType.goldenHourEveningEnd,
+      ),
+      (time: phases.sunset, type: SolarEventType.sunset),
+      (time: phases.civilTwilightEnd, type: SolarEventType.civilTwilightEnd),
+    ];
+
+    // Sort by time
+    events.sort((a, b) => a.time.compareTo(b.time));
 
     for (final event in events) {
-      if (event.isAfter(currentTime)) {
-        return event.difference(currentTime);
+      if (event.time.isAfter(currentTime)) {
+        return (duration: event.time.difference(currentTime), type: event.type);
       }
     }
 
-    // If all events passed today, calculate time until next day's first event (civil twilight begin)
+    // If all events passed today, calculate time until next day's first event
     final nextDayDawn = phases.civilTwilightBegin.add(const Duration(days: 1));
-    return nextDayDawn.difference(currentTime);
+    return (
+      duration: nextDayDawn.difference(currentTime),
+      type: SolarEventType.civilTwilightBegin,
+    );
+  }
+
+  /// Calculates the duration until the next solar event (backward compatibility).
+  Duration getTimeUntilNextEvent(SolarPhaseModel phases, DateTime currentTime) {
+    return getNextEvent(phases, currentTime).duration;
   }
 
   /// Estimates clear-sky UV Index based on sun elevation using empirical approximations.

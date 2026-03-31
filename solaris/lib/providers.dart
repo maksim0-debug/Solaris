@@ -396,11 +396,13 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
   final roughElevation = service.getSunElevation(lat, lon, initialNow);
   final roughAzimuth = service.getSunAzimuth(lat, lon, initialNow);
   final roughProgress = service.getSunProgress(phases, initialNow);
+  final nextEvent = service.getNextEvent(phases, initialNow);
 
   yield SolarState(
     phases: phases,
     currentPhase: service.getCurrentPhase(phases, initialNow),
-    timeUntilNextEvent: service.getTimeUntilNextEvent(phases, initialNow),
+    timeUntilNextEvent: nextEvent.duration,
+    nextEventType: nextEvent.type,
     sunElevation: roughElevation,
     sunAzimuth: roughAzimuth,
     sunZenith: service.getSunZenith(lat, lon, initialNow),
@@ -450,10 +452,13 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
       intensity = service.getSpectralIntensity(currentElevation);
     }
 
+    final nextEvent = service.getNextEvent(phases, now);
+
     yield SolarState(
       phases: phases,
       currentPhase: service.getCurrentPhase(phases, now),
-      timeUntilNextEvent: service.getTimeUntilNextEvent(phases, now),
+      timeUntilNextEvent: nextEvent.duration,
+      nextEventType: nextEvent.type,
       sunElevation: currentElevation,
       sunAzimuth: currentAzimuth,
       sunZenith: service.getSunZenith(lat, lon, now),

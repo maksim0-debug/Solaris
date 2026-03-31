@@ -32,6 +32,10 @@
   "goldenHour": "Golden Hour",
   "goldenHourMorning": "Golden Hour (Morning)",
   "goldenHourEvening": "Golden Hour (Evening)",
+  "eventZenithStart": "Zenith Start",
+  "eventZenithEnd": "Zenith End",
+  "eventSolarNoon": "Solar Noon",
+  "eventGoldenHourEnd": "Golden Hour End",
   "calculating": "CALCULATING...",
   "comingIn": "COMING IN {time}",
   "@comingIn": {

@@ -32,6 +32,10 @@
   "goldenHour": "Золотой час",
   "goldenHourMorning": "Золотой час (утро)",
   "goldenHourEvening": "Золотой час (вечер)",
+  "eventZenithStart": "Начало зенита",
+  "eventZenithEnd": "Конец зенита",
+  "eventSolarNoon": "Солнечный полдень",
+  "eventGoldenHourEnd": "Конец золотого часа",
   "calculating": "РАСЧЕТ...",
   "comingIn": "ЧЕРЕЗ {time}",
   "@comingIn": {

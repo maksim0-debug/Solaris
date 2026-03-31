@@ -405,26 +405,50 @@ class _Header extends ConsumerWidget {
       orElse: () => '--:-- --',
     );
 
-    String goldenHourStatus = l10n.goldenHour;
-    String goldenHourTime = l10n.calculating;
+    String nextEventStatus = l10n.calculating;
+    String nextEventTime = l10n.calculating;
 
     solarAsync.whenData((state) {
       final now = DateTime.now();
       final timeStr = timeService.formatCountdown(state.timeUntilNextEvent);
 
+      // Helper to get localized event name
+      String getEventName(SolarEventType type) {
+        switch (type) {
+          case SolarEventType.civilTwilightBegin:
+            return l10n.civilTwilight;
+          case SolarEventType.sunrise:
+            return l10n.sunriseLabel;
+          case SolarEventType.goldenHourMorning:
+            return l10n.goldenHourMorning;
+          case SolarEventType.goldenHourMorningEnd:
+            return l10n.eventGoldenHourEnd;
+          case SolarEventType.zenithStart:
+            return l10n.eventZenithStart;
+          case SolarEventType.solarNoon:
+            return l10n.eventSolarNoon;
+          case SolarEventType.zenithEnd:
+            return l10n.eventZenithEnd;
+          case SolarEventType.goldenHourEvening:
+            return l10n.goldenHourEvening;
+          case SolarEventType.goldenHourEveningEnd:
+            return l10n.eventGoldenHourEnd;
+          case SolarEventType.sunset:
+            return l10n.sunsetLabel;
+          case SolarEventType.civilTwilightEnd:
+            return l10n.civilTwilight;
+        }
+      }
+
       if (state.currentPhase == CurrentDayPhase.goldenHour) {
-        goldenHourStatus = l10n.goldenHourActive;
-        goldenHourTime = l10n.remaining(timeStr);
-      } else if (now.isBefore(state.phases.sunrise)) {
-        goldenHourStatus = l10n.goldenHour;
-        goldenHourTime = l10n.comingIn(timeStr);
-      } else if (now.isAfter(state.phases.sunset)) {
-        goldenHourStatus = l10n.night;
-        goldenHourTime = l10n.finished;
+        nextEventStatus = l10n.goldenHourActive;
+        nextEventTime = l10n.remaining(timeStr);
+      } else if (now.isAfter(state.phases.civilTwilightEnd)) {
+        nextEventStatus = l10n.night;
+        nextEventTime = l10n.finished;
       } else {
-        // broad daylight
-        goldenHourStatus = l10n.goldenHour;
-        goldenHourTime = l10n.comingIn(timeStr);
+        nextEventStatus = getEventName(state.nextEventType);
+        nextEventTime = l10n.comingIn(timeStr);
       }
     });
 
@@ -452,7 +476,7 @@ class _Header extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              goldenHourStatus,
+              nextEventStatus.toUpperCase(),
               style: Theme.of(context).textTheme.displayLarge?.copyWith(
                 fontSize: 18,
                 color: const Color(0xFFFDBA74),
@@ -460,7 +484,7 @@ class _Header extends ConsumerWidget {
               ),
             ),
             Text(
-              goldenHourTime,
+              nextEventTime,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 11,
                 color: Colors.white54,

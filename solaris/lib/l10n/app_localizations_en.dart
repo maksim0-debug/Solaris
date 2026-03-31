@@ -82,6 +82,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get goldenHourEvening => 'Golden Hour (Evening)';
 
   @override
+  String get eventZenithStart => 'Zenith Start';
+
+  @override
+  String get eventZenithEnd => 'Zenith End';
+
+  @override
+  String get eventSolarNoon => 'Solar Noon';
+
+  @override
+  String get eventGoldenHourEnd => 'Golden Hour End';
+
+  @override
   String get calculating => 'CALCULATING...';
 
   @override
