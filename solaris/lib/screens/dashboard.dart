@@ -19,6 +19,7 @@ import 'package:solaris/screens/settings_screen.dart';
 import 'package:solaris/screens/sleep_screen.dart';
 import 'package:solaris/providers/lifecycle_provider.dart';
 import 'package:solaris/utils/status_helper.dart';
+import 'package:solaris/widgets/circadian_breakdown_tooltip.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -836,20 +837,6 @@ class _DashboardView extends ConsumerWidget {
                               if (!isAutoBright || activeAjustments.isEmpty)
                                 return const SizedBox.shrink();
 
-                              final receiptText = [
-                                '${l10n.sunBase.toUpperCase()}: ${smartData.baseBrightness.round()}%',
-                                if (smartData.weatherAbsoluteImpact > 0.5)
-                                  '${l10n.weatherAdjustmentTitle}: -${smartData.weatherAbsoluteImpact.round()}%',
-                                if (smartData.windDownAbsoluteImpact > 0.5)
-                                  '${l10n.featureWindDownShort}: -${smartData.windDownAbsoluteImpact.round()}%',
-                                if (smartData.sleepPressureAbsoluteImpact > 0.5)
-                                  '${l10n.featureSleepPressureShort}: -${smartData.sleepPressureAbsoluteImpact.round()}%',
-                                if (smartData.sleepDebtAbsoluteImpact > 0.5)
-                                  '${l10n.featureSleepDebtShort}: -${smartData.sleepDebtAbsoluteImpact.round()}%',
-                                '-------------------',
-                                '${l10n.finalValue.toUpperCase()}: ${brightness.round()}%',
-                              ].join('\n');
-
                               return Padding(
                                 padding: const EdgeInsets.only(top: 16.0),
                                 child: Column(
@@ -869,10 +856,9 @@ class _DashboardView extends ConsumerWidget {
                                             letterSpacing: 1.2,
                                           ),
                                         ),
-                                        Tooltip(
-                                          message: receiptText,
-                                          padding: const EdgeInsets.all(12),
-                                          preferBelow: false,
+                                        CircadianBreakdownTooltip(
+                                          smartData: smartData,
+                                          currentBrightness: brightness,
                                           child: const Icon(
                                             LucideIcons.info,
                                             size: 14,
