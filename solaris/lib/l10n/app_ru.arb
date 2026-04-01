@@ -494,5 +494,11 @@
   "multiMonitorOffsetsSubtitle": "Индивидуальная подстройка яркости для каждого монитора",
   "brightnessOffset": "Смещение яркости",
   "linkAndOffset": "Линковка и Смещение",
-  "offsetFormula": "Итог = Общая + Смещение"
+  "offsetFormula": "Итог = Общая + Смещение",
+  "weatherAnimations": "Погодные эффекты",
+  "showRain": "Дождь",
+  "showSnow": "Снег",
+  "showThunder": "Гроза",
+  "showClouds": "Облачность",
+  "weatherSettingsSubtitle": "Настройте видимость погодных условий на карте"
 }

@@ -494,5 +494,11 @@
   "multiMonitorOffsetsSubtitle": "Adjust individual monitor brightness relative to global level",
   "brightnessOffset": "Brightness Offset",
   "linkAndOffset": "Link & Offset",
-  "offsetFormula": "Final = Global + Offset"
+  "offsetFormula": "Final = Global + Offset",
+  "weatherAnimations": "Weather Animations",
+  "showRain": "Show Rain",
+  "showSnow": "Show Snow",
+  "showThunder": "Show Thunderstorm",
+  "showClouds": "Show Clouds",
+  "weatherSettingsSubtitle": "Customize animation visibility"
 }

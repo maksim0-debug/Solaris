@@ -931,4 +931,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get offsetFormula => 'Final = Global + Offset';
+
+  @override
+  String get weatherAnimations => 'Weather Animations';
+
+  @override
+  String get showRain => 'Show Rain';
+
+  @override
+  String get showSnow => 'Show Snow';
+
+  @override
+  String get showThunder => 'Show Thunderstorm';
+
+  @override
+  String get showClouds => 'Show Clouds';
+
+  @override
+  String get weatherSettingsSubtitle => 'Customize animation visibility';
 }

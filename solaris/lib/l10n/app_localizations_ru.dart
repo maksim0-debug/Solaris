@@ -933,4 +933,23 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get offsetFormula => 'Итог = Общая + Смещение';
+
+  @override
+  String get weatherAnimations => 'Погодные эффекты';
+
+  @override
+  String get showRain => 'Дождь';
+
+  @override
+  String get showSnow => 'Снег';
+
+  @override
+  String get showThunder => 'Гроза';
+
+  @override
+  String get showClouds => 'Облачность';
+
+  @override
+  String get weatherSettingsSubtitle =>
+      'Настройте видимость погодных условий на карте';
 }

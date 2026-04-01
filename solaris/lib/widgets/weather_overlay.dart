@@ -5,11 +5,19 @@ import 'package:flutter/scheduler.dart';
 class WeatherOverlay extends StatefulWidget {
   final int weatherCode;
   final double cloudCover; // Clouds coverage percentage (0-100)
+  final bool showRain;
+  final bool showSnow;
+  final bool showThunder;
+  final bool showClouds;
 
   const WeatherOverlay({
     super.key,
     required this.weatherCode,
     this.cloudCover = 0,
+    this.showRain = true,
+    this.showSnow = true,
+    this.showThunder = true,
+    this.showClouds = true,
   });
 
   @override
@@ -116,7 +124,11 @@ class _WeatherOverlayState extends State<WeatherOverlay>
   void didUpdateWidget(WeatherOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.weatherCode != widget.weatherCode ||
-        oldWidget.cloudCover != widget.cloudCover) {
+        oldWidget.cloudCover != widget.cloudCover ||
+        oldWidget.showRain != widget.showRain ||
+        oldWidget.showSnow != widget.showSnow ||
+        oldWidget.showThunder != widget.showThunder ||
+        oldWidget.showClouds != widget.showClouds) {
       _updateWeatherFlags();
     }
   }
@@ -145,13 +157,18 @@ class _WeatherOverlayState extends State<WeatherOverlay>
         code == 71 ||
         code == 85;
 
-    if (_isRain || _isSnow) {
-      if (_isHeavy) {
-        _targetParticleCount = _isSnow ? 300 : 250;
-      } else if (_isLight) {
-        _targetParticleCount = _isSnow ? 80 : 60;
+     if (_isRain || _isSnow) {
+      bool allowed = (_isRain && widget.showRain) || (_isSnow && widget.showSnow);
+      if (allowed) {
+        if (_isHeavy) {
+          _targetParticleCount = _isSnow ? 300 : 250;
+        } else if (_isLight) {
+          _targetParticleCount = _isSnow ? 80 : 60;
+        } else {
+          _targetParticleCount = _isSnow ? 150 : 120;
+        }
       } else {
-        _targetParticleCount = _isSnow ? 150 : 120;
+        _targetParticleCount = 0;
       }
     } else {
       _targetParticleCount = 0;
@@ -166,8 +183,8 @@ class _WeatherOverlayState extends State<WeatherOverlay>
     // cloudCover 30-70 -> 6 clouds (medium)
     // cloudCover 70-100 -> 3 clouds (small)
     
-    int targetCloudCount;
-    if (widget.cloudCover <= 0) {
+     int targetCloudCount;
+    if (widget.cloudCover <= 0 || !widget.showClouds) {
       targetCloudCount = 0;
     } else if (widget.cloudCover < 30) {
       targetCloudCount = 10;
@@ -352,9 +369,11 @@ class _WeatherOverlayState extends State<WeatherOverlay>
     p.thickness = fresh.thickness;
   }
 
-  void _scheduleNextLightning() {
+   void _scheduleNextLightning() {
     if (!mounted) return;
-    if (widget.weatherCode >= 95 && widget.weatherCode <= 99) {
+    if (widget.showThunder &&
+        widget.weatherCode >= 95 &&
+        widget.weatherCode <= 99) {
       final nextDelay = Duration(milliseconds: 2000 + _random.nextInt(5000));
       Future.delayed(nextDelay, () {
         if (!mounted) return;

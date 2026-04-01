@@ -1438,6 +1438,34 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
       return s;
     });
   }
+
+  void updateShowRainAnimation(bool val) {
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(showRainAnimation: val),
+    );
+  }
+
+  void updateShowSnowAnimation(bool val) {
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(showSnowAnimation: val),
+    );
+  }
+
+  void updateShowThunderAnimation(bool val) {
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(showThunderAnimation: val),
+    );
+  }
+
+  void updateShowCloudAnimation(bool val) {
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(showCloudAnimation: val),
+    );
+  }
 }
 
 final settingsProvider =

@@ -1731,6 +1731,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Final = Global + Offset'**
   String get offsetFormula;
+
+  /// No description provided for @weatherAnimations.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather Animations'**
+  String get weatherAnimations;
+
+  /// No description provided for @showRain.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Rain'**
+  String get showRain;
+
+  /// No description provided for @showSnow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Snow'**
+  String get showSnow;
+
+  /// No description provided for @showThunder.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Thunderstorm'**
+  String get showThunder;
+
+  /// No description provided for @showClouds.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Clouds'**
+  String get showClouds;
+
+  /// No description provided for @weatherSettingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize animation visibility'**
+  String get weatherSettingsSubtitle;
 }
 
 class _AppLocalizationsDelegate

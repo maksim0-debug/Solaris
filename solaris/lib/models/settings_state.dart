@@ -48,6 +48,10 @@ class SettingsState {
   final List<UserPreset> userPresets;
   final String? activeUserPresetId;
   final List<String> presetOrder;
+  final bool showRainAnimation;
+  final bool showSnowAnimation;
+  final bool showThunderAnimation;
+  final bool showCloudAnimation;
 
   SettingsState({
     this.activePreset = PresetType.bright,
@@ -108,8 +112,12 @@ class SettingsState {
     this.isMultiMonitorOffsetEnabled = false,
     this.brightnessOffset = 0.0,
     this.userPresets = const [],
-    this.activeUserPresetId,
+     this.activeUserPresetId,
     List<String>? presetOrder,
+    this.showRainAnimation = true,
+    this.showSnowAnimation = true,
+    this.showThunderAnimation = true,
+    this.showCloudAnimation = true,
   }) : curvesMap = curvesMap ?? PresetConstants.getAllDefaults(),
        presetOrder = presetOrder ?? [
          ...PresetType.values.map((e) => 'system:${e.name}'),
@@ -178,8 +186,12 @@ class SettingsState {
     'isMultiMonitorOffsetEnabled': isMultiMonitorOffsetEnabled,
     'brightnessOffset': brightnessOffset,
     'userPresets': userPresets.map((p) => p.toJson()).toList(),
-    'activeUserPresetId': activeUserPresetId,
+     'activeUserPresetId': activeUserPresetId,
     'presetOrder': presetOrder,
+    'showRainAnimation': showRainAnimation,
+    'showSnowAnimation': showSnowAnimation,
+    'showThunderAnimation': showThunderAnimation,
+    'showCloudAnimation': showCloudAnimation,
   };
 
   factory SettingsState.fromJson(Map<String, dynamic> json) {
@@ -327,8 +339,12 @@ class SettingsState {
             (p) => UserPreset.fromJson(p as Map<String, dynamic>),
           ).toList() ??
           [],
-      activeUserPresetId: json['activeUserPresetId'] as String?,
+       activeUserPresetId: json['activeUserPresetId'] as String?,
       presetOrder: (json['presetOrder'] as List<dynamic>?)?.cast<String>(),
+      showRainAnimation: json['showRainAnimation'] as bool? ?? true,
+      showSnowAnimation: json['showSnowAnimation'] as bool? ?? true,
+      showThunderAnimation: json['showThunderAnimation'] as bool? ?? true,
+      showCloudAnimation: json['showCloudAnimation'] as bool? ?? true,
     );
   }
 
@@ -377,8 +393,12 @@ class SettingsState {
     bool? isMultiMonitorOffsetEnabled,
     double? brightnessOffset,
     List<UserPreset>? userPresets,
-    String? activeUserPresetId,
+     String? activeUserPresetId,
     List<String>? presetOrder,
+    bool? showRainAnimation,
+    bool? showSnowAnimation,
+    bool? showThunderAnimation,
+    bool? showCloudAnimation,
     bool clearNextPresetHotKey = false,
     bool clearPrevPresetHotKey = false,
     bool clearBrightnessUpHotKey = false,
@@ -460,9 +480,13 @@ class SettingsState {
           isMultiMonitorOffsetEnabled ?? this.isMultiMonitorOffsetEnabled,
       brightnessOffset: brightnessOffset ?? this.brightnessOffset,
       userPresets: userPresets ?? this.userPresets,
-      activeUserPresetId:
+       activeUserPresetId:
           clearActiveUserPresetId ? null : (activeUserPresetId ?? this.activeUserPresetId),
       presetOrder: presetOrder ?? this.presetOrder,
+      showRainAnimation: showRainAnimation ?? this.showRainAnimation,
+      showSnowAnimation: showSnowAnimation ?? this.showSnowAnimation,
+      showThunderAnimation: showThunderAnimation ?? this.showThunderAnimation,
+      showCloudAnimation: showCloudAnimation ?? this.showCloudAnimation,
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers.dart';
+import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/providers/lifecycle_provider.dart';
 import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/weather_overlay.dart';
@@ -17,6 +18,7 @@ class StylishLocationCard extends ConsumerWidget {
     final locationAsync = ref.watch(effectiveLocationProvider);
     final solarAsync = ref.watch(solarStateStreamProvider);
     final weatherAsync = ref.watch(currentWeatherProvider);
+    final settingsAsync = ref.watch(settingsProvider);
 
     return solarAsync.maybeWhen(
       data: (solarState) {
@@ -72,17 +74,27 @@ class StylishLocationCard extends ConsumerWidget {
                     ),
                   ),
                 ),
-
-                if (weatherAsync.value != null)
-                  Positioned.fill(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: WeatherOverlay(
-                        weatherCode: weatherAsync.value!.weatherCode,
-                        cloudCover: weatherAsync.value!.cloudCover,
-                      ),
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: settingsAsync.maybeWhen(
+                      data: (settingsMap) {
+                        final settings = settingsMap['all'] ?? SettingsState();
+                        final weather = weatherAsync.value;
+                        if (weather == null) return const SizedBox.shrink();
+                        return WeatherOverlay(
+                          weatherCode: weather.weatherCode,
+                          cloudCover: weather.cloudCover,
+                          showRain: settings.showRainAnimation,
+                          showSnow: settings.showSnowAnimation,
+                          showThunder: settings.showThunderAnimation,
+                          showClouds: settings.showCloudAnimation,
+                        );
+                      },
+                      orElse: () => const SizedBox.shrink(),
                     ),
                   ),
+                ),
 
                 // Gradient Overlay for contrast
                 Positioned.fill(
@@ -114,8 +126,11 @@ class StylishLocationCard extends ConsumerWidget {
                   child: Column(
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
+                          _WeatherSettingsButton(
+                            accentColor: accentColor,
+                          ),
                           Icon(
                             LucideIcons.compass,
                             size: 20,
@@ -242,6 +257,217 @@ class _PulsingLocationMarkerState extends ConsumerState<PulsingLocationMarker>
           ],
         );
       },
+    );
+  }
+}
+
+class _WeatherSettingsButton extends ConsumerStatefulWidget {
+  final Color accentColor;
+  const _WeatherSettingsButton({super.key, required this.accentColor});
+
+  @override
+  ConsumerState<_WeatherSettingsButton> createState() => _WeatherSettingsButtonState();
+}
+
+class _WeatherSettingsButtonState extends ConsumerState<_WeatherSettingsButton> {
+  final LayerLink _layerLink = LayerLink();
+  OverlayEntry? _overlayEntry;
+  bool _isOpen = false;
+
+  void _togglePopover() {
+    if (_isOpen) {
+      _closePopover();
+    } else {
+      _showPopover();
+    }
+  }
+
+  void _showPopover() {
+    final l10n = AppLocalizations.of(context)!;
+    final overlay = Overlay.of(context);
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) => Stack(
+        children: [
+          // Invisible barrier to close on tap outside
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: _closePopover,
+              behavior: HitTestBehavior.opaque,
+              child: Container(),
+            ),
+          ),
+          Positioned(
+            width: 280,
+            child: CompositedTransformFollower(
+              link: _layerLink,
+              showWhenUnlinked: false,
+              offset: const Offset(-14, -235), // Positioned 45px higher and 14px left as requested
+              child: Material(
+                color: Colors.transparent,
+                child: Consumer(
+                  builder: (context, ref, child) {
+                    final settingsAsync = ref.watch(settingsProvider);
+                    return settingsAsync.maybeWhen(
+                      data: (settingsMap) {
+                        final settings = settingsMap['all'] ?? SettingsState();
+                        return GlassCard(
+                          glowColor: widget.accentColor,
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(LucideIcons.cloudRain, color: widget.accentColor, size: 18),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    l10n.weatherAnimations,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  IconButton(
+                                    icon: const Icon(LucideIcons.x, size: 14, color: Colors.white54),
+                                    onPressed: _closePopover,
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    splashRadius: 16,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              _WeatherToggleRow(
+                                label: l10n.showRain,
+                                value: settings.showRainAnimation,
+                                onChanged: (val) => ref
+                                    .read(settingsProvider.notifier)
+                                    .updateShowRainAnimation(val),
+                                accentColor: widget.accentColor,
+                              ),
+                              _WeatherToggleRow(
+                                label: l10n.showSnow,
+                                value: settings.showSnowAnimation,
+                                onChanged: (val) => ref
+                                    .read(settingsProvider.notifier)
+                                    .updateShowSnowAnimation(val),
+                                accentColor: widget.accentColor,
+                              ),
+                              _WeatherToggleRow(
+                                label: l10n.showThunder,
+                                value: settings.showThunderAnimation,
+                                onChanged: (val) => ref
+                                    .read(settingsProvider.notifier)
+                                    .updateShowThunderAnimation(val),
+                                accentColor: widget.accentColor,
+                              ),
+                              _WeatherToggleRow(
+                                label: l10n.showClouds,
+                                value: settings.showCloudAnimation,
+                                onChanged: (val) => ref
+                                    .read(settingsProvider.notifier)
+                                    .updateShowCloudAnimation(val),
+                                accentColor: widget.accentColor,
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      orElse: () => const SizedBox.shrink(),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    overlay.insert(_overlayEntry!);
+    setState(() => _isOpen = true);
+  }
+
+  void _closePopover() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    if (mounted) setState(() => _isOpen = false);
+  }
+
+  @override
+  void dispose() {
+    _overlayEntry?.remove();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CompositedTransformTarget(
+      link: _layerLink,
+      child: IconButton(
+        onPressed: _togglePopover,
+        icon: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: _isOpen ? widget.accentColor.withOpacity(0.2) : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            LucideIcons.settings,
+            size: 16,
+            color: _isOpen ? widget.accentColor : widget.accentColor.withOpacity(0.8),
+          ),
+        ),
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+        splashRadius: 16,
+        tooltip: _isOpen ? null : AppLocalizations.of(context)!.weatherAnimations,
+      ),
+    );
+  }
+}
+
+class _WeatherToggleRow extends StatelessWidget {
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  final Color accentColor;
+
+  const _WeatherToggleRow({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+    required this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white, fontSize: 12),
+          ),
+          Transform.scale(
+            scale: 0.7,
+            child: Switch(
+              value: value,
+              onChanged: onChanged,
+              activeColor: accentColor,
+              activeTrackColor: accentColor.withOpacity(0.3),
+              inactiveThumbColor: Colors.white54,
+              inactiveTrackColor: Colors.white10,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
