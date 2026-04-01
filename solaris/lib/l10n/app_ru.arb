@@ -349,5 +349,139 @@
   "deletePreset": "Удалить пресет",
   "deletePresetConfirm": "Вы уверены, что хотите удалить этот пресет?",
   "delete": "Удалить",
-  "rename": "Переименовать"
+  "rename": "Переименовать",
+  "errorWithMsg": "Ошибка: {msg}",
+  "@errorWithMsg": {
+    "placeholders": {
+      "msg": {
+        "type": "String"
+      }
+    }
+  },
+  "sunAzimuthFormat": "{value}°",
+  "@sunAzimuthFormat": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "sunElevationFormat": "{value}°",
+  "@sunElevationFormat": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "sunZenithFormat": "{value}°",
+  "@sunZenithFormat": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "timeFormat": "{hour}:{minute}",
+  "@timeFormat": {
+    "placeholders": {
+      "hour": {
+        "type": "String"
+      },
+      "minute": {
+        "type": "String"
+      }
+    }
+  },
+  "percentFormat": "{value}%",
+  "@percentFormat": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "temperatureFormat": "{value}°C",
+  "@temperatureFormat": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "spectralIntensityValue": "{value} Вт/м²",
+  "@spectralIntensityValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "uvIndexValue": "{value}",
+  "@uvIndexValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "latLonFormat": "Широта: {lat}, Долгота: {lon}",
+  "@latLonFormat": {
+    "placeholders": {
+      "lat": {
+        "type": "String"
+      },
+      "lon": {
+        "type": "String"
+      }
+    }
+  },
+  "detectingLocation": "Определение местоположения...",
+  "coordinatesUnavailable": "Координаты недоступны",
+  "north": "С",
+  "south": "Ю",
+  "east": "В",
+  "west": "З",
+  "dmsFormat": "{latDeg}° {latMin}' {latSec}\" {latDir}, {lonDeg}° {lonMin}' {lonSec}\" {lonDir}",
+  "@dmsFormat": {
+    "placeholders": {
+      "latDeg": { "type": "int" },
+      "latMin": { "type": "int" },
+      "latSec": { "type": "int" },
+      "latDir": { "type": "String" },
+      "lonDeg": { "type": "int" },
+      "lonMin": { "type": "int" },
+      "lonSec": { "type": "int" },
+      "lonDir": { "type": "String" }
+    }
+  },
+  "chartDegreesFormat": "{value}°",
+  "@chartDegreesFormat": {
+    "placeholders": {
+      "value": { "type": "int" }
+    }
+  },
+  "chartTemperatureFormat": "{value}K",
+  "@chartTemperatureFormat": {
+    "placeholders": {
+      "value": { "type": "int" }
+    }
+  },
+  "chartPercentFormat": "{value}%",
+  "@chartPercentFormat": {
+    "placeholders": {
+      "value": { "type": "int" }
+    }
+  },
+  "currentPosition": "Текущее положение",
+  "liveLocation": "Местоположение",
+  "lockedBrightnessValue": "{value}%",
+  "@lockedBrightnessValue": {
+    "placeholders": {
+      "value": { "type": "int" }
+    }
+  },
+  "gameModeHint": "напр. game.exe",
+  "hoursAbbreviation": "ч",
+  "minutesAbbreviation": "м"
 }

@@ -593,7 +593,7 @@ abstract class AppLocalizations {
   /// No description provided for @liveLocation.
   ///
   /// In en, this message translates to:
-  /// **'LIVE LOCATION'**
+  /// **'Live Location'**
   String get liveLocation;
 
   /// No description provided for @solarTelemetry.
@@ -1518,6 +1518,153 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rename'**
   String get rename;
+
+  /// No description provided for @errorWithMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {msg}'**
+  String errorWithMsg(String msg);
+
+  /// No description provided for @sunAzimuthFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}°'**
+  String sunAzimuthFormat(String value);
+
+  /// No description provided for @sunElevationFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}°'**
+  String sunElevationFormat(String value);
+
+  /// No description provided for @sunZenithFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}°'**
+  String sunZenithFormat(String value);
+
+  /// No description provided for @timeFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'{hour}:{minute}'**
+  String timeFormat(String hour, String minute);
+
+  /// No description provided for @percentFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}%'**
+  String percentFormat(String value);
+
+  /// No description provided for @temperatureFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}°C'**
+  String temperatureFormat(String value);
+
+  /// No description provided for @spectralIntensityValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} W/m²'**
+  String spectralIntensityValue(String value);
+
+  /// No description provided for @uvIndexValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}'**
+  String uvIndexValue(String value);
+
+  /// No description provided for @latLonFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Lat: {lat}, Lon: {lon}'**
+  String latLonFormat(String lat, String lon);
+
+  /// No description provided for @detectingLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Detecting location...'**
+  String get detectingLocation;
+
+  /// No description provided for @coordinatesUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Coordinates unavailable'**
+  String get coordinatesUnavailable;
+
+  /// No description provided for @north.
+  ///
+  /// In en, this message translates to:
+  /// **'N'**
+  String get north;
+
+  /// No description provided for @south.
+  ///
+  /// In en, this message translates to:
+  /// **'S'**
+  String get south;
+
+  /// No description provided for @east.
+  ///
+  /// In en, this message translates to:
+  /// **'E'**
+  String get east;
+
+  /// No description provided for @west.
+  ///
+  /// In en, this message translates to:
+  /// **'W'**
+  String get west;
+
+  /// No description provided for @dmsFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'{latDeg}° {latMin}\' {latSec}\" {latDir}, {lonDeg}° {lonMin}\' {lonSec}\" {lonDir}'**
+  String dmsFormat(
+    int latDeg,
+    int latMin,
+    int latSec,
+    String latDir,
+    int lonDeg,
+    int lonMin,
+    int lonSec,
+    String lonDir,
+  );
+
+  /// No description provided for @chartDegreesFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}°'**
+  String chartDegreesFormat(int value);
+
+  /// No description provided for @chartTemperatureFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}K'**
+  String chartTemperatureFormat(int value);
+
+  /// No description provided for @chartPercentFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}%'**
+  String chartPercentFormat(int value);
+
+  /// No description provided for @currentPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Position'**
+  String get currentPosition;
+
+  /// No description provided for @lockedBrightnessValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}%'**
+  String lockedBrightnessValue(int value);
+
+  /// No description provided for @gameModeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. game.exe'**
+  String get gameModeHint;
 }
 
 class _AppLocalizationsDelegate

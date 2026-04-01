@@ -216,7 +216,7 @@ class _PresetSelectorState extends ConsumerState<_PresetSelector> {
   }) {
     final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController(text: initialName);
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(renameId != null ? l10n.rename : l10n.savePreset),
@@ -273,7 +273,7 @@ class _PresetSelectorState extends ConsumerState<_PresetSelector> {
     required String id,
   }) {
     final l10n = AppLocalizations.of(context)!;
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.deletePreset),
@@ -1068,7 +1068,7 @@ class _SmartExclusionsCard extends ConsumerWidget {
                       ),
                     ),
                     Text(
-                      '${settings.gameModeBrightness.round()}%',
+                      l10n.chartPercentFormat(settings.gameModeBrightness.round()),
                       style: const TextStyle(
                         color: Color(0xFFA855F7),
                         fontWeight: FontWeight.bold,
@@ -1304,6 +1304,7 @@ class _AppListManagerState extends State<_AppListManager> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1328,7 +1329,7 @@ class _AppListManagerState extends State<_AppListManager> {
                 controller: _controller,
                 style: const TextStyle(color: Colors.white, fontSize: 13),
                 decoration: InputDecoration(
-                  hintText: 'e.g. game.exe',
+                  hintText: l10n.gameModeHint,
                   hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(
@@ -1460,6 +1461,7 @@ class _PremiumSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: 130, // Compact but clear
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -1493,9 +1495,9 @@ class _PremiumSlider extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           SizedBox(
-            width: 24,
+            width: 32,
             child: Text(
-              '${value.round()}%',
+              l10n.chartPercentFormat(value.round()),
               style: const TextStyle(
                 color: Color(0xFF60A5FA),
                 fontSize: 10,

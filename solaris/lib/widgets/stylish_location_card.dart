@@ -149,9 +149,11 @@ class StylishLocationCard extends ConsumerWidget {
                       const Spacer(),
                       Text(
                         locationAsync.maybeWhen(
-                          data: (pos) =>
-                              'Lat: ${pos.latitude.toStringAsFixed(4)}, Lon: ${pos.longitude.toStringAsFixed(4)}',
-                          orElse: () => 'Detecting location...',
+                          data: (pos) => l10n.latLonFormat(
+                            pos.latitude.toStringAsFixed(4),
+                            pos.longitude.toStringAsFixed(4),
+                          ),
+                          orElse: () => l10n.detectingLocation,
                         ),
                         style: const TextStyle(
                           fontSize: 18,
@@ -160,9 +162,8 @@ class StylishLocationCard extends ConsumerWidget {
                       ),
                       Text(
                         locationAsync.maybeWhen(
-                          data: (pos) =>
-                              _formatDMS(pos.latitude, pos.longitude),
-                          orElse: () => 'Coordinates unavailable',
+                          data: (pos) => _formatDMS(pos.latitude, pos.longitude, l10n),
+                          orElse: () => l10n.coordinatesUnavailable,
                         ),
                         style: const TextStyle(
                           fontSize: 12,
@@ -181,9 +182,9 @@ class StylishLocationCard extends ConsumerWidget {
     );
   }
 
-  String _formatDMS(double lat, double lon) {
-    String latDir = lat >= 0 ? "N" : "S";
-    String lonDir = lon >= 0 ? "E" : "W";
+  String _formatDMS(double lat, double lon, AppLocalizations l10n) {
+    String latDir = lat >= 0 ? l10n.north : l10n.south;
+    String lonDir = lon >= 0 ? l10n.east : l10n.west;
 
     double absLat = lat.abs();
     int latDeg = absLat.floor();
@@ -195,7 +196,16 @@ class StylishLocationCard extends ConsumerWidget {
     int lonMin = ((absLon - lonDeg) * 60).floor();
     int lonSec = (((absLon - lonDeg) * 60 - lonMin) * 60).floor();
 
-    return '$latDeg° $latMin\' $latSec" $latDir, $lonDeg° $lonMin\' $lonSec" $lonDir';
+    return l10n.dmsFormat(
+      latDeg,
+      latMin,
+      latSec,
+      latDir,
+      lonDeg,
+      lonMin,
+      lonSec,
+      lonDir,
+    );
   }
 }
 

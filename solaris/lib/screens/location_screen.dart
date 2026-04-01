@@ -34,6 +34,14 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
     }
   }
 
+  List<double> _toDMS(double coordinate) {
+    int degrees = coordinate.floor();
+    double minutesFraction = (coordinate - degrees) * 60;
+    int minutes = minutesFraction.floor();
+    double seconds = (minutesFraction - minutes) * 60;
+    return [degrees.toDouble(), minutes.toDouble(), seconds];
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -126,15 +134,69 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
-                                      Text(
-                                        l10n.celestialMapSubtitle,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.white38,
-                                          overflow: TextOverflow.ellipsis,
+                                      const SizedBox(height: 8),
+                                      settingsAsync.maybeWhen(
+                                        data: (settings) => _AutoDetectToggle(
+                                          isActive: !settings.useManual,
+                                          onToggle: (val) {
+                                            if (val) {
+                                              ref
+                                                  .read(locationSettingsProvider.notifier)
+                                                  .setAutoLocation();
+                                            } else {
+                                              final pos = locationAsync.value;
+                                              if (pos != null) {
+                                                ref
+                                                    .read(
+                                                      locationSettingsProvider.notifier,
+                                                    )
+                                                    .setManualLocation(
+                                                      pos.latitude,
+                                                      pos.longitude,
+                                                    );
+                                              }
+                                            }
+                                          },
                                         ),
+                                        orElse: () => const SizedBox(),
                                       ),
                                     ],
+                                  ),
+                                ),
+                                locationAsync.when(
+                                  data: (pos) {
+                                    final lat = pos.latitude;
+                                    final lon = pos.longitude;
+                                    final latDir = lat >= 0 ? l10n.north : l10n.south;
+                                    final lonDir = lon >= 0 ? l10n.east : l10n.west;
+                                    
+                                    final latDms = _toDMS(lat.abs());
+                                    final lonDms = _toDMS(lon.abs());
+
+                                    return _InfoTile(
+                                      label: l10n.location,
+                                      value: l10n.dmsFormat(
+                                        latDms[0].toInt(),
+                                        latDms[1].toInt(),
+                                        latDms[2].toInt(),
+                                        latDir,
+                                        lonDms[0].toInt(),
+                                        lonDms[1].toInt(),
+                                        lonDms[2].toInt(),
+                                        lonDir,
+                                      ),
+                                      icon: LucideIcons.mapPin,
+                                    );
+                                  },
+                                  loading: () => _InfoTile(
+                                    label: l10n.location,
+                                    value: l10n.detectingLocation,
+                                    icon: LucideIcons.mapPin,
+                                  ),
+                                  error: (e, _) => _InfoTile(
+                                    label: l10n.location,
+                                    value: l10n.coordinatesUnavailable,
+                                    icon: LucideIcons.mapPin,
                                   ),
                                 ),
                               ],
@@ -208,7 +270,10 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                           ),
                                         ),
                                         Text(
-                                          "${pos.latitude.toStringAsFixed(4)}° N, ${pos.longitude.toStringAsFixed(4)}° W",
+                                          l10n.latLonFormat(
+                                            pos.latitude.toStringAsFixed(4),
+                                            pos.longitude.toStringAsFixed(4),
+                                          ),
                                           style: const TextStyle(
                                             fontSize: 12,
                                             color: Colors.white54,
@@ -223,36 +288,6 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                             ],
                           ),
                         ],
-                      ),
-                      Positioned(
-                        top: 20,
-                        right: 20,
-                        child: settingsAsync.maybeWhen(
-                          data:
-                              (settings) => _AutoDetectToggle(
-                                isActive: !settings.useManual,
-                                onToggle: (val) {
-                                  if (val) {
-                                    ref
-                                        .read(locationSettingsProvider.notifier)
-                                        .setAutoLocation();
-                                  } else {
-                                    final pos = locationAsync.value;
-                                    if (pos != null) {
-                                      ref
-                                          .read(
-                                            locationSettingsProvider.notifier,
-                                          )
-                                          .setManualLocation(
-                                            pos.latitude,
-                                            pos.longitude,
-                                          );
-                                    }
-                                  }
-                                },
-                              ),
-                          orElse: () => const SizedBox(),
-                        ),
                       ),
                     ],
                   ),
@@ -499,4 +534,52 @@ class _CoordinateInput extends StatelessWidget {
 class RoundedRectangleType extends RoundedRectangleBorder {
   RoundedRectangleType(double radius)
     : super(borderRadius: BorderRadius.circular(radius));
+}
+
+class _InfoTile extends StatelessWidget {
+  const _InfoTile({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
+
+  final String label;
+  final String value;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: const Color(0xFFFDBA74)),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(fontSize: 10, color: Colors.white38),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'monospace',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }

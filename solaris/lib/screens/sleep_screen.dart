@@ -845,6 +845,7 @@ class _IntensitySlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -856,7 +857,7 @@ class _IntensitySlider extends StatelessWidget {
               style: const TextStyle(fontSize: 12, color: Colors.white60),
             ),
             Text(
-              '${(value * 100).toInt()}%',
+              l10n.chartPercentFormat((value * 100).toInt()),
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,

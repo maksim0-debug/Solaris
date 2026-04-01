@@ -349,5 +349,139 @@
   "deletePreset": "Delete Preset",
   "deletePresetConfirm": "Are you sure you want to delete this preset?",
   "delete": "Delete",
-  "rename": "Rename"
+  "rename": "Rename",
+  "errorWithMsg": "Error: {msg}",
+  "@errorWithMsg": {
+    "placeholders": {
+      "msg": {
+        "type": "String"
+      }
+    }
+  },
+  "sunAzimuthFormat": "{value}°",
+  "@sunAzimuthFormat": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "sunElevationFormat": "{value}°",
+  "@sunElevationFormat": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "sunZenithFormat": "{value}°",
+  "@sunZenithFormat": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "timeFormat": "{hour}:{minute}",
+  "@timeFormat": {
+    "placeholders": {
+      "hour": {
+        "type": "String"
+      },
+      "minute": {
+        "type": "String"
+      }
+    }
+  },
+  "percentFormat": "{value}%",
+  "@percentFormat": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "temperatureFormat": "{value}°C",
+  "@temperatureFormat": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "spectralIntensityValue": "{value} W/m²",
+  "@spectralIntensityValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "uvIndexValue": "{value}",
+  "@uvIndexValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "latLonFormat": "Lat: {lat}, Lon: {lon}",
+  "@latLonFormat": {
+    "placeholders": {
+      "lat": {
+        "type": "String"
+      },
+      "lon": {
+        "type": "String"
+      }
+    }
+  },
+  "detectingLocation": "Detecting location...",
+  "coordinatesUnavailable": "Coordinates unavailable",
+  "north": "N",
+  "south": "S",
+  "east": "E",
+  "west": "W",
+  "dmsFormat": "{latDeg}° {latMin}' {latSec}\" {latDir}, {lonDeg}° {lonMin}' {lonSec}\" {lonDir}",
+  "@dmsFormat": {
+    "placeholders": {
+      "latDeg": { "type": "int" },
+      "latMin": { "type": "int" },
+      "latSec": { "type": "int" },
+      "latDir": { "type": "String" },
+      "lonDeg": { "type": "int" },
+      "lonMin": { "type": "int" },
+      "lonSec": { "type": "int" },
+      "lonDir": { "type": "String" }
+    }
+  },
+  "chartDegreesFormat": "{value}°",
+  "@chartDegreesFormat": {
+    "placeholders": {
+      "value": { "type": "int" }
+    }
+  },
+  "chartTemperatureFormat": "{value}K",
+  "@chartTemperatureFormat": {
+    "placeholders": {
+      "value": { "type": "int" }
+    }
+  },
+  "chartPercentFormat": "{value}%",
+  "@chartPercentFormat": {
+    "placeholders": {
+      "value": { "type": "int" }
+    }
+  },
+  "currentPosition": "Current Position",
+  "liveLocation": "Live Location",
+  "lockedBrightnessValue": "{value}%",
+  "@lockedBrightnessValue": {
+    "placeholders": {
+      "value": { "type": "int" }
+    }
+  },
+  "gameModeHint": "e.g. game.exe",
+  "hoursAbbreviation": "h",
+  "minutesAbbreviation": "m"
 }

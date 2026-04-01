@@ -82,7 +82,7 @@ class ScheduleScreen extends ConsumerWidget {
                                       child: CircularProgressIndicator(),
                                     ),
                                     error: (e, _) =>
-                                        Center(child: Text('Error: $e')),
+                                        Center(child: Text(l10n.errorWithMsg(e.toString()))),
                                   ),
                                 ),
                               ],
@@ -97,8 +97,7 @@ class ScheduleScreen extends ConsumerWidget {
                               Expanded(
                                 child: _CoordinateCard(
                                   label: l10n.azimuth,
-                                  value:
-                                      '${state.sunAzimuth.toStringAsFixed(1)}°',
+                                  value: l10n.sunAzimuthFormat(state.sunAzimuth.toStringAsFixed(1)),
                                   trend: state.azimuthTrend,
                                   trendIcon: state.azimuthTrend.startsWith('+')
                                       ? LucideIcons.trendingUp
@@ -111,8 +110,7 @@ class ScheduleScreen extends ConsumerWidget {
                               Expanded(
                                 child: _CoordinateCard(
                                   label: l10n.elevation,
-                                  value:
-                                      '${state.sunElevation.toStringAsFixed(1)}°',
+                                  value: l10n.sunElevationFormat(state.sunElevation.toStringAsFixed(1)),
                                   trend: state.elevationTrend,
                                   trendIcon:
                                       state.elevationTrend.startsWith('+')
@@ -130,8 +128,7 @@ class ScheduleScreen extends ConsumerWidget {
                               Expanded(
                                 child: _CoordinateCard(
                                   label: l10n.zenith,
-                                  value:
-                                      '${state.sunZenith.toStringAsFixed(1)}°',
+                                  value: l10n.sunZenithFormat(state.sunZenith.toStringAsFixed(1)),
                                   trend: l10n.constant,
                                 ),
                               ),
@@ -174,14 +171,20 @@ class ScheduleScreen extends ConsumerWidget {
                                     icon: LucideIcons.sun,
                                     label: l10n.civilTwilight,
                                     value:
-                                        '${state.phases.civilTwilightBegin.hour.toString().padLeft(2, '0')}:${state.phases.civilTwilightBegin.minute.toString().padLeft(2, '0')}',
+                                        l10n.timeFormat(
+                                  state.phases.civilTwilightBegin.hour.toString().padLeft(2, '0'),
+                                  state.phases.civilTwilightBegin.minute.toString().padLeft(2, '0'),
+                                ),
                                   ),
                                   const SizedBox(height: 16),
                                   _TelemetryRow(
                                     icon: LucideIcons.moon,
                                     label: l10n.astronomicalNight,
                                     value:
-                                        '${state.phases.astronomicalDusk.hour.toString().padLeft(2, '0')}:${state.phases.astronomicalDusk.minute.toString().padLeft(2, '0')}',
+                                        l10n.timeFormat(
+                                  state.phases.astronomicalDusk.hour.toString().padLeft(2, '0'),
+                                  state.phases.astronomicalDusk.minute.toString().padLeft(2, '0'),
+                                ),
                                   ),
                                   const SizedBox(height: 16),
                                   // Humidity row
@@ -202,9 +205,7 @@ class ScheduleScreen extends ConsumerWidget {
                                     icon: LucideIcons.thermometer,
                                     label: l10n.airTemp,
                                     value: weatherAsync.maybeWhen(
-                                      data: (w) => w != null
-                                          ? '${w.temperature.toStringAsFixed(1)}°C'
-                                          : '--°C',
+                                      data: (w) => w != null ? l10n.temperatureFormat(w.temperature.toStringAsFixed(1)) : '--°C',
                                       orElse: () => '--°C',
                                     ),
                                     iconColor: Colors.white70,
@@ -225,7 +226,7 @@ class ScheduleScreen extends ConsumerWidget {
                                                   state.spectralIntensity,
                                             );
 
-                                        return '${surfTemp.toStringAsFixed(1)}°C';
+                                        return l10n.temperatureFormat(surfTemp.toStringAsFixed(1));
                                       },
                                       orElse: () => '--°C',
                                     ),
@@ -234,16 +235,14 @@ class ScheduleScreen extends ConsumerWidget {
                                   const SizedBox(height: 32),
                                   _ProgressBar(
                                     label: l10n.spectralIntensity,
-                                    value:
-                                        '${state.spectralIntensity.toStringAsFixed(1)} W/m²',
+                                    value: l10n.spectralIntensityValue(state.spectralIntensity.toStringAsFixed(1)),
                                     progress: (state.spectralIntensity / 1000.0)
                                         .clamp(0.0, 1.0),
                                   ),
                                   const SizedBox(height: 16),
                                   _ProgressBar(
                                     label: l10n.uvIndex,
-                                    value:
-                                        '${state.uvIndex.toStringAsFixed(1)}',
+                                    value: l10n.uvIndexValue(state.uvIndex.toStringAsFixed(1)),
                                     progress: (state.uvIndex / 15.0).clamp(
                                       0.0,
                                       1.0,

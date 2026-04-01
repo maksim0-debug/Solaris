@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/models/settings_state.dart';
@@ -78,9 +79,10 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
   }
 
   Widget _buildChart(BuildContext context, List<FlSpot> points, bool isTemp) {
+    final l10n = AppLocalizations.of(context)!;
     final solarAsync = ref.watch(
       solarStateStreamProvider,
-    ); // Получаем данные о солнце
+    ); // Get solar data
     final weatherAsync = ref.watch(currentWeatherProvider);
     final circadianService = ref.read(circadianServiceProvider);
 
@@ -95,13 +97,13 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
     const nightColor = Colors.indigoAccent;
     const twilightColor = Colors.purpleAccent;
 
-    // Текущая высота солнца из провайдера (если данные еще грузятся, берем 0)
+    // Current sun elevation from provider (if data still loading, take 0)
     final currentElevation = solarAsync.maybeWhen(
       data: (state) => state.sunElevation,
       orElse: () => 0.0,
     );
 
-    // Рассчитываем позицию маркера по Y
+    // Calculate marker Y position
     double currentBrightnessY = points.first.y;
     if (currentElevation >= points.last.x) {
       currentBrightnessY = points.last.y;
@@ -177,7 +179,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
           ),
         ),
       ),
-      // Анимированное свечение (Halo) вокруг маркера
+      // Animated halo around the marker
       LineChartBarData(
         spots: [
           FlSpot(currentElevation.clamp(-20.0, 90.0), currentBrightnessY),
@@ -204,7 +206,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
           ),
         ),
       ),
-      // Основной маркер текущего положения солнца (больше на 25%)
+      // Main sun position marker (larger by 25%)
       LineChartBarData(
         spots: [
           FlSpot(currentElevation.clamp(-20.0, 90.0), currentBrightnessY),
@@ -226,7 +228,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
     ];
 
     if (adjustedBrightnessY != null) {
-      // Соединительная линия (только если есть погодная коррекция)
+      // connecting line (only if weather correction exists)
       lineBars.add(
         LineChartBarData(
           spots: [
@@ -240,7 +242,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
           dotData: FlDotData(show: false),
         ),
       );
-      // Свечение для погодного маркера (анимированное)
+      // Weather marker halo (animated)
       lineBars.add(
         LineChartBarData(
           spots: [
@@ -257,7 +259,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
           ),
         ),
       );
-      // Добавляем актуальный маркер с учетом погоды (больше на 25%)
+      // Actual marker with weather (larger by 25%)
       lineBars.add(
         LineChartBarData(
           spots: [
@@ -298,7 +300,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
                   getDrawingHorizontalLine: (value) =>
                       const FlLine(color: Colors.white10, strokeWidth: 1),
                   getDrawingVerticalLine: (value) {
-                    // Выделяем линию горизонта (0 градусов)
+                    // Highlight the horizon line (0 degrees)
                     if (value == 0) {
                       return const FlLine(
                         color: Color(0xFFFDBA74),
@@ -323,12 +325,12 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
                   reservedSize: _bottomTitleHeight,
                   interval: 20,
                   getTitlesWidget: (value, meta) {
-                    // Показывать градусы (-20°, 0°, 20°, 40°...)
+                    // Show degrees (-20°, 0°, 20°, 40°...)
                     return SideTitleWidget(
                       meta: meta,
                       space: 4,
                       child: Text(
-                        '${value.toInt()}°',
+                        l10n.chartDegreesFormat(value.toInt()),
                         style: TextStyle(
                           color: value == 0
                               ? const Color(0xFFFDBA74)
@@ -354,7 +356,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
                     return SideTitleWidget(
                       meta: meta,
                       child: Text(
-                        isTemp ? '${value.toInt()}K' : '${value.toInt()}%',
+                        isTemp ? l10n.chartTemperatureFormat(value.toInt()) : l10n.chartPercentFormat(value.toInt()),
                         style: const TextStyle(
                           color: Colors.white30,
                           fontSize: 10,
@@ -381,7 +383,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
                     if (event is FlPanStartEvent || event is FlTapDownEvent) {
                       if (touchResponse?.lineBarSpots != null &&
                           touchResponse!.lineBarSpots!.isNotEmpty) {
-                        // Не позволяем хватать маркер текущего времени (это второй график, index 1)
+                        // Do not allow grabbing the current time marker (index 1)
                         if (touchResponse.lineBarSpots!.first.barIndex == 0) {
                           setState(() {
                             _touchedIndex =
@@ -497,7 +499,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
       newPoints[index] = FlSpot(
         x,
         y,
-      ); // Мы больше не синхронизируем концы, так как это не цикл времени
+      ); // Not syncing ends as it's not a time cycle
     } else {
       final double minX = newPoints[index - 1].x + 1.0; // Зазор в 1 градус
       final double maxX = newPoints[index + 1].x - 1.0;
@@ -550,7 +552,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
 
     bool tooClose = currentPoints.any(
       (p) => (p.x - x).abs() < 2.0,
-    ); // Защита от спама точками
+    ); // Protect against spamming points
 
     if (!tooClose) {
       if (isTemp) {

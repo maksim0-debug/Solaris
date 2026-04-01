@@ -291,7 +291,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sunPosition => 'Профиль освещенности';
 
   @override
-  String get liveLocation => 'ТЕКУЩЕЕ МЕСТО';
+  String get liveLocation => 'Местоположение';
 
   @override
   String get solarTelemetry => 'Солнечная телеметрия';
@@ -790,4 +790,112 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get rename => 'Переименовать';
+
+  @override
+  String errorWithMsg(String msg) {
+    return 'Ошибка: $msg';
+  }
+
+  @override
+  String sunAzimuthFormat(String value) {
+    return '$value°';
+  }
+
+  @override
+  String sunElevationFormat(String value) {
+    return '$value°';
+  }
+
+  @override
+  String sunZenithFormat(String value) {
+    return '$value°';
+  }
+
+  @override
+  String timeFormat(String hour, String minute) {
+    return '$hour:$minute';
+  }
+
+  @override
+  String percentFormat(String value) {
+    return '$value%';
+  }
+
+  @override
+  String temperatureFormat(String value) {
+    return '$value°C';
+  }
+
+  @override
+  String spectralIntensityValue(String value) {
+    return '$value Вт/м²';
+  }
+
+  @override
+  String uvIndexValue(String value) {
+    return '$value';
+  }
+
+  @override
+  String latLonFormat(String lat, String lon) {
+    return 'Широта: $lat, Долгота: $lon';
+  }
+
+  @override
+  String get detectingLocation => 'Определение местоположения...';
+
+  @override
+  String get coordinatesUnavailable => 'Координаты недоступны';
+
+  @override
+  String get north => 'С';
+
+  @override
+  String get south => 'Ю';
+
+  @override
+  String get east => 'В';
+
+  @override
+  String get west => 'З';
+
+  @override
+  String dmsFormat(
+    int latDeg,
+    int latMin,
+    int latSec,
+    String latDir,
+    int lonDeg,
+    int lonMin,
+    int lonSec,
+    String lonDir,
+  ) {
+    return '$latDeg° $latMin\' $latSec\" $latDir, $lonDeg° $lonMin\' $lonSec\" $lonDir';
+  }
+
+  @override
+  String chartDegreesFormat(int value) {
+    return '$value°';
+  }
+
+  @override
+  String chartTemperatureFormat(int value) {
+    return '${value}K';
+  }
+
+  @override
+  String chartPercentFormat(int value) {
+    return '$value%';
+  }
+
+  @override
+  String get currentPosition => 'Текущее положение';
+
+  @override
+  String lockedBrightnessValue(int value) {
+    return '$value%';
+  }
+
+  @override
+  String get gameModeHint => 'напр. game.exe';
 }

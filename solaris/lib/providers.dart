@@ -593,11 +593,22 @@ class LocaleNotifier extends Notifier<Locale> {
     final prefs = ref.watch(sharedPreferencesProvider);
     final languageCode = prefs?.getString(_localeKey);
 
-    // Default to 'ru' to maintain previous behavior, but check if user saved 'en'
-    if (languageCode == 'en') {
-      return const Locale('en');
+    if (languageCode != null) {
+      return Locale(languageCode);
     }
-    return const Locale('ru');
+
+    // Detect system locale if no user preference is saved
+    try {
+      final systemLocale = PlatformDispatcher.instance.locale;
+      if (systemLocale.languageCode.startsWith('ru')) {
+        return const Locale('ru');
+      }
+    } catch (e) {
+      debugPrint('Error detecting system locale: $e');
+    }
+
+    // Default to English for all other system languages
+    return const Locale('en');
   }
 
   void setLocale(String languageCode) {

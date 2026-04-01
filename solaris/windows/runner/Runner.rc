@@ -89,11 +89,11 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
+            VALUE "CompanyName", "Solaris Team" "\0"
             VALUE "FileDescription", "solaris" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "solaris" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Solaris Team. All rights reserved." "\0"
             VALUE "OriginalFilename", "solaris.exe" "\0"
             VALUE "ProductName", "solaris" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"

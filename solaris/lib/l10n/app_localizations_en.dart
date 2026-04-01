@@ -289,7 +289,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sunPosition => 'Sun Position';
 
   @override
-  String get liveLocation => 'LIVE LOCATION';
+  String get liveLocation => 'Live Location';
 
   @override
   String get solarTelemetry => 'Solar Telemetry';
@@ -788,4 +788,112 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rename => 'Rename';
+
+  @override
+  String errorWithMsg(String msg) {
+    return 'Error: $msg';
+  }
+
+  @override
+  String sunAzimuthFormat(String value) {
+    return '$value°';
+  }
+
+  @override
+  String sunElevationFormat(String value) {
+    return '$value°';
+  }
+
+  @override
+  String sunZenithFormat(String value) {
+    return '$value°';
+  }
+
+  @override
+  String timeFormat(String hour, String minute) {
+    return '$hour:$minute';
+  }
+
+  @override
+  String percentFormat(String value) {
+    return '$value%';
+  }
+
+  @override
+  String temperatureFormat(String value) {
+    return '$value°C';
+  }
+
+  @override
+  String spectralIntensityValue(String value) {
+    return '$value W/m²';
+  }
+
+  @override
+  String uvIndexValue(String value) {
+    return '$value';
+  }
+
+  @override
+  String latLonFormat(String lat, String lon) {
+    return 'Lat: $lat, Lon: $lon';
+  }
+
+  @override
+  String get detectingLocation => 'Detecting location...';
+
+  @override
+  String get coordinatesUnavailable => 'Coordinates unavailable';
+
+  @override
+  String get north => 'N';
+
+  @override
+  String get south => 'S';
+
+  @override
+  String get east => 'E';
+
+  @override
+  String get west => 'W';
+
+  @override
+  String dmsFormat(
+    int latDeg,
+    int latMin,
+    int latSec,
+    String latDir,
+    int lonDeg,
+    int lonMin,
+    int lonSec,
+    String lonDir,
+  ) {
+    return '$latDeg° $latMin\' $latSec\" $latDir, $lonDeg° $lonMin\' $lonSec\" $lonDir';
+  }
+
+  @override
+  String chartDegreesFormat(int value) {
+    return '$value°';
+  }
+
+  @override
+  String chartTemperatureFormat(int value) {
+    return '${value}K';
+  }
+
+  @override
+  String chartPercentFormat(int value) {
+    return '$value%';
+  }
+
+  @override
+  String get currentPosition => 'Current Position';
+
+  @override
+  String lockedBrightnessValue(int value) {
+    return '$value%';
+  }
+
+  @override
+  String get gameModeHint => 'e.g. game.exe';
 }
