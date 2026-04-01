@@ -23,7 +23,7 @@ void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
   await TimeService.initialize();
-  
+
   // Must unregister all hotkeys at startup to avoid conflicts
   await hotKeyManager.unregisterAll();
 

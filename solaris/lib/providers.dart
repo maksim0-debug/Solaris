@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:ui';
 import 'dart:math' as math;
 
@@ -1259,8 +1259,8 @@ class CurrentBrightnessNotifier extends Notifier<double> {
 
               final effectiveSmartData =
                   selectedSettings.isSmartCircadianEnabled
-                      ? smartData
-                      : const SmartCircadianData.neutral();
+                  ? smartData
+                  : const SmartCircadianData.neutral();
 
               // Calculate Bio-Morning Shift (Shifted Elevation)
               double effectiveElevation = state.sunElevation;
@@ -1369,10 +1369,9 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
 
             // Calculate and Apply Brightness
             if (settings.isAutoBrightnessEnabled) {
-              final effectiveSmartData =
-                  settings.isSmartCircadianEnabled
-                      ? smartData
-                      : const SmartCircadianData.neutral();
+              final effectiveSmartData = settings.isSmartCircadianEnabled
+                  ? smartData
+                  : const SmartCircadianData.neutral();
 
               double effectiveElevation = state.sunElevation;
               if (settings.isSmartCircadianEnabled &&
@@ -1436,8 +1435,8 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
             if (tempSettings.isEnabled && isTempEnabled) {
               final effectiveSmartTempData =
                   tempSettings.isSmartCircadianEnabled
-                      ? smartTempData
-                      : const SmartCircadianData.neutral();
+                  ? smartTempData
+                  : const SmartCircadianData.neutral();
 
               double effectiveElevation = state.sunElevation;
               if (tempSettings.isSmartCircadianEnabled &&

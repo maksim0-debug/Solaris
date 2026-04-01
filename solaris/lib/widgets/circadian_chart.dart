@@ -133,7 +133,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
         final finalFactor = 1.0 - penalty;
         adjustedBrightnessY = (currentBrightnessY * finalFactor).clamp(
           points.first.y,
-          isTemp ? 7000.0 : 100.0,
+          isTemp ? 6500.0 : 100.0,
         );
       }
     }
@@ -293,7 +293,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: true,
-                  horizontalInterval: isTemp ? 1000 : 25,
+                  horizontalInterval: isTemp ? 500 : 25,
                   verticalInterval: 10,
                   getDrawingHorizontalLine: (value) =>
                       const FlLine(color: Colors.white10, strokeWidth: 1),
@@ -346,7 +346,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
               leftTitles: AxisTitles(
                 sideTitles: SideTitles(
                   showTitles: true,
-                  interval: isTemp ? 1000 : 25,
+                  interval: isTemp ? 500 : 25,
                   reservedSize: _leftTitleWidth + (isTemp ? 20 : 0),
                   getTitlesWidget: (value, meta) {
                     if (!isTemp && value > 100) return const SizedBox();
@@ -369,9 +369,9 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
             minX: -20, // От -20 градусов (ночь)
             maxX: 90, // До +90 градусов (зенит)
             minY: isTemp
-                ? 1000
-                : 0, // От 1000K для температуры или 0% для яркости
-            maxY: isTemp ? 7000 : 105, // До 7000K или 105%
+                ? 3000
+                : 0, // From 3000K for temp (padding for 3300K floor)
+            maxY: isTemp ? 7000 : 105, // Up to 7000K or 105%
             lineBarsData: lineBars,
             lineTouchData: LineTouchData(
               enabled: true,
@@ -446,7 +446,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
 
     final isTemp = ref.read(editingTemperatureProvider);
     final maxY = isTemp ? 7000.0 : 105.0;
-    final minY = isTemp ? 1000.0 : 0.0;
+    final minY = isTemp ? 3000.0 : 0.0;
     final rangeY = maxY - minY;
 
     double x =
@@ -465,8 +465,8 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
 
     double x = chartCoords.dx;
     double y = chartCoords.dy.clamp(
-      isTemp ? 1000.0 : 0.0,
-      isTemp ? 7000.0 : 100.0,
+      isTemp ? 3300.0 : 0.0,
+      isTemp ? 6500.0 : 100.0,
     );
 
     final selectedIds = ref.read(selectedMonitorsProvider);
