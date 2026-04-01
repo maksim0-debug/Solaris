@@ -110,64 +110,36 @@ class StylishLocationCard extends ConsumerWidget {
 
                 // Card Content
                 Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(12),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.1),
-                              ),
-                            ),
-                            child: Text(
-                              l10n.liveLocation,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1,
-                              ),
-                            ),
-                          ),
                           Icon(
                             LucideIcons.compass,
                             size: 20,
-                            color:
-                                accentColor, // The compass icon now matches the theme
+                            color: accentColor,
                           ),
                         ],
                       ),
                       const Spacer(),
-                      Text(
-                        locationAsync.maybeWhen(
-                          data: (pos) => l10n.latLonFormat(
-                            pos.latitude.toStringAsFixed(4),
-                            pos.longitude.toStringAsFixed(4),
+                      SizedBox(
+                        width: double.infinity,
+                        child: Text(
+                          locationAsync.maybeWhen(
+                            data: (pos) => l10n.latLonFormat(
+                              pos.latitude.toStringAsFixed(4),
+                              pos.longitude.toStringAsFixed(4),
+                            ),
+                            orElse: () => l10n.detectingLocation,
                           ),
-                          orElse: () => l10n.detectingLocation,
-                        ),
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        locationAsync.maybeWhen(
-                          data: (pos) => _formatDMS(pos.latitude, pos.longitude, l10n),
-                          orElse: () => l10n.coordinatesUnavailable,
-                        ),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.white54,
+                          textAlign: TextAlign.left,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white.withOpacity(0.7),
+                          ),
                         ),
                       ),
                     ],
@@ -179,32 +151,6 @@ class StylishLocationCard extends ConsumerWidget {
         );
       },
       orElse: () => const SizedBox.shrink(),
-    );
-  }
-
-  String _formatDMS(double lat, double lon, AppLocalizations l10n) {
-    String latDir = lat >= 0 ? l10n.north : l10n.south;
-    String lonDir = lon >= 0 ? l10n.east : l10n.west;
-
-    double absLat = lat.abs();
-    int latDeg = absLat.floor();
-    int latMin = ((absLat - latDeg) * 60).floor();
-    int latSec = (((absLat - latDeg) * 60 - latMin) * 60).floor();
-
-    double absLon = lon.abs();
-    int lonDeg = absLon.floor();
-    int lonMin = ((absLon - lonDeg) * 60).floor();
-    int lonSec = (((absLon - lonDeg) * 60 - lonMin) * 60).floor();
-
-    return l10n.dmsFormat(
-      latDeg,
-      latMin,
-      latSec,
-      latDir,
-      lonDeg,
-      lonMin,
-      lonSec,
-      lonDir,
     );
   }
 }
