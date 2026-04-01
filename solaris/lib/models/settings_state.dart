@@ -43,6 +43,8 @@ class SettingsState {
   final Map<String, dynamic>? autoBrightnessHotKey;
   final double brightnessStepUp;
   final double brightnessStepDown;
+  final bool isMultiMonitorOffsetEnabled;
+  final double brightnessOffset;
   final List<UserPreset> userPresets;
   final String? activeUserPresetId;
   final List<String> presetOrder;
@@ -103,6 +105,8 @@ class SettingsState {
     this.autoBrightnessHotKey,
     this.brightnessStepUp = 5.0,
     this.brightnessStepDown = 5.0,
+    this.isMultiMonitorOffsetEnabled = false,
+    this.brightnessOffset = 0.0,
     this.userPresets = const [],
     this.activeUserPresetId,
     List<String>? presetOrder,
@@ -171,6 +175,8 @@ class SettingsState {
     'autoBrightnessHotKey': autoBrightnessHotKey,
     'brightnessStepUp': brightnessStepUp,
     'brightnessStepDown': brightnessStepDown,
+    'isMultiMonitorOffsetEnabled': isMultiMonitorOffsetEnabled,
+    'brightnessOffset': brightnessOffset,
     'userPresets': userPresets.map((p) => p.toJson()).toList(),
     'activeUserPresetId': activeUserPresetId,
     'presetOrder': presetOrder,
@@ -314,6 +320,9 @@ class SettingsState {
       brightnessStepUp: (json['brightnessStepUp'] as num?)?.toDouble() ?? 5.0,
       brightnessStepDown:
           (json['brightnessStepDown'] as num?)?.toDouble() ?? 5.0,
+      isMultiMonitorOffsetEnabled:
+          json['isMultiMonitorOffsetEnabled'] as bool? ?? false,
+      brightnessOffset: (json['brightnessOffset'] as num?)?.toDouble() ?? 0.0,
       userPresets: (json['userPresets'] as List<dynamic>?)?.map(
             (p) => UserPreset.fromJson(p as Map<String, dynamic>),
           ).toList() ??
@@ -365,6 +374,8 @@ class SettingsState {
     Map<String, dynamic>? autoBrightnessHotKey,
     double? brightnessStepUp,
     double? brightnessStepDown,
+    bool? isMultiMonitorOffsetEnabled,
+    double? brightnessOffset,
     List<UserPreset>? userPresets,
     String? activeUserPresetId,
     List<String>? presetOrder,
@@ -445,6 +456,9 @@ class SettingsState {
           : (autoBrightnessHotKey ?? this.autoBrightnessHotKey),
       brightnessStepUp: brightnessStepUp ?? this.brightnessStepUp,
       brightnessStepDown: brightnessStepDown ?? this.brightnessStepDown,
+      isMultiMonitorOffsetEnabled:
+          isMultiMonitorOffsetEnabled ?? this.isMultiMonitorOffsetEnabled,
+      brightnessOffset: brightnessOffset ?? this.brightnessOffset,
       userPresets: userPresets ?? this.userPresets,
       activeUserPresetId:
           clearActiveUserPresetId ? null : (activeUserPresetId ?? this.activeUserPresetId),

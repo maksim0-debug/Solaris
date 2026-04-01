@@ -665,9 +665,19 @@ class AutoBrightnessAdjustmentNotifier extends Notifier<bool> {
     if (currentState) {
       final monitor = _getBaselineMonitor(ref);
       if (monitor?.realBrightness != null) {
+        final settingsAsync = ref.read(settingsProvider);
+        final settings = settingsAsync.value?[monitor!.deviceName] ??
+            settingsAsync.value?['all'] ??
+            SettingsState();
+
         ref
             .read(manualBrightnessProvider.notifier)
-            .update(monitor!.realBrightness!.toDouble());
+            .update(
+              (monitor!.realBrightness! - settings.brightnessOffset).clamp(
+                0.0,
+                100.0,
+              ).toDouble(),
+            );
       }
     }
 
@@ -818,21 +828,22 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
 
   Future<void> _updateSettings(
     Set<String> monitorIds,
-    SettingsState newState,
+    SettingsState Function(SettingsState) transform,
   ) async {
     final currentMap = state.value ?? {'all': SettingsState()};
     final newStateMap = Map<String, SettingsState>.from(currentMap);
 
     for (final id in monitorIds) {
-      newStateMap[id] = newState;
-
       if (id == 'all') {
-        // If updating 'all', replicate to all existing keys
+        newStateMap['all'] = transform(newStateMap['all']!);
+        // Replicate CHANGE to all other specific monitors without overwriting their unique fields
         for (final key in newStateMap.keys.toList()) {
           if (key != 'all') {
-            newStateMap[key] = newState;
+            newStateMap[key] = transform(newStateMap[key]!);
           }
         }
+      } else {
+        newStateMap[id] = transform(newStateMap[id]!);
       }
     }
 
@@ -841,73 +852,79 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   }
 
   void updateCurveSharpness(double value) {
-    final ids = ref.read(selectedMonitorsProvider);
-    // Use the first selected monitor's current settings as base
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(curveSharpness: value));
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(curveSharpness: value),
+    );
   }
 
   void updateAutorun(bool enabled) {
-    final currentMap = state.value ?? {'all': SettingsState()};
-    final current = currentMap['all']!;
-    _updateSettings({'all'}, current.copyWith(isAutorunEnabled: enabled));
+    _updateSettings(
+      {'all'}, // Autorun is globally replicated
+      (s) => s.copyWith(isAutorunEnabled: enabled),
+    );
     AutorunService.setEnabled(enabled);
   }
 
   void updateWeatherAdjustment(bool enabled) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(isWeatherAdjustmentEnabled: enabled));
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(isWeatherAdjustmentEnabled: enabled),
+    );
   }
 
   void updateGameModeEnabled(bool enabled) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(isGameModeEnabled: enabled));
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(isGameModeEnabled: enabled),
+    );
   }
 
   void updateGameModeBrightness(double brightness) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(gameModeBrightness: brightness));
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(gameModeBrightness: brightness),
+    );
   }
 
   void addWhitelistItem(String item) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    if (!current.gameModeWhitelist.contains(item)) {
-      final newList = List<String>.from(current.gameModeWhitelist)..add(item);
-      _updateSettings(ids, current.copyWith(gameModeWhitelist: newList));
-    }
+    _updateSettings(ref.read(selectedMonitorsProvider), (s) {
+      if (!s.gameModeWhitelist.contains(item)) {
+        final newList = List<String>.from(s.gameModeWhitelist)..add(item);
+        return s.copyWith(gameModeWhitelist: newList);
+      }
+      return s;
+    });
   }
 
   void removeWhitelistItem(String item) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    if (current.gameModeWhitelist.contains(item)) {
-      final newList = List<String>.from(current.gameModeWhitelist)
-        ..remove(item);
-      _updateSettings(ids, current.copyWith(gameModeWhitelist: newList));
-    }
+    _updateSettings(ref.read(selectedMonitorsProvider), (s) {
+      if (s.gameModeWhitelist.contains(item)) {
+        final newList = List<String>.from(s.gameModeWhitelist)..remove(item);
+        return s.copyWith(gameModeWhitelist: newList);
+      }
+      return s;
+    });
   }
 
   void addBlacklistItem(String item) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    if (!current.gameModeBlacklist.contains(item)) {
-      final newList = List<String>.from(current.gameModeBlacklist)..add(item);
-      _updateSettings(ids, current.copyWith(gameModeBlacklist: newList));
-    }
+    _updateSettings(ref.read(selectedMonitorsProvider), (s) {
+      if (!s.gameModeBlacklist.contains(item)) {
+        final newList = List<String>.from(s.gameModeBlacklist)..add(item);
+        return s.copyWith(gameModeBlacklist: newList);
+      }
+      return s;
+    });
   }
 
   void removeBlacklistItem(String item) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    if (current.gameModeBlacklist.contains(item)) {
-      final newList = List<String>.from(current.gameModeBlacklist)
-        ..remove(item);
-      _updateSettings(ids, current.copyWith(gameModeBlacklist: newList));
-    }
+    _updateSettings(ref.read(selectedMonitorsProvider), (s) {
+      if (s.gameModeBlacklist.contains(item)) {
+        final newList = List<String>.from(s.gameModeBlacklist)..remove(item);
+        return s.copyWith(gameModeBlacklist: newList);
+      }
+      return s;
+    });
   }
 
   void updateAutoBrightness(bool enabled) {
@@ -915,28 +932,30 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     final firstId = ids.firstOrNull ?? 'all';
     final current = _getSettings(firstId);
 
-    if (current.isAutoBrightnessEnabled == enabled) return;
-
-    // Transitioning from Auto to Manual: Sync current hardware brightness to manual provider
-    if (!enabled) {
+    // Only perform sync if we are actually switching from Auto to Manual
+    if (current.isAutoBrightnessEnabled && !enabled) {
       final monitor = _getBaselineMonitor(ref);
       if (monitor?.realBrightness != null) {
-        ref
-            .read(manualBrightnessProvider.notifier)
-            .update(monitor!.realBrightness!.toDouble());
+        final monitorSettings = _getSettings(monitor!.deviceName);
+        ref.read(manualBrightnessProvider.notifier).update(
+              (monitor.realBrightness! - monitorSettings.brightnessOffset)
+                  .clamp(0.0, 100.0)
+                  .toDouble(),
+            );
       }
     }
 
     ref
         .read(sharedPreferencesProvider)
         ?.setBool('auto_brightness_enabled', enabled);
-    _updateSettings(ids, current.copyWith(isAutoBrightnessEnabled: enabled));
+    _updateSettings(ids, (s) => s.copyWith(isAutoBrightnessEnabled: enabled));
   }
 
   void updateSmartCircadian(bool enabled) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(isSmartCircadianEnabled: enabled));
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(isSmartCircadianEnabled: enabled),
+    );
 
     // Sync with temperature settings
     ref
@@ -945,62 +964,65 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   }
 
   void updateWindDownMaster(bool enabled) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(isWindDownMasterEnabled: enabled));
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(isWindDownMasterEnabled: enabled),
+    );
   }
 
   void updateTimeShiftMaster(bool enabled) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(isTimeShiftMasterEnabled: enabled));
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(isTimeShiftMasterEnabled: enabled),
+    );
   }
 
   void updateSleepPressureMaster(bool enabled) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
     _updateSettings(
-      ids,
-      current.copyWith(isSleepPressureMasterEnabled: enabled),
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(isSleepPressureMasterEnabled: enabled),
     );
   }
 
   void updateSleepDebtMaster(bool enabled) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(isSleepDebtMasterEnabled: enabled));
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(isSleepDebtMasterEnabled: enabled),
+    );
   }
 
   void updateSleepDebt(bool enabled) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(isSleepDebtEnabled: enabled));
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(isSleepDebtEnabled: enabled),
+    );
   }
 
   void updateSleepPressure(bool enabled) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(isSleepPressureEnabled: enabled));
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(isSleepPressureEnabled: enabled),
+    );
   }
 
   void updateTimeShift(bool enabled) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(isTimeShiftEnabled: enabled));
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(isTimeShiftEnabled: enabled),
+    );
   }
 
   void updateWindDown(bool enabled) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(isWindDownEnabled: enabled));
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(isWindDownEnabled: enabled),
+    );
   }
 
   void updateWindDownIntensity(double brightness, double temperature) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
     _updateSettings(
-      ids,
-      current.copyWith(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(
         windDownBrightnessIntensity: brightness,
         windDownTemperatureIntensity: temperature,
       ),
@@ -1008,80 +1030,86 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   }
 
   void updateWindDownDuration(int minutes) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(windDownDurationMinutes: minutes));
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(windDownDurationMinutes: minutes),
+    );
   }
 
   void updateTimeShiftDuration(int minutes) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(timeShiftDurationMinutes: minutes));
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(timeShiftDurationMinutes: minutes),
+    );
   }
 
   void updateSleepPressureLimit(double hours) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(sleepPressureWakeLimitHours: hours));
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(sleepPressureWakeLimitHours: hours),
+    );
   }
 
   void updateSleepDebtThreshold(int minutes) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(sleepDebtThresholdMinutes: minutes));
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(sleepDebtThresholdMinutes: minutes),
+    );
   }
 
   void updateSleepToleranceWindow(int value) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(sleepToleranceWindow: value));
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(sleepToleranceWindow: value),
+    );
   }
 
   void updateSleepMaxAnomalies(int value) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(sleepMaxAnomalies: value));
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(sleepMaxAnomalies: value),
+    );
   }
 
   void updateSleepMinRegimeLength(int value) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(sleepMinRegimeLength: value));
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(sleepMinRegimeLength: value),
+    );
   }
 
   void updateSleepAnchorSize(int value) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(sleepAnchorSize: value));
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(sleepAnchorSize: value),
+    );
   }
 
   void updateSleepMaxSpread(int value) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(sleepMaxSpread: value));
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(sleepMaxSpread: value),
+    );
   }
 
   void updateTimeShiftIntensity(double intensity) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(timeShiftIntensity: intensity));
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(timeShiftIntensity: intensity),
+    );
   }
 
   void updateSleepPressureIntensity(double intensity) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
     _updateSettings(
-      ids,
-      current.copyWith(sleepPressureBrightnessIntensity: intensity),
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(sleepPressureBrightnessIntensity: intensity),
     );
   }
 
   void updateSleepDebtIntensity(double brightness, double temperature) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
     _updateSettings(
-      ids,
-      current.copyWith(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(
         sleepDebtBrightnessIntensity: brightness,
         sleepDebtTemperatureIntensity: temperature,
       ),
@@ -1102,12 +1130,65 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
       sortedPoints.add(FlSpot(90, sortedPoints.last.y));
     }
 
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(ref.read(selectedMonitorsProvider), (s) {
+      if (s.activeUserPresetId != null) {
+        final newUserPresets = s.userPresets.map((p) {
+          if (p.id == s.activeUserPresetId) {
+            return UserPreset(
+              id: p.id,
+              name: p.name,
+              points: sortedPoints,
+              initialPoints: p.initialPoints,
+            );
+          }
+          return p;
+        }).toList();
+        return s.copyWith(userPresets: newUserPresets);
+      } else {
+        final newCurvesMap = Map<PresetType, List<FlSpot>>.from(s.curvesMap);
+        newCurvesMap[s.activePreset] = sortedPoints;
+        return s.copyWith(curvesMap: newCurvesMap);
+      }
+    });
+  }
 
-    if (current.activeUserPresetId != null) {
-      final newUserPresets = current.userPresets.map((p) {
-        if (p.id == current.activeUserPresetId) {
+  void addCurvePoint(FlSpot point) {
+    _updateSettings(ref.read(selectedMonitorsProvider), (s) {
+      final newPoints = List<FlSpot>.from(s.curvePoints)..add(point);
+      // Helper to update curve points within the transform
+      return _updatePointsInState(s, newPoints);
+    });
+  }
+
+  void removeCurvePoint(int index) {
+    _updateSettings(ref.read(selectedMonitorsProvider), (s) {
+      if (index >= 0 && index < s.curvePoints.length) {
+        if (s.curvePoints[index].x == -20 || s.curvePoints[index].x == 90)
+          return s;
+        final newPoints = List<FlSpot>.from(s.curvePoints)..removeAt(index);
+        return _updatePointsInState(s, newPoints);
+      }
+      return s;
+    });
+  }
+
+  SettingsState _updatePointsInState(SettingsState s, List<FlSpot> points) {
+    final sortedPoints = List<FlSpot>.from(points)
+      ..sort((a, b) => a.x.compareTo(b.x));
+
+    if (sortedPoints.isEmpty || sortedPoints.first.x > -20) {
+      sortedPoints.insert(
+        0,
+        FlSpot(-20, sortedPoints.isEmpty ? 15 : sortedPoints.first.y),
+      );
+    }
+    if (sortedPoints.last.x < 90) {
+      sortedPoints.add(FlSpot(90, sortedPoints.last.y));
+    }
+
+    if (s.activeUserPresetId != null) {
+      final newUserPresets = s.userPresets.map((p) {
+        if (p.id == s.activeUserPresetId) {
           return UserPreset(
             id: p.id,
             name: p.name,
@@ -1117,217 +1198,191 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
         }
         return p;
       }).toList();
-      _updateSettings(ids, current.copyWith(userPresets: newUserPresets));
+      return s.copyWith(userPresets: newUserPresets);
     } else {
-      final newCurvesMap = Map<PresetType, List<FlSpot>>.from(current.curvesMap);
-      newCurvesMap[current.activePreset] = sortedPoints;
-      _updateSettings(ids, current.copyWith(curvesMap: newCurvesMap));
-    }
-  }
-
-  void addCurvePoint(FlSpot point) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    final newPoints = List<FlSpot>.from(current.curvePoints)..add(point);
-    updateCurvePoints(newPoints);
-  }
-
-  void removeCurvePoint(int index) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    if (index >= 0 && index < current.curvePoints.length) {
-      if (current.curvePoints[index].x == -20 ||
-          current.curvePoints[index].x == 90)
-        return;
-      final newPoints = List<FlSpot>.from(current.curvePoints)..removeAt(index);
-      updateCurvePoints(newPoints);
+      final newCurvesMap = Map<PresetType, List<FlSpot>>.from(s.curvesMap);
+      newCurvesMap[s.activePreset] = sortedPoints;
+      return s.copyWith(curvesMap: newCurvesMap);
     }
   }
 
   void setActivePreset(PresetType type) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
     _updateSettings(
-      ids,
-      current.copyWith(activePreset: type, clearActiveUserPresetId: true),
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(activePreset: type, clearActiveUserPresetId: true),
     );
+  }
+
+  void updateMultiMonitorOffsetEnabled(bool enabled) {
+    _updateSettings(
+      {'all'},
+      (s) => s.copyWith(isMultiMonitorOffsetEnabled: enabled),
+    );
+  }
+
+  void updateMonitorOffset(String monitorId, double offset) {
+    _updateSettings({monitorId}, (s) => s.copyWith(brightnessOffset: offset));
   }
 
   void setActiveUserPreset(String id) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(activeUserPresetId: id));
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(activeUserPresetId: id),
+    );
   }
 
   void saveAsNewPreset(String name) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    final newPreset = UserPreset(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: name,
-      points: List<FlSpot>.from(current.curvePoints),
-      initialPoints: List<FlSpot>.from(current.curvePoints),
-    );
-    final newUserPresets = List<UserPreset>.from(current.userPresets)
-      ..add(newPreset);
-    final newPresetOrder = List<String>.from(current.presetOrder)
-      ..add('user:${newPreset.id}');
-    _updateSettings(
-      ids,
-      current.copyWith(
+    _updateSettings(ref.read(selectedMonitorsProvider), (s) {
+      final newPreset = UserPreset(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        name: name,
+        points: List<FlSpot>.from(s.curvePoints),
+        initialPoints: List<FlSpot>.from(s.curvePoints),
+      );
+      final newUserPresets = List<UserPreset>.from(s.userPresets)
+        ..add(newPreset);
+      final newPresetOrder = List<String>.from(s.presetOrder)
+        ..add('user:${newPreset.id}');
+      return s.copyWith(
         userPresets: newUserPresets,
         activeUserPresetId: newPreset.id,
         presetOrder: newPresetOrder,
-      ),
-    );
+      );
+    });
   }
 
   void deleteUserPreset(String id) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    final newUserPresets = current.userPresets.where((p) => p.id != id).toList();
-    final newPresetOrder =
-        current.presetOrder.where((orderId) => orderId != 'user:$id').toList();
+    _updateSettings(ref.read(selectedMonitorsProvider), (s) {
+      final newUserPresets = s.userPresets.where((p) => p.id != id).toList();
+      final newPresetOrder =
+          s.presetOrder.where((orderId) => orderId != 'user:$id').toList();
 
-    String? newActiveId = current.activeUserPresetId;
-    if (newActiveId == id) {
-      newActiveId = newUserPresets.isNotEmpty ? newUserPresets.first.id : null;
-    }
+      String? newActiveId = s.activeUserPresetId;
+      if (newActiveId == id) {
+        newActiveId = newUserPresets.isNotEmpty ? newUserPresets.first.id : null;
+      }
 
-    _updateSettings(
-      ids,
-      current.copyWith(
+      return s.copyWith(
         userPresets: newUserPresets,
         activeUserPresetId: newActiveId,
         presetOrder: newPresetOrder,
-      ),
-    );
+      );
+    });
   }
 
   void reorderAllPresets(int oldIndex, int newIndex) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    final newOrder = List<String>.from(current.presetOrder);
-
-    if (oldIndex < newIndex) {
-      newIndex -= 1;
-    }
-    final item = newOrder.removeAt(oldIndex);
-    newOrder.insert(newIndex, item);
-
-    _updateSettings(ids, current.copyWith(presetOrder: newOrder));
+    _updateSettings(ref.read(selectedMonitorsProvider), (s) {
+      final newOrder = List<String>.from(s.presetOrder);
+      if (oldIndex < newIndex) {
+        newIndex -= 1;
+      }
+      final item = newOrder.removeAt(oldIndex);
+      newOrder.insert(newIndex, item);
+      return s.copyWith(presetOrder: newOrder);
+    });
   }
 
   void renameUserPreset(String id, String newName) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    final newUserPresets = current.userPresets.map((p) {
-      if (p.id == id) {
-        return UserPreset(
-          id: p.id,
-          name: newName,
-          points: p.points,
-          initialPoints: p.initialPoints,
-        );
-      }
-      return p;
-    }).toList();
-
-    _updateSettings(ids, current.copyWith(userPresets: newUserPresets));
-  }
-
-  void resetCurrentPreset() {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-
-    if (current.activeUserPresetId != null) {
-      final newUserPresets = current.userPresets.map((p) {
-        if (p.id == current.activeUserPresetId) {
+    _updateSettings(ref.read(selectedMonitorsProvider), (s) {
+      final newUserPresets = s.userPresets.map((p) {
+        if (p.id == id) {
           return UserPreset(
             id: p.id,
-            name: p.name,
-            points: List<FlSpot>.from(p.initialPoints),
-            initialPoints: List<FlSpot>.from(p.initialPoints),
+            name: newName,
+            points: p.points,
+            initialPoints: p.initialPoints,
           );
         }
         return p;
       }).toList();
-      _updateSettings(ids, current.copyWith(userPresets: newUserPresets));
-      return;
-    }
+      return s.copyWith(userPresets: newUserPresets);
+    });
+  }
 
-    final presetType = current.activePreset;
+  void resetCurrentPreset() {
+    _updateSettings(ref.read(selectedMonitorsProvider), (s) {
+      if (s.activeUserPresetId != null) {
+        final newUserPresets = s.userPresets.map((p) {
+          if (p.id == s.activeUserPresetId) {
+            return UserPreset(
+              id: p.id,
+              name: p.name,
+              points: List<FlSpot>.from(p.initialPoints),
+              initialPoints: List<FlSpot>.from(p.initialPoints),
+            );
+          }
+          return p;
+        }).toList();
+        return s.copyWith(userPresets: newUserPresets);
+      }
 
-    final newCurvesMap = Map<PresetType, List<FlSpot>>.from(current.curvesMap);
-    newCurvesMap[presetType] = PresetConstants.getDefaultPoints(presetType);
-
-    _updateSettings(ids, current.copyWith(curvesMap: newCurvesMap));
+      final presetType = s.activePreset;
+      final newCurvesMap = Map<PresetType, List<FlSpot>>.from(s.curvesMap);
+      newCurvesMap[presetType] = PresetConstants.getDefaultPoints(presetType);
+      return s.copyWith(curvesMap: newCurvesMap);
+    });
   }
 
   void cyclePreset({required bool brighter}) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final id = ids.firstOrNull ?? 'all';
-    final current = _getSettings(id);
-
-    // Filter out 'system:custom' and map to objects
-    final cycleOrder = current.presetOrder
-        .where((orderId) => orderId != 'system:custom')
-        .map((orderId) {
-      if (orderId.startsWith('system:')) {
-        final typeName = orderId.substring(7);
-        try {
-          return PresetType.values.firstWhere((e) => e.name == typeName);
-        } catch (_) {
-          return PresetType.bright;
+    // Cycling is complex because it depends on the current state of each monitor.
+    // We update each selected monitor based on its own cycle order.
+    _updateSettings(ref.read(selectedMonitorsProvider), (s) {
+      final cycleOrder = s.presetOrder
+          .where((orderId) => orderId != 'system:custom')
+          .map((orderId) {
+        if (orderId.startsWith('system:')) {
+          final typeName = orderId.substring(7);
+          try {
+            return PresetType.values.firstWhere((e) => e.name == typeName);
+          } catch (_) {
+            return PresetType.bright;
+          }
+        } else {
+          final userId = orderId.substring(5);
+          try {
+            return s.userPresets.firstWhere((p) => p.id == userId);
+          } catch (_) {
+            return null;
+          }
         }
+      }).where((item) => item != null).toList();
+
+      if (cycleOrder.isEmpty) return s;
+
+      int currentIndex = -1;
+      if (s.activeUserPresetId != null) {
+        currentIndex = cycleOrder.indexWhere(
+          (p) => p is UserPreset && p.id == s.activeUserPresetId,
+        );
       } else {
-        final userId = orderId.substring(5);
-        try {
-          return current.userPresets.firstWhere((p) => p.id == userId);
-        } catch (_) {
-          return null;
+        currentIndex = cycleOrder.indexOf(s.activePreset);
+      }
+
+      if (currentIndex == -1) {
+        final next = cycleOrder.first;
+        if (next is PresetType) {
+          return s.copyWith(activePreset: next, clearActiveUserPresetId: true);
+        } else if (next is UserPreset) {
+          return s.copyWith(activeUserPresetId: next.id);
         }
+        return s;
       }
-    }).where((item) => item != null).toList();
 
-    if (cycleOrder.isEmpty) return;
+      int newIndex;
+      if (brighter) {
+        newIndex = (currentIndex + 1) % cycleOrder.length;
+      } else {
+        newIndex = (currentIndex - 1 + cycleOrder.length) % cycleOrder.length;
+      }
 
-    int currentIndex = -1;
-    if (current.activeUserPresetId != null) {
-      currentIndex = cycleOrder.indexWhere(
-        (p) => p is UserPreset && p.id == current.activeUserPresetId,
-      );
-    } else {
-      currentIndex = cycleOrder.indexOf(current.activePreset);
-    }
-
-    if (currentIndex == -1) {
-      // Default to the first preset in the list if current state is unknown
-      final next = cycleOrder.first;
+      final next = cycleOrder[newIndex];
       if (next is PresetType) {
-        setActivePreset(next);
+        return s.copyWith(activePreset: next, clearActiveUserPresetId: true);
       } else if (next is UserPreset) {
-        setActiveUserPreset(next.id);
+        return s.copyWith(activeUserPresetId: next.id);
       }
-      return;
-    }
-
-    // Directionality:
-    // next_preset (brighter: true) -> Forward in list (index + 1)
-    // prev_preset (brighter: false) -> Backward in list (index - 1)
-    int newIndex;
-    if (brighter) {
-      newIndex = (currentIndex + 1) % cycleOrder.length;
-    } else {
-      newIndex = (currentIndex - 1 + cycleOrder.length) % cycleOrder.length;
-    }
-
-    final next = cycleOrder[newIndex];
-    if (next is PresetType) {
-      setActivePreset(next);
-    } else if (next is UserPreset) {
-      setActiveUserPreset(next.id);
-    }
+      return s;
+    });
   }
 
   void adjustManualBrightness(double delta) {
@@ -1343,61 +1398,45 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   }
 
   void updateBrightnessStep(bool isUp, double value) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = _getSettings(ids.firstOrNull ?? 'all');
-    if (isUp) {
-      _updateSettings(ids, current.copyWith(brightnessStepUp: value));
-    } else {
-      _updateSettings(ids, current.copyWith(brightnessStepDown: value));
-    }
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) =>
+          isUp
+              ? s.copyWith(brightnessStepUp: value)
+              : s.copyWith(brightnessStepDown: value),
+    );
   }
 
   void updateHotkey(String field, Map<String, dynamic>? hotKeyJson) {
-    // Hotkeys are global app settings, so we update 'all'
-    final currentMap = state.value ?? {'all': SettingsState()};
-    final current = currentMap['all']!;
-
-    if (field == 'next_preset') {
-      _updateSettings(
-        {'all'},
-        current.copyWith(
+    _updateSettings({'all'}, (s) {
+      if (field == 'next_preset') {
+        return s.copyWith(
           nextPresetHotKey: hotKeyJson,
           clearNextPresetHotKey: hotKeyJson == null,
-        ),
-      );
-    } else if (field == 'prev_preset') {
-      _updateSettings(
-        {'all'},
-        current.copyWith(
+        );
+      } else if (field == 'prev_preset') {
+        return s.copyWith(
           prevPresetHotKey: hotKeyJson,
           clearPrevPresetHotKey: hotKeyJson == null,
-        ),
-      );
-    } else if (field == 'brightness_up') {
-      _updateSettings(
-        {'all'},
-        current.copyWith(
+        );
+      } else if (field == 'brightness_up') {
+        return s.copyWith(
           brightnessUpHotKey: hotKeyJson,
           clearBrightnessUpHotKey: hotKeyJson == null,
-        ),
-      );
-    } else if (field == 'brightness_down') {
-      _updateSettings(
-        {'all'},
-        current.copyWith(
+        );
+      } else if (field == 'brightness_down') {
+        return s.copyWith(
           brightnessDownHotKey: hotKeyJson,
           clearBrightnessDownHotKey: hotKeyJson == null,
-        ),
-      );
-    } else if (field == 'auto_brightness_toggle') {
-      _updateSettings(
-        {'all'},
-        current.copyWith(
+        );
+      } else if (field == 'auto_brightness_toggle') {
+        return s.copyWith(
           autoBrightnessHotKey: hotKeyJson,
           clearAutoBrightnessHotKey: hotKeyJson == null,
-        ),
-      );
-    }
+        );
+      }
+      return s;
+    });
   }
 }
 
@@ -1509,6 +1548,25 @@ final currentBrightnessProvider =
       CurrentBrightnessNotifier.new,
     );
 
+final brightnessOffsetsProvider = Provider<Map<String, double>>((ref) {
+  final settingsAsync = ref.watch(settingsProvider);
+  return settingsAsync.maybeWhen(
+    data: (settingsMap) {
+      final allSettings = settingsMap['all'] ?? SettingsState();
+      if (!allSettings.isMultiMonitorOffsetEnabled) return {};
+
+      final Map<String, double> offsets = {};
+      settingsMap.forEach((id, s) {
+        if (id != 'all') {
+          offsets[id] = s.brightnessOffset;
+        }
+      });
+      return offsets;
+    },
+    orElse: () => {},
+  );
+});
+
 /// Background provider that manages monitor brightness and temperature adjustments.
 /// It listens to solar state and applies brightness updates to hardware.
 /// If the app is minimized, it skips UI state updates to save resources.
@@ -1596,11 +1654,14 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                 targetBrightness = calculationResult.finalBrightness;
               }
 
+              final offsets = ref.watch(brightnessOffsetsProvider);
+
               brightnessService.applyBrightnessSmoothly(
                 selection: monitor.deviceName,
                 targetValue: targetBrightness,
                 monitors: monitors,
                 monitorService: monitorService,
+                offsets: offsets,
                 isUIVisible: visibility == AppVisibilityState.visible,
                 updateBrightnessCallback: (id, val) {
                   // ONLY update the UI provider if the app is visible

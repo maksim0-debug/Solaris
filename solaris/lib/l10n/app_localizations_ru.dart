@@ -917,4 +917,20 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get close => 'Закрыть';
+
+  @override
+  String get multiMonitorOffsets => 'Линковка и Смещение';
+
+  @override
+  String get multiMonitorOffsetsSubtitle =>
+      'Индивидуальная подстройка яркости для каждого монитора';
+
+  @override
+  String get brightnessOffset => 'Смещение яркости';
+
+  @override
+  String get linkAndOffset => 'Линковка и Смещение';
+
+  @override
+  String get offsetFormula => 'Итог = Общая + Смещение';
 }

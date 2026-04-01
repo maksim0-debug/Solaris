@@ -15,12 +15,14 @@ class BrightnessService {
     required List<MonitorInfo> monitors,
     required MonitorService monitorService,
     required void Function(String, int) updateBrightnessCallback,
+    Map<String, double>? offsets,
     bool isUIVisible = true,
   }) {
-    final target = targetValue.round();
-
     for (final monitor in monitors) {
       if (selection == 'all' || selection == monitor.deviceName) {
+        final offset = offsets?[monitor.deviceName] ?? 0.0;
+        final target = (targetValue + offset).clamp(0.0, 100.0).round();
+
         _targetBrightness[monitor.deviceName] = target;
 
         if (_adjustmentTimers[monitor.deviceName] == null) {

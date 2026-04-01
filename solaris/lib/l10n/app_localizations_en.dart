@@ -915,4 +915,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get close => 'Close';
+
+  @override
+  String get multiMonitorOffsets => 'Multi-monitor Offsets';
+
+  @override
+  String get multiMonitorOffsetsSubtitle =>
+      'Adjust individual monitor brightness relative to global level';
+
+  @override
+  String get brightnessOffset => 'Brightness Offset';
+
+  @override
+  String get linkAndOffset => 'Link & Offset';
+
+  @override
+  String get offsetFormula => 'Final = Global + Offset';
 }

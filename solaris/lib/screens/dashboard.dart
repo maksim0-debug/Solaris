@@ -282,12 +282,14 @@ class _Header extends ConsumerWidget {
         final selection = ref.read(selectedMonitorsProvider);
         final monitors = ref.read(monitorListProvider).value ?? [];
 
+        final offsets = ref.read(brightnessOffsetsProvider);
         for (final id in selection) {
           brightnessService.applyBrightnessSmoothly(
             selection: id,
             targetValue: next,
             monitors: monitors,
             monitorService: monitorService,
+            offsets: offsets,
             updateBrightnessCallback: (id, val) =>
                 monitorListNotifier.updateBrightness(id, val),
           );
@@ -341,12 +343,14 @@ class _Header extends ConsumerWidget {
         // Sync brightness
         final targetBright = ref.read(currentBrightnessProvider);
         debugPrint('Initial sync: applying brightness $targetBright');
+        final offsets = ref.read(brightnessOffsetsProvider);
         for (final id in selection) {
           brightnessService.applyBrightnessSmoothly(
             selection: id,
             targetValue: targetBright,
             monitors: monitors,
             monitorService: monitorService,
+            offsets: offsets,
             updateBrightnessCallback: (id, val) =>
                 monitorListNotifier.updateBrightness(id, val),
           );
@@ -393,11 +397,13 @@ class _Header extends ConsumerWidget {
       if (next.contains('all')) {
         // Apply brightness
         final brightness = ref.read(currentBrightnessProvider);
+        final offsets = ref.read(brightnessOffsetsProvider);
         brightnessService.applyBrightnessSmoothly(
           selection: 'all',
           targetValue: brightness,
           monitors: monitorValue,
           monitorService: monitorService,
+          offsets: offsets,
           updateBrightnessCallback: (id, val) =>
               monitorListNotifier.updateBrightness(id, val),
         );
@@ -1301,6 +1307,8 @@ class _Footer extends ConsumerWidget {
                       ),
                     );
                   }),
+                  const SizedBox(width: 24),
+                  _OffsetSettingsButton(),
                 ],
               );
             },
@@ -1379,6 +1387,233 @@ class _DisplayInfo extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _OffsetSettingsButton extends ConsumerWidget {
+  const _OffsetSettingsButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return IconButton(
+      icon: Icon(
+        LucideIcons.settings,
+        size: 14,
+        color: ref.watch(settingsProvider).maybeWhen(
+              data: (map) => map['all']?.isMultiMonitorOffsetEnabled ?? false
+                  ? const Color(0xFF818CF8)
+                  : Colors.white24,
+              orElse: () => Colors.white24,
+            ),
+      ),
+      onPressed: () {
+        final RenderBox button = context.findRenderObject() as RenderBox;
+        final RenderBox overlay =
+            Overlay.of(context).context.findRenderObject() as RenderBox;
+        final RelativeRect position = RelativeRect.fromRect(
+          Rect.fromPoints(
+            button.localToGlobal(Offset.zero, ancestor: overlay),
+            button.localToGlobal(
+              button.size.bottomRight(Offset.zero),
+              ancestor: overlay,
+            ),
+          ),
+          Offset.zero & overlay.size,
+        );
+
+        showDialog<void>(
+          context: context,
+          barrierColor: Colors.transparent,
+          builder: (context) => _MultiMonitorOffsetPopover(position: position),
+        );
+      },
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(),
+      splashRadius: 16,
+      tooltip: AppLocalizations.of(context)!.multiMonitorOffsets,
+    );
+  }
+}
+
+class _MultiMonitorOffsetPopover extends ConsumerWidget {
+  const _MultiMonitorOffsetPopover({required this.position});
+  final RelativeRect position;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final settingsAsync = ref.watch(settingsProvider);
+    final monitorsAsync = ref.watch(monitorListProvider);
+    final globalBrightness = ref.watch(currentBrightnessProvider);
+    final size = MediaQuery.of(context).size;
+
+    return Stack(
+      children: [
+        GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          child: Container(color: Colors.transparent),
+        ),
+        Positioned(
+          left: (position.left + (size.width - position.left - position.right) / 2 - 160)
+              .clamp(16.0, size.width - 320 - 16.0),
+          bottom: (size.height - position.top) + 16,
+          child: Material(
+            color: Colors.transparent,
+            child: SizedBox(
+              width: 320,
+              child: GlassCard(
+                padding: const EdgeInsets.all(20),
+                child: settingsAsync.when(
+                  data: (settingsMap) {
+                    final allSettings = settingsMap['all'] ?? SettingsState();
+                    final isEnabled = allSettings.isMultiMonitorOffsetEnabled;
+
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  l10n.linkAndOffset,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                Text(
+                                  l10n.offsetFormula,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.white.withOpacity(0.4),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Transform.scale(
+                              scale: 0.8,
+                              child: Switch(
+                                value: isEnabled,
+                                onChanged: (val) => ref
+                                    .read(settingsProvider.notifier)
+                                    .updateMultiMonitorOffsetEnabled(val),
+                                activeColor: const Color(0xFF818CF8),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        const Divider(color: Colors.white10),
+                        const SizedBox(height: 12),
+                        AnimatedOpacity(
+                          duration: const Duration(milliseconds: 200),
+                          opacity: isEnabled ? 1.0 : 0.4,
+                          child: AbsorbPointer(
+                            absorbing: !isEnabled,
+                            child: monitorsAsync.when(
+                              data: (monitors) => Column(
+                                children: monitors.map((monitor) {
+                                  final offset = settingsMap[monitor.deviceName]
+                                          ?.brightnessOffset ??
+                                      0.0;
+                                  final finalVal =
+                                      (globalBrightness + offset).clamp(0, 100).round();
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 16.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                monitor.friendlyName,
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.white70,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            Text(
+                                              '${globalBrightness.round()}% ${offset >= 0 ? '+' : ''}${offset.round()}% = $finalVal%',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.bold,
+                                                color: offset == 0
+                                                    ? Colors.white30
+                                                    : const Color(0xFFFDBA74),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 4),
+                                        SliderTheme(
+                                          data: SliderTheme.of(context).copyWith(
+                                            trackHeight: 2,
+                                            thumbShape:
+                                                const RoundSliderThumbShape(
+                                              enabledThumbRadius: 6,
+                                            ),
+                                            overlayShape:
+                                                const RoundSliderOverlayShape(
+                                              overlayRadius: 14,
+                                            ),
+                                            activeTrackColor:
+                                                const Color(0xFFFDBA74)
+                                                    .withOpacity(0.5),
+                                            inactiveTrackColor: Colors.white10,
+                                            thumbColor: const Color(0xFFFDBA74),
+                                            overlayColor: const Color(0xFFFDBA74)
+                                                .withOpacity(0.2),
+                                          ),
+                                          child: Slider(
+                                            value: offset,
+                                            min: -100,
+                                            max: 100,
+                                            divisions: 200,
+                                            onChanged: (val) => ref
+                                                .read(settingsProvider.notifier)
+                                                .updateMonitorOffset(
+                                                  monitor.deviceName,
+                                                  val,
+                                                ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                              loading: () => const SizedBox(
+                                height: 100,
+                                child:
+                                    Center(child: CircularProgressIndicator()),
+                              ),
+                              error: (e, _) => Text('Error: $e'),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                  loading: () => const CircularProgressIndicator(),
+                  error: (e, _) => Text('Error: $e'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

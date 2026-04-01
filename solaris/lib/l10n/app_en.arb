@@ -489,5 +489,10 @@
   "disclaimerTitle": "Disclaimer",
   "disclaimerText": "This software is provided 'as is', without warranty of any kind, express or implied. The author shall not be liable for any damage to monitors or other hardware resulting from the use of this software. Use at your own risk.",
   "viewLicenses": "View Licenses",
-  "close": "Close"
+  "close": "Close",
+  "multiMonitorOffsets": "Multi-monitor Offsets",
+  "multiMonitorOffsetsSubtitle": "Adjust individual monitor brightness relative to global level",
+  "brightnessOffset": "Brightness Offset",
+  "linkAndOffset": "Link & Offset",
+  "offsetFormula": "Final = Global + Offset"
 }

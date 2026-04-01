@@ -1701,6 +1701,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close'**
   String get close;
+
+  /// No description provided for @multiMonitorOffsets.
+  ///
+  /// In en, this message translates to:
+  /// **'Multi-monitor Offsets'**
+  String get multiMonitorOffsets;
+
+  /// No description provided for @multiMonitorOffsetsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust individual monitor brightness relative to global level'**
+  String get multiMonitorOffsetsSubtitle;
+
+  /// No description provided for @brightnessOffset.
+  ///
+  /// In en, this message translates to:
+  /// **'Brightness Offset'**
+  String get brightnessOffset;
+
+  /// No description provided for @linkAndOffset.
+  ///
+  /// In en, this message translates to:
+  /// **'Link & Offset'**
+  String get linkAndOffset;
+
+  /// No description provided for @offsetFormula.
+  ///
+  /// In en, this message translates to:
+  /// **'Final = Global + Offset'**
+  String get offsetFormula;
 }
 
 class _AppLocalizationsDelegate
