@@ -348,8 +348,6 @@ class _ResetButton extends ConsumerWidget {
     if (currentPoints.length != defaultPoints.length) return true;
 
     for (int i = 0; i < currentPoints.length; i++) {
-      // Comparison with a small epsilon for floating point safety if needed,
-      // but FlSpot values are usually exact from UI interaction.
       if ((currentPoints[i].x - defaultPoints[i].x).abs() > 0.01 ||
           (currentPoints[i].y - defaultPoints[i].y).abs() > 0.01) {
         return true;
@@ -688,6 +686,141 @@ class _SmartExclusionsCard extends ConsumerWidget {
   }
 }
 
+class _GlobalHotkeysCard extends ConsumerWidget {
+  const _GlobalHotkeysCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final settingsAsync = ref.watch(settingsProvider);
+    final selectedIds = ref.watch(selectedMonitorsProvider);
+    final monitorId = selectedIds.firstOrNull ?? 'all';
+
+    return settingsAsync.maybeWhen(
+      data: (map) {
+        final settings = map[monitorId] ?? map['all']!;
+
+        return GlassCard(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF60A5FA).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      LucideIcons.keyboard,
+                      color: Color(0xFF60A5FA),
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.globalHotkeys,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        l10n.globalHotkeysSubtitle,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.white54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              _HotkeyRow(
+                label: l10n.nextPreset,
+                hotKeyJson: settings.nextPresetHotKey,
+                onChanged: (newHotKey) {
+                  ref
+                      .read(settingsProvider.notifier)
+                      .updateHotkey('next_preset', newHotKey?.toJson());
+                },
+              ),
+              const SizedBox(height: 16),
+              const Divider(color: Colors.white10),
+              const SizedBox(height: 16),
+              _HotkeyRow(
+                label: l10n.prevPreset,
+                hotKeyJson: settings.prevPresetHotKey,
+                onChanged: (newHotKey) {
+                  ref
+                      .read(settingsProvider.notifier)
+                      .updateHotkey('prev_preset', newHotKey?.toJson());
+                },
+              ),
+              const SizedBox(height: 16),
+              const Divider(color: Colors.white10),
+              const SizedBox(height: 16),
+              _HotkeyRow(
+                label: l10n.increaseBrightness,
+                hotKeyJson: settings.brightnessUpHotKey,
+                trailing: _StepAdjustmentControl(
+                  value: settings.brightnessStepUp,
+                  onChanged: (val) => ref
+                      .read(settingsProvider.notifier)
+                      .updateBrightnessStep(true, val),
+                ),
+                onChanged: (newHotKey) {
+                  ref
+                      .read(settingsProvider.notifier)
+                      .updateHotkey('brightness_up', newHotKey?.toJson());
+                },
+              ),
+              const SizedBox(height: 16),
+              const Divider(color: Colors.white10),
+              const SizedBox(height: 16),
+              _HotkeyRow(
+                label: l10n.decreaseBrightness,
+                hotKeyJson: settings.brightnessDownHotKey,
+                trailing: _StepAdjustmentControl(
+                  value: settings.brightnessStepDown,
+                  onChanged: (val) => ref
+                      .read(settingsProvider.notifier)
+                      .updateBrightnessStep(false, val),
+                ),
+                onChanged: (newHotKey) {
+                  ref
+                      .read(settingsProvider.notifier)
+                      .updateHotkey('brightness_down', newHotKey?.toJson());
+                },
+              ),
+              const SizedBox(height: 16),
+              const Divider(color: Colors.white10),
+              const SizedBox(height: 16),
+              _HotkeyRow(
+                label: l10n.toggleAutoBrightness,
+                hotKeyJson: settings.autoBrightnessHotKey,
+                onChanged: (newHotKey) {
+                  ref
+                      .read(settingsProvider.notifier)
+                      .updateHotkey('auto_brightness_toggle', newHotKey?.toJson());
+                },
+              ),
+            ],
+          ),
+        );
+      },
+      orElse: () => const SizedBox.shrink(),
+    );
+  }
+}
+
 class _AppListManager extends StatefulWidget {
   final String title;
   final String subtitle;
@@ -823,129 +956,6 @@ class _AppListManagerState extends State<_AppListManager> {
           ),
         ],
       ],
-    );
-  }
-}
-
-class _GlobalHotkeysCard extends ConsumerWidget {
-  const _GlobalHotkeysCard();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
-    final settingsAsync = ref.watch(settingsProvider);
-    final selectedIds = ref.watch(selectedMonitorsProvider);
-    final monitorId = selectedIds.firstOrNull ?? 'all';
-
-    return settingsAsync.maybeWhen(
-      data: (map) {
-        final settings = map[monitorId] ?? map['all']!;
-
-        return GlassCard(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF60A5FA).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      LucideIcons.keyboard,
-                      color: Color(0xFF60A5FA),
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.globalHotkeys,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      Text(
-                        l10n.globalHotkeysSubtitle,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.white54,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              _HotkeyRow(
-                label: l10n.nextPreset,
-                hotKeyJson: settings.nextPresetHotKey,
-                onChanged: (newHotKey) {
-                  ref
-                      .read(settingsProvider.notifier)
-                      .updateHotkey('next_preset', newHotKey?.toJson());
-                },
-              ),
-              const SizedBox(height: 16),
-              const Divider(color: Colors.white10),
-              const SizedBox(height: 16),
-              _HotkeyRow(
-                label: l10n.prevPreset,
-                hotKeyJson: settings.prevPresetHotKey,
-                onChanged: (newHotKey) {
-                  ref
-                      .read(settingsProvider.notifier)
-                      .updateHotkey('prev_preset', newHotKey?.toJson());
-                },
-              ),
-              const SizedBox(height: 16),
-              const Divider(color: Colors.white10),
-              const SizedBox(height: 16),
-              _HotkeyRow(
-                label: l10n.increaseBrightness,
-                hotKeyJson: settings.brightnessUpHotKey,
-                trailing: _StepAdjustmentControl(
-                  value: settings.brightnessStepUp,
-                  onChanged: (val) => ref
-                      .read(settingsProvider.notifier)
-                      .updateBrightnessStep(true, val),
-                ),
-                onChanged: (newHotKey) {
-                  ref
-                      .read(settingsProvider.notifier)
-                      .updateHotkey('brightness_up', newHotKey?.toJson());
-                },
-              ),
-              const SizedBox(height: 16),
-              const Divider(color: Colors.white10),
-              const SizedBox(height: 16),
-              _HotkeyRow(
-                label: l10n.decreaseBrightness,
-                hotKeyJson: settings.brightnessDownHotKey,
-                trailing: _StepAdjustmentControl(
-                  value: settings.brightnessStepDown,
-                  onChanged: (val) => ref
-                      .read(settingsProvider.notifier)
-                      .updateBrightnessStep(false, val),
-                ),
-                onChanged: (newHotKey) {
-                  ref
-                      .read(settingsProvider.notifier)
-                      .updateHotkey('brightness_down', newHotKey?.toJson());
-                },
-              ),
-            ],
-          ),
-        );
-      },
-      orElse: () => const SizedBox(),
     );
   }
 }
@@ -1098,12 +1108,12 @@ class _HotkeyRow extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
                   if (trailing != null) ...[
                     const SizedBox(width: 8),
                     trailing!,
@@ -1307,8 +1317,6 @@ class _PremiumHotkeyRecorderState extends State<_PremiumHotkeyRecorder>
     return modifiers;
   }
 
-  // Helper removed as direct access to physicalKey/logicalKey is easier
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -1440,8 +1448,6 @@ class _PremiumHotkeyRecorderState extends State<_PremiumHotkeyRecorder>
     } else if (key == LogicalKeyboardKey.enter) {
       label = 'Enter';
     } else {
-      // For character keys (A-Z, 0-9), keyLabel is exactly what we want.
-      // We capitalize it for consistency.
       if (label.isEmpty) {
         label = key.debugName ?? '';
         if (label.startsWith('Key ')) label = label.substring(4);
@@ -1479,8 +1485,6 @@ class _PremiumHotkeyRecorderState extends State<_PremiumHotkeyRecorder>
     }
     return _Badge(label: label, icon: icon, isModifier: true);
   }
-
-  // consolidated into _buildKeyBadge
 }
 
 class _Badge extends StatelessWidget {

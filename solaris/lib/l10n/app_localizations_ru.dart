@@ -762,4 +762,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get save => 'Сохранить';
+
+  @override
+  String get toggleAutoBrightness => 'Вкл/Выкл автояркость';
 }

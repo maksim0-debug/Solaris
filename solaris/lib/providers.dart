@@ -1209,6 +1209,14 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
           clearBrightnessDownHotKey: hotKeyJson == null,
         ),
       );
+    } else if (field == 'auto_brightness_toggle') {
+      _updateSettings(
+        {'all'},
+        current.copyWith(
+          autoBrightnessHotKey: hotKeyJson,
+          clearAutoBrightnessHotKey: hotKeyJson == null,
+        ),
+      );
     }
   }
 }

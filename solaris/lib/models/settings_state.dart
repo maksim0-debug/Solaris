@@ -40,6 +40,7 @@ class SettingsState {
   final Map<String, dynamic>? prevPresetHotKey;
   final Map<String, dynamic>? brightnessUpHotKey;
   final Map<String, dynamic>? brightnessDownHotKey;
+  final Map<String, dynamic>? autoBrightnessHotKey;
   final double brightnessStepUp;
   final double brightnessStepDown;
 
@@ -96,6 +97,7 @@ class SettingsState {
     },
     this.brightnessUpHotKey,
     this.brightnessDownHotKey,
+    this.autoBrightnessHotKey,
     this.brightnessStepUp = 5.0,
     this.brightnessStepDown = 5.0,
   }) : curvesMap = curvesMap ?? PresetConstants.getAllDefaults();
@@ -144,6 +146,7 @@ class SettingsState {
     'prevPresetHotKey': prevPresetHotKey,
     'brightnessUpHotKey': brightnessUpHotKey,
     'brightnessDownHotKey': brightnessDownHotKey,
+    'autoBrightnessHotKey': autoBrightnessHotKey,
     'brightnessStepUp': brightnessStepUp,
     'brightnessStepDown': brightnessStepDown,
   };
@@ -281,6 +284,8 @@ class SettingsState {
       brightnessUpHotKey: json['brightnessUpHotKey'] as Map<String, dynamic>?,
       brightnessDownHotKey:
           json['brightnessDownHotKey'] as Map<String, dynamic>?,
+      autoBrightnessHotKey:
+          json['autoBrightnessHotKey'] as Map<String, dynamic>?,
       brightnessStepUp: (json['brightnessStepUp'] as num?)?.toDouble() ?? 5.0,
       brightnessStepDown:
           (json['brightnessStepDown'] as num?)?.toDouble() ?? 5.0,
@@ -326,12 +331,14 @@ class SettingsState {
     Map<String, dynamic>? prevPresetHotKey,
     Map<String, dynamic>? brightnessUpHotKey,
     Map<String, dynamic>? brightnessDownHotKey,
+    Map<String, dynamic>? autoBrightnessHotKey,
     double? brightnessStepUp,
     double? brightnessStepDown,
     bool clearNextPresetHotKey = false,
     bool clearPrevPresetHotKey = false,
     bool clearBrightnessUpHotKey = false,
     bool clearBrightnessDownHotKey = false,
+    bool clearAutoBrightnessHotKey = false,
   }) {
     return SettingsState(
       activePreset: activePreset ?? this.activePreset,
@@ -398,6 +405,9 @@ class SettingsState {
       brightnessDownHotKey: clearBrightnessDownHotKey
           ? null
           : (brightnessDownHotKey ?? this.brightnessDownHotKey),
+      autoBrightnessHotKey: clearAutoBrightnessHotKey
+          ? null
+          : (autoBrightnessHotKey ?? this.autoBrightnessHotKey),
       brightnessStepUp: brightnessStepUp ?? this.brightnessStepUp,
       brightnessStepDown: brightnessStepDown ?? this.brightnessStepDown,
     );

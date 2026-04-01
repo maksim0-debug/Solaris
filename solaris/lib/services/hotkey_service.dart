@@ -38,7 +38,8 @@ class HotkeyService {
       settings.nextPresetHotKey,
       settings.prevPresetHotKey,
       settings.brightnessUpHotKey,
-      settings.brightnessDownHotKey,
+      settings.brightnessDownHotKey?.toString(),
+      settings.autoBrightnessHotKey?.toString(),
       settings.brightnessStepUp,
       settings.brightnessStepDown,
     ].toString();
@@ -118,6 +119,22 @@ class HotkeyService {
           );
         } catch (e) {
           debugPrint('Error registering brightness down hotkey: $e');
+        }
+      }
+
+      // Auto-brightness Toggle
+      if (settings.autoBrightnessHotKey != null) {
+        try {
+          final hotKey = HotKey.fromJson(settings.autoBrightnessHotKey!);
+          await hotKeyManager.register(
+            hotKey,
+            keyDownHandler: (hotKey) {
+              debugPrint('Hotkey pressed: Auto-brightness Toggle (${hotKey.toJson()})');
+              ref.read(autoBrightnessAdjustmentProvider.notifier).toggle();
+            },
+          );
+        } catch (e) {
+          debugPrint('Error registering auto-brightness hotkey: $e');
         }
       }
 

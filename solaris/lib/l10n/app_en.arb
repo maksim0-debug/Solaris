@@ -340,5 +340,6 @@
   "pressToRecord": "Press keys to record...",
   "hotkeyRecording": "Recording...",
   "cancel": "Cancel",
-  "save": "Save"
+  "save": "Save",
+  "toggleAutoBrightness": "Toggle Auto-brightness"
 }

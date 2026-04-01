@@ -1464,6 +1464,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save'**
   String get save;
+
+  /// No description provided for @toggleAutoBrightness.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle Auto-brightness'**
+  String get toggleAutoBrightness;
 }
 
 class _AppLocalizationsDelegate

@@ -340,5 +340,6 @@
   "pressToRecord": "Нажмите клавиши...",
   "hotkeyRecording": "Запись...",
   "cancel": "Отмена",
-  "save": "Сохранить"
+  "save": "Сохранить",
+  "toggleAutoBrightness": "Вкл/Выкл автояркость"
 }
