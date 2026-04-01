@@ -145,8 +145,8 @@
   "high": "Высокая",
   "sunriseLabel": "Восход",
   "sunsetLabel": "Закат",
-  "engineVersion": "Движок Solaris v{version}",
-  "@engineVersion": {
+  "appVersion": "Версия Solaris {version}",
+  "@appVersion": {
     "placeholders": {
       "version": {
         "type": "String"
@@ -483,5 +483,11 @@
   },
   "gameModeHint": "напр. game.exe",
   "hoursAbbreviation": "ч",
-  "minutesAbbreviation": "м"
+  "minutesAbbreviation": "м",
+  "about": "О программе",
+  "legal": "Юридическая информация",
+  "disclaimerTitle": "Отказ от ответственности",
+  "disclaimerText": "Программное обеспечение предоставляется «как есть», без каких-либо гарантий. Автор не несет ответственности за любой ущерб мониторам или другому оборудованию, возникший в результате использования данного ПО. Используйте на свой страх и риск.",
+  "viewLicenses": "Лицензии",
+  "close": "Закрыть"
 }

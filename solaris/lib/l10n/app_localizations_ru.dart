@@ -277,8 +277,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sunsetLabel => 'Закат';
 
   @override
-  String engineVersion(String version) {
-    return 'Движок Solaris v$version';
+  String appVersion(String version) {
+    return 'Версия Solaris $version';
   }
 
   @override
@@ -898,4 +898,23 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get gameModeHint => 'напр. game.exe';
+
+  @override
+  String get about => 'О программе';
+
+  @override
+  String get legal => 'Юридическая информация';
+
+  @override
+  String get disclaimerTitle => 'Отказ от ответственности';
+
+  @override
+  String get disclaimerText =>
+      'Программное обеспечение предоставляется «как есть», без каких-либо гарантий. Автор не несет ответственности за любой ущерб мониторам или другому оборудованию, возникший в результате использования данного ПО. Используйте на свой страх и риск.';
+
+  @override
+  String get viewLicenses => 'Лицензии';
+
+  @override
+  String get close => 'Закрыть';
 }

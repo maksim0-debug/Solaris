@@ -566,11 +566,11 @@ abstract class AppLocalizations {
   /// **'Sunset'**
   String get sunsetLabel;
 
-  /// No description provided for @engineVersion.
+  /// No description provided for @appVersion.
   ///
   /// In en, this message translates to:
-  /// **'Solaris Engine v{version}'**
-  String engineVersion(String version);
+  /// **'Solaris Version {version}'**
+  String appVersion(String version);
 
   /// No description provided for @allMonitors.
   ///
@@ -1665,6 +1665,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'e.g. game.exe'**
   String get gameModeHint;
+
+  /// No description provided for @about.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get about;
+
+  /// No description provided for @legal.
+  ///
+  /// In en, this message translates to:
+  /// **'Legal Information'**
+  String get legal;
+
+  /// No description provided for @disclaimerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Disclaimer'**
+  String get disclaimerTitle;
+
+  /// No description provided for @disclaimerText.
+  ///
+  /// In en, this message translates to:
+  /// **'This software is provided \'as is\', without warranty of any kind, express or implied. The author shall not be liable for any damage to monitors or other hardware resulting from the use of this software. Use at your own risk.'**
+  String get disclaimerText;
+
+  /// No description provided for @viewLicenses.
+  ///
+  /// In en, this message translates to:
+  /// **'View Licenses'**
+  String get viewLicenses;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
 }
 
 class _AppLocalizationsDelegate

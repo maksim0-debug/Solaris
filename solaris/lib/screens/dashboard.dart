@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:solaris/l10n/app_localizations.dart';
@@ -20,6 +20,8 @@ import 'package:solaris/screens/sleep_screen.dart';
 import 'package:solaris/providers/lifecycle_provider.dart';
 import 'package:solaris/utils/status_helper.dart';
 import 'package:solaris/widgets/circadian_breakdown_tooltip.dart';
+import 'package:solaris/widgets/about_dialog.dart';
+import 'package:solaris/providers/app_info_provider.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -186,6 +188,15 @@ class _Sidebar extends ConsumerWidget {
             onTap: () => ref
                 .read(activeScreenProvider.notifier)
                 .setScreen(AppScreen.sleep),
+          ),
+          const Spacer(),
+          _SidebarItem(
+            icon: LucideIcons.shieldCheck,
+            label: l10n.legal,
+            onTap: () => showDialog<void>(
+              context: context,
+              builder: (context) => const SolarisAboutDialog(),
+            ),
           ),
         ],
       ),
@@ -1294,11 +1305,16 @@ class _Footer extends ConsumerWidget {
           ),
           Row(
             children: [
-              Text(
-                l10n.engineVersion('2.4'),
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(fontSize: 10),
+              Consumer(
+                builder: (context, ref, child) {
+                  final versionAsync = ref.watch(appVersionProvider);
+                  return Text(
+                    l10n.appVersion(versionAsync.value ?? '--'),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(fontSize: 10),
+                  );
+                },
               ),
               const SizedBox(width: 8),
               Container(

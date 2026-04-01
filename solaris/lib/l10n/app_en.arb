@@ -145,8 +145,8 @@
   "high": "High",
   "sunriseLabel": "Sunrise",
   "sunsetLabel": "Sunset",
-  "engineVersion": "Solaris Engine v{version}",
-  "@engineVersion": {
+  "appVersion": "Solaris Version {version}",
+  "@appVersion": {
     "placeholders": {
       "version": {
         "type": "String"
@@ -483,5 +483,11 @@
   },
   "gameModeHint": "e.g. game.exe",
   "hoursAbbreviation": "h",
-  "minutesAbbreviation": "m"
+  "minutesAbbreviation": "m",
+  "about": "About",
+  "legal": "Legal Information",
+  "disclaimerTitle": "Disclaimer",
+  "disclaimerText": "This software is provided 'as is', without warranty of any kind, express or implied. The author shall not be liable for any damage to monitors or other hardware resulting from the use of this software. Use at your own risk.",
+  "viewLicenses": "View Licenses",
+  "close": "Close"
 }

@@ -275,8 +275,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sunsetLabel => 'Sunset';
 
   @override
-  String engineVersion(String version) {
-    return 'Solaris Engine v$version';
+  String appVersion(String version) {
+    return 'Solaris Version $version';
   }
 
   @override
@@ -896,4 +896,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gameModeHint => 'e.g. game.exe';
+
+  @override
+  String get about => 'About';
+
+  @override
+  String get legal => 'Legal Information';
+
+  @override
+  String get disclaimerTitle => 'Disclaimer';
+
+  @override
+  String get disclaimerText =>
+      'This software is provided \'as is\', without warranty of any kind, express or implied. The author shall not be liable for any damage to monitors or other hardware resulting from the use of this software. Use at your own risk.';
+
+  @override
+  String get viewLicenses => 'View Licenses';
+
+  @override
+  String get close => 'Close';
 }
