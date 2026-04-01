@@ -118,8 +118,9 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                       Column(
                         children: [
                           Padding(
-                            padding: const EdgeInsets.all(24),
+                            padding: const EdgeInsets.fromLTRB(24, 24, 24, 5),
                             child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Expanded(
                                   child: Column(
@@ -134,7 +135,21 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
-                                      const SizedBox(height: 8),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        l10n.celestialMapSubtitle,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.white.withOpacity(0.4),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IntrinsicWidth(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
                                       settingsAsync.maybeWhen(
                                         data: (settings) => _AutoDetectToggle(
                                           isActive: !settings.useManual,
@@ -160,43 +175,44 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                         ),
                                         orElse: () => const SizedBox(),
                                       ),
-                                    ],
-                                  ),
-                                ),
-                                locationAsync.when(
-                                  data: (pos) {
-                                    final lat = pos.latitude;
-                                    final lon = pos.longitude;
-                                    final latDir = lat >= 0 ? l10n.north : l10n.south;
-                                    final lonDir = lon >= 0 ? l10n.east : l10n.west;
-                                    
-                                    final latDms = _toDMS(lat.abs());
-                                    final lonDms = _toDMS(lon.abs());
+                                      const SizedBox(height: 8),
+                                      locationAsync.when(
+                                        data: (pos) {
+                                          final lat = pos.latitude;
+                                          final lon = pos.longitude;
+                                          final latDir = lat >= 0 ? l10n.north : l10n.south;
+                                          final lonDir = lon >= 0 ? l10n.east : l10n.west;
+                                          
+                                          final latDms = _toDMS(lat.abs());
+                                          final lonDms = _toDMS(lon.abs());
 
-                                    return _InfoTile(
-                                      label: l10n.location,
-                                      value: l10n.dmsFormat(
-                                        latDms[0].toInt(),
-                                        latDms[1].toInt(),
-                                        latDms[2].toInt(),
-                                        latDir,
-                                        lonDms[0].toInt(),
-                                        lonDms[1].toInt(),
-                                        lonDms[2].toInt(),
-                                        lonDir,
+                                          return _InfoTile(
+                                            label: l10n.location,
+                                            value: l10n.dmsFormat(
+                                              latDms[0].toInt(),
+                                              latDms[1].toInt(),
+                                              latDms[2].toInt(),
+                                              latDir,
+                                              lonDms[0].toInt(),
+                                              lonDms[1].toInt(),
+                                              lonDms[2].toInt(),
+                                              lonDir,
+                                            ),
+                                            icon: LucideIcons.mapPin,
+                                          );
+                                        },
+                                        loading: () => _InfoTile(
+                                          label: l10n.location,
+                                          value: l10n.detectingLocation,
+                                          icon: LucideIcons.mapPin,
+                                        ),
+                                        error: (e, _) => _InfoTile(
+                                          label: l10n.location,
+                                          value: l10n.coordinatesUnavailable,
+                                          icon: LucideIcons.mapPin,
+                                        ),
                                       ),
-                                      icon: LucideIcons.mapPin,
-                                    );
-                                  },
-                                  loading: () => _InfoTile(
-                                    label: l10n.location,
-                                    value: l10n.detectingLocation,
-                                    icon: LucideIcons.mapPin,
-                                  ),
-                                  error: (e, _) => _InfoTile(
-                                    label: l10n.location,
-                                    value: l10n.coordinatesUnavailable,
-                                    icon: LucideIcons.mapPin,
+                                    ],
                                   ),
                                 ),
                               ],

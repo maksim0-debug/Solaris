@@ -1687,7 +1687,7 @@ abstract class AppLocalizations {
   /// No description provided for @disclaimerText.
   ///
   /// In en, this message translates to:
-  /// **'This software is provided \'as is\', without warranty of any kind, express or implied. The author shall not be liable for any damage to monitors or other hardware resulting from the use of this software. Use at your own risk.'**
+  /// **'DISCLAIMER: This software is provided \'AS IS\', WITHOUT WARRANTY OF ANY KIND, express or implied, including but not limited to the warranties of merchantability and fitness for a particular purpose. The developer shall not be liable for any hardware failures, firmware issues, or physical discomfort resulting from the use of this software. By using Solaris, you acknowledge that you do so at your own risk and assume full responsibility for equipment compatibility. In no event shall the author be liable for any special, incidental, or consequential damages.'**
   String get disclaimerText;
 
   /// No description provided for @viewLicenses.

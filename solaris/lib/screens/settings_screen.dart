@@ -105,9 +105,55 @@ class SettingsScreen extends ConsumerWidget {
                   onChanged: (val) =>
                       ref.read(settingsProvider.notifier).updateAutorun(val),
                 ),
-                const SizedBox(height: 16),
-                const Divider(color: Colors.white10),
-                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Weather Settings
+          GlassCard(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFDBA74).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        LucideIcons.cloudSun,
+                        color: Color(0xFFFDBA74),
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.weatherAdjustmentTitle,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          l10n.weatherAdjustmentSubtitle,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white.withOpacity(0.5),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
                 _SettingsRow(
                   title: l10n.weatherAdjustmentTitle,
                   subtitle: l10n.weatherAdjustmentSubtitle,

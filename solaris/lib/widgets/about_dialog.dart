@@ -71,7 +71,7 @@ class SolarisAboutDialog extends ConsumerWidget {
               // Disclaimer Section
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(20),
+                constraints: const BoxConstraints(maxHeight: 200),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.03),
                   borderRadius: BorderRadius.circular(16),
@@ -79,38 +79,41 @@ class SolarisAboutDialog extends ConsumerWidget {
                     color: Colors.white.withOpacity(0.05),
                   ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(
-                          LucideIcons.shieldAlert,
-                          color: Color(0xFFFDBA74),
-                          size: 18,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          l10n.disclaimerTitle.toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            LucideIcons.shieldAlert,
                             color: Color(0xFFFDBA74),
+                            size: 18,
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      l10n.disclaimerText,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.white70,
-                        height: 1.5,
+                          const SizedBox(width: 8),
+                          Text(
+                            l10n.disclaimerTitle.toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                              color: Color(0xFFFDBA74),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 12),
+                      Text(
+                        l10n.disclaimerText,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.white70,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 32),
