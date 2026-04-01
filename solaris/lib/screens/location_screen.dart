@@ -61,6 +61,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
     }
 
     return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -104,34 +105,131 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                 flex: 2,
                 child: GlassCard(
                   padding: EdgeInsets.zero,
-                  child: Column(
+                  child: Stack(
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                      Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Row(
                               children: [
-                                Text(
-                                  l10n.celestialMap,
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  l10n.celestialMapSubtitle,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.white38,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        l10n.location,
+                                        style: const TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      Text(
+                                        l10n.celestialMapSubtitle,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.white38,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
-                            settingsAsync.maybeWhen(
-                              data: (settings) => _AutoDetectToggle(
+                          ),
+                          Stack(
+                            children: [
+                              locationAsync.when(
+                                data: (pos) => AspectRatio(
+                                  aspectRatio: 16 / 9,
+                                  child: SolarMap(
+                                    latitude: pos.latitude,
+                                    longitude: pos.longitude,
+                                    zoom: 1.5,
+                                    onLongPress: (latLng) {
+                                      ref
+                                          .read(
+                                            locationSettingsProvider.notifier,
+                                          )
+                                          .setManualLocation(
+                                            latLng.latitude,
+                                            latLng.longitude,
+                                          );
+                                    },
+                                  ),
+                                ),
+                                loading:
+                                    () => const AspectRatio(
+                                      aspectRatio: 16 / 9,
+                                      child: Center(
+                                        child: CircularProgressIndicator(),
+                                      ),
+                                    ),
+                                error:
+                                    (e, __) => AspectRatio(
+                                      aspectRatio: 16 / 9,
+                                      child: Center(child: Text('Error: $e')),
+                                    ),
+                              ),
+                              // Overlay location info
+                              Positioned(
+                                bottom: 24,
+                                left: 24,
+                                child: locationAsync.maybeWhen(
+                                  data: (pos) => GlassCard(
+                                    blur: 10,
+                                    opacity: 0.1,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          l10n.currentAnchor,
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFFFDBA74),
+                                            letterSpacing: 1.2,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        const Text(
+                                          "Global Coordinates",
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Text(
+                                          "${pos.latitude.toStringAsFixed(4)}° N, ${pos.longitude.toStringAsFixed(4)}° W",
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.white54,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  orElse: () => const SizedBox(),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      Positioned(
+                        top: 20,
+                        right: 20,
+                        child: settingsAsync.maybeWhen(
+                          data:
+                              (settings) => _AutoDetectToggle(
                                 isActive: !settings.useManual,
                                 onToggle: (val) {
                                   if (val) {
@@ -153,78 +251,8 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                   }
                                 },
                               ),
-                              orElse: () => const SizedBox(),
-                            ),
-                          ],
+                          orElse: () => const SizedBox(),
                         ),
-                      ),
-                      Stack(
-                        children: [
-                          locationAsync.when(
-                            data: (pos) => AspectRatio(
-                              aspectRatio: 16 / 9,
-                              child: SolarMap(
-                                latitude: pos.latitude,
-                                longitude: pos.longitude,
-                                zoom:
-                                    1.5, // Minimum zoom to avoid repetition and see enough area
-                              ),
-                            ),
-                            loading: () => const AspectRatio(
-                              aspectRatio: 16 / 9,
-                              child: Center(child: CircularProgressIndicator()),
-                            ),
-                            error: (e, __) => AspectRatio(
-                              aspectRatio: 16 / 9,
-                              child: Center(child: Text('Error: $e')),
-                            ),
-                          ),
-                          // Overlay location info
-                          Positioned(
-                            bottom: 24,
-                            left: 24,
-                            child: locationAsync.maybeWhen(
-                              data: (pos) => GlassCard(
-                                blur: 10,
-                                opacity: 0.1,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      l10n.currentAnchor,
-                                      style: const TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFFFDBA74),
-                                        letterSpacing: 1.2,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    const Text(
-                                      "Global Coordinates", // Simplified for now as we don't have reverse geocoding here
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Text(
-                                      "${pos.latitude.toStringAsFixed(4)}° N, ${pos.longitude.toStringAsFixed(4)}° W",
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.white54,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              orElse: () => const SizedBox(),
-                            ),
-                          ),
-                        ],
                       ),
                     ],
                   ),
@@ -402,7 +430,9 @@ class _AutoDetectToggle extends StatelessWidget {
           ),
         ),
         child: Text(
-          l10n.autoDetect(isActive ? l10n.active.toUpperCase() : l10n.disabled.toUpperCase()),
+          l10n.autoDetect(
+            isActive ? l10n.active.toUpperCase() : l10n.disabled.toUpperCase(),
+          ),
           style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.bold,

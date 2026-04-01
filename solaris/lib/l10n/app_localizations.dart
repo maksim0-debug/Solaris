@@ -155,7 +155,7 @@ abstract class AppLocalizations {
   /// No description provided for @celestialMapSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Drag to anchor your primary observation point'**
+  /// **'Hold LMB on the map to set your location'**
   String get celestialMapSubtitle;
 
   /// No description provided for @autoDetect.

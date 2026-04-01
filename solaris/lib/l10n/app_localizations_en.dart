@@ -37,8 +37,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get celestialMap => 'Celestial Map';
 
   @override
-  String get celestialMapSubtitle =>
-      'Drag to anchor your primary observation point';
+  String get celestialMapSubtitle => 'Hold LMB on the map to set your location';
 
   @override
   String autoDetect(String status) {

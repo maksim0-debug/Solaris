@@ -24,12 +24,23 @@ class GlassCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: [
-          if (glowColor != null)
+          if (glowColor != null) ...[
+            BoxShadow(
+              color: glowColor!.withOpacity(0.1),
+              blurRadius: 32,
+              spreadRadius: 4,
+            ),
+            BoxShadow(
+              color: glowColor!.withOpacity(0.2),
+              blurRadius: 16,
+              spreadRadius: 1,
+            ),
             BoxShadow(
               color: glowColor!.withOpacity(0.3),
-              blurRadius: 32,
-              spreadRadius: 2,
+              blurRadius: 8,
+              spreadRadius: -2,
             ),
+          ],
         ],
       ),
       child: ClipRRect(

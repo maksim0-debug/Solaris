@@ -9,12 +9,14 @@ class SolarMap extends StatefulWidget {
   final double latitude;
   final double longitude;
   final double zoom;
+  final void Function(LatLng latLng)? onLongPress;
 
   const SolarMap({
     super.key,
     required this.latitude,
     required this.longitude,
     this.zoom = 1.0,
+    this.onLongPress,
   });
 
   @override
@@ -85,6 +87,9 @@ class _SolarMapState extends State<SolarMap> {
         interactionOptions: const InteractionOptions(
           flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
         ),
+        onLongPress: (tapPosition, latLng) {
+          widget.onLongPress?.call(latLng);
+        },
       ),
       children: [
         TileLayer(

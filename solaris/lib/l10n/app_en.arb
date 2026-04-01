@@ -11,7 +11,7 @@
   "locationAutomation": "Location & Automation",
   "locationSubtitle": "Sync your environment with your geographical position. Let the solar cycles dictate your workflow fluidity.",
   "celestialMap": "Celestial Map",
-  "celestialMapSubtitle": "Drag to anchor your primary observation point",
+  "celestialMapSubtitle": "Hold LMB on the map to set your location",
   "autoDetect": "AUTO-DETECT: {status}",
   "@autoDetect": {
     "placeholders": {

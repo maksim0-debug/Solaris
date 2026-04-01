@@ -38,7 +38,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get celestialMapSubtitle =>
-      'Перетащите, чтобы закрепить основную точку наблюдения';
+      'Удерживайте ЛКМ на карте, чтобы задать ваше местоположение';
 
   @override
   String autoDetect(String status) {
