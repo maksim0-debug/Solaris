@@ -5,12 +5,14 @@ class TemperatureService {
   final Map<String, int> _currentHardwareTemperature = {};
   final Map<String, Timer?> _adjustmentTimers = {};
 
-  final Map<String, int> _targetTemperatures = {};
+  final Map<String, int?> _targetTemperatures = {};
+
+  final Map<String, int> _lastTempSentTime = {};
 
   void stopTemperatureControlForDevice(String deviceName) {
     _adjustmentTimers[deviceName]?.cancel();
     _adjustmentTimers[deviceName] = null;
-    _targetTemperatures.remove(deviceName);
+    _targetTemperatures[deviceName] = null; // Signal loop to stop
   }
 
   Future<void> resetTemperatureNow({
@@ -25,6 +27,44 @@ class TemperatureService {
         _currentHardwareTemperature[monitor.deviceName] = 6500;
         updateTemperatureCallback(monitor.deviceName, 6500);
         await monitorService.resetMonitorTemperature(monitor.deviceName);
+      }
+    }
+  }
+
+  Future<void> setTemperatureInstant({
+    required String selection,
+    required double targetValue,
+    required List<MonitorInfo> monitors,
+    required MonitorService monitorService,
+    required void Function(String, int) updateTemperatureCallback,
+  }) async {
+    final target = targetValue.round();
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    for (final monitor in monitors) {
+      if (selection == 'all' || selection == monitor.deviceName) {
+        // Stop any active smooth transition
+        stopTemperatureControlForDevice(monitor.deviceName);
+
+        // Throttle check: Software gamma is fast, but 60Hz bridge calls can be overhead.
+        // 20ms (50Hz) is a good balance between responsiveness and efficiency.
+        final lastSent = _lastTempSentTime[monitor.deviceName] ?? 0;
+        if (now - lastSent < 20 && target != 6500) {
+          // Update internal state and UI immediately, but skip native call
+          _currentHardwareTemperature[monitor.deviceName] = target;
+          updateTemperatureCallback(monitor.deviceName, target);
+          continue;
+        }
+
+        _lastTempSentTime[monitor.deviceName] = now;
+        _currentHardwareTemperature[monitor.deviceName] = target;
+        updateTemperatureCallback(monitor.deviceName, target);
+
+        if (target == 6500) {
+          await monitorService.resetMonitorTemperature(monitor.deviceName);
+        } else {
+          await monitorService.setMonitorTemperature(monitor.deviceName, target);
+        }
       }
     }
   }
@@ -155,8 +195,11 @@ class TemperatureService {
         }
 
         // Wait between commands for monitor stability.
-        // 130ms for even better compatibility with slow DDC/CI controllers.
-        await Future<void>.delayed(const Duration(milliseconds: 130));
+        // For software temperature, 30ms is enough for visual smoothness.
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+
+        // Re-check target after delay
+        if (_targetTemperatures[deviceName] == null) break;
       }
     } finally {
       _isLoopRunning[deviceName] = false;

@@ -130,12 +130,12 @@ class CircadianService {
     }
 
     // Typical clamping for Kelvin
-    int finalTemp = baseTemperature.clamp(1000.0, 10000.0).toInt();
+    int finalTemp = baseTemperature.clamp(3300.0, 6500.0).toInt();
 
     // Apply Smart Offset (Wind-down, Sleep Debt)
     finalTemp += smartData.temperatureOffset;
 
-    return finalTemp.clamp(1000, 10000);
+    return finalTemp.clamp(3300, 6500);
   }
 
   double _calculateFromElevation(List<FlSpot> points, double currentElevation) {

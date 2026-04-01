@@ -293,14 +293,25 @@ class _Header extends ConsumerWidget {
         final monitors = ref.read(monitorListProvider).value ?? [];
 
         for (final id in selection) {
-          temperatureService.applyTemperatureSmoothly(
-            selection: id,
-            targetValue: next.toDouble(),
-            monitors: monitors,
-            monitorService: monitorService,
-            updateTemperatureCallback: (id, val) =>
-                monitorListNotifier.updateTemperature(id, val),
-          );
+          if (ref.read(autoTemperatureAdjustmentProvider)) {
+            temperatureService.applyTemperatureSmoothly(
+              selection: id,
+              targetValue: next.toDouble(),
+              monitors: monitors,
+              monitorService: monitorService,
+              updateTemperatureCallback: (id, val) =>
+                  monitorListNotifier.updateTemperature(id, val),
+            );
+          } else {
+            temperatureService.setTemperatureInstant(
+              selection: id,
+              targetValue: next.toDouble(),
+              monitors: monitors,
+              monitorService: monitorService,
+              updateTemperatureCallback: (id, val) =>
+                  monitorListNotifier.updateTemperature(id, val),
+            );
+          }
         }
       }
     });
@@ -334,14 +345,25 @@ class _Header extends ConsumerWidget {
           final targetTemp = ref.read(currentTemperatureProvider);
           debugPrint('Initial sync: applying temperature $targetTemp');
           for (final id in selection) {
-            temperatureService.applyTemperatureSmoothly(
-              selection: id,
-              targetValue: targetTemp.toDouble(),
-              monitors: monitors,
-              monitorService: monitorService,
-              updateTemperatureCallback: (id, val) =>
-                  monitorListNotifier.updateTemperature(id, val),
-            );
+            if (ref.read(autoTemperatureAdjustmentProvider)) {
+              temperatureService.applyTemperatureSmoothly(
+                selection: id,
+                targetValue: targetTemp.toDouble(),
+                monitors: monitors,
+                monitorService: monitorService,
+                updateTemperatureCallback: (id, val) =>
+                    monitorListNotifier.updateTemperature(id, val),
+              );
+            } else {
+              temperatureService.setTemperatureInstant(
+                selection: id,
+                targetValue: targetTemp.toDouble(),
+                monitors: monitors,
+                monitorService: monitorService,
+                updateTemperatureCallback: (id, val) =>
+                    monitorListNotifier.updateTemperature(id, val),
+              );
+            }
           }
         }
       }
@@ -371,14 +393,25 @@ class _Header extends ConsumerWidget {
         // Apply temperature
         if (ref.read(isColorTemperatureEnabledProvider)) {
           final targetTemp = ref.read(currentTemperatureProvider);
-          temperatureService.applyTemperatureSmoothly(
-            selection: 'all',
-            targetValue: targetTemp.toDouble(),
-            monitors: monitorValue,
-            monitorService: monitorService,
-            updateTemperatureCallback: (id, val) =>
-                monitorListNotifier.updateTemperature(id, val),
-          );
+          if (ref.read(autoTemperatureAdjustmentProvider)) {
+            temperatureService.applyTemperatureSmoothly(
+              selection: 'all',
+              targetValue: targetTemp.toDouble(),
+              monitors: monitorValue,
+              monitorService: monitorService,
+              updateTemperatureCallback: (id, val) =>
+                  monitorListNotifier.updateTemperature(id, val),
+            );
+          } else {
+            temperatureService.setTemperatureInstant(
+              selection: 'all',
+              targetValue: targetTemp.toDouble(),
+              monitors: monitorValue,
+              monitorService: monitorService,
+              updateTemperatureCallback: (id, val) =>
+                  monitorListNotifier.updateTemperature(id, val),
+            );
+          }
         }
       } else if (next.length == 1) {
         // If single monitor selected, sync UI to its current levels
@@ -581,8 +614,8 @@ class _DashboardView extends ConsumerWidget {
                       child: CustomPaint(
                         painter: TemperatureDialPainter(
                           progress:
-                              (6500.0 - currentTemperature.clamp(2000, 6500)) /
-                              (6500.0 - 2000.0),
+                              (6500.0 - currentTemperature.clamp(3300, 6500)) /
+                              (6500.0 - 3300.0),
                         ),
                       ),
                     ),

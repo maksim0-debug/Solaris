@@ -8,19 +8,19 @@ class TemperatureSlider extends StatelessWidget {
     super.key,
   });
 
-  final double value; // Real value: 2000.0 to 6500.0
+  final double value; // Real value: 3300.0 to 6500.0
   final ValueChanged<double> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    // Map value so 6500 is Left (0.0) and 2000 is Right (1.0)
-    final minTemp = 2000.0;
+    // Map value so 6500 is Left (0.0) and 3300 is Right (1.0)
+    final minTemp = 3300.0;
     final maxTemp = 6500.0;
 
     // clamp value just in case
     final clampedValue = value.clamp(minTemp, maxTemp);
 
-    // progress: 0.0 (Cold/Left/6500K) to 1.0 (Warm/Right/2000K)
+    // progress: 0.0 (Cold/Left/6500K) to 1.0 (Warm/Right/3300K)
     final double progress = (maxTemp - clampedValue) / (maxTemp - minTemp);
 
     return Column(
