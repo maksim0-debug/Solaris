@@ -5,6 +5,8 @@ import 'package:solaris/providers.dart';
 import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/models/settings_state.dart';
 
+
+
 class CircadianChartWidget extends ConsumerStatefulWidget {
   const CircadianChartWidget({super.key});
 
@@ -13,8 +15,30 @@ class CircadianChartWidget extends ConsumerStatefulWidget {
       _CircadianChartWidgetState();
 }
 
-class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
+class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
   int? _touchedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+    _pulseAnimation = CurvedAnimation(
+      parent: _pulseController,
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
 
   static const double _leftTitleWidth = 32.0;
   static const double _bottomTitleHeight = 22.0;
@@ -153,7 +177,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
           ),
         ),
       ),
-      // Пульсирующий маркер текущего положения солнца
+      // Анимированное свечение (Halo) вокруг маркера
       LineChartBarData(
         spots: [
           FlSpot(currentElevation.clamp(-20.0, 90.0), currentBrightnessY),
@@ -161,7 +185,36 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
         dotData: FlDotData(
           show: true,
           getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-            radius: adjustedBrightnessY != null ? 3 : 5,
+            radius: 10 + (_pulseAnimation.value * 8), // Пульсация от 10 до 18
+            color: dayColor.withOpacity(0.15 * (1.0 - _pulseAnimation.value * 0.5)),
+            strokeWidth: 0,
+          ),
+        ),
+      ),
+      LineChartBarData(
+        spots: [
+          FlSpot(currentElevation.clamp(-20.0, 90.0), currentBrightnessY),
+        ],
+        dotData: FlDotData(
+          show: true,
+          getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
+            radius: 7 + (_pulseAnimation.value * 4), // Пульсация от 7 до 11
+            color: dayColor.withOpacity(0.35 * (1.0 - _pulseAnimation.value * 0.3)),
+            strokeWidth: 0,
+          ),
+        ),
+      ),
+      // Основной маркер текущего положения солнца (больше на 25%)
+      LineChartBarData(
+        spots: [
+          FlSpot(currentElevation.clamp(-20.0, 90.0), currentBrightnessY),
+        ],
+        dotData: FlDotData(
+          show: true,
+          getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
+            radius: adjustedBrightnessY != null 
+                ? 3.75 // 3 * 1.25
+                : 6.25, // 5 * 1.25
             color: adjustedBrightnessY != null ? Colors.white54 : Colors.white,
             strokeWidth: 2,
             strokeColor: adjustedBrightnessY != null
@@ -173,7 +226,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
     ];
 
     if (adjustedBrightnessY != null) {
-      // Добавляем соединительную пунктирную линию
+      // Соединительная линия (только если есть погодная коррекция)
       lineBars.add(
         LineChartBarData(
           spots: [
@@ -187,7 +240,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
           dotData: FlDotData(show: false),
         ),
       );
-      // Добавляем актуальный маркер с учетом погоды
+      // Свечение для погодного маркера (анимированное)
       lineBars.add(
         LineChartBarData(
           spots: [
@@ -197,7 +250,24 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
             show: true,
             getDotPainter: (spot, percent, barData, index) =>
                 FlDotCirclePainter(
-                  radius: 5,
+                  radius: 8 + (_pulseAnimation.value * 4),
+                  color: Colors.lightBlueAccent.withOpacity(0.2 * (1.0 - _pulseAnimation.value * 0.4)),
+                  strokeWidth: 0,
+                ),
+          ),
+        ),
+      );
+      // Добавляем актуальный маркер с учетом погоды (больше на 25%)
+      lineBars.add(
+        LineChartBarData(
+          spots: [
+            FlSpot(currentElevation.clamp(-20.0, 90.0), adjustedBrightnessY),
+          ],
+          dotData: FlDotData(
+            show: true,
+            getDotPainter: (spot, percent, barData, index) =>
+                FlDotCirclePainter(
+                  radius: 6.25, // 5 * 1.25
                   color: Colors.white,
                   strokeWidth: 2,
                   strokeColor: Colors.lightBlueAccent,
@@ -215,28 +285,31 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
           right: _containerRight,
           bottom: _containerBottom,
         ),
-        child: LineChart(
-          LineChartData(
-            gridData: FlGridData(
-              show: true,
-              drawVerticalLine: true,
-              horizontalInterval: isTemp ? 1000 : 25,
-              verticalInterval: 10,
-              getDrawingHorizontalLine: (value) =>
-                  const FlLine(color: Colors.white10, strokeWidth: 1),
-              getDrawingVerticalLine: (value) {
-                // Выделяем линию горизонта (0 градусов)
-                if (value == 0) {
-                  return const FlLine(
-                    color: Color(0xFFFDBA74),
-                    strokeWidth: 1.5,
-                    dashArray: [5, 5],
-                  );
-                }
-                return const FlLine(color: Colors.white10, strokeWidth: 1);
-              },
-            ),
-            titlesData: FlTitlesData(
+        child: AnimatedBuilder(
+          animation: _pulseAnimation,
+          builder: (context, child) {
+            return LineChart(
+              LineChartData(
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: true,
+                  horizontalInterval: isTemp ? 1000 : 25,
+                  verticalInterval: 10,
+                  getDrawingHorizontalLine: (value) =>
+                      const FlLine(color: Colors.white10, strokeWidth: 1),
+                  getDrawingVerticalLine: (value) {
+                    // Выделяем линию горизонта (0 градусов)
+                    if (value == 0) {
+                      return const FlLine(
+                        color: Color(0xFFFDBA74),
+                        strokeWidth: 1.5,
+                        dashArray: [5, 5],
+                      );
+                    }
+                    return const FlLine(color: Colors.white10, strokeWidth: 1);
+                  },
+                ),
+                titlesData: FlTitlesData(
               show: true,
               rightTitles: const AxisTitles(
                 sideTitles: SideTitles(showTitles: false),
@@ -352,16 +425,14 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget> {
                       }
                     }
                   },
-              touchTooltipData: LineTouchTooltipData(
-                getTooltipColor: (spot) => Colors.transparent,
-                getTooltipItems: (touchedSpots) => [],
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
-    );
-  }
+    ),
+  );
+}
 
   Offset _pixelToChart(Offset localPosition, Size widgetSize) {
     final gridWidth = widgetSize.width - _leftTitleWidth - _containerRight;
