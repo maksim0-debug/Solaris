@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:solaris/l10n/app_localizations.dart';
+import 'package:solaris/models/preset_type.dart';
 import 'package:solaris/models/smart_circadian_data.dart';
 
 class CircadianBreakdownTooltip extends StatelessWidget {
@@ -30,7 +31,7 @@ class CircadianBreakdownTooltip extends StatelessWidget {
         children: [
           _buildRow(
             icon: LucideIcons.sun,
-            label: l10n.sunBase.toUpperCase(),
+            label: '${l10n.sunBase} [${_getPresetName(l10n, smartData)}]'.toUpperCase(),
             value: '${smartData.baseBrightness.round()}%',
             iconColor: const Color(0xFFFDBA74),
           ),
@@ -97,6 +98,27 @@ class CircadianBreakdownTooltip extends StatelessWidget {
       preferBelow: false,
       child: child,
     );
+  }
+
+  String _getPresetName(AppLocalizations l10n, SmartCircadianData smartData) {
+    if (smartData.activeUserPresetName != null) {
+      return smartData.activeUserPresetName!;
+    }
+    if (smartData.activeSystemPreset != null) {
+      switch (smartData.activeSystemPreset!) {
+        case PresetType.brightest:
+          return l10n.presetBrightest;
+        case PresetType.bright:
+          return l10n.presetBright;
+        case PresetType.dim:
+          return l10n.presetDim;
+        case PresetType.dimmest:
+          return l10n.presetDimmest;
+        case PresetType.custom:
+          return l10n.presetCustom;
+      }
+    }
+    return '';
   }
 
   InlineSpan _buildRow({

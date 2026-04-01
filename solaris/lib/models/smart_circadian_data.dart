@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:solaris/models/preset_type.dart';
 
 class SmartCircadianData extends Equatable {
   final double brightnessMultiplier;
@@ -25,6 +26,10 @@ class SmartCircadianData extends Equatable {
   final double sleepDebtAbsoluteImpact;
   final double weatherAbsoluteImpact;
 
+  // Active Preset Information
+  final PresetType? activeSystemPreset;
+  final String? activeUserPresetName;
+
   const SmartCircadianData({
     this.brightnessMultiplier = 1.0,
     this.temperatureOffset = 0,
@@ -47,6 +52,8 @@ class SmartCircadianData extends Equatable {
     this.sleepPressureAbsoluteImpact = 0.0,
     this.sleepDebtAbsoluteImpact = 0.0,
     this.weatherAbsoluteImpact = 0.0,
+    this.activeSystemPreset,
+    this.activeUserPresetName,
   });
 
   const SmartCircadianData.neutral()
@@ -70,7 +77,9 @@ class SmartCircadianData extends Equatable {
       windDownAbsoluteImpact = 0.0,
       sleepPressureAbsoluteImpact = 0.0,
       sleepDebtAbsoluteImpact = 0.0,
-      weatherAbsoluteImpact = 0.0;
+      weatherAbsoluteImpact = 0.0,
+      activeSystemPreset = null,
+      activeUserPresetName = null;
 
   @override
   List<Object?> get props => [
@@ -95,6 +104,8 @@ class SmartCircadianData extends Equatable {
     sleepDebtAbsoluteImpact,
     weatherAbsoluteImpact,
     weatherCode,
+    activeSystemPreset,
+    activeUserPresetName,
   ];
 
   SmartCircadianData copyWith({
@@ -119,6 +130,8 @@ class SmartCircadianData extends Equatable {
     double? sleepDebtAbsoluteImpact,
     double? weatherAbsoluteImpact,
     int? weatherCode,
+    PresetType? activeSystemPreset,
+    String? activeUserPresetName,
   }) {
     return SmartCircadianData(
       brightnessMultiplier: brightnessMultiplier ?? this.brightnessMultiplier,
@@ -147,9 +160,10 @@ class SmartCircadianData extends Equatable {
           sleepPressureAbsoluteImpact ?? this.sleepPressureAbsoluteImpact,
       sleepDebtAbsoluteImpact:
           sleepDebtAbsoluteImpact ?? this.sleepDebtAbsoluteImpact,
-      weatherAbsoluteImpact:
-          weatherAbsoluteImpact ?? this.weatherAbsoluteImpact,
+      weatherAbsoluteImpact: weatherAbsoluteImpact ?? this.weatherAbsoluteImpact,
       weatherCode: weatherCode ?? this.weatherCode,
+      activeSystemPreset: activeSystemPreset ?? this.activeSystemPreset,
+      activeUserPresetName: activeUserPresetName ?? this.activeUserPresetName,
     );
   }
 }

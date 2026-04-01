@@ -158,6 +158,22 @@ final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
         smartData: smartData,
       );
 
+      // Resolve Active Preset Name
+      String? activeUserPresetName;
+      PresetType? activeSystemPreset;
+
+      if (monitorSettings.activeUserPresetId != null) {
+        try {
+          activeUserPresetName = monitorSettings.userPresets
+              .firstWhere((p) => p.id == monitorSettings.activeUserPresetId)
+              .name;
+        } catch (_) {
+          activeSystemPreset = monitorSettings.activePreset;
+        }
+      } else {
+        activeSystemPreset = monitorSettings.activePreset;
+      }
+
       return smartData.copyWith(
         baseBrightness: result.baseBrightness,
         windDownAbsoluteImpact: result.windDownImpact,
@@ -166,6 +182,8 @@ final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
         weatherAbsoluteImpact: result.weatherImpact,
         timeShiftBrightnessImpact: timeShiftImpact,
         weatherCode: weatherAsync.value?.weatherCode,
+        activeSystemPreset: activeSystemPreset,
+        activeUserPresetName: activeUserPresetName,
       );
     },
     orElse: () => const SmartCircadianData.neutral(),
