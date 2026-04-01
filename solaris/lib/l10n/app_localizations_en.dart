@@ -465,7 +465,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get testSync => 'Test Sync';
 
   @override
-  String get sleep => 'Sleep';
+  String get sleep => 'Sleep (Beta)';
+
+  @override
+  String get circadianRegulationBetaNote =>
+      'This feature is currently in beta testing. Stable performance is not guaranteed.';
 
   @override
   String get sleepSubtitle => 'Analyze your sleep regimes and sync data';
@@ -534,7 +538,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Dynamic correction based on Google Fit sleep data (wind-down, bio-morning, sleep debt)';
 
   @override
-  String get circadianRegulation => 'Circadian Regulation';
+  String get circadianRegulation => 'Circadian Regulation (Beta)';
 
   @override
   String get featureWindDown => 'Wind-down Phase';

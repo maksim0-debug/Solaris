@@ -925,8 +925,14 @@ abstract class AppLocalizations {
   /// No description provided for @sleep.
   ///
   /// In en, this message translates to:
-  /// **'Sleep'**
+  /// **'Sleep (Beta)'**
   String get sleep;
+
+  /// No description provided for @circadianRegulationBetaNote.
+  ///
+  /// In en, this message translates to:
+  /// **'This feature is currently in beta testing. Stable performance is not guaranteed.'**
+  String get circadianRegulationBetaNote;
 
   /// No description provided for @sleepSubtitle.
   ///
@@ -1057,7 +1063,7 @@ abstract class AppLocalizations {
   /// No description provided for @circadianRegulation.
   ///
   /// In en, this message translates to:
-  /// **'Circadian Regulation'**
+  /// **'Circadian Regulation (Beta)'**
   String get circadianRegulation;
 
   /// No description provided for @featureWindDown.

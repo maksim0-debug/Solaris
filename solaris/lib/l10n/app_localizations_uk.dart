@@ -465,7 +465,11 @@ class AppLocalizationsUk extends AppLocalizations {
   String get testSync => 'Перевірити синхронізацію';
 
   @override
-  String get sleep => 'Сон';
+  String get sleep => 'Сон (Beta)';
+
+  @override
+  String get circadianRegulationBetaNote =>
+      'Даний функціонал перебуває на стадії бета-тестування. Стабільна робота не гарантується.';
 
   @override
   String get sleepSubtitle => 'Аналізуйте режими сну та синхронізуйте дані';
@@ -534,7 +538,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Динамічна корекція на основі даних про сон з Google Fit (фаза засинання, біо-ранок, недосип)';
 
   @override
-  String get circadianRegulation => 'Циркадна регуляція';
+  String get circadianRegulation => 'Циркадна регуляція (Beta)';
 
   @override
   String get featureWindDown => 'Фаза «Підготовки до сну» (Wind-down)';

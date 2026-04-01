@@ -381,6 +381,14 @@ class _CircadianRegulationSection extends ConsumerWidget {
             ),
           ],
         ),
+        const SizedBox(height: 4),
+        Text(
+          l10n.circadianRegulationBetaNote,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.white.withOpacity(0.4),
+          ),
+        ),
         const SizedBox(height: 16),
         GlassCard(
           padding: const EdgeInsets.all(24),
