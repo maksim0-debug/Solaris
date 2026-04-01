@@ -384,13 +384,22 @@ class _PresetSelectorState extends ConsumerState<_PresetSelector> {
   }
 
   bool _isBrightnessModified(SettingsState settings) {
-    // If we're on a custom preset, always allow "Save as New" to support duplication/branching.
-    if (settings.activeUserPresetId != null) return true;
-    
     final currentPoints = settings.curvePoints;
-    final defaultPoints = PresetConstants.getDefaultPoints(
-      settings.activePreset,
-    );
+    List<FlSpot> defaultPoints;
+
+    if (settings.activeUserPresetId != null) {
+      try {
+        final up = settings.userPresets.firstWhere(
+          (p) => p.id == settings.activeUserPresetId,
+        );
+        defaultPoints = up.initialPoints;
+      } catch (_) {
+        return false;
+      }
+    } else {
+      defaultPoints = PresetConstants.getDefaultPoints(settings.activePreset);
+    }
+
     if (currentPoints.length != defaultPoints.length) return true;
     for (int i = 0; i < currentPoints.length; i++) {
       if ((currentPoints[i].x - defaultPoints[i].x).abs() > 0.01 ||
@@ -402,13 +411,24 @@ class _PresetSelectorState extends ConsumerState<_PresetSelector> {
   }
 
   bool _isTempModified(TemperatureState settings) {
-    // If we're on a custom preset, always allow "Save as New" to support duplication/branching.
-    if (settings.activeUserPresetId != null) return true;
-
     final currentPoints = settings.curvePoints;
-    final defaultPoints = PresetConstants.getTemperatureDefaultPoints(
-      settings.activePreset,
-    );
+    List<FlSpot> defaultPoints;
+
+    if (settings.activeUserPresetId != null) {
+      try {
+        final up = settings.userPresets.firstWhere(
+          (p) => p.id == settings.activeUserPresetId,
+        );
+        defaultPoints = up.initialPoints;
+      } catch (_) {
+        return false;
+      }
+    } else {
+      defaultPoints = PresetConstants.getTemperatureDefaultPoints(
+        settings.activePreset,
+      );
+    }
+
     if (currentPoints.length != defaultPoints.length) return true;
     for (int i = 0; i < currentPoints.length; i++) {
       if ((currentPoints[i].x - defaultPoints[i].x).abs() > 0.01 ||
@@ -665,12 +685,11 @@ class _SavePresetButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!isModified) return const SizedBox.shrink();
-
     return IconButton(
       icon: const Icon(LucideIcons.plusCircle),
-      onPressed: onPressed,
+      onPressed: isModified ? onPressed : null,
       color: const Color(0xFFFDBA74),
+      disabledColor: Colors.white10,
       tooltip: AppLocalizations.of(context)!.savePreset,
     );
   }
