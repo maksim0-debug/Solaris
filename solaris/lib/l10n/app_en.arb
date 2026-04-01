@@ -329,6 +329,7 @@
   "language": "Language",
   "english": "English",
   "russian": "Russian",
+  "ukrainian": "Ukrainian",
   "globalHotkeys": "Global Hotkeys",
   "globalHotkeysSubtitle": "Control presets and brightness from any application",
   "nextPreset": "Next Preset",

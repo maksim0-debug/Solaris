@@ -727,6 +727,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get russian => 'Русский';
 
   @override
+  String get ukrainian => 'Украинский';
+
+  @override
   String get globalHotkeys => 'Глобальные горячие клавиши';
 
   @override

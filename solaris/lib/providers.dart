@@ -603,6 +603,9 @@ class LocaleNotifier extends Notifier<Locale> {
       if (systemLocale.languageCode.startsWith('ru')) {
         return const Locale('ru');
       }
+      if (systemLocale.languageCode.startsWith('uk')) {
+        return const Locale('uk');
+      }
     } catch (e) {
       debugPrint('Error detecting system locale: $e');
     }
@@ -612,7 +615,7 @@ class LocaleNotifier extends Notifier<Locale> {
   }
 
   void setLocale(String languageCode) {
-    if (languageCode != 'en' && languageCode != 'ru') return;
+    if (languageCode != 'en' && languageCode != 'ru' && languageCode != 'uk') return;
     state = Locale(languageCode);
     ref.read(sharedPreferencesProvider)?.setString(_localeKey, languageCode);
   }

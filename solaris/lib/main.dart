@@ -131,7 +131,7 @@ class SolarisApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [Locale('en'), Locale('ru')],
+      supportedLocales: const [Locale('en'), Locale('ru'), Locale('uk')],
       locale: locale,
       home: const DashboardScreen(),
     );

@@ -1,0 +1,503 @@
+{
+  "appTitle": "Solaris",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+  "celestialControl": "НЕБЕСНИЙ КОНТРОЛЬ",
+  "dashboard": "Панель керування",
+  "schedule": "Графік",
+  "settings": "Налаштування",
+  "location": "Місцезнаходження",
+  "locationAutomation": "Місцезнаходження та автоматизація",
+  "locationSubtitle": "Синхронізуйте ваше середовище з географічним положенням. Нехай сонячні цикли диктують плавність вашого робочого процесу.",
+  "celestialMap": "Небесна карта",
+  "celestialMapSubtitle": "Утримуйте ЛКМ на карті, щоб задати ваше місцезнаходження",
+  "autoDetect": "АВТОМАТИЧНЕ ВИЗНАЧЕННЯ: {status}",
+  "@autoDetect": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "manualCoordinateEntry": "Ручне введення координат",
+  "latitude": "ШИРОТА",
+  "longitude": "ДОВГОТА",
+  "updatePosition": "Оновити позицію",
+  "precisionGps": "Прецизійний GPS",
+  "gpsSubtitle": "Високоточне визначення місцезнаходження для інтеграції з обладнанням відстеження сонця.",
+  "statusConnected": "Статус: Підключено",
+  "currentAnchor": "ПОТОЧНИЙ ЯКІР",
+  "reset": "Скинути",
+  "localTime": "МІСЦЕВИЙ ЧАС",
+  "goldenHour": "Золота година",
+  "goldenHourMorning": "Золота година (ранок)",
+  "goldenHourEvening": "Золота година (вечір)",
+  "eventZenithStart": "Початок зеніту",
+  "eventZenithEnd": "Кінець зеніту",
+  "eventSolarNoon": "Сонячний полудень",
+  "eventGoldenHourEnd": "Кінець золотої години",
+  "calculating": "РОЗРАХУНОК...",
+  "comingIn": "ЧЕРЕЗ {time}",
+  "@comingIn": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "goldenHourActive": "ЗОЛОТА ГОДИНА АКТИВНА",
+  "remaining": "ЗАЛИШИЛОСЯ {time}",
+  "@remaining": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "night": "НІЧ",
+  "finished": "ЗАВЕРШЕНО",
+  "brightness": "ЯСКРАВІСТЬ",
+  "remainingLower": "Залишилося {time}",
+  "@remainingLower": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "remainingUntilSleep": "До сну: {time}",
+  "@remainingUntilSleep": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "remainingUntilWakeUp": "До пробудження",
+  "@remainingUntilWakeUp": {
+    "description": "Text shown during the rest period when the timer is no longer needed"
+  },
+  "circadianImpactWithStatus": "{feature} {impact}% яскравість ({status})",
+  "@circadianImpactWithStatus": {
+    "placeholders": {
+      "feature": {
+        "type": "String"
+      },
+      "impact": {
+        "type": "int"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "activeLower": "Активно {time}",
+  "@activeLower": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "sunSet": "Сонце зайшло",
+  "calculatingLower": "Розрахунок...",
+  "transitionNotice": "Система перейде на теплий спектр 2700K приблизно через {hours} год.",
+  "@transitionNotice": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "goldenHourNotice": "Зараз Золота година. Спектр зміщено до теплого 2700K.",
+  "solarCycleEnded": "Сонячний цикл на сьогодні завершено. Система в ручному нічному режимі.",
+  "updatingSolarData": "Оновлення даних про сонце на основі вашого місцезнаходження...",
+  "autoAdapt": "Автопідстроювання",
+  "autoBrightness": "Автояскравість",
+  "autoTemperature": "Автотемпература",
+  "active": "Активно",
+  "nightShift": "Нічний режим",
+  "disabled": "Вимкнено",
+  "statusAdaptive": "Адаптивний контроль",
+  "statusManual": "Ручний режим",
+  "phaseDeepNight": "ГЛИБОКА НІЧ",
+  "phaseDawn": "СВІТАНОК",
+  "phaseMorningSpike": "РАНКОВИЙ ПІК",
+  "phaseZenith": "ЗЕНІТ",
+  "phaseGoldenHour": "ЗОЛОТА ГОДИНА",
+  "phaseTwilight": "СУТІНКИ",
+  "descDeepNightAuto": "Нічний цикл. Адаптивний контроль підтримує мінімальну яскравість.",
+  "descDeepNightManual": "Глибока ніч. Система в ручному режимі очікування світанку.",
+  "descDawnAuto": "Цивільні сутінки. Плавний перехід до денного режиму.",
+  "descDawnManual": "Світанок. Система в ручному режимі очікування сонця.",
+  "descMorningSpikeAuto": "Передсвітанковий пік. Яскравість плавно зростає до сходу сонця.",
+  "descMorningSpikeManual": "Передсвітанковий підйом. Встановлено фіксовану яскравість.",
+  "descZenithAuto": "Зеніт. Максимальна світлова ефективність за розкладом.",
+  "descZenithManual": "Повний день. Ви використовуєте ручні налаштування яскравості.",
+  "descGoldenHourAuto": "Золота година. Спектр зміщено до теплого 2700K для комфорту.",
+  "descGoldenHourManual": "Золота година. Колірна корекція призупинена.",
+  "descTwilightAuto": "Цивільні сутінки. Плавний перехід до нічного режиму.",
+  "descTwilightManual": "Сутінки. Система в ручному режимі зниженої яскравості.",
+  "panelTemperature": "Температура панелі",
+  "efficiencyRate": "Ефективність",
+  "atmosphericClarity": "Ясність атмосфери",
+  "high": "Висока",
+  "sunriseLabel": "Схід сонця",
+  "sunsetLabel": "Захід сонця",
+  "appVersion": "Версія Solaris {version}",
+  "@appVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "allMonitors": "Усі монітори",
+  "luminosityProfile": "Профіль освітленості",
+  "sunPosition": "Положення сонця",
+  "liveLocation": "ТОЧНЕ МІСЦЕ",
+  "solarTelemetry": "Сонячна телеметрія",
+  "civilTwilight": "Цивільні сутінки",
+  "astronomicalNight": "Астрономічна ніч",
+  "surfaceTemp": "Темп. поверхні",
+  "spectralIntensity": "Спектральна інтенсивність",
+  "uvIndex": "Індекс УФ",
+  "extreme": "Екстремальний",
+  "azimuth": "АЗИМУТ",
+  "elevation": "ВИСОТА",
+  "zenith": "ЗЕНІТ",
+  "constant": "Постійно",
+  "humidity": "Вологість",
+  "airTemp": "Темп. повітря",
+  "settingsSubtitle": "Налаштуйте параметри вашого циркадного ритму",
+  "circadianLimits": "Циркадні межі",
+  "circadianLimitsSubtitle": "Визначте межі для автояскравості",
+  "minBrightness": "Мінімальна яскравість",
+  "minBrightnessSubtitle": "Найнижчий рівень яскравості вночі",
+  "maxBrightness": "Максимальна яскравість",
+  "maxBrightnessSubtitle": "Пікова яскравість, що досягається в зеніті",
+  "transBrightness": "Яскравість переходу",
+  "transBrightnessSubtitle": "Цільовий рівень під час золотої години та цивільних сутінків",
+  "realtimeApplyNotice": "Зміни застосовуються в реальному часі. Використовуйте панель керування для перемикання між ручним та автоматичним регулюванням.",
+  "autorun": "Автозапуск при старті",
+  "autorunSubtitle": "Автоматично запускати програму при вході у Windows",
+  "weatherAdjustmentTitle": "Вплив погоди",
+  "weatherAdjustmentSubtitle": "Знижує яскравість у хмарну або дощову погоду",
+  "weatherBrightnessReduction": "Погода: зниження яскравості на {percent}%",
+  "@weatherBrightnessReduction": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "selectMonitor": "Оберіть монітор",
+  "presetBrightest": "Найяскравіший",
+  "presetBright": "Яскравий",
+  "presetDim": "Тьмяний",
+  "presetDimmest": "Найтемніший",
+  "presetCustom": "Свій",
+  "tempCoolest": "Найхолодніший",
+  "tempCool": "Холодний",
+  "tempWarm": "Теплий",
+  "tempWarmest": "Найтепліший",
+  "tempCustom": "Свій",
+  "blueLightFilter": "Адаптивна колірна температура",
+  "blueLightFilterSubtitle": "Автоматично робить кольори теплішими ввечері для зниження навантаження на очі",
+  "chartModeBrightness": "Яскравість",
+  "chartModeTemperature": "Температура",
+  "disabledInSettings": "Вимкнено в налаштуваннях",
+  "enable": "Увімкнути",
+  "sleepData": "Дані про сон",
+  "sleepDataSubtitle": "Синхронізація з Google Fit для відстеження циклів відпочинку",
+  "connectGoogleFit": "Підключити Google Fit",
+  "disconnectGoogleFit": "Відключити",
+  "googleFitConnected": "Підключено до Google Fit",
+  "googleFitDisconnected": "Не підключено",
+  "lastSyncSuccess": "Остання синхронізація: успішно",
+  "lastSyncFailed": "Остання синхронізація: помилка",
+  "testSync": "Перевірити синхронізацію",
+  "sleep": "Сон",
+  "sleepSubtitle": "Аналізуйте режими сну та синхронізуйте дані",
+  "googleFitSync": "Синхронізація Google Fit",
+  "connectedStatusSmall": "Підключено",
+  "lastFetchLabel": "Останнє оновлення:",
+  "never": "Ніколи",
+  "signOut": "Вийти",
+  "syncNow": "Синхронізувати",
+  "syncing": "Синхронізація...",
+  "verifyingConnection": "Перевірка підключення...",
+  "connectionError": "Помилка підключення",
+  "hoursAbbreviation": "год",
+  "minutesAbbreviation": "хв",
+  "sleepRegime": "Режим сну",
+  "scatter": "Розсіювання",
+  "daysCount": "{count} дн.",
+  "@daysCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sleepInDate": "Дата засинання",
+  "detectedRegimes": "Виявлені режими",
+  "currentRegime": "Поточний режим",
+  "outdated": "Застаріло",
+  "smartCircadianTitle": "Розумне циркадне підстроювання",
+  "smartCircadianSubtitle": "Динамічна корекція на основі даних про сон з Google Fit (фаза засинання, біо-ранок, недосип)",
+  "circadianRegulation": "Циркадна регуляція",
+  "featureWindDown": "Фаза «Підготовки до сну» (Wind-down)",
+  "featureWindDownSubtitle": "Плавне зниження яскравості та потепління екрана перед сном",
+  "featureTimeShift": "Біо-ранок (Динамічний якір)",
+  "featureTimeShiftSubtitle": "Зміщення графіка під реальний час пробудження",
+  "featureSleepPressure": "Тиск сну (Час бадьорості)",
+  "featureSleepPressureSubtitle": "Плавне димування при тривалій відсутності сну",
+  "featureSleepDebt": "Компенсація недосипу",
+  "featureSleepDebtSubtitle": "Зниження навантаження при короткому сні (< 6.5год)",
+  "influenceBrightness": "Яскравість",
+  "influenceTemperature": "Температура",
+  "featureWindDownInfo": "Готує організм до сну, поступово зменшуючи кількість синього світла та загальну освітленість. Це стимулює вироблення мелатоніну та полегшує засинання.",
+  "featureTimeShiftInfo": "Адаптує циркадний графік під ваш реальний час пробудження. Якщо ви прокинулися раніше або пізніше звичайного, система плавно змістить піки яскравості та температури, щоб синхронізуватися з вашим поточним станом.",
+  "featureSleepPressureInfo": "Враховує час, проведений без сну. Якщо ви бадьорствуєте занадто довго, система починає плавно знижувати яскравість, щоб зменшити когнітивне навантаження та подати організму сигнал про необхідність відпочинку.",
+  "featureSleepDebtInfo": "Активується, якщо ваш останній сон був коротшим за 6.5 годин. Протягом дня система підтримуватиме комфортніший, приглушений режим освітлення, щоб знизити навантаження на втомлені очі та нервову систему.",
+  "intensity": "Інтенсивність",
+  "strength": "Сила",
+  "brightnessIntensity": "Інтенсивність (яскравість)",
+  "temperatureIntensity": "Інтенсивність (температура)",
+  "shiftStrength": "Сила зміщення",
+  "circadianImpact": "{feature} {impact}% яскравість",
+  "featureWindDownShort": "Підготовка до сну",
+  "featureTimeShiftShort": "Біо-ранок",
+  "featureSleepPressureShort": "Тиск сну",
+  "featureSleepDebtShort": "Недосип",
+  "circadianImpactWithTime": "{feature} {impact}% яскравість ({time} {unit})",
+  "@circadianImpactWithTime": {
+    "placeholders": {
+      "feature": {
+        "type": "String"
+      },
+      "impact": {
+        "type": "int"
+      },
+      "time": {
+        "type": "int"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "@circadianImpact": {
+    "placeholders": {
+      "feature": {
+        "type": "String"
+      },
+      "impact": {
+        "type": "int"
+      }
+    }
+  },
+  "windDownDuration": "Тривалість підготовки до сну",
+  "timeShiftDuration": "Час адаптації біо-ранку",
+  "sleepPressureLimit": "Поріг бадьорості",
+  "sleepDebtThreshold": "Норма сну (поріг недосипу)",
+  "smartExclusions": "Розумні виключення",
+  "smartExclusionsSubtitle": "Автоматичне блокування яскравості для ігор",
+  "enableGameMode": "Увімкнути ігровий режим",
+  "enableGameModeSubtitle": "Блокувати яскравість при виявленні гри",
+  "lockedBrightness": "Заблокована яскравість",
+  "whitelist": "Білий список",
+  "whitelistSubtitle": "Програми, які завжди вмикають ігровий режим",
+  "blacklist": "Чорний список",
+  "blacklistSubtitle": "Ігнорувати, навіть якщо на весь екран",
+  "sunBase": "База (Сонце)",
+  "finalValue": "Підсумок",
+  "brightnessReceipt": "Чек яскравості",
+  "sleepAnalysisSettings": "Налаштування аналізу сну",
+  "toleranceWindow": "Вікно допустимих відхилень",
+  "toleranceWindowDesc": "Наскільки може відхилятися час відходу до сну від «опорного» значення, перш ніж буде зарахована аномалія.",
+  "maxAnomalies": "Максимум аномалій",
+  "maxAnomaliesDesc": "Кількість послідовних «аномальних» днів, що допускається алгоритмом до розриву поточного режиму.",
+  "minRegimeLength": "Мінімальна кількість днів",
+  "minRegimeLengthDesc": "Мінімальна тривалість режиму, щоб він не був об’єднаний із сусіднім.",
+  "anchorSize": "Розмір опорного вікна",
+  "anchorSizeDesc": "Кількість перших днів для формування якірного середнього значення.",
+  "maxSpread": "Максимальний розкид режиму",
+  "maxSpreadDesc": "Максимальна різниця (макс — мін) у графіку відходу до сну у хвилинах. Якщо перевищена, режим розбивається.",
+  "language": "Мова",
+  "english": "Англійська",
+  "russian": "Російська",
+  "ukrainian": "Українська",
+  "globalHotkeys": "Глобальні гарячі клавіші",
+  "globalHotkeysSubtitle": "Керуйте пресетами та яскравістю з будь-якої програми",
+  "nextPreset": "Наступний пресет",
+  "prevPreset": "Попередній пресет",
+  "increaseBrightness": "Яскравіше",
+  "decreaseBrightness": "Тьмяніше",
+  "brightnessStep": "Крок налаштування яскравості",
+  "brightnessStepUp": "Крок (збільшення)",
+  "brightnessStepDown": "Крок (зменшення)",
+  "pressToRecord": "Натисніть клавіші...",
+  "hotkeyRecording": "Запис...",
+  "cancel": "Скасувати",
+  "save": "Зберегти",
+  "toggleAutoBrightness": "Увімк./Вимк. автояскравість",
+  "savePreset": "Зберегти пресет",
+  "presetName": "Назва пресета",
+  "namePresetHint": "Введіть назву...",
+  "deletePreset": "Видалити пресет",
+  "deletePresetConfirm": "Ви впевнені, що хочете видалити цей пресет?",
+  "delete": "Видалити",
+  "rename": "Перейменувати",
+  "errorWithMsg": "Помилка: {msg}",
+  "@errorWithMsg": {
+    "placeholders": {
+      "msg": {
+        "type": "String"
+      }
+    }
+  },
+  "sunAzimuthFormat": "{value}°",
+  "@sunAzimuthFormat": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "sunElevationFormat": "{value}°",
+  "@sunElevationFormat": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "sunZenithFormat": "{value}°",
+  "@sunZenithFormat": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "timeFormat": "{hour}:{minute}",
+  "@timeFormat": {
+    "placeholders": {
+      "hour": {
+        "type": "String"
+      },
+      "minute": {
+        "type": "String"
+      }
+    }
+  },
+  "percentFormat": "{value}%",
+  "@percentFormat": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "temperatureFormat": "{value}°C",
+  "@temperatureFormat": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "spectralIntensityValue": "{value} Вт/м²",
+  "@spectralIntensityValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "uvIndexValue": "{value}",
+  "@uvIndexValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "latLonFormat": "Широта: {lat}, Довгота: {lon}",
+  "@latLonFormat": {
+    "placeholders": {
+      "lat": {
+        "type": "String"
+      },
+      "lon": {
+        "type": "String"
+      }
+    }
+  },
+  "detectingLocation": "Визначення місцезнаходження...",
+  "coordinatesUnavailable": "Координати недоступні",
+  "north": "Пн",
+  "south": "Пд",
+  "east": "Сх",
+  "west": "Зх",
+  "dmsFormat": "{latDeg}° {latMin}' {latSec}\" {latDir}, {lonDeg}° {lonMin}' {lonSec}\" {lonDir}",
+  "@dmsFormat": {
+    "placeholders": {
+      "latDeg": { "type": "int" },
+      "latMin": { "type": "int" },
+      "latSec": { "type": "int" },
+      "latDir": { "type": "String" },
+      "lonDeg": { "type": "int" },
+      "lonMin": { "type": "int" },
+      "lonSec": { "type": "int" },
+      "lonDir": { "type": "String" }
+    }
+  },
+  "chartDegreesFormat": "{value}°",
+  "@chartDegreesFormat": {
+    "placeholders": {
+      "value": { "type": "int" }
+    }
+  },
+  "chartTemperatureFormat": "{value}K",
+  "@chartTemperatureFormat": {
+    "placeholders": {
+      "value": { "type": "int" }
+    }
+  },
+  "chartPercentFormat": "{value}%",
+  "@chartPercentFormat": {
+    "placeholders": {
+      "value": { "type": "int" }
+    }
+  },
+  "currentPosition": "Поточне положення",
+  "liveLocation": "Місцезнаходження",
+  "lockedBrightnessValue": "{value}%",
+  "@lockedBrightnessValue": {
+    "placeholders": {
+      "value": { "type": "int" }
+    }
+  },
+  "gameModeHint": "напр. game.exe",
+  "about": "Про програму",
+  "legal": "Юридична інформація",
+  "disclaimerTitle": "Відмова від відповідальності",
+  "disclaimerText": "ВІДМОВА ВІД ВІДПОВІДАЛЬНОСТІ: Це програмне забезпечення надається на умовах «ЯК Є», БЕЗ БУДЬ-ЯКИХ ГАРАНТІЙ. Розробник не несе відповідальності за апаратні збої, проблеми з прошивкою або фізичний дискомфорт, що виникли внаслідок використання цієї програми. Використовуючи Solaris, ви визнаєте, що робите це на власний ризик і берете на себе повну відповідальність за сумісність обладнання. У жодному разі автор не несе відповідальності за будь-які особливі, випадкові або непрямі збитки.",
+  "viewLicenses": "Переглянути ліцензії",
+  "close": "Закрити",
+  "multiMonitorOffsets": "Зміщення для декількох моніторів",
+  "multiMonitorOffsetsSubtitle": "Налаштуйте індивідуальну яскравість моніторів відносно глобального рівня",
+  "brightnessOffset": "Зміщення яскравості",
+  "linkAndOffset": "Зв'язок та зміщення",
+  "offsetFormula": "Підсумок = Глобальна + Зміщення",
+  "weatherAnimations": "Анімації погоди",
+  "showRain": "Показати дощ",
+  "showSnow": "Показати сніг",
+  "showThunder": "Показати грозу",
+  "showClouds": "Показати хмари",
+  "weatherSettingsSubtitle": "Налаштуйте видимість анімацій"
+}

@@ -2061,6 +2061,7 @@ class _LanguageSelectorCard extends ConsumerWidget {
             segments: [
               ButtonSegment<String>(value: 'en', label: Text(l10n.english)),
               ButtonSegment<String>(value: 'ru', label: Text(l10n.russian)),
+              ButtonSegment<String>(value: 'uk', label: Text(l10n.ukrainian)),
             ],
             selected: {currentLocale.languageCode},
             onSelectionChanged: (Set<String> newSelection) {
