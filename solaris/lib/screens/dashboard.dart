@@ -22,6 +22,7 @@ import 'package:solaris/utils/status_helper.dart';
 import 'package:solaris/widgets/circadian_breakdown_tooltip.dart';
 import 'package:solaris/widgets/about_dialog.dart';
 import 'package:solaris/providers/app_info_provider.dart';
+import 'package:solaris/models/settings_state.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -791,11 +792,19 @@ class _DashboardView extends ConsumerWidget {
                               final currentSelection = ref.watch(
                                 selectedMonitorsProvider,
                               );
-                              final monitorId =
+                               final monitorId =
                                   currentSelection.firstOrNull ?? 'all';
                               final smartData = ref.watch(
                                 smartCircadianDataProvider(monitorId),
                               );
+
+                              final settingsAsync = ref.watch(settingsProvider);
+                              final settings = settingsAsync.maybeWhen(
+                                data: (map) =>
+                                    map[monitorId] ?? map['all'] ?? SettingsState(),
+                                orElse: () => SettingsState(),
+                              );
+                              final isSmartEnabled = settings.isSmartCircadianEnabled;
 
                               final activeAjustments = <Widget>[];
 
@@ -815,7 +824,7 @@ class _DashboardView extends ConsumerWidget {
                                 );
                               }
 
-                              if (smartData.isWindDownActive) {
+                              if (isSmartEnabled && smartData.isWindDownActive) {
                                 final impactPercent = smartData
                                     .windDownAbsoluteImpact
                                     .round();
@@ -848,7 +857,7 @@ class _DashboardView extends ConsumerWidget {
                                 );
                               }
 
-                              if (smartData.isTimeShiftActive) {
+                              if (isSmartEnabled && smartData.isTimeShiftActive) {
                                 final impactPercent = smartData
                                     .timeShiftBrightnessImpact
                                     .round();
@@ -872,7 +881,7 @@ class _DashboardView extends ConsumerWidget {
                                 );
                               }
 
-                              if (smartData.isSleepPressureActive) {
+                              if (isSmartEnabled && smartData.isSleepPressureActive) {
                                 final impactPercent = smartData
                                     .sleepPressureAbsoluteImpact
                                     .round();
@@ -887,7 +896,7 @@ class _DashboardView extends ConsumerWidget {
                                 );
                               }
 
-                              if (smartData.isSleepDebtActive) {
+                              if (isSmartEnabled && smartData.isSleepDebtActive) {
                                 final impactPercent = smartData
                                     .sleepDebtAbsoluteImpact
                                     .round();
@@ -927,6 +936,7 @@ class _DashboardView extends ConsumerWidget {
                                         CircadianBreakdownTooltip(
                                           smartData: smartData,
                                           currentBrightness: brightness,
+                                          isSmartCircadianEnabled: isSmartEnabled,
                                           child: const Icon(
                                             LucideIcons.info,
                                             size: 14,

@@ -10,11 +10,13 @@ class CircadianBreakdownTooltip extends StatelessWidget {
     required this.child,
     required this.smartData,
     required this.currentBrightness,
+    required this.isSmartCircadianEnabled,
   });
 
   final Widget child;
   final SmartCircadianData smartData;
   final double currentBrightness;
+  final bool isSmartCircadianEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -42,21 +44,31 @@ class CircadianBreakdownTooltip extends StatelessWidget {
               value: '-${smartData.weatherAbsoluteImpact.round()}%',
               iconColor: const Color(0xFF94A3B8),
             ),
-          if (smartData.windDownAbsoluteImpact > 0.5)
+          if (isSmartCircadianEnabled &&
+              smartData.timeShiftBrightnessImpact.abs() > 0.5)
+            _buildRow(
+              icon: LucideIcons.sunrise,
+              label: l10n.featureTimeShiftShort,
+              value:
+                  '${smartData.timeShiftBrightnessImpact > 0 ? '+' : ''}${smartData.timeShiftBrightnessImpact.round()}%',
+              iconColor: const Color(0xFFFDBA74),
+            ),
+          if (isSmartCircadianEnabled && smartData.windDownAbsoluteImpact > 0.5)
             _buildRow(
               icon: LucideIcons.moon,
               label: l10n.featureWindDownShort,
               value: '-${smartData.windDownAbsoluteImpact.round()}%',
               iconColor: const Color(0xFF818CF8),
             ),
-          if (smartData.sleepPressureAbsoluteImpact > 0.5)
+          if (isSmartCircadianEnabled &&
+              smartData.sleepPressureAbsoluteImpact > 0.5)
             _buildRow(
               icon: LucideIcons.brain,
               label: l10n.featureSleepPressureShort,
               value: '-${smartData.sleepPressureAbsoluteImpact.round()}%',
               iconColor: const Color(0xFFF472B6),
             ),
-          if (smartData.sleepDebtAbsoluteImpact > 0.5)
+          if (isSmartCircadianEnabled && smartData.sleepDebtAbsoluteImpact > 0.5)
             _buildRow(
               icon: LucideIcons.battery,
               label: l10n.featureSleepDebtShort,
