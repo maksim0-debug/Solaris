@@ -768,4 +768,26 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get toggleAutoBrightness => 'Вкл/Выкл автояркость';
+
+  @override
+  String get savePreset => 'Сохранить пресет';
+
+  @override
+  String get presetName => 'Название пресета';
+
+  @override
+  String get namePresetHint => 'Введите название...';
+
+  @override
+  String get deletePreset => 'Удалить пресет';
+
+  @override
+  String get deletePresetConfirm =>
+      'Вы уверены, что хотите удалить этот пресет?';
+
+  @override
+  String get delete => 'Удалить';
+
+  @override
+  String get rename => 'Переименовать';
 }

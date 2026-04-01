@@ -43,6 +43,9 @@ class SettingsState {
   final Map<String, dynamic>? autoBrightnessHotKey;
   final double brightnessStepUp;
   final double brightnessStepDown;
+  final List<UserPreset> userPresets;
+  final String? activeUserPresetId;
+  final List<String> presetOrder;
 
   SettingsState({
     this.activePreset = PresetType.bright,
@@ -100,9 +103,28 @@ class SettingsState {
     this.autoBrightnessHotKey,
     this.brightnessStepUp = 5.0,
     this.brightnessStepDown = 5.0,
-  }) : curvesMap = curvesMap ?? PresetConstants.getAllDefaults();
+    this.userPresets = const [],
+    this.activeUserPresetId,
+    List<String>? presetOrder,
+  }) : curvesMap = curvesMap ?? PresetConstants.getAllDefaults(),
+       presetOrder = presetOrder ?? [
+         ...PresetType.values.map((e) => 'system:${e.name}'),
+         ...userPresets.map((e) => 'user:${e.id}'),
+       ];
 
-  List<FlSpot> get curvePoints => curvesMap[activePreset]!;
+  List<FlSpot> get curvePoints {
+    if (activeUserPresetId != null) {
+      try {
+        final userPreset = userPresets.firstWhere(
+          (p) => p.id == activeUserPresetId,
+        );
+        return userPreset.points;
+      } catch (_) {
+        if (userPresets.isNotEmpty) return userPresets.first.points;
+      }
+    }
+    return curvesMap[activePreset]!;
+  }
 
   Map<String, dynamic> toJson() => {
     'activePreset': activePreset.toJson(),
@@ -149,6 +171,9 @@ class SettingsState {
     'autoBrightnessHotKey': autoBrightnessHotKey,
     'brightnessStepUp': brightnessStepUp,
     'brightnessStepDown': brightnessStepDown,
+    'userPresets': userPresets.map((p) => p.toJson()).toList(),
+    'activeUserPresetId': activeUserPresetId,
+    'presetOrder': presetOrder,
   };
 
   factory SettingsState.fromJson(Map<String, dynamic> json) {
@@ -289,6 +314,12 @@ class SettingsState {
       brightnessStepUp: (json['brightnessStepUp'] as num?)?.toDouble() ?? 5.0,
       brightnessStepDown:
           (json['brightnessStepDown'] as num?)?.toDouble() ?? 5.0,
+      userPresets: (json['userPresets'] as List<dynamic>?)?.map(
+            (p) => UserPreset.fromJson(p as Map<String, dynamic>),
+          ).toList() ??
+          [],
+      activeUserPresetId: json['activeUserPresetId'] as String?,
+      presetOrder: (json['presetOrder'] as List<dynamic>?)?.cast<String>(),
     );
   }
 
@@ -334,11 +365,15 @@ class SettingsState {
     Map<String, dynamic>? autoBrightnessHotKey,
     double? brightnessStepUp,
     double? brightnessStepDown,
+    List<UserPreset>? userPresets,
+    String? activeUserPresetId,
+    List<String>? presetOrder,
     bool clearNextPresetHotKey = false,
     bool clearPrevPresetHotKey = false,
     bool clearBrightnessUpHotKey = false,
     bool clearBrightnessDownHotKey = false,
     bool clearAutoBrightnessHotKey = false,
+    bool clearActiveUserPresetId = false,
   }) {
     return SettingsState(
       activePreset: activePreset ?? this.activePreset,
@@ -410,6 +445,10 @@ class SettingsState {
           : (autoBrightnessHotKey ?? this.autoBrightnessHotKey),
       brightnessStepUp: brightnessStepUp ?? this.brightnessStepUp,
       brightnessStepDown: brightnessStepDown ?? this.brightnessStepDown,
+      userPresets: userPresets ?? this.userPresets,
+      activeUserPresetId:
+          clearActiveUserPresetId ? null : (activeUserPresetId ?? this.activeUserPresetId),
+      presetOrder: presetOrder ?? this.presetOrder,
     );
   }
 }

@@ -766,4 +766,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get toggleAutoBrightness => 'Toggle Auto-brightness';
+
+  @override
+  String get savePreset => 'Save Preset';
+
+  @override
+  String get presetName => 'Preset Name';
+
+  @override
+  String get namePresetHint => 'Enter name...';
+
+  @override
+  String get deletePreset => 'Delete Preset';
+
+  @override
+  String get deletePresetConfirm =>
+      'Are you sure you want to delete this preset?';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get rename => 'Rename';
 }

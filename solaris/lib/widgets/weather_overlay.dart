@@ -4,8 +4,13 @@ import 'package:flutter/scheduler.dart';
 
 class WeatherOverlay extends StatefulWidget {
   final int weatherCode;
+  final double cloudCover; // Clouds coverage percentage (0-100)
 
-  const WeatherOverlay({super.key, required this.weatherCode});
+  const WeatherOverlay({
+    super.key,
+    required this.weatherCode,
+    this.cloudCover = 0,
+  });
 
   @override
   State<WeatherOverlay> createState() => _WeatherOverlayState();
@@ -33,6 +38,48 @@ class _Particle {
   });
 }
 
+class _Cloud {
+  double x;
+  double y;
+  double speed;
+  double scale;
+  double opacity;
+  double floatPhase;
+  double floatSpeed;
+  late List<Offset> offsets;
+  late List<double> radii;
+
+  _Cloud({
+    required this.x,
+    required this.y,
+    required this.speed,
+    required this.scale,
+    required this.opacity,
+    required this.floatPhase,
+    required this.floatSpeed,
+  }) {
+    // Generate a horizontal, elongated puffy cloud shape
+    offsets = [
+      const Offset(-25, 5),    // Left bottom
+      const Offset(25, 5),     // Right bottom
+      const Offset(0, 10),     // Middle bottom (slightly lower)
+      const Offset(-12, -10),  // Top left puff
+      const Offset(15, -8),    // Top right puff
+      const Offset(-40, 2),    // Far left small puff
+      const Offset(40, 2),     // Far right small puff
+    ];
+    radii = [
+      20.0, // Left bottom
+      22.0, // Right bottom
+      18.0, // Middle bottom
+      16.0, // Top left
+      18.0, // Top right
+      12.0, // Far left
+      13.0, // Far right
+    ];
+  }
+}
+
 class _WeatherOverlayState extends State<WeatherOverlay>
     with TickerProviderStateMixin {
   late Ticker _ticker;
@@ -41,6 +88,7 @@ class _WeatherOverlayState extends State<WeatherOverlay>
   bool _isLightningStricking = false;
 
   List<_Particle> _particles = [];
+  List<_Cloud> _clouds = [];
   Duration _lastElapsed = Duration.zero;
 
   bool _isRain = false;
@@ -67,7 +115,8 @@ class _WeatherOverlayState extends State<WeatherOverlay>
   @override
   void didUpdateWidget(WeatherOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.weatherCode != widget.weatherCode) {
+    if (oldWidget.weatherCode != widget.weatherCode ||
+        oldWidget.cloudCover != widget.cloudCover) {
       _updateWeatherFlags();
     }
   }
@@ -109,6 +158,55 @@ class _WeatherOverlayState extends State<WeatherOverlay>
     }
   }
 
+  void _updateCloudCount(double width, double height) {
+    // User requested: "if cloudiness is strong, then there will be fewer clouds and smaller"
+    // We'll interpret this as: 
+    // cloudCover 0 -> 0 clouds
+    // cloudCover 1-30 -> 10 clouds (large)
+    // cloudCover 30-70 -> 6 clouds (medium)
+    // cloudCover 70-100 -> 3 clouds (small)
+    
+    int targetCloudCount;
+    if (widget.cloudCover <= 0) {
+      targetCloudCount = 0;
+    } else if (widget.cloudCover < 30) {
+      targetCloudCount = 10;
+    } else if (widget.cloudCover < 70) {
+      targetCloudCount = 6;
+    } else {
+      targetCloudCount = 3;
+    }
+
+    if (_clouds.length < targetCloudCount) {
+      int toAdd = targetCloudCount - _clouds.length;
+      for (int i = 0; i < toAdd; i++) {
+        _clouds.add(_spawnCloud(width, height, randomizeX: true));
+      }
+    } else if (_clouds.length > targetCloudCount) {
+      _clouds.removeRange(targetCloudCount, _clouds.length);
+    }
+  }
+
+  _Cloud _spawnCloud(double width, double height, {bool randomizeX = false}) {
+    // Base scale modified by cloud cover as requested
+    double baseScale = 0.8 + _random.nextDouble() * 0.8;
+    if (widget.cloudCover > 70) {
+      baseScale *= 0.6; // Smaller for strong cloudiness
+    } else if (widget.cloudCover > 30) {
+      baseScale *= 0.8;
+    }
+
+    return _Cloud(
+      x: randomizeX ? _random.nextDouble() * width : -100,
+      y: _random.nextDouble() * (height * 0.6), // Upper half mostly
+      speed: 10.0 + _random.nextDouble() * 20.0,
+      scale: baseScale,
+      opacity: 0.5 + _random.nextDouble() * 0.3, // Slightly more opaque to see the outline
+      floatPhase: _random.nextDouble() * pi * 2,
+      floatSpeed: 0.5 + _random.nextDouble() * 1.0,
+    );
+  }
+
   void _onTick(Duration elapsed) {
     if (!mounted) return;
     if (_lastElapsed == Duration.zero) {
@@ -122,6 +220,8 @@ class _WeatherOverlayState extends State<WeatherOverlay>
     final size = MediaQuery.maybeSizeOf(context) ?? const Size(400, 800);
     final width = size.width;
     final height = size.height;
+
+    _updateCloudCount(width, height);
 
     if (_particles.length < _targetParticleCount) {
       int toAdd = _targetParticleCount - _particles.length;
@@ -148,6 +248,16 @@ class _WeatherOverlayState extends State<WeatherOverlay>
         p.x = width + 50;
       } else if (p.x > width + 50) {
         p.x = -50;
+      }
+    }
+
+    for (var c in _clouds) {
+      c.x += c.speed * dt;
+      c.floatPhase += c.floatSpeed * dt;
+
+      if (c.x > width + 100) {
+        c.x = -100;
+        c.y = _random.nextDouble() * (height * 0.6);
       }
     }
 
@@ -271,11 +381,20 @@ class _WeatherOverlayState extends State<WeatherOverlay>
 
   @override
   Widget build(BuildContext context) {
-    if (!_isRain && !_isSnow && !_isLightningStricking)
+    if (!_isRain && !_isSnow && !_isLightningStricking && _clouds.isEmpty)
       return const SizedBox.shrink();
 
     return Stack(
       children: [
+        if (_clouds.isNotEmpty)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(
+                painter: CloudPainter(clouds: _clouds),
+                willChange: true,
+              ),
+            ),
+          ),
         if (_isRain || _isSnow)
           Positioned.fill(
             child: IgnorePointer(
@@ -341,4 +460,52 @@ class PrecipitationSystemPainter extends CustomPainter {
   bool shouldRepaint(covariant PrecipitationSystemPainter oldDelegate) {
     return true;
   }
+}
+
+class CloudPainter extends CustomPainter {
+  final List<_Cloud> clouds;
+
+  CloudPainter({required this.clouds});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (var cloud in clouds) {
+      final floatOffset = sin(cloud.floatPhase) * 5.0;
+
+      // To draw a single outline for the whole shape, we must UNION the paths
+      Path cloudPath = Path();
+      for (int i = 0; i < cloud.offsets.length; i++) {
+        final center = Offset(
+          cloud.x + cloud.offsets[i].dx * cloud.scale,
+          cloud.y + (cloud.offsets[i].dy + floatOffset) * cloud.scale,
+        );
+        final Path circlePath = Path();
+        circlePath.addOval(Rect.fromCircle(
+          center: center,
+          radius: cloud.radii[i] * cloud.scale,
+        ));
+        
+        // Combine paths to create a single silhouette
+        cloudPath = Path.combine(PathOperation.union, cloudPath, circlePath);
+      }
+
+      // 1. Draw the Body (Greyish, blurred for soft appearance)
+      final bodyPaint = Paint()
+        ..color = const Color(0xFF94A3B8).withOpacity(cloud.opacity) // Elegant slate grey
+        ..style = PaintingStyle.fill
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+      canvas.drawPath(cloudPath, bodyPaint);
+
+      // 2. Draw the Outline (Single continuous line)
+      final outlinePaint = Paint()
+        ..color = const Color(0xFF1E293B).withOpacity(0.5) // Darker slate for outline
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.0
+        ..strokeCap = StrokeCap.round;
+      canvas.drawPath(cloudPath, outlinePaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CloudPainter oldDelegate) => true;
 }

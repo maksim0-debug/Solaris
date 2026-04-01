@@ -342,5 +342,12 @@
   "hotkeyRecording": "Recording...",
   "cancel": "Cancel",
   "save": "Save",
-  "toggleAutoBrightness": "Toggle Auto-brightness"
+  "toggleAutoBrightness": "Toggle Auto-brightness",
+  "savePreset": "Save Preset",
+  "presetName": "Preset Name",
+  "namePresetHint": "Enter name...",
+  "deletePreset": "Delete Preset",
+  "deletePresetConfirm": "Are you sure you want to delete this preset?",
+  "delete": "Delete",
+  "rename": "Rename"
 }

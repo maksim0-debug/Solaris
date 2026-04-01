@@ -342,5 +342,12 @@
   "hotkeyRecording": "Запись...",
   "cancel": "Отмена",
   "save": "Сохранить",
-  "toggleAutoBrightness": "Вкл/Выкл автояркость"
+  "toggleAutoBrightness": "Вкл/Выкл автояркость",
+  "savePreset": "Сохранить пресет",
+  "presetName": "Название пресета",
+  "namePresetHint": "Введите название...",
+  "deletePreset": "Удалить пресет",
+  "deletePresetConfirm": "Вы уверены, что хотите удалить этот пресет?",
+  "delete": "Удалить",
+  "rename": "Переименовать"
 }

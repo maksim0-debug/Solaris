@@ -1,4 +1,4 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:ui';
 import 'dart:math' as math;
 
@@ -1076,10 +1076,24 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     final ids = ref.read(selectedMonitorsProvider);
     final current = _getSettings(ids.firstOrNull ?? 'all');
 
-    final newCurvesMap = Map<PresetType, List<FlSpot>>.from(current.curvesMap);
-    newCurvesMap[current.activePreset] = sortedPoints;
-
-    _updateSettings(ids, current.copyWith(curvesMap: newCurvesMap));
+    if (current.activeUserPresetId != null) {
+      final newUserPresets = current.userPresets.map((p) {
+        if (p.id == current.activeUserPresetId) {
+          return UserPreset(
+            id: p.id,
+            name: p.name,
+            points: sortedPoints,
+            initialPoints: p.initialPoints,
+          );
+        }
+        return p;
+      }).toList();
+      _updateSettings(ids, current.copyWith(userPresets: newUserPresets));
+    } else {
+      final newCurvesMap = Map<PresetType, List<FlSpot>>.from(current.curvesMap);
+      newCurvesMap[current.activePreset] = sortedPoints;
+      _updateSettings(ids, current.copyWith(curvesMap: newCurvesMap));
+    }
   }
 
   void addCurvePoint(FlSpot point) {
@@ -1104,12 +1118,115 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   void setActivePreset(PresetType type) {
     final ids = ref.read(selectedMonitorsProvider);
     final current = _getSettings(ids.firstOrNull ?? 'all');
-    _updateSettings(ids, current.copyWith(activePreset: type));
+    _updateSettings(
+      ids,
+      current.copyWith(activePreset: type, clearActiveUserPresetId: true),
+    );
+  }
+
+  void setActiveUserPreset(String id) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    _updateSettings(ids, current.copyWith(activeUserPresetId: id));
+  }
+
+  void saveAsNewPreset(String name) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    final newPreset = UserPreset(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      name: name,
+      points: List<FlSpot>.from(current.curvePoints),
+      initialPoints: List<FlSpot>.from(current.curvePoints),
+    );
+    final newUserPresets = List<UserPreset>.from(current.userPresets)
+      ..add(newPreset);
+    final newPresetOrder = List<String>.from(current.presetOrder)
+      ..add('user:${newPreset.id}');
+    _updateSettings(
+      ids,
+      current.copyWith(
+        userPresets: newUserPresets,
+        activeUserPresetId: newPreset.id,
+        presetOrder: newPresetOrder,
+      ),
+    );
+  }
+
+  void deleteUserPreset(String id) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    final newUserPresets = current.userPresets.where((p) => p.id != id).toList();
+    final newPresetOrder =
+        current.presetOrder.where((orderId) => orderId != 'user:$id').toList();
+
+    String? newActiveId = current.activeUserPresetId;
+    if (newActiveId == id) {
+      newActiveId = newUserPresets.isNotEmpty ? newUserPresets.first.id : null;
+    }
+
+    _updateSettings(
+      ids,
+      current.copyWith(
+        userPresets: newUserPresets,
+        activeUserPresetId: newActiveId,
+        presetOrder: newPresetOrder,
+      ),
+    );
+  }
+
+  void reorderAllPresets(int oldIndex, int newIndex) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    final newOrder = List<String>.from(current.presetOrder);
+
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    final item = newOrder.removeAt(oldIndex);
+    newOrder.insert(newIndex, item);
+
+    _updateSettings(ids, current.copyWith(presetOrder: newOrder));
+  }
+
+  void renameUserPreset(String id, String newName) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = _getSettings(ids.firstOrNull ?? 'all');
+    final newUserPresets = current.userPresets.map((p) {
+      if (p.id == id) {
+        return UserPreset(
+          id: p.id,
+          name: newName,
+          points: p.points,
+          initialPoints: p.initialPoints,
+        );
+      }
+      return p;
+    }).toList();
+
+    _updateSettings(ids, current.copyWith(userPresets: newUserPresets));
   }
 
   void resetCurrentPreset() {
     final ids = ref.read(selectedMonitorsProvider);
     final current = _getSettings(ids.firstOrNull ?? 'all');
+
+    if (current.activeUserPresetId != null) {
+      final newUserPresets = current.userPresets.map((p) {
+        if (p.id == current.activeUserPresetId) {
+          return UserPreset(
+            id: p.id,
+            name: p.name,
+            points: List<FlSpot>.from(p.initialPoints),
+            initialPoints: List<FlSpot>.from(p.initialPoints),
+          );
+        }
+        return p;
+      }).toList();
+      _updateSettings(ids, current.copyWith(userPresets: newUserPresets));
+      return;
+    }
+
     final presetType = current.activePreset;
 
     final newCurvesMap = Map<PresetType, List<FlSpot>>.from(current.curvesMap);
@@ -1122,30 +1239,48 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     final ids = ref.read(selectedMonitorsProvider);
     final id = ids.firstOrNull ?? 'all';
     final current = _getSettings(id);
-    final currentPreset = current.activePreset;
 
-    // Use specific order for cycling (excluding custom)
-    const cycleOrder = [
+    // Combined order of all selectable presets
+    final cycleOrder = [
       PresetType.brightest,
       PresetType.bright,
       PresetType.dim,
       PresetType.dimmest,
+      ...current.userPresets,
     ];
 
-    int currentIndex = cycleOrder.indexOf(currentPreset);
+    int currentIndex = -1;
+    if (current.activeUserPresetId != null) {
+      currentIndex = cycleOrder.indexWhere(
+        (p) => p is UserPreset && p.id == current.activeUserPresetId,
+      );
+    } else {
+      currentIndex = cycleOrder.indexOf(current.activePreset);
+    }
+
     if (currentIndex == -1) {
-      // If we are on 'custom' or something else, start from a sensible place
+      // Default to sensible place if current state is unknown
       setActivePreset(brighter ? PresetType.bright : PresetType.dim);
       return;
     }
 
     if (brighter) {
       if (currentIndex > 0) {
-        setActivePreset(cycleOrder[currentIndex - 1]);
+        final next = cycleOrder[currentIndex - 1];
+        if (next is PresetType) {
+          setActivePreset(next);
+        } else if (next is UserPreset) {
+          setActiveUserPreset(next.id);
+        }
       }
     } else {
       if (currentIndex < cycleOrder.length - 1) {
-        setActivePreset(cycleOrder[currentIndex + 1]);
+        final next = cycleOrder[currentIndex + 1];
+        if (next is PresetType) {
+          setActivePreset(next);
+        } else if (next is UserPreset) {
+          setActiveUserPreset(next.id);
+        }
       }
     }
   }
@@ -1337,7 +1472,7 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
   final solarStateAsync = ref.watch(solarStateStreamProvider);
   final settingsAsync = ref.watch(settingsProvider);
   final tempSettingsAsync = ref.watch(temperatureSettingsProvider);
-  final monitorsAsync = ref.watch(monitorListProvider);
+  final monitorsAsync = ref.read(monitorListProvider);
   final visibility = ref.watch(appLifecycleProvider);
   final weatherAsync = ref.watch(currentWeatherProvider);
 

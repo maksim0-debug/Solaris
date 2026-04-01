@@ -147,3 +147,53 @@ class PresetConstants {
     };
   }
 }
+
+class UserPreset {
+  final String id;
+  final String name;
+  final List<FlSpot> points;
+  final List<FlSpot> initialPoints;
+
+  UserPreset({
+    required this.id,
+    required this.name,
+    required this.points,
+    List<FlSpot>? initialPoints,
+  }) : initialPoints = initialPoints ?? List<FlSpot>.from(points);
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'points': points.map((p) => {'x': p.x, 'y': p.y}).toList(),
+    'initialPoints': initialPoints.map((p) => {'x': p.x, 'y': p.y}).toList(),
+  };
+
+  factory UserPreset.fromJson(Map<String, dynamic> json) {
+    final points = (json['points'] as List<dynamic>).map((p) {
+      final map = p as Map<String, dynamic>;
+      return FlSpot(
+        (map['x'] as num).toDouble(),
+        (map['y'] as num).toDouble(),
+      );
+    }).toList();
+
+    List<FlSpot>? initialPoints;
+    if (json.containsKey('initialPoints')) {
+      initialPoints = (json['initialPoints'] as List<dynamic>).map((p) {
+        final map = p as Map<String, dynamic>;
+        return FlSpot(
+          (map['x'] as num).toDouble(),
+          (map['y'] as num).toDouble(),
+        );
+      }).toList();
+    }
+
+    return UserPreset(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      points: points,
+      initialPoints: initialPoints,
+    );
+  }
+}
+

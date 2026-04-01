@@ -10,6 +10,9 @@ class TemperatureState {
   final bool isSleepPressureEnabled;
   final bool isTimeShiftEnabled;
   final bool isWindDownEnabled;
+  final List<UserPreset> userPresets;
+  final String? activeUserPresetId;
+  final List<String> presetOrder;
 
   TemperatureState({
     this.activePreset = TemperaturePresetType.cool,
@@ -20,9 +23,28 @@ class TemperatureState {
     this.isSleepPressureEnabled = false,
     this.isTimeShiftEnabled = false,
     this.isWindDownEnabled = false,
-  }) : curvesMap = curvesMap ?? PresetConstants.getAllTemperatureDefaults();
+    this.userPresets = const [],
+    this.activeUserPresetId,
+    List<String>? presetOrder,
+  }) : curvesMap = curvesMap ?? PresetConstants.getAllTemperatureDefaults(),
+       presetOrder = presetOrder ?? [
+         ...TemperaturePresetType.values.map((e) => 'system:${e.name}'),
+         ...userPresets.map((e) => 'user:${e.id}'),
+       ];
 
-  List<FlSpot> get curvePoints => curvesMap[activePreset]!;
+  List<FlSpot> get curvePoints {
+    if (activeUserPresetId != null) {
+      try {
+        final userPreset = userPresets.firstWhere(
+          (p) => p.id == activeUserPresetId,
+        );
+        return userPreset.points;
+      } catch (_) {
+        if (userPresets.isNotEmpty) return userPresets.first.points;
+      }
+    }
+    return curvesMap[activePreset]!;
+  }
 
   TemperatureState copyWith({
     TemperaturePresetType? activePreset,
@@ -33,6 +55,10 @@ class TemperatureState {
     bool? isSleepPressureEnabled,
     bool? isTimeShiftEnabled,
     bool? isWindDownEnabled,
+    List<UserPreset>? userPresets,
+    String? activeUserPresetId,
+    List<String>? presetOrder,
+    bool clearActiveUserPresetId = false,
   }) {
     return TemperatureState(
       activePreset: activePreset ?? this.activePreset,
@@ -45,6 +71,10 @@ class TemperatureState {
           isSleepPressureEnabled ?? this.isSleepPressureEnabled,
       isTimeShiftEnabled: isTimeShiftEnabled ?? this.isTimeShiftEnabled,
       isWindDownEnabled: isWindDownEnabled ?? this.isWindDownEnabled,
+      userPresets: userPresets ?? this.userPresets,
+      activeUserPresetId:
+          clearActiveUserPresetId ? null : (activeUserPresetId ?? this.activeUserPresetId),
+      presetOrder: presetOrder ?? this.presetOrder,
     );
   }
 
@@ -57,6 +87,9 @@ class TemperatureState {
       'isSleepPressureEnabled': isSleepPressureEnabled,
       'isTimeShiftEnabled': isTimeShiftEnabled,
       'isWindDownEnabled': isWindDownEnabled,
+      'userPresets': userPresets.map((p) => p.toJson()).toList(),
+      'activeUserPresetId': activeUserPresetId,
+      'presetOrder': presetOrder,
       'curvesMap': curvesMap.map(
         (key, value) => MapEntry(
           key.toJson(),
@@ -98,6 +131,12 @@ class TemperatureState {
       isSleepPressureEnabled: json['isSleepPressureEnabled'] as bool? ?? true,
       isTimeShiftEnabled: json['isTimeShiftEnabled'] as bool? ?? true,
       isWindDownEnabled: json['isWindDownEnabled'] as bool? ?? true,
+      userPresets: (json['userPresets'] as List<dynamic>?)?.map(
+            (p) => UserPreset.fromJson(p as Map<String, dynamic>),
+          ).toList() ??
+          [],
+      activeUserPresetId: json['activeUserPresetId'] as String?,
+      presetOrder: (json['presetOrder'] as List<dynamic>?)?.cast<String>(),
       curvesMap: parsedCurvesMap,
     );
   }

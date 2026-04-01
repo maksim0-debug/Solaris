@@ -209,17 +209,119 @@ class TemperatureSettingsNotifier
   void setPreset(TemperaturePresetType type) {
     final ids = ref.read(selectedMonitorsProvider);
     final current = currentSettings();
-    _updateSettings(ids, current.copyWith(activePreset: type));
+    _updateSettings(
+      ids,
+      current.copyWith(activePreset: type, clearActiveUserPresetId: true),
+    );
+  }
+
+  void setActiveUserPreset(String id) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = currentSettings();
+    _updateSettings(ids, current.copyWith(activeUserPresetId: id));
+  }
+
+  void saveAsNewPreset(String name) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = currentSettings();
+    final newPreset = UserPreset(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      name: name,
+      points: List<FlSpot>.from(current.curvePoints),
+      initialPoints: List<FlSpot>.from(current.curvePoints),
+    );
+    final newUserPresets = List<UserPreset>.from(current.userPresets)
+      ..add(newPreset);
+    final newPresetOrder = List<String>.from(current.presetOrder)
+      ..add('user:${newPreset.id}');
+    _updateSettings(
+      ids,
+      current.copyWith(
+        userPresets: newUserPresets,
+        activeUserPresetId: newPreset.id,
+        presetOrder: newPresetOrder,
+      ),
+    );
+  }
+
+  void deleteUserPreset(String id) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = currentSettings();
+    final newUserPresets = current.userPresets.where((p) => p.id != id).toList();
+    final newPresetOrder =
+        current.presetOrder.where((orderId) => orderId != 'user:$id').toList();
+ 
+    String? newActiveId = current.activeUserPresetId;
+    if (newActiveId == id) {
+      newActiveId = newUserPresets.isNotEmpty ? newUserPresets.first.id : null;
+    }
+ 
+    _updateSettings(
+      ids,
+      current.copyWith(
+        userPresets: newUserPresets,
+        activeUserPresetId: newActiveId,
+        presetOrder: newPresetOrder,
+      ),
+    );
+  }
+
+  void reorderAllPresets(int oldIndex, int newIndex) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = currentSettings();
+    final newOrder = List<String>.from(current.presetOrder);
+ 
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    final item = newOrder.removeAt(oldIndex);
+    newOrder.insert(newIndex, item);
+ 
+    _updateSettings(ids, current.copyWith(presetOrder: newOrder));
+  }
+
+  void renameUserPreset(String id, String newName) {
+    final ids = ref.read(selectedMonitorsProvider);
+    final current = currentSettings();
+    final newUserPresets = current.userPresets.map((p) {
+      if (p.id == id) {
+        return UserPreset(
+          id: p.id,
+          name: newName,
+          points: p.points,
+          initialPoints: p.initialPoints,
+        );
+      }
+      return p;
+    }).toList();
+
+    _updateSettings(ids, current.copyWith(userPresets: newUserPresets));
   }
 
   void updateCurvePoints(List<FlSpot> newPoints) {
     final ids = ref.read(selectedMonitorsProvider);
     final current = currentSettings();
-    final newMap = Map<TemperaturePresetType, List<FlSpot>>.from(
-      current.curvesMap,
-    );
-    newMap[current.activePreset] = newPoints;
-    _updateSettings(ids, current.copyWith(curvesMap: newMap));
+
+    if (current.activeUserPresetId != null) {
+      final newUserPresets = current.userPresets.map((p) {
+        if (p.id == current.activeUserPresetId) {
+          return UserPreset(
+            id: p.id,
+            name: p.name,
+            points: newPoints,
+            initialPoints: p.initialPoints,
+          );
+        }
+        return p;
+      }).toList();
+      _updateSettings(ids, current.copyWith(userPresets: newUserPresets));
+    } else {
+      final newMap = Map<TemperaturePresetType, List<FlSpot>>.from(
+        current.curvesMap,
+      );
+      newMap[current.activePreset] = newPoints;
+      _updateSettings(ids, current.copyWith(curvesMap: newMap));
+    }
   }
 
   void addCurvePoint(FlSpot point) {
@@ -240,6 +342,22 @@ class TemperatureSettingsNotifier
 
   void resetCurrentPreset() {
     final current = currentSettings();
+    if (current.activeUserPresetId != null) {
+      final newUserPresets = current.userPresets.map((p) {
+        if (p.id == current.activeUserPresetId) {
+          return UserPreset(
+            id: p.id,
+            name: p.name,
+            points: List<FlSpot>.from(p.initialPoints),
+            initialPoints: List<FlSpot>.from(p.initialPoints),
+          );
+        }
+        return p;
+      }).toList();
+      _updateSettings(ref.read(selectedMonitorsProvider), current.copyWith(userPresets: newUserPresets));
+      return;
+    }
+
     final defaultPoints = PresetConstants.getTemperatureDefaultPoints(
       current.activePreset,
     );

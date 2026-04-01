@@ -1476,6 +1476,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Toggle Auto-brightness'**
   String get toggleAutoBrightness;
+
+  /// No description provided for @savePreset.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Preset'**
+  String get savePreset;
+
+  /// No description provided for @presetName.
+  ///
+  /// In en, this message translates to:
+  /// **'Preset Name'**
+  String get presetName;
+
+  /// No description provided for @namePresetHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter name...'**
+  String get namePresetHint;
+
+  /// No description provided for @deletePreset.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Preset'**
+  String get deletePreset;
+
+  /// No description provided for @deletePresetConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this preset?'**
+  String get deletePresetConfirm;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @rename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get rename;
 }
 
 class _AppLocalizationsDelegate

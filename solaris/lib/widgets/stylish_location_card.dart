@@ -79,6 +79,7 @@ class StylishLocationCard extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(24),
                       child: WeatherOverlay(
                         weatherCode: weatherAsync.value!.weatherCode,
+                        cloudCover: weatherAsync.value!.cloudCover,
                       ),
                     ),
                   ),

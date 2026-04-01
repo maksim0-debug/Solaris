@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:solaris/l10n/app_localizations.dart';
@@ -11,6 +12,9 @@ import 'package:solaris/widgets/circadian_chart.dart';
 import 'package:solaris/models/preset_type.dart';
 import 'package:solaris/models/temperature_state.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'dart:ui';
+
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -196,64 +200,110 @@ extension PresetTypeExtension on PresetType {
   }
 }
 
-class _PresetSelector extends ConsumerWidget {
+class _PresetSelector extends ConsumerStatefulWidget {
   const _PresetSelector();
 
-  Widget _buildSelector<T>({
+  @override
+  ConsumerState<_PresetSelector> createState() => _PresetSelectorState();
+}
+
+class _PresetSelectorState extends ConsumerState<_PresetSelector> {
+  void _showNamingDialog({
     required BuildContext context,
-    required List<T> values,
-    required T activeValue,
-    required String Function(T) getName,
-    required void Function(T) onSelected,
-    required Widget resetButton,
+    required bool isTemp,
+    String? initialName,
+    String? renameId,
   }) {
-    return GlassCard(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              child: Row(
-                children: values.map((type) {
-                  final isActive = type == activeValue;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: TextButton(
-                      onPressed: () => onSelected(type),
-                      style: TextButton.styleFrom(
-                        backgroundColor: isActive
-                            ? const Color(0xFFFDBA74).withOpacity(0.1)
-                            : Colors.transparent,
-                        foregroundColor: isActive
-                            ? const Color(0xFFFDBA74)
-                            : Colors.white24,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          side: BorderSide(
-                            color: isActive
-                                ? const Color(0xFFFDBA74).withOpacity(0.5)
-                                : Colors.transparent,
-                          ),
-                        ),
-                      ),
-                      child: Text(getName(type)),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
+    final l10n = AppLocalizations.of(context)!;
+    final controller = TextEditingController(text: initialName);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(renameId != null ? l10n.rename : l10n.savePreset),
+        content: TextField(
+          controller: controller,
+          decoration: InputDecoration(
+            hintText: l10n.namePresetHint,
+            labelText: l10n.presetName,
           ),
-          const SizedBox(width: 8),
-          resetButton,
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              if (controller.text.isNotEmpty) {
+                if (renameId != null) {
+                  if (isTemp) {
+                    ref
+                        .read(temperatureSettingsProvider.notifier)
+                        .renameUserPreset(renameId, controller.text);
+                  } else {
+                    ref
+                        .read(settingsProvider.notifier)
+                        .renameUserPreset(renameId, controller.text);
+                  }
+                } else {
+                  if (isTemp) {
+                    ref
+                        .read(temperatureSettingsProvider.notifier)
+                        .saveAsNewPreset(controller.text);
+                  } else {
+                    ref
+                        .read(settingsProvider.notifier)
+                        .saveAsNewPreset(controller.text);
+                  }
+                }
+                Navigator.pop(context);
+              }
+            },
+            child: Text(l10n.save),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirm({
+    required BuildContext context,
+    required bool isTemp,
+    required String id,
+  }) {
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.deletePreset),
+        content: Text(l10n.deletePresetConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              if (isTemp) {
+                ref
+                    .read(temperatureSettingsProvider.notifier)
+                    .deleteUserPreset(id);
+              } else {
+                ref.read(settingsProvider.notifier).deleteUserPreset(id);
+              }
+              Navigator.pop(context);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+            child: Text(l10n.delete),
+          ),
         ],
       ),
     );
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isTemp = ref.watch(editingTemperatureProvider);
     final selectedIds = ref.watch(selectedMonitorsProvider);
@@ -264,14 +314,32 @@ class _PresetSelector extends ConsumerWidget {
         data: (tempMap) {
           final settings =
               tempMap[selectedIds.firstOrNull ?? 'all'] ?? tempMap['all']!;
-          return _buildSelector<TemperaturePresetType>(
+          return _buildPresetBar(
             context: context,
-            values: TemperaturePresetType.values,
-            activeValue: settings.activePreset,
-            getName: (type) => type.getName(l10n),
-            onSelected: (type) =>
-                ref.read(temperatureSettingsProvider.notifier).setPreset(type),
+            isTemp: true,
+            systemPresets: TemperaturePresetType.values,
+            userPresets: settings.userPresets,
+            activePreset: settings.activePreset,
+            activeUserPresetId: settings.activeUserPresetId,
+            getName: (type) => (type as TemperaturePresetType).getName(l10n),
+            onSystemSelected: (type) =>
+                ref
+                    .read(temperatureSettingsProvider.notifier)
+                    .setPreset(type as TemperaturePresetType),
+            onUserSelected: (id) =>
+                ref
+                    .read(temperatureSettingsProvider.notifier)
+                    .setActiveUserPreset(id),
+            onReorder: (oldIndex, newIndex) =>
+                ref
+                    .read(temperatureSettingsProvider.notifier)
+                    .reorderAllPresets(oldIndex, newIndex),
+            presetOrder: settings.presetOrder,
             resetButton: _ResetTempButton(settings: settings),
+            saveButton: _SavePresetButton(
+              isModified: _isTempModified(settings),
+              onPressed: () => _showNamingDialog(context: context, isTemp: true),
+            ),
           );
         },
         orElse: () => const SizedBox(),
@@ -283,19 +351,328 @@ class _PresetSelector extends ConsumerWidget {
           final settings =
               settingsMap[selectedIds.firstOrNull ?? 'all'] ??
               settingsMap['all']!;
-          return _buildSelector<PresetType>(
+          return _buildPresetBar(
             context: context,
-            values: PresetType.values,
-            activeValue: settings.activePreset,
-            getName: (type) => type.getName(l10n),
-            onSelected: (type) =>
-                ref.read(settingsProvider.notifier).setActivePreset(type),
+            isTemp: false,
+            systemPresets: PresetType.values,
+            userPresets: settings.userPresets,
+            activePreset: settings.activePreset,
+            activeUserPresetId: settings.activeUserPresetId,
+            getName: (type) => (type as PresetType).getName(l10n),
+            onSystemSelected: (type) =>
+                ref
+                    .read(settingsProvider.notifier)
+                    .setActivePreset(type as PresetType),
+            onUserSelected: (id) =>
+                ref.read(settingsProvider.notifier).setActiveUserPreset(id),
+            onReorder: (oldIndex, newIndex) =>
+                ref
+                    .read(settingsProvider.notifier)
+                    .reorderAllPresets(oldIndex, newIndex),
+            presetOrder: settings.presetOrder,
             resetButton: _ResetButton(settings: settings),
+            saveButton: _SavePresetButton(
+              isModified: _isBrightnessModified(settings),
+              onPressed:
+                  () => _showNamingDialog(context: context, isTemp: false),
+            ),
           );
         },
         orElse: () => const SizedBox(),
       );
     }
+  }
+
+  bool _isBrightnessModified(SettingsState settings) {
+    // If we're on a custom preset, always allow "Save as New" to support duplication/branching.
+    if (settings.activeUserPresetId != null) return true;
+    
+    final currentPoints = settings.curvePoints;
+    final defaultPoints = PresetConstants.getDefaultPoints(
+      settings.activePreset,
+    );
+    if (currentPoints.length != defaultPoints.length) return true;
+    for (int i = 0; i < currentPoints.length; i++) {
+      if ((currentPoints[i].x - defaultPoints[i].x).abs() > 0.01 ||
+          (currentPoints[i].y - defaultPoints[i].y).abs() > 0.01) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool _isTempModified(TemperatureState settings) {
+    // If we're on a custom preset, always allow "Save as New" to support duplication/branching.
+    if (settings.activeUserPresetId != null) return true;
+
+    final currentPoints = settings.curvePoints;
+    final defaultPoints = PresetConstants.getTemperatureDefaultPoints(
+      settings.activePreset,
+    );
+    if (currentPoints.length != defaultPoints.length) return true;
+    for (int i = 0; i < currentPoints.length; i++) {
+      if ((currentPoints[i].x - defaultPoints[i].x).abs() > 0.01 ||
+          (currentPoints[i].y - defaultPoints[i].y).abs() > 0.01) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  Widget _buildPresetBar({
+    required BuildContext context,
+    required bool isTemp,
+    required List<dynamic> systemPresets,
+    required List<UserPreset> userPresets,
+    required dynamic activePreset,
+    required String? activeUserPresetId,
+    required String Function(dynamic) getName,
+    required void Function(dynamic) onSystemSelected,
+    required void Function(String) onUserSelected,
+    required void Function(int, int) onReorder,
+    required List<String> presetOrder,
+    required Widget resetButton,
+    required Widget saveButton,
+  }) {
+    return GlassCard(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: 40,
+              child: ReorderableListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: presetOrder.length,
+                buildDefaultDragHandles: false,
+                onReorder: onReorder,
+                proxyDecorator: (child, index, animation) {
+                  return AnimatedBuilder(
+                    animation: animation,
+                    builder: (context, child) {
+                      final double animValue = Curves.easeInOut.transform(animation.value);
+                      final double scale = lerpDouble(1, 1.05, animValue)!;
+                      return Transform.scale(
+                        scale: scale,
+                        child: _WiggleWrapper(
+                          enabled: true,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: child,
+                          ),
+                        ),
+                      );
+                    },
+                    child: child,
+                  );
+                },
+                itemBuilder: (context, index) {
+                  final orderId = presetOrder[index];
+                  if (orderId.startsWith('system:')) {
+                    final typeName = orderId.substring(7);
+                    final type = isTemp
+                        ? TemperaturePresetType.values.firstWhere((e) => e.name == typeName)
+                        : PresetType.values.firstWhere((e) => e.name == typeName);
+                    
+                    final isActive = activeUserPresetId == null && type == activePreset;
+                    
+                    return ReorderableDelayedDragStartListener(
+                      key: ValueKey(orderId),
+                      index: index,
+                      child: _PresetChip(
+                        label: getName(type),
+                        isActive: isActive,
+                        onPressed: () => onSystemSelected(type),
+                      ),
+                    );
+                  } else {
+                    final userId = orderId.substring(5);
+                    final up = userPresets.firstWhere((p) => p.id == userId);
+                    final isActive = activeUserPresetId == up.id;
+                    
+                    return ReorderableDelayedDragStartListener(
+                      key: ValueKey(orderId),
+                      index: index,
+                      child: _PresetChip(
+                        label: up.name,
+                        isActive: isActive,
+                        onPressed: () => onUserSelected(up.id),
+                        onSecondaryTap: () => _showPresetMenu(context, up, isTemp),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          saveButton,
+          const VerticalDivider(width: 1, indent: 8, endIndent: 8, color: Colors.white10),
+          const SizedBox(width: 8),
+          resetButton,
+        ],
+      ),
+    );
+  }
+
+  void _showPresetMenu(BuildContext context, UserPreset up, bool isTemp) {
+    final l10n = AppLocalizations.of(context)!;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF1A1A1A),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(LucideIcons.edit2, color: Colors.white70),
+              title: Text(l10n.rename, style: const TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context);
+                _showNamingDialog(
+                  context: context,
+                  isTemp: isTemp,
+                  initialName: up.name,
+                  renameId: up.id,
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(LucideIcons.trash2, color: Colors.redAccent),
+              title: Text(l10n.delete, style: const TextStyle(color: Colors.redAccent)),
+              onTap: () {
+                Navigator.pop(context);
+                _showDeleteConfirm(context: context, isTemp: isTemp, id: up.id);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PresetChip extends StatelessWidget {
+  final String label;
+  final bool isActive;
+  final VoidCallback onPressed;
+  final VoidCallback? onSecondaryTap;
+
+  const _PresetChip({
+    required this.label,
+    required this.isActive,
+    required this.onPressed,
+    this.onSecondaryTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: GestureDetector(
+        onSecondaryTap: onSecondaryTap,
+        child: TextButton(
+          onPressed: onPressed,
+          style: TextButton.styleFrom(
+            backgroundColor: isActive
+                ? const Color(0xFFFDBA74).withOpacity(0.1)
+                : Colors.transparent,
+            foregroundColor:
+                isActive ? const Color(0xFFFDBA74) : Colors.white24,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+              side: BorderSide(
+                color: isActive
+                    ? const Color(0xFFFDBA74).withOpacity(0.5)
+                    : Colors.transparent,
+              ),
+            ),
+          ),
+          child: Text(label),
+        ),
+      ),
+    );
+  }
+}
+
+class _WiggleWrapper extends StatefulWidget {
+  final Widget child;
+  final bool enabled;
+
+  const _WiggleWrapper({required this.child, this.enabled = true});
+
+  @override
+  State<_WiggleWrapper> createState() => _WiggleWrapperState();
+}
+
+class _WiggleWrapperState extends State<_WiggleWrapper> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 150),
+    );
+    if (widget.enabled) _controller.repeat(reverse: true);
+  }
+
+  @override
+  void didUpdateWidget(_WiggleWrapper oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.enabled && !_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    } else if (!widget.enabled && _controller.isAnimating) {
+      _controller.stop();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        // Subtle wiggle: +/- 1.5 degrees
+        final double rotation = widget.enabled 
+            ? (math.sin(_controller.value * math.pi * 2) * 0.02) 
+            : 0;
+        return Transform.rotate(
+          angle: rotation,
+          child: child,
+        );
+      },
+      child: widget.child,
+    );
+  }
+}
+
+class _SavePresetButton extends StatelessWidget {
+  final bool isModified;
+  final VoidCallback onPressed;
+
+  const _SavePresetButton({required this.isModified, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isModified) return const SizedBox.shrink();
+
+    return IconButton(
+      icon: const Icon(LucideIcons.plusCircle),
+      onPressed: onPressed,
+      color: const Color(0xFFFDBA74),
+      tooltip: AppLocalizations.of(context)!.savePreset,
+    );
   }
 }
 
@@ -305,20 +682,52 @@ class _ResetTempButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (settings.activePreset == TemperaturePresetType.custom) {
-      return const SizedBox.shrink();
-    }
+    final isModified = _isModified();
 
     return IconButton(
-      onPressed: () {
-        ref.read(temperatureSettingsProvider.notifier).resetCurrentPreset();
-      },
+      onPressed: isModified
+          ? () =>
+              ref.read(temperatureSettingsProvider.notifier).resetCurrentPreset()
+          : null,
       icon: const Icon(LucideIcons.rotateCcw, size: 18),
-      color: Colors.white54,
+      color: const Color(0xFFFDBA74),
+      disabledColor: Colors.white10,
       tooltip: AppLocalizations.of(context)!.reset,
     );
   }
+
+  bool _isModified() {
+    final currentPoints = settings.curvePoints;
+    List<FlSpot> defaultPoints;
+
+    if (settings.activeUserPresetId != null) {
+      try {
+        final up = settings.userPresets.firstWhere(
+          (p) => p.id == settings.activeUserPresetId,
+        );
+        defaultPoints = up.initialPoints;
+      } catch (_) {
+        return false;
+      }
+    } else {
+      if (settings.activePreset == TemperaturePresetType.custom) return false;
+      defaultPoints = PresetConstants.getTemperatureDefaultPoints(
+        settings.activePreset,
+      );
+    }
+
+    if (currentPoints.length != defaultPoints.length) return true;
+
+    for (int i = 0; i < currentPoints.length; i++) {
+      if ((currentPoints[i].x - defaultPoints[i].x).abs() > 0.01 ||
+          (currentPoints[i].y - defaultPoints[i].y).abs() > 0.01) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
+
 
 class _ResetButton extends ConsumerWidget {
   final SettingsState settings;
@@ -341,9 +750,20 @@ class _ResetButton extends ConsumerWidget {
 
   bool _isModified() {
     final currentPoints = settings.curvePoints;
-    final defaultPoints = PresetConstants.getDefaultPoints(
-      settings.activePreset,
-    );
+    List<FlSpot> defaultPoints;
+
+    if (settings.activeUserPresetId != null) {
+      try {
+        final up = settings.userPresets.firstWhere(
+          (p) => p.id == settings.activeUserPresetId,
+        );
+        defaultPoints = up.initialPoints;
+      } catch (_) {
+        return false;
+      }
+    } else {
+      defaultPoints = PresetConstants.getDefaultPoints(settings.activePreset);
+    }
 
     if (currentPoints.length != defaultPoints.length) return true;
 
