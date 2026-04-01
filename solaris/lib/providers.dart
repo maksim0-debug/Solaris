@@ -1240,14 +1240,28 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     final id = ids.firstOrNull ?? 'all';
     final current = _getSettings(id);
 
-    // Combined order of all selectable presets
-    final cycleOrder = [
-      PresetType.brightest,
-      PresetType.bright,
-      PresetType.dim,
-      PresetType.dimmest,
-      ...current.userPresets,
-    ];
+    // Filter out 'system:custom' and map to objects
+    final cycleOrder = current.presetOrder
+        .where((orderId) => orderId != 'system:custom')
+        .map((orderId) {
+      if (orderId.startsWith('system:')) {
+        final typeName = orderId.substring(7);
+        try {
+          return PresetType.values.firstWhere((e) => e.name == typeName);
+        } catch (_) {
+          return PresetType.bright;
+        }
+      } else {
+        final userId = orderId.substring(5);
+        try {
+          return current.userPresets.firstWhere((p) => p.id == userId);
+        } catch (_) {
+          return null;
+        }
+      }
+    }).where((item) => item != null).toList();
+
+    if (cycleOrder.isEmpty) return;
 
     int currentIndex = -1;
     if (current.activeUserPresetId != null) {
@@ -1259,29 +1273,31 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     }
 
     if (currentIndex == -1) {
-      // Default to sensible place if current state is unknown
-      setActivePreset(brighter ? PresetType.bright : PresetType.dim);
+      // Default to the first preset in the list if current state is unknown
+      final next = cycleOrder.first;
+      if (next is PresetType) {
+        setActivePreset(next);
+      } else if (next is UserPreset) {
+        setActiveUserPreset(next.id);
+      }
       return;
     }
 
+    // Directionality:
+    // next_preset (brighter: true) -> Forward in list (index + 1)
+    // prev_preset (brighter: false) -> Backward in list (index - 1)
+    int newIndex;
     if (brighter) {
-      if (currentIndex > 0) {
-        final next = cycleOrder[currentIndex - 1];
-        if (next is PresetType) {
-          setActivePreset(next);
-        } else if (next is UserPreset) {
-          setActiveUserPreset(next.id);
-        }
-      }
+      newIndex = (currentIndex + 1) % cycleOrder.length;
     } else {
-      if (currentIndex < cycleOrder.length - 1) {
-        final next = cycleOrder[currentIndex + 1];
-        if (next is PresetType) {
-          setActivePreset(next);
-        } else if (next is UserPreset) {
-          setActiveUserPreset(next.id);
-        }
-      }
+      newIndex = (currentIndex - 1 + cycleOrder.length) % cycleOrder.length;
+    }
+
+    final next = cycleOrder[newIndex];
+    if (next is PresetType) {
+      setActivePreset(next);
+    } else if (next is UserPreset) {
+      setActiveUserPreset(next.id);
     }
   }
 
