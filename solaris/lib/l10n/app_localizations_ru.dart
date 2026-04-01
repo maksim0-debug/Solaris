@@ -521,6 +521,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get detectedRegimes => 'Обнаруженные режимы';
 
   @override
+  String get currentRegime => 'Текущий режим';
+
+  @override
   String get outdated => 'Устарело';
 
   @override

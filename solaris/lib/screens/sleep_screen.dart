@@ -55,32 +55,34 @@ class SleepScreen extends ConsumerWidget {
                 style: const TextStyle(color: Colors.white24),
               ),
             )
-          else
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.detectedRegimes,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ...regimes.asMap().entries.map((entry) {
-                  final regime = entry.value;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: SleepRegimeCard(
-                      regime: regime,
-                      initiallyExpanded:
-                          false, // All collapsed by default as requested
+          else ...[
+            Builder(
+              builder: (context) {
+                final currentRegime = regimes.firstWhere(
+                  (r) => r.isCurrent,
+                  orElse: () => regimes.first,
+                );
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.currentRegime,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
-                  );
-                }),
-              ],
+                    const SizedBox(height: 16),
+                    SleepRegimeCard(
+                      regime: currentRegime,
+                      initiallyExpanded: false,
+                    ),
+                  ],
+                );
+              },
             ),
+          ],
           const SizedBox(height: 32),
           if (googleFitState.status == GoogleFitStatus.connected) ...[
             const _SleepAnalysisSettingsSection(),

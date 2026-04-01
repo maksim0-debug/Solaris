@@ -521,6 +521,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detectedRegimes => 'Detected Regimes';
 
   @override
+  String get currentRegime => 'Current Regime';
+
+  @override
   String get outdated => 'Outdated';
 
   @override

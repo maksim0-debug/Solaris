@@ -1028,6 +1028,12 @@ abstract class AppLocalizations {
   /// **'Detected Regimes'**
   String get detectedRegimes;
 
+  /// No description provided for @currentRegime.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Regime'**
+  String get currentRegime;
+
   /// No description provided for @outdated.
   ///
   /// In en, this message translates to:

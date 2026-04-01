@@ -243,6 +243,7 @@
   },
   "sleepInDate": "Sleep-in date",
   "detectedRegimes": "Detected Regimes",
+  "currentRegime": "Current Regime",
   "outdated": "Outdated",
   "smartCircadianTitle": "Smart Circadian Adjustment",
   "smartCircadianSubtitle": "Dynamic correction based on Google Fit sleep data (wind-down, bio-morning, sleep debt)",

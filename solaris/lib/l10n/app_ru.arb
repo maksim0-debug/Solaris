@@ -243,6 +243,7 @@
   },
   "sleepInDate": "Дата засыпания",
   "detectedRegimes": "Обнаруженные режимы",
+  "currentRegime": "Текущий режим",
   "outdated": "Устарело",
   "smartCircadianTitle": "Умная циркадная подстройка",
   "smartCircadianSubtitle": "Динамическая коррекция на основе данных о сне из Google Fit (фаза засыпания, био-утро, недосып)",
