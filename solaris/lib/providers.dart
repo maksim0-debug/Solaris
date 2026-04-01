@@ -1538,8 +1538,18 @@ class CurrentBrightnessNotifier extends Notifier<double> {
 
   void setManualBrightness(double value) {
     ref.read(settingsProvider.notifier).updateAutoBrightness(false);
-    ref.read(manualBrightnessProvider.notifier).update(value);
-    _saveBrightness(value);
+
+    double baseValue = value;
+    final selection = ref.read(selectedMonitorsProvider);
+    if (selection.length == 1 && !selection.contains('all')) {
+      final id = selection.first;
+      final offsets = ref.read(brightnessOffsetsProvider);
+      final offset = offsets[id] ?? 0.0;
+      baseValue = (value - offset).clamp(0.0, 100.0);
+    }
+
+    ref.read(manualBrightnessProvider.notifier).update(baseValue);
+    _saveBrightness(baseValue);
   }
 }
 

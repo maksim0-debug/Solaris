@@ -437,9 +437,16 @@ class _Header extends ConsumerWidget {
           final id = next.first;
           final monitor = monitorValue.firstWhere((m) => m.deviceName == id);
           if (monitor.realBrightness != null) {
+            final offsets = ref.read(brightnessOffsetsProvider);
+            final offset = offsets[id] ?? 0.0;
             ref
                 .read(manualBrightnessProvider.notifier)
-                .update(monitor.realBrightness!.toDouble());
+                .update(
+                  (monitor.realBrightness!.toDouble() - offset).clamp(
+                    0.0,
+                    100.0,
+                  ),
+                );
           }
           if (monitor.realTemperature != null &&
               ref.read(isColorTemperatureEnabledProvider)) {
@@ -578,13 +585,22 @@ class _DashboardView extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final solarAsync = ref.watch(solarStateStreamProvider);
     final timeService = ref.watch(timeServiceProvider);
-    final brightness = ref.watch(currentBrightnessProvider);
+    final baseBrightness = ref.watch(currentBrightnessProvider);
     final currentTemperature = ref.watch(currentTemperatureProvider);
+    final selection = ref.watch(selectedMonitorsProvider);
     final bool isAutoBright = ref.watch<bool>(autoBrightnessAdjustmentProvider);
     final bool isAutoTemp = ref.watch<bool>(autoTemperatureAdjustmentProvider);
     final bool isColorTempEnabled = ref.watch(
       isColorTemperatureEnabledProvider,
     );
+
+    double brightness = baseBrightness;
+    if (selection.length == 1 && !selection.contains('all')) {
+      final id = selection.first;
+      final offsets = ref.watch(brightnessOffsetsProvider);
+      final offset = offsets[id] ?? 0.0;
+      brightness = (baseBrightness + offset).clamp(0.0, 100.0);
+    }
 
     return Row(
       children: [
