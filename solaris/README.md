@@ -1,120 +1,136 @@
-# Solaris — Продвинутое управление мониторами по циркадным ритмам
+# Solaris — Advanced Circadian Monitor Control
 
-![Логотип Solaris](assets/icon/icon.png)
+![Solaris Logo](assets/icon/icon.png)
 
-**Solaris** — это современное Windows-приложение, созданное на Flutter, которое синхронизирует яркость и цветовую температуру ваших мониторов с естественными циркадными ритмами. Рассчитывая точное положение солнца (высоту и азимут) на основе вашего географического местоположения, Solaris обеспечивает комфортную, здоровую и полностью автоматизированную работу за компьютером в любое время суток.
-
----
-
-## 🌟 Ключевые возможности
-
-### 🌖 Циркадный режим (Авторегулировка)
-
-Сердце Solaris. Приложение автоматически вычисляет положение солнца относительно вашего горизонта и корректирует яркость мониторов согласно настраиваемой кривой.
-
-- **Отслеживание солнца в реальном времени**: Высокоточные расчеты для рассвета, заката, солнечного полдня и сумерек.
-- **Плавные переходы**: Изменения яркости применяются постепенно, чтобы избежать резких скачков.
-
-### 🖥️ Управление несколькими мониторами
-
-Полный контроль над рабочим пространством.
-
-- **Индивидуальное управление**: Настройка отдельных кривых или ручной яркости для каждого монитора.
-- **Групповое управление**: Синхронизация всех мониторов одним кликом.
-- **Аппаратная интеграция**: Прямое взаимодействие с мониторами через DDC/CI с использованием системных API Windows.
-
-### 📈 Интерактивные кривые яркости
-
-Не ограничивайтесь настройками по умолчанию. Визуализируйте и редактируйте свой профиль яркости.
-
-- **Кривые на базе Безье**: Тонкая настройка зависимости яркости от высоты солнца.
-- **Пресеты**: Быстрое переключение между профилями «Яркий», «Сбалансированный», «Мягкий» и «Пользовательский».
-- **Предпросмотр в реальном времени**: Мгновенное отображение изменений на графике светимости.
-
-### 📍 Автоматизация на основе местоположения
-
-- **Авто-геопозиция**: Использование GPS для определения ваших координат.
-- **Ручной режим**: Установка местоположения через интерактивную карту, если GPS недоступен.
-- **Интеграция с погодой**: (Экспериментально) Корректировка логики в зависимости от облачности через Open-Meteo.
-
-### 🛠️ Интеграция с системой
-
-- **Системный трей**: Работает в фоновом режиме, управление осуществляется через стильную иконку в трее.
-- **Автозагрузка**: Возможность автоматического запуска при старте Windows.
-- **Современный интерфейс**: Премиальный дизайн с элементами Glassmorphism, темной темой и плавными анимациями.
+**Solaris** is a professional Windows application built with Flutter that synchronizes your monitor's brightness and color temperature with natural circadian rhythms. By calculating the precise position of the sun (elevation and azimuth) based on your geographic location, Solaris ensures a comfortable, healthy, and fully automated computing experience 24/7.
 
 ---
 
-## 🚀 Технический стек
+## 🌟 Key Features
 
-Solaris использует передовые технологии для обеспечения высокой производительности на Windows:
+### 🌖 Circadian Mode (Auto-Adjustment)
 
-- **Фреймворк**: [Flutter](https://flutter.dev/) (Windows Desktop)
-- **Управление состоянием**: [Riverpod](https://riverpod.dev/) (AsyncNotifiers и StreamProviders для обновлений в реальном времени)
-- **Native Interop**: 
-  - [Dart FFI](https://dart.dev/guides/libraries/c-interop) и пакет [win32](https://pub.dev/packages/win32) для низкоуровневых вызовов ОС.
-  - Кастомные MethodChannels для связи с мониторами по протоколу DDC/CI.
-- **Математика**: Сферическая тригонометрия и алгоритмы положения солнца (`solar_calculator`, `sunrise_sunset_calc`).
-- **Хранение данных**: JSON-хранилище на базе `shared_preferences` and `path_provider`.
-- **UI/UX**: `fl_chart` для визуализации данных, `glassmorphism` для эстетики и кастомные Painters для солнечных диаграмм.
+The core of Solaris. The app automatically calculates the sun's position relative to your horizon and adjusts monitor brightness according to a customizable curve.
+
+- **Real-time Sun Tracking**: High-precision calculations for sunrise, sunset, solar noon, and twilight.
+- **Smooth Transitions**: Brightness changes are applied gradually to avoid sudden flashes.
+
+### 🌡️ Dynamic Color Temperature
+Protect your eyes from blue light. Solaris shifts your display to warmer tones as the sun goes down.
+- **Range**: Smooth transition from 6500K (Daylight) to 3300K (Warm).
+- **Automation**: Fully synced with the solar cycle to maintain your natural sleep-wake rhythm.
+
+### 🖥️ Multi-Monitor Mastery
+Full control over your entire workspace.
+- **DDC/CI Integration**: Direct hardware communication with monitors via system-level APIs.
+- **Individual Control**: Set unique brightness offsets or manual levels for each display.
+- **Unified Sync**: Adjust all monitors at once with a single click.
+
+### 📈 Interactive Brightness Curves
+Don't settle for defaults. Visualize and refine your lighting profile.
+- **Bezier Curves**: Fine-tune how brightness responds to solar elevation.
+- **Presets**: Swiftly switch between **Bright**, **Balanced**, **Soft**, and **Custom** profiles.
+- **Real-time Preview**: See changes instantly on the luminosity graph.
+
+### 🎮 Smart Game Mode (Exclusions)
+Focus on the win without distractions.
+- **Auto-Lock**: Solaris detects when you start a game and prevents brightness from shifting during intense sessions.
+- **Customizable Lists**: Add specific apps to a **Whitelist** (always lock) or **Blacklist** (never lock).
+
+### ☁️ Weather Influence
+The first monitor controller that cares about the sky.
+- **Cloudiness Logic**: Naturally dims brightness when it's overcast, rainy, or snowy using real-time Open-Meteo data.
+- **Atmospheric UI**: Beautiful background animations for rain, snow, thunder, and clouds within the dashboard.
+
+### ⌨️ Global Hotkeys
+Control your environment without leaving your current app.
+- **Custom Bindings**: Set shortcuts for Next/Prev Preset, Brightness Up/Down, and Toggling Auto-mode.
+- **Stepless Control**: Fine-tune brightness in precise increments (e.g., 5% per press).
+
+### 📍 Precise Location
+- **Auto-Geolocation**: Uses GPS to determine your coordinates automatically.
+- **Map Selection**: Choose your location on an interactive map if GPS is unavailable.
+- **Persistence**: Remembers your preferred location across sessions.
 
 ---
 
-## 📂 Структура проекта
+## 🧪 Beta Feature: Sleep Sync (Google Fit)
+Align your workspace with your actual health data.
+- **Google Fit Integration**: Connect your account to sync monitor behavior with your real sleep cycles.
+- **Recovery Mode**: Automatically lowers brightness if you're experiencing "Sleep Debt" or need more rest.
+
+---
+
+## 🚀 Technical Stack
+
+Solaris leverages cutting-edge technologies for peak performance on Windows:
+
+- **Framework**: [Flutter](https://flutter.dev/) (Windows Desktop)
+- **State Management**: [Riverpod](https://riverpod.dev/) (using AsyncNotifiers and StreamProviders)
+- **Hardware Interop**: 
+    - [Dart FFI](https://dart.dev/guides/libraries/c-interop) and [win32](https://pub.dev/packages/win32) for low-level OS calls.
+    - Custom MethodChannels for DDC/CI communication.
+- **APIs & Services**:
+    - **Google Fit API**: Health data synchronization.
+    - **Open-Meteo**: High-precision weather data.
+    - **Mapbox/OpenStreetMap**: Location services.
+- **Math engine**: Spherical trigonometry and solar algorithms (`solar_calculator`, `sunrise_sunset_calc`).
+
+---
+
+## 📂 Project Structure
 
 ```text
 lib/
-├── l10n/              # Локализация (поддержка английского и русского)
-├── models/            # Структуры данных (SolarPhase, MonitorInfo, Settings)
-├── providers.dart     # Централизованное управление состоянием через Riverpod
-├── screens/           # Основные экраны (Dashboard, Schedule, Settings, Location)
-├── services/          # Ядро логики (упр. мониторами, расчет солнца, хранение, трей)
-├── theme/             # Стили приложения и цветовые палитры
-└── widgets/           # Компоненты интерфейса (графики, регуляторы, карточки)
+├── l10n/              # Localization (English, Russian, Ukrainian support)
+├── models/            # Data structures (SolarPhase, SettingsState, PresetType)
+├── providers/         # Feature-specific logic (Weather, Temperature, Lifecycle)
+├── screens/           # UI Screens (Dashboard, Schedule, Settings, Location, Sleep)
+├── services/          # Core mechanics (Monitor control, Sun math, Hotkeys)
+├── theme/             # Premium Glassmorphism styling and palettes
+└── widgets/           # Specialized UI components (SunPathPainter, Dials, Charts)
 ```
 
 ---
 
-## 🛠️ Начало работы
+## 🛠️ Getting Started
 
-### Требования
-
-- [Flutter SDK](https://docs.flutter.dev/get-started/install) (стабильный канал)
+### Requirements
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) (Stable channel)
 - Windows 10/11
-- Мониторы с поддержкой **DDC/CI** (убедитесь, что эта функция включена в меню настроек самого монитора)
+- Monitors with **DDC/CI** support (Ensure it is enabled in your monitor's OSD menu)
+- **Visual C++ Redistributable (x64)**: Required for running the application on Windows. [Download here](https://aka.ms/vs/17/release/vc_redist.x64.exe).
+- **Windows Location Services**: Must be enabled in Windows Settings for auto-coordinates.
 
-### Установка
+### 🛠️ Troubleshooting (Map Problems)
+If Mapbox maps or location detection is not working on a clean Windows install:
+1. **Enable Location Services**: Go to *Settings > Privacy > Location* and ensure "Allow apps to access your location" is ON.
+2. **Install VCRedist**: Download and install the [Microsoft Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe).
+3. **Manual Entry**: If GPS is unavailable, you can always enter your coordinates manually in the **Location** tab of the app.
 
-1. Склонируйте репозиторий:
-
+### Installation
+1. Clone the repository:
    ```bash
    git clone https://github.com/solaris-org/solaris.git
    ```
-
-2. Загрузите зависимости:
-
+2. Get dependencies:
    ```bash
    flutter pub get
    ```
-
-3. Запустите приложение:
-
+3. Run the app:
    ```bash
    flutter run -d windows
    ```
 
-### Сборка версии для релиза
-
+### Building for Release
 ```bash
 flutter build windows
 ```
 
 ---
 
-## 📜 Лицензия
-
-Этот проект распространяется под лицензией **MIT**. Подробности см. в файле [LICENSE](LICENSE).
+## 📜 License
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
 
 ---
-
-*Создано с ❤️ для здоровья глаз и продуктивности.*
+*Developed with ❤️ for visual health and focused productivity.*

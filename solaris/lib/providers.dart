@@ -331,6 +331,19 @@ final locationSettingsProvider =
       LocationSettingsNotifier.new,
     );
 
+final _defaultPosition = Position(
+  latitude: 50.4547, // Default Kyiv
+  longitude: 30.5238,
+  timestamp: DateTime.now(),
+  accuracy: 0,
+  altitude: 0,
+  heading: 0,
+  speed: 0,
+  speedAccuracy: 0,
+  altitudeAccuracy: 0,
+  headingAccuracy: 0,
+);
+
 final effectiveLocationProvider = Provider<AsyncValue<Position>>((ref) {
   final settingsAsync = ref.watch(locationSettingsProvider);
   final streamAsync = ref.watch(locationStreamProvider);
@@ -355,10 +368,14 @@ final effectiveLocationProvider = Provider<AsyncValue<Position>>((ref) {
           ),
         );
       }
-      return streamAsync;
+      // If auto-detect is on, but stream is loading/error, provide default
+      return streamAsync.maybeWhen(
+        data: (pos) => AsyncData(pos),
+        orElse: () => AsyncData(_defaultPosition),
+      );
     },
-    loading: () => const AsyncLoading(),
-    error: (e, st) => AsyncError(e, st),
+    loading: () => AsyncData(_defaultPosition), // Immediate fallback during settings load
+    error: (e, st) => AsyncData(_defaultPosition), // Fallback on error
   );
 });
 
