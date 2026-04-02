@@ -1,6 +1,6 @@
 # Solaris — Advanced Circadian Monitor Control
 
-![Solaris Logo](solaris/assets/icon/icon.png)
+ ㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤ <img src="solaris/assets/icon/icon.png" width="300">
 
 **Solaris** is a professional Windows application built with Flutter that synchronizes your monitor's brightness and color temperature with natural circadian rhythms. By calculating the precise position of the sun (elevation and azimuth) based on your geographic location, Solaris ensures a comfortable, healthy, and fully automated computing experience 24/7.
 
@@ -35,6 +35,7 @@ Focus on the win without distractions.
 - **Auto-Lock**: Solaris detects when you start a game and prevents brightness from shifting during intense sessions.
 - **Customizable Lists**: Add specific apps to a **Whitelist** (always lock) or **Blacklist** (never lock).
 
+
 ### ☁️ Weather Influence
 The first monitor controller that cares about the sky.
 - **Cloudiness Logic**: Naturally dims brightness when it's overcast, rainy, or snowy using real-time Open-Meteo data.
@@ -49,6 +50,7 @@ Control your environment without leaving your current app.
 - **Auto-Geolocation**: Uses GPS to determine your coordinates automatically.
 - **Map Selection**: Choose your location on an interactive map if GPS is unavailable.
 - **Persistence**: Remembers your preferred location across sessions.
+
 
 ---
 
