@@ -502,5 +502,31 @@
   "showSnow": "Show Snow",
   "showThunder": "Show Thunderstorm",
   "showClouds": "Show Clouds",
-  "weatherSettingsSubtitle": "Customize animation visibility"
+  "weatherSettingsSubtitle": "Customize animation visibility",
+  "searchPlaceholder": "Search settings (e.g. 'brightness', 'sleep', 'hotkeys')...",
+  "noResultsFound": "No results found for '{query}'",
+  "@noResultsFound": {
+    "placeholders": {
+      "query": { "type": "String" }
+    }
+  },
+  "tags_brightness": "light, dark, glow, sun, backlight, screen, brightness, dim, bright, monitor, display, panel, level",
+  "tags_auto_brightness": "automatic, adaptive, sensor, solar, schedule, auto, brightness, dynamic, link, sync, synchronization",
+  "tags_auto_temperature": "color, warm, blue light, filter, night, evening, kelvin, temperature, auto, night shift, k, spectrum",
+  "tags_schedule": "graph, sun path, cycle, morning, day, evening, night, chart, schedule, curve, plot, profile, daily",
+  "tags_sleep": "google fit, rest, wake up, rhythm, sleep, analysis, data, google, fit, alarm, regime",
+  "tags_smart_circadian": "smart, adaptive, biological, dynamic, sleep pressure, wind down, bio morning, sleep debt, beta, experimental, adjustment",
+  "tags_wind_down": "melatonin, evening, pre-sleep, calm, dimming, warm, red, wind down, prepare",
+  "tags_game_mode": "gaming, fullscreen, priority, lock, performance, exclude, game, app",
+  "tags_circadian_limits": "min, max, range, boundaries, limit, brightness, range, constraints, curve, anchor, points",
+  "tags_autorun": "boot, startup, windows, launch, autorun, startup",
+  "tags_weather": "rain, cloud, sun, storm, snow, visibility, weather, reduction, atmosphere, clarity",
+  "tags_hotkeys": "shortcut, keys, keyboard, command, fast, hotkeys, binding, global, shortcut",
+  "tags_language": "lang, english, russian, ukrainian, dialect, translation, language, locale",
+  "tags_location": "gps, map, coordinates, city, geo, position, location, latitude, longitude",
+  "tags_location_auto": "gps, detect, ip, geo, auto, detect, position, automatic",
+  "tags_multi_monitor": "display, screen, multi, link, offset, separate, individual, monitor",
+  "tags_weather_animations": "animation, visual, rain, snow, thunder, effect, clouds, toggle, map",
+  "tags_sleep_analysis": "threshold, anomalies, average, regime, spread, analysis, sleep, settings",
+  "tags_legal": "legal, license, disclaimer, hardware, liability, info, about"
 }

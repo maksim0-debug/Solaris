@@ -959,4 +959,88 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get weatherSettingsSubtitle =>
       'Настройте видимость погодных условий на карте';
+
+  @override
+  String get searchPlaceholder => 'Поиск настроек (яркость, сон, клавиши)...';
+
+  @override
+  String noResultsFound(String query) {
+    return 'Ничего не найдено по запросу \'$query\'';
+  }
+
+  @override
+  String get tags_brightness =>
+      'свет, яркость, подсветка, экран, монитор, темнее, светлее, глаза, дисплей, панель, уровень';
+
+  @override
+  String get tags_auto_brightness =>
+      'автоматически, адаптивно, датчик, график, солнце, авто, динамика, линковка, синхронизация, связь';
+
+  @override
+  String get tags_auto_temperature =>
+      'цвет, тепло, синий свет, фильтр, ночь, вечер, кельвины, температура, авто, спектр, ночной режим';
+
+  @override
+  String get tags_schedule =>
+      'график, кривая, цикл, утро, день, вечер, ночь, диаграмма, расписание, профиль, план, карта';
+
+  @override
+  String get tags_sleep =>
+      'гугл фит, отдых, подъем, ритм, сон, анализ, данные, будильник, режим, трекер';
+
+  @override
+  String get tags_smart_circadian =>
+      'умный, адаптивный, био, динамика, давление сна, засыпание, био-утро, долг сна, бета, тест, настройка';
+
+  @override
+  String get tags_wind_down =>
+      'мелатонин, вечер, подготовка, покой, затухание, теплый, красный, засыпание, релакс';
+
+  @override
+  String get tags_game_mode =>
+      'игры, полный экран, приоритет, блок, производительность, исключения, игра, приложение';
+
+  @override
+  String get tags_circadian_limits =>
+      'мин, макс, диапазон, границы, лимит, яркость, предел, ограничения, кривая, точки, якорь';
+
+  @override
+  String get tags_autorun =>
+      'старт, запуск, виндовс, автозапуск, загрузка, авто, запуск';
+
+  @override
+  String get tags_weather =>
+      'дождь, облака, солнце, гроза, снег, видимость, погода, снижение, ясность, атмосфера';
+
+  @override
+  String get tags_hotkeys =>
+      'сочетание, клавиши, клавиатура, команда, быстро, хоткеи, привязка, глобальные, кнопки';
+
+  @override
+  String get tags_language =>
+      'язык, русский, английский, украинский, перевод, локализация, наречие';
+
+  @override
+  String get tags_location =>
+      'gps, карта, координаты, город, гео, позиция, локация, широта, долгота';
+
+  @override
+  String get tags_location_auto =>
+      'gps, определить, ip, гео, авто, позиция, автоматически';
+
+  @override
+  String get tags_multi_monitor =>
+      'монитор, дисплей, экран, несколько, линковка, смещение, раздельно, индивидуально';
+
+  @override
+  String get tags_weather_animations =>
+      'анимация, визуально, дождь, снег, гроза, эффект, облака, включить, карта';
+
+  @override
+  String get tags_sleep_analysis =>
+      'порог, аномалии, среднее, режим, разброс, анализ, сон, настройки';
+
+  @override
+  String get tags_legal =>
+      'юридический, лицензия, отказ, ответственность, железо, инфо, о программе';
 }

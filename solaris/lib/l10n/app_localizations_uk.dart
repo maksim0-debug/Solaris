@@ -956,4 +956,89 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get weatherSettingsSubtitle => 'Налаштуйте видимість анімацій';
+
+  @override
+  String get searchPlaceholder =>
+      'Пошук налаштувань (яскравість, сон, клавіші)...';
+
+  @override
+  String noResultsFound(String query) {
+    return 'Нічого не знайдено за запитом \'$query\'';
+  }
+
+  @override
+  String get tags_brightness =>
+      'світло, яскравість, підсвічування, екран, монітор, темніше, світліше, очі, дисплей, панель, рівень';
+
+  @override
+  String get tags_auto_brightness =>
+      'автоматично, адаптивно, датчик, графік, сонце, авто, динаміка, лінкування, синхронізація, зв\'язок';
+
+  @override
+  String get tags_auto_temperature =>
+      'колір, тепло, синє світло, фільтр, ніч, вечір, кельвіни, температура, авто, спектр, нічний режим';
+
+  @override
+  String get tags_schedule =>
+      'графік, крива, цикл, ранок, день, вечір, ніч, діаграма, розклад, профіль, план, карта';
+
+  @override
+  String get tags_sleep =>
+      'гугл фіт, відпочинок, підйом, ритм, сон, аналіз, дані, будильник, режим, трекер';
+
+  @override
+  String get tags_smart_circadian =>
+      'розумний, адаптивний, біо, динаміка, тиск сну, засинання, біо-ранок, борг сну, бета, тест, налаштування';
+
+  @override
+  String get tags_wind_down =>
+      'мелатонін, вечір, підготовка, спокій, загасання, теплий, червоний, засинання, релакс';
+
+  @override
+  String get tags_game_mode =>
+      'ігри, повний екран, пріоритет, блок, продуктивність, виключення, гра, додаток';
+
+  @override
+  String get tags_circadian_limits =>
+      'мін, макс, діапазон, межі, ліміт, яскравість, границя, обмеження, крива, точки, якір';
+
+  @override
+  String get tags_autorun =>
+      'старт, запуск, віндовс, автозапуск, завантаження, авто, запуск';
+
+  @override
+  String get tags_weather =>
+      'дощ, хмари, сонце, гроза, сніг, видимість, погода, зниження, ясність, атмосфера';
+
+  @override
+  String get tags_hotkeys =>
+      'поєднання, клавіші, клавіатура, команда, швидко, хоткеї, прив\'язка, глобальні, кнопки';
+
+  @override
+  String get tags_language =>
+      'мова, українська, російська, англійська, переклад, локалізація, говірка';
+
+  @override
+  String get tags_location =>
+      'gps, карта, координати, місто, гео, позиція, локація, широта, довгота';
+
+  @override
+  String get tags_location_auto =>
+      'gps, визначити, ip, гео, авто, позиція, автоматично';
+
+  @override
+  String get tags_multi_monitor =>
+      'монітор, дисплей, екран, кілька, лінкування, зміщення, окремо, індивідуально';
+
+  @override
+  String get tags_weather_animations =>
+      'анімація, візуально, дощ, сніг, гроза, ефект, хмари, увімкнути, карта';
+
+  @override
+  String get tags_sleep_analysis =>
+      'поріг, аномалії, середнє, режим, розкид, аналіз, сон, налаштування';
+
+  @override
+  String get tags_legal =>
+      'юридичний, ліцензія, відмова, відповідальність, залізо, інфо, про програму';
 }

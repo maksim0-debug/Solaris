@@ -956,4 +956,88 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get weatherSettingsSubtitle => 'Customize animation visibility';
+
+  @override
+  String get searchPlaceholder =>
+      'Search settings (e.g. \'brightness\', \'sleep\', \'hotkeys\')...';
+
+  @override
+  String noResultsFound(String query) {
+    return 'No results found for \'$query\'';
+  }
+
+  @override
+  String get tags_brightness =>
+      'light, dark, glow, sun, backlight, screen, brightness, dim, bright, monitor, display, panel, level';
+
+  @override
+  String get tags_auto_brightness =>
+      'automatic, adaptive, sensor, solar, schedule, auto, brightness, dynamic, link, sync, synchronization';
+
+  @override
+  String get tags_auto_temperature =>
+      'color, warm, blue light, filter, night, evening, kelvin, temperature, auto, night shift, k, spectrum';
+
+  @override
+  String get tags_schedule =>
+      'graph, sun path, cycle, morning, day, evening, night, chart, schedule, curve, plot, profile, daily';
+
+  @override
+  String get tags_sleep =>
+      'google fit, rest, wake up, rhythm, sleep, analysis, data, google, fit, alarm, regime';
+
+  @override
+  String get tags_smart_circadian =>
+      'smart, adaptive, biological, dynamic, sleep pressure, wind down, bio morning, sleep debt, beta, experimental, adjustment';
+
+  @override
+  String get tags_wind_down =>
+      'melatonin, evening, pre-sleep, calm, dimming, warm, red, wind down, prepare';
+
+  @override
+  String get tags_game_mode =>
+      'gaming, fullscreen, priority, lock, performance, exclude, game, app';
+
+  @override
+  String get tags_circadian_limits =>
+      'min, max, range, boundaries, limit, brightness, range, constraints, curve, anchor, points';
+
+  @override
+  String get tags_autorun => 'boot, startup, windows, launch, autorun, startup';
+
+  @override
+  String get tags_weather =>
+      'rain, cloud, sun, storm, snow, visibility, weather, reduction, atmosphere, clarity';
+
+  @override
+  String get tags_hotkeys =>
+      'shortcut, keys, keyboard, command, fast, hotkeys, binding, global, shortcut';
+
+  @override
+  String get tags_language =>
+      'lang, english, russian, ukrainian, dialect, translation, language, locale';
+
+  @override
+  String get tags_location =>
+      'gps, map, coordinates, city, geo, position, location, latitude, longitude';
+
+  @override
+  String get tags_location_auto =>
+      'gps, detect, ip, geo, auto, detect, position, automatic';
+
+  @override
+  String get tags_multi_monitor =>
+      'display, screen, multi, link, offset, separate, individual, monitor';
+
+  @override
+  String get tags_weather_animations =>
+      'animation, visual, rain, snow, thunder, effect, clouds, toggle, map';
+
+  @override
+  String get tags_sleep_analysis =>
+      'threshold, anomalies, average, regime, spread, analysis, sleep, settings';
+
+  @override
+  String get tags_legal =>
+      'legal, license, disclaimer, hardware, liability, info, about';
 }

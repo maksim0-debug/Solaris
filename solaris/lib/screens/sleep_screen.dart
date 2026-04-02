@@ -12,17 +12,78 @@ import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/models/temperature_state.dart';
 import 'package:intl/intl.dart';
 
-class SleepScreen extends ConsumerWidget {
+import 'package:solaris/widgets/deep_link_target.dart';
+
+class SleepScreen extends ConsumerStatefulWidget {
   const SleepScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SleepScreen> createState() => _SleepScreenState();
+}
+
+class _SleepScreenState extends ConsumerState<SleepScreen> {
+  final ScrollController _scrollController = ScrollController();
+  final Map<String, GlobalKey<DeepLinkTargetState>> _anchorKeys = {
+    'google_fit': GlobalKey<DeepLinkTargetState>(),
+    'circadian_regulation': GlobalKey<DeepLinkTargetState>(),
+    'wind_down': GlobalKey<DeepLinkTargetState>(),
+    'time_shift': GlobalKey<DeepLinkTargetState>(),
+    'sleep_pressure': GlobalKey<DeepLinkTargetState>(),
+    'sleep_debt': GlobalKey<DeepLinkTargetState>(),
+    'sleep_regimes': GlobalKey<DeepLinkTargetState>(),
+    'sleep_analysis': GlobalKey<DeepLinkTargetState>(),
+  };
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToAnchor(String anchorId) {
+    final key = _anchorKeys[anchorId];
+    if (key != null && key.currentContext != null) {
+      Scrollable.ensureVisible(
+        key.currentContext!,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOutCubic,
+        alignment: 0.5,
+      );
+      key.currentState?.highlight();
+      
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (mounted) {
+          ref.read(searchAnchorProvider.notifier).clear();
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final sleepState = ref.watch(sleepProvider);
     final regimes = ref.watch(sleepRegimesProvider);
     final googleFitState = ref.watch(googleFitProvider);
 
+    ref.listen<String?>(searchAnchorProvider, (previous, next) {
+      if (next != null && _anchorKeys.containsKey(next)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToAnchor(next);
+        });
+      }
+    });
+
+    // Handle initial anchor on first build/mount
+    final initialAnchor = ref.read(searchAnchorProvider);
+    if (initialAnchor != null && _anchorKeys.containsKey(initialAnchor)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToAnchor(initialAnchor);
+      });
+    }
+
     return SingleChildScrollView(
+      controller: _scrollController,
       physics: const BouncingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,57 +96,74 @@ class SleepScreen extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // Google Fit Sync Card
-          _GoogleFitSyncCard(
-            googleFitState: googleFitState,
-            sleepState: sleepState,
+          DeepLinkTarget(
+            key: _anchorKeys['google_fit'],
+            id: 'google_fit',
+            child: _GoogleFitSyncCard(
+              googleFitState: googleFitState,
+              sleepState: sleepState,
+            ),
           ),
           const SizedBox(height: 24),
 
           // Circadian Regulation Section
           if (googleFitState.status == GoogleFitStatus.connected) ...[
-            const _CircadianRegulationSection(),
+            _CircadianRegulationSection(anchorKeys: _anchorKeys),
             const SizedBox(height: 32),
           ],
 
           // Sleep Regimes / History
-          if (regimes.isEmpty && !sleepState.isLoading)
-            Center(
-              child: Text(
-                l10n.sleepDataSubtitle,
-                style: const TextStyle(color: Colors.white24),
-              ),
-            )
-          else ...[
-            Builder(
-              builder: (context) {
-                final currentRegime = regimes.firstWhere(
-                  (r) => r.isCurrent,
-                  orElse: () => regimes.first,
-                );
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.currentRegime,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+          DeepLinkTarget(
+            key: _anchorKeys['sleep_regimes'],
+            id: 'sleep_regimes',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (regimes.isEmpty && !sleepState.isLoading)
+                  Center(
+                    child: Text(
+                      l10n.sleepDataSubtitle,
+                      style: const TextStyle(color: Colors.white24),
                     ),
-                    const SizedBox(height: 16),
-                    SleepRegimeCard(
-                      regime: currentRegime,
-                      initiallyExpanded: false,
-                    ),
-                  ],
-                );
-              },
+                  )
+                else ...[
+                  Builder(
+                    builder: (context) {
+                      final currentRegime = regimes.firstWhere(
+                        (r) => r.isCurrent,
+                        orElse: () => regimes.first,
+                      );
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.currentRegime,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          SleepRegimeCard(
+                            regime: currentRegime,
+                            initiallyExpanded: false,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ],
             ),
-          ],
+          ),
           const SizedBox(height: 32),
           if (googleFitState.status == GoogleFitStatus.connected) ...[
-            const _SleepAnalysisSettingsSection(),
+            DeepLinkTarget(
+              key: _anchorKeys['sleep_analysis'],
+              id: 'sleep_analysis',
+              child: const _SleepAnalysisSettingsSection(),
+            ),
             const SizedBox(height: 48),
           ],
         ],
@@ -328,7 +406,8 @@ class _GoogleFitSyncCard extends ConsumerWidget {
 }
 
 class _CircadianRegulationSection extends ConsumerWidget {
-  const _CircadianRegulationSection();
+  final Map<String, GlobalKey<DeepLinkTargetState>> anchorKeys;
+  const _CircadianRegulationSection({required this.anchorKeys});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -362,31 +441,41 @@ class _CircadianRegulationSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              l10n.circadianRegulation,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+        DeepLinkTarget(
+          key: anchorKeys['circadian_regulation'],
+          id: 'circadian_regulation',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    l10n.circadianRegulation,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Switch(
+                    value: settings.isSmartCircadianEnabled,
+                    onChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateSmartCircadian(val),
+                    activeColor: const Color(0xFF8B5CF6),
+                  ),
+                ],
               ),
-            ),
-            Switch(
-              value: settings.isSmartCircadianEnabled,
-              onChanged: (val) =>
-                  ref.read(settingsProvider.notifier).updateSmartCircadian(val),
-              activeColor: const Color(0xFF8B5CF6),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          l10n.circadianRegulationBetaNote,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.white.withOpacity(0.4),
+              const SizedBox(height: 4),
+              Text(
+                l10n.circadianRegulationBetaNote,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.white.withOpacity(0.4),
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 16),
@@ -394,180 +483,199 @@ class _CircadianRegulationSection extends ConsumerWidget {
           padding: const EdgeInsets.all(24),
           child: AnimatedOpacity(
             duration: const Duration(milliseconds: 300),
-            opacity:
-                (settings.isSmartCircadianEnabled ||
+            opacity: (settings.isSmartCircadianEnabled ||
                     tempSettings.isSmartCircadianEnabled)
                 ? 1.0
                 : 0.4,
             child: AbsorbPointer(
-              absorbing:
-                  !settings.isSmartCircadianEnabled &&
+              absorbing: !settings.isSmartCircadianEnabled &&
                   !tempSettings.isSmartCircadianEnabled,
               child: Column(
                 children: [
-                  _RegulationToggle(
-                    title: l10n.featureWindDown,
-                    subtitle: l10n.featureWindDownSubtitle,
-                    info: l10n.featureWindDownInfo,
-                    masterValue: settings.isWindDownMasterEnabled,
-                    brightnessValue: settings.isWindDownEnabled,
-                    temperatureValue: tempSettings.isWindDownEnabled,
-                    onMasterChanged: (val) => ref
-                        .read(settingsProvider.notifier)
-                        .updateWindDownMaster(val),
-                    onBrightnessChanged: (val) =>
-                        ref.read(settingsProvider.notifier).updateWindDown(val),
-                    onTemperatureChanged: (val) => ref
-                        .read(temperatureSettingsProvider.notifier)
-                        .updateWindDown(val),
-                    brightnessLabel: l10n.influenceBrightness,
-                    temperatureLabel: l10n.influenceTemperature,
-                    isActive: smartData.isWindDownActive,
-                    timingText: smartData.isWindDownActive
-                        ? (smartData.minutesUntilSleep != null &&
+                  DeepLinkTarget(
+                    key: anchorKeys['wind_down'],
+                    id: 'wind_down',
+                    child: _RegulationToggle(
+                      title: l10n.featureWindDown,
+                      subtitle: l10n.featureWindDownSubtitle,
+                      info: l10n.featureWindDownInfo,
+                      masterValue: settings.isWindDownMasterEnabled,
+                      brightnessValue: settings.isWindDownEnabled,
+                      temperatureValue: tempSettings.isWindDownEnabled,
+                      onMasterChanged: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateWindDownMaster(val),
+                      onBrightnessChanged: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateWindDown(val),
+                      onTemperatureChanged: (val) => ref
+                          .read(temperatureSettingsProvider.notifier)
+                          .updateWindDown(val),
+                      brightnessLabel: l10n.influenceBrightness,
+                      temperatureLabel: l10n.influenceTemperature,
+                      isActive: smartData.isWindDownActive,
+                      timingText: smartData.isWindDownActive
+                          ? (smartData.minutesUntilSleep != null &&
                                   smartData.minutesUntilSleep! > 0)
                               ? l10n.remainingUntilSleep(
                                   formatMins(smartData.minutesUntilSleep!),
                                 )
                               : (smartData.minutesUntilWakeUp != null)
-                              ? l10n.remainingUntilWakeUp
-                              : l10n.active
-                        : null,
-                    brightnessIntensity: settings.windDownBrightnessIntensity,
-                    temperatureIntensity: settings.windDownTemperatureIntensity,
-                    onBrightnessIntensityChanged: (val) => ref
-                        .read(settingsProvider.notifier)
-                        .updateWindDownIntensity(
-                          val,
+                                  ? l10n.remainingUntilWakeUp
+                                  : l10n.active
+                          : null,
+                      brightnessIntensity: settings.windDownBrightnessIntensity,
+                      temperatureIntensity:
                           settings.windDownTemperatureIntensity,
-                        ),
-                    onTemperatureIntensityChanged: (val) => ref
-                        .read(settingsProvider.notifier)
-                        .updateWindDownIntensity(
-                          settings.windDownBrightnessIntensity,
-                          val,
-                        ),
-                    durationValue: settings.windDownDurationMinutes.toDouble(),
-                    durationMin: 30,
-                    durationMax: 360,
-                    durationLabel: l10n.windDownDuration,
-                    onDurationChanged: (val) => ref
-                        .read(settingsProvider.notifier)
-                        .updateWindDownDuration(val.toInt()),
+                      onBrightnessIntensityChanged: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateWindDownIntensity(
+                            val,
+                            settings.windDownTemperatureIntensity,
+                          ),
+                      onTemperatureIntensityChanged: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateWindDownIntensity(
+                            settings.windDownBrightnessIntensity,
+                            val,
+                          ),
+                      durationValue:
+                          settings.windDownDurationMinutes.toDouble(),
+                      durationMin: 30,
+                      durationMax: 360,
+                      durationLabel: l10n.windDownDuration,
+                      onDurationChanged: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateWindDownDuration(val.toInt()),
+                    ),
                   ),
                   const Divider(height: 32, color: Colors.white10),
-                  _RegulationToggle(
-                    title: l10n.featureTimeShift,
-                    subtitle: l10n.featureTimeShiftSubtitle,
-                    info: l10n.featureTimeShiftInfo,
-                    masterValue: settings.isTimeShiftMasterEnabled,
-                    brightnessValue: settings.isTimeShiftEnabled,
-                    temperatureValue: tempSettings.isTimeShiftEnabled,
-                    onMasterChanged: (val) => ref
-                        .read(settingsProvider.notifier)
-                        .updateTimeShiftMaster(val),
-                    onBrightnessChanged: (val) => ref
-                        .read(settingsProvider.notifier)
-                        .updateTimeShift(val),
-                    onTemperatureChanged: (val) => ref
-                        .read(temperatureSettingsProvider.notifier)
-                        .updateTimeShift(val),
-                    brightnessLabel: l10n.influenceBrightness,
-                    temperatureLabel: l10n.influenceTemperature,
-                    isActive: smartData.isTimeShiftActive,
-                    brightnessIntensity: settings.timeShiftIntensity,
-                    onBrightnessIntensityChanged: (val) => ref
-                        .read(settingsProvider.notifier)
-                        .updateTimeShiftIntensity(val),
-                    showTemperatureIntensity:
-                        false, // Time shift is a single factor
-                    durationValue: settings.timeShiftDurationMinutes.toDouble(),
-                    durationMin: 60,
-                    durationMax: 720,
-                    durationLabel: l10n.timeShiftDuration,
-                    onDurationChanged: (val) => ref
-                        .read(settingsProvider.notifier)
-                        .updateTimeShiftDuration(val.toInt()),
+                  DeepLinkTarget(
+                    key: anchorKeys['time_shift'],
+                    id: 'time_shift',
+                    child: _RegulationToggle(
+                      title: l10n.featureTimeShift,
+                      subtitle: l10n.featureTimeShiftSubtitle,
+                      info: l10n.featureTimeShiftInfo,
+                      masterValue: settings.isTimeShiftMasterEnabled,
+                      brightnessValue: settings.isTimeShiftEnabled,
+                      temperatureValue: tempSettings.isTimeShiftEnabled,
+                      onMasterChanged: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateTimeShiftMaster(val),
+                      onBrightnessChanged: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateTimeShift(val),
+                      onTemperatureChanged: (val) => ref
+                          .read(temperatureSettingsProvider.notifier)
+                          .updateTimeShift(val),
+                      brightnessLabel: l10n.influenceBrightness,
+                      temperatureLabel: l10n.influenceTemperature,
+                      isActive: smartData.isTimeShiftActive,
+                      brightnessIntensity: settings.timeShiftIntensity,
+                      onBrightnessIntensityChanged: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateTimeShiftIntensity(val),
+                      showTemperatureIntensity:
+                          false, // Time shift is a single factor
+                      durationValue:
+                          settings.timeShiftDurationMinutes.toDouble(),
+                      durationMin: 60,
+                      durationMax: 720,
+                      durationLabel: l10n.timeShiftDuration,
+                      onDurationChanged: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateTimeShiftDuration(val.toInt()),
+                    ),
                   ),
                   const Divider(height: 32, color: Colors.white10),
-                  _RegulationToggle(
-                    title: l10n.featureSleepPressure,
-                    subtitle: l10n.featureSleepPressureSubtitle,
-                    info: l10n.featureSleepPressureInfo,
-                    masterValue: settings.isSleepPressureMasterEnabled,
-                    brightnessValue: settings.isSleepPressureEnabled,
-                    temperatureValue: tempSettings.isSleepPressureEnabled,
-                    onMasterChanged: (val) => ref
-                        .read(settingsProvider.notifier)
-                        .updateSleepPressureMaster(val),
-                    onBrightnessChanged: (val) => ref
-                        .read(settingsProvider.notifier)
-                        .updateSleepPressure(val),
-                    onTemperatureChanged: (val) => ref
-                        .read(temperatureSettingsProvider.notifier)
-                        .updateSleepPressure(val),
-                    brightnessLabel: l10n.influenceBrightness,
-                    temperatureLabel: l10n.influenceTemperature,
-                    isActive: smartData.isSleepPressureActive,
-                    brightnessIntensity:
-                        settings.sleepPressureBrightnessIntensity,
-                    onBrightnessIntensityChanged: (val) => ref
-                        .read(settingsProvider.notifier)
-                        .updateSleepPressureIntensity(val),
-                    showTemperatureIntensity:
-                        false, // Currently only brightness
-                    durationValue: settings.sleepPressureWakeLimitHours,
-                    durationMin: 10,
-                    durationMax: 20,
-                    durationLabel: l10n.sleepPressureLimit,
-                    durationUnit: l10n.hoursAbbreviation,
-                    onDurationChanged: (val) => ref
-                        .read(settingsProvider.notifier)
-                        .updateSleepPressureLimit(val),
+                  DeepLinkTarget(
+                    key: anchorKeys['sleep_pressure'],
+                    id: 'sleep_pressure',
+                    child: _RegulationToggle(
+                      title: l10n.featureSleepPressure,
+                      subtitle: l10n.featureSleepPressureSubtitle,
+                      info: l10n.featureSleepPressureInfo,
+                      masterValue: settings.isSleepPressureMasterEnabled,
+                      brightnessValue: settings.isSleepPressureEnabled,
+                      temperatureValue: tempSettings.isSleepPressureEnabled,
+                      onMasterChanged: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateSleepPressureMaster(val),
+                      onBrightnessChanged: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateSleepPressure(val),
+                      onTemperatureChanged: (val) => ref
+                          .read(temperatureSettingsProvider.notifier)
+                          .updateSleepPressure(val),
+                      brightnessLabel: l10n.influenceBrightness,
+                      temperatureLabel: l10n.influenceTemperature,
+                      isActive: smartData.isSleepPressureActive,
+                      brightnessIntensity:
+                          settings.sleepPressureBrightnessIntensity,
+                      onBrightnessIntensityChanged: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateSleepPressureIntensity(val),
+                      showTemperatureIntensity:
+                          false, // Currently only brightness
+                      durationValue: settings.sleepPressureWakeLimitHours,
+                      durationMin: 10,
+                      durationMax: 20,
+                      durationLabel: l10n.sleepPressureLimit,
+                      durationUnit: l10n.hoursAbbreviation,
+                      onDurationChanged: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateSleepPressureLimit(val),
+                    ),
                   ),
                   const Divider(height: 32, color: Colors.white10),
-                  _RegulationToggle(
-                    title: l10n.featureSleepDebt,
-                    subtitle: l10n.featureSleepDebtSubtitle,
-                    info: l10n.featureSleepDebtInfo,
-                    masterValue: settings.isSleepDebtMasterEnabled,
-                    brightnessValue: settings.isSleepDebtEnabled,
-                    temperatureValue: tempSettings.isSleepDebtEnabled,
-                    onMasterChanged: (val) => ref
-                        .read(settingsProvider.notifier)
-                        .updateSleepDebtMaster(val),
-                    onBrightnessChanged: (val) => ref
-                        .read(settingsProvider.notifier)
-                        .updateSleepDebt(val),
-                    onTemperatureChanged: (val) => ref
-                        .read(temperatureSettingsProvider.notifier)
-                        .updateSleepDebt(val),
-                    brightnessLabel: l10n.influenceBrightness,
-                    temperatureLabel: l10n.influenceTemperature,
-                    isActive: smartData.isSleepDebtActive,
-                    brightnessIntensity: settings.sleepDebtBrightnessIntensity,
-                    temperatureIntensity:
-                        settings.sleepDebtTemperatureIntensity,
-                    onBrightnessIntensityChanged: (val) => ref
-                        .read(settingsProvider.notifier)
-                        .updateSleepDebtIntensity(
-                          val,
-                          settings.sleepDebtTemperatureIntensity,
-                        ),
-                    onTemperatureIntensityChanged: (val) => ref
-                        .read(settingsProvider.notifier)
-                        .updateSleepDebtIntensity(
+                  DeepLinkTarget(
+                    key: anchorKeys['sleep_debt'],
+                    id: 'sleep_debt',
+                    child: _RegulationToggle(
+                      title: l10n.featureSleepDebt,
+                      subtitle: l10n.featureSleepDebtSubtitle,
+                      info: l10n.featureSleepDebtInfo,
+                      masterValue: settings.isSleepDebtMasterEnabled,
+                      brightnessValue: settings.isSleepDebtEnabled,
+                      temperatureValue: tempSettings.isSleepDebtEnabled,
+                      onMasterChanged: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateSleepDebtMaster(val),
+                      onBrightnessChanged: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateSleepDebt(val),
+                      onTemperatureChanged: (val) => ref
+                          .read(temperatureSettingsProvider.notifier)
+                          .updateSleepDebt(val),
+                      brightnessLabel: l10n.influenceBrightness,
+                      temperatureLabel: l10n.influenceTemperature,
+                      isActive: smartData.isSleepDebtActive,
+                      brightnessIntensity:
                           settings.sleepDebtBrightnessIntensity,
-                          val,
-                        ),
-                    durationValue: settings.sleepDebtThresholdMinutes
-                        .toDouble(),
-                    durationMin: 240,
-                    durationMax: 540,
-                    durationLabel: l10n.sleepDebtThreshold,
-                    onDurationChanged: (val) => ref
-                        .read(settingsProvider.notifier)
-                        .updateSleepDebtThreshold(val.toInt()),
+                      temperatureIntensity:
+                          settings.sleepDebtTemperatureIntensity,
+                      onBrightnessIntensityChanged: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateSleepDebtIntensity(
+                            val,
+                            settings.sleepDebtTemperatureIntensity,
+                          ),
+                      onTemperatureIntensityChanged: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateSleepDebtIntensity(
+                            settings.sleepDebtBrightnessIntensity,
+                            val,
+                          ),
+                      durationValue:
+                          settings.sleepDebtThresholdMinutes.toDouble(),
+                      durationMin: 240,
+                      durationMax: 540,
+                      durationLabel: l10n.sleepDebtThreshold,
+                      onDurationChanged: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateSleepDebtThreshold(val.toInt()),
+                    ),
                   ),
                 ],
               ),

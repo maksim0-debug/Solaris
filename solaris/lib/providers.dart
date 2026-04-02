@@ -585,6 +585,28 @@ final activeScreenProvider = NotifierProvider<ActiveScreenNotifier, AppScreen>(
   ActiveScreenNotifier.new,
 );
 
+class IsSearchVisibleNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+  void setVisible(bool visible) => state = visible;
+  void toggle() => state = !state;
+}
+
+final isSearchVisibleProvider = NotifierProvider<IsSearchVisibleNotifier, bool>(
+  IsSearchVisibleNotifier.new,
+);
+
+class SearchAnchorNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+  void setAnchor(String? anchor) => state = anchor;
+  void clear() => state = null;
+}
+
+final searchAnchorProvider = NotifierProvider<SearchAnchorNotifier, String?>(
+  SearchAnchorNotifier.new,
+);
+
 class LocaleNotifier extends Notifier<Locale> {
   static const _localeKey = 'app_locale';
 

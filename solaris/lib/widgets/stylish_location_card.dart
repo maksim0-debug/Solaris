@@ -9,8 +9,11 @@ import 'package:solaris/providers/lifecycle_provider.dart';
 import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/weather_overlay.dart';
 
+import 'package:solaris/widgets/deep_link_target.dart';
+
 class StylishLocationCard extends ConsumerWidget {
-  const StylishLocationCard({super.key});
+  final GlobalKey<DeepLinkTargetState>? anchorKey;
+  const StylishLocationCard({super.key, this.anchorKey});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -130,6 +133,7 @@ class StylishLocationCard extends ConsumerWidget {
                         children: [
                           _WeatherSettingsButton(
                             accentColor: accentColor,
+                            anchorKey: anchorKey,
                           ),
                           Icon(
                             LucideIcons.compass,
@@ -263,7 +267,8 @@ class _PulsingLocationMarkerState extends ConsumerState<PulsingLocationMarker>
 
 class _WeatherSettingsButton extends ConsumerStatefulWidget {
   final Color accentColor;
-  const _WeatherSettingsButton({super.key, required this.accentColor});
+  final GlobalKey<DeepLinkTargetState>? anchorKey;
+  const _WeatherSettingsButton({super.key, required this.accentColor, this.anchorKey});
 
   @override
   ConsumerState<_WeatherSettingsButton> createState() => _WeatherSettingsButtonState();
@@ -405,27 +410,34 @@ class _WeatherSettingsButtonState extends ConsumerState<_WeatherSettingsButton> 
 
   @override
   Widget build(BuildContext context) {
-    return CompositedTransformTarget(
-      link: _layerLink,
-      child: IconButton(
-        onPressed: _togglePopover,
-        icon: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: _isOpen ? widget.accentColor.withOpacity(0.2) : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
+    return DeepLinkTarget(
+      key: widget.anchorKey,
+      id: 'weather_animations',
+      onDeepLink: () {
+        if (!_isOpen) _togglePopover();
+      },
+      child: CompositedTransformTarget(
+        link: _layerLink,
+        child: IconButton(
+          onPressed: _togglePopover,
+          icon: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: _isOpen ? widget.accentColor.withOpacity(0.2) : Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              LucideIcons.settings,
+              size: 16,
+              color: _isOpen ? widget.accentColor : widget.accentColor.withOpacity(0.8),
+            ),
           ),
-          child: Icon(
-            LucideIcons.settings,
-            size: 16,
-            color: _isOpen ? widget.accentColor : widget.accentColor.withOpacity(0.8),
-          ),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          splashRadius: 16,
+          tooltip: _isOpen ? null : AppLocalizations.of(context)!.weatherAnimations,
         ),
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(),
-        splashRadius: 16,
-        tooltip: _isOpen ? null : AppLocalizations.of(context)!.weatherAnimations,
       ),
     );
   }

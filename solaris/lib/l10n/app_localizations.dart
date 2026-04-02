@@ -1781,6 +1781,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Customize animation visibility'**
   String get weatherSettingsSubtitle;
+
+  /// No description provided for @searchPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Search settings (e.g. \'brightness\', \'sleep\', \'hotkeys\')...'**
+  String get searchPlaceholder;
+
+  /// No description provided for @noResultsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No results found for \'{query}\''**
+  String noResultsFound(String query);
+
+  /// No description provided for @tags_brightness.
+  ///
+  /// In en, this message translates to:
+  /// **'light, dark, glow, sun, backlight, screen, brightness, dim, bright, monitor, display, panel, level'**
+  String get tags_brightness;
+
+  /// No description provided for @tags_auto_brightness.
+  ///
+  /// In en, this message translates to:
+  /// **'automatic, adaptive, sensor, solar, schedule, auto, brightness, dynamic, link, sync, synchronization'**
+  String get tags_auto_brightness;
+
+  /// No description provided for @tags_auto_temperature.
+  ///
+  /// In en, this message translates to:
+  /// **'color, warm, blue light, filter, night, evening, kelvin, temperature, auto, night shift, k, spectrum'**
+  String get tags_auto_temperature;
+
+  /// No description provided for @tags_schedule.
+  ///
+  /// In en, this message translates to:
+  /// **'graph, sun path, cycle, morning, day, evening, night, chart, schedule, curve, plot, profile, daily'**
+  String get tags_schedule;
+
+  /// No description provided for @tags_sleep.
+  ///
+  /// In en, this message translates to:
+  /// **'google fit, rest, wake up, rhythm, sleep, analysis, data, google, fit, alarm, regime'**
+  String get tags_sleep;
+
+  /// No description provided for @tags_smart_circadian.
+  ///
+  /// In en, this message translates to:
+  /// **'smart, adaptive, biological, dynamic, sleep pressure, wind down, bio morning, sleep debt, beta, experimental, adjustment'**
+  String get tags_smart_circadian;
+
+  /// No description provided for @tags_wind_down.
+  ///
+  /// In en, this message translates to:
+  /// **'melatonin, evening, pre-sleep, calm, dimming, warm, red, wind down, prepare'**
+  String get tags_wind_down;
+
+  /// No description provided for @tags_game_mode.
+  ///
+  /// In en, this message translates to:
+  /// **'gaming, fullscreen, priority, lock, performance, exclude, game, app'**
+  String get tags_game_mode;
+
+  /// No description provided for @tags_circadian_limits.
+  ///
+  /// In en, this message translates to:
+  /// **'min, max, range, boundaries, limit, brightness, range, constraints, curve, anchor, points'**
+  String get tags_circadian_limits;
+
+  /// No description provided for @tags_autorun.
+  ///
+  /// In en, this message translates to:
+  /// **'boot, startup, windows, launch, autorun, startup'**
+  String get tags_autorun;
+
+  /// No description provided for @tags_weather.
+  ///
+  /// In en, this message translates to:
+  /// **'rain, cloud, sun, storm, snow, visibility, weather, reduction, atmosphere, clarity'**
+  String get tags_weather;
+
+  /// No description provided for @tags_hotkeys.
+  ///
+  /// In en, this message translates to:
+  /// **'shortcut, keys, keyboard, command, fast, hotkeys, binding, global, shortcut'**
+  String get tags_hotkeys;
+
+  /// No description provided for @tags_language.
+  ///
+  /// In en, this message translates to:
+  /// **'lang, english, russian, ukrainian, dialect, translation, language, locale'**
+  String get tags_language;
+
+  /// No description provided for @tags_location.
+  ///
+  /// In en, this message translates to:
+  /// **'gps, map, coordinates, city, geo, position, location, latitude, longitude'**
+  String get tags_location;
+
+  /// No description provided for @tags_location_auto.
+  ///
+  /// In en, this message translates to:
+  /// **'gps, detect, ip, geo, auto, detect, position, automatic'**
+  String get tags_location_auto;
+
+  /// No description provided for @tags_multi_monitor.
+  ///
+  /// In en, this message translates to:
+  /// **'display, screen, multi, link, offset, separate, individual, monitor'**
+  String get tags_multi_monitor;
+
+  /// No description provided for @tags_weather_animations.
+  ///
+  /// In en, this message translates to:
+  /// **'animation, visual, rain, snow, thunder, effect, clouds, toggle, map'**
+  String get tags_weather_animations;
+
+  /// No description provided for @tags_sleep_analysis.
+  ///
+  /// In en, this message translates to:
+  /// **'threshold, anomalies, average, regime, spread, analysis, sleep, settings'**
+  String get tags_sleep_analysis;
+
+  /// No description provided for @tags_legal.
+  ///
+  /// In en, this message translates to:
+  /// **'legal, license, disclaimer, hardware, liability, info, about'**
+  String get tags_legal;
 }
 
 class _AppLocalizationsDelegate

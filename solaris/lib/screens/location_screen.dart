@@ -6,6 +6,7 @@ import 'package:solaris/providers.dart';
 import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/stylish_location_card.dart';
 import 'package:solaris/widgets/solar_map.dart';
+import 'package:solaris/widgets/deep_link_target.dart';
 
 class LocationScreen extends ConsumerStatefulWidget {
   const LocationScreen({super.key});
@@ -17,12 +18,34 @@ class LocationScreen extends ConsumerStatefulWidget {
 class _LocationScreenState extends ConsumerState<LocationScreen> {
   final TextEditingController _latController = TextEditingController();
   final TextEditingController _lonController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  final Map<String, GlobalKey<DeepLinkTargetState>> _anchorKeys = {
+    'location_region': GlobalKey<DeepLinkTargetState>(),
+    'location_auto': GlobalKey<DeepLinkTargetState>(),
+    'location_lat': GlobalKey<DeepLinkTargetState>(),
+    'location_lng': GlobalKey<DeepLinkTargetState>(),
+    'weather_animations': GlobalKey<DeepLinkTargetState>(),
+  };
 
   @override
   void dispose() {
     _latController.dispose();
     _lonController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _scrollToAnchor(String anchorId) {
+    final key = _anchorKeys[anchorId];
+    if (key != null && key.currentContext != null) {
+      Scrollable.ensureVisible(
+        key.currentContext!,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOutCubic,
+        alignment: 0.5,
+      );
+      key.currentState?.highlight();
+    }
   }
 
   void _updateControllers(double? lat, double? lon) {
@@ -57,18 +80,27 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
       });
     });
 
-    // Populate controllers initially if settings are already loaded
-    if (settingsAsync.hasValue && settingsAsync.value!.useManual) {
-      final settings = settingsAsync.value!;
-      if (_latController.text.isEmpty && settings.manualLatitude != null) {
-        _latController.text = settings.manualLatitude!.toStringAsFixed(4);
+    // Listen for deep link anchors
+    ref.listen(searchAnchorProvider, (previous, next) {
+      if (next != null && _anchorKeys.containsKey(next)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToAnchor(next);
+          ref.read(searchAnchorProvider.notifier).clear();
+        });
       }
-      if (_lonController.text.isEmpty && settings.manualLongitude != null) {
-        _lonController.text = settings.manualLongitude!.toStringAsFixed(4);
-      }
+    });
+
+    // Handle initial anchor on first build/mount
+    final initialAnchor = ref.read(searchAnchorProvider);
+    if (initialAnchor != null && _anchorKeys.containsKey(initialAnchor)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToAnchor(initialAnchor);
+        ref.read(searchAnchorProvider.notifier).clear();
+      });
     }
 
     return SingleChildScrollView(
+      controller: _scrollController,
       padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,27 +183,31 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                     crossAxisAlignment: CrossAxisAlignment.stretch,
                                     children: [
                                       settingsAsync.maybeWhen(
-                                        data: (settings) => _AutoDetectToggle(
-                                          isActive: !settings.useManual,
-                                          onToggle: (val) {
-                                            if (val) {
-                                              ref
-                                                  .read(locationSettingsProvider.notifier)
-                                                  .setAutoLocation();
-                                            } else {
-                                              final pos = locationAsync.value;
-                                              if (pos != null) {
+                                        data: (settings) => DeepLinkTarget(
+                                          key: _anchorKeys['location_auto'],
+                                          id: 'location_auto',
+                                          child: _AutoDetectToggle(
+                                            isActive: !settings.useManual,
+                                            onToggle: (val) {
+                                              if (val) {
                                                 ref
-                                                    .read(
-                                                      locationSettingsProvider.notifier,
-                                                    )
-                                                    .setManualLocation(
-                                                      pos.latitude,
-                                                      pos.longitude,
-                                                    );
+                                                    .read(locationSettingsProvider.notifier)
+                                                    .setAutoLocation();
+                                              } else {
+                                                final pos = locationAsync.value;
+                                                if (pos != null) {
+                                                  ref
+                                                      .read(
+                                                        locationSettingsProvider.notifier,
+                                                      )
+                                                      .setManualLocation(
+                                                        pos.latitude,
+                                                        pos.longitude,
+                                                      );
+                                                }
                                               }
-                                            }
-                                          },
+                                            },
+                                          ),
                                         ),
                                         orElse: () => const SizedBox(),
                                       ),
@@ -312,10 +348,16 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
               const SizedBox(width: 32),
               // Controls Side
               Expanded(
-                child: Column(
-                  children: [
-                    const StylishLocationCard(),
-                    const SizedBox(height: 24),
+                    child: Column(
+                      children: [
+                        DeepLinkTarget(
+                          key: _anchorKeys['location_region'],
+                          id: 'location_region',
+                          child: StylishLocationCard(
+                            anchorKey: _anchorKeys['weather_animations'],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
                     GlassCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -328,16 +370,24 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                             ),
                           ),
                           const SizedBox(height: 24),
-                          _CoordinateInput(
-                            label: l10n.latitude,
-                            controller: _latController,
-                            hint: "00.0000",
+                          DeepLinkTarget(
+                            key: _anchorKeys['location_lat'],
+                            id: 'location_lat',
+                            child: _CoordinateInput(
+                              label: l10n.latitude,
+                              controller: _latController,
+                              hint: "00.0000",
+                            ),
                           ),
                           const SizedBox(height: 16),
-                          _CoordinateInput(
-                            label: l10n.longitude,
-                            controller: _lonController,
-                            hint: "00.0000",
+                          DeepLinkTarget(
+                            key: _anchorKeys['location_lng'],
+                            id: 'location_lng',
+                            child: _CoordinateInput(
+                              label: l10n.longitude,
+                              controller: _lonController,
+                              hint: "00.0000",
+                            ),
                           ),
                           const SizedBox(height: 32),
                           SizedBox(

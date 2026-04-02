@@ -23,6 +23,10 @@ import 'package:solaris/widgets/circadian_breakdown_tooltip.dart';
 import 'package:solaris/widgets/about_dialog.dart';
 import 'package:solaris/providers/app_info_provider.dart';
 import 'package:solaris/models/settings_state.dart';
+import 'package:flutter/services.dart';
+import 'package:solaris/widgets/settings_search_overlay.dart';
+import 'package:solaris/widgets/deep_link_target.dart';
+import 'dart:ui';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -32,6 +36,20 @@ class DashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  final FocusNode _focusNode = FocusNode();
+  final Map<String, GlobalKey<DeepLinkTargetState>> _anchorKeys = {
+    'legal_info': GlobalKey<DeepLinkTargetState>(),
+    'multi_monitor_offsets': GlobalKey<DeepLinkTargetState>(),
+  };
+
+  void _handleGlobalDeepLink(String anchorId) {
+    final key = _anchorKeys[anchorId];
+    if (key != null && key.currentState != null) {
+      key.currentState?.highlight();
+      ref.read(searchAnchorProvider.notifier).clear();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -43,9 +61,37 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     // Keep the background brightness adjustment logic alive
     ref.watch(circadianAdjustmentProvider);
+
+    ref.listen<bool>(isSearchVisibleProvider, (previous, next) {
+      if (previous == true && next == false) {
+        _focusNode.requestFocus();
+      }
+    });
+
+    ref.listen(searchAnchorProvider, (previous, next) {
+      if (next != null && _anchorKeys.containsKey(next)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _handleGlobalDeepLink(next);
+        });
+      }
+    });
+
+    // Handle initial global anchor
+    final initialAnchor = ref.read(searchAnchorProvider);
+    if (initialAnchor != null && _anchorKeys.containsKey(initialAnchor)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _handleGlobalDeepLink(initialAnchor);
+      });
+    }
 
     // Watch visibility state to prune the widget tree when not visible
     final visibility = ref.watch(appLifecycleProvider);
@@ -57,43 +103,61 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       return const SizedBox.shrink();
     }
 
-    return Scaffold(
-      body: Column(
-        children: [
-          const WindowTitleBar(),
-          const Expanded(
-            child: Row(
-              children: [
-                // Sidebar
-                _Sidebar(),
-
-                // Main Content
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.all(32),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.keyF, control: true): () {
+          ref.read(isSearchVisibleProvider.notifier).setVisible(true);
+        },
+      },
+      child: Focus(
+        focusNode: _focusNode,
+        autofocus: true,
+        child: Scaffold(
+          body: Stack(
+            children: [
+              Column(
+                children: [
+                  const WindowTitleBar(),
+                  Expanded(
+                    child: Row(
                       children: [
-                        _Header(),
-                        SizedBox(height: 32),
-                        Expanded(child: _MainView()),
-                        SizedBox(height: 32),
-                        _Footer(),
+                        // Sidebar
+                        _Sidebar(anchorKeys: _anchorKeys),
+        
+                        // Main Content
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(32),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const _Header(),
+                                const SizedBox(height: 32),
+                                const Expanded(child: _MainView()),
+                                const SizedBox(height: 32),
+                                _Footer(anchorKeys: _anchorKeys),
+                              ],
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+              if (ref.watch(isSearchVisibleProvider))
+                const SettingsSearchOverlay(),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 }
 
 class _Sidebar extends ConsumerWidget {
-  const _Sidebar();
+  final Map<String, GlobalKey<DeepLinkTargetState>> anchorKeys;
+  const _Sidebar({required this.anchorKeys});
 
   static const IconData insights = IconData(
     0xe347,
@@ -190,13 +254,26 @@ class _Sidebar extends ConsumerWidget {
                 .read(activeScreenProvider.notifier)
                 .setScreen(AppScreen.sleep),
           ),
-          const Spacer(),
           _SidebarItem(
-            icon: LucideIcons.shieldCheck,
-            label: l10n.legal,
-            onTap: () => showDialog<void>(
+            icon: LucideIcons.search,
+            label: l10n.searchPlaceholder.split(' (').first,
+            onTap: () => ref.read(isSearchVisibleProvider.notifier).setVisible(true),
+          ),
+          const Spacer(),
+          DeepLinkTarget(
+            key: anchorKeys['legal_info'],
+            id: 'legal_info',
+            onDeepLink: () => showDialog<void>(
               context: context,
               builder: (context) => const SolarisAboutDialog(),
+            ),
+            child: _SidebarItem(
+              icon: LucideIcons.shieldCheck,
+              label: l10n.legal,
+              onTap: () => showDialog<void>(
+                context: context,
+                builder: (context) => const SolarisAboutDialog(),
+              ),
             ),
           ),
         ],
@@ -577,11 +654,43 @@ class _MainView extends ConsumerWidget {
   }
 }
 
-class _DashboardView extends ConsumerWidget {
+class _DashboardView extends ConsumerStatefulWidget {
   const _DashboardView();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_DashboardView> createState() => _DashboardViewState();
+}
+
+class _DashboardViewState extends ConsumerState<_DashboardView> {
+  final ScrollController _scrollController = ScrollController();
+  final Map<String, GlobalKey<DeepLinkTargetState>> _anchorKeys = {
+    'brightness_control': GlobalKey<DeepLinkTargetState>(),
+    'auto_brightness': GlobalKey<DeepLinkTargetState>(),
+    'auto_temperature': GlobalKey<DeepLinkTargetState>(),
+    'color_temperature': GlobalKey<DeepLinkTargetState>(),
+  };
+
+  void _scrollToAnchor(String anchorId) {
+    final key = _anchorKeys[anchorId];
+    if (key != null && key.currentContext != null) {
+      Scrollable.ensureVisible(
+        key.currentContext!,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOutCubic,
+        alignment: 0.5,
+      );
+      key.currentState?.highlight();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final solarAsync = ref.watch(solarStateStreamProvider);
     final timeService = ref.watch(timeServiceProvider);
@@ -593,6 +702,24 @@ class _DashboardView extends ConsumerWidget {
     final bool isColorTempEnabled = ref.watch(
       isColorTemperatureEnabledProvider,
     );
+
+    ref.listen(searchAnchorProvider, (previous, next) {
+      if (next != null && _anchorKeys.containsKey(next)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToAnchor(next);
+          ref.read(searchAnchorProvider.notifier).clear();
+        });
+      }
+    });
+
+    // Handle initial anchor on first build/mount
+    final initialAnchor = ref.read(searchAnchorProvider);
+    if (initialAnchor != null && _anchorKeys.containsKey(initialAnchor)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToAnchor(initialAnchor);
+        ref.read(searchAnchorProvider.notifier).clear();
+      });
+    }
 
     double brightness = baseBrightness;
     if (selection.length == 1 && !selection.contains('all')) {
@@ -694,23 +821,31 @@ class _DashboardView extends ConsumerWidget {
               const SizedBox(height: 48),
               SizedBox(
                 width: 320,
-                child: Column(
-                  children: [
-                    BrightnessSlider(
-                      value: brightness,
-                      onChanged: (val) => ref
-                          .read(currentBrightnessProvider.notifier)
-                          .setManualBrightness(val),
-                    ),
-                    const SizedBox(height: 24),
-                    TemperatureSlider(
-                      value: currentTemperature.toDouble(),
-                      onChanged: (val) => ref
-                          .read(currentTemperatureProvider.notifier)
-                          .setManualTemperature(val.round()),
-                    ),
-                  ],
-                ),
+                  child: Column(
+                    children: [
+                      DeepLinkTarget(
+                        key: _anchorKeys['brightness_control'],
+                        id: 'brightness_control',
+                        child: BrightnessSlider(
+                          value: brightness,
+                          onChanged: (val) => ref
+                              .read(currentBrightnessProvider.notifier)
+                              .setManualBrightness(val),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      DeepLinkTarget(
+                        key: _anchorKeys['color_temperature'],
+                        id: 'color_temperature',
+                        child: TemperatureSlider(
+                          value: currentTemperature.toDouble(),
+                          onChanged: (val) => ref
+                              .read(currentTemperatureProvider.notifier)
+                              .setManualTemperature(val.round()),
+                        ),
+                      ),
+                    ],
+                  ),
               ),
             ],
           ),
@@ -719,6 +854,7 @@ class _DashboardView extends ConsumerWidget {
         // Stats and Toggles
         Expanded(
           child: SingleChildScrollView(
+            controller: _scrollController,
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.only(
               right: 8,
@@ -1019,123 +1155,131 @@ class _DashboardView extends ConsumerWidget {
                               .read(autoBrightnessAdjustmentProvider.notifier)
                               .toggle(),
                           borderRadius: BorderRadius.circular(16),
-                          child: GlassCard(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  LucideIcons.sunMedium,
-                                  size: 20,
-                                  color: isAutoBright
-                                      ? const Color(0xFFFDBA74)
-                                      : Colors.white30,
-                                ),
-                                const SizedBox(height: 12),
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    l10n.autoBrightness,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: isAutoBright
-                                          ? Colors.white
-                                          : Colors.white30,
-                                    ),
-                                    maxLines: 1,
-                                  ),
-                                ),
-                                Text(
-                                  isAutoBright ? l10n.active : l10n.disabled,
-                                  style: TextStyle(
-                                    fontSize: 10,
+                          child: DeepLinkTarget(
+                            key: _anchorKeys['auto_brightness'],
+                            id: 'auto_brightness',
+                            child: GlassCard(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    LucideIcons.sunMedium,
+                                    size: 20,
                                     color: isAutoBright
                                         ? const Color(0xFFFDBA74)
                                         : Colors.white30,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(height: 12),
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      l10n.autoBrightness,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: isAutoBright
+                                            ? Colors.white
+                                            : Colors.white30,
+                                      ),
+                                      maxLines: 1,
+                                    ),
+                                  ),
+                                  Text(
+                                    isAutoBright ? l10n.active : l10n.disabled,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: isAutoBright
+                                          ? const Color(0xFFFDBA74)
+                                          : Colors.white30,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: InkWell(
-                          onTap: () => ref
-                              .read(autoTemperatureAdjustmentProvider.notifier)
-                              .toggle(),
-                          borderRadius: BorderRadius.circular(16),
-                          child: GlassCard(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  LucideIcons.thermometer,
-                                  size: 20,
-                                  color: !isColorTempEnabled
-                                      ? Colors.white10
-                                      : isAutoTemp
-                                      ? const Color(0xFFFDBA74)
-                                      : Colors.white30,
-                                ),
-                                const SizedBox(height: 12),
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    l10n.autoTemperature,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: !isColorTempEnabled
-                                          ? Colors.white10
-                                          : isAutoTemp
-                                          ? Colors.white
-                                          : Colors.white30,
-                                    ),
-                                    maxLines: 1,
+                        child: DeepLinkTarget(
+                          key: _anchorKeys['auto_temperature'],
+                          id: 'auto_temperature',
+                          child: InkWell(
+                            onTap: () => ref
+                                .read(autoTemperatureAdjustmentProvider.notifier)
+                                .toggle(),
+                            borderRadius: BorderRadius.circular(16),
+                            child: GlassCard(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    LucideIcons.thermometer,
+                                    size: 20,
+                                    color: !isColorTempEnabled
+                                        ? Colors.white10
+                                        : isAutoTemp
+                                        ? const Color(0xFFFDBA74)
+                                        : Colors.white30,
                                   ),
-                                ),
-                                if (isColorTempEnabled) ...[
-                                  Text(
-                                    isAutoTemp ? l10n.active : l10n.disabled,
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: isAutoTemp
-                                          ? const Color(0xFFFDBA74)
-                                          : Colors.white30,
+                                  const SizedBox(height: 12),
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      l10n.autoTemperature,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: !isColorTempEnabled
+                                            ? Colors.white10
+                                            : isAutoTemp
+                                            ? Colors.white
+                                            : Colors.white30,
+                                      ),
+                                      maxLines: 1,
                                     ),
                                   ),
-                                ] else ...[
-                                  Text(
-                                    l10n.disabledInSettings,
-                                    style: const TextStyle(
-                                      fontSize: 9,
-                                      color: Colors.white24,
+                                  if (isColorTempEnabled) ...[
+                                    Text(
+                                      isAutoTemp ? l10n.active : l10n.disabled,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: isAutoTemp
+                                            ? const Color(0xFFFDBA74)
+                                            : Colors.white30,
+                                      ),
                                     ),
-                                    textAlign: TextAlign.center,
-                                    maxLines: 2,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  MouseRegion(
-                                    cursor: SystemMouseCursors.click,
-                                    child: GestureDetector(
-                                      onTap: () => ref
-                                          .read(
-                                            isColorTemperatureEnabledProvider
-                                                .notifier,
-                                          )
-                                          .set(true),
-                                      child: Text(
-                                        l10n.enable.toUpperCase(),
-                                        style: const TextStyle(
-                                          fontSize: 8,
-                                          color: Color(0xFFFDBA74),
-                                          fontWeight: FontWeight.bold,
+                                  ] else ...[
+                                    Text(
+                                      l10n.disabledInSettings,
+                                      style: const TextStyle(
+                                        fontSize: 9,
+                                        color: Colors.white24,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 2,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    MouseRegion(
+                                      cursor: SystemMouseCursors.click,
+                                      child: GestureDetector(
+                                        onTap: () => ref
+                                            .read(
+                                              isColorTemperatureEnabledProvider
+                                                  .notifier,
+                                            )
+                                            .set(true),
+                                        child: Text(
+                                          l10n.enable.toUpperCase(),
+                                          style: const TextStyle(
+                                            fontSize: 8,
+                                            color: Color(0xFFFDBA74),
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
+                                  ],
                                 ],
-                              ],
+                              ),
                             ),
                           ),
                         ),
@@ -1262,7 +1406,8 @@ class _StatRow extends StatelessWidget {
 }
 
 class _Footer extends ConsumerWidget {
-  const _Footer();
+  final Map<String, GlobalKey<DeepLinkTargetState>> anchorKeys;
+  const _Footer({required this.anchorKeys});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1324,7 +1469,18 @@ class _Footer extends ConsumerWidget {
                     );
                   }),
                   const SizedBox(width: 24),
-                  _OffsetSettingsButton(),
+                  DeepLinkTarget(
+                    key: anchorKeys['multi_monitor_offsets'],
+                    id: 'multi_monitor_offsets',
+                    onDeepLink: () {
+                      anchorKeys['multi_monitor_offsets']
+                          ?.currentContext
+                          ?.findAncestorWidgetOfExactType<IconButton>()
+                          ?.onPressed
+                          ?.call();
+                    },
+                    child: const _OffsetSettingsButton(),
+                  ),
                 ],
               );
             },

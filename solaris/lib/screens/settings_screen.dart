@@ -14,18 +14,79 @@ import 'package:solaris/models/temperature_state.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'dart:ui';
+import 'package:solaris/widgets/deep_link_target.dart';
 
-
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  final ScrollController _scrollController = ScrollController();
+  final Map<String, GlobalKey<DeepLinkTargetState>> _anchorKeys = {
+    'autorun': GlobalKey<DeepLinkTargetState>(),
+    'weather_adjustment': GlobalKey<DeepLinkTargetState>(),
+    'hotkeys': GlobalKey<DeepLinkTargetState>(),
+    'circadian_regulation': GlobalKey<DeepLinkTargetState>(),
+    'circadian_limits': GlobalKey<DeepLinkTargetState>(),
+    'language': GlobalKey<DeepLinkTargetState>(),
+    'schedule_view': GlobalKey<DeepLinkTargetState>(),
+    'game_mode': GlobalKey<DeepLinkTargetState>(),
+  };
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToAnchor(String anchorId) {
+    final key = _anchorKeys[anchorId];
+    if (key != null && key.currentContext != null) {
+      Scrollable.ensureVisible(
+        key.currentContext!,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOutCubic,
+        alignment: 0.5, // Center the item
+      );
+      key.currentState?.highlight();
+      
+      // Clear the anchor after consuming it
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (mounted) {
+          ref.read(searchAnchorProvider.notifier).clear();
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final settingsAsync = ref.watch(settingsProvider);
     final selectedIds = ref.watch(selectedMonitorsProvider);
 
+    // Listen for deep link requests
+    ref.listen<String?>(searchAnchorProvider, (previous, next) {
+      if (next != null && _anchorKeys.containsKey(next)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToAnchor(next);
+        });
+      }
+    });
+
+    // Handle initial anchor on first build/mount
+    final initialAnchor = ref.read(searchAnchorProvider);
+    if (initialAnchor != null && _anchorKeys.containsKey(initialAnchor)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToAnchor(initialAnchor);
+      });
+    }
+
     return SingleChildScrollView(
+      controller: _scrollController,
       physics: const BouncingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,147 +99,178 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // Chart Preview
-          const _PresetSelector(),
-          const SizedBox(height: 8),
-          const _TypeSelector(),
-          const SizedBox(height: 8),
-          const CircadianChartWidget(),
-          const SizedBox(height: 8),
-          const _TempToggleCard(),
+          DeepLinkTarget(
+            key: _anchorKeys['circadian_regulation'],
+            id: 'circadian_regulation',
+            child: DeepLinkTarget(
+              key: _anchorKeys['schedule_view'],
+              id: 'schedule_view',
+              child: Column(
+                children: [
+                  const _PresetSelector(),
+                  const SizedBox(height: 8),
+                  const _TypeSelector(),
+                  const SizedBox(height: 8),
+                  const CircadianChartWidget(),
+                  const SizedBox(height: 8),
+                  const _TempToggleCard(),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 24),
 
           // Language Selection
-          const _LanguageSelectorCard(),
+          DeepLinkTarget(
+            key: _anchorKeys['language'],
+            id: 'language',
+            child: _LanguageSelectorCard(anchorKeys: _anchorKeys),
+          ),
           const SizedBox(height: 24),
 
           // App Settings (Autorun)
-          GlassCard(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFDBA74).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        LucideIcons.monitor,
-                        color: Color(0xFFFDBA74),
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.settings,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+          DeepLinkTarget(
+            key: _anchorKeys['autorun'],
+            id: 'autorun',
+            child: GlassCard(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFDBA74).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        Text(
-                          l10n.autorunSubtitle,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white.withOpacity(0.5),
-                          ),
+                        child: const Icon(
+                          LucideIcons.monitor,
+                          color: Color(0xFFFDBA74),
+                          size: 20,
                         ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                _SettingsRow(
-                  title: l10n.autorun,
-                  subtitle: l10n.autorunSubtitle,
-                  value: settingsAsync.maybeWhen(
-                    data: (map) => map['all']?.isAutorunEnabled ?? false,
-                    orElse: () => false,
+                      ),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.settings,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            l10n.autorunSubtitle,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white.withOpacity(0.5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  onChanged: (val) =>
-                      ref.read(settingsProvider.notifier).updateAutorun(val),
-                ),
-              ],
+                  const SizedBox(height: 24),
+                  _SettingsRow(
+                    title: l10n.autorun,
+                    subtitle: l10n.autorunSubtitle,
+                    value: settingsAsync.maybeWhen(
+                      data: (map) => map['all']?.isAutorunEnabled ?? false,
+                      orElse: () => false,
+                    ),
+                    onChanged: (val) =>
+                        ref.read(settingsProvider.notifier).updateAutorun(val),
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 24),
 
           // Weather Settings
-          GlassCard(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFDBA74).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        LucideIcons.cloudSun,
-                        color: Color(0xFFFDBA74),
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.weatherAdjustmentTitle,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+          DeepLinkTarget(
+            key: _anchorKeys['weather_adjustment'],
+            id: 'weather_adjustment',
+            child: GlassCard(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFDBA74).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        Text(
-                          l10n.weatherAdjustmentSubtitle,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white.withOpacity(0.5),
-                          ),
+                        child: const Icon(
+                          LucideIcons.cloudSun,
+                          color: Color(0xFFFDBA74),
+                          size: 20,
                         ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                _SettingsRow(
-                  title: l10n.weatherAdjustmentTitle,
-                  subtitle: l10n.weatherAdjustmentSubtitle,
-                  value: settingsAsync.maybeWhen(
-                    data: (map) =>
-                        map[selectedIds.firstOrNull ?? 'all']
-                            ?.isWeatherAdjustmentEnabled ??
-                        true,
-                    orElse: () => true,
+                      ),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.weatherAdjustmentTitle,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            l10n.weatherAdjustmentSubtitle,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white.withOpacity(0.5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  onChanged: (val) => ref
-                      .read(settingsProvider.notifier)
-                      .updateWeatherAdjustment(val),
-                ),
-              ],
+                  const SizedBox(height: 24),
+                  _SettingsRow(
+                    title: l10n.weatherAdjustmentTitle,
+                    subtitle: l10n.weatherAdjustmentSubtitle,
+                    value: settingsAsync.maybeWhen(
+                      data: (map) =>
+                          map[selectedIds.firstOrNull ?? 'all']
+                              ?.isWeatherAdjustmentEnabled ??
+                          true,
+                      orElse: () => true,
+                    ),
+                    onChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateWeatherAdjustment(val),
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 24),
 
-          const _SmartExclusionsCard(),
+          DeepLinkTarget(
+            key: _anchorKeys['circadian_limits'],
+            id: 'circadian_limits',
+            child: _SmartExclusionsCard(anchorKeys: _anchorKeys),
+          ),
           const SizedBox(height: 24),
 
-          const _GlobalHotkeysCard(),
+          DeepLinkTarget(
+            key: _anchorKeys['hotkeys'],
+            id: 'hotkeys',
+            child: _GlobalHotkeysCard(anchorKeys: _anchorKeys),
+          ),
           const SizedBox(height: 24),
-
 
           // Info Card
           GlassCard(
@@ -1036,7 +1128,8 @@ class _SettingsRow extends StatelessWidget {
 }
 
 class _SmartExclusionsCard extends ConsumerWidget {
-  const _SmartExclusionsCard();
+  final Map<String, GlobalKey<DeepLinkTargetState>> anchorKeys;
+  const _SmartExclusionsCard({required this.anchorKeys});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1091,13 +1184,17 @@ class _SmartExclusionsCard extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 24),
-              _SettingsRow(
-                title: l10n.enableGameMode,
-                subtitle: l10n.enableGameModeSubtitle,
-                value: settings.isGameModeEnabled,
-                onChanged: (val) => ref
-                    .read(settingsProvider.notifier)
-                    .updateGameModeEnabled(val),
+              DeepLinkTarget(
+                key: anchorKeys['game_mode'],
+                id: 'game_mode',
+                child: _SettingsRow(
+                  title: l10n.enableGameMode,
+                  subtitle: l10n.enableGameModeSubtitle,
+                  value: settings.isGameModeEnabled,
+                  onChanged: (val) => ref
+                      .read(settingsProvider.notifier)
+                      .updateGameModeEnabled(val),
+                ),
               ),
               if (settings.isGameModeEnabled) ...[
                 const SizedBox(height: 24),
@@ -1172,7 +1269,8 @@ class _SmartExclusionsCard extends ConsumerWidget {
 }
 
 class _GlobalHotkeysCard extends ConsumerWidget {
-  const _GlobalHotkeysCard();
+  final Map<String, GlobalKey<DeepLinkTargetState>> anchorKeys;
+  const _GlobalHotkeysCard({required this.anchorKeys});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -2023,7 +2121,8 @@ class _Badge extends StatelessWidget {
 }
 
 class _LanguageSelectorCard extends ConsumerWidget {
-  const _LanguageSelectorCard();
+  final Map<String, GlobalKey<DeepLinkTargetState>> anchorKeys;
+  const _LanguageSelectorCard({required this.anchorKeys});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
