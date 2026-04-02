@@ -66,6 +66,7 @@ dependencies:
   hotkey_manager: 0.2.2
   package_info_plus: ^8.1.2
   string_similarity: ^2.0.0
+  crypto: ^3.0.3
 dev_dependencies:
   flutter_test:
     sdk: flutter
