@@ -29,6 +29,12 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Create .env file
+        shell: bash
+        run: |
+          echo "API_KEY=${{ secrets.MY_API_KEY }}" > .env
+          echo "ANOTHER_VAR=${{ secrets.ANOTHER_SECRET }}" >> .env
+
       - name: Build Windows
         run: flutter build windows --release
 
