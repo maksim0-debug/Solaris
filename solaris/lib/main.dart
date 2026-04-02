@@ -13,7 +13,6 @@ import 'package:solaris/services/time_service.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:solaris/services/tray_service.dart';
 import 'package:solaris/providers/lifecycle_provider.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:hotkey_manager/hotkey_manager.dart';
@@ -26,12 +25,6 @@ void main(List<String> args) async {
 
   // Must unregister all hotkeys at startup to avoid conflicts
   await hotKeyManager.unregisterAll();
-
-  try {
-    await dotenv.load(fileName: ".env");
-  } catch (e) {
-    debugPrint('Error loading .env file: $e');
-  }
 
   bool startMinimized = args.contains('--minimized');
 

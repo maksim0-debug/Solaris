@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:solaris/env/env.dart';
 import 'package:solaris/services/terminator_service.dart';
 import 'package:solaris/providers.dart';
 
@@ -69,7 +69,7 @@ class _SolarMapState extends State<SolarMap> {
 
   @override
   Widget build(BuildContext context) {
-    final token = dotenv.get('MAPBOX_TOKEN', fallback: '');
+    final token = Env.mapboxToken;
     // Using the same style as in LocationScreen for consistency
     const style = kMapboxLargeMapStyle;
     final urlTemplate =

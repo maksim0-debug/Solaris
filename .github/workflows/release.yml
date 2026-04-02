@@ -35,6 +35,9 @@ jobs:
           echo "MAPBOX_TOKEN=${{ secrets.MAPBOX_TOKEN }}" > .env
           echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
           echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
+          
+      - name: Generate obfuscated code
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Build Windows
         run: flutter build windows --release

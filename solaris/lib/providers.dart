@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:ui';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:solaris/env/env.dart';
 import 'dart:math' as math;
 
 import 'dart:convert';
@@ -1841,7 +1841,7 @@ String getStaticMapUrl(
   String style = kMapboxNightStyle,
   double zoom = 15.1,
 }) {
-  final token = dotenv.get('MAPBOX_TOKEN', fallback: '');
+  final token = Env.mapboxToken;
   const width = 600;
   const height = 600;
 

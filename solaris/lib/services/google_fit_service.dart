@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:solaris/env/env.dart';
 import 'package:googleapis/fitness/v1.dart';
 import 'package:googleapis_auth/auth_io.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -32,8 +32,8 @@ class GoogleFitService {
         if (decoded is Map<String, dynamic>) {
           var credentials = AccessCredentials.fromJson(decoded);
           final clientId = ClientId(
-            dotenv.get('GOOGLE_CLIENT_ID'),
-            dotenv.get('GOOGLE_CLIENT_SECRET'),
+            Env.googleClientId,
+            Env.googleClientSecret,
           );
 
           // Check if token is expired and refresh it proactively
@@ -77,7 +77,7 @@ class GoogleFitService {
 
   Future<bool> signIn() async {
     try {
-      final clientIdStr = dotenv.get('GOOGLE_CLIENT_ID');
+      final clientIdStr = Env.googleClientId;
 
       // 1. Generate PKCE verifier and challenge
       final verifier = PkceService.generateCodeVerifier();
@@ -148,7 +148,7 @@ class GoogleFitService {
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {
           'client_id': clientIdStr,
-          'client_secret': dotenv.get('GOOGLE_CLIENT_SECRET'),
+          'client_secret': Env.googleClientSecret,
           'code': code,
           'code_verifier': verifier,
           'grant_type': 'authorization_code',
@@ -221,8 +221,8 @@ class GoogleFitService {
       if (credentials.accessToken.expiry.isBefore(DateTime.now())) {
         debugPrint('Google Fit token expired, attempting to refresh...');
         final clientId = ClientId(
-          dotenv.get('GOOGLE_CLIENT_ID'),
-          dotenv.get('GOOGLE_CLIENT_SECRET'),
+          Env.googleClientId,
+          Env.googleClientSecret,
         );
 
         // Use refreshCredentials instead of refreshAuthenticatedClient

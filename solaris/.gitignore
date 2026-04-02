@@ -51,3 +51,4 @@ secrets.json
 credentials.json
 .env
 google_fit_token.json
+env.g.dart
