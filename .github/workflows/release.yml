@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Windows
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        working-directory: solaris
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build Windows
+        run: flutter build windows --release
+
+      - name: Package Release
+        shell: pwsh
+        run: |
+          $buildDir = "build/windows/x64/runner/Release"
+          $releaseDir = "Solaris_Release"
+          if (Test-Path $releaseDir) { Remove-Item -Recurse -Force $releaseDir }
+          New-Item -ItemType Directory -Path $releaseDir
+          
+          # Copy executable, dlls, and data folder
+          Copy-Item "$buildDir/*.exe" -Destination $releaseDir/
+          Copy-Item "$buildDir/*.dll" -Destination $releaseDir/
+          Copy-Item -Path "$buildDir/data" -Destination "$releaseDir/data" -Recurse
+          
+          # Create archive in the root directory
+          Compress-Archive -Path "$releaseDir/*" -DestinationPath ../Solaris-Windows.zip
+
+      - name: Publish Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Solaris-Windows.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
