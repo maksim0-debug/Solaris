@@ -268,7 +268,7 @@ class _PulsingLocationMarkerState extends ConsumerState<PulsingLocationMarker>
 class _WeatherSettingsButton extends ConsumerStatefulWidget {
   final Color accentColor;
   final GlobalKey<DeepLinkTargetState>? anchorKey;
-  const _WeatherSettingsButton({super.key, required this.accentColor, this.anchorKey});
+  const _WeatherSettingsButton({required this.accentColor, this.anchorKey});
 
   @override
   ConsumerState<_WeatherSettingsButton> createState() => _WeatherSettingsButtonState();

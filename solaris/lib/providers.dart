@@ -812,7 +812,13 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   @override
   Future<Map<String, SettingsState>> build() async {
     final storage = ref.watch(storageServiceProvider);
-    return await _loadSettings(storage);
+    final settings = await _loadSettings(storage);
+
+    // Sync autorun on startup
+    final isEnabled = settings['all']?.isAutorunEnabled ?? true;
+    unawaited(AutorunService.setEnabled(isEnabled));
+
+    return settings;
   }
 
   Future<Map<String, SettingsState>> _loadSettings(

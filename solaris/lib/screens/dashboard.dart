@@ -26,7 +26,7 @@ import 'package:solaris/models/settings_state.dart';
 import 'package:flutter/services.dart';
 import 'package:solaris/widgets/settings_search_overlay.dart';
 import 'package:solaris/widgets/deep_link_target.dart';
-import 'dart:ui';
+
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});

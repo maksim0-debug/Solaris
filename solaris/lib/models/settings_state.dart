@@ -57,7 +57,7 @@ class SettingsState {
     this.activePreset = PresetType.bright,
     Map<PresetType, List<FlSpot>>? curvesMap,
     this.curveSharpness = 1.0,
-    this.isAutorunEnabled = false,
+    this.isAutorunEnabled = true,
     this.isWeatherAdjustmentEnabled = true,
     this.isAutoBrightnessEnabled = true,
     this.isSmartCircadianEnabled = false,
@@ -238,7 +238,7 @@ class SettingsState {
       activePreset: activePreset,
       curvesMap: curvesMap,
       curveSharpness: (json['curveSharpness'] as num?)?.toDouble() ?? 1.0,
-      isAutorunEnabled: json['isAutorunEnabled'] as bool? ?? false,
+      isAutorunEnabled: json['isAutorunEnabled'] as bool? ?? true,
       isWeatherAdjustmentEnabled:
           json['isWeatherAdjustmentEnabled'] as bool? ?? true,
       isAutoBrightnessEnabled: json['isAutoBrightnessEnabled'] as bool? ?? true,
