@@ -31,11 +31,25 @@ jobs:
 
       - name: Create .env file
         shell: bash
+        env:
+          MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: |
-          echo "MAPBOX_TOKEN=${{ secrets.MAPBOX_TOKEN }}" > .env
-          echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
-          echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
+          # Use printf to avoid issues with special characters in secrets
+          printf "MAPBOX_TOKEN=%s\n" "$MAPBOX_TOKEN" > .env
+          printf "GOOGLE_CLIENT_ID=%s\n" "$GOOGLE_CLIENT_ID" >> .env
+          printf "GOOGLE_CLIENT_SECRET=%s\n" "$GOOGLE_CLIENT_SECRET" >> .env
           
+      - name: Verify .env exists and has content
+        shell: bash
+        run: |
+          if [ ! -s .env ]; then
+            echo "Error: .env file is empty or missing! Check your GitHub Secrets."
+            exit 1
+          fi
+          echo ".env file successfully created."
+
       - name: Generate obfuscated code
         run: dart run build_runner build --delete-conflicting-outputs
 
