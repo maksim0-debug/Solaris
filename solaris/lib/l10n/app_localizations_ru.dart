@@ -1085,4 +1085,10 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get sslFixInstruction =>
       'Для исправления нужно инициировать обновление корневых сертификатов в Windows. Нажатие кнопки ниже откроет защищенную ссылку в вашем браузере — сам визит на эту страницу часто заставляет Windows загрузить недостающий сертификат.';
+
+  @override
+  String get trayOpen => 'Открыть Solaris';
+
+  @override
+  String get trayExit => 'Выход';
 }

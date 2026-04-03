@@ -1979,6 +1979,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'To fix this, we need to trigger a Root Certificate update in Windows. Clicking the button below will open a secure link in your browser - simply visiting it often forces Windows to fetch the missing certificate.'**
   String get sslFixInstruction;
+
+  /// No description provided for @trayOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Solaris'**
+  String get trayOpen;
+
+  /// No description provided for @trayExit.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit'**
+  String get trayExit;
 }
 
 class _AppLocalizationsDelegate

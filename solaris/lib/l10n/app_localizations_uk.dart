@@ -1083,4 +1083,10 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get sslFixInstruction =>
       'Для виправлення потрібно ініціювати оновлення кореневих сертифікатів у Windows. Натискання кнопки нижче відкриє безпечне посилання у вашому браузері — сам візит на цю сторінку часто змушує Windows завантажити відсутній сертифікат.';
+
+  @override
+  String get trayOpen => 'Відкрити';
+
+  @override
+  String get trayExit => 'Вихід';
 }

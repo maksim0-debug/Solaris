@@ -1081,4 +1081,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get sslFixInstruction =>
       'To fix this, we need to trigger a Root Certificate update in Windows. Clicking the button below will open a secure link in your browser - simply visiting it often forces Windows to fetch the missing certificate.';
+
+  @override
+  String get trayOpen => 'Open Solaris';
+
+  @override
+  String get trayExit => 'Exit';
 }

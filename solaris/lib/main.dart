@@ -102,6 +102,11 @@ void main(List<String> args) async {
   // Initialize Hotkey Service
   await container.read(hotkeyServiceProvider).init();
 
+  // Initial localized Tray Labels
+  final initialLocale = container.read(localeProvider);
+  final initialL10n = await AppLocalizations.delegate.load(initialLocale);
+  await trayService.updateLabels(initialL10n);
+
   runApp(
     UncontrolledProviderScope(container: container, child: const SolarisApp()),
   );
@@ -112,6 +117,11 @@ class SolarisApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen<Locale>(localeProvider, (prev, next) async {
+      final l10n = await AppLocalizations.delegate.load(next);
+      TrayService().updateLabels(l10n);
+    });
+
     final locale = ref.watch(localeProvider);
 
     return MaterialApp(

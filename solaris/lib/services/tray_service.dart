@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:solaris/l10n/app_localizations.dart';
 
 class TrayService with TrayListener {
   static final TrayService _instance = TrayService._internal();
@@ -28,6 +29,24 @@ class TrayService with TrayListener {
       debugPrint('Tray initialized successfully');
     } catch (e) {
       debugPrint('Error initializing tray: $e');
+    }
+  }
+
+  Future<void> updateLabels(AppLocalizations l10n) async {
+    if (!Platform.isWindows) return;
+
+    try {
+      final Menu menu = Menu(
+        items: [
+          MenuItem(key: 'open_window', label: l10n.trayOpen),
+          MenuItem.separator(),
+          MenuItem(key: 'exit_app', label: l10n.trayExit),
+        ],
+      );
+      await trayManager.setContextMenu(menu);
+      debugPrint('Tray labels updated: ${l10n.trayOpen}, ${l10n.trayExit}');
+    } catch (e) {
+      debugPrint('Error updating tray labels: $e');
     }
   }
 
