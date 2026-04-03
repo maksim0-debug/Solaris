@@ -1064,16 +1064,23 @@ class AppLocalizationsUk extends AppLocalizations {
   String get retryDiagnostics => 'Повторити діагностику';
 
   @override
-  String get mapboxServers => 'Mapbox Servers';
+  String get mapboxServers => 'Сервери Mapbox';
 
   @override
-  String get mapboxReachabilityDesc => 'Mapbox servers are unreachable.';
+  String get mapboxReachabilityDesc => 'Сервери Mapbox недоступні.';
 
   @override
   String get sslIssueHint =>
-      'This looks like a certificate issue. Clean Windows 10 installations often lack modern root certificates. Try running Windows Update or manual update.';
+      'Схоже на проблему з сертифікатами. Чисті установки Windows 10 часто не мають сучасних кореневих сертифікатів (наприклад, ISRG Root X1).';
 
   @override
   String get missingRedistHint =>
-      'Visual C++ components are missing. These are not pre-installed on clean Windows. Please install the package.';
+      'Відсутні компоненти Visual C++. Вони не предустановлені в чистій Windows. Будь ласка, встановіть цей пакет.';
+
+  @override
+  String get fixSslCert => 'Виправити SSL сертифікат';
+
+  @override
+  String get sslFixInstruction =>
+      'Для виправлення потрібно ініціювати оновлення кореневих сертифікатів у Windows. Натискання кнопки нижче відкриє безпечне посилання у вашому браузері — сам візит на цю сторінку часто змушує Windows завантажити відсутній сертифікат.';
 }

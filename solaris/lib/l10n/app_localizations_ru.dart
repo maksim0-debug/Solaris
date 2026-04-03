@@ -1078,4 +1078,11 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get missingRedistHint =>
       'Отсутствуют компоненты Visual C++ (2015-2022). Они не предустановлены в чистой Windows. Пожалуйста, установите этот пакет.';
+
+  @override
+  String get fixSslCert => 'Исправить SSL сертификат';
+
+  @override
+  String get sslFixInstruction =>
+      'Для исправления нужно инициировать обновление корневых сертификатов в Windows. Нажатие кнопки ниже откроет защищенную ссылку в вашем браузере — сам визит на эту страницу часто заставляет Windows загрузить недостающий сертификат.';
 }
