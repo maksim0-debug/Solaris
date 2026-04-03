@@ -19,27 +19,56 @@ class SessionGrouper {
           '${s.startTime.millisecondsSinceEpoch}_${s.endTime.millisecondsSinceEpoch}';
       uniqueMap[key] = s;
     }
-    final uniqueSessions = uniqueMap.values.toList();
+    final List<SleepSession> uniqueSessions = uniqueMap.values.toList();
 
-    // 2. Sort all sessions by start time
-    final sortedSessions = List<SleepSession>.from(uniqueSessions)
+    // 2. Remove nested sessions (sessions entirely contained within another)
+    // To ensure we don't have redundant data.
+    final List<SleepSession> deduplicated = [];
+    uniqueSessions.sort((a, b) => a.startTime.compareTo(b.startTime));
+    
+    for (int i = 0; i < uniqueSessions.length; i++) {
+       bool isNested = false;
+       for (int j = 0; j < uniqueSessions.length; j++) {
+         if (i == j) continue;
+         final s1 = uniqueSessions[i];
+         final s2 = uniqueSessions[j];
+         // Case: s1 is inside s2
+         if (s1.startTime.isAtSameMomentAs(s2.startTime) || s1.startTime.isAfter(s2.startTime)) {
+            if (s1.endTime.isAtSameMomentAs(s2.endTime) || s1.endTime.isBefore(s2.endTime)) {
+              if (s1.id != s2.id || i > j) { // Prefer larger or earlier-index
+                isNested = true;
+                break;
+              }
+            }
+         }
+       }
+       if (!isNested) deduplicated.add(uniqueSessions[i]);
+    }
+
+    // 3. Sort all sessions by start time
+    final sortedSessions = List<SleepSession>.from(deduplicated)
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
 
-    // 3. Cluster sessions by adjacency (gap < 3.5h)
+    // 4. Cluster sessions by adjacency (gap < 3.5h) using maxEndTime of cluster
     final clusters = <List<SleepSession>>[];
     if (sortedSessions.isNotEmpty) {
       var currentCluster = [sortedSessions.first];
+      var maxEndTime = sortedSessions.first.endTime;
+
       for (int i = 1; i < sortedSessions.length; i++) {
-        final prev = sortedSessions[i - 1];
         final curr = sortedSessions[i];
 
-        // Check the gap between previous end and current start
-        if (curr.startTime.difference(prev.endTime).inMinutes <
+        // Check the gap between the cluster's latest end and current start
+        if (curr.startTime.difference(maxEndTime).inMinutes <
             mergeThresholdMinutes) {
           currentCluster.add(curr);
+          if (curr.endTime.isAfter(maxEndTime)) {
+            maxEndTime = curr.endTime;
+          }
         } else {
           clusters.add(currentCluster);
           currentCluster = [curr];
+          maxEndTime = curr.endTime;
         }
       }
       clusters.add(currentCluster);

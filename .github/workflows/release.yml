@@ -42,7 +42,11 @@ jobs:
             echo "Please add these secrets in Repository Settings > Secrets and variables > Actions"
             exit 1
           fi
-          echo "All required secrets are present."
+          if [[ ! "$MAPBOX_TOKEN" =~ ^(pk|sk)\. ]]; then
+            echo "::error::MAPBOX_TOKEN is invalid. It must start with 'pk.' or 'sk.'."
+            exit 1
+          fi
+          echo "All required secrets are present and valid."
         env:
           MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}

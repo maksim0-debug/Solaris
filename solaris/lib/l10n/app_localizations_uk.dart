@@ -1041,4 +1041,25 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get tags_legal =>
       'юридичний, ліцензія, відмова, відповідальність, залізо, інфо, про програму';
+
+  @override
+  String get mapIssueDetected => 'Виявлено проблему з картою';
+
+  @override
+  String get mapboxTokenMissing =>
+      'Токен доступу Mapbox відсутній або недійсний.';
+
+  @override
+  String get noInternetAccess =>
+      'Не вдалося зв\'язатися з серверами Mapbox. Будь ласка, перевірте підключення до інтернету.';
+
+  @override
+  String get vcRedistMissing =>
+      'Відсутній Visual C++ Redistributable (msvcp140.dll). Це необхідно для коректного відображення карт.';
+
+  @override
+  String get downloadVcRedist => 'Завантажити Visual C++ Redistributable';
+
+  @override
+  String get retryDiagnostics => 'Повторити діагностику';
 }

@@ -31,6 +31,8 @@ import 'package:solaris/models/temperature_state.dart';
 import 'package:solaris/models/preset_type.dart';
 import 'package:solaris/providers/lifecycle_provider.dart';
 import 'package:solaris/services/gaming_mode_service.dart';
+import 'package:solaris/services/map_health_service.dart';
+import 'package:solaris/models/map_health_report.dart';
 
 final locationServiceProvider = Provider((ref) => LocationService());
 final sunCalculatorServiceProvider = Provider((ref) => SunCalculatorService());
@@ -42,6 +44,7 @@ final storageServiceProvider = Provider((ref) => StorageService());
 final smartCircadianServiceProvider = Provider<SmartCircadianService>(
   (ref) => SmartCircadianService(),
 );
+final mapHealthServiceProvider = Provider((ref) => MapHealthService());
 
 final gamingModeServiceProvider = Provider<GamingModeService>((ref) {
   return ref.watch<GamingModeService>(gamingModeProvider.notifier);
@@ -275,6 +278,11 @@ final currentWeatherProvider = FutureProvider<WeatherData?>((ref) async {
 
   // Делаем запрос к API
   return await weatherService.fetchCurrentWeather(pos.latitude, pos.longitude);
+});
+
+final mapHealthProvider = FutureProvider<MapHealthReport>((ref) async {
+  final service = ref.watch(mapHealthServiceProvider);
+  return await service.getHealthReport();
 });
 
 // SolarState moved to lib/models/solar_state.dart
@@ -1533,6 +1541,7 @@ class CurrentBrightnessNotifier extends Notifier<double> {
     final isAuto = ref.watch(autoBrightnessAdjustmentProvider);
     final currentSelection = ref.watch(selectedMonitorsProvider);
     final manualBrightness = ref.watch(manualBrightnessProvider);
+    final isGamingMode = ref.watch(gamingModeProvider);
     final firstId = currentSelection.firstOrNull ?? 'all';
     final smartData = ref.watch(smartCircadianDataProvider(firstId));
 
@@ -1548,6 +1557,10 @@ class CurrentBrightnessNotifier extends Notifier<double> {
             data: (settingsMap) {
               final selectedSettings =
                   settingsMap[firstId] ?? settingsMap['all']!;
+
+              if (isGamingMode && selectedSettings.isGameModeEnabled) {
+                return selectedSettings.gameModeBrightness;
+              }
 
               if (!selectedSettings.isAutoBrightnessEnabled) {
                 return manualBrightness;
@@ -1674,6 +1687,7 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
   final smartTempData = ref.watch(
     smartCircadianTemperatureDataProvider(primaryId),
   );
+  final offsets = ref.watch(brightnessOffsetsProvider);
 
   final circadianService = ref.read(circadianServiceProvider);
   final brightnessService = ref.read(brightnessServiceProvider);
@@ -1721,27 +1735,26 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
               }
 
               double targetBrightness;
-              CircadianCalculationResult? calculationResult;
 
               if (isGamingMode && settings.isGameModeEnabled) {
                 targetBrightness = settings.gameModeBrightness;
               } else {
-                calculationResult = circadianService.calculateTargetBrightness(
-                  state.phases,
-                  effectiveElevation,
-                  DateTime.now(),
-                  curveSharpness: settings.curveSharpness,
-                  curvePoints: settings.curvePoints,
-                  weather: settings.isWeatherAdjustmentEnabled
-                      ? weatherAsync.value
-                      : null,
-                  presetSensitivity: settings.activePreset.weatherSensitivity,
-                  smartData: effectiveSmartData,
-                );
+                final calculationResult =
+                    circadianService.calculateTargetBrightness(
+                      state.phases,
+                      effectiveElevation,
+                      DateTime.now(),
+                      curveSharpness: settings.curveSharpness,
+                      curvePoints: settings.curvePoints,
+                      weather:
+                          settings.isWeatherAdjustmentEnabled
+                              ? weatherAsync.value
+                              : null,
+                      presetSensitivity: settings.activePreset.weatherSensitivity,
+                      smartData: effectiveSmartData,
+                    );
                 targetBrightness = calculationResult.finalBrightness;
               }
-
-              final offsets = ref.watch(brightnessOffsetsProvider);
 
               brightnessService.applyBrightnessSmoothly(
                 selection: monitor.deviceName,

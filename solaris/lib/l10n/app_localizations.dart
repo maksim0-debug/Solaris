@@ -1907,6 +1907,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'legal, license, disclaimer, hardware, liability, info, about'**
   String get tags_legal;
+
+  /// No description provided for @mapIssueDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'Map Issue Detected'**
+  String get mapIssueDetected;
+
+  /// No description provided for @mapboxTokenMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Mapbox access token is missing or invalid.'**
+  String get mapboxTokenMissing;
+
+  /// No description provided for @noInternetAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not reach Mapbox servers. Please check your internet connection.'**
+  String get noInternetAccess;
+
+  /// No description provided for @vcRedistMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Visual C++ Redistributable (msvcp140.dll) is missing. This is required for maps to render correctly.'**
+  String get vcRedistMissing;
+
+  /// No description provided for @downloadVcRedist.
+  ///
+  /// In en, this message translates to:
+  /// **'Download Visual C++ Redistributable'**
+  String get downloadVcRedist;
+
+  /// No description provided for @retryDiagnostics.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry Diagnosis'**
+  String get retryDiagnostics;
 }
 
 class _AppLocalizationsDelegate

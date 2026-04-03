@@ -528,5 +528,11 @@
   "tags_multi_monitor": "display, screen, multi, link, offset, separate, individual, monitor",
   "tags_weather_animations": "animation, visual, rain, snow, thunder, effect, clouds, toggle, map",
   "tags_sleep_analysis": "threshold, anomalies, average, regime, spread, analysis, sleep, settings",
-  "tags_legal": "legal, license, disclaimer, hardware, liability, info, about"
+  "tags_legal": "legal, license, disclaimer, hardware, liability, info, about",
+  "mapIssueDetected": "Map Issue Detected",
+  "mapboxTokenMissing": "Mapbox access token is missing or invalid.",
+  "noInternetAccess": "Could not reach Mapbox servers. Please check your internet connection.",
+  "vcRedistMissing": "Visual C++ Redistributable (msvcp140.dll) is missing. This is required for maps to render correctly.",
+  "downloadVcRedist": "Download Visual C++ Redistributable",
+  "retryDiagnostics": "Retry Diagnosis"
 }

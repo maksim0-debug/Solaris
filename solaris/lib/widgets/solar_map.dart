@@ -5,8 +5,12 @@ import 'package:latlong2/latlong.dart';
 import 'package:solaris/env/env.dart';
 import 'package:solaris/services/terminator_service.dart';
 import 'package:solaris/providers.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:solaris/widgets/map_health_dialog.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:solaris/models/map_health_report.dart';
 
-class SolarMap extends StatefulWidget {
+class SolarMap extends ConsumerStatefulWidget {
   final double latitude;
   final double longitude;
   final double zoom;
@@ -21,10 +25,10 @@ class SolarMap extends StatefulWidget {
   });
 
   @override
-  State<SolarMap> createState() => _SolarMapState();
+  ConsumerState<SolarMap> createState() => _SolarMapState();
 }
 
-class _SolarMapState extends State<SolarMap> {
+class _SolarMapState extends ConsumerState<SolarMap> {
   final TerminatorService _terminatorService = TerminatorService();
   final MapController _mapController = MapController();
   List<LatLng> _terminatorPoints = [];
@@ -70,12 +74,14 @@ class _SolarMapState extends State<SolarMap> {
   @override
   Widget build(BuildContext context) {
     final token = Env.mapboxToken;
+    final healthAsync = ref.watch(mapHealthProvider);
+    
     // Using the same style as in LocationScreen for consistency
     const style = kMapboxLargeMapStyle;
     final urlTemplate =
         'https://api.mapbox.com/styles/v1/$style/tiles/256/{z}/{x}/{y}@2x?access_token=$token';
 
-    return FlutterMap(
+    final mapWidget = FlutterMap(
       mapController: _mapController,
       options: MapOptions(
         initialCenter: LatLng(widget.latitude, widget.longitude),
@@ -121,6 +127,52 @@ class _SolarMapState extends State<SolarMap> {
               ),
             ),
           ],
+        ),
+      ],
+    );
+
+    return Stack(
+      children: [
+        mapWidget,
+        Positioned(
+          top: 12,
+          right: 12,
+          child: healthAsync.maybeWhen(
+            data: (MapHealthReport report) => report.hasIssues
+                ? GestureDetector(
+                    onTap: () => showDialog<void>(
+                      context: context,
+                      builder: (context) => MapHealthDialog(report: report),
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFFDBA74).withOpacity(0.5)),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(LucideIcons.alertTriangle,
+                              color: Color(0xFFFDBA74), size: 16),
+                          SizedBox(width: 8),
+                          Text(
+                            "MAP ISSUES",
+                            style: TextStyle(
+                              color: Color(0xFFFDBA74),
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : const SizedBox(),
+            orElse: () => const SizedBox(),
+          ),
         ),
       ],
     );

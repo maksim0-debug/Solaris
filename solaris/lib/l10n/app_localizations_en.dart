@@ -1040,4 +1040,24 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get tags_legal =>
       'legal, license, disclaimer, hardware, liability, info, about';
+
+  @override
+  String get mapIssueDetected => 'Map Issue Detected';
+
+  @override
+  String get mapboxTokenMissing => 'Mapbox access token is missing or invalid.';
+
+  @override
+  String get noInternetAccess =>
+      'Could not reach Mapbox servers. Please check your internet connection.';
+
+  @override
+  String get vcRedistMissing =>
+      'Visual C++ Redistributable (msvcp140.dll) is missing. This is required for maps to render correctly.';
+
+  @override
+  String get downloadVcRedist => 'Download Visual C++ Redistributable';
+
+  @override
+  String get retryDiagnostics => 'Retry Diagnosis';
 }
