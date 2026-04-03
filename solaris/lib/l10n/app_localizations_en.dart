@@ -1060,4 +1060,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get retryDiagnostics => 'Retry Diagnosis';
+
+  @override
+  String get mapboxServers => 'Mapbox Servers';
+
+  @override
+  String get mapboxReachabilityDesc => 'Mapbox servers are unreachable.';
+
+  @override
+  String get sslIssueHint =>
+      'This looks like a certificate issue. Clean Windows 10 installations often lack modern root certificates. Try running Windows Update or manual update.';
+
+  @override
+  String get missingRedistHint =>
+      'Visual C++ components are missing. These are not pre-installed on clean Windows. Please install the package.';
 }

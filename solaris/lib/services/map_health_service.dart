@@ -7,18 +7,17 @@ class MapHealthService {
   static const String mapboxApiUrl = 'https://api.mapbox.com';
 
   Future<MapHealthReport> getHealthReport() async {
-    final results = await Future.wait([
-      _checkToken(),
-      _checkInternet(),
-      _checkVCRedistInstalled(),
-      _checkMapboxReachable(),
-    ]);
+    final isTokenValid = await _checkToken();
+    final isInternetAvailable = await _checkInternet();
+    final isVCRedistInstalled = await _checkVCRedistInstalled();
+    final (isMapboxReachable, errorDetails) = await _checkMapboxReachable();
 
     return MapHealthReport(
-      isTokenValid: results[0],
-      isInternetAvailable: results[1],
-      isVCRedistInstalled: results[2],
-      isMapboxReachable: results[3],
+      isTokenValid: isTokenValid,
+      isInternetAvailable: isInternetAvailable,
+      isVCRedistInstalled: isVCRedistInstalled,
+      isMapboxReachable: isMapboxReachable,
+      errorDetails: errorDetails,
     );
   }
 
@@ -41,15 +40,26 @@ class MapHealthService {
     }
   }
 
-  Future<bool> _checkMapboxReachable() async {
+  Future<(bool, String?)> _checkMapboxReachable() async {
     try {
-      final response = await http
-          .get(Uri.parse('$mapboxApiUrl/tokens/v2?access_token=${Env.mapboxToken}'))
-          .timeout(const Duration(seconds: 3));
-      // Even a 401/403 means the server is reachable
-      return response.statusCode != 404 && response.statusCode != 500;
-    } catch (_) {
-      return false;
+      // Use a standard style endpoint for reachability check
+      final url = Uri.parse('$mapboxApiUrl/styles/v1/mapbox/streets-v11?access_token=${Env.mapboxToken}');
+      final response = await http.get(url).timeout(const Duration(seconds: 5));
+      
+      if (response.statusCode == 200 || response.statusCode == 401) {
+        return (true, null);
+      }
+      return (false, "HTTP ${response.statusCode}");
+    } on SocketException catch (e) {
+      return (false, "Network error: ${e.message}");
+    } on http.ClientException catch (e) {
+      return (false, "Client error: ${e.message}");
+    } catch (e) {
+      final errorStr = e.toString();
+      if (errorStr.contains('CERTIFICATE_VERIFY_FAILED')) {
+        return (false, "SSL Certificate Error (Clean Windows 10?)");
+      }
+      return (false, errorStr);
     }
   }
 
@@ -59,11 +69,19 @@ class MapHealthService {
     if (!Platform.isWindows) return true;
 
     try {
-      // Check for the presence of the DLL in System32
-      final systemPath = '${Platform.environment['SystemRoot']}\\System32\\msvcp140.dll';
-      return await File(systemPath).exists();
+      final sysRoot = Platform.environment['SystemRoot'] ?? 'C:\\Windows';
+      // msvcp140.dll is the core, vcruntime140_1.dll handles x64 specifics in newer redist versions
+      final paths = [
+        '$sysRoot\\System32\\msvcp140.dll',
+        if (Platform.executableArguments.contains('--x64') || !Platform.executable.contains('32'))
+          '$sysRoot\\System32\\vcruntime140_1.dll',
+      ];
+      
+      for (final path in paths) {
+        if (!(await File(path).exists())) return false;
+      }
+      return true;
     } catch (_) {
-      // If we can't check, assume true to avoid false positives in restrictive environments
       return true;
     }
   }

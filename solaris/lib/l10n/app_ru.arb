@@ -534,5 +534,9 @@
   "noInternetAccess": "Не удалось связаться с серверами Mapbox. Пожалуйста, проверьте подключение к интернету.",
   "vcRedistMissing": "Отсутствует Visual C++ Redistributable (msvcp140.dll). Это необходимо для корректного отображения карт.",
   "downloadVcRedist": "Скачать Visual C++ Redistributable",
-  "retryDiagnostics": "Повторить диагностику"
+  "retryDiagnostics": "Повторить диагностику",
+  "mapboxServers": "Серверы Mapbox",
+  "mapboxReachabilityDesc": "Серверы Mapbox недоступны.",
+  "sslIssueHint": "Похоже на проблему с сертификатами. Чистые установки Windows 10 часто не имеют современных корневых сертификатов. Попробуйте запустить Центр обновления Windows.",
+  "missingRedistHint": "Отсутствуют компоненты Visual C++ (2015-2022). Они не предустановлены в чистой Windows. Пожалуйста, установите этот пакет."
 }

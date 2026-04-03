@@ -534,5 +534,9 @@
   "noInternetAccess": "Could not reach Mapbox servers. Please check your internet connection.",
   "vcRedistMissing": "Visual C++ Redistributable (msvcp140.dll) is missing. This is required for maps to render correctly.",
   "downloadVcRedist": "Download Visual C++ Redistributable",
-  "retryDiagnostics": "Retry Diagnosis"
+  "retryDiagnostics": "Retry Diagnosis",
+  "mapboxServers": "Mapbox Servers",
+  "mapboxReachabilityDesc": "Mapbox servers are unreachable.",
+  "sslIssueHint": "This looks like a certificate issue. Clean Windows 10 installations often lack modern root certificates. Try running Windows Update or manual update.",
+  "missingRedistHint": "Visual C++ components are missing. These are not pre-installed on clean Windows. Please install the package."
 }

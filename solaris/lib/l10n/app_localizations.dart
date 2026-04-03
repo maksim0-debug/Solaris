@@ -1943,6 +1943,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry Diagnosis'**
   String get retryDiagnostics;
+
+  /// No description provided for @mapboxServers.
+  ///
+  /// In en, this message translates to:
+  /// **'Mapbox Servers'**
+  String get mapboxServers;
+
+  /// No description provided for @mapboxReachabilityDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Mapbox servers are unreachable.'**
+  String get mapboxReachabilityDesc;
+
+  /// No description provided for @sslIssueHint.
+  ///
+  /// In en, this message translates to:
+  /// **'This looks like a certificate issue. Clean Windows 10 installations often lack modern root certificates. Try running Windows Update or manual update.'**
+  String get sslIssueHint;
+
+  /// No description provided for @missingRedistHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Visual C++ components are missing. These are not pre-installed on clean Windows. Please install the package.'**
+  String get missingRedistHint;
 }
 
 class _AppLocalizationsDelegate

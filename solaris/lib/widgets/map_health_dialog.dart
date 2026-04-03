@@ -57,17 +57,38 @@ class MapHealthDialog extends ConsumerWidget {
                 title: "Internet",
                 description: l10n.noInternetAccess,
               ),
-            if (!report.isMapboxReachable && report.isInternetAvailable)
-              const _IssueItem(
+            if (!report.isMapboxReachable && report.isInternetAvailable) ...[
+              _IssueItem(
                 icon: LucideIcons.serverOff,
-                title: "Mapbox Servers",
-                description: "Mapbox servers are currently unreachable. This might be a temporary service outage or a firewall issue.",
+                title: l10n.mapboxServers,
+                description: report.errorDetails ?? l10n.mapboxReachabilityDesc,
               ),
+              if (report.errorDetails?.contains('SSL') ?? false)
+                Padding(
+                  padding: const EdgeInsets.only(left: 52, bottom: 20, right: 16),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFDBA74).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFFDBA74).withOpacity(0.2)),
+                    ),
+                    child: Text(
+                      l10n.sslIssueHint,
+                      style: const TextStyle(
+                        color: Color(0xFFFDBA74),
+                        fontSize: 12,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
             if (!report.isVCRedistInstalled)
               _IssueItem(
                 icon: LucideIcons.binary,
                 title: "Visual C++ Redistributable",
-                description: l10n.vcRedistMissing,
+                description: "${l10n.vcRedistMissing}\n\n${l10n.missingRedistHint}",
                 action: ElevatedButton.icon(
                   onPressed: () => launchUrl(Uri.parse(
                       'https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170')),

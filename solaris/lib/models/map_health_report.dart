@@ -6,11 +6,14 @@ class MapHealthReport extends Equatable {
   final bool isVCRedistInstalled;
   final bool isMapboxReachable;
 
+  final String? errorDetails;
+
   const MapHealthReport({
     required this.isTokenValid,
     required this.isInternetAvailable,
     required this.isVCRedistInstalled,
     required this.isMapboxReachable,
+    this.errorDetails,
   });
 
   bool get hasIssues =>
@@ -22,6 +25,7 @@ class MapHealthReport extends Equatable {
     isInternetAvailable,
     isVCRedistInstalled,
     isMapboxReachable,
+    errorDetails,
   ];
 
   MapHealthReport copyWith({
@@ -29,12 +33,14 @@ class MapHealthReport extends Equatable {
     bool? isInternetAvailable,
     bool? isVCRedistInstalled,
     bool? isMapboxReachable,
+    String? errorDetails,
   }) {
     return MapHealthReport(
       isTokenValid: isTokenValid ?? this.isTokenValid,
       isInternetAvailable: isInternetAvailable ?? this.isInternetAvailable,
       isVCRedistInstalled: isVCRedistInstalled ?? this.isVCRedistInstalled,
       isMapboxReachable: isMapboxReachable ?? this.isMapboxReachable,
+      errorDetails: errorDetails ?? this.errorDetails,
     );
   }
 }

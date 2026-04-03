@@ -1064,4 +1064,18 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get retryDiagnostics => 'Повторить диагностику';
+
+  @override
+  String get mapboxServers => 'Серверы Mapbox';
+
+  @override
+  String get mapboxReachabilityDesc => 'Серверы Mapbox недоступны.';
+
+  @override
+  String get sslIssueHint =>
+      'Похоже на проблему с сертификатами. Чистые установки Windows 10 часто не имеют современных корневых сертификатов. Попробуйте запустить Центр обновления Windows.';
+
+  @override
+  String get missingRedistHint =>
+      'Отсутствуют компоненты Visual C++ (2015-2022). Они не предустановлены в чистой Windows. Пожалуйста, установите этот пакет.';
 }
