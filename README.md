@@ -121,8 +121,10 @@ flutter build windows
 
 ---
 
-## 📜 License
-This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
+---
+## 📄 Legal
+- **Privacy Policy**: [Read our Privacy Policy](https://maksim0-debug.github.io/Solaris/)
+- **License**: This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
 
 ---
 *Developed with ❤️ for visual health and focused productivity.*
