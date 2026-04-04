@@ -51,13 +51,26 @@ Control your environment without leaving your current app.
 - **Map Selection**: Choose your location on an interactive map if GPS is unavailable.
 - **Persistence**: Remembers your preferred location across sessions.
 
-
 ---
 
-## 🧪 Beta Feature: Sleep Sync (Google Fit)
-Align your workspace with your actual health data.
-- **Google Fit Integration**: Connect your account to sync monitor behavior with your real sleep cycles.
-- **Recovery Mode**: Automatically lowers brightness if you're experiencing "Sleep Debt" or need more rest.
+## 🔐 Google Fit Integration (Advanced Mode)
+
+Solaris supports direct synchronization with **Google Fit** to retrieve your sleep history, enabling high-precision adjustments to monitor color temperature and brightness based on your personal circadian rhythms.
+
+> [!IMPORTANT]
+> **Access & Security Policy:** Due to Google's stringent security policies regarding health data (**Restricted Scopes**), public applications are prohibited from accessing sleep history without undergoing an extensive and costly independent security audit.
+>
+> Consequently, the official release builds of Solaris cannot natively sync with your Google Fit account for automated adjustments.
+
+To utilize Google Fit synchronization, you must configure a private integration by following these steps:
+
+1. **Create a Project**: Set up a free personal project in the [Google Cloud Console](https://console.cloud.google.com/).
+2. **Configure OAuth**: Define your "OAuth Consent Screen" and generate a Client ID with the `fitness.sleep.read` scope enabled.
+3. **Local Setup**: Clone this repository to your local system.
+4. **Environment Variables**: Navigate to the `solaris/` directory, rename `.env.example` to `.env` and insert your personal **Client ID**.
+5. **Manual Build**: Compile and execute the application from source using the Flutter SDK (`flutter run -d windows`).
+
+*By utilizing a personal API key, the application will operate as a private developer instance, bypassing the verification requirements typically imposed on public distributions.*
 
 ---
 
@@ -103,7 +116,7 @@ lib/
 ### Installation
 1. Clone the repository:
    ```bash
-   git clone https://github.com/solaris-org/solaris.git
+   git clone https://github.com/maksim0-debug/Solaris.git
    ```
 2. Get dependencies:
    ```bash

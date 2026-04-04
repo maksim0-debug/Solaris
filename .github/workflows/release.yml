@@ -87,6 +87,10 @@ jobs:
           Copy-Item "$buildDir/*.dll" -Destination $releaseDir/
           Copy-Item -Path "$buildDir/data" -Destination "$releaseDir/data" -Recurse
           
+          # Copy LICENSE and README.md
+          Copy-Item "LICENSE" -Destination $releaseDir/
+          Copy-Item "README.md" -Destination $releaseDir/
+          
           # Create archive in the root directory
           Compress-Archive -Path "$releaseDir/*" -DestinationPath ../Solaris-Windows.zip
 

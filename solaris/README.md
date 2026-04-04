@@ -9,9 +9,7 @@
 ## 🌟 Key Features
 
 ### 🌖 Circadian Mode (Auto-Adjustment)
-
 The core of Solaris. The app automatically calculates the sun's position relative to your horizon and adjusts monitor brightness according to a customizable curve.
-
 - **Real-time Sun Tracking**: High-precision calculations for sunrise, sunset, solar noon, and twilight.
 - **Smooth Transitions**: Brightness changes are applied gradually to avoid sudden flashes.
 
@@ -37,6 +35,7 @@ Focus on the win without distractions.
 - **Auto-Lock**: Solaris detects when you start a game and prevents brightness from shifting during intense sessions.
 - **Customizable Lists**: Add specific apps to a **Whitelist** (always lock) or **Blacklist** (never lock).
 
+
 ### ☁️ Weather Influence
 The first monitor controller that cares about the sky.
 - **Cloudiness Logic**: Naturally dims brightness when it's overcast, rainy, or snowy using real-time Open-Meteo data.
@@ -54,10 +53,24 @@ Control your environment without leaving your current app.
 
 ---
 
-## 🧪 Beta Feature: Sleep Sync (Google Fit)
-Align your workspace with your actual health data.
-- **Google Fit Integration**: Connect your account to sync monitor behavior with your real sleep cycles.
-- **Recovery Mode**: Automatically lowers brightness if you're experiencing "Sleep Debt" or need more rest.
+## 🔐 Google Fit Integration (Advanced Mode)
+
+Solaris supports direct synchronization with **Google Fit** to retrieve your sleep history, enabling high-precision adjustments to monitor color temperature and brightness based on your personal circadian rhythms.
+
+> [!IMPORTANT]
+> **Access & Security Policy:** Due to Google's stringent security policies regarding health data (**Restricted Scopes**), public applications are prohibited from accessing sleep history without undergoing an extensive and costly independent security audit.
+>
+> Consequently, the official release builds of Solaris cannot natively sync with your Google Fit account for automated adjustments.
+
+To utilize Google Fit synchronization, you must configure a private integration by following these steps:
+
+1. **Create a Project**: Set up a free personal project in the [Google Cloud Console](https://console.cloud.google.com/).
+2. **Configure OAuth**: Define your "OAuth Consent Screen" and generate a Client ID with the `fitness.sleep.read` scope enabled.
+3. **Local Setup**: Clone this repository to your local system.
+4. **Environment Variables**: Navigate to the `solaris/` directory, rename `.env.example` to `.env` and insert your personal **Client ID**.
+5. **Manual Build**: Compile and execute the application from source using the Flutter SDK (`flutter run -d windows`).
+
+*By utilizing a personal API key, the application will operate as a private developer instance, bypassing the verification requirements typically imposed on public distributions.*
 
 ---
 
@@ -99,19 +112,11 @@ lib/
 - [Flutter SDK](https://docs.flutter.dev/get-started/install) (Stable channel)
 - Windows 10/11
 - Monitors with **DDC/CI** support (Ensure it is enabled in your monitor's OSD menu)
-- **Visual C++ Redistributable (x64)**: Required for running the application on Windows. [Download here](https://aka.ms/vs/17/release/vc_redist.x64.exe).
-- **Windows Location Services**: Must be enabled in Windows Settings for auto-coordinates.
-
-### 🛠️ Troubleshooting (Map Problems)
-If Mapbox maps or location detection is not working on a clean Windows install:
-1. **Enable Location Services**: Go to *Settings > Privacy > Location* and ensure "Allow apps to access your location" is ON.
-2. **Install VCRedist**: Download and install the [Microsoft Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe).
-3. **Manual Entry**: If GPS is unavailable, you can always enter your coordinates manually in the **Location** tab of the app.
 
 ### Installation
 1. Clone the repository:
    ```bash
-   git clone https://github.com/solaris-org/solaris.git
+   git clone https://github.com/maksim0-debug/Solaris.git
    ```
 2. Get dependencies:
    ```bash
@@ -129,8 +134,10 @@ flutter build windows
 
 ---
 
-## 📜 License
-This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
+---
+## 📄 Legal
+- **Privacy Policy**: [Read our Privacy Policy](https://maksim0-debug.github.io/Solaris/docs)
+- **License**: This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
 
 ---
 *Developed with ❤️ for visual health and focused productivity.*
