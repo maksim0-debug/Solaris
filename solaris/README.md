@@ -86,7 +86,7 @@ Solaris leverages cutting-edge technologies for peak performance on Windows:
 - **APIs & Services**:
     - **Google Fit API**: Health data synchronization.
     - **Open-Meteo**: High-precision weather data.
-    - **Mapbox/OpenStreetMap**: Location services.
+    - **Mapbox**: Location services.
 - **Math engine**: Spherical trigonometry and solar algorithms (`solar_calculator`, `sunrise_sunset_calc`).
 
 ---
