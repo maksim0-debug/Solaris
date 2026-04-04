@@ -911,6 +911,16 @@ class AppLocalizationsUk extends AppLocalizations {
   String get legal => 'Юридична інформація';
 
   @override
+  String get legalSubtitle => 'Юридична інформація та конфіденційність';
+
+  @override
+  String get privacyPolicy => 'Політика конфіденційності';
+
+  @override
+  String get privacyPolicySubtitle =>
+      'Дізнайтеся про те, як ми обробляємо ваші дані та інтеграцію з Google Fit.';
+
+  @override
   String get disclaimerTitle => 'Відмова від відповідальності';
 
   @override

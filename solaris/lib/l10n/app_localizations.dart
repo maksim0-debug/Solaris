@@ -1692,6 +1692,24 @@ abstract class AppLocalizations {
   /// **'Legal Information'**
   String get legal;
 
+  /// No description provided for @legalSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Legal & Privacy'**
+  String get legalSubtitle;
+
+  /// No description provided for @privacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get privacyPolicy;
+
+  /// No description provided for @privacyPolicySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Read about how we handle your data and Google Fit integration.'**
+  String get privacyPolicySubtitle;
+
   /// No description provided for @disclaimerTitle.
   ///
   /// In en, this message translates to:

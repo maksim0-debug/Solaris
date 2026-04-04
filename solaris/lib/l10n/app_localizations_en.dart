@@ -911,6 +911,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get legal => 'Legal Information';
 
   @override
+  String get legalSubtitle => 'Legal & Privacy';
+
+  @override
+  String get privacyPolicy => 'Privacy Policy';
+
+  @override
+  String get privacyPolicySubtitle =>
+      'Read about how we handle your data and Google Fit integration.';
+
+  @override
   String get disclaimerTitle => 'Disclaimer';
 
   @override

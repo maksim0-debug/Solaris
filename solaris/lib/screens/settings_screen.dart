@@ -15,6 +15,9 @@ import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'dart:ui';
 import 'package:solaris/widgets/deep_link_target.dart';
+import 'package:solaris/screens/privacy_policy_screen.dart';
+import 'package:solaris/theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -298,6 +301,78 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 24),
+          const _LegalSection(),
+          const SizedBox(height: 48),
+        ],
+      ),
+    );
+  }
+}
+
+class _LegalSection extends StatelessWidget {
+  const _LegalSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return GlassCard(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  LucideIcons.shieldCheck,
+                  color: AppTheme.accent,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Text(
+                l10n.legalSubtitle,
+                style: GoogleFonts.outfit(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(LucideIcons.fileText, color: Colors.white70, size: 20),
+            title: Text(
+              l10n.privacyPolicy,
+              style: GoogleFonts.outfit(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+              ),
+            ),
+            subtitle: Text(
+              l10n.privacyPolicySubtitle,
+              style: GoogleFonts.outfit(
+                fontSize: 12,
+                color: Colors.white.withOpacity(0.5),
+              ),
+            ),
+            trailing: const Icon(LucideIcons.chevronRight, color: Colors.white24, size: 18),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (context) => const PrivacyPolicyScreen(),
+                ),
+              );
+            },
+          ),
         ],
       ),
     );

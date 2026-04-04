@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/providers/app_info_provider.dart';
+import 'package:solaris/screens/privacy_policy_screen.dart';
 
 class SolarisAboutDialog extends ConsumerWidget {
   const SolarisAboutDialog({super.key});
@@ -119,9 +120,23 @@ class SolarisAboutDialog extends ConsumerWidget {
               const SizedBox(height: 32),
               
               // Actions
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              Wrap(
+                alignment: WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 12,
+                runSpacing: 8,
                 children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (context) => const PrivacyPolicyScreen(),
+                      ),
+                    ),
+                    child: Text(
+                      l10n.privacyPolicy,
+                      style: const TextStyle(color: Colors.white54, fontSize: 13),
+                    ),
+                  ),
                   TextButton(
                     onPressed: () => showLicensePage(
                       context: context,
@@ -145,10 +160,9 @@ class SolarisAboutDialog extends ConsumerWidget {
                     ),
                     child: Text(
                       l10n.viewLicenses,
-                      style: const TextStyle(color: Colors.white54),
+                      style: const TextStyle(color: Colors.white54, fontSize: 13),
                     ),
                   ),
-                  const SizedBox(width: 16),
                   ElevatedButton(
                     onPressed: () => Navigator.of(context).pop(),
                     style: ElevatedButton.styleFrom(
@@ -159,11 +173,11 @@ class SolarisAboutDialog extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(12),
                         side: BorderSide(color: const Color(0xFFFDBA74).withOpacity(0.3)),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     ),
                     child: Text(
                       l10n.close,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ),
                 ],

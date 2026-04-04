@@ -913,6 +913,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get legal => 'Юридическая информация';
 
   @override
+  String get legalSubtitle => 'Юридическая информация и конфиденциальность';
+
+  @override
+  String get privacyPolicy => 'Политика конфиденциальности';
+
+  @override
+  String get privacyPolicySubtitle =>
+      'Узнайте о том, как мы обрабатываем ваши данные и интеграции с Google Fit.';
+
+  @override
   String get disclaimerTitle => 'Отказ от ответственности';
 
   @override
