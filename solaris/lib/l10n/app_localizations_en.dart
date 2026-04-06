@@ -331,7 +331,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get airTemp => 'Air Temp';
 
   @override
-  String get settingsSubtitle => 'Configure your circadian rhythm parameters';
+  String get settingsSubtitle =>
+      'Configure your circadian rhythm parameters. Hold the left mouse button to drag and drop presets, or use the right mouse button to rename or delete them.';
 
   @override
   String get circadianLimits => 'Circadian Limits';
@@ -966,6 +967,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get weatherSettingsSubtitle => 'Customize animation visibility';
+
+  @override
+  String get mapSettings => 'Map Settings';
+
+  @override
+  String get mapStyle => 'Map Style';
+
+  @override
+  String get mapStyleAuto => 'Automatic';
+
+  @override
+  String get mapStyleDay => 'Day';
+
+  @override
+  String get mapStyleNight => 'Night';
 
   @override
   String get searchPlaceholder =>

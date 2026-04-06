@@ -333,7 +333,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get airTemp => 'Темп. повітря';
 
   @override
-  String get settingsSubtitle => 'Налаштуйте параметри вашого циркадного ритму';
+  String get settingsSubtitle =>
+      'Налаштуйте параметри вашого циркадного ритму. Ви можете перетягувати пресети, затиснувши ліву кнопку миші, а також перейменувати або видалити їх, натиснувши праву кнопку миші.';
 
   @override
   String get circadianLimits => 'Циркадні межі';
@@ -966,6 +967,21 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get weatherSettingsSubtitle => 'Налаштуйте видимість анімацій';
+
+  @override
+  String get mapSettings => 'Налаштування карти';
+
+  @override
+  String get mapStyle => 'Стиль карти';
+
+  @override
+  String get mapStyleAuto => 'Автоматично';
+
+  @override
+  String get mapStyleDay => 'День';
+
+  @override
+  String get mapStyleNight => 'Ніч';
 
   @override
   String get searchPlaceholder =>

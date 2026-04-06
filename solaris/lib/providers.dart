@@ -1391,6 +1391,13 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     });
   }
 
+  void updateMapStyleMode(MapStyleMode mode) {
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(mapStyleMode: mode),
+    );
+  }
+
   void cyclePreset({required bool brighter}) {
     // Cycling is complex because it depends on the current state of each monitor.
     // We update each selected monitor based on its own cycle order.

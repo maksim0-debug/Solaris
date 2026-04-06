@@ -1,6 +1,16 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:solaris/models/preset_type.dart';
 
+enum MapStyleMode {
+  auto,
+  day,
+  night;
+
+  String toJson() => name;
+  factory MapStyleMode.fromJson(String json) =>
+      MapStyleMode.values.firstWhere((e) => e.name == json, orElse: () => MapStyleMode.auto);
+}
+
 class SettingsState {
   final PresetType activePreset;
   final Map<PresetType, List<FlSpot>> curvesMap;
@@ -52,6 +62,7 @@ class SettingsState {
   final bool showSnowAnimation;
   final bool showThunderAnimation;
   final bool showCloudAnimation;
+  final MapStyleMode mapStyleMode;
 
   SettingsState({
     this.activePreset = PresetType.bright,
@@ -118,6 +129,7 @@ class SettingsState {
     this.showSnowAnimation = true,
     this.showThunderAnimation = true,
     this.showCloudAnimation = true,
+    this.mapStyleMode = MapStyleMode.auto,
   }) : curvesMap = curvesMap ?? PresetConstants.getAllDefaults(),
        presetOrder = presetOrder ?? [
          ...PresetType.values.map((e) => 'system:${e.name}'),
@@ -192,6 +204,7 @@ class SettingsState {
     'showSnowAnimation': showSnowAnimation,
     'showThunderAnimation': showThunderAnimation,
     'showCloudAnimation': showCloudAnimation,
+    'mapStyleMode': mapStyleMode.toJson(),
   };
 
   factory SettingsState.fromJson(Map<String, dynamic> json) {
@@ -345,6 +358,7 @@ class SettingsState {
       showSnowAnimation: json['showSnowAnimation'] as bool? ?? true,
       showThunderAnimation: json['showThunderAnimation'] as bool? ?? true,
       showCloudAnimation: json['showCloudAnimation'] as bool? ?? true,
+      mapStyleMode: MapStyleMode.fromJson(json['mapStyleMode'] as String? ?? 'auto'),
     );
   }
 
@@ -399,6 +413,7 @@ class SettingsState {
     bool? showSnowAnimation,
     bool? showThunderAnimation,
     bool? showCloudAnimation,
+    MapStyleMode? mapStyleMode,
     bool clearNextPresetHotKey = false,
     bool clearPrevPresetHotKey = false,
     bool clearBrightnessUpHotKey = false,
@@ -487,6 +502,7 @@ class SettingsState {
       showSnowAnimation: showSnowAnimation ?? this.showSnowAnimation,
       showThunderAnimation: showThunderAnimation ?? this.showThunderAnimation,
       showCloudAnimation: showCloudAnimation ?? this.showCloudAnimation,
+      mapStyleMode: mapStyleMode ?? this.mapStyleMode,
     );
   }
 }

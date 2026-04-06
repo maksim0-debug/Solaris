@@ -679,7 +679,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Configure your circadian rhythm parameters'**
+  /// **'Configure your circadian rhythm parameters. Hold the left mouse button to drag and drop presets, or use the right mouse button to rename or delete them.'**
   String get settingsSubtitle;
 
   /// No description provided for @circadianLimits.
@@ -1799,6 +1799,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Customize animation visibility'**
   String get weatherSettingsSubtitle;
+
+  /// No description provided for @mapSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Map Settings'**
+  String get mapSettings;
+
+  /// No description provided for @mapStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Map Style'**
+  String get mapStyle;
+
+  /// No description provided for @mapStyleAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get mapStyleAuto;
+
+  /// No description provided for @mapStyleDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day'**
+  String get mapStyleDay;
+
+  /// No description provided for @mapStyleNight.
+  ///
+  /// In en, this message translates to:
+  /// **'Night'**
+  String get mapStyleNight;
 
   /// No description provided for @searchPlaceholder.
   ///

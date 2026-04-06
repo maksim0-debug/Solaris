@@ -25,9 +25,13 @@ class StylishLocationCard extends ConsumerWidget {
 
     return solarAsync.maybeWhen(
       data: (solarState) {
-        final elevation = solarState.sunElevation;
-        // Determine style and colors based on elevation
-        final bool isNight = elevation < -6;
+        // Determine style and colors based on settings or sun elevation
+        final settings = settingsAsync.value?['all'] ?? SettingsState();
+        final bool isNight = switch (settings.mapStyleMode) {
+          MapStyleMode.auto => solarState.sunElevation < -6,
+          MapStyleMode.day => false,
+          MapStyleMode.night => true,
+        };
 
         final String mapStyle = isNight ? kMapboxNightStyle : kMapboxDayStyle;
 
@@ -307,27 +311,44 @@ class _WeatherSettingsButtonState extends ConsumerState<_WeatherSettingsButton> 
             child: CompositedTransformFollower(
               link: _layerLink,
               showWhenUnlinked: false,
-              offset: const Offset(-14, -235), // Positioned 45px higher and 14px left as requested
+              offset: const Offset(-14, -315), // Adjusted offset to align better with the card
               child: Material(
                 color: Colors.transparent,
                 child: Consumer(
                   builder: (context, ref, child) {
                     final settingsAsync = ref.watch(settingsProvider);
+                    final solarAsync = ref.watch(solarStateStreamProvider);
+
                     return settingsAsync.maybeWhen(
                       data: (settingsMap) {
-                        final settings = settingsMap['all'] ?? SettingsState();
+                        final settings =
+                            settingsMap['all'] ?? SettingsState();
+                        final solarState = solarAsync.value;
+
+                        final bool isNight = switch (settings.mapStyleMode) {
+                          MapStyleMode.auto =>
+                            (solarState?.sunElevation ?? 0) < -6,
+                          MapStyleMode.day => false,
+                          MapStyleMode.night => true,
+                        };
+
+                        final Color dynamicAccentColor = isNight
+                            ? Colors.blueAccent
+                            : const Color(0xFFFDBA74);
+
                         return GlassCard(
-                          glowColor: widget.accentColor,
-                          padding: const EdgeInsets.all(16),
+                          glowColor: dynamicAccentColor,
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Row(
                                 children: [
-                                  Icon(LucideIcons.cloudRain, color: widget.accentColor, size: 18),
+                                  Icon(LucideIcons.map,
+                                      color: dynamicAccentColor, size: 16),
                                   const SizedBox(width: 8),
                                   Text(
-                                    l10n.weatherAnimations,
+                                    l10n.mapSettings,
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 14,
@@ -336,7 +357,8 @@ class _WeatherSettingsButtonState extends ConsumerState<_WeatherSettingsButton> 
                                   ),
                                   const Spacer(),
                                   IconButton(
-                                    icon: const Icon(LucideIcons.x, size: 14, color: Colors.white54),
+                                    icon: const Icon(LucideIcons.x,
+                                        size: 14, color: Colors.white54),
                                     onPressed: _closePopover,
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(),
@@ -345,13 +367,42 @@ class _WeatherSettingsButtonState extends ConsumerState<_WeatherSettingsButton> 
                                 ],
                               ),
                               const SizedBox(height: 12),
+                              // Map Style Section
+                              _MapStyleDropdown(
+                                currentMode: settings.mapStyleMode,
+                                onSelected: (mode) => ref
+                                    .read(settingsProvider.notifier)
+                                    .updateMapStyleMode(mode),
+                                accentColor: dynamicAccentColor,
+                                l10n: l10n,
+                              ),
+                              const Divider(color: Colors.white12, height: 24),
+                              // Weather Animations Section
+                              Row(
+                                children: [
+                                  Icon(LucideIcons.cloudRain,
+                                      color:
+                                          dynamicAccentColor.withOpacity(0.7),
+                                      size: 14),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    l10n.weatherAnimations,
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
                               _WeatherToggleRow(
                                 label: l10n.showRain,
                                 value: settings.showRainAnimation,
                                 onChanged: (val) => ref
                                     .read(settingsProvider.notifier)
                                     .updateShowRainAnimation(val),
-                                accentColor: widget.accentColor,
+                                accentColor: dynamicAccentColor,
                               ),
                               _WeatherToggleRow(
                                 label: l10n.showSnow,
@@ -359,7 +410,7 @@ class _WeatherSettingsButtonState extends ConsumerState<_WeatherSettingsButton> 
                                 onChanged: (val) => ref
                                     .read(settingsProvider.notifier)
                                     .updateShowSnowAnimation(val),
-                                accentColor: widget.accentColor,
+                                accentColor: dynamicAccentColor,
                               ),
                               _WeatherToggleRow(
                                 label: l10n.showThunder,
@@ -367,7 +418,7 @@ class _WeatherSettingsButtonState extends ConsumerState<_WeatherSettingsButton> 
                                 onChanged: (val) => ref
                                     .read(settingsProvider.notifier)
                                     .updateShowThunderAnimation(val),
-                                accentColor: widget.accentColor,
+                                accentColor: dynamicAccentColor,
                               ),
                               _WeatherToggleRow(
                                 label: l10n.showClouds,
@@ -375,7 +426,7 @@ class _WeatherSettingsButtonState extends ConsumerState<_WeatherSettingsButton> 
                                 onChanged: (val) => ref
                                     .read(settingsProvider.notifier)
                                     .updateShowCloudAnimation(val),
-                                accentColor: widget.accentColor,
+                                accentColor: dynamicAccentColor,
                               ),
                             ],
                           ),
@@ -436,9 +487,131 @@ class _WeatherSettingsButtonState extends ConsumerState<_WeatherSettingsButton> 
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(),
           splashRadius: 16,
-          tooltip: _isOpen ? null : AppLocalizations.of(context)!.weatherAnimations,
+          tooltip: _isOpen ? null : AppLocalizations.of(context)!.mapSettings,
         ),
       ),
+    );
+  }
+}
+
+class _MapStyleDropdown extends StatefulWidget {
+  final MapStyleMode currentMode;
+  final ValueChanged<MapStyleMode> onSelected;
+  final Color accentColor;
+  final AppLocalizations l10n;
+
+  const _MapStyleDropdown({
+    required this.currentMode,
+    required this.onSelected,
+    required this.accentColor,
+    required this.l10n,
+  });
+
+  @override
+  State<_MapStyleDropdown> createState() => _MapStyleDropdownState();
+}
+
+class _MapStyleDropdownState extends State<_MapStyleDropdown> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final currentLabel = switch (widget.currentMode) {
+      MapStyleMode.auto => widget.l10n.mapStyleAuto,
+      MapStyleMode.day => widget.l10n.mapStyleDay,
+      MapStyleMode.night => widget.l10n.mapStyleNight,
+    };
+
+    final currentIcon = switch (widget.currentMode) {
+      MapStyleMode.auto => LucideIcons.refreshCw,
+      MapStyleMode.day => LucideIcons.sun,
+      MapStyleMode.night => LucideIcons.moon,
+    };
+
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: () => setState(() => _isExpanded = !_isExpanded),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _isExpanded ? widget.accentColor.withOpacity(0.3) : Colors.transparent,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(currentIcon, size: 16, color: widget.accentColor),
+                const SizedBox(width: 12),
+                Text(
+                  currentLabel,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Spacer(),
+                AnimatedRotation(
+                  turns: _isExpanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: const Icon(
+                    LucideIcons.chevronDown,
+                    size: 16,
+                    color: Colors.white54,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_isExpanded) ...[
+          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.03),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              children: [
+                _MapStyleOption(
+                  label: widget.l10n.mapStyleAuto,
+                  icon: LucideIcons.refreshCw,
+                  isSelected: widget.currentMode == MapStyleMode.auto,
+                  onTap: () {
+                    widget.onSelected(MapStyleMode.auto);
+                    setState(() => _isExpanded = false);
+                  },
+                  accentColor: widget.accentColor,
+                ),
+                _MapStyleOption(
+                  label: widget.l10n.mapStyleDay,
+                  icon: LucideIcons.sun,
+                  isSelected: widget.currentMode == MapStyleMode.day,
+                  onTap: () {
+                    widget.onSelected(MapStyleMode.day);
+                    setState(() => _isExpanded = false);
+                  },
+                  accentColor: widget.accentColor,
+                ),
+                _MapStyleOption(
+                  label: widget.l10n.mapStyleNight,
+                  icon: LucideIcons.moon,
+                  isSelected: widget.currentMode == MapStyleMode.night,
+                  onTap: () {
+                    widget.onSelected(MapStyleMode.night);
+                    setState(() => _isExpanded = false);
+                  },
+                  accentColor: widget.accentColor,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -458,27 +631,86 @@ class _WeatherToggleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(color: Colors.white, fontSize: 12),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 13, // Slightly larger for better readability
+            fontWeight: FontWeight.w500,
           ),
-          Transform.scale(
-            scale: 0.7,
-            child: Switch(
-              value: value,
-              onChanged: onChanged,
-              activeColor: accentColor,
-              activeTrackColor: accentColor.withOpacity(0.3),
-              inactiveThumbColor: Colors.white54,
-              inactiveTrackColor: Colors.white10,
+        ),
+        Transform.scale(
+          scale: 0.75, // Better balance
+          child: Switch(
+            value: value,
+            onChanged: onChanged,
+            activeColor: accentColor,
+            activeTrackColor: accentColor.withOpacity(0.3),
+            inactiveThumbColor: Colors.white54,
+            inactiveTrackColor: Colors.white10,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MapStyleOption extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final Color accentColor;
+
+  const _MapStyleOption({
+    required this.label,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+    required this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        margin: const EdgeInsets.symmetric(vertical: 1),
+        decoration: BoxDecoration(
+          color:
+              isSelected ? accentColor.withOpacity(0.12) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected ? accentColor : Colors.white54,
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.white70,
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+            const Spacer(),
+            if (isSelected)
+              Icon(
+                LucideIcons.check,
+                size: 16,
+                color: accentColor,
+              ),
+          ],
+        ),
       ),
     );
   }

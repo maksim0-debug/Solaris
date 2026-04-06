@@ -590,42 +590,53 @@ class _Header extends ConsumerWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              timeStr,
-              style: Theme.of(
-                context,
-              ).textTheme.displayLarge?.copyWith(fontSize: 18),
-            ),
-            Text(
-              l10n.localTime,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(fontSize: 10),
-            ),
-          ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                timeStr,
+                style: Theme.of(
+                  context,
+                ).textTheme.displayLarge?.copyWith(fontSize: 18),
+                overflow: TextOverflow.ellipsis,
+              ),
+              Text(
+                l10n.localTime,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontSize: 10),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              nextEventStatus.toUpperCase(),
-              style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                fontSize: 18,
-                color: const Color(0xFFFDBA74),
-                fontWeight: FontWeight.bold,
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                nextEventStatus.toUpperCase(),
+                style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                  fontSize: 18,
+                  color: const Color(0xFFFDBA74),
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.end,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            Text(
-              nextEventTime,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontSize: 11,
-                color: Colors.white54,
+              Text(
+                nextEventTime,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontSize: 11,
+                  color: Colors.white54,
+                ),
+                textAlign: TextAlign.end,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );

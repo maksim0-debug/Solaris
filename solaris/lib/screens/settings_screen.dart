@@ -1026,24 +1026,26 @@ class _SectionHeader extends StatelessWidget {
       children: [
         Icon(icon, color: const Color(0xFFFDBA74), size: 28),
         const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                fontSize: 24,
-                letterSpacing: -0.5,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                  fontSize: 24,
+                  letterSpacing: -0.5,
+                ),
               ),
-            ),
-            Text(
-              subtitle,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontSize: 12,
-                color: Colors.white38,
+              Text(
+                subtitle,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontSize: 12,
+                  color: Colors.white38,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
