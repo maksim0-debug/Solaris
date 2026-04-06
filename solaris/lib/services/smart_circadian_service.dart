@@ -96,7 +96,10 @@ class SmartCircadianService {
           // NON-LINEAR CONVEX FADE:
           // At high intensities, we hold the bonus for much longer.
           // Power 20 at 100% intensity means bonus stays >90% for ~4.5 hours and >30% until last 10 mins.
-          final double fadePower = 1.0 + (19.0 * timeShiftIntensity);
+          // SMOOTH DIVE (Плавное пике): 
+          // At max intensity, power is 3.0 (Cubic). This spreads the decay 
+          // much more evenly over the duration, preventing the "cliff" effect.
+          final double fadePower = 1.0 + (2.0 * timeShiftIntensity);
           fadeFactor = 1.0 - math.pow(progress, fadePower);
 
           timeShiftMinutesRemaining = timeShiftDur - timeSinceWake.inMinutes;

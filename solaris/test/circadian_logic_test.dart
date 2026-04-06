@@ -35,41 +35,41 @@ void main() {
 
     test('Deep Night should return default minBrightness (15%)', () {
       final now = DateTime(2026, 3, 19, 2, 0); // 2 AM
-      final brightness = service.calculateTargetBrightness(phases, -30.0, now);
-      expect(brightness, 15.0);
+      final result = service.calculateTargetBrightness(phases, -30.0, now);
+      expect(result.finalBrightness, 15.0);
     });
 
     test('Solar Zenith should return default maxBrightness (100%)', () {
       final now = DateTime(2026, 3, 19, 12, 0); // Noon
-      final brightness = service.calculateTargetBrightness(phases, 60.0, now);
-      expect(brightness, 100.0);
+      final result = service.calculateTargetBrightness(phases, 60.0, now);
+      expect(result.finalBrightness, 100.0);
     });
 
     test(
       'Golden Hour Evening (30 min before sunset) should return around 72.5% based on curve',
       () {
         final now = DateTime(2026, 3, 19, 17, 30);
-        final brightness = service.calculateTargetBrightness(
+        final result = service.calculateTargetBrightness(
           phases,
           5.0,
           now,
           curvePoints: curvePoints,
         );
         // elevation 5 between 0 (60%) and 10 (85%) => 72.5%
-        expect(brightness, closeTo(72.5, 0.1));
+        expect(result.finalBrightness, closeTo(72.5, 0.1));
       },
     );
 
     test('Civil Twilight should return between 60% and 15% based on curve', () {
       final now = DateTime(2026, 3, 19, 18, 15); // Middle of Civil Twilight
-      final brightness = service.calculateTargetBrightness(
+      final result = service.calculateTargetBrightness(
         phases,
         -3.0,
         now,
         curvePoints: curvePoints,
       );
       // elevation -3 between -6 (25%) and 0 (60%) => 42.5%
-      expect(brightness, closeTo(42.5, 0.1));
+      expect(result.finalBrightness, closeTo(42.5, 0.1));
     });
 
     test(
@@ -86,7 +86,7 @@ void main() {
           weatherCode: 55, // rain => base weather factor 0.75 in daytime
         );
 
-        final brightness = service.calculateTargetBrightness(
+        final result = service.calculateTargetBrightness(
           phases,
           30.0,
           now,
@@ -96,7 +96,7 @@ void main() {
         );
 
         // base=100; finalFactor=1-((1-0.75)*0.6)=0.85 => 85
-        expect(brightness, closeTo(85.0, 0.1));
+        expect(result.finalBrightness, closeTo(85.0, 0.1));
       },
     );
 
@@ -118,7 +118,7 @@ void main() {
         const FlSpot(90, 20),
       ];
 
-      final brightness = service.calculateTargetBrightness(
+      final result = service.calculateTargetBrightness(
         phases,
         20.0,
         now,
@@ -129,7 +129,7 @@ void main() {
 
       // Computed value falls below the configured minimum (first point = 40),
       // so the result must be clamped.
-      expect(brightness, 40.0);
+      expect(result.finalBrightness, 40.0);
     });
   });
 }

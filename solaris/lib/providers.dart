@@ -126,9 +126,14 @@ final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
           // Bio-morning is a bonus: never dim below natural sun level (for late risers)
           effectiveElevation = math.max(effectiveElevation, solar.sunElevation);
 
-          // Blinding Protection (similar to other providers)
-          if (solar.sunElevation < 0 && effectiveElevation > 10) {
-            effectiveElevation = effectiveElevation.clamp(-20.0, 10.0);
+          // Blinding Protection (Smooth transition)
+          // If real sun is below horizon, we clamp the "future sun" to a maximum (e.g. 10 degrees)
+          // to avoid blinding the user at night. 
+          // We fade this protection out as the real sun rises to avoid a jump.
+          if (solar.sunElevation < 5 && effectiveElevation > 10) {
+            double protectionFactor = (5.0 - solar.sunElevation).clamp(0.0, 5.0) / 5.0; // 1.0 at <0, 0.0 at 5
+            double maxAllowed = 10.0 + (effectiveElevation - 10.0) * (1.0 - protectionFactor);
+            effectiveElevation = effectiveElevation.clamp(-20.0, maxAllowed);
           }
 
           // Calculate time shift impact for reference
@@ -382,7 +387,8 @@ final effectiveLocationProvider = Provider<AsyncValue<Position>>((ref) {
         orElse: () => AsyncData(_defaultPosition),
       );
     },
-    loading: () => AsyncData(_defaultPosition), // Immediate fallback during settings load
+    loading: () =>
+        AsyncData(_defaultPosition), // Immediate fallback during settings load
     error: (e, st) => AsyncData(_defaultPosition), // Fallback on error
   );
 });
@@ -663,7 +669,8 @@ class LocaleNotifier extends Notifier<Locale> {
   }
 
   void setLocale(String languageCode) {
-    if (languageCode != 'en' && languageCode != 'ru' && languageCode != 'uk') return;
+    if (languageCode != 'en' && languageCode != 'ru' && languageCode != 'uk')
+      return;
     state = Locale(languageCode);
     ref.read(sharedPreferencesProvider)?.setString(_localeKey, languageCode);
   }
@@ -717,17 +724,17 @@ class AutoBrightnessAdjustmentNotifier extends Notifier<bool> {
       final monitor = _getBaselineMonitor(ref);
       if (monitor?.realBrightness != null) {
         final settingsAsync = ref.read(settingsProvider);
-        final settings = settingsAsync.value?[monitor!.deviceName] ??
+        final settings =
+            settingsAsync.value?[monitor!.deviceName] ??
             settingsAsync.value?['all'] ??
             SettingsState();
 
         ref
             .read(manualBrightnessProvider.notifier)
             .update(
-              (monitor!.realBrightness! - settings.brightnessOffset).clamp(
-                0.0,
-                100.0,
-              ).toDouble(),
+              (monitor!.realBrightness! - settings.brightnessOffset)
+                  .clamp(0.0, 100.0)
+                  .toDouble(),
             );
       }
     }
@@ -994,7 +1001,9 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
       final monitor = _getBaselineMonitor(ref);
       if (monitor?.realBrightness != null) {
         final monitorSettings = _getSettings(monitor!.deviceName);
-        ref.read(manualBrightnessProvider.notifier).update(
+        ref
+            .read(manualBrightnessProvider.notifier)
+            .update(
               (monitor.realBrightness! - monitorSettings.brightnessOffset)
                   .clamp(0.0, 100.0)
                   .toDouble(),
@@ -1271,10 +1280,9 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   }
 
   void updateMultiMonitorOffsetEnabled(bool enabled) {
-    _updateSettings(
-      {'all'},
-      (s) => s.copyWith(isMultiMonitorOffsetEnabled: enabled),
-    );
+    _updateSettings({
+      'all',
+    }, (s) => s.copyWith(isMultiMonitorOffsetEnabled: enabled));
   }
 
   void updateMonitorOffset(String monitorId, double offset) {
@@ -1311,12 +1319,15 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   void deleteUserPreset(String id) {
     _updateSettings(ref.read(selectedMonitorsProvider), (s) {
       final newUserPresets = s.userPresets.where((p) => p.id != id).toList();
-      final newPresetOrder =
-          s.presetOrder.where((orderId) => orderId != 'user:$id').toList();
+      final newPresetOrder = s.presetOrder
+          .where((orderId) => orderId != 'user:$id')
+          .toList();
 
       String? newActiveId = s.activeUserPresetId;
       if (newActiveId == id) {
-        newActiveId = newUserPresets.isNotEmpty ? newUserPresets.first.id : null;
+        newActiveId = newUserPresets.isNotEmpty
+            ? newUserPresets.first.id
+            : null;
       }
 
       return s.copyWith(
@@ -1387,22 +1398,24 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
       final cycleOrder = s.presetOrder
           .where((orderId) => orderId != 'system:custom')
           .map((orderId) {
-        if (orderId.startsWith('system:')) {
-          final typeName = orderId.substring(7);
-          try {
-            return PresetType.values.firstWhere((e) => e.name == typeName);
-          } catch (_) {
-            return PresetType.bright;
-          }
-        } else {
-          final userId = orderId.substring(5);
-          try {
-            return s.userPresets.firstWhere((p) => p.id == userId);
-          } catch (_) {
-            return null;
-          }
-        }
-      }).where((item) => item != null).toList();
+            if (orderId.startsWith('system:')) {
+              final typeName = orderId.substring(7);
+              try {
+                return PresetType.values.firstWhere((e) => e.name == typeName);
+              } catch (_) {
+                return PresetType.bright;
+              }
+            } else {
+              final userId = orderId.substring(5);
+              try {
+                return s.userPresets.firstWhere((p) => p.id == userId);
+              } catch (_) {
+                return null;
+              }
+            }
+          })
+          .where((item) => item != null)
+          .toList();
 
       if (cycleOrder.isEmpty) return s;
 
@@ -1457,10 +1470,9 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   void updateBrightnessStep(bool isUp, double value) {
     _updateSettings(
       ref.read(selectedMonitorsProvider),
-      (s) =>
-          isUp
-              ? s.copyWith(brightnessStepUp: value)
-              : s.copyWith(brightnessStepDown: value),
+      (s) => isUp
+          ? s.copyWith(brightnessStepUp: value)
+          : s.copyWith(brightnessStepDown: value),
     );
   }
 
@@ -1739,18 +1751,18 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
               if (isGamingMode && settings.isGameModeEnabled) {
                 targetBrightness = settings.gameModeBrightness;
               } else {
-                final calculationResult =
-                    circadianService.calculateTargetBrightness(
+                final calculationResult = circadianService
+                    .calculateTargetBrightness(
                       state.phases,
                       effectiveElevation,
                       DateTime.now(),
                       curveSharpness: settings.curveSharpness,
                       curvePoints: settings.curvePoints,
-                      weather:
-                          settings.isWeatherAdjustmentEnabled
-                              ? weatherAsync.value
-                              : null,
-                      presetSensitivity: settings.activePreset.weatherSensitivity,
+                      weather: settings.isWeatherAdjustmentEnabled
+                          ? weatherAsync.value
+                          : null,
+                      presetSensitivity:
+                          settings.activePreset.weatherSensitivity,
                       smartData: effectiveSmartData,
                     );
                 targetBrightness = calculationResult.finalBrightness;
