@@ -7,8 +7,10 @@ enum MapStyleMode {
   night;
 
   String toJson() => name;
-  factory MapStyleMode.fromJson(String json) =>
-      MapStyleMode.values.firstWhere((e) => e.name == json, orElse: () => MapStyleMode.auto);
+  factory MapStyleMode.fromJson(String json) => MapStyleMode.values.firstWhere(
+    (e) => e.name == json,
+    orElse: () => MapStyleMode.auto,
+  );
 }
 
 class SettingsState {
@@ -63,6 +65,7 @@ class SettingsState {
   final bool showThunderAnimation;
   final bool showCloudAnimation;
   final MapStyleMode mapStyleMode;
+  final double weatherAdjustmentIntensity;
 
   SettingsState({
     this.activePreset = PresetType.bright,
@@ -123,18 +126,21 @@ class SettingsState {
     this.isMultiMonitorOffsetEnabled = false,
     this.brightnessOffset = 0.0,
     this.userPresets = const [],
-     this.activeUserPresetId,
+    this.activeUserPresetId,
     List<String>? presetOrder,
     this.showRainAnimation = true,
     this.showSnowAnimation = true,
     this.showThunderAnimation = true,
     this.showCloudAnimation = true,
     this.mapStyleMode = MapStyleMode.auto,
+    this.weatherAdjustmentIntensity = 0.45,
   }) : curvesMap = curvesMap ?? PresetConstants.getAllDefaults(),
-       presetOrder = presetOrder ?? [
-         ...PresetType.values.map((e) => 'system:${e.name}'),
-         ...userPresets.map((e) => 'user:${e.id}'),
-       ];
+       presetOrder =
+           presetOrder ??
+           [
+             ...PresetType.values.map((e) => 'system:${e.name}'),
+             ...userPresets.map((e) => 'user:${e.id}'),
+           ];
 
   List<FlSpot> get curvePoints {
     if (activeUserPresetId != null) {
@@ -198,13 +204,14 @@ class SettingsState {
     'isMultiMonitorOffsetEnabled': isMultiMonitorOffsetEnabled,
     'brightnessOffset': brightnessOffset,
     'userPresets': userPresets.map((p) => p.toJson()).toList(),
-     'activeUserPresetId': activeUserPresetId,
+    'activeUserPresetId': activeUserPresetId,
     'presetOrder': presetOrder,
     'showRainAnimation': showRainAnimation,
     'showSnowAnimation': showSnowAnimation,
     'showThunderAnimation': showThunderAnimation,
     'showCloudAnimation': showCloudAnimation,
     'mapStyleMode': mapStyleMode.toJson(),
+    'weatherAdjustmentIntensity': weatherAdjustmentIntensity,
   };
 
   factory SettingsState.fromJson(Map<String, dynamic> json) {
@@ -313,10 +320,7 @@ class SettingsState {
         }
         if (json[keyName] == null) return null;
         final map = json[keyName] as Map<String, dynamic>;
-        return {
-          ...map,
-          'identifier': 'next_preset',
-        };
+        return {...map, 'identifier': 'next_preset'};
       })(),
       prevPresetHotKey: (() {
         // Migration from darkerHotKey
@@ -332,10 +336,7 @@ class SettingsState {
         }
         if (json[keyName] == null) return null;
         final map = json[keyName] as Map<String, dynamic>;
-        return {
-          ...map,
-          'identifier': 'prev_preset',
-        };
+        return {...map, 'identifier': 'prev_preset'};
       })(),
       brightnessUpHotKey: json['brightnessUpHotKey'] as Map<String, dynamic>?,
       brightnessDownHotKey:
@@ -348,17 +349,22 @@ class SettingsState {
       isMultiMonitorOffsetEnabled:
           json['isMultiMonitorOffsetEnabled'] as bool? ?? false,
       brightnessOffset: (json['brightnessOffset'] as num?)?.toDouble() ?? 0.0,
-      userPresets: (json['userPresets'] as List<dynamic>?)?.map(
-            (p) => UserPreset.fromJson(p as Map<String, dynamic>),
-          ).toList() ??
+      userPresets:
+          (json['userPresets'] as List<dynamic>?)
+              ?.map((p) => UserPreset.fromJson(p as Map<String, dynamic>))
+              .toList() ??
           [],
-       activeUserPresetId: json['activeUserPresetId'] as String?,
+      activeUserPresetId: json['activeUserPresetId'] as String?,
       presetOrder: (json['presetOrder'] as List<dynamic>?)?.cast<String>(),
       showRainAnimation: json['showRainAnimation'] as bool? ?? true,
       showSnowAnimation: json['showSnowAnimation'] as bool? ?? true,
       showThunderAnimation: json['showThunderAnimation'] as bool? ?? true,
       showCloudAnimation: json['showCloudAnimation'] as bool? ?? true,
-      mapStyleMode: MapStyleMode.fromJson(json['mapStyleMode'] as String? ?? 'auto'),
+      mapStyleMode: MapStyleMode.fromJson(
+        json['mapStyleMode'] as String? ?? 'auto',
+      ),
+      weatherAdjustmentIntensity:
+          (json['weatherAdjustmentIntensity'] as num?)?.toDouble() ?? 0.6,
     );
   }
 
@@ -407,13 +413,14 @@ class SettingsState {
     bool? isMultiMonitorOffsetEnabled,
     double? brightnessOffset,
     List<UserPreset>? userPresets,
-     String? activeUserPresetId,
+    String? activeUserPresetId,
     List<String>? presetOrder,
     bool? showRainAnimation,
     bool? showSnowAnimation,
     bool? showThunderAnimation,
     bool? showCloudAnimation,
     MapStyleMode? mapStyleMode,
+    double? weatherAdjustmentIntensity,
     bool clearNextPresetHotKey = false,
     bool clearPrevPresetHotKey = false,
     bool clearBrightnessUpHotKey = false,
@@ -495,14 +502,17 @@ class SettingsState {
           isMultiMonitorOffsetEnabled ?? this.isMultiMonitorOffsetEnabled,
       brightnessOffset: brightnessOffset ?? this.brightnessOffset,
       userPresets: userPresets ?? this.userPresets,
-       activeUserPresetId:
-          clearActiveUserPresetId ? null : (activeUserPresetId ?? this.activeUserPresetId),
+      activeUserPresetId: clearActiveUserPresetId
+          ? null
+          : (activeUserPresetId ?? this.activeUserPresetId),
       presetOrder: presetOrder ?? this.presetOrder,
       showRainAnimation: showRainAnimation ?? this.showRainAnimation,
       showSnowAnimation: showSnowAnimation ?? this.showSnowAnimation,
       showThunderAnimation: showThunderAnimation ?? this.showThunderAnimation,
       showCloudAnimation: showCloudAnimation ?? this.showCloudAnimation,
       mapStyleMode: mapStyleMode ?? this.mapStyleMode,
+      weatherAdjustmentIntensity:
+          weatherAdjustmentIntensity ?? this.weatherAdjustmentIntensity,
     );
   }
 }

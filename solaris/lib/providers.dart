@@ -164,6 +164,7 @@ final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
             ? weatherAsync.value
             : null,
         presetSensitivity: monitorSettings.activePreset.weatherSensitivity,
+        weatherIntensity: monitorSettings.weatherAdjustmentIntensity,
         smartData: smartData,
       );
 
@@ -937,6 +938,13 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     );
   }
 
+  void updateWeatherAdjustmentIntensity(double intensity) {
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(weatherAdjustmentIntensity: intensity),
+    );
+  }
+
   void updateGameModeEnabled(bool enabled) {
     _updateSettings(
       ref.read(selectedMonitorsProvider),
@@ -1625,6 +1633,7 @@ class CurrentBrightnessNotifier extends Notifier<double> {
                     : null,
                 presetSensitivity:
                     selectedSettings.activePreset.weatherSensitivity,
+                weatherIntensity: selectedSettings.weatherAdjustmentIntensity,
                 smartData: effectiveSmartData,
               );
               _saveBrightness(result.finalBrightness);
@@ -1770,6 +1779,7 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                           : null,
                       presetSensitivity:
                           settings.activePreset.weatherSensitivity,
+                      weatherIntensity: settings.weatherAdjustmentIntensity,
                       smartData: effectiveSmartData,
                     );
                 targetBrightness = calculationResult.finalBrightness;

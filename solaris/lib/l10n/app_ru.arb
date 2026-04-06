@@ -182,8 +182,10 @@
   "realtimeApplyNotice": "Изменения применяются в реальном времени. Используйте панель управления для переключения между ручной и автоматической настройкой.",
   "autorun": "Автозапуск при старте",
   "autorunSubtitle": "Автоматически запускать приложение при входе в Windows",
-  "weatherAdjustmentTitle": "Влияние погоды",
-  "weatherAdjustmentSubtitle": "Снижает яркость в облачную или дождливую погоду",
+  "weatherAdjustmentTitle": "Коррекция по погоде",
+  "weatherAdjustmentSubtitle": "Снижение яркости в облачную или дождливую погоду",
+  "weatherIntensity": "Интенсивность коррекции",
+  "weatherAdjustmentIntensitySubtitle": "Управляет тем, насколько сильно погода влияет на яркость экрана",
   "weatherBrightnessReduction": "Погода: снижение яркости на {percent}%",
   "@weatherBrightnessReduction": {
     "placeholders": {

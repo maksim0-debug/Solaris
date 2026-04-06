@@ -760,6 +760,18 @@ abstract class AppLocalizations {
   /// **'Reduce brightness in cloudy or rainy weather'**
   String get weatherAdjustmentSubtitle;
 
+  /// No description provided for @weatherIntensity.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather Sensitivity Intensity'**
+  String get weatherIntensity;
+
+  /// No description provided for @weatherAdjustmentIntensitySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Controls how strongly local weather affects your screen'**
+  String get weatherAdjustmentIntensitySubtitle;
+
   /// No description provided for @weatherBrightnessReduction.
   ///
   /// In en, this message translates to:

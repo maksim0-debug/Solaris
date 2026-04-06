@@ -374,11 +374,18 @@ class AppLocalizationsUk extends AppLocalizations {
       'Автоматично запускати програму при вході у Windows';
 
   @override
-  String get weatherAdjustmentTitle => 'Вплив погоди';
+  String get weatherAdjustmentTitle => 'Корекція по погоді';
 
   @override
   String get weatherAdjustmentSubtitle =>
-      'Знижує яскравість у хмарну або дощову погоду';
+      'Зниження яскравості в хмарну або дощову погоду';
+
+  @override
+  String get weatherIntensity => 'Інтенсивність корекції';
+
+  @override
+  String get weatherAdjustmentIntensitySubtitle =>
+      'Керує тим, наскільки сильно погода впливає на яскравість екрана';
 
   @override
   String weatherBrightnessReduction(int percent) {

@@ -129,9 +129,9 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
           .calculateWeatherFactor(weatherAsync.value, currentElevation);
 
       if (baseFactor < 0.99) {
-        final penalty =
-            (1.0 - baseFactor) *
-            currentSettings.activePreset.weatherSensitivity;
+        final penalty = (1.0 - baseFactor) *
+            currentSettings.activePreset.weatherSensitivity *
+            currentSettings.weatherAdjustmentIntensity;
         final finalFactor = 1.0 - penalty;
         adjustedBrightnessY = (currentBrightnessY * finalFactor).clamp(
           points.first.y,

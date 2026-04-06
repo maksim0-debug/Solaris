@@ -184,6 +184,8 @@
   "autorunSubtitle": "Automatically start the application when you log into Windows",
   "weatherAdjustmentTitle": "Weather-based Adjustment",
   "weatherAdjustmentSubtitle": "Reduce brightness in cloudy or rainy weather",
+  "weatherIntensity": "Weather Sensitivity Intensity",
+  "weatherAdjustmentIntensitySubtitle": "Controls how strongly local weather affects your screen",
   "weatherBrightnessReduction": "Weather: brightness reduced by {percent}%",
   "@weatherBrightnessReduction": {
     "placeholders": {

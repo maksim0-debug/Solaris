@@ -35,6 +35,7 @@ class CircadianService {
     List<FlSpot>? curvePoints,
     WeatherData? weather,
     double presetSensitivity = 1.0,
+    double weatherIntensity = 1.0,
     SmartCircadianData smartData = const SmartCircadianData.neutral(),
   }) {
     double baseBrightness;
@@ -59,7 +60,8 @@ class CircadianService {
         weather,
         elevation,
       );
-      weatherFactor = 1.0 - ((1.0 - baseFactor) * presetSensitivity);
+      final penalty = (1.0 - baseFactor) * presetSensitivity * weatherIntensity;
+      weatherFactor = 1.0 - penalty;
     }
 
     // Physical final brightness (multiplicative)

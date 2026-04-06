@@ -381,6 +381,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Reduce brightness in cloudy or rainy weather';
 
   @override
+  String get weatherIntensity => 'Weather Sensitivity Intensity';
+
+  @override
+  String get weatherAdjustmentIntensitySubtitle =>
+      'Controls how strongly local weather affects your screen';
+
+  @override
   String weatherBrightnessReduction(int percent) {
     return 'Weather: brightness reduced by $percent%';
   }

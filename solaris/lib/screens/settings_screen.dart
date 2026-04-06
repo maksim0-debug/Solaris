@@ -255,6 +255,44 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         .read(settingsProvider.notifier)
                         .updateWeatherAdjustment(val),
                   ),
+                  
+                  // Animated appearance of intensity slider
+                  AnimatedCrossFade(
+                    firstChild: const SizedBox(width: double.infinity),
+                    secondChild: Column(
+                      children: [
+                        const SizedBox(height: 16),
+                        const Divider(color: Colors.white10),
+                        const SizedBox(height: 16),
+                        Builder(
+                          builder: (context) {
+                            final monitorId = selectedIds.firstOrNull ?? 'all';
+                            final settings = settingsAsync.maybeWhen(
+                              data: (map) => map[monitorId] ?? map['all'] ?? SettingsState(),
+                              orElse: () => SettingsState(),
+                            );
+                            
+                            return _IntensitySlider(
+                              label: l10n.weatherIntensity,
+                              value: settings.weatherAdjustmentIntensity,
+                              color: const Color(0xFFFDBA74),
+                              onChanged: (val) => ref
+                                  .read(settingsProvider.notifier)
+                                  .updateWeatherAdjustmentIntensity(val),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    crossFadeState: settingsAsync.maybeWhen(
+                      data: (map) => (map[selectedIds.firstOrNull ?? 'all']?.isWeatherAdjustmentEnabled ?? map['all']?.isWeatherAdjustmentEnabled ?? true) 
+                          ? CrossFadeState.showSecond 
+                          : CrossFadeState.showFirst,
+                      orElse: () => CrossFadeState.showFirst,
+                    ),
+                    duration: const Duration(milliseconds: 300),
+                    sizeCurve: Curves.easeInOutCubic,
+                  ),
                 ],
               ),
             ),
@@ -2258,6 +2296,75 @@ class _LanguageSelectorCard extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+class _IntensitySlider extends StatelessWidget {
+  const _IntensitySlider({
+    required this.label,
+    required this.value,
+    this.onChanged,
+    required this.color,
+  });
+
+  final String label;
+  final double value;
+  final ValueChanged<double>? onChanged;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Colors.white70,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                l10n.chartPercentFormat((value * 100).toInt()),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 2,
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+            overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+            activeTrackColor: color.withOpacity(0.5),
+            inactiveTrackColor: Colors.white10,
+            thumbColor: color,
+            overlayColor: color.withOpacity(0.2),
+          ),
+          child: Slider(
+            value: value,
+            min: 0.0,
+            max: 1.0,
+            onChanged: onChanged,
+          ),
+        ),
+      ],
     );
   }
 }
