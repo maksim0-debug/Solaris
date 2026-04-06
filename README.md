@@ -12,28 +12,38 @@
 The core of Solaris. The app automatically calculates the sun's position relative to your horizon and adjusts monitor brightness according to a customizable curve.
 - **Real-time Sun Tracking**: High-precision calculations for sunrise, sunset, solar noon, and twilight.
 - **Smooth Transitions**: Brightness changes are applied gradually to avoid sudden flashes.
+<img width="1377" height="865" alt="image" src="https://github.com/user-attachments/assets/23223ab1-f9d8-491b-bf1d-d3ff2f39db58" />
 
-### 🌡️ Dynamic Color Temperature
-Protect your eyes from blue light. Solaris shifts your display to warmer tones as the sun goes down.
-- **Range**: Smooth transition from 6500K (Daylight) to 3300K (Warm).
-- **Automation**: Fully synced with the solar cycle to maintain your natural sleep-wake rhythm.
-
-### 🖥️ Multi-Monitor Mastery
-Full control over your entire workspace.
-- **DDC/CI Integration**: Direct hardware communication with monitors via system-level APIs.
-- **Individual Control**: Set unique brightness offsets or manual levels for each display.
-- **Unified Sync**: Adjust all monitors at once with a single click.
 
 ### 📈 Interactive Brightness Curves
 Don't settle for defaults. Visualize and refine your lighting profile.
 - **Bezier Curves**: Fine-tune how brightness responds to solar elevation.
 - **Presets**: Swiftly switch between **Bright**, **Balanced**, **Soft**, and **Custom** profiles.
 - **Real-time Preview**: See changes instantly on the luminosity graph.
+![solaris_qhd5iAF2fp](https://github.com/user-attachments/assets/0fd7fb2d-d0e7-4101-8b2e-470f7dd8a84d)
+
+
+
+
+
+### 🖥️ Multi-Monitor Mastery
+Full control over your entire workspace.
+- **DDC/CI Integration**: Direct hardware communication with monitors via system-level APIs.
+- **Individual Control**: Set unique brightness offsets or manual levels for each display.
+- **Unified Sync**: Adjust all monitors at once with a single click.
+<img width="314" height="254" alt="image" src="https://github.com/user-attachments/assets/53066949-0c59-4fc8-afa5-79805fd59ef8" />
+
+
+### 🌡️ Dynamic Color Temperature
+Protect your eyes from blue light. Solaris shifts your display to warmer tones as the sun goes down.
+- **Range**: Smooth transition from 6500K (Daylight) to 3300K (Warm).
+- **Automation**: Fully synced with the solar cycle to maintain your natural sleep-wake rhythm.
 
 ### 🎮 Smart Game Mode (Exclusions)
 Focus on the win without distractions.
 - **Auto-Lock**: Solaris detects when you start a game and prevents brightness from shifting during intense sessions.
 - **Customizable Lists**: Add specific apps to a **Whitelist** (always lock) or **Blacklist** (never lock).
+<img width="971" height="603" alt="image" src="https://github.com/user-attachments/assets/4f2429b0-2470-42fb-b5a7-f6b6086cb091" />
 
 
 ### ☁️ Weather Influence
@@ -45,11 +55,13 @@ The first monitor controller that cares about the sky.
 Control your environment without leaving your current app.
 - **Custom Bindings**: Set shortcuts for Next/Prev Preset, Brightness Up/Down, and Toggling Auto-mode.
 - **Stepless Control**: Fine-tune brightness in precise increments (e.g., 5% per press).
+<img width="985" height="541" alt="image" src="https://github.com/user-attachments/assets/1b8301c3-eeff-41b0-b240-2d76551cb641" />
 
 ### 📍 Precise Location
 - **Auto-Geolocation**: Uses GPS to determine your coordinates automatically.
 - **Map Selection**: Choose your location on an interactive map if GPS is unavailable.
 - **Persistence**: Remembers your preferred location across sessions.
+![solaris_P402Nw3VEq](https://github.com/user-attachments/assets/a984424a-3b9e-45de-8c8d-a601f4b8b2d0)
 
 ---
 
@@ -71,6 +83,7 @@ To utilize Google Fit synchronization, you must configure a private integration 
 5. **Manual Build**: Compile and execute the application from source using the Flutter SDK (`flutter run -d windows`).
 
 *By utilizing a personal API key, the application will operate as a private developer instance, bypassing the verification requirements typically imposed on public distributions.*
+<img width="787" height="653" alt="image" src="https://github.com/user-attachments/assets/94ee4ba4-6a71-4227-b05e-1d858a9917c4" />
 
 ---
 
