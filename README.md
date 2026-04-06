@@ -106,28 +106,51 @@ lib/
 
 ---
 
-## 🛠️ Getting Started
+### 🛠️ Getting Started
 
-### Requirements
+#### Prerequisites
+
 - [Flutter SDK](https://docs.flutter.dev/get-started/install) (Stable channel)
 - Windows 10/11
 - Monitors with **DDC/CI** support (Ensure it is enabled in your monitor's OSD menu)
 
-### Installation
-1. Clone the repository:
+#### Installation & Configuration
+
+1. **Clone the repository**:
+
    ```bash
    git clone https://github.com/maksim0-debug/Solaris.git
    ```
-2. Get dependencies:
+
+2. **Setup Environment Variables**:
+
+   Navigate to the `solaris/` directory, rename `.env.example` to `.env`.
+
+   ```bash
+   cd solaris
+   cp .env.example .env
+   ```
+
+3. **Configure API Keys**:
+
+   Open the newly created `.env` file and insert your credentials:
+
+   - **Mapbox**: To use interactive maps for location selection, [get a Mapbox Access Token](https://docs.mapbox.com/help/getting-started/access-tokens/) and paste it into `MAPBOX_TOKEN`.
+   - **Google Fit (Optional)**: If you want to sync your sleep history, follow the [Google Fit Integration](#-google-fit-integration-advanced-mode) guide above to get your `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
+
+4. **Get dependencies**:
+
    ```bash
    flutter pub get
    ```
-3. Run the app:
+
+5. **Run the app**:
+
    ```bash
    flutter run -d windows
    ```
 
-### Building for Release
+#### Building for Release
 ```bash
 flutter build windows
 ```
