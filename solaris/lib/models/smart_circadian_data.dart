@@ -12,6 +12,7 @@ class SmartCircadianData extends Equatable {
   final double sleepDebtFactor;
   final double sleepPressureFactor;
   final double windDownFactor;
+  final double timeShiftFactor;
   final double timeShiftBrightnessImpact;
   final int? timeShiftMinutesRemaining;
   final int? windDownMinutesRemaining;
@@ -41,6 +42,7 @@ class SmartCircadianData extends Equatable {
     this.sleepDebtFactor = 1.0,
     this.sleepPressureFactor = 1.0,
     this.windDownFactor = 1.0,
+    this.timeShiftFactor = 0.0,
     this.timeShiftBrightnessImpact = 0.0,
     this.timeShiftMinutesRemaining,
     this.windDownMinutesRemaining,
@@ -67,6 +69,7 @@ class SmartCircadianData extends Equatable {
       sleepDebtFactor = 1.0,
       sleepPressureFactor = 1.0,
       windDownFactor = 1.0,
+      timeShiftFactor = 0.0,
       timeShiftBrightnessImpact = 0.0,
       timeShiftMinutesRemaining = null,
       windDownMinutesRemaining = null,
@@ -93,6 +96,7 @@ class SmartCircadianData extends Equatable {
     sleepDebtFactor,
     sleepPressureFactor,
     windDownFactor,
+    timeShiftFactor,
     timeShiftBrightnessImpact,
     timeShiftMinutesRemaining,
     windDownMinutesRemaining,
@@ -119,6 +123,7 @@ class SmartCircadianData extends Equatable {
     double? sleepDebtFactor,
     double? sleepPressureFactor,
     double? windDownFactor,
+    double? timeShiftFactor,
     double? timeShiftBrightnessImpact,
     int? timeShiftMinutesRemaining,
     int? windDownMinutesRemaining,
@@ -145,6 +150,7 @@ class SmartCircadianData extends Equatable {
       sleepDebtFactor: sleepDebtFactor ?? this.sleepDebtFactor,
       sleepPressureFactor: sleepPressureFactor ?? this.sleepPressureFactor,
       windDownFactor: windDownFactor ?? this.windDownFactor,
+      timeShiftFactor: timeShiftFactor ?? this.timeShiftFactor,
       timeShiftBrightnessImpact:
           timeShiftBrightnessImpact ?? this.timeShiftBrightnessImpact,
       timeShiftMinutesRemaining:

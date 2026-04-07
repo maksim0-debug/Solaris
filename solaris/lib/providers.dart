@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:ui';
 import 'package:solaris/env/env.dart';
-import 'dart:math' as math;
+
 
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -105,59 +105,15 @@ final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
 
       final weatherAsync = ref.watch(currentWeatherProvider);
       final circadianService = ref.watch(circadianServiceProvider);
-      final sunService = ref.read(sunCalculatorServiceProvider);
 
-      // Determine effective elevation for calculation (with time shift)
-      double effectiveElevation = solar.sunElevation;
-      double timeShiftImpact = 0;
 
-      if (smartData.isTimeShiftActive) {
-        final shiftedTime = now.subtract(smartData.timeOffset);
-        final locationAsync = ref.watch(effectiveLocationProvider);
-        final pos = locationAsync.value;
-
-        if (pos != null) {
-          effectiveElevation = sunService.getSunElevation(
-            pos.latitude,
-            pos.longitude,
-            shiftedTime,
-          );
-
-          // Bio-morning is a bonus: never dim below natural sun level (for late risers)
-          effectiveElevation = math.max(effectiveElevation, solar.sunElevation);
-
-          // Blinding Protection (Smooth transition)
-          // If real sun is below horizon, we clamp the "future sun" to a maximum (e.g. 10 degrees)
-          // to avoid blinding the user at night. 
-          // We fade this protection out as the real sun rises to avoid a jump.
-          if (solar.sunElevation < 5 && effectiveElevation > 10) {
-            double protectionFactor = (5.0 - solar.sunElevation).clamp(0.0, 5.0) / 5.0; // 1.0 at <0, 0.0 at 5
-            double maxAllowed = 10.0 + (effectiveElevation - 10.0) * (1.0 - protectionFactor);
-            effectiveElevation = effectiveElevation.clamp(-20.0, maxAllowed);
-          }
-
-          // Calculate time shift impact for reference
-          final baseResult = circadianService.calculateTargetBrightness(
-            solar.phases,
-            solar.sunElevation,
-            now,
-            curvePoints: monitorSettings.curvePoints,
-          );
-          final shiftedResult = circadianService.calculateTargetBrightness(
-            solar.phases,
-            effectiveElevation,
-            now,
-            curvePoints: monitorSettings.curvePoints,
-          );
-          timeShiftImpact =
-              shiftedResult.finalBrightness - baseResult.finalBrightness;
-        }
-      }
+      // All smart logic (including morning boost) is now handled via smartData 
+      // directly in the circadian service.
 
       // Calculate Full Proportional Result
       final result = circadianService.calculateTargetBrightness(
         solar.phases,
-        effectiveElevation,
+        solar.sunElevation,
         now,
         curvePoints: monitorSettings.curvePoints,
         weather: monitorSettings.isWeatherAdjustmentEnabled
@@ -190,7 +146,7 @@ final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
         sleepPressureAbsoluteImpact: result.sleepPressureImpact,
         sleepDebtAbsoluteImpact: result.sleepDebtImpact,
         weatherAbsoluteImpact: result.weatherImpact,
-        timeShiftBrightnessImpact: timeShiftImpact,
+        timeShiftBrightnessImpact: result.timeShiftImpact,
         weatherCode: weatherAsync.value?.weatherCode,
         activeSystemPreset: activeSystemPreset,
         activeUserPresetName: activeUserPresetName,

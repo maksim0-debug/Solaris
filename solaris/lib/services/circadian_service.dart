@@ -11,6 +11,7 @@ class CircadianCalculationResult {
   final double sleepPressureImpact;
   final double sleepDebtImpact;
   final double weatherImpact;
+  final double timeShiftImpact;
 
   CircadianCalculationResult({
     required this.finalBrightness,
@@ -19,6 +20,7 @@ class CircadianCalculationResult {
     this.sleepPressureImpact = 0,
     this.sleepDebtImpact = 0,
     this.weatherImpact = 0,
+    this.timeShiftImpact = 0,
   });
 }
 
@@ -68,6 +70,20 @@ class CircadianService {
     double theoreticalFinal =
         baseBrightness * weatherFactor * smartData.brightnessMultiplier;
 
+    // Apply Bio-morning boost (Additive towards 100%)
+    double timeShiftImpact = 0.0;
+    if (smartData.timeShiftFactor > 0) {
+      // Pull towards 100% (or the max of the user preset)
+      double morningTarget = 100.0;
+      if (curvePoints != null && curvePoints.isNotEmpty) {
+        morningTarget = curvePoints.last.y;
+      }
+
+      timeShiftImpact =
+          (morningTarget - theoreticalFinal) * smartData.timeShiftFactor;
+      theoreticalFinal += timeShiftImpact;
+    }
+
     // Clamp to minimum allowed
     double minAllowed = 15.0;
     if (curvePoints != null && curvePoints.isNotEmpty) {
@@ -96,6 +112,7 @@ class CircadianService {
           windDownImpact: totalReduction * (wWindDown / sumOfWeights),
           sleepPressureImpact: totalReduction * (wPressure / sumOfWeights),
           sleepDebtImpact: totalReduction * (wDebt / sumOfWeights),
+          timeShiftImpact: timeShiftImpact,
         );
       }
     }
@@ -103,6 +120,7 @@ class CircadianService {
     return CircadianCalculationResult(
       finalBrightness: finalBrightness,
       baseBrightness: baseBrightness,
+      timeShiftImpact: timeShiftImpact,
     );
   }
 

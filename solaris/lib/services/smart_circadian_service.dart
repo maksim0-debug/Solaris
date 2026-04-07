@@ -63,6 +63,7 @@ class SmartCircadianService {
 
     // 3. Bio-Morning Shift (Time Offset)
     Duration timeOffset = Duration.zero;
+    double timeShiftFactorValue = 0.0;
     int? timeShiftMinutesRemaining;
 
     if (useTimeShift) {
@@ -93,14 +94,10 @@ class SmartCircadianService {
               timeSinceWake.inMinutes /
               (timeShiftDur > 0 ? timeShiftDur.toDouble() : 1.0);
 
-          // NON-LINEAR CONVEX FADE:
-          // At high intensities, we hold the bonus for much longer.
-          // Power 20 at 100% intensity means bonus stays >90% for ~4.5 hours and >30% until last 10 mins.
-          // SMOOTH DIVE (Плавное пике): 
-          // At max intensity, power is 3.0 (Cubic). This spreads the decay 
-          // much more evenly over the duration, preventing the "cliff" effect.
-          final double fadePower = 1.0 + (2.0 * timeShiftIntensity);
-          fadeFactor = 1.0 - math.pow(progress, fadePower);
+          // SMOOTH TRANSITION: 
+          // Instead of a sharp power-based decay, use a cosine wave for 
+          // a perfectly smooth start and a rounded landing at zero.
+          fadeFactor = math.cos(progress * math.pi / 2).clamp(0.0, 1.0);
 
           timeShiftMinutesRemaining = timeShiftDur - timeSinceWake.inMinutes;
         } else {
@@ -108,9 +105,10 @@ class SmartCircadianService {
         }
 
         final double adjustedIntensity = timeShiftIntensity;
+        timeShiftFactorValue = adjustedIntensity * fadeFactor;
 
         timeOffset = Duration(
-          minutes: (effectiveDiff * adjustedIntensity * fadeFactor).toInt(),
+          minutes: (effectiveDiff * timeShiftFactorValue).toInt(),
         );
       }
     }
@@ -259,12 +257,11 @@ class SmartCircadianService {
           ),
       temperatureOffset: sleepDebtTempOffset + windDownTempOffset,
       timeOffset: timeOffset,
+      timeShiftFactor: timeShiftFactorValue,
       isWindDownActive: isWindDownActive,
       isSleepPressureActive: sleepPressureFactor < 0.99,
       isSleepDebtActive: sleepDebtFactor < 0.99,
-      isTimeShiftActive:
-          timeOffset.inMinutes.abs() > 5 &&
-          (timeShiftMinutesRemaining ?? 0) > 0,
+      isTimeShiftActive: (timeShiftMinutesRemaining ?? 0) > 0,
       sleepDebtFactor: sleepDebtFactor,
       sleepPressureFactor: sleepPressureFactor,
       windDownFactor: windDownFactor,
