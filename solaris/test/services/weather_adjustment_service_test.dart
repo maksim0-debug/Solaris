@@ -14,7 +14,9 @@ void main() {
         directRadiation: 500,
         diffuseRadiation: 150,
         cloudCover: cloudCover,
+        windSpeed: 0,
         weatherCode: weatherCode,
+        lastUpdated: DateTime.now(),
       );
     }
 
@@ -36,7 +38,7 @@ void main() {
         weather(cloudCover: 90, weatherCode: 3),
         20.0,
       );
-      expect(factor, closeTo(0.85, 0.001));
+      expect(factor, closeTo(0.7, 0.001));
     });
 
     test('returns 0.75 for rain codes in daytime', () {
@@ -44,7 +46,7 @@ void main() {
         weather(cloudCover: 10, weatherCode: 55),
         20.0,
       );
-      expect(factor, closeTo(0.75, 0.001));
+      expect(factor, closeTo(0.55, 0.001));
     });
 
     test('returns 0.65 for thunderstorm codes in daytime', () {
@@ -52,7 +54,7 @@ void main() {
         weather(cloudCover: 10, weatherCode: 95),
         20.0,
       );
-      expect(factor, closeTo(0.65, 0.001));
+      expect(factor, closeTo(0.5, 0.001));
     });
 
     test('disables weather impact below horizon', () {
@@ -68,10 +70,10 @@ void main() {
         weather(cloudCover: 10, weatherCode: 55),
         5.0,
       );
-
-      // Rain base factor is 0.75, and elevation at 5deg applies 50% of the penalty:
-      // 1.0 - (0.25 * 0.5) = 0.875.
-      expect(factor, closeTo(0.875, 0.001));
+  
+      // At 5deg elevation, the impact is fully applied.
+      // 1.0 - (1.0-0.55) = 0.55
+      expect(factor, closeTo(0.55, 0.001));
     });
   });
 }

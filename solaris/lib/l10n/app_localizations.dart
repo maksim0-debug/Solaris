@@ -616,11 +616,11 @@ abstract class AppLocalizations {
   /// **'Astronomical Night'**
   String get astronomicalNight;
 
-  /// No description provided for @surfaceTemp.
+  /// No description provided for @windSpeed.
   ///
   /// In en, this message translates to:
-  /// **'Surface Temp'**
-  String get surfaceTemp;
+  /// **'Wind Speed'**
+  String get windSpeed;
 
   /// No description provided for @spectralIntensity.
   ///
@@ -771,6 +771,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Controls how strongly local weather affects your screen'**
   String get weatherAdjustmentIntensitySubtitle;
+
+  /// No description provided for @weatherProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather Provider'**
+  String get weatherProvider;
+
+  /// No description provided for @weatherProviderAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get weatherProviderAuto;
+
+  /// No description provided for @weatherProviderWeatherApi.
+  ///
+  /// In en, this message translates to:
+  /// **'WeatherAPI.com'**
+  String get weatherProviderWeatherApi;
+
+  /// No description provided for @weatherProviderOpenMeteo.
+  ///
+  /// In en, this message translates to:
+  /// **'Open-Meteo.com'**
+  String get weatherProviderOpenMeteo;
 
   /// No description provided for @weatherBrightnessReduction.
   ///
@@ -1587,6 +1611,12 @@ abstract class AppLocalizations {
   /// **'{value}°C'**
   String temperatureFormat(String value);
 
+  /// No description provided for @windSpeedFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} km/h'**
+  String windSpeedFormat(String value);
+
   /// No description provided for @spectralIntensityValue.
   ///
   /// In en, this message translates to:
@@ -1811,6 +1841,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Customize animation visibility'**
   String get weatherSettingsSubtitle;
+
+  /// No description provided for @lastUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Last updated'**
+  String get lastUpdated;
+
+  /// No description provided for @lastUpdatedFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated {time}'**
+  String lastUpdatedFormat(String time);
 
   /// No description provided for @mapSettings.
   ///

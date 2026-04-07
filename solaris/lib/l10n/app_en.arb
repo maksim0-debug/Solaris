@@ -160,7 +160,7 @@
   "solarTelemetry": "Solar Telemetry",
   "civilTwilight": "Civil Twilight",
   "astronomicalNight": "Astronomical Night",
-  "surfaceTemp": "Surface Temp",
+  "windSpeed": "Wind Speed",
   "spectralIntensity": "Spectral Intensity",
   "uvIndex": "UV Index",
   "extreme": "Extreme",
@@ -186,6 +186,10 @@
   "weatherAdjustmentSubtitle": "Reduce brightness in cloudy or rainy weather",
   "weatherIntensity": "Weather Sensitivity Intensity",
   "weatherAdjustmentIntensitySubtitle": "Controls how strongly local weather affects your screen",
+  "weatherProvider": "Weather Provider",
+  "weatherProviderAuto": "Automatic",
+  "weatherProviderWeatherApi": "WeatherAPI.com",
+  "weatherProviderOpenMeteo": "Open-Meteo.com",
   "weatherBrightnessReduction": "Weather: brightness reduced by {percent}%",
   "@weatherBrightnessReduction": {
     "placeholders": {
@@ -413,6 +417,14 @@
       }
     }
   },
+  "windSpeedFormat": "{value} km/h",
+  "@windSpeedFormat": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "spectralIntensityValue": "{value} W/m²",
   "@spectralIntensityValue": {
     "placeholders": {
@@ -509,6 +521,15 @@
   "showThunder": "Show Thunderstorm",
   "showClouds": "Show Clouds",
   "weatherSettingsSubtitle": "Customize animation visibility",
+  "lastUpdated": "Last updated",
+  "lastUpdatedFormat": "Updated {time}",
+  "@lastUpdatedFormat": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "mapSettings": "Map Settings",
   "mapStyle": "Map Style",
   "mapStyleAuto": "Automatic",

@@ -272,13 +272,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               orElse: () => SettingsState(),
                             );
                             
-                            return _IntensitySlider(
-                              label: l10n.weatherIntensity,
-                              value: settings.weatherAdjustmentIntensity,
-                              color: const Color(0xFFFDBA74),
-                              onChanged: (val) => ref
-                                  .read(settingsProvider.notifier)
-                                  .updateWeatherAdjustmentIntensity(val),
+                            return Column(
+                              children: [
+                                _IntensitySlider(
+                                  label: l10n.weatherIntensity,
+                                  value: settings.weatherAdjustmentIntensity,
+                                  color: const Color(0xFFFDBA74),
+                                  onChanged: (val) => ref
+                                      .read(settingsProvider.notifier)
+                                      .updateWeatherAdjustmentIntensity(val),
+                                ),
+                                const SizedBox(height: 24),
+                                _WeatherProviderSelector(
+                                  selectedProvider: settings.weatherProvider,
+                                  onChanged: (WeatherProvider provider) => ref
+                                      .read(settingsProvider.notifier)
+                                      .updateWeatherProvider(provider),
+                                ),
+                              ],
                             );
                           },
                         ),
@@ -2362,6 +2373,93 @@ class _IntensitySlider extends StatelessWidget {
             min: 0.0,
             max: 1.0,
             onChanged: onChanged,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _WeatherProviderSelector extends StatelessWidget {
+  final WeatherProvider selectedProvider;
+  final ValueChanged<WeatherProvider> onChanged;
+
+  const _WeatherProviderSelector({
+    required this.selectedProvider,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.weatherProvider,
+          style: const TextStyle(
+            fontSize: 13,
+            color: Colors.white70,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Center(
+          child: SegmentedButton<WeatherProvider>(
+            showSelectedIcon: false,
+            segments: [
+              ButtonSegment<WeatherProvider>(
+                value: WeatherProvider.auto,
+                label: Text(
+                  l10n.weatherProviderAuto,
+                  style: const TextStyle(fontSize: 10),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                icon: const Icon(LucideIcons.zap, size: 14),
+              ),
+              ButtonSegment<WeatherProvider>(
+                value: WeatherProvider.weatherApi,
+                label: Text(
+                  l10n.weatherProviderWeatherApi,
+                  style: const TextStyle(fontSize: 10),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                icon: const Icon(LucideIcons.cloudRain, size: 14),
+              ),
+              ButtonSegment<WeatherProvider>(
+                value: WeatherProvider.openMeteo,
+                label: Text(
+                  l10n.weatherProviderOpenMeteo,
+                  style: const TextStyle(fontSize: 10),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                icon: const Icon(LucideIcons.sun, size: 14),
+              ),
+            ],
+            selected: {selectedProvider},
+            onSelectionChanged: (Set<WeatherProvider> newSelection) {
+              onChanged(newSelection.first);
+            },
+            style: ButtonStyle(
+              visualDensity: VisualDensity.compact,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return const Color(0xFFFDBA74).withOpacity(0.2);
+                }
+                return Colors.white.withOpacity(0.05);
+              }),
+              foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return const Color(0xFFFDBA74);
+                }
+                return Colors.white38;
+              }),
+              side: WidgetStateProperty.all(BorderSide.none),
+              shape: WidgetStateProperty.all(
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
           ),
         ),
       ],

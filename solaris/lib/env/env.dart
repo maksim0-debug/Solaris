@@ -12,4 +12,7 @@ abstract class Env {
 
   @EnviedField(varName: 'MAPBOX_TOKEN')
   static final String mapboxToken = _Env.mapboxToken;
+
+  @EnviedField(varName: 'WEATHER_API_KEY')
+  static final String weatherApiKey = _Env.weatherApiKey;
 }

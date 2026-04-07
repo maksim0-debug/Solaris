@@ -83,7 +83,9 @@ void main() {
           directRadiation: 500,
           diffuseRadiation: 150,
           cloudCover: 30,
+          windSpeed: 15,
           weatherCode: 55, // rain => base weather factor 0.75 in daytime
+          lastUpdated: DateTime.now(),
         );
 
         final result = service.calculateTargetBrightness(
@@ -95,8 +97,8 @@ void main() {
           presetSensitivity: 0.6,
         );
 
-        // base=100; finalFactor=1-((1-0.75)*0.6)=0.85 => 85
-        expect(result.finalBrightness, closeTo(85.0, 0.1));
+        // base=100; penalty=0.45; finalFactor=1-(0.45*0.6)=0.73 => 73
+        expect(result.finalBrightness, closeTo(73.0, 0.1));
       },
     );
 
@@ -109,7 +111,9 @@ void main() {
         directRadiation: 300,
         diffuseRadiation: 120,
         cloudCover: 95,
+        windSpeed: 25,
         weatherCode: 95, // thunderstorm => strongest penalty
+        lastUpdated: DateTime.now(),
       );
 
       final pointsWithHighMinimum = [

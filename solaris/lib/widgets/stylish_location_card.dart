@@ -8,6 +8,7 @@ import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/providers/lifecycle_provider.dart';
 import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/weather_overlay.dart';
+import 'package:intl/intl.dart';
 
 import 'package:solaris/widgets/deep_link_target.dart';
 
@@ -163,6 +164,27 @@ class StylishLocationCard extends ConsumerWidget {
                             fontWeight: FontWeight.bold,
                             color: Colors.white.withOpacity(0.7),
                           ),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      SizedBox(
+                        width: double.infinity,
+                        child: weatherAsync.maybeWhen(
+                          data: (weather) {
+                            if (weather == null) return const SizedBox.shrink();
+                            return Text(
+                              l10n.lastUpdatedFormat(
+                                DateFormat.Hm().format(weather.lastUpdated),
+                              ),
+                              textAlign: TextAlign.left,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white.withOpacity(0.4),
+                              ),
+                            );
+                          },
+                          orElse: () => const SizedBox.shrink(),
                         ),
                       ),
                     ],

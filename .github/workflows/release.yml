@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 permissions:
   contents: write
@@ -24,7 +24,7 @@ jobs:
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: "stable"
 
       - name: Get dependencies
         run: flutter pub get
@@ -36,7 +36,8 @@ jobs:
           [ -z "$MAPBOX_TOKEN" ] && MISSING_SECRETS+=("MAPBOX_TOKEN")
           [ -z "$GOOGLE_CLIENT_ID" ] && MISSING_SECRETS+=("GOOGLE_CLIENT_ID")
           [ -z "$GOOGLE_CLIENT_SECRET" ] && MISSING_SECRETS+=("GOOGLE_CLIENT_SECRET")
-          
+          [ -z "$WEATHER_API_KEY" ] && MISSING_SECRETS+=("WEATHER_API_KEY")
+
           if [ ${#MISSING_SECRETS[@]} -ne 0 ]; then
             echo "::error::Missing GitHub Secrets: ${MISSING_SECRETS[*]}"
             echo "Please add these secrets in Repository Settings > Secrets and variables > Actions"
@@ -51,6 +52,7 @@ jobs:
           MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
 
       - name: Create .env file
         shell: bash
@@ -58,10 +60,12 @@ jobs:
           MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
         run: |
           printf "MAPBOX_TOKEN=%s\n" "$MAPBOX_TOKEN" > .env
           printf "GOOGLE_CLIENT_ID=%s\n" "$GOOGLE_CLIENT_ID" >> .env
           printf "GOOGLE_CLIENT_SECRET=%s\n" "$GOOGLE_CLIENT_SECRET" >> .env
+          printf "WEATHER_API_KEY=%s\n" "$WEATHER_API_KEY" >> .env
           echo ".env file created successfully."
 
       - name: Generate obfuscated code
@@ -69,6 +73,7 @@ jobs:
           MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Build Windows
@@ -81,16 +86,16 @@ jobs:
           $releaseDir = "Solaris_Release"
           if (Test-Path $releaseDir) { Remove-Item -Recurse -Force $releaseDir }
           New-Item -ItemType Directory -Path $releaseDir
-          
+
           # Copy executable, dlls, and data folder
           Copy-Item "$buildDir/*.exe" -Destination $releaseDir/
           Copy-Item "$buildDir/*.dll" -Destination $releaseDir/
           Copy-Item -Path "$buildDir/data" -Destination "$releaseDir/data" -Recurse
-          
+
           # Copy LICENSE and README.md
           Copy-Item "LICENSE" -Destination $releaseDir/
           Copy-Item "README.md" -Destination $releaseDir/
-          
+
           # Create archive in the root directory
           Compress-Archive -Path "$releaseDir/*" -DestinationPath ../Solaris-Windows.zip
 

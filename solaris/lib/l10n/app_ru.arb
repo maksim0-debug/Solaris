@@ -160,7 +160,7 @@
   "solarTelemetry": "Солнечная телеметрия",
   "civilTwilight": "Гражданские сумерки",
   "astronomicalNight": "Астрономическая ночь",
-  "surfaceTemp": "Темп. поверхности",
+  "windSpeed": "Скорость ветра",
   "spectralIntensity": "Спектральная интенсивность",
   "uvIndex": "Индекс УФ",
   "extreme": "Экстремальный",
@@ -186,6 +186,10 @@
   "weatherAdjustmentSubtitle": "Снижение яркости в облачную или дождливую погоду",
   "weatherIntensity": "Интенсивность коррекции",
   "weatherAdjustmentIntensitySubtitle": "Управляет тем, насколько сильно погода влияет на яркость экрана",
+  "weatherProvider": "Провайдер погоды",
+  "weatherProviderAuto": "Автоматически",
+  "weatherProviderWeatherApi": "WeatherAPI.com",
+  "weatherProviderOpenMeteo": "Open-Meteo.com",
   "weatherBrightnessReduction": "Погода: снижение яркости на {percent}%",
   "@weatherBrightnessReduction": {
     "placeholders": {
@@ -413,6 +417,14 @@
       }
     }
   },
+  "windSpeedFormat": "{value} км/ч",
+  "@windSpeedFormat": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "spectralIntensityValue": "{value} Вт/м²",
   "@spectralIntensityValue": {
     "placeholders": {
@@ -509,6 +521,15 @@
   "showThunder": "Гроза",
   "showClouds": "Облачность",
   "weatherSettingsSubtitle": "Настройте видимость погодных условий на карте",
+  "lastUpdated": "Обновлено",
+  "lastUpdatedFormat": "Обновлено в {time}",
+  "@lastUpdatedFormat": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "mapSettings": "Настройки карты",
   "mapStyle": "Стиль карты",
   "mapStyleAuto": "Автоматически",

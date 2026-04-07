@@ -183,15 +183,15 @@ class _WeatherOverlayState extends State<WeatherOverlay>
     // cloudCover 30-70 -> 6 clouds (medium)
     // cloudCover 70-100 -> 3 clouds (small)
     
-     int targetCloudCount;
+    int targetCloudCount;
     if (widget.cloudCover <= 0 || !widget.showClouds) {
       targetCloudCount = 0;
     } else if (widget.cloudCover < 30) {
-      targetCloudCount = 10;
+      targetCloudCount = 3; // Sparse puffs
     } else if (widget.cloudCover < 70) {
-      targetCloudCount = 6;
+      targetCloudCount = 8; // Moderate coverage
     } else {
-      targetCloudCount = 3;
+      targetCloudCount = 15; // Dense overcast
     }
 
     if (_clouds.length < targetCloudCount) {
@@ -205,12 +205,12 @@ class _WeatherOverlayState extends State<WeatherOverlay>
   }
 
   _Cloud _spawnCloud(double width, double height, {bool randomizeX = false}) {
-    // Base scale modified by cloud cover as requested
-    double baseScale = 0.8 + _random.nextDouble() * 0.8;
+    // Base scale modified by cloud cover for intuitive representation
+    double baseScale = 0.5 + _random.nextDouble() * 0.7; // Slightly smaller base to handle more clouds
     if (widget.cloudCover > 70) {
-      baseScale *= 0.6; // Smaller for strong cloudiness
+      baseScale *= 1.4; // Larger puffs for overcast skies
     } else if (widget.cloudCover > 30) {
-      baseScale *= 0.8;
+      baseScale *= 1.1;
     }
 
     return _Cloud(

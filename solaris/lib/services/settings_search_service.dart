@@ -139,6 +139,14 @@ class SettingsSearchService {
         anchorId: 'weather_adjustment',
       ),
       SettingItem(
+        id: 'weather_provider',
+        title: l10n.weatherProvider,
+        description: l10n.weatherAdjustmentSubtitle,
+        tags: _splitTags(l10n.tags_weather),
+        screen: AppScreen.settings,
+        anchorId: 'weather_adjustment',
+      ),
+      SettingItem(
         id: 'weather_animations',
         title: l10n.weatherAnimations,
         description: l10n.weatherSettingsSubtitle,

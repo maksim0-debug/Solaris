@@ -301,7 +301,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get astronomicalNight => 'Astronomical Night';
 
   @override
-  String get surfaceTemp => 'Surface Temp';
+  String get windSpeed => 'Wind Speed';
 
   @override
   String get spectralIntensity => 'Spectral Intensity';
@@ -386,6 +386,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get weatherAdjustmentIntensitySubtitle =>
       'Controls how strongly local weather affects your screen';
+
+  @override
+  String get weatherProvider => 'Weather Provider';
+
+  @override
+  String get weatherProviderAuto => 'Automatic';
+
+  @override
+  String get weatherProviderWeatherApi => 'WeatherAPI.com';
+
+  @override
+  String get weatherProviderOpenMeteo => 'Open-Meteo.com';
 
   @override
   String weatherBrightnessReduction(int percent) {
@@ -840,6 +852,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String windSpeedFormat(String value) {
+    return '$value km/h';
+  }
+
+  @override
   String spectralIntensityValue(String value) {
     return '$value W/m²';
   }
@@ -974,6 +991,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get weatherSettingsSubtitle => 'Customize animation visibility';
+
+  @override
+  String get lastUpdated => 'Last updated';
+
+  @override
+  String lastUpdatedFormat(String time) {
+    return 'Updated $time';
+  }
 
   @override
   String get mapSettings => 'Map Settings';

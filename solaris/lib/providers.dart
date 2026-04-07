@@ -225,13 +225,20 @@ final weatherServiceProvider = Provider((ref) => WeatherService());
 final currentWeatherProvider = FutureProvider<WeatherData?>((ref) async {
   final locationAsync = ref.watch(effectiveLocationProvider);
   final weatherService = ref.watch(weatherServiceProvider);
+  final settingsAsync = ref.watch(settingsProvider);
+
+  // Get current weather provider from settings
+  final provider = settingsAsync.maybeWhen(
+    data: (map) => map['all']?.weatherProvider ?? WeatherProvider.auto,
+    orElse: () => WeatherProvider.auto,
+  );
 
   // Ждем, пока появится локация
   final pos = locationAsync.value;
   if (pos == null) return null;
 
-  // Настраиваем автообновление каждые 15 минут (900 секунд)
-  final timer = Timer(const Duration(minutes: 15), () {
+  // Настраиваем автообновление каждые 5 минут для большей "реалтаймовости"
+  final timer = Timer(const Duration(minutes: 5), () {
     ref.invalidateSelf(); // Заставляет провайдер обновить данные
   });
 
@@ -239,7 +246,11 @@ final currentWeatherProvider = FutureProvider<WeatherData?>((ref) async {
   ref.onDispose(() => timer.cancel());
 
   // Делаем запрос к API
-  return await weatherService.fetchCurrentWeather(pos.latitude, pos.longitude);
+  return await weatherService.fetchCurrentWeather(
+    pos.latitude,
+    pos.longitude,
+    provider: provider,
+  );
 });
 
 final mapHealthProvider = FutureProvider<MapHealthReport>((ref) async {
@@ -898,6 +909,13 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     _updateSettings(
       ref.read(selectedMonitorsProvider),
       (s) => s.copyWith(weatherAdjustmentIntensity: intensity),
+    );
+  }
+
+  void updateWeatherProvider(WeatherProvider provider) {
+    _updateSettings(
+      {'all'}, // Weather provider is likely intended to be global
+      (s) => s.copyWith(weatherProvider: provider),
     );
   }
 

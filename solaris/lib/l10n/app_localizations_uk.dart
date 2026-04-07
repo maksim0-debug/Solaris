@@ -303,7 +303,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get astronomicalNight => 'Астрономічна ніч';
 
   @override
-  String get surfaceTemp => 'Темп. поверхні';
+  String get windSpeed => 'Швидкість вітру';
 
   @override
   String get spectralIntensity => 'Спектральна інтенсивність';
@@ -386,6 +386,18 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get weatherAdjustmentIntensitySubtitle =>
       'Керує тим, наскільки сильно погода впливає на яскравість екрана';
+
+  @override
+  String get weatherProvider => 'Провайдер погоди';
+
+  @override
+  String get weatherProviderAuto => 'Автоматично';
+
+  @override
+  String get weatherProviderWeatherApi => 'WeatherAPI.com';
+
+  @override
+  String get weatherProviderOpenMeteo => 'Open-Meteo.com';
 
   @override
   String weatherBrightnessReduction(int percent) {
@@ -840,6 +852,11 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String windSpeedFormat(String value) {
+    return '$value км/год';
+  }
+
+  @override
   String spectralIntensityValue(String value) {
     return '$value Вт/м²';
   }
@@ -974,6 +991,14 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get weatherSettingsSubtitle => 'Налаштуйте видимість анімацій';
+
+  @override
+  String get lastUpdated => 'Оновлено';
+
+  @override
+  String lastUpdatedFormat(String time) {
+    return 'Оновлено о $time';
+  }
 
   @override
   String get mapSettings => 'Налаштування карти';

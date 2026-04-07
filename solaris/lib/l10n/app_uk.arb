@@ -160,7 +160,7 @@
   "solarTelemetry": "Сонячна телеметрія",
   "civilTwilight": "Цивільні сутінки",
   "astronomicalNight": "Астрономічна ніч",
-  "surfaceTemp": "Темп. поверхні",
+  "windSpeed": "Швидкість вітру",
   "spectralIntensity": "Спектральна інтенсивність",
   "uvIndex": "Індекс УФ",
   "extreme": "Екстремальний",
@@ -186,6 +186,10 @@
   "weatherAdjustmentSubtitle": "Зниження яскравості в хмарну або дощову погоду",
   "weatherIntensity": "Інтенсивність корекції",
   "weatherAdjustmentIntensitySubtitle": "Керує тим, наскільки сильно погода впливає на яскравість екрана",
+  "weatherProvider": "Провайдер погоди",
+  "weatherProviderAuto": "Автоматично",
+  "weatherProviderWeatherApi": "WeatherAPI.com",
+  "weatherProviderOpenMeteo": "Open-Meteo.com",
   "weatherBrightnessReduction": "Погода: зниження яскравості на {percent}%",
   "@weatherBrightnessReduction": {
     "placeholders": {
@@ -413,6 +417,14 @@
       }
     }
   },
+  "windSpeedFormat": "{value} км/год",
+  "@windSpeedFormat": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "spectralIntensityValue": "{value} Вт/м²",
   "@spectralIntensityValue": {
     "placeholders": {
@@ -507,6 +519,15 @@
   "showThunder": "Показати грозу",
   "showClouds": "Показати хмари",
   "weatherSettingsSubtitle": "Налаштуйте видимість анімацій",
+  "lastUpdated": "Оновлено",
+  "lastUpdatedFormat": "Оновлено о {time}",
+  "@lastUpdatedFormat": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "mapSettings": "Налаштування карти",
   "mapStyle": "Стиль карти",
   "mapStyleAuto": "Автоматично",

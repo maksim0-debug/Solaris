@@ -13,6 +13,16 @@ enum MapStyleMode {
   );
 }
 
+enum WeatherProvider {
+  auto,
+  weatherApi,
+  openMeteo;
+
+  String toJson() => name;
+  factory WeatherProvider.fromJson(String json) => WeatherProvider.values
+      .firstWhere((e) => e.name == json, orElse: () => WeatherProvider.auto);
+}
+
 class SettingsState {
   final PresetType activePreset;
   final Map<PresetType, List<FlSpot>> curvesMap;
@@ -66,6 +76,7 @@ class SettingsState {
   final bool showCloudAnimation;
   final MapStyleMode mapStyleMode;
   final double weatherAdjustmentIntensity;
+  final WeatherProvider weatherProvider;
 
   SettingsState({
     this.activePreset = PresetType.bright,
@@ -134,6 +145,7 @@ class SettingsState {
     this.showCloudAnimation = true,
     this.mapStyleMode = MapStyleMode.auto,
     this.weatherAdjustmentIntensity = 0.45,
+    this.weatherProvider = WeatherProvider.auto,
   }) : curvesMap = curvesMap ?? PresetConstants.getAllDefaults(),
        presetOrder =
            presetOrder ??
@@ -212,6 +224,7 @@ class SettingsState {
     'showCloudAnimation': showCloudAnimation,
     'mapStyleMode': mapStyleMode.toJson(),
     'weatherAdjustmentIntensity': weatherAdjustmentIntensity,
+    'weatherProvider': weatherProvider.toJson(),
   };
 
   factory SettingsState.fromJson(Map<String, dynamic> json) {
@@ -365,6 +378,9 @@ class SettingsState {
       ),
       weatherAdjustmentIntensity:
           (json['weatherAdjustmentIntensity'] as num?)?.toDouble() ?? 0.6,
+      weatherProvider: WeatherProvider.fromJson(
+        json['weatherProvider'] as String? ?? 'auto',
+      ),
     );
   }
 
@@ -421,6 +437,7 @@ class SettingsState {
     bool? showCloudAnimation,
     MapStyleMode? mapStyleMode,
     double? weatherAdjustmentIntensity,
+    WeatherProvider? weatherProvider,
     bool clearNextPresetHotKey = false,
     bool clearPrevPresetHotKey = false,
     bool clearBrightnessUpHotKey = false,
@@ -513,6 +530,7 @@ class SettingsState {
       mapStyleMode: mapStyleMode ?? this.mapStyleMode,
       weatherAdjustmentIntensity:
           weatherAdjustmentIntensity ?? this.weatherAdjustmentIntensity,
+      weatherProvider: weatherProvider ?? this.weatherProvider,
     );
   }
 }

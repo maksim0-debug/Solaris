@@ -153,9 +153,6 @@ class ScheduleScreen extends ConsumerWidget {
                             final weatherAsync = ref.watch(
                               currentWeatherProvider,
                             );
-                            final calcService = ref.watch(
-                              sunCalculatorServiceProvider,
-                            );
 
                             return GlassCard(
                               child: Column(
@@ -213,26 +210,18 @@ class ScheduleScreen extends ConsumerWidget {
                                     iconColor: Colors.white70,
                                   ),
                                   const SizedBox(height: 16),
-                                  // Updated Surface Temp row
                                   _TelemetryRow(
-                                    icon: LucideIcons.thermometerSun,
-                                    label: l10n.surfaceTemp,
+                                    icon: LucideIcons.wind,
+                                    label: l10n.windSpeed,
                                     value: weatherAsync.maybeWhen(
-                                      data: (w) {
-                                        if (w == null) return '--°C';
-                                        final surfTemp = calcService
-                                            .getEstimatedSurfaceTemp(
-                                              state.sunElevation,
-                                              w.temperature,
-                                              realIrradiance:
-                                                  state.spectralIntensity,
-                                            );
-
-                                        return l10n.temperatureFormat(surfTemp.toStringAsFixed(1));
-                                      },
-                                      orElse: () => '--°C',
+                                      data: (w) => w != null
+                                          ? l10n.windSpeedFormat(
+                                            w.windSpeed.toStringAsFixed(1),
+                                          )
+                                          : '--',
+                                      orElse: () => '--',
                                     ),
-                                    iconColor: Colors.orange,
+                                    iconColor: Colors.cyanAccent,
                                   ),
                                   const SizedBox(height: 32),
                                   _ProgressBar(
