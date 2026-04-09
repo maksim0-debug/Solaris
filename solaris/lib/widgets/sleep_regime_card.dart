@@ -48,7 +48,14 @@ class _SleepRegimeCardState extends State<SleepRegimeCard> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '${DateFormat('d MMM', l10n.localeName).format(widget.regime.startDate)} — ${DateFormat('d MMM', l10n.localeName).format(widget.regime.endDate)}',
+                      _formatDateRange(
+                        start: widget.regime.startDate,
+                        end: widget.regime.nights.isEmpty
+                            ? widget.regime.endDate
+                            : widget.regime.nights.first.aggregatedSession.endTime,
+                        locale: l10n.localeName,
+                        includeYear: false,
+                      ),
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.5),
                         fontSize: 13,
@@ -169,10 +176,11 @@ class _SessionDetailRow extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          DateFormat(
-                            'd MMM, yyyy',
-                            l10n.localeName,
-                          ).format(session.startTime),
+                          _formatDateRange(
+                            start: session.startTime,
+                            end: session.endTime,
+                            locale: l10n.localeName,
+                          ),
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -268,5 +276,44 @@ class _SessionChip extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+String _formatDateRange({
+  required DateTime start,
+  required DateTime end,
+  required String locale,
+  bool includeYear = true,
+}) {
+  final startDay = DateTime(start.year, start.month, start.day);
+  final endDay = DateTime(end.year, end.month, end.day);
+
+  if (startDay.isAtSameMomentAs(endDay)) {
+    return DateFormat(includeYear ? 'd MMM, yyyy' : 'd MMM', locale).format(start);
+  }
+
+  // Cross-day range
+  if (start.year == end.year && start.month == end.month) {
+    final monthPart = DateFormat(
+      includeYear ? 'MMM, yyyy' : 'MMM',
+      locale,
+    ).format(end);
+    return '${start.day} — ${end.day} $monthPart';
+  } else if (start.year == end.year) {
+    final startPart = DateFormat('d MMM', locale).format(start);
+    final endPart = DateFormat(
+      includeYear ? 'd MMM, yyyy' : 'd MMM',
+      locale,
+    ).format(end);
+    return '$startPart — $endPart';
+  } else {
+    final startPart = DateFormat(
+      includeYear ? 'd MMM, yyyy' : 'd MMM',
+      locale,
+    ).format(start);
+    final endPart = DateFormat(
+      includeYear ? 'd MMM, yyyy' : 'd MMM',
+      locale,
+    ).format(end);
+    return '$startPart — $endPart';
   }
 }
