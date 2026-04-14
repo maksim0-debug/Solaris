@@ -16,6 +16,7 @@ import 'package:solaris/services/weather_service.dart';
 import 'package:solaris/services/autorun_service.dart';
 import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/models/solar_state.dart';
+import 'package:solaris/models/current_day_phase.dart';
 import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/models/solar_phase_model.dart';
 import 'package:solaris/models/smart_circadian_data.dart';
@@ -494,6 +495,59 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
 });
 
 // solarDataProvider logic unified into solarStateStreamProvider
+
+/// A debounced view of [solarStateStreamProvider] for the hardware-facing
+/// circadian loop. The raw stream emits once per second (when visible) so the
+/// on-screen chart stays smooth, but the Bezier math + weather adjustment +
+/// gaming override cascade inside [circadianAdjustmentProvider] does not need
+/// to run that often — sun elevation moves very slowly.
+///
+/// This provider only forwards a new state when one of:
+///   * sun elevation moved >= 0.1 degrees since the last forwarded value
+///   * the current day phase changed (sunrise / golden hour / twilight / ...)
+///   * 60 seconds passed since the last forwarded value (safety heartbeat)
+class _DebouncedSolarStateNotifier
+    extends Notifier<AsyncValue<SolarState>> {
+  double? _lastElevation;
+  DateTime? _lastEmitTime;
+  CurrentDayPhase? _lastPhase;
+
+  @override
+  AsyncValue<SolarState> build() {
+    ref.listen<AsyncValue<SolarState>>(
+      solarStateStreamProvider,
+      (prev, next) {
+        if (next is AsyncError) {
+          state = next;
+          return;
+        }
+        next.whenData((solar) {
+          final now = DateTime.now();
+          final phaseChanged = _lastPhase != solar.currentPhase;
+          final elevDelta = _lastElevation == null
+              ? double.infinity
+              : (solar.sunElevation - _lastElevation!).abs();
+          final heartbeat = _lastEmitTime == null ||
+              now.difference(_lastEmitTime!).inSeconds >= 60;
+
+          if (phaseChanged || elevDelta >= 0.1 || heartbeat) {
+            _lastElevation = solar.sunElevation;
+            _lastPhase = solar.currentPhase;
+            _lastEmitTime = now;
+            state = AsyncValue.data(solar);
+          }
+        });
+      },
+      fireImmediately: true,
+    );
+    return const AsyncValue.loading();
+  }
+}
+
+final debouncedSolarStateProvider =
+    NotifierProvider<_DebouncedSolarStateNotifier, AsyncValue<SolarState>>(
+  _DebouncedSolarStateNotifier.new,
+);
 
 class MonitorListNotifier extends AsyncNotifier<List<MonitorInfo>> {
   @override
@@ -1673,8 +1727,13 @@ final brightnessOffsetsProvider = Provider<Map<String, double>>((ref) {
 /// It listens to solar state and applies brightness updates to hardware.
 /// If the app is minimized, it skips UI state updates to save resources.
 final circadianAdjustmentProvider = Provider<void>((ref) {
-  // Watch all required providers to ensure consistency and immediate reaction
-  final solarStateAsync = ref.watch(solarStateStreamProvider);
+  // Watch all required providers to ensure consistency and immediate reaction.
+  // NOTE: this path is hardware-facing. It reads the debounced solar state so
+  // the Bezier math / weather adjustment / gaming override cascade only runs
+  // when sun elevation has actually moved (>=0.1deg), the phase changed, or a
+  // 60s heartbeat elapsed — NOT every 1s tick from the raw stream that the UI
+  // chart uses.
+  final solarStateAsync = ref.watch(debouncedSolarStateProvider);
   final settingsAsync = ref.watch(settingsProvider);
   final tempSettingsAsync = ref.watch(temperatureSettingsProvider);
   final monitorsAsync = ref.read(monitorListProvider);

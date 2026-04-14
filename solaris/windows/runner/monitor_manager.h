@@ -4,6 +4,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <vector>
 #include <windows.h>
 #include <mutex>
@@ -84,6 +85,16 @@ class MonitorManager {
   std::chrono::steady_clock::time_point last_gaming_match_time_;
   bool is_gaming_candidate_ = false;
   std::chrono::steady_clock::time_point candidate_start_time_;
+
+  // Per-PID cache of the expensive parts of EvaluateGamingScore (path, parent,
+  // loaded DLLs). These are stable for a process lifetime, so we only compute
+  // them once per PID and reuse on subsequent detector ticks.
+  struct CachedProcessInfo {
+    int static_score = 0;            // path + parent-process + DLL scan
+    std::string process_name_lower;  // lowercase file name (for whitelist/blacklist)
+    bool scanned = false;
+  };
+  std::unordered_map<DWORD, CachedProcessInfo> process_cache_;
 };
 
 #endif  // RUNNER_MONITOR_MANAGER_H_

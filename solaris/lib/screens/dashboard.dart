@@ -93,17 +93,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       });
     }
 
-    // Watch visibility state to prune the widget tree when not visible
-    final visibility = ref.watch(appLifecycleProvider);
+    // Freeze all animations under the dashboard when the window is minimized
+    // or hidden to the tray. Previously we pruned the whole subtree with
+    // SizedBox.shrink() which also destroyed widget state and forced a full
+    // rebuild + provider re-subscribe on restore (visible flicker). TickerMode
+    // stops every Ticker/AnimationController.repeat beneath this point — same
+    // GPU win — while preserving widget state so the next `visible` transition
+    // is instant. Providers that throttle on appLifecycleProvider (solar
+    // stream, circadian loop) continue to cut background math cost.
+    final isVisible =
+        ref.watch(appLifecycleProvider) == AppVisibilityState.visible;
 
-    // If the window is minimized or hidden, we return an empty widget.
-    // This stops all animations (Pulsing Radar, Dial, etc.) and all GPU-intensive
-    // rendering (BackdropFilter in GlassCard, Gradients).
-    if (visibility != AppVisibilityState.visible) {
-      return const SizedBox.shrink();
-    }
-
-    return CallbackShortcuts(
+    return TickerMode(
+      enabled: isVisible,
+      child: CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.keyF, control: true): () {
           ref.read(isSearchVisibleProvider.notifier).setVisible(true);
@@ -150,6 +153,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

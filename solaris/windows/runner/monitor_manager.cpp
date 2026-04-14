@@ -478,7 +478,12 @@ void MonitorManager::DetectorLoop() {
       }
     }
     
-    for (int i = 0; i < 10 && !stop_detector_; i++) {
+    // Detector poll interval: 2 seconds. With per-PID caching the per-tick
+    // cost is a handful of cheap Win32 calls (class, rect, cursor, clip), so
+    // 2s polling is more than enough for fullscreen-toggle / alt-tab detection
+    // and keeps background CPU near zero. Hysteresis (ENTRY/EXIT_DELAY_MS)
+    // still protects against flaps.
+    for (int i = 0; i < 40 && !stop_detector_; i++) {
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
   }
@@ -519,84 +524,103 @@ int MonitorManager::EvaluateGamingScore(HWND hwnd, DWORD processId) {
     return 0; 
   }
 
-  int score = 0;
-  std::string processName = "";
-  std::wstring fullPathW = L"";
-  
-  HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, processId);
-  if (hProcess) {
-    wchar_t buffer[MAX_PATH];
-    DWORD size = MAX_PATH;
-    if (QueryFullProcessImageNameW(hProcess, 0, buffer, &size)) {
-      fullPathW = buffer;
-      std::wstring fullPathLower = fullPathW;
-      std::transform(fullPathLower.begin(), fullPathLower.end(), fullPathLower.begin(), ::towlower);
-      
-      size_t lastSlash = fullPathW.find_last_of(L"\\/");
-      std::wstring fileName = (lastSlash == std::wstring::npos) ? fullPathW : fullPathW.substr(lastSlash + 1);
-      for (wchar_t wc : fileName) {
-        processName += static_cast<char>(std::tolower(static_cast<unsigned char>(wc)));
-      }
+  // --- Per-PID cached scoring ---
+  // The path heuristic, parent-process check, and loaded-DLL scan are all
+  // stable for a process lifetime. Compute them once per PID and reuse.
+  CachedProcessInfo* cached = nullptr;
+  auto cache_it = process_cache_.find(processId);
+  if (cache_it != process_cache_.end() && cache_it->second.scanned) {
+    cached = &cache_it->second;
+  } else {
+    CachedProcessInfo info;
+    std::wstring fullPathLower;
 
-      // --- Path Heuristics ---
+    HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, processId);
+    if (hProcess) {
+      wchar_t buffer[MAX_PATH];
+      DWORD size = MAX_PATH;
+      if (QueryFullProcessImageNameW(hProcess, 0, buffer, &size)) {
+        fullPathLower = buffer;
+        std::transform(fullPathLower.begin(), fullPathLower.end(), fullPathLower.begin(), ::towlower);
+
+        size_t lastSlash = fullPathLower.find_last_of(L"\\/");
+        std::wstring fileName = (lastSlash == std::wstring::npos) ? fullPathLower : fullPathLower.substr(lastSlash + 1);
+        for (wchar_t wc : fileName) {
+          info.process_name_lower += static_cast<char>(std::tolower(static_cast<unsigned char>(wc)));
+        }
+      }
+      CloseHandle(hProcess);
+    }
+
+    int static_score = 0;
+
+    // --- Path Heuristics ---
+    if (!fullPathLower.empty()) {
       if (fullPathLower.find(L"\\steamapps\\common\\") != std::wstring::npos ||
           fullPathLower.find(L"\\epic games\\") != std::wstring::npos ||
           fullPathLower.find(L"\\origin games\\") != std::wstring::npos ||
           fullPathLower.find(L"\\gog galaxy\\games\\") != std::wstring::npos ||
           fullPathLower.find(L"\\xboxgames\\") != std::wstring::npos) {
-        score += 100;
+        static_score += 100;
       }
-
-      // Penalty for system paths
       if (fullPathLower.find(L"c:\\windows\\") != std::wstring::npos) {
-          score -= 200;
+        static_score -= 200;
       }
     }
-    CloseHandle(hProcess);
-  }
 
-  // --- Whitelist / Blacklist ---
-  {
-    std::lock_guard<std::mutex> lock(lists_mutex_);
-    if (whitelist_.count(processName)) return 1000; // Absolute match
-    if (blacklist_.count(processName)) return -1000; // Absolute mismatch
-  }
+    // --- Parent Process Check ---
+    std::string parentName = GetParentProcessName(processId);
+    if (parentName == "steam.exe" || parentName == "epicgameslauncher.exe" ||
+        parentName == "galaxyclient.exe" || parentName == "origin.exe") {
+      static_score += 100;
+    }
 
-  // --- Parent Process Check ---
-  std::string parentName = GetParentProcessName(processId);
-  if (parentName == "steam.exe" || parentName == "epicgameslauncher.exe" || 
-      parentName == "galaxyclient.exe" || parentName == "origin.exe") {
-    score += 100;
-  }
-
-  // --- DLL Scanning (More permissive access) ---
-  hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
-  if (hProcess) {
-    HMODULE hMods[1024];
-    DWORD cbNeeded;
-    if (EnumProcessModules(hProcess, hMods, sizeof(hMods), &cbNeeded)) {
-      for (unsigned int i = 0; i < (cbNeeded / sizeof(HMODULE)); i++) {
-        wchar_t szModName[MAX_PATH];
-        if (GetModuleBaseNameW(hProcess, hMods[i], szModName, sizeof(szModName) / sizeof(wchar_t))) {
+    // --- DLL Scanning (one-shot per PID) ---
+    HANDLE hProcDll = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
+    if (hProcDll) {
+      HMODULE hMods[1024];
+      DWORD cbNeeded;
+      if (EnumProcessModules(hProcDll, hMods, sizeof(hMods), &cbNeeded)) {
+        for (unsigned int i = 0; i < (cbNeeded / sizeof(HMODULE)); i++) {
+          wchar_t szModName[MAX_PATH];
+          if (GetModuleBaseNameW(hProcDll, hMods[i], szModName, sizeof(szModName) / sizeof(wchar_t))) {
             std::wstring modName(szModName);
             std::transform(modName.begin(), modName.end(), modName.begin(), ::towlower);
-            
-            // Controller APIs (High confidence)
-            if (modName.find(L"xinput") != std::wstring::npos) score += 60;
-            if (modName == L"dinput8.dll") score += 50;
 
-            // Audio engine (Medium confidence)
-            if (modName.find(L"xaudio2") != std::wstring::npos) score += 30;
-
-            // Graphics engines (Low confidence, apps use them too)
+            if (modName.find(L"xinput") != std::wstring::npos) static_score += 60;
+            if (modName == L"dinput8.dll") static_score += 50;
+            if (modName.find(L"xaudio2") != std::wstring::npos) static_score += 30;
             if (modName == L"d3d11.dll" || modName == L"d3d12.dll" || modName == L"vulkan-1.dll") {
-                score += 10;
+              static_score += 10;
             }
+          }
         }
       }
+      CloseHandle(hProcDll);
     }
-    CloseHandle(hProcess);
+
+    info.static_score = static_score;
+    info.scanned = true;
+
+    // Cap cache growth from short-lived PIDs. A full clear is cheap and simple;
+    // 64 entries is far more than a typical desktop's foreground-window churn.
+    if (process_cache_.size() >= 64) {
+      process_cache_.clear();
+    }
+    auto inserted = process_cache_.emplace(processId, std::move(info));
+    cached = &inserted.first->second;
   }
+
+  // --- Whitelist / Blacklist (lists mutable, check each tick) ---
+  {
+    std::lock_guard<std::mutex> lock(lists_mutex_);
+    if (!cached->process_name_lower.empty()) {
+      if (whitelist_.count(cached->process_name_lower)) return 1000;
+      if (blacklist_.count(cached->process_name_lower)) return -1000;
+    }
+  }
+
+  int score = cached->static_score;
 
   // --- Cursor Behavior ---
   CURSORINFO ci = { sizeof(ci) };

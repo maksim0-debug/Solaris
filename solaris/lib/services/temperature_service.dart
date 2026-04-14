@@ -195,8 +195,10 @@ class TemperatureService {
         }
 
         // Wait between commands for monitor stability.
-        // For software temperature, 30ms is enough for visual smoothness.
-        await Future<void>.delayed(const Duration(milliseconds: 30));
+        // 120ms (~8 Hz) is plenty for color-temperature smoothness — the eye
+        // is far less time-sensitive to hue shifts than to motion — and cuts
+        // SetDeviceGammaRamp + MethodChannel traffic ~4x vs the old 30ms.
+        await Future<void>.delayed(const Duration(milliseconds: 120));
 
         // Re-check target after delay
         if (_targetTemperatures[deviceName] == null) break;
