@@ -23,6 +23,17 @@ enum WeatherProvider {
       .firstWhere((e) => e.name == json, orElse: () => WeatherProvider.auto);
 }
 
+enum StartupMode {
+  minimized,
+  tray;
+
+  String toJson() => name;
+  factory StartupMode.fromJson(String json) => StartupMode.values.firstWhere(
+    (e) => e.name == json,
+    orElse: () => StartupMode.minimized,
+  );
+}
+
 class SettingsState {
   final PresetType activePreset;
   final Map<PresetType, List<FlSpot>> curvesMap;
@@ -77,6 +88,7 @@ class SettingsState {
   final MapStyleMode mapStyleMode;
   final double weatherAdjustmentIntensity;
   final WeatherProvider weatherProvider;
+  final StartupMode startupMode;
 
   SettingsState({
     this.activePreset = PresetType.bright,
@@ -146,6 +158,7 @@ class SettingsState {
     this.mapStyleMode = MapStyleMode.auto,
     this.weatherAdjustmentIntensity = 0.45,
     this.weatherProvider = WeatherProvider.auto,
+    this.startupMode = StartupMode.minimized,
   }) : curvesMap = curvesMap ?? PresetConstants.getAllDefaults(),
        presetOrder =
            presetOrder ??
@@ -225,6 +238,7 @@ class SettingsState {
     'mapStyleMode': mapStyleMode.toJson(),
     'weatherAdjustmentIntensity': weatherAdjustmentIntensity,
     'weatherProvider': weatherProvider.toJson(),
+    'startupMode': startupMode.toJson(),
   };
 
   factory SettingsState.fromJson(Map<String, dynamic> json) {
@@ -381,6 +395,9 @@ class SettingsState {
       weatherProvider: WeatherProvider.fromJson(
         json['weatherProvider'] as String? ?? 'auto',
       ),
+      startupMode: StartupMode.fromJson(
+        json['startupMode'] as String? ?? 'minimized',
+      ),
     );
   }
 
@@ -438,6 +455,7 @@ class SettingsState {
     MapStyleMode? mapStyleMode,
     double? weatherAdjustmentIntensity,
     WeatherProvider? weatherProvider,
+    StartupMode? startupMode,
     bool clearNextPresetHotKey = false,
     bool clearPrevPresetHotKey = false,
     bool clearBrightnessUpHotKey = false,
@@ -531,6 +549,7 @@ class SettingsState {
       weatherAdjustmentIntensity:
           weatherAdjustmentIntensity ?? this.weatherAdjustmentIntensity,
       weatherProvider: weatherProvider ?? this.weatherProvider,
+      startupMode: startupMode ?? this.startupMode,
     );
   }
 }

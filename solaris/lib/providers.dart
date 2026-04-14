@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:ui';
 import 'package:solaris/env/env.dart';
 
-
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
@@ -107,8 +106,7 @@ final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
       final weatherAsync = ref.watch(currentWeatherProvider);
       final circadianService = ref.watch(circadianServiceProvider);
 
-
-      // All smart logic (including morning boost) is now handled via smartData 
+      // All smart logic (including morning boost) is now handled via smartData
       // directly in the circadian service.
 
       // Calculate Full Proportional Result
@@ -506,48 +504,44 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
 ///   * sun elevation moved >= 0.1 degrees since the last forwarded value
 ///   * the current day phase changed (sunrise / golden hour / twilight / ...)
 ///   * 60 seconds passed since the last forwarded value (safety heartbeat)
-class _DebouncedSolarStateNotifier
-    extends Notifier<AsyncValue<SolarState>> {
+class _DebouncedSolarStateNotifier extends Notifier<AsyncValue<SolarState>> {
   double? _lastElevation;
   DateTime? _lastEmitTime;
   CurrentDayPhase? _lastPhase;
 
   @override
   AsyncValue<SolarState> build() {
-    ref.listen<AsyncValue<SolarState>>(
-      solarStateStreamProvider,
-      (prev, next) {
-        if (next is AsyncError) {
-          state = next;
-          return;
-        }
-        next.whenData((solar) {
-          final now = DateTime.now();
-          final phaseChanged = _lastPhase != solar.currentPhase;
-          final elevDelta = _lastElevation == null
-              ? double.infinity
-              : (solar.sunElevation - _lastElevation!).abs();
-          final heartbeat = _lastEmitTime == null ||
-              now.difference(_lastEmitTime!).inSeconds >= 60;
+    ref.listen<AsyncValue<SolarState>>(solarStateStreamProvider, (prev, next) {
+      if (next is AsyncError) {
+        state = next;
+        return;
+      }
+      next.whenData((solar) {
+        final now = DateTime.now();
+        final phaseChanged = _lastPhase != solar.currentPhase;
+        final elevDelta = _lastElevation == null
+            ? double.infinity
+            : (solar.sunElevation - _lastElevation!).abs();
+        final heartbeat =
+            _lastEmitTime == null ||
+            now.difference(_lastEmitTime!).inSeconds >= 60;
 
-          if (phaseChanged || elevDelta >= 0.1 || heartbeat) {
-            _lastElevation = solar.sunElevation;
-            _lastPhase = solar.currentPhase;
-            _lastEmitTime = now;
-            state = AsyncValue.data(solar);
-          }
-        });
-      },
-      fireImmediately: true,
-    );
+        if (phaseChanged || elevDelta >= 0.1 || heartbeat) {
+          _lastElevation = solar.sunElevation;
+          _lastPhase = solar.currentPhase;
+          _lastEmitTime = now;
+          state = AsyncValue.data(solar);
+        }
+      });
+    }, fireImmediately: true);
     return const AsyncValue.loading();
   }
 }
 
 final debouncedSolarStateProvider =
     NotifierProvider<_DebouncedSolarStateNotifier, AsyncValue<SolarState>>(
-  _DebouncedSolarStateNotifier.new,
-);
+      _DebouncedSolarStateNotifier.new,
+    );
 
 class MonitorListNotifier extends AsyncNotifier<List<MonitorInfo>> {
   @override
@@ -868,9 +862,25 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     final storage = ref.watch(storageServiceProvider);
     final settings = await _loadSettings(storage);
 
+    // Load startup mode from SharedPreferences
+    final prefs = ref.read(sharedPreferencesProvider);
+    final savedModeStr = prefs?.getString('startup_mode');
+    final StartupMode startupMode;
+    if (savedModeStr != null) {
+      startupMode = StartupMode.values.firstWhere(
+        (e) => e.name == savedModeStr,
+        orElse: () => StartupMode.minimized,
+      );
+      if (settings['all'] != null) {
+        settings['all'] = settings['all']!.copyWith(startupMode: startupMode);
+      }
+    } else {
+      startupMode = settings['all']?.startupMode ?? StartupMode.minimized;
+    }
+
     // Sync autorun on startup
     final isEnabled = settings['all']?.isAutorunEnabled ?? true;
-    unawaited(AutorunService.setEnabled(isEnabled));
+    unawaited(AutorunService.setEnabled(isEnabled, startupMode));
 
     return settings;
   }
@@ -949,7 +959,15 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
       {'all'}, // Autorun is globally replicated
       (s) => s.copyWith(isAutorunEnabled: enabled),
     );
-    AutorunService.setEnabled(enabled);
+    final startupMode = _getSettings('all').startupMode;
+    AutorunService.setEnabled(enabled, startupMode);
+  }
+
+  void updateStartupMode(StartupMode mode) {
+    ref.read(sharedPreferencesProvider)?.setString('startup_mode', mode.name);
+    _updateSettings({'all'}, (s) => s.copyWith(startupMode: mode));
+    final isEnabled = _getSettings('all').isAutorunEnabled;
+    AutorunService.setEnabled(isEnabled, mode);
   }
 
   void updateWeatherAdjustment(bool enabled) {

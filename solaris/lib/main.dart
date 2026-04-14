@@ -27,9 +27,10 @@ void main(List<String> args) async {
   await hotKeyManager.unregisterAll();
 
   bool startMinimized = args.contains('--minimized');
+  bool startTray = args.contains('--tray');
 
-  WindowOptions windowOptions = const WindowOptions(
-    size: Size(1300, 890),
+  WindowOptions windowOptions = WindowOptions(
+    size: const Size(1300, 890),
     center: true,
     backgroundColor: AppTheme.background,
     skipTaskbar: false,
@@ -37,10 +38,12 @@ void main(List<String> args) async {
   );
 
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
-    if (startMinimized) {
+    if (startTray) {
+      await windowManager.hide();
+    } else if (startMinimized) {
       await windowManager.hide();
     }
-    // We will show the window once the UI is ready in dashboard.dart
+    // We will show/minimize the window once the UI is ready in dashboard.dart
   });
 
   // Tray initialization
@@ -73,6 +76,7 @@ void main(List<String> args) async {
   final container = ProviderContainer(
     overrides: [
       if (prefs != null) sharedPreferencesProvider.overrideWithValue(prefs),
+      startupArgsProvider.overrideWithValue(args),
     ],
   );
 

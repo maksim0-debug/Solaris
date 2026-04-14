@@ -7,7 +7,6 @@ import 'package:solaris/services/regime_analyzer.dart';
 void main() {
   group('Session Grouping Fix Tests', () {
     test('Overlapping and nested sessions should be handled correctly', () {
-      final date = DateTime(2026, 3, 31);
       
       // Data from screenshot:
       // Session 1: 13:26 - 19:09

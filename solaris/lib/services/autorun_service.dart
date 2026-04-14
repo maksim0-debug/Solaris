@@ -3,13 +3,15 @@ import 'dart:io';
 import 'package:ffi/ffi.dart';
 import 'package:win32/win32.dart';
 
+import 'package:solaris/models/settings_state.dart';
+
 class AutorunService {
   static const String _keyName = 'Solaris';
   static const String _runKeyPath =
       r'Software\Microsoft\Windows\CurrentVersion\Run';
 
   /// Enables or disables autorun for the current application on Windows.
-  static Future<bool> setEnabled(bool enabled) async {
+  static Future<bool> setEnabled(bool enabled, StartupMode mode) async {
     if (!Platform.isWindows) return false;
 
     final phkResult = calloc<HKEY>();
@@ -33,7 +35,8 @@ class AutorunService {
       final valueNamePtr = _keyName.toNativeUtf16();
 
       if (enabled) {
-        final executablePath = '${Platform.resolvedExecutable} --minimized';
+        final flag = mode == StartupMode.tray ? '--tray' : '--minimized';
+        final executablePath = '${Platform.resolvedExecutable} $flag';
         final dataPtr = executablePath.toNativeUtf16();
         final dataSize = (executablePath.length + 1) * 2;
 

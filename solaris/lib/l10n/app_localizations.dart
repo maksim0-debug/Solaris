@@ -748,6 +748,24 @@ abstract class AppLocalizations {
   /// **'Automatically start the application when you log into Windows'**
   String get autorunSubtitle;
 
+  /// No description provided for @startupMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Startup Mode'**
+  String get startupMode;
+
+  /// No description provided for @startupModeTray.
+  ///
+  /// In en, this message translates to:
+  /// **'Tray'**
+  String get startupModeTray;
+
+  /// No description provided for @startupModeMinimized.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimized'**
+  String get startupModeMinimized;
+
   /// No description provided for @weatherAdjustmentTitle.
   ///
   /// In en, this message translates to:

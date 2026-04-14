@@ -51,9 +51,10 @@ class TrayService with TrayListener {
   }
 
   @override
-  void onTrayIconMouseDown() {
-    windowManager.show();
-    windowManager.focus();
+  void onTrayIconMouseDown() async {
+    await windowManager.setSkipTaskbar(false);
+    await windowManager.show();
+    await windowManager.focus();
   }
 
   @override
@@ -64,6 +65,7 @@ class TrayService with TrayListener {
   @override
   void onTrayMenuItemClick(MenuItem menuItem) async {
     if (menuItem.key == 'open_window') {
+      await windowManager.setSkipTaskbar(false);
       await windowManager.show();
       await windowManager.focus();
     } else if (menuItem.key == 'exit_app') {

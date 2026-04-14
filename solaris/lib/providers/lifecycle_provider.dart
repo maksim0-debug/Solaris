@@ -17,3 +17,5 @@ final appLifecycleProvider =
     NotifierProvider<AppLifecycleNotifier, AppVisibilityState>(
       AppLifecycleNotifier.new,
     );
+
+final startupArgsProvider = Provider<List<String>>((_) => []);

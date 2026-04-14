@@ -374,6 +374,15 @@ class AppLocalizationsUk extends AppLocalizations {
       'Автоматично запускати програму при вході у Windows';
 
   @override
+  String get startupMode => 'Режим запуску';
+
+  @override
+  String get startupModeTray => 'У треї';
+
+  @override
+  String get startupModeMinimized => 'Згорнуто';
+
+  @override
   String get weatherAdjustmentTitle => 'Корекція по погоді';
 
   @override

@@ -55,8 +55,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     super.initState();
     // Show window once the first frame is rendered to avoid white flash
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await windowManager.show();
-      await windowManager.focus();
+      final args = ref.read(startupArgsProvider);
+      bool startMinimized = args.contains('--minimized');
+      bool startTray = args.contains('--tray');
+
+      if (!startMinimized && !startTray) {
+        await windowManager.show();
+        await windowManager.focus();
+      } else if (startMinimized) {
+        await windowManager.show();
+        await Future.delayed(const Duration(milliseconds: 250));
+        await windowManager.minimize();
+      } else if (startTray) {
+        await windowManager.hide();
+      }
     });
   }
 

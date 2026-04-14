@@ -373,6 +373,15 @@ class AppLocalizationsRu extends AppLocalizations {
       'Автоматически запускать приложение при входе в Windows';
 
   @override
+  String get startupMode => 'Режим запуска';
+
+  @override
+  String get startupModeTray => 'В трее';
+
+  @override
+  String get startupModeMinimized => 'Свернутым';
+
+  @override
   String get weatherAdjustmentTitle => 'Коррекция по погоде';
 
   @override

@@ -55,7 +55,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         alignment: 0.5, // Center the item
       );
       key.currentState?.highlight();
-      
+
       // Clear the anchor after consuming it
       Future.delayed(const Duration(milliseconds: 600), () {
         if (mounted) {
@@ -188,6 +188,86 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     onChanged: (val) =>
                         ref.read(settingsProvider.notifier).updateAutorun(val),
                   ),
+                  if (settingsAsync.maybeWhen(
+                    data: (map) => map['all']?.isAutorunEnabled ?? false,
+                    orElse: () => false,
+                  )) ...[
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                l10n.startupMode,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SegmentedButton<StartupMode>(
+                          segments: [
+                            ButtonSegment<StartupMode>(
+                              value: StartupMode.tray,
+                              label: Text(l10n.startupModeTray),
+                            ),
+                            ButtonSegment<StartupMode>(
+                              value: StartupMode.minimized,
+                              label: Text(l10n.startupModeMinimized),
+                            ),
+                          ],
+                          selected: {
+                            settingsAsync.maybeWhen(
+                                      data: (map) =>
+                                          map['all']?.startupMode ??
+                                          StartupMode.minimized,
+                                      orElse: () => StartupMode.minimized,
+                                    ) !=
+                                    StartupMode.tray
+                                ? StartupMode.minimized
+                                : StartupMode.tray,
+                          },
+                          showSelectedIcon: false,
+                          onSelectionChanged: (Set<StartupMode> newSelection) {
+                            ref
+                                .read(settingsProvider.notifier)
+                                .updateStartupMode(newSelection.first);
+                          },
+                          style: ButtonStyle(
+                            backgroundColor:
+                                WidgetStateProperty.resolveWith<Color>((
+                                  Set<WidgetState> states,
+                                ) {
+                                  if (states.contains(WidgetState.selected)) {
+                                    return const Color(
+                                      0xFFFDBA74,
+                                    ).withOpacity(0.2);
+                                  }
+                                  return Colors.white.withOpacity(0.05);
+                                }),
+                            foregroundColor:
+                                WidgetStateProperty.resolveWith<Color>((
+                                  Set<WidgetState> states,
+                                ) {
+                                  if (states.contains(WidgetState.selected)) {
+                                    return const Color(0xFFFDBA74);
+                                  }
+                                  return Colors.white70;
+                                }),
+                            side: WidgetStateProperty.all(
+                              BorderSide(color: Colors.white.withOpacity(0.1)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -255,7 +335,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         .read(settingsProvider.notifier)
                         .updateWeatherAdjustment(val),
                   ),
-                  
+
                   // Animated appearance of intensity slider
                   AnimatedCrossFade(
                     firstChild: const SizedBox(width: double.infinity),
@@ -268,10 +348,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           builder: (context) {
                             final monitorId = selectedIds.firstOrNull ?? 'all';
                             final settings = settingsAsync.maybeWhen(
-                              data: (map) => map[monitorId] ?? map['all'] ?? SettingsState(),
+                              data: (map) =>
+                                  map[monitorId] ??
+                                  map['all'] ??
+                                  SettingsState(),
                               orElse: () => SettingsState(),
                             );
-                            
+
                             return Column(
                               children: [
                                 _IntensitySlider(
@@ -296,8 +379,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ],
                     ),
                     crossFadeState: settingsAsync.maybeWhen(
-                      data: (map) => (map[selectedIds.firstOrNull ?? 'all']?.isWeatherAdjustmentEnabled ?? map['all']?.isWeatherAdjustmentEnabled ?? true) 
-                          ? CrossFadeState.showSecond 
+                      data: (map) =>
+                          (map[selectedIds.firstOrNull ?? 'all']
+                                  ?.isWeatherAdjustmentEnabled ??
+                              map['all']?.isWeatherAdjustmentEnabled ??
+                              true)
+                          ? CrossFadeState.showSecond
                           : CrossFadeState.showFirst,
                       orElse: () => CrossFadeState.showFirst,
                     ),
@@ -397,7 +484,11 @@ class _LegalSection extends StatelessWidget {
           const SizedBox(height: 24),
           ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: const Icon(LucideIcons.fileText, color: Colors.white70, size: 20),
+            leading: const Icon(
+              LucideIcons.fileText,
+              color: Colors.white70,
+              size: 20,
+            ),
             title: Text(
               l10n.privacyPolicy,
               style: GoogleFonts.outfit(
@@ -413,7 +504,11 @@ class _LegalSection extends StatelessWidget {
                 color: Colors.white.withOpacity(0.5),
               ),
             ),
-            trailing: const Icon(LucideIcons.chevronRight, color: Colors.white24, size: 18),
+            trailing: const Icon(
+              LucideIcons.chevronRight,
+              color: Colors.white24,
+              size: 18,
+            ),
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
@@ -584,23 +679,21 @@ class _PresetSelectorState extends ConsumerState<_PresetSelector> {
             activePreset: settings.activePreset,
             activeUserPresetId: settings.activeUserPresetId,
             getName: (type) => (type as TemperaturePresetType).getName(l10n),
-            onSystemSelected: (type) =>
-                ref
-                    .read(temperatureSettingsProvider.notifier)
-                    .setPreset(type as TemperaturePresetType),
-            onUserSelected: (id) =>
-                ref
-                    .read(temperatureSettingsProvider.notifier)
-                    .setActiveUserPreset(id),
-            onReorder: (oldIndex, newIndex) =>
-                ref
-                    .read(temperatureSettingsProvider.notifier)
-                    .reorderAllPresets(oldIndex, newIndex),
+            onSystemSelected: (type) => ref
+                .read(temperatureSettingsProvider.notifier)
+                .setPreset(type as TemperaturePresetType),
+            onUserSelected: (id) => ref
+                .read(temperatureSettingsProvider.notifier)
+                .setActiveUserPreset(id),
+            onReorder: (oldIndex, newIndex) => ref
+                .read(temperatureSettingsProvider.notifier)
+                .reorderAllPresets(oldIndex, newIndex),
             presetOrder: settings.presetOrder,
             resetButton: _ResetTempButton(settings: settings),
             saveButton: _SavePresetButton(
               isModified: _isTempModified(settings),
-              onPressed: () => _showNamingDialog(context: context, isTemp: true),
+              onPressed: () =>
+                  _showNamingDialog(context: context, isTemp: true),
             ),
           );
         },
@@ -621,22 +714,20 @@ class _PresetSelectorState extends ConsumerState<_PresetSelector> {
             activePreset: settings.activePreset,
             activeUserPresetId: settings.activeUserPresetId,
             getName: (type) => (type as PresetType).getName(l10n),
-            onSystemSelected: (type) =>
-                ref
-                    .read(settingsProvider.notifier)
-                    .setActivePreset(type as PresetType),
+            onSystemSelected: (type) => ref
+                .read(settingsProvider.notifier)
+                .setActivePreset(type as PresetType),
             onUserSelected: (id) =>
                 ref.read(settingsProvider.notifier).setActiveUserPreset(id),
-            onReorder: (oldIndex, newIndex) =>
-                ref
-                    .read(settingsProvider.notifier)
-                    .reorderAllPresets(oldIndex, newIndex),
+            onReorder: (oldIndex, newIndex) => ref
+                .read(settingsProvider.notifier)
+                .reorderAllPresets(oldIndex, newIndex),
             presetOrder: settings.presetOrder,
             resetButton: _ResetButton(settings: settings),
             saveButton: _SavePresetButton(
               isModified: _isBrightnessModified(settings),
-              onPressed:
-                  () => _showNamingDialog(context: context, isTemp: false),
+              onPressed: () =>
+                  _showNamingDialog(context: context, isTemp: false),
             ),
           );
         },
@@ -732,7 +823,9 @@ class _PresetSelectorState extends ConsumerState<_PresetSelector> {
                   return AnimatedBuilder(
                     animation: animation,
                     builder: (context, child) {
-                      final double animValue = Curves.easeInOut.transform(animation.value);
+                      final double animValue = Curves.easeInOut.transform(
+                        animation.value,
+                      );
                       final double scale = lerpDouble(1, 1.05, animValue)!;
                       return Transform.scale(
                         scale: scale,
@@ -753,11 +846,16 @@ class _PresetSelectorState extends ConsumerState<_PresetSelector> {
                   if (orderId.startsWith('system:')) {
                     final typeName = orderId.substring(7);
                     final type = isTemp
-                        ? TemperaturePresetType.values.firstWhere((e) => e.name == typeName)
-                        : PresetType.values.firstWhere((e) => e.name == typeName);
-                    
-                    final isActive = activeUserPresetId == null && type == activePreset;
-                    
+                        ? TemperaturePresetType.values.firstWhere(
+                            (e) => e.name == typeName,
+                          )
+                        : PresetType.values.firstWhere(
+                            (e) => e.name == typeName,
+                          );
+
+                    final isActive =
+                        activeUserPresetId == null && type == activePreset;
+
                     return ReorderableDelayedDragStartListener(
                       key: ValueKey(orderId),
                       index: index,
@@ -771,7 +869,7 @@ class _PresetSelectorState extends ConsumerState<_PresetSelector> {
                     final userId = orderId.substring(5);
                     final up = userPresets.firstWhere((p) => p.id == userId);
                     final isActive = activeUserPresetId == up.id;
-                    
+
                     return ReorderableDelayedDragStartListener(
                       key: ValueKey(orderId),
                       index: index,
@@ -779,7 +877,8 @@ class _PresetSelectorState extends ConsumerState<_PresetSelector> {
                         label: up.name,
                         isActive: isActive,
                         onPressed: () => onUserSelected(up.id),
-                        onSecondaryTap: () => _showPresetMenu(context, up, isTemp),
+                        onSecondaryTap: () =>
+                            _showPresetMenu(context, up, isTemp),
                       ),
                     );
                   }
@@ -789,7 +888,12 @@ class _PresetSelectorState extends ConsumerState<_PresetSelector> {
           ),
           const SizedBox(width: 8),
           saveButton,
-          const VerticalDivider(width: 1, indent: 8, endIndent: 8, color: Colors.white10),
+          const VerticalDivider(
+            width: 1,
+            indent: 8,
+            endIndent: 8,
+            color: Colors.white10,
+          ),
           const SizedBox(width: 8),
           resetButton,
         ],
@@ -811,7 +915,10 @@ class _PresetSelectorState extends ConsumerState<_PresetSelector> {
           children: [
             ListTile(
               leading: const Icon(LucideIcons.edit2, color: Colors.white70),
-              title: Text(l10n.rename, style: const TextStyle(color: Colors.white)),
+              title: Text(
+                l10n.rename,
+                style: const TextStyle(color: Colors.white),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _showNamingDialog(
@@ -824,7 +931,10 @@ class _PresetSelectorState extends ConsumerState<_PresetSelector> {
             ),
             ListTile(
               leading: const Icon(LucideIcons.trash2, color: Colors.redAccent),
-              title: Text(l10n.delete, style: const TextStyle(color: Colors.redAccent)),
+              title: Text(
+                l10n.delete,
+                style: const TextStyle(color: Colors.redAccent),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _showDeleteConfirm(context: context, isTemp: isTemp, id: up.id);
@@ -862,8 +972,9 @@ class _PresetChip extends StatelessWidget {
             backgroundColor: isActive
                 ? const Color(0xFFFDBA74).withOpacity(0.1)
                 : Colors.transparent,
-            foregroundColor:
-                isActive ? const Color(0xFFFDBA74) : Colors.white24,
+            foregroundColor: isActive
+                ? const Color(0xFFFDBA74)
+                : Colors.white24,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
@@ -891,7 +1002,8 @@ class _WiggleWrapper extends StatefulWidget {
   State<_WiggleWrapper> createState() => _WiggleWrapperState();
 }
 
-class _WiggleWrapperState extends State<_WiggleWrapper> with SingleTickerProviderStateMixin {
+class _WiggleWrapperState extends State<_WiggleWrapper>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -926,13 +1038,10 @@ class _WiggleWrapperState extends State<_WiggleWrapper> with SingleTickerProvide
       animation: _controller,
       builder: (context, child) {
         // Subtle wiggle: +/- 1.5 degrees
-        final double rotation = widget.enabled 
-            ? (math.sin(_controller.value * math.pi * 2) * 0.02) 
+        final double rotation = widget.enabled
+            ? (math.sin(_controller.value * math.pi * 2) * 0.02)
             : 0;
-        return Transform.rotate(
-          angle: rotation,
-          child: child,
-        );
+        return Transform.rotate(angle: rotation, child: child);
       },
       child: widget.child,
     );
@@ -967,8 +1076,9 @@ class _ResetTempButton extends ConsumerWidget {
 
     return IconButton(
       onPressed: isModified
-          ? () =>
-              ref.read(temperatureSettingsProvider.notifier).resetCurrentPreset()
+          ? () => ref
+                .read(temperatureSettingsProvider.notifier)
+                .resetCurrentPreset()
           : null,
       icon: const Icon(LucideIcons.rotateCcw, size: 18),
       color: const Color(0xFFFDBA74),
@@ -1008,7 +1118,6 @@ class _ResetTempButton extends ConsumerWidget {
     return false;
   }
 }
-
 
 class _ResetButton extends ConsumerWidget {
   final SettingsState settings;
@@ -1337,7 +1446,9 @@ class _SmartExclusionsCard extends ConsumerWidget {
                       ),
                     ),
                     Text(
-                      l10n.chartPercentFormat(settings.gameModeBrightness.round()),
+                      l10n.chartPercentFormat(
+                        settings.gameModeBrightness.round(),
+                      ),
                       style: const TextStyle(
                         color: Color(0xFFA855F7),
                         fontWeight: FontWeight.bold,
@@ -1518,7 +1629,10 @@ class _GlobalHotkeysCard extends ConsumerWidget {
                 onChanged: (newHotKey) {
                   ref
                       .read(settingsProvider.notifier)
-                      .updateHotkey('auto_brightness_toggle', newHotKey?.toJson());
+                      .updateHotkey(
+                        'auto_brightness_toggle',
+                        newHotKey?.toJson(),
+                      );
                 },
               ),
             ],
@@ -2310,6 +2424,7 @@ class _LanguageSelectorCard extends ConsumerWidget {
     );
   }
 }
+
 class _IntensitySlider extends StatelessWidget {
   const _IntensitySlider({
     required this.label,
@@ -2368,12 +2483,7 @@ class _IntensitySlider extends StatelessWidget {
             thumbColor: color,
             overlayColor: color.withOpacity(0.2),
           ),
-          child: Slider(
-            value: value,
-            min: 0.0,
-            max: 1.0,
-            onChanged: onChanged,
-          ),
+          child: Slider(value: value, min: 0.0, max: 1.0, onChanged: onChanged),
         ),
       ],
     );

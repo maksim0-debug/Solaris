@@ -374,6 +374,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'Automatically start the application when you log into Windows';
 
   @override
+  String get startupMode => 'Startup Mode';
+
+  @override
+  String get startupModeTray => 'Tray';
+
+  @override
+  String get startupModeMinimized => 'Minimized';
+
+  @override
   String get weatherAdjustmentTitle => 'Weather-based Adjustment';
 
   @override
