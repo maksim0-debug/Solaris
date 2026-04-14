@@ -107,10 +107,8 @@ class _SleepScreenState extends ConsumerState<SleepScreen> {
           const SizedBox(height: 24),
 
           // Circadian Regulation Section
-          if (googleFitState.status == GoogleFitStatus.connected) ...[
-            _CircadianRegulationSection(anchorKeys: _anchorKeys),
-            const SizedBox(height: 32),
-          ],
+          _CircadianRegulationSection(anchorKeys: _anchorKeys),
+          const SizedBox(height: 32),
 
           // Sleep Regimes / History
           DeepLinkTarget(
@@ -119,10 +117,10 @@ class _SleepScreenState extends ConsumerState<SleepScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (regimes.isEmpty && !sleepState.isLoading)
+                if (regimes.isEmpty)
                   Center(
                     child: Text(
-                      l10n.sleepDataSubtitle,
+                      sleepState.isLoading ? l10n.syncing : l10n.sleepDataSubtitle,
                       style: const TextStyle(color: Colors.white24),
                     ),
                   )
@@ -158,14 +156,12 @@ class _SleepScreenState extends ConsumerState<SleepScreen> {
             ),
           ),
           const SizedBox(height: 32),
-          if (googleFitState.status == GoogleFitStatus.connected) ...[
-            DeepLinkTarget(
-              key: _anchorKeys['sleep_analysis'],
-              id: 'sleep_analysis',
-              child: const _SleepAnalysisSettingsSection(),
-            ),
-            const SizedBox(height: 48),
-          ],
+          DeepLinkTarget(
+            key: _anchorKeys['sleep_analysis'],
+            id: 'sleep_analysis',
+            child: const _SleepAnalysisSettingsSection(),
+          ),
+          const SizedBox(height: 48),
         ],
       ),
     );
