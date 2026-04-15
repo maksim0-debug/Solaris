@@ -546,6 +546,15 @@ final debouncedSolarStateProvider =
 class MonitorListNotifier extends AsyncNotifier<List<MonitorInfo>> {
   @override
   Future<List<MonitorInfo>> build() async {
+    ref.listen<AppVisibilityState>(appLifecycleProvider, (prev, next) async {
+      if (prev != AppVisibilityState.visible && next == AppVisibilityState.visible) {
+        final newMonitors = await ref.read(monitorServiceProvider).getConnectedMonitors();
+        if (state.hasValue) {
+          state = AsyncData(newMonitors);
+        }
+      }
+    });
+
     return ref.watch(monitorServiceProvider).getConnectedMonitors();
   }
 
