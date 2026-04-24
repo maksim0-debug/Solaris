@@ -8,6 +8,7 @@ class BrightnessService {
   final Map<String, Timer?> _adjustmentTimers = {};
 
   final Map<String, int> _targetBrightness = {};
+  final Map<String, double> _lastCalculatedFloat = {};
 
   void applyBrightnessSmoothly({
     required String selection,
@@ -17,17 +18,28 @@ class BrightnessService {
     required void Function(String, int) updateBrightnessCallback,
     Map<String, double>? offsets,
     bool isUIVisible = true,
+    bool isManual = false,
   }) {
     for (final monitor in monitors) {
       if (selection == 'all' || selection == monitor.deviceName) {
-        final offset = offsets?[monitor.deviceName] ?? 0.0;
-        final target = (targetValue + offset).clamp(0.0, 100.0).round();
+        final deviceName = monitor.deviceName;
+        final offset = offsets?[deviceName] ?? 0.0;
+        final rawTarget = (targetValue + offset).clamp(0.0, 100.0);
 
-        _targetBrightness[monitor.deviceName] = target;
+        // HYSTERESIS: Filter out noise to prevent flicker
+        final double lastCalculated = _lastCalculatedFloat[deviceName] ?? -100.0;
+        if (!isManual && (rawTarget - lastCalculated).abs() < 1.5) {
+          continue; // Ignore micro-fluctuations
+        }
+        
+        _lastCalculatedFloat[deviceName] = rawTarget;
+        final target = rawTarget.round();
 
-        if (_adjustmentTimers[monitor.deviceName] == null) {
+        _targetBrightness[deviceName] = target;
+
+        if (_adjustmentTimers[deviceName] == null) {
           _runTransitionLoop(
-            monitor.deviceName,
+            deviceName,
             target,
             monitors,
             monitorService,
@@ -91,11 +103,14 @@ class BrightnessService {
 
         await monitorService.setBrightness(deviceName, current);
 
-        if (current == target) break;
+        // ALWAYS check against the most recent target, to avoid race conditions 
+        // where target updates while we were waiting for setBrightness.
+        if (current == _targetBrightness[deviceName]) break;
 
         await Future<void>.delayed(const Duration(milliseconds: 100));
       }
     } finally {
+      // Free the timer so it can be restarted if new requests come in
       _adjustmentTimers[deviceName]?.cancel();
       _adjustmentTimers.remove(deviceName);
     }

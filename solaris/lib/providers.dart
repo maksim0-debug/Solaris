@@ -50,6 +50,34 @@ final gamingModeServiceProvider = Provider<GamingModeService>((ref) {
   return ref.watch<GamingModeService>(gamingModeProvider.notifier);
 });
 
+final minuteTimeProvider = StreamProvider<DateTime>((ref) {
+  final now = DateTime.now();
+  final delayUntilNextMinute = Duration(
+    seconds: 60 - now.second,
+    milliseconds: 1000 - now.millisecond,
+  );
+
+  StreamController<DateTime> controller = StreamController();
+  
+  // Emit initial values
+  controller.add(now);
+
+  Timer? timer;
+  Timer(delayUntilNextMinute, () {
+    if (!controller.isClosed) controller.add(DateTime.now());
+    timer = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (!controller.isClosed) controller.add(DateTime.now());
+    });
+  });
+
+  ref.onDispose(() {
+    timer?.cancel();
+    controller.close();
+  });
+  
+  return controller.stream;
+});
+
 final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
   ref,
   monitorId,
@@ -58,7 +86,7 @@ final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
   final service = ref.watch(smartCircadianServiceProvider);
   final settingsAsync = ref.watch(settingsProvider);
   final solarStateAsync = ref.watch(solarStateStreamProvider);
-  final now = ref.watch(currentTimeProvider).value ?? DateTime.now();
+  final now = ref.watch(minuteTimeProvider).value ?? DateTime.now();
 
   // Use 'all' as fallback if monitorId not found
   final settings = settingsAsync.value;
@@ -174,7 +202,7 @@ final smartCircadianTemperatureDataProvider =
         orElse: () => SettingsState(),
       );
 
-      final now = ref.watch(currentTimeProvider).value ?? DateTime.now();
+      final now = ref.watch(minuteTimeProvider).value ?? DateTime.now();
 
       return solarStateAsync.maybeWhen(
         data: (solar) => service.calculateSmartAdjustments(

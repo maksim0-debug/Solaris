@@ -64,7 +64,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         await windowManager.focus();
       } else if (startMinimized) {
         await windowManager.show();
-        await Future.delayed(const Duration(milliseconds: 250));
+        await Future<void>.delayed(const Duration(milliseconds: 250));
         await windowManager.minimize();
       } else if (startTray) {
         await windowManager.hide();
@@ -383,6 +383,7 @@ class _Header extends ConsumerWidget {
             monitors: monitors,
             monitorService: monitorService,
             offsets: offsets,
+            isManual: true,
             updateBrightnessCallback: (id, val) =>
                 monitorListNotifier.updateBrightness(id, val),
           );
@@ -444,6 +445,7 @@ class _Header extends ConsumerWidget {
             monitors: monitors,
             monitorService: monitorService,
             offsets: offsets,
+            isManual: true,
             updateBrightnessCallback: (id, val) =>
                 monitorListNotifier.updateBrightness(id, val),
           );
@@ -497,6 +499,7 @@ class _Header extends ConsumerWidget {
           monitors: monitorValue,
           monitorService: monitorService,
           offsets: offsets,
+          isManual: true,
           updateBrightnessCallback: (id, val) =>
               monitorListNotifier.updateBrightness(id, val),
         );
