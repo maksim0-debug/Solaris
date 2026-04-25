@@ -85,7 +85,7 @@ final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
   final regimes = ref.watch(sleepRegimesProvider);
   final service = ref.watch(smartCircadianServiceProvider);
   final settingsAsync = ref.watch(settingsProvider);
-  final solarStateAsync = ref.watch(solarStateStreamProvider);
+  final solarStateAsync = ref.watch(debouncedSolarStateProvider);
   final now = ref.watch(minuteTimeProvider).value ?? DateTime.now();
 
   // Use 'all' as fallback if monitorId not found
@@ -188,7 +188,7 @@ final smartCircadianTemperatureDataProvider =
       final regimes = ref.watch(sleepRegimesProvider);
       final service = ref.watch(smartCircadianServiceProvider);
       final tempSettingsAsync = ref.watch(temperatureSettingsProvider);
-      final solarStateAsync = ref.watch(solarStateStreamProvider);
+      final solarStateAsync = ref.watch(debouncedSolarStateProvider);
 
       final settings = tempSettingsAsync.value;
       if (settings == null) return const SmartCircadianData.neutral();
@@ -248,36 +248,78 @@ final sharedPreferencesProvider = Provider<SharedPreferences?>((ref) => null);
 // 1. Провайдер самого сервиса
 final weatherServiceProvider = Provider((ref) => WeatherService());
 
-// 2. Асинхронный провайдер данных о погоде
-final currentWeatherProvider = FutureProvider<WeatherData?>((ref) async {
-  final locationAsync = ref.watch(effectiveLocationProvider);
-  final weatherService = ref.watch(weatherServiceProvider);
-  final settingsAsync = ref.watch(settingsProvider);
+class WeatherNotifier extends AsyncNotifier<WeatherData?> {
+  Timer? _timer;
+  static WeatherData? _lastKnownWeather;
 
-  // Get current weather provider from settings
-  final provider = settingsAsync.maybeWhen(
-    data: (map) => map['all']?.weatherProvider ?? WeatherProvider.auto,
-    orElse: () => WeatherProvider.auto,
-  );
+  @override
+  Future<WeatherData?> build() async {
+    final locationAsync = ref.watch(effectiveLocationProvider);
+    final weatherService = ref.watch(weatherServiceProvider);
+    final settingsAsync = ref.watch(settingsProvider);
 
-  // Ждем, пока появится локация
-  final pos = locationAsync.value;
-  if (pos == null) return null;
+    final provider = settingsAsync.maybeWhen(
+      data: (map) => map['all']?.weatherProvider ?? WeatherProvider.auto,
+      orElse: () => WeatherProvider.auto,
+    );
 
-  // Настраиваем автообновление каждые 5 минут для большей "реалтаймовости"
-  final timer = Timer(const Duration(minutes: 5), () {
-    ref.invalidateSelf(); // Заставляет провайдер обновить данные
-  });
+    // При уничтожении - очищаем старый таймер
+    ref.onDispose(() {
+      _timer?.cancel();
+    });
 
-  // Очищаем таймер, если провайдер уничтожается
-  ref.onDispose(() => timer.cancel());
+    // Получаем текущую локацию (уже с сохранением старого state при загрузке)
+    final pos = locationAsync.value;
 
-  // Делаем запрос к API
-  return await weatherService.fetchCurrentWeather(
-    pos.latitude,
-    pos.longitude,
-    provider: provider,
-  );
+    _setupTimer(pos, provider, weatherService);
+
+    if (pos == null) {
+      return _lastKnownWeather; 
+    }
+
+    try {
+      final newData = await weatherService.fetchCurrentWeather(
+        pos.latitude,
+        pos.longitude,
+        provider: provider,
+      );
+
+      if (newData != null) {
+        _lastKnownWeather = newData;
+      }
+    } catch (e) {
+      print('CurrentWeather provider caught error: $e. Retaining previous weather state.');
+    }
+
+    return _lastKnownWeather;
+  }
+
+  void _setupTimer(Position? pos, WeatherProvider provider, WeatherService weatherService) {
+    _timer?.cancel();
+    if (pos == null) return;
+
+    _timer = Timer.periodic(const Duration(minutes: 5), (_) async {
+      try {
+        final newData = await weatherService.fetchCurrentWeather(
+          pos.latitude,
+          pos.longitude,
+          provider: provider,
+        );
+        if (newData != null) {
+          _lastKnownWeather = newData;
+          // Обновляем состояние асинхронно, Riverpod не будет сбрасывать его в null
+          state = AsyncData(newData);
+        }
+      } catch (e) {
+        // Ошибка или таймаут - просто ничего не делаем, оставив старый стейт
+        print('Timer update caught error: $e. Retaining previous weather state.');
+      }
+    });
+  }
+}
+
+final currentWeatherProvider = AsyncNotifierProvider<WeatherNotifier, WeatherData?>(() {
+  return WeatherNotifier();
 });
 
 final mapHealthProvider = FutureProvider<MapHealthReport>((ref) async {
@@ -356,36 +398,41 @@ final effectiveLocationProvider = Provider<AsyncValue<Position>>((ref) {
   final settingsAsync = ref.watch(locationSettingsProvider);
   final streamAsync = ref.watch(locationStreamProvider);
 
-  return settingsAsync.when(
-    data: (settings) {
-      if (settings.useManual &&
-          settings.manualLatitude != null &&
-          settings.manualLongitude != null) {
-        return AsyncData(
-          Position(
-            latitude: settings.manualLatitude!,
-            longitude: settings.manualLongitude!,
-            timestamp: DateTime.now(),
-            accuracy: 0,
-            altitude: 0,
-            heading: 0,
-            speed: 0,
-            speedAccuracy: 0,
-            altitudeAccuracy: 0,
-            headingAccuracy: 0,
-          ),
-        );
-      }
-      // If auto-detect is on, but stream is loading/error, provide default
-      return streamAsync.maybeWhen(
-        data: (pos) => AsyncData(pos),
-        orElse: () => AsyncData(_defaultPosition),
+  final settings = settingsAsync.value;
+
+  if (settings != null) {
+    if (settings.useManual &&
+        settings.manualLatitude != null &&
+        settings.manualLongitude != null) {
+      return AsyncData(
+        Position(
+          latitude: settings.manualLatitude!,
+          longitude: settings.manualLongitude!,
+          timestamp: DateTime.now(),
+          accuracy: 0,
+          altitude: 0,
+          heading: 0,
+          speed: 0,
+          speedAccuracy: 0,
+          altitudeAccuracy: 0,
+          headingAccuracy: 0,
+        ),
       );
-    },
-    loading: () =>
-        AsyncData(_defaultPosition), // Immediate fallback during settings load
-    error: (e, st) => AsyncData(_defaultPosition), // Fallback on error
-  );
+    }
+    // Если авто-обновление включено, пытаемся сохранить предыдущие координаты при миганиях stream 
+    final lastPos = streamAsync.value;
+    if (lastPos != null) {
+      return AsyncData(lastPos);
+    }
+
+    // Если предыдущих данных нет (например первый запуск), то ждем данных или используем дефолт
+    return streamAsync.maybeWhen(
+      data: (pos) => AsyncData(pos),
+      orElse: () => AsyncData(_defaultPosition),
+    );
+  }
+
+  return AsyncData(_defaultPosition);
 });
 
 final currentTimeProvider = StreamProvider<DateTime>((ref) async* {

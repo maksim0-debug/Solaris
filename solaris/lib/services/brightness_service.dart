@@ -45,6 +45,7 @@ class BrightnessService {
             monitorService,
             updateBrightnessCallback,
             isUIVisible: isUIVisible,
+            isManual: isManual,
           );
         }
       }
@@ -58,6 +59,7 @@ class BrightnessService {
     MonitorService monitorService,
     void Function(String, int) updateBrightnessCallback, {
     bool isUIVisible = true,
+    bool isManual = false,
   }) async {
     if (_adjustmentTimers[deviceName] != null) return;
 
@@ -82,10 +84,19 @@ class BrightnessService {
 
         if (diff == 0) break;
 
-        if (!isUIVisible) {
+        if (!isUIVisible && !isManual) {
           current = target;
-        } else {
+        } else if (isManual) {
+          // Ручное управление или видимый UI (быстрое изменение, 20-40% в сек)
           final step = diff > 20 ? 4 : 2;
+          if (current < target) {
+            current = (current + step).clamp(0, target).toInt();
+          } else {
+            current = (current - step).clamp(target, 100).toInt();
+          }
+        } else {
+          // Автоматическое фоновое влияние (медленное "дыхание", 1% каждые 150-200мс)
+          final step = 1;
           if (current < target) {
             current = (current + step).clamp(0, target).toInt();
           } else {
@@ -107,7 +118,8 @@ class BrightnessService {
         // where target updates while we were waiting for setBrightness.
         if (current == _targetBrightness[deviceName]) break;
 
-        await Future<void>.delayed(const Duration(milliseconds: 100));
+        // Если ручное изменение, ждем 100мс, если автоматика - 150мс для большей ленивости
+        await Future<void>.delayed(Duration(milliseconds: isManual ? 100 : 150));
       }
     } finally {
       // Free the timer so it can be restarted if new requests come in
