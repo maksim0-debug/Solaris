@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:solaris/l10n/app_localizations.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/models/current_day_phase.dart';
 import 'package:solaris/models/solar_state.dart';
 

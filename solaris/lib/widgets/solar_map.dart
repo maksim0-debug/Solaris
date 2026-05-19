@@ -7,7 +7,7 @@ import 'package:solaris/services/terminator_service.dart';
 import 'package:solaris/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solaris/widgets/map_health_dialog.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/models/map_health_report.dart';
 
 class SolarMap extends ConsumerStatefulWidget {
