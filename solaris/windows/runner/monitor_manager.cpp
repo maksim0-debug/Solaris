@@ -23,7 +23,7 @@
 DEFINE_GUID(GUID_DEVINTERFACE_MONITOR_INTERNAL, 0xE6F07B5F, 0xEE97, 0x4a90, 0xB0, 0x76, 0x33, 0xF5, 0x7B, 0xF4, 0xEA, 0xA7);
 
 MonitorManager::MonitorManager() {
-  last_gaming_match_time_ = std::chrono::steady_clock::now() - std::chrono::seconds(10);
+  last_gaming_match_time_ = std::chrono::steady_clock::now() - std::chrono::hours(24);
   candidate_start_time_ = last_gaming_match_time_;
   
   worker_thread_ = std::thread(&MonitorManager::WorkerLoop, this);
@@ -472,6 +472,7 @@ void MonitorManager::DetectorLoop() {
           is_match = true;
           active_game_hwnd_ = hwnd;
           active_game_pid_ = processId;
+          last_active_game_pid_ = processId;
         } else {
           is_match = false;
         }
@@ -499,11 +500,28 @@ void MonitorManager::DetectorLoop() {
     } else {
         is_gaming_candidate_ = false;
         
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_gaming_match_time_).count();
-        if (duration < EXIT_DELAY_MS) {
-            target_gaming_mode = true; // Hysteresis: Keep active
+        bool is_game_process_running = false;
+        if (last_active_game_pid_ != 0) {
+            HANDLE hProcess = OpenProcess(SYNCHRONIZE, FALSE, last_active_game_pid_);
+            if (hProcess != NULL) {
+                DWORD waitResult = WaitForSingleObject(hProcess, 0);
+                if (waitResult == WAIT_TIMEOUT) {
+                    is_game_process_running = true;
+                }
+                CloseHandle(hProcess);
+            }
+        }
+
+        if (is_game_process_running) {
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_gaming_match_time_).count();
+            if (duration < EXIT_DELAY_MS) {
+                target_gaming_mode = true; // Hysteresis: Keep active
+            } else {
+                target_gaming_mode = false;
+            }
         } else {
             target_gaming_mode = false;
+            last_active_game_pid_ = 0;
         }
     }
 

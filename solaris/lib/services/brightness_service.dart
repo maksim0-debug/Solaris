@@ -87,16 +87,16 @@ class BrightnessService {
         if (!isUIVisible && !isManual) {
           current = target;
         } else if (isManual) {
-          // Ручное управление или видимый UI (быстрое изменение, 20-40% в сек)
-          final step = diff > 20 ? 4 : 2;
+          // Ручное управление или видимый UI (быстрое изменение, 60-120% в сек - ускорено в 3 раза)
+          final step = diff > 20 ? 12 : 6;
           if (current < target) {
             current = (current + step).clamp(0, target).toInt();
           } else {
             current = (current - step).clamp(target, 100).toInt();
           }
         } else {
-          // Автоматическое фоновое влияние (медленное "дыхание", 1% каждые 150-200мс)
-          final step = 1;
+          // Автоматическое фоновое влияние (медленное "дыхание", 3% каждые 150-200мс - ускорено в 3 раза)
+          final step = 3;
           if (current < target) {
             current = (current + step).clamp(0, target).toInt();
           } else {

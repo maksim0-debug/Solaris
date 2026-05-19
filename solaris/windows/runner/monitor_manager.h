@@ -81,7 +81,7 @@ class MonitorManager {
   // Hysteresis constants & state
   const int SCORE_THRESHOLD = 75;
   const int ENTRY_DELAY_MS = 500;
-  const int EXIT_DELAY_MS = 3000;
+  const int EXIT_DELAY_MS = 30000;
 
   std::chrono::steady_clock::time_point last_gaming_match_time_;
   bool is_gaming_candidate_ = false;
@@ -100,6 +100,7 @@ class MonitorManager {
   // Game session lock context
   HWND active_game_hwnd_ = nullptr;
   DWORD active_game_pid_ = 0;
+  DWORD last_active_game_pid_ = 0;
 };
 
 #endif  // RUNNER_MONITOR_MANAGER_H_
