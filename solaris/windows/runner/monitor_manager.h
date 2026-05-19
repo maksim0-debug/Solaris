@@ -73,6 +73,7 @@ class MonitorManager {
 
   void DetectorLoop();
   int EvaluateGamingScore(HWND hwnd, DWORD processId);
+  bool IsWindowFullscreen(HWND hwnd);
   std::string GetParentProcessName(DWORD processId);
   std::string ParseEdid(const std::vector<uint8_t>& edid);
   std::string GetManufacturerName(uint16_t manufacturer_id);
@@ -95,6 +96,10 @@ class MonitorManager {
     bool scanned = false;
   };
   std::unordered_map<DWORD, CachedProcessInfo> process_cache_;
+
+  // Game session lock context
+  HWND active_game_hwnd_ = nullptr;
+  DWORD active_game_pid_ = 0;
 };
 
 #endif  // RUNNER_MONITOR_MANAGER_H_

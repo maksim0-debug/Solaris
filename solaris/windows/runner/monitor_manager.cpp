@@ -442,8 +442,44 @@ void MonitorManager::DetectorLoop() {
     if (hwnd) {
       DWORD processId;
       GetWindowThreadProcessId(hwnd, &processId);
-      int score = EvaluateGamingScore(hwnd, processId);
-      is_match = (score >= SCORE_THRESHOLD);
+
+      bool check_completed = false;
+
+      // Bypass Check (State Lock):
+      if (active_game_hwnd_ != nullptr) {
+        if (hwnd == active_game_hwnd_ || processId == active_game_pid_) {
+          if (IsWindowFullscreen(hwnd)) {
+            is_match = true;
+            check_completed = true;
+          } else {
+            // Game window is no longer fullscreen or is minimized
+            active_game_hwnd_ = nullptr;
+            active_game_pid_ = 0;
+            // Proceed to standard search
+          }
+        } else {
+          // Active window changed to a completely different window (Alt-Tab)
+          active_game_hwnd_ = nullptr;
+          active_game_pid_ = 0;
+          // Proceed to standard search
+        }
+      }
+
+      // Standard Search:
+      if (!check_completed) {
+        int score = EvaluateGamingScore(hwnd, processId);
+        if (score >= SCORE_THRESHOLD) {
+          is_match = true;
+          active_game_hwnd_ = hwnd;
+          active_game_pid_ = processId;
+        } else {
+          is_match = false;
+        }
+      }
+    } else {
+      // hwnd is nullptr (desktop transition / system focus lost / resolution change)
+      is_match = false;
+      // We do NOT reset active_game_hwnd_ or active_game_pid_ here to survive temporary focus losses.
     }
 
     auto now = std::chrono::steady_clock::now();
@@ -489,6 +525,20 @@ void MonitorManager::DetectorLoop() {
   }
 }
 
+bool MonitorManager::IsWindowFullscreen(HWND hwnd) {
+  if (!hwnd || IsIconic(hwnd)) return false;
+
+  HMONITOR hMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
+  MONITORINFO mi = { sizeof(mi) };
+  if (!GetMonitorInfoW(hMonitor, &mi)) return false;
+
+  RECT wr;
+  if (!GetWindowRect(hwnd, &wr)) return false;
+
+  return (wr.left <= mi.rcMonitor.left + 1 && wr.top <= mi.rcMonitor.top + 1 &&
+          wr.right >= mi.rcMonitor.right - 1 && wr.bottom >= mi.rcMonitor.bottom - 1);
+}
+
 int MonitorManager::EvaluateGamingScore(HWND hwnd, DWORD processId) {
   if (!hwnd) return 0;
 
@@ -504,17 +554,14 @@ int MonitorManager::EvaluateGamingScore(HWND hwnd, DWORD processId) {
   }
 
   // --- Size Check ---
+  if (!IsWindowFullscreen(hwnd)) return 0;
+
   HMONITOR hMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
   MONITORINFO mi = { sizeof(mi) };
   if (!GetMonitorInfoW(hMonitor, &mi)) return 0;
 
   RECT wr;
   if (!GetWindowRect(hwnd, &wr)) return 0;
-
-  bool isFullscreen = (wr.left <= mi.rcMonitor.left + 1 && wr.top <= mi.rcMonitor.top + 1 &&
-                       wr.right >= mi.rcMonitor.right - 1 && wr.bottom >= mi.rcMonitor.bottom - 1);
-
-  if (!isFullscreen) return 0;
 
   // --- Style Analysis ---
   LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
