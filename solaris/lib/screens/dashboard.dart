@@ -426,23 +426,62 @@ class _Header extends ConsumerWidget {
 
     // Initial sync when monitors are detected
     ref.listen(monitorListProvider, (previous, next) {
-      if (ref.read(autoBrightnessAdjustmentProvider) &&
-          ref.read(autoTemperatureAdjustmentProvider))
-        return; // Already handled by background loop
-
       if (next.hasValue && !next.isLoading) {
         final selection = ref.read(selectedMonitorsProvider);
         final monitors = next.value ?? [];
 
-        // Sync brightness
-        final targetBright = ref.read(currentBrightnessProvider);
-        debugPrint('Initial sync: applying brightness $targetBright');
-        final offsets = ref.read(brightnessOffsetsProvider);
-        for (final id in selection) {
+        // Sync brightness only if auto brightness is disabled
+        if (!ref.read(autoBrightnessAdjustmentProvider)) {
+          final targetBright = ref.read(currentBrightnessProvider);
+          debugPrint('Initial sync: applying brightness $targetBright');
+          final offsets = ref.read(brightnessOffsetsProvider);
+          for (final id in selection) {
+            brightnessService.applyBrightnessSmoothly(
+              selection: id,
+              targetValue: targetBright,
+              monitors: monitors,
+              monitorService: monitorService,
+              offsets: offsets,
+              isManual: true,
+              updateBrightnessCallback: (id, val) =>
+                  monitorListNotifier.updateBrightness(id, val),
+            );
+          }
+        }
+
+        // Sync temperature only if color temperature is enabled and auto temperature is disabled
+        if (ref.read(isColorTemperatureEnabledProvider) &&
+            !ref.read(autoTemperatureAdjustmentProvider)) {
+          final targetTemp = ref.read(currentTemperatureProvider);
+          debugPrint('Initial sync: applying temperature $targetTemp');
+          for (final id in selection) {
+            temperatureService.setTemperatureInstant(
+              selection: id,
+              targetValue: targetTemp.toDouble(),
+              monitors: monitors,
+              monitorService: monitorService,
+              updateTemperatureCallback: (id, val) =>
+                  monitorListNotifier.updateTemperature(id, val),
+            );
+          }
+        }
+      }
+    });
+
+    // Sync brightness and temperature when selection changes
+    ref.listen<Set<String>>(selectedMonitorsProvider, (previous, next) {
+      final monitorValue = ref.read(monitorListProvider).value;
+      if (monitorValue == null) return;
+
+      if (next.contains('all')) {
+        // Apply brightness only if auto brightness is disabled
+        if (!ref.read(autoBrightnessAdjustmentProvider)) {
+          final brightness = ref.read(currentBrightnessProvider);
+          final offsets = ref.read(brightnessOffsetsProvider);
           brightnessService.applyBrightnessSmoothly(
-            selection: id,
-            targetValue: targetBright,
-            monitors: monitors,
+            selection: 'all',
+            targetValue: brightness,
+            monitors: monitorValue,
             monitorService: monitorService,
             offsets: offsets,
             isManual: true,
@@ -451,81 +490,18 @@ class _Header extends ConsumerWidget {
           );
         }
 
-        // Sync temperature
-        if (ref.read(isColorTemperatureEnabledProvider)) {
+        // Apply temperature only if color temperature is enabled and auto temperature is disabled
+        if (ref.read(isColorTemperatureEnabledProvider) &&
+            !ref.read(autoTemperatureAdjustmentProvider)) {
           final targetTemp = ref.read(currentTemperatureProvider);
-          debugPrint('Initial sync: applying temperature $targetTemp');
-          for (final id in selection) {
-            if (ref.read(autoTemperatureAdjustmentProvider)) {
-              temperatureService.applyTemperatureSmoothly(
-                selection: id,
-                targetValue: targetTemp.toDouble(),
-                monitors: monitors,
-                monitorService: monitorService,
-                updateTemperatureCallback: (id, val) =>
-                    monitorListNotifier.updateTemperature(id, val),
-              );
-            } else {
-              temperatureService.setTemperatureInstant(
-                selection: id,
-                targetValue: targetTemp.toDouble(),
-                monitors: monitors,
-                monitorService: monitorService,
-                updateTemperatureCallback: (id, val) =>
-                    monitorListNotifier.updateTemperature(id, val),
-              );
-            }
-          }
-        }
-      }
-    });
-
-    // Sync brightness and temperature when selection changes
-    ref.listen<Set<String>>(selectedMonitorsProvider, (previous, next) {
-      if (ref.read(autoBrightnessAdjustmentProvider) &&
-          ref.read(autoTemperatureAdjustmentProvider))
-        return; // Already handled by background loop
-
-      final monitorValue = ref.read(monitorListProvider).value;
-      if (monitorValue == null) return;
-
-      if (next.contains('all')) {
-        // Apply brightness
-        final brightness = ref.read(currentBrightnessProvider);
-        final offsets = ref.read(brightnessOffsetsProvider);
-        brightnessService.applyBrightnessSmoothly(
-          selection: 'all',
-          targetValue: brightness,
-          monitors: monitorValue,
-          monitorService: monitorService,
-          offsets: offsets,
-          isManual: true,
-          updateBrightnessCallback: (id, val) =>
-              monitorListNotifier.updateBrightness(id, val),
-        );
-
-        // Apply temperature
-        if (ref.read(isColorTemperatureEnabledProvider)) {
-          final targetTemp = ref.read(currentTemperatureProvider);
-          if (ref.read(autoTemperatureAdjustmentProvider)) {
-            temperatureService.applyTemperatureSmoothly(
-              selection: 'all',
-              targetValue: targetTemp.toDouble(),
-              monitors: monitorValue,
-              monitorService: monitorService,
-              updateTemperatureCallback: (id, val) =>
-                  monitorListNotifier.updateTemperature(id, val),
-            );
-          } else {
-            temperatureService.setTemperatureInstant(
-              selection: 'all',
-              targetValue: targetTemp.toDouble(),
-              monitors: monitorValue,
-              monitorService: monitorService,
-              updateTemperatureCallback: (id, val) =>
-                  monitorListNotifier.updateTemperature(id, val),
-            );
-          }
+          temperatureService.setTemperatureInstant(
+            selection: 'all',
+            targetValue: targetTemp.toDouble(),
+            monitors: monitorValue,
+            monitorService: monitorService,
+            updateTemperatureCallback: (id, val) =>
+                monitorListNotifier.updateTemperature(id, val),
+          );
         }
       } else if (next.length == 1) {
         // If single monitor selected, sync UI to its current levels

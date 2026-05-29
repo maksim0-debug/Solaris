@@ -1001,6 +1001,20 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     });
   }
 
+  Future<void> savePendingSettings() async {
+    if (_saveTimer != null && _saveTimer!.isActive) {
+      _saveTimer!.cancel();
+      final currentMap = state.value;
+      if (currentMap != null) {
+        final storage = ref.read(storageServiceProvider);
+        final encoded = currentMap.map(
+          (key, value) => MapEntry(key, value.toJson()),
+        );
+        await storage.save(_settingsFilename, jsonEncode(encoded));
+      }
+    }
+  }
+
   SettingsState _getSettings(String monitorId) {
     final currentMap = state.value ?? {'all': SettingsState()};
     return currentMap[monitorId] ?? currentMap['all']!;
@@ -1864,19 +1878,22 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
       settingsAsync.whenData((settingsMap) {
         tempSettingsAsync.whenData((tempSettingsMap) {
           for (final monitor in monitors) {
+            final globalSettings = settingsMap['all'] ?? SettingsState();
+            final globalTempSettings = tempSettingsMap['all'] ?? TemperatureState();
+
             final settings =
-                settingsMap[monitor.deviceName] ?? settingsMap['all']!;
+                settingsMap[monitor.deviceName] ?? globalSettings;
             final tempSettings =
-                tempSettingsMap[monitor.deviceName] ?? tempSettingsMap['all']!;
+                tempSettingsMap[monitor.deviceName] ?? globalTempSettings;
 
             // Calculate and Apply Brightness
             if (settings.isAutoBrightnessEnabled) {
-              final effectiveSmartData = settings.isSmartCircadianEnabled
+              final effectiveSmartData = globalSettings.isSmartCircadianEnabled
                   ? smartData
                   : const SmartCircadianData.neutral();
 
               double effectiveElevation = state.sunElevation;
-              if (settings.isSmartCircadianEnabled &&
+              if (globalSettings.isSmartCircadianEnabled &&
                   effectiveSmartData.timeOffset != Duration.zero) {
                 final locationAsync = ref.read(effectiveLocationProvider);
                 final pos = locationAsync.value;
@@ -1899,22 +1916,22 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
 
               double targetBrightness;
 
-              if (isGamingMode && settings.isGameModeEnabled) {
-                targetBrightness = settings.gameModeBrightness;
+              if (isGamingMode && globalSettings.isGameModeEnabled) {
+                targetBrightness = globalSettings.gameModeBrightness;
               } else {
                 final calculationResult = circadianService
                     .calculateTargetBrightness(
                       state.phases,
                       effectiveElevation,
                       DateTime.now(),
-                      curveSharpness: settings.curveSharpness,
-                      curvePoints: settings.curvePoints,
-                      weather: settings.isWeatherAdjustmentEnabled
+                      curveSharpness: globalSettings.curveSharpness,
+                      curvePoints: globalSettings.curvePoints,
+                      weather: globalSettings.isWeatherAdjustmentEnabled
                           ? weatherAsync.value
                           : null,
                       presetSensitivity:
-                          settings.activePreset.weatherSensitivity,
-                      weatherIntensity: settings.weatherAdjustmentIntensity,
+                          globalSettings.activePreset.weatherSensitivity,
+                      weatherIntensity: globalSettings.weatherAdjustmentIntensity,
                       smartData: effectiveSmartData,
                     );
                 targetBrightness = calculationResult.finalBrightness;
@@ -1928,10 +1945,7 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                 offsets: offsets,
                 isUIVisible: visibility == AppVisibilityState.visible,
                 updateBrightnessCallback: (id, val) {
-                  // ONLY update the UI provider if the app is visible
-                  if (visibility == AppVisibilityState.visible) {
-                    monitorListNotifier.updateBrightness(id, val);
-                  }
+                  monitorListNotifier.updateBrightness(id, val);
                 },
               );
             }
@@ -1939,12 +1953,12 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
             // Calculate and Apply Temperature
             if (tempSettings.isEnabled && isTempEnabled) {
               final effectiveSmartTempData =
-                  tempSettings.isSmartCircadianEnabled
+                  globalTempSettings.isSmartCircadianEnabled
                   ? smartTempData
                   : const SmartCircadianData.neutral();
 
               double effectiveElevation = state.sunElevation;
-              if (tempSettings.isSmartCircadianEnabled &&
+              if (globalTempSettings.isSmartCircadianEnabled &&
                   effectiveSmartTempData.timeOffset != Duration.zero) {
                 final locationAsync = ref.read(effectiveLocationProvider);
                 final pos = locationAsync.value;
@@ -1969,7 +1983,7 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                 state.phases,
                 effectiveElevation,
                 DateTime.now(),
-                curvePoints: tempSettings.curvePoints,
+                curvePoints: globalTempSettings.curvePoints,
                 weather: weatherAsync.value,
                 smartData: effectiveSmartTempData,
               );
@@ -1980,7 +1994,9 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                 monitors: monitors,
                 monitorService: monitorService,
                 isUIVisible: visibility == AppVisibilityState.visible,
-                updateTemperatureCallback: (id, val) {},
+                updateTemperatureCallback: (id, val) {
+                  monitorListNotifier.updateTemperature(id, val);
+                },
               );
             } else {
               // Disabled means no further temperature writes from circadian loop.

@@ -1,15 +1,20 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:solaris/l10n/app_localizations.dart';
+import 'package:solaris/providers.dart';
 
 class TrayService with TrayListener {
   static final TrayService _instance = TrayService._internal();
   factory TrayService() => _instance;
   TrayService._internal();
 
-  Future<void> init() async {
+  ProviderContainer? _container;
+
+  Future<void> init([ProviderContainer? container]) async {
+    _container = container;
     if (!Platform.isWindows) return;
 
     try {
@@ -69,6 +74,13 @@ class TrayService with TrayListener {
       await windowManager.show();
       await windowManager.focus();
     } else if (menuItem.key == 'exit_app') {
+      if (_container != null) {
+        try {
+          await _container!.read(settingsProvider.notifier).savePendingSettings();
+        } catch (e) {
+          debugPrint('Error saving pending settings on exit: $e');
+        }
+      }
       await trayManager.destroy();
       exit(0);
     }

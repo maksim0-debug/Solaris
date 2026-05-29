@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:developer' as dev;
+import 'package:flutter/foundation.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/models/settings_state.dart';
 
@@ -64,14 +64,11 @@ class GamingModeService extends Notifier<bool> {
       (dynamic event) {
         if (event is bool) {
           state = event;
-          dev.log('Gaming Mode Changed: $state', name: 'GamingModeService');
+          debugPrint('[GamingModeService] Gaming Mode Changed: $state');
         }
       },
       onError: (Object error) {
-        dev.log(
-          'Error in GamingMode EventChannel: $error',
-          name: 'GamingModeService',
-        );
+        debugPrint('[GamingModeService] Error in GamingMode EventChannel: $error');
       },
     );
   }
@@ -80,7 +77,7 @@ class GamingModeService extends Notifier<bool> {
     try {
       await _methodChannel.invokeMethod('updateWhitelist', whitelist);
     } catch (e) {
-      dev.log('Failed to update whitelist: $e', name: 'GamingModeService');
+      debugPrint('[GamingModeService] Failed to update whitelist: $e');
     }
   }
 
@@ -88,7 +85,7 @@ class GamingModeService extends Notifier<bool> {
     try {
       await _methodChannel.invokeMethod('updateBlacklist', blacklist);
     } catch (e) {
-      dev.log('Failed to update blacklist: $e', name: 'GamingModeService');
+      debugPrint('[GamingModeService] Failed to update blacklist: $e');
     }
   }
 

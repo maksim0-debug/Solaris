@@ -1,7 +1,9 @@
 import 'dart:ffi';
+import 'dart:async';
 import 'package:ffi/ffi.dart';
 import 'package:win32/win32.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 
 class MonitorInfo {
   final String name;
@@ -24,6 +26,8 @@ class MonitorInfo {
 class MonitorService {
   static const _channel = MethodChannel('com.solaris.monitor/names');
   final Map<String, int> _lastSentBrightness = {};
+  final Map<String, Timer> _immediateDebugTimers = {};
+  final Map<String, Timer> _delayedDebugTimers = {};
 
   Future<bool> setMonitorTemperature(String deviceName, int temperature) async {
     try {
@@ -64,6 +68,18 @@ class MonitorService {
       );
       if (success == true) {
         _lastSentBrightness[deviceName] = brightness;
+
+        if (kDebugMode) {
+          _immediateDebugTimers[deviceName]?.cancel();
+          _immediateDebugTimers[deviceName] = Timer(const Duration(milliseconds: 200), () {
+            _logRealBrightness(deviceName, brightness, 'Immediately');
+          });
+
+          _delayedDebugTimers[deviceName]?.cancel();
+          _delayedDebugTimers[deviceName] = Timer(const Duration(seconds: 3), () {
+            _logRealBrightness(deviceName, brightness, 'After 3s');
+          });
+        }
       }
       return success ?? false;
     } catch (e) {
@@ -83,6 +99,19 @@ class MonitorService {
       print('Failed to get brightness for $deviceName: $e');
       return null;
     }
+  }
+
+  void _logRealBrightness(String deviceName, int targetBrightness, String timing) {
+    Future(() async {
+      final real = await getBrightness(deviceName);
+      if (real == null) {
+        debugPrint('❌ [DDC/CI Debug] [$timing] Device: $deviceName | Target: $targetBrightness% | Real: Failed to read');
+      } else if (real != targetBrightness) {
+        debugPrint('⚠️ [DDC/CI Debug] [$timing] Device: $deviceName | MISMATCH! Target: $targetBrightness% | Real (DDC/CI): $real%');
+      } else {
+        debugPrint('✅ [DDC/CI Debug] [$timing] Device: $deviceName | MATCH! Target: $targetBrightness% | Real (DDC/CI): $real%');
+      }
+    });
   }
 
   Future<List<MonitorInfo>> getConnectedMonitors() async {
