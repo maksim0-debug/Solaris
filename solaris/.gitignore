@@ -53,3 +53,4 @@ credentials.json
 google_fit_token.json
 env.g.dart
 .agent/
+.agents/

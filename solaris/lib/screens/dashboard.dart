@@ -727,12 +727,56 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
       });
     }
 
-    double brightness = baseBrightness;
+    final monitors = ref.watch(monitorListProvider).value ?? [];
+
+    double targetBrightness = baseBrightness;
     if (selection.length == 1 && !selection.contains('all')) {
       final id = selection.first;
       final offsets = ref.watch(brightnessOffsetsProvider);
       final offset = offsets[id] ?? 0.0;
-      brightness = (baseBrightness + offset).clamp(0.0, 100.0);
+      targetBrightness = (baseBrightness + offset).clamp(0.0, 100.0);
+    }
+
+    double brightness = targetBrightness;
+    if (isAutoBright) {
+      if (selection.length == 1 && !selection.contains('all')) {
+        final id = selection.first;
+        final monitor = monitors.where((m) => m.deviceName == id).firstOrNull;
+        if (monitor != null && monitor.realBrightness != null) {
+          brightness = monitor.realBrightness!.toDouble();
+        }
+      } else {
+        final primaryMonitor = monitors.where((m) => m.isPrimary).firstOrNull;
+        if (primaryMonitor != null && primaryMonitor.realBrightness != null) {
+          brightness = primaryMonitor.realBrightness!.toDouble();
+        } else {
+          final firstWithBrightness = monitors.where((m) => m.realBrightness != null).firstOrNull;
+          if (firstWithBrightness != null) {
+            brightness = firstWithBrightness.realBrightness!.toDouble();
+          }
+        }
+      }
+    }
+
+    double tempVal = currentTemperature.toDouble();
+    if (isAutoTemp && isColorTempEnabled) {
+      if (selection.length == 1 && !selection.contains('all')) {
+        final id = selection.first;
+        final monitor = monitors.where((m) => m.deviceName == id).firstOrNull;
+        if (monitor != null && monitor.realTemperature != null) {
+          tempVal = monitor.realTemperature!.toDouble();
+        }
+      } else {
+        final primaryMonitor = monitors.where((m) => m.isPrimary).firstOrNull;
+        if (primaryMonitor != null && primaryMonitor.realTemperature != null) {
+          tempVal = primaryMonitor.realTemperature!.toDouble();
+        } else {
+          final firstWithTemp = monitors.where((m) => m.realTemperature != null).firstOrNull;
+          if (firstWithTemp != null) {
+            tempVal = firstWithTemp.realTemperature!.toDouble();
+          }
+        }
+      }
     }
 
     return Row(
@@ -781,7 +825,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                       child: CustomPaint(
                         painter: TemperatureDialPainter(
                           progress:
-                              (6500.0 - currentTemperature.clamp(3300, 6500)) /
+                              (6500.0 - tempVal.clamp(3300.0, 6500.0)) /
                               (6500.0 - 3300.0),
                         ),
                       ),
@@ -844,7 +888,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                         key: _anchorKeys['color_temperature'],
                         id: 'color_temperature',
                         child: TemperatureSlider(
-                          value: currentTemperature.toDouble(),
+                          value: tempVal,
                           onChanged: (val) => ref
                               .read(currentTemperatureProvider.notifier)
                               .setManualTemperature(val.round()),
@@ -1099,7 +1143,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                         ),
                                         CircadianBreakdownTooltip(
                                           smartData: smartData,
-                                          currentBrightness: brightness,
+                                          currentBrightness: targetBrightness,
                                           isSmartCircadianEnabled: isSmartEnabled,
                                           child: const Icon(
                                             LucideIcons.info,
