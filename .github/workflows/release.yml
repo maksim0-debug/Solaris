@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: write
+  id-token: write
+  attestations: write
 
 jobs:
   build:
@@ -98,6 +100,11 @@ jobs:
 
           # Create archive in the root directory
           Compress-Archive -Path "$releaseDir/*" -DestinationPath ../Solaris-Windows.zip
+
+      - name: Generate Build Attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: 'Solaris-Windows.zip'
 
       - name: Publish Release
         uses: softprops/action-gh-release@v2
