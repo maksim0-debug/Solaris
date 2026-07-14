@@ -39,10 +39,12 @@ Full control over your entire workspace.
 - **Unified Sync**: Adjust all monitors at once with a single click.
 <img width="314" height="254" alt="Multi-monitor controls for individual display brightness offsets" src="https://github.com/user-attachments/assets/53066949-0c59-4fc8-afa5-79805fd59ef8" />
 
-### 🌡️ Dynamic Color Temperature
+### 🌡️ Dynamic Color Temperature (GPU-Assisted Filter)
 Protect your eyes from blue light. Solaris shifts your display to warmer tones as the sun goes down.
+- **GPU-Level Control**: Modifies the display's **Gamma Ramp (LUT)** at the graphics card level using Win32 GDI APIs, eliminating hardware communication delays.
+- **Universal Compatibility**: Works on **all screens** (including built-in laptop displays, older monitors, or screens without DDC/CI support).
+- **Automation & Calibration Care**: Fully synced with the solar cycle. Automatically backs up your original system color curves and restores them when resetting or closing the app.
 - **Range**: Smooth transition from 6500K (Daylight) to 3300K (Warm).
-- **Automation**: Fully synced with the solar cycle to maintain your natural sleep-wake rhythm.
 
 ### 🎮 Smart Game Mode (Exclusions)
 
@@ -103,9 +105,9 @@ Solaris leverages cutting-edge technologies for peak performance on Windows:
 
 - **Framework**: [Flutter](https://flutter.dev/) (Windows Desktop)
 - **State Management**: [Riverpod](https://riverpod.dev/) (using AsyncNotifiers and StreamProviders)
-- **Hardware Interop**:
+- **Hardware & OS Interop**:
   - [Dart FFI](https://dart.dev/guides/libraries/c-interop) and [win32](https://pub.dev/packages/win32) for low-level OS calls.
-  - Custom MethodChannels for DDC/CI communication.
+  - Custom MethodChannels for hardware DDC/CI brightness control and GPU Gamma Ramp temperature manipulation.
 - **APIs & Services**:
   - **Google Fit API**: Health data synchronization.
   - **WeatherAPI.com**: Advanced solar radiation and cloudiness data.
@@ -154,7 +156,7 @@ For the full feature set (including Google Fit), follow these steps:
 - [Flutter SDK](https://docs.flutter.dev/get-started/install) (Stable channel)
 - Windows 10/11
 - **WeatherAPI Key**: Mandatory for real-time weather synchronization.
-- Monitors with **DDC/CI** support (Ensure it is enabled in your monitor's OSD menu)
+- Monitors with **DDC/CI** support (Required for *hardware brightness control* only; *color temperature adjustments* work universally). Ensure it is enabled in your monitor's OSD menu.
 
 ---
 
