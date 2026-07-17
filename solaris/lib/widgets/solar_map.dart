@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -9,6 +10,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solaris/widgets/map_health_dialog.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/models/map_health_report.dart';
+import 'package:solaris/l10n/app_localizations.dart';
+
 
 class SolarMap extends ConsumerStatefulWidget {
   final double latitude;
@@ -33,6 +36,7 @@ class _SolarMapState extends ConsumerState<SolarMap> {
   final MapController _mapController = MapController();
   List<LatLng> _terminatorPoints = [];
   Timer? _timer;
+  bool _isMapReady = false;
 
   @override
   void initState() {
@@ -46,8 +50,8 @@ class _SolarMapState extends ConsumerState<SolarMap> {
   @override
   void didUpdateWidget(SolarMap oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.latitude != widget.latitude ||
-        oldWidget.longitude != widget.longitude) {
+    if (_isMapReady && (oldWidget.latitude != widget.latitude ||
+        oldWidget.longitude != widget.longitude)) {
       _mapController.move(
         LatLng(widget.latitude, widget.longitude),
         widget.zoom,
@@ -75,6 +79,12 @@ class _SolarMapState extends ConsumerState<SolarMap> {
   Widget build(BuildContext context) {
     final token = Env.mapboxToken;
     final healthAsync = ref.watch(mapHealthProvider);
+    final isMapTokenValid = Env.isMapboxTokenValid;
+    final l10n = AppLocalizations.of(context)!;
+
+    if (!isMapTokenValid) {
+      _isMapReady = false;
+    }
     
     // Using the same style as in LocationScreen for consistency
     const style = kMapboxLargeMapStyle;
@@ -96,6 +106,9 @@ class _SolarMapState extends ConsumerState<SolarMap> {
         ),
         onLongPress: (tapPosition, latLng) {
           widget.onLongPress?.call(latLng);
+        },
+        onMapReady: () {
+          _isMapReady = true;
         },
       ),
       children: [
@@ -131,9 +144,60 @@ class _SolarMapState extends ConsumerState<SolarMap> {
       ],
     );
 
+    final Widget mapContent = isMapTokenValid
+        ? mapWidget
+        : Stack(
+            children: [
+              Container(
+                color: const Color(0xFF0F172A),
+                child: const Center(
+                  child: Opacity(
+                    opacity: 0.05,
+                    child: Icon(
+                      LucideIcons.map,
+                      size: 150,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              ClipRRect(
+                child: ImageFiltered(
+                  imageFilter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    color: Colors.black.withOpacity(0.2),
+                  ),
+                ),
+              ),
+              Center(
+                child: Tooltip(
+                  message: l10n.mapboxTokenMissingTooltip,
+                  triggerMode: TooltipTriggerMode.tap,
+                  preferBelow: false,
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFFFDBA74).withOpacity(0.5),
+                        width: 2,
+                      ),
+                    ),
+                    child: const Icon(
+                      LucideIcons.lock,
+                      color: Color(0xFFFDBA74),
+                      size: 32,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+
     return Stack(
       children: [
-        mapWidget,
+        mapContent,
         Positioned(
           top: 12,
           right: 12,
@@ -177,4 +241,5 @@ class _SolarMapState extends ConsumerState<SolarMap> {
       ],
     );
   }
+
 }

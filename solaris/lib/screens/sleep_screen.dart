@@ -6,6 +6,7 @@ import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers/sleep_provider.dart';
 import 'package:solaris/providers/google_fit_provider.dart';
 import 'package:solaris/widgets/glass_card.dart';
+import 'package:solaris/env/env.dart';
 import 'package:solaris/widgets/sleep_regime_card.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/providers/temperature_provider.dart';
@@ -237,6 +238,7 @@ class _GoogleFitSyncCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final isSyncing = sleepState.isSyncing ||
         googleFitState.status == GoogleFitStatus.connecting;
+    final isGoogleKeysValid = Env.isGoogleFitKeysValid;
 
     return GlassCard(
       padding: const EdgeInsets.all(24),
@@ -290,18 +292,41 @@ class _GoogleFitSyncCard extends ConsumerWidget {
           const SizedBox(height: 20),
           if (googleFitState.status == GoogleFitStatus.disconnected ||
               googleFitState.status == GoogleFitStatus.initial)
-            ElevatedButton(
-              onPressed: isSyncing
-                  ? null
-                  : () => ref.read(googleFitProvider.notifier).signIn(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF8B5CF6),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ElevatedButton(
+                  onPressed: (isSyncing || !isGoogleKeysValid)
+                      ? null
+                      : () => ref.read(googleFitProvider.notifier).signIn(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF8B5CF6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                  ),
+                  child: Text(l10n.connectGoogleFit),
                 ),
-              ),
-              child: Text(l10n.connectGoogleFit),
+                if (!isGoogleKeysValid) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Icon(LucideIcons.alertCircle, color: Color(0xFFF87171), size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          l10n.googleFitKeysMissingWarning,
+                          style: const TextStyle(
+                            color: Color(0xFFF87171),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
             )
           else if (googleFitState.status == GoogleFitStatus.connecting)
             Text(
@@ -319,13 +344,32 @@ class _GoogleFitSyncCard extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
                 ElevatedButton(
-                  onPressed: () =>
-                      ref.read(googleFitProvider.notifier).signIn(),
+                  onPressed: !isGoogleKeysValid
+                      ? null
+                      : () => ref.read(googleFitProvider.notifier).signIn(),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF8B5CF6),
                   ),
                   child: Text(l10n.connectGoogleFit),
                 ),
+                if (!isGoogleKeysValid) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Icon(LucideIcons.alertCircle, color: Color(0xFFF87171), size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          l10n.googleFitKeysMissingWarning,
+                          style: const TextStyle(
+                            color: Color(0xFFF87171),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             )
           else

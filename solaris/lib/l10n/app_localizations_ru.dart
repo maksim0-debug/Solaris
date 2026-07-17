@@ -1267,4 +1267,16 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get sleepIntegrationHelpSectionFormatText =>
       'Приложение ожидает данные в формате JSON. Детали схемы:\n\n1. Сессии сна (POST на /api/sleep/sessions)\nОжидаемые данные: Массив объектов сессий сна JSON.\nКаждый объект содержит:\n• id: строка (уникальный идентификатор сессии)\n• startTime: строка (дата/время ISO 8601, например, \"2026-07-17T00:30:00Z\")\n• endTime: строка (дата/время ISO 8601, например, \"2026-07-17T08:00:00Z\")\n• title: строка (опциональное название сессии)\n• source: строка (опционально, по умолчанию \"local_api\")\n\n2. Текущий статус сна (POST на /api/sleep/status)\nОжидаемые данные: Объект JSON, содержащий:\n• is_sleeping: логическое значение (true, если пользователь спит, false — если бодрствует)';
+
+  @override
+  String get mapboxTokenMissingTooltip =>
+      'Токен доступа Mapbox отсутствует. Карта отключена.';
+
+  @override
+  String get weatherApiKeyMissingWarning =>
+      'Провайдер WeatherAPI отключен, так как WEATHER_API_KEY не настроен в .env.';
+
+  @override
+  String get googleFitKeysMissingWarning =>
+      'Интеграция с Google Fit отключена, так как GOOGLE_CLIENT_ID не настроен в .env.';
 }

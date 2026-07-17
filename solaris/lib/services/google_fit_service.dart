@@ -33,7 +33,6 @@ class GoogleFitService {
           var credentials = AccessCredentials.fromJson(decoded);
           final clientId = ClientId(
             Env.googleClientId,
-            Env.googleClientSecret,
           );
 
           // Check if token is expired and refresh it proactively
@@ -148,7 +147,6 @@ class GoogleFitService {
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {
           'client_id': clientIdStr,
-          'client_secret': Env.googleClientSecret,
           'code': code,
           'code_verifier': verifier,
           'grant_type': 'authorization_code',
@@ -222,7 +220,6 @@ class GoogleFitService {
         debugPrint('Google Fit token expired, attempting to refresh...');
         final clientId = ClientId(
           Env.googleClientId,
-          Env.googleClientSecret,
         );
 
         // Use refreshCredentials instead of refreshAuthenticatedClient

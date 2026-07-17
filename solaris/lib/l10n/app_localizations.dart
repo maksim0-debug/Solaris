@@ -2297,6 +2297,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Solaris expects strict JSON payloads. Schema details:\n\n1. Sleep Sessions (POST to /api/sleep/sessions)\nExpected payload: A JSON array of sleep session objects.\nEach session object contains:\n• id: string (unique session identifier)\n• startTime: string (ISO 8601 date, e.g., \"2026-07-17T00:30:00Z\")\n• endTime: string (ISO 8601 date, e.g., \"2026-07-17T08:00:00Z\")\n• title: string (optional session name)\n• source: string (optional, \"local_api\" is default)\n\n2. Real-time sleep status (POST to /api/sleep/status)\nExpected payload: A JSON object containing:\n• is_sleeping: boolean (true if user is sleeping, false if awake)'**
   String get sleepIntegrationHelpSectionFormatText;
+
+  /// No description provided for @mapboxTokenMissingTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Mapbox access token is missing. Map is disabled.'**
+  String get mapboxTokenMissingTooltip;
+
+  /// No description provided for @weatherApiKeyMissingWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'WeatherAPI provider is disabled because WEATHER_API_KEY is not configured in .env.'**
+  String get weatherApiKeyMissingWarning;
+
+  /// No description provided for @googleFitKeysMissingWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Fit integration is disabled because GOOGLE_CLIENT_ID is not configured in .env.'**
+  String get googleFitKeysMissingWarning;
 }
 
 class _AppLocalizationsDelegate

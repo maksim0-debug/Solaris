@@ -1265,4 +1265,16 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get sleepIntegrationHelpSectionFormatText =>
       'Додаток очікує дані у форматі JSON. Деталі схеми:\n\n1. Сесії сну (POST на /api/sleep/sessions)\nОчікувані дані: Масив об\'єктів сесій сну JSON.\nКожен об\'єкт містить:\n• id: рядок (унікальний ідентифікатор сесії)\n• startTime: рядок (дата/час ISO 8601, наприклад, \"2026-07-17T00:30:00Z\")\n• endTime: рядок (дата/час ISO 8601, наприклад, \"2026-07-17T08:00:00Z\")\n• title: рядок (необов\'язкова назва сесії)\n• source: рядок (необов\'язково, за замовчуванням \"local_api\")\n\n2. Поточний статус сну (POST на /api/sleep/status)\nОчікувані дані: Об\'єкт JSON, що містить:\n• is_sleeping: логічне значення (true, якщо користувач спить, false — якщо не спить)';
+
+  @override
+  String get mapboxTokenMissingTooltip =>
+      'Токен доступу Mapbox відсутній. Карта вимкнена.';
+
+  @override
+  String get weatherApiKeyMissingWarning =>
+      'Провайдер WeatherAPI вимкнено, оскільки WEATHER_API_KEY не налаштовано в .env.';
+
+  @override
+  String get googleFitKeysMissingWarning =>
+      'Інтеграція з Google Fit вимкнена, оскільки GOOGLE_CLIENT_ID не налаштований в .env.';
 }

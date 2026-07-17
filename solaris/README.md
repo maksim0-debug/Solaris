@@ -13,34 +13,34 @@
 ### 🌖 Circadian Mode (Auto-Adjustment)
 
 The core of Solaris. The app automatically calculates the sun's position relative to your horizon and adjusts monitor brightness according to a customizable curve.
+
 - **Real-time Sun Tracking**: High-precision calculations for sunrise, sunset, solar noon, and twilight.
 - **Smooth Transitions**: Brightness changes are applied gradually to avoid sudden flashes.
 
 <img width="1377" height="865" alt="Solaris Dashboard showing global brightness control and circadian rhythm chart" src="https://github.com/user-attachments/assets/23223ab1-f9d8-491b-bf1d-d3ff2f39db58" />
 
-
 ### 📈 Interactive Brightness Curves
 
 Don't settle for defaults. Visualize and refine your lighting profile.
+
 - **Bezier Curves**: Fine-tune how brightness responds to solar elevation.
 - **Presets**: Swiftly switch between **Bright**, **Balanced**, **Soft**, and **Custom** profiles.
 - **Real-time Preview**: See changes instantly on the luminosity graph.
-![Interactive Brightness Curve Editor with custom Bezier points and presets](https://github.com/user-attachments/assets/0fd7fb2d-d0e7-4101-8b2e-470f7dd8a84d)
-
-
-
-
+  ![Interactive Brightness Curve Editor with custom Bezier points and presets](https://github.com/user-attachments/assets/0fd7fb2d-d0e7-4101-8b2e-470f7dd8a84d)
 
 ### 🖥️ Multi-Monitor Mastery
 
 Full control over your entire workspace.
+
 - **DDC/CI Integration**: Direct hardware communication with monitors via system-level APIs.
 - **Individual Control**: Set unique brightness offsets or manual levels for each display.
 - **Unified Sync**: Adjust all monitors at once with a single click.
-<img width="314" height="254" alt="Multi-monitor controls for individual display brightness offsets" src="https://github.com/user-attachments/assets/53066949-0c59-4fc8-afa5-79805fd59ef8" />
+  <img width="314" height="254" alt="Multi-monitor controls for individual display brightness offsets" src="https://github.com/user-attachments/assets/53066949-0c59-4fc8-afa5-79805fd59ef8" />
 
 ### 🌡️ Dynamic Color Temperature (GPU-Assisted Filter)
+
 Protect your eyes from blue light. Solaris shifts your display to warmer tones as the sun goes down.
+
 - **GPU-Level Control**: Modifies the display's **Gamma Ramp (LUT)** at the graphics card level using Win32 GDI APIs, eliminating hardware communication delays.
 - **Universal Compatibility**: Works on **all screens** (including built-in laptop displays, older monitors, or screens without DDC/CI support).
 - **Automation & Calibration Care**: Fully synced with the solar cycle. Automatically backs up your original system color curves and restores them when resetting or closing the app.
@@ -49,14 +49,15 @@ Protect your eyes from blue light. Solaris shifts your display to warmer tones a
 ### 🎮 Smart Game Mode (Exclusions)
 
 Focus on the win without distractions.
+
 - **Auto-Lock**: Solaris detects when you start a game and prevents brightness from shifting during intense sessions.
 - **Customizable Lists**: Add specific apps to a **Whitelist** (always lock) or **Blacklist** (never lock).
-<img width="971" height="603" alt="Game Mode and Application Whitelist configuration" src="https://github.com/user-attachments/assets/4f2429b0-2470-42fb-b5a7-f6b6086cb091" />
-
+  <img width="971" height="603" alt="Game Mode and Application Whitelist configuration" src="https://github.com/user-attachments/assets/4f2429b0-2470-42fb-b5a7-f6b6086cb091" />
 
 ### ☁️ Weather Influence
 
 The first monitor controller that cares about the sky.
+
 - **Real-time Precision**: Uses **WeatherAPI.com** to fetch highly accurate current weather conditions and solar radiation data for precise brightness adjustments.
 - **Cloudiness & Radiation Logic**: Naturally dims brightness when it's overcast, rainy, or snowy. Uses **Open-Meteo** as a secondary fallback source.
 - **Atmospheric UI**: Beautiful background animations for rain, snow, thunder, and clouds within the dashboard.
@@ -64,16 +65,17 @@ The first monitor controller that cares about the sky.
 ### ⌨️ Global Hotkeys
 
 Control your environment without leaving your current app.
+
 - **Custom Bindings**: Set shortcuts for Next/Prev Preset, Brightness Up/Down, and Toggling Auto-mode.
 - **Stepless Control**: Fine-tune brightness in precise increments (e.g., 5% per press).
-<img width="985" height="541" alt="Global Hotkey settings for brightness and preset navigation" src="https://github.com/user-attachments/assets/1b8301c3-eeff-41b0-b240-2d76551cb641" />
+  <img width="985" height="541" alt="Global Hotkey settings for brightness and preset navigation" src="https://github.com/user-attachments/assets/1b8301c3-eeff-41b0-b240-2d76551cb641" />
 
 ### 📍 Precise Location
 
 - **Auto-Geolocation**: Uses GPS to determine your coordinates automatically.
 - **Map Selection**: Choose your location on an interactive map if GPS is unavailable.
 - **Persistence**: Remembers your preferred location across sessions.
-![Interactive map for setting geographical coordinates for solar calculations](https://github.com/user-attachments/assets/a984424a-3b9e-45de-8c8d-a601f4b8b2d0)
+  ![Interactive map for setting geographical coordinates for solar calculations](https://github.com/user-attachments/assets/a984424a-3b9e-45de-8c8d-a601f4b8b2d0)
 
 ---
 
@@ -91,11 +93,42 @@ To utilize Google Fit synchronization, you must configure a private integration 
 1. **Create a Project**: Set up a free personal project in the [Google Cloud Console](https://console.cloud.google.com/).
 2. **Configure OAuth**: Define your "OAuth Consent Screen" and generate a Client ID with the `fitness.sleep.read` scope enabled.
 3. **Local Setup**: Clone this repository to your local system.
-4. **Environment Variables**: Navigate to the `solaris/` directory, rename `.env.example` to `.env` and insert your personal **Client ID**.
+4. **Environment Variables**: Navigate to the `solaris/` directory, rename `.env.example` to `.env` and insert your personal **Client ID** (Client Secret is not required, as Solaris uses PKCE Desktop OAuth).
 5. **Manual Build**: Compile and execute the application from source using the Flutter SDK (`flutter run -d windows`).
 
-*By utilizing a personal API key, the application will operate as a private developer instance, bypassing the verification requirements typically imposed on public distributions.*
+_By utilizing a personal API key, the application will operate as a private developer instance, bypassing the verification requirements typically imposed on public distributions._
 <img width="787" height="653" alt="Google Fit Sleep Data integration screen" src="https://github.com/user-attachments/assets/94ee4ba4-6a71-4227-b05e-1d858a9917c4" />
+
+---
+
+## 💤 Local Sleep Integration
+
+If you prefer not to use Google Fit or want a completely offline, internet-free setup, Solaris features a built-in **Local API Web Server**. This allows third-party desktop sleep trackers, smart alarms, or automation scripts running on your PC to feed sleep data directly into the app.
+
+- **How to Enable**: Go to the **Sleep** tab in the app, and turn on the **"Enable local API server"** toggle. You can customize the server port (default is `45321`).
+- **Security & Privacy**: The server binds strictly to the local loopback address (`127.0.0.1`), meaning it is inaccessible from the local network or the internet. Your sleep data remains entirely on your machine.
+- **Data Deduplication**: Local sleep data takes absolute priority. If a sleep session received via Google Fit overlaps with a session from the Local API (within a 1-hour safety buffer), the Google Fit session is automatically discarded to prevent double-logging.
+- **Supported Endpoints**:
+  1. **Sleep History** (`POST http://127.0.0.1:45321/api/sleep/sessions`):
+     Expects a JSON array of sleep session objects:
+     ```json
+     [
+       {
+         "id": "unique-session-id-123",
+         "startTime": "2026-07-17T00:30:00Z",
+         "endTime": "2026-07-17T08:00:00Z",
+         "title": "Night Sleep",
+         "source": "local_api"
+       }
+     ]
+     ```
+  2. **Real-time Status** (`POST http://127.0.0.1:45321/api/sleep/status`):
+     Expects a JSON object indicating if the user is currently asleep:
+     ```json
+     {
+       "is_sleeping": true
+     }
+     ```
 
 ---
 
@@ -149,14 +182,13 @@ If you just want to use the application, you can download the latest ready-to-us
 
 #### Building from Source
 
-For the full feature set (including Google Fit), follow these steps:
+Solaris can be compiled and executed **entirely without any API keys**. If you do not configure `.env` (or configure it with placeholders), the application will build successfully and run in **Graceful Fallback Mode** (see [Feature Limitations](#-graceful-fallback-mode--feature-limitations) below).
 
 **Prerequisites:**
 
 - [Flutter SDK](https://docs.flutter.dev/get-started/install) (Stable channel)
 - Windows 10/11
-- **WeatherAPI Key**: Mandatory for real-time weather synchronization.
-- Monitors with **DDC/CI** support (Required for *hardware brightness control* only; *color temperature adjustments* work universally). Ensure it is enabled in your monitor's OSD menu.
+- Monitors with **DDC/CI** support (Required for _hardware brightness control_ only; _color temperature adjustments_ work universally). Ensure it is enabled in your monitor's OSD menu.
 
 ---
 
@@ -175,18 +207,18 @@ For the full feature set (including Google Fit), follow these steps:
    cp .env.example .env
    ```
 
-3. **Configure API Keys**:
+3. **Configure API Keys (Optional)**:
 
-   Open the newly created `.env` file and insert your credentials:
-
+   Open the newly created `.env` file and insert your credentials to unlock advanced features:
    - **WeatherAPI**: To allow Solaris to adjust brightness based on real-time cloudiness and solar radiation with high precision, [register at WeatherAPI.com](https://www.weatherapi.com/signup.aspx) to get a free API key and paste it into `WEATHER_API_KEY`.
    - **Mapbox**: To use interactive maps for location selection, [get a Mapbox Access Token](https://docs.mapbox.com/help/getting-started/access-tokens/) and paste it into `MAPBOX_TOKEN`.
-   - **Google Fit (Optional)**: If you want to sync your sleep history, follow the [Google Fit Integration](#-google-fit-integration-advanced-mode) guide above to get your `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
+   - **Google Fit**: If you want to sync your sleep history, follow the [Google Fit Integration](#-google-fit-integration-advanced-mode) guide above to get your `GOOGLE_CLIENT_ID` (Client Secret is not required).
 
-4. **Get dependencies**:
+4. **Get dependencies & generate code**:
 
    ```bash
    flutter pub get
+   dart run build_runner build --delete-conflicting-outputs
    ```
 
 5. **Run the app**:
@@ -196,15 +228,30 @@ For the full feature set (including Google Fit), follow these steps:
    ```
 
 #### Building for Release
+
 ```bash
 flutter build windows
 ```
 
 ---
 
+### ⚠️ Graceful Fallback Mode & Feature Limitations
+
+If you compile or run Solaris without providing API keys, the application automatically handles this by disabling specific features while keeping the core circadian rhythm engine fully functional:
+
+| Feature / Integration          | Requirement        | Fallback Behavior when Key is Missing                                                                                                                                                                                                   |
+| ------------------------------ | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Interactive Map & Mini-Map** | `MAPBOX_TOKEN`     | Map areas display a padlock icon. Clicking it shows a tooltip informing that the token is missing. You can still set your coordinates manually. Reverse geocoding falls back to a timezone-based city lookup.                           |
+| **WeatherAPI Provider**        | `WEATHER_API_KEY`  | "WeatherAPI" option in Settings is disabled and displays a warning under the selector. Solaris automatically falls back to **Open-Meteo API** (free public endpoints), meaning weather-based brightness shifts remain functional.       |
+| **Google Fit Integration**     | `GOOGLE_CLIENT_ID` | "Connect Google Fit" button on the Sleep screen is disabled, and an informative warning message is shown. Offline sleep tracking can still be fully synced using the [Local Sleep Integration](#-local-sleep-integration). |
+
+---
+
 ## 📄 Legal
+
 - **Privacy Policy**: [Read our Privacy Policy](https://maksim0-debug.github.io/Solaris/docs)
 - **License**: This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
 
 ---
-*Developed with ❤️ for visual health and focused productivity.*
+
+_Developed with ❤️ for visual health and focused productivity._

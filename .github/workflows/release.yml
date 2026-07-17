@@ -37,23 +37,20 @@ jobs:
           MISSING_SECRETS=()
           [ -z "$MAPBOX_TOKEN" ] && MISSING_SECRETS+=("MAPBOX_TOKEN")
           [ -z "$GOOGLE_CLIENT_ID" ] && MISSING_SECRETS+=("GOOGLE_CLIENT_ID")
-          [ -z "$GOOGLE_CLIENT_SECRET" ] && MISSING_SECRETS+=("GOOGLE_CLIENT_SECRET")
           [ -z "$WEATHER_API_KEY" ] && MISSING_SECRETS+=("WEATHER_API_KEY")
 
           if [ ${#MISSING_SECRETS[@]} -ne 0 ]; then
-            echo "::error::Missing GitHub Secrets: ${MISSING_SECRETS[*]}"
-            echo "Please add these secrets in Repository Settings > Secrets and variables > Actions"
-            exit 1
+            echo "::warning::Missing GitHub Secrets for production API keys: ${MISSING_SECRETS[*]}"
+            echo "Solaris will be built with fallback features (no real map/weatherapi)."
           fi
-          if [[ ! "$MAPBOX_TOKEN" =~ ^(pk|sk)\. ]]; then
-            echo "::error::MAPBOX_TOKEN is invalid. It must start with 'pk.' or 'sk.'."
-            exit 1
+          
+          if [ -n "$MAPBOX_TOKEN" ] && [[ ! "$MAPBOX_TOKEN" =~ ^(pk|sk)\. ]]; then
+            echo "::warning::MAPBOX_TOKEN is invalid. It must start with 'pk.' or 'sk.'."
           fi
-          echo "All required secrets are present and valid."
+          echo "Secret check complete."
         env:
           MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
 
       - name: Create .env file
@@ -61,20 +58,17 @@ jobs:
         env:
           MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
         run: |
-          printf "MAPBOX_TOKEN=%s\n" "$MAPBOX_TOKEN" > .env
-          printf "GOOGLE_CLIENT_ID=%s\n" "$GOOGLE_CLIENT_ID" >> .env
-          printf "GOOGLE_CLIENT_SECRET=%s\n" "$GOOGLE_CLIENT_SECRET" >> .env
-          printf "WEATHER_API_KEY=%s\n" "$WEATHER_API_KEY" >> .env
+          printf "MAPBOX_TOKEN=%s\n" "${MAPBOX_TOKEN:-your_mapbox_token_here}" > .env
+          printf "GOOGLE_CLIENT_ID=%s\n" "${GOOGLE_CLIENT_ID:-your_client_id_here}" >> .env
+          printf "WEATHER_API_KEY=%s\n" "${WEATHER_API_KEY:-your_weather_api_key_here}" >> .env
           echo ".env file created successfully."
 
       - name: Generate obfuscated code
         env:
           MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
         run: dart run build_runner build --delete-conflicting-outputs
 

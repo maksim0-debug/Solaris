@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/models/settings_state.dart';
+import 'package:solaris/env/env.dart';
 import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/circadian_chart.dart';
@@ -2524,6 +2525,8 @@ class _WeatherProviderSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isWeatherKeyValid = Env.isWeatherApiKeyValid;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2551,12 +2554,20 @@ class _WeatherProviderSelector extends StatelessWidget {
               ),
               ButtonSegment<WeatherProvider>(
                 value: WeatherProvider.weatherApi,
+                enabled: isWeatherKeyValid,
                 label: Text(
                   l10n.weatherProviderWeatherApi,
-                  style: const TextStyle(fontSize: 10),
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isWeatherKeyValid ? null : Colors.white24,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
-                icon: const Icon(LucideIcons.cloudRain, size: 14),
+                icon: Icon(
+                  LucideIcons.cloudRain,
+                  size: 14,
+                  color: isWeatherKeyValid ? null : Colors.white24,
+                ),
               ),
               ButtonSegment<WeatherProvider>(
                 value: WeatherProvider.openMeteo,
@@ -2572,6 +2583,7 @@ class _WeatherProviderSelector extends StatelessWidget {
             onSelectionChanged: (Set<WeatherProvider> newSelection) {
               onChanged(newSelection.first);
             },
+            selectedIcon: const SizedBox.shrink(),
             style: ButtonStyle(
               visualDensity: VisualDensity.compact,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -2594,6 +2606,24 @@ class _WeatherProviderSelector extends StatelessWidget {
             ),
           ),
         ),
+        if (!isWeatherKeyValid) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(LucideIcons.alertCircle, color: Color(0xFFFDBA74), size: 14),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  l10n.weatherApiKeyMissingWarning,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFFFDBA74),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
