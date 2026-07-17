@@ -1398,13 +1398,32 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          l10n.sleepIntegrationTitle,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              l10n.sleepIntegrationTitle,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () {}, // Prevent InkWell tap propagation
+                              child: IconButton(
+                                icon: Icon(
+                                  LucideIcons.info,
+                                  size: 16,
+                                  color: Colors.white.withOpacity(0.3),
+                                ),
+                                onPressed: () => _showHelpDialog(context, l10n),
+                                constraints: const BoxConstraints(),
+                                padding: EdgeInsets.zero,
+                                splashRadius: 16,
+                              ),
+                            ),
+                          ],
                         ),
                         Text(
                           l10n.sleepIntegrationSubtitle,
@@ -1551,6 +1570,138 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showHelpDialog(BuildContext context, AppLocalizations l10n) {
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
+            child: GlassCard(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          l10n.sleepIntegrationHelpTitle,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(LucideIcons.x, color: Colors.white60, size: 20),
+                        onPressed: () => Navigator.pop(context),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        splashRadius: 20,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.sleepIntegrationHelpIntro,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.white70,
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          _buildHelpSection(
+                            title: l10n.sleepIntegrationHelpSectionWhat,
+                            text: l10n.sleepIntegrationHelpSectionWhatText,
+                          ),
+                          const SizedBox(height: 16),
+                          _buildHelpSection(
+                            title: l10n.sleepIntegrationHelpSectionHow,
+                            text: l10n.sleepIntegrationHelpSectionHowText,
+                          ),
+                          const SizedBox(height: 16),
+                          _buildHelpSection(
+                            title: l10n.sleepIntegrationHelpSectionConfig,
+                            text: l10n.sleepIntegrationHelpSectionConfigText,
+                          ),
+                          const SizedBox(height: 16),
+                          _buildHelpSection(
+                            title: l10n.sleepIntegrationHelpSectionDeduplication,
+                            text: l10n.sleepIntegrationHelpSectionDeduplicationText,
+                          ),
+                          const SizedBox(height: 16),
+                          _buildHelpSection(
+                            title: l10n.sleepIntegrationHelpSectionSecurity,
+                            text: l10n.sleepIntegrationHelpSectionSecurityText,
+                          ),
+                          const SizedBox(height: 16),
+                          _buildHelpSection(
+                            title: l10n.sleepIntegrationHelpSectionFormat,
+                            text: l10n.sleepIntegrationHelpSectionFormatText,
+                            isCode: true,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFFA78BFA),
+                      ),
+                      child: const Text('OK'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHelpSection({required String title, required String text, bool isCode = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFFA78BFA),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.white.withOpacity(0.7),
+            height: 1.4,
+            fontFamily: isCode ? 'monospace' : null,
+          ),
+        ),
+      ],
     );
   }
 }

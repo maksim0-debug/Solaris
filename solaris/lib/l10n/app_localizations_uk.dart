@@ -1222,4 +1222,53 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get serverStoppedStatus => 'Сервер зупинено або порт зайнятий';
+
+  @override
+  String get sleepIntegrationHelpTitle => 'Посібник з інтеграції сну';
+
+  @override
+  String get sleepIntegrationHelpIntro =>
+      'Ця інтеграція дозволяє стороннім програмам для відстеження сну, розумним будильникам або скриптам автоматизації надсилати дані про сон безпосередньо в цей додаток через безпечне локальне з\'єднання.';
+
+  @override
+  String get sleepIntegrationHelpSectionWhat => 'Що це таке?';
+
+  @override
+  String get sleepIntegrationHelpSectionWhatText =>
+      'Solaris динамічно регулює яскравість та колірну температуру ваших моніторів на основі циркадних ритмів. Для цього додатку потрібні точні дані про сон. Локальний API-сервер дозволяє отримувати точні дані без затримок та офлайн від програм, що запущені на вашому ПК.';
+
+  @override
+  String get sleepIntegrationHelpSectionHow => 'Як це працює';
+
+  @override
+  String get sleepIntegrationHelpSectionHowText =>
+      '1. При увімкненні додаток запускає міні-сервер на вашому ПК, який слухає лише локальні запити (127.0.0.1).\n2. Сторонні програми надсилають сесії сну (у форматі JSON) або статус сну в реальному часі (спить / не спить).\n3. Додаток обробляє ці дані та автоматично коригує профіль екрана.';
+
+  @override
+  String get sleepIntegrationHelpSectionConfig => 'Налаштування';
+
+  @override
+  String get sleepIntegrationHelpSectionConfigText =>
+      '• Увімкніть тумблер «Увімкнути локальний API сервер».\n• Залиште порт за замовчуванням (45321), якщо він не зайнятий іншою програмою.\n• Налаштуйте ваше ПЗ для надсилання POST-запитів на адреси:\n  - Історія сну: http://127.0.0.1:45321/api/sleep/sessions\n  - Статус реального часу: http://127.0.0.1:45321/api/sleep/status';
+
+  @override
+  String get sleepIntegrationHelpSectionDeduplication => 'Дедуплікація даних';
+
+  @override
+  String get sleepIntegrationHelpSectionDeduplicationText =>
+      'Локальні дані мають абсолютний пріоритет. Якщо сесія з Google Fit перетинається за часом з локальною сесією (з похибкою в 1 годину), запис Google Fit автоматично видаляється, запобігаючи накладенню та подвійним записам.';
+
+  @override
+  String get sleepIntegrationHelpSectionSecurity => 'Безпека та приватність';
+
+  @override
+  String get sleepIntegrationHelpSectionSecurityText =>
+      'Сервер працює виключно на локальній адресі 127.0.0.1 і недоступен з інтернету або локальної мережі. Ваші дані про сон залишаються тільки на вашому пристрої.';
+
+  @override
+  String get sleepIntegrationHelpSectionFormat => 'Формат JSON-даних';
+
+  @override
+  String get sleepIntegrationHelpSectionFormatText =>
+      'Додаток очікує дані у форматі JSON. Деталі схеми:\n\n1. Сесії сну (POST на /api/sleep/sessions)\nОчікувані дані: Масив об\'єктів сесій сну JSON.\nКожен об\'єкт містить:\n• id: рядок (унікальний ідентифікатор сесії)\n• startTime: рядок (дата/час ISO 8601, наприклад, \"2026-07-17T00:30:00Z\")\n• endTime: рядок (дата/час ISO 8601, наприклад, \"2026-07-17T08:00:00Z\")\n• title: рядок (необов\'язкова назва сесії)\n• source: рядок (необов\'язково, за замовчуванням \"local_api\")\n\n2. Поточний статус сну (POST на /api/sleep/status)\nОчікувані дані: Об\'єкт JSON, що містить:\n• is_sleeping: логічне значення (true, якщо користувач спить, false — якщо не спить)';
 }

@@ -2225,6 +2225,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Server stopped or port in use'**
   String get serverStoppedStatus;
+
+  /// No description provided for @sleepIntegrationHelpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep Integration Guide'**
+  String get sleepIntegrationHelpTitle;
+
+  /// No description provided for @sleepIntegrationHelpIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'This integration allows third-party desktop sleep trackers, smart alarms, or automation scripts to send sleep data directly to this app over a secure local network connection.'**
+  String get sleepIntegrationHelpIntro;
+
+  /// No description provided for @sleepIntegrationHelpSectionWhat.
+  ///
+  /// In en, this message translates to:
+  /// **'What is it?'**
+  String get sleepIntegrationHelpSectionWhat;
+
+  /// No description provided for @sleepIntegrationHelpSectionWhatText.
+  ///
+  /// In en, this message translates to:
+  /// **'Solaris can adjust your monitor\'s brightness and color temperature dynamically based on your circadian rhythm. To do this, it needs accurate sleep data. While Google Fit provides cloud sync, this local API server allows immediate, offline synchronization from apps running on your PC.'**
+  String get sleepIntegrationHelpSectionWhatText;
+
+  /// No description provided for @sleepIntegrationHelpSectionHow.
+  ///
+  /// In en, this message translates to:
+  /// **'How it works'**
+  String get sleepIntegrationHelpSectionHow;
+
+  /// No description provided for @sleepIntegrationHelpSectionHowText.
+  ///
+  /// In en, this message translates to:
+  /// **'1. When enabled, the app starts a mini HTTP web server on your computer, listening only to local requests (127.0.0.1).\n2. External apps send sleep sessions (JSON format) or real-time status (sleeping / awake) to the server.\n3. The app automatically merges this data and applies it to adjust your screen settings.'**
+  String get sleepIntegrationHelpSectionHowText;
+
+  /// No description provided for @sleepIntegrationHelpSectionConfig.
+  ///
+  /// In en, this message translates to:
+  /// **'How to configure'**
+  String get sleepIntegrationHelpSectionConfig;
+
+  /// No description provided for @sleepIntegrationHelpSectionConfigText.
+  ///
+  /// In en, this message translates to:
+  /// **'• Toggle \'Enable local API server\' on.\n• Keep the default port (45321) unless it is used by another application.\n• Configure your tracking software to send POST requests to:\n  - History: http://127.0.0.1:45321/api/sleep/sessions\n  - Real-time: http://127.0.0.1:45321/api/sleep/status'**
+  String get sleepIntegrationHelpSectionConfigText;
+
+  /// No description provided for @sleepIntegrationHelpSectionDeduplication.
+  ///
+  /// In en, this message translates to:
+  /// **'Data Deduplication'**
+  String get sleepIntegrationHelpSectionDeduplication;
+
+  /// No description provided for @sleepIntegrationHelpSectionDeduplicationText.
+  ///
+  /// In en, this message translates to:
+  /// **'Local data has absolute priority. If a sleep session synced via Google Fit overlaps with a local API session (with a 1-hour safety buffer), the Google Fit session is automatically discarded to prevent double-logging and conflicts.'**
+  String get sleepIntegrationHelpSectionDeduplicationText;
+
+  /// No description provided for @sleepIntegrationHelpSectionSecurity.
+  ///
+  /// In en, this message translates to:
+  /// **'Security & Privacy'**
+  String get sleepIntegrationHelpSectionSecurity;
+
+  /// No description provided for @sleepIntegrationHelpSectionSecurityText.
+  ///
+  /// In en, this message translates to:
+  /// **'The server runs strictly on the local loopback address (127.0.0.1) and is inaccessible from the internet or other network devices. Your sleep data remains entirely on your machine.'**
+  String get sleepIntegrationHelpSectionSecurityText;
+
+  /// No description provided for @sleepIntegrationHelpSectionFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'JSON Data Formats'**
+  String get sleepIntegrationHelpSectionFormat;
+
+  /// No description provided for @sleepIntegrationHelpSectionFormatText.
+  ///
+  /// In en, this message translates to:
+  /// **'Solaris expects strict JSON payloads. Schema details:\n\n1. Sleep Sessions (POST to /api/sleep/sessions)\nExpected payload: A JSON array of sleep session objects.\nEach session object contains:\n• id: string (unique session identifier)\n• startTime: string (ISO 8601 date, e.g., \"2026-07-17T00:30:00Z\")\n• endTime: string (ISO 8601 date, e.g., \"2026-07-17T08:00:00Z\")\n• title: string (optional session name)\n• source: string (optional, \"local_api\" is default)\n\n2. Real-time sleep status (POST to /api/sleep/status)\nExpected payload: A JSON object containing:\n• is_sleeping: boolean (true if user is sleeping, false if awake)'**
+  String get sleepIntegrationHelpSectionFormatText;
 }
 
 class _AppLocalizationsDelegate

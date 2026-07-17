@@ -1220,4 +1220,53 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get serverStoppedStatus => 'Server stopped or port in use';
+
+  @override
+  String get sleepIntegrationHelpTitle => 'Sleep Integration Guide';
+
+  @override
+  String get sleepIntegrationHelpIntro =>
+      'This integration allows third-party desktop sleep trackers, smart alarms, or automation scripts to send sleep data directly to this app over a secure local network connection.';
+
+  @override
+  String get sleepIntegrationHelpSectionWhat => 'What is it?';
+
+  @override
+  String get sleepIntegrationHelpSectionWhatText =>
+      'Solaris can adjust your monitor\'s brightness and color temperature dynamically based on your circadian rhythm. To do this, it needs accurate sleep data. While Google Fit provides cloud sync, this local API server allows immediate, offline synchronization from apps running on your PC.';
+
+  @override
+  String get sleepIntegrationHelpSectionHow => 'How it works';
+
+  @override
+  String get sleepIntegrationHelpSectionHowText =>
+      '1. When enabled, the app starts a mini HTTP web server on your computer, listening only to local requests (127.0.0.1).\n2. External apps send sleep sessions (JSON format) or real-time status (sleeping / awake) to the server.\n3. The app automatically merges this data and applies it to adjust your screen settings.';
+
+  @override
+  String get sleepIntegrationHelpSectionConfig => 'How to configure';
+
+  @override
+  String get sleepIntegrationHelpSectionConfigText =>
+      '• Toggle \'Enable local API server\' on.\n• Keep the default port (45321) unless it is used by another application.\n• Configure your tracking software to send POST requests to:\n  - History: http://127.0.0.1:45321/api/sleep/sessions\n  - Real-time: http://127.0.0.1:45321/api/sleep/status';
+
+  @override
+  String get sleepIntegrationHelpSectionDeduplication => 'Data Deduplication';
+
+  @override
+  String get sleepIntegrationHelpSectionDeduplicationText =>
+      'Local data has absolute priority. If a sleep session synced via Google Fit overlaps with a local API session (with a 1-hour safety buffer), the Google Fit session is automatically discarded to prevent double-logging and conflicts.';
+
+  @override
+  String get sleepIntegrationHelpSectionSecurity => 'Security & Privacy';
+
+  @override
+  String get sleepIntegrationHelpSectionSecurityText =>
+      'The server runs strictly on the local loopback address (127.0.0.1) and is inaccessible from the internet or other network devices. Your sleep data remains entirely on your machine.';
+
+  @override
+  String get sleepIntegrationHelpSectionFormat => 'JSON Data Formats';
+
+  @override
+  String get sleepIntegrationHelpSectionFormatText =>
+      'Solaris expects strict JSON payloads. Schema details:\n\n1. Sleep Sessions (POST to /api/sleep/sessions)\nExpected payload: A JSON array of sleep session objects.\nEach session object contains:\n• id: string (unique session identifier)\n• startTime: string (ISO 8601 date, e.g., \"2026-07-17T00:30:00Z\")\n• endTime: string (ISO 8601 date, e.g., \"2026-07-17T08:00:00Z\")\n• title: string (optional session name)\n• source: string (optional, \"local_api\" is default)\n\n2. Real-time sleep status (POST to /api/sleep/status)\nExpected payload: A JSON object containing:\n• is_sleeping: boolean (true if user is sleeping, false if awake)';
 }
