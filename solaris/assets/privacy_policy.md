@@ -1,6 +1,6 @@
 # Privacy Policy for Solaris
 
-Last Updated: April 4, 2026
+Last Updated: July 18, 2026
 
 This Privacy Policy describes how Solaris ("we," "us," or "our") collects, uses, and protects your information when you use our desktop application (the "App").
 
