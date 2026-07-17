@@ -110,5 +110,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: Solaris-Windows.zip
+          generate_release_notes: true
+          append_body: true
+          body: |
+            ### 🛡️ Verification
+            This release is signed with a GitHub Artifact Attestation.
+            To verify the authenticity of the archive, run:
+            ```bash
+            gh attestation verify Solaris-Windows.zip --owner ${{ github.repository_owner }}
+            ```
+
+            You can view the build attestation history here:
+            https://github.com/${{ github.repository }}/attestations
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
