@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:solaris/models/solar_phase_model.dart';
 import 'package:solar_calculator/solar_calculator.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 class LuminosityGraph extends StatelessWidget {
   final SolarPhaseModel phases;
@@ -146,7 +147,9 @@ class LuminosityGraph extends StatelessWidget {
   List<FlSpot> _generateSpots() {
     List<FlSpot> spots = [];
     final now = phases.sunrise;
-    final startOfDay = DateTime(now.year, now.month, now.day); // Полночь
+    final startOfDay = now is tz.TZDateTime
+        ? tz.TZDateTime(now.location, now.year, now.month, now.day)
+        : DateTime(now.year, now.month, now.day); // Полночь
 
     // Считаем высоту солнца каждые 30 минут (0.5 часа) для идеальной кривой
     for (double hour = 0; hour <= 24; hour += 0.5) {
