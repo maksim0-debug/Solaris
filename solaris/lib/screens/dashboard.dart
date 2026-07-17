@@ -1171,8 +1171,8 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                 );
                               }
 
-                              final bool showBright = isAutoBright && activeAdjustments.isNotEmpty;
-                              final bool showTemp = isAutoTemp && isColorTempEnabled && activeTempAdjustments.isNotEmpty;
+                              final bool showBright = isAutoBright;
+                              final bool showTemp = isAutoTemp && isColorTempEnabled;
 
                               if (!showBright && !showTemp) {
                                 return const SizedBox.shrink();
@@ -1210,15 +1210,17 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 8),
-                                      ...activeAdjustments.map(
-                                        (w) => Padding(
-                                          padding: const EdgeInsets.only(
-                                            bottom: 6.0,
+                                      if (activeAdjustments.isNotEmpty) ...[
+                                        const SizedBox(height: 8),
+                                        ...activeAdjustments.map(
+                                          (w) => Padding(
+                                            padding: const EdgeInsets.only(
+                                              bottom: 6.0,
+                                            ),
+                                            child: w,
                                           ),
-                                          child: w,
                                         ),
-                                      ),
+                                      ],
                                     ],
                                     if (showBright && showTemp)
                                       const SizedBox(height: 16),
@@ -1249,15 +1251,17 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 8),
-                                      ...activeTempAdjustments.map(
-                                        (w) => Padding(
-                                          padding: const EdgeInsets.only(
-                                            bottom: 6.0,
+                                      if (activeTempAdjustments.isNotEmpty) ...[
+                                        const SizedBox(height: 8),
+                                        ...activeTempAdjustments.map(
+                                          (w) => Padding(
+                                            padding: const EdgeInsets.only(
+                                              bottom: 6.0,
+                                            ),
+                                            child: w,
                                           ),
-                                          child: w,
                                         ),
-                                      ),
+                                      ],
                                     ],
                                   ],
                                 ),

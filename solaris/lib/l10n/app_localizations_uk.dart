@@ -409,7 +409,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get temperatureRegulationTitle => 'Регуляція температури';
 
   @override
-  String get temperatureBreakdownBase => 'Базова температура';
+  String get temperatureBreakdownBase => 'Базова температура кривої';
 
   @override
   String get temperatureBreakdownWeather => 'Погода (зниження)';
@@ -604,7 +604,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Динамічна корекція на основі даних про сон з Google Fit (фаза засинання, біо-ранок, недосип)';
 
   @override
-  String get circadianRegulation => 'Циркадна регуляція';
+  String get circadianRegulation => 'Регуляція яскравості';
 
   @override
   String get featureWindDown => 'Фаза «Підготовки до сну» (Wind-down)';
@@ -739,7 +739,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get blacklistSubtitle => 'Ігнорувати, навіть якщо на весь екран';
 
   @override
-  String get sunBase => 'База (Сонце)';
+  String get sunBase => 'Базова яскравість кривої';
 
   @override
   String get finalValue => 'Підсумок';

@@ -259,6 +259,22 @@ final smartCircadianTemperatureDataProvider =
             smartData: smartData,
           );
 
+          // Resolve Active Preset Name for Temperature
+          String? activeUserTempPresetName;
+          TemperaturePresetType? activeSystemTempPreset;
+
+          if (monitorSettings.activeUserPresetId != null) {
+            try {
+              activeUserTempPresetName = monitorSettings.userPresets
+                  .firstWhere((p) => p.id == monitorSettings.activeUserPresetId)
+                  .name;
+            } catch (_) {
+              activeSystemTempPreset = monitorSettings.activePreset;
+            }
+          } else {
+            activeSystemTempPreset = monitorSettings.activePreset;
+          }
+
           return smartData.copyWith(
             baseTemperature: tempResult.baseTemperature,
             weatherTemperatureImpact: tempResult.weatherImpact,
@@ -266,6 +282,8 @@ final smartCircadianTemperatureDataProvider =
             windDownTemperatureImpact: tempResult.windDownImpact,
             sleepDebtTemperatureImpact: tempResult.sleepDebtImpact,
             weatherCode: weatherAsync.value?.weatherCode,
+            activeSystemTemperaturePreset: activeSystemTempPreset,
+            activeUserTemperaturePresetName: activeUserTempPresetName,
           );
         },
         orElse: () => const SmartCircadianData.neutral(),

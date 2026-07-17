@@ -811,7 +811,7 @@ abstract class AppLocalizations {
   /// No description provided for @temperatureBreakdownBase.
   ///
   /// In en, this message translates to:
-  /// **'Base Temperature'**
+  /// **'Base curve temperature'**
   String get temperatureBreakdownBase;
 
   /// No description provided for @temperatureBreakdownWeather.
@@ -1183,7 +1183,7 @@ abstract class AppLocalizations {
   /// No description provided for @circadianRegulation.
   ///
   /// In en, this message translates to:
-  /// **'Circadian Regulation'**
+  /// **'Brightness Regulation'**
   String get circadianRegulation;
 
   /// No description provided for @featureWindDown.
@@ -1422,7 +1422,7 @@ abstract class AppLocalizations {
   /// No description provided for @sunBase.
   ///
   /// In en, this message translates to:
-  /// **'Sun Base'**
+  /// **'Base curve brightness'**
   String get sunBase;
 
   /// No description provided for @finalValue.

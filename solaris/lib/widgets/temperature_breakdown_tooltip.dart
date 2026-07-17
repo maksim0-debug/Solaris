@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/l10n/app_localizations.dart';
+import 'package:solaris/models/preset_type.dart';
 import 'package:solaris/models/smart_circadian_data.dart';
 import 'package:solaris/widgets/weather_icon_helper.dart';
 
@@ -40,7 +41,7 @@ class TemperatureBreakdownTooltip extends StatelessWidget {
         children: [
           _buildRow(
             icon: LucideIcons.sun,
-            label: l10n.temperatureBreakdownBase,
+            label: '${l10n.temperatureBreakdownBase} [${_getPresetName(l10n, smartData)}]'.toUpperCase(),
             value: '${baseTemp} K',
             iconColor: const Color(0xFF818CF8), // Blue-Indigo for temp base
           ),
@@ -102,6 +103,26 @@ class TemperatureBreakdownTooltip extends StatelessWidget {
       preferBelow: false,
       child: child,
     );
+  }
+
+  String _getPresetName(AppLocalizations l10n, SmartCircadianData data) {
+    if (data.activeUserTemperaturePresetName != null) {
+      return data.activeUserTemperaturePresetName!;
+    }
+    switch (data.activeSystemTemperaturePreset) {
+      case TemperaturePresetType.coolest:
+        return l10n.tempCoolest;
+      case TemperaturePresetType.cool:
+        return l10n.tempCool;
+      case TemperaturePresetType.warm:
+        return l10n.tempWarm;
+      case TemperaturePresetType.warmest:
+        return l10n.tempWarmest;
+      case TemperaturePresetType.custom:
+        return l10n.tempCustom;
+      default:
+        return l10n.tempCool;
+    }
   }
 
   TextSpan _buildRow({

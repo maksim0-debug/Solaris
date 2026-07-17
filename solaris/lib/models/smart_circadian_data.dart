@@ -30,6 +30,8 @@ class SmartCircadianData extends Equatable {
   // Active Preset Information
   final PresetType? activeSystemPreset;
   final String? activeUserPresetName;
+  final TemperaturePresetType? activeSystemTemperaturePreset;
+  final String? activeUserTemperaturePresetName;
 
   // Temperature Factor Breakdown (filled by smartCircadianTemperatureDataProvider)
   final int sleepDebtTemperatureOffset;
@@ -66,6 +68,8 @@ class SmartCircadianData extends Equatable {
     this.weatherAbsoluteImpact = 0.0,
     this.activeSystemPreset,
     this.activeUserPresetName,
+    this.activeSystemTemperaturePreset,
+    this.activeUserTemperaturePresetName,
     this.sleepDebtTemperatureOffset = 0,
     this.windDownTemperatureOffset = 0,
     this.sleepPressureTemperatureOffset = 0,
@@ -101,6 +105,8 @@ class SmartCircadianData extends Equatable {
       weatherAbsoluteImpact = 0.0,
       activeSystemPreset = null,
       activeUserPresetName = null,
+      activeSystemTemperaturePreset = null,
+      activeUserTemperaturePresetName = null,
       sleepDebtTemperatureOffset = 0,
       windDownTemperatureOffset = 0,
       sleepPressureTemperatureOffset = 0,
@@ -136,6 +142,8 @@ class SmartCircadianData extends Equatable {
     weatherCode,
     activeSystemPreset,
     activeUserPresetName,
+    activeSystemTemperaturePreset,
+    activeUserTemperaturePresetName,
     sleepDebtTemperatureOffset,
     windDownTemperatureOffset,
     sleepPressureTemperatureOffset,
@@ -171,6 +179,8 @@ class SmartCircadianData extends Equatable {
     int? weatherCode,
     PresetType? activeSystemPreset,
     String? activeUserPresetName,
+    TemperaturePresetType? activeSystemTemperaturePreset,
+    String? activeUserTemperaturePresetName,
     int? sleepDebtTemperatureOffset,
     int? windDownTemperatureOffset,
     int? sleepPressureTemperatureOffset,
@@ -212,6 +222,10 @@ class SmartCircadianData extends Equatable {
       weatherCode: weatherCode ?? this.weatherCode,
       activeSystemPreset: activeSystemPreset ?? this.activeSystemPreset,
       activeUserPresetName: activeUserPresetName ?? this.activeUserPresetName,
+      activeSystemTemperaturePreset:
+          activeSystemTemperaturePreset ?? this.activeSystemTemperaturePreset,
+      activeUserTemperaturePresetName:
+          activeUserTemperaturePresetName ?? this.activeUserTemperaturePresetName,
       sleepDebtTemperatureOffset:
           sleepDebtTemperatureOffset ?? this.sleepDebtTemperatureOffset,
       windDownTemperatureOffset:

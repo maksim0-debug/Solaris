@@ -409,7 +409,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get temperatureRegulationTitle => 'Temperature Regulation';
 
   @override
-  String get temperatureBreakdownBase => 'Base Temperature';
+  String get temperatureBreakdownBase => 'Base curve temperature';
 
   @override
   String get temperatureBreakdownWeather => 'Weather (reduction)';
@@ -604,7 +604,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Dynamic correction based on Google Fit sleep data (wind-down, bio-morning, sleep debt)';
 
   @override
-  String get circadianRegulation => 'Circadian Regulation';
+  String get circadianRegulation => 'Brightness Regulation';
 
   @override
   String get featureWindDown => 'Wind-down Phase';
@@ -739,7 +739,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get blacklistSubtitle => 'Ignore even if fullscreen';
 
   @override
-  String get sunBase => 'Sun Base';
+  String get sunBase => 'Base curve brightness';
 
   @override
   String get finalValue => 'Final';
