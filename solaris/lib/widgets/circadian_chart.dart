@@ -85,6 +85,8 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
     ); // Get solar data
     final weatherAsync = ref.watch(currentWeatherProvider);
     final circadianService = ref.read(circadianServiceProvider);
+    final currentTimeAsync = ref.watch(currentTimeProvider);
+    final now = currentTimeAsync.value ?? DateTime.now();
 
     final selectedIds = ref.watch(selectedMonitorsProvider);
     final settingsMap = ref.watch(settingsProvider).value;
@@ -129,7 +131,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
         final drop = circadianService.weatherAdjustmentService
             .calculateWeatherTemperatureDrop(
               weather: weatherAsync.value!,
-              now: DateTime.now(),
+              now: now,
               phases: solarAsync.value!.phases,
               intensity: currentSettings.weatherAdjustmentIntensity,
             );

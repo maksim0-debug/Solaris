@@ -57,14 +57,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updatePosition => 'Update Position';
 
   @override
-  String get precisionGps => 'Precision GPS';
-
-  @override
-  String get gpsSubtitle =>
-      'High-precision location services for solar-tracking hardware integration.';
-
-  @override
-  String get statusConnected => 'Status: Connected';
+  String get autoDetectSubtitle =>
+      'Automatically detect location via system services or IP';
 
   @override
   String get currentAnchor => 'CURRENT ANCHOR';

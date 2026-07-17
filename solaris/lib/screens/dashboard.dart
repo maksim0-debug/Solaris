@@ -361,6 +361,7 @@ class _Header extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final timeAsync = ref.watch<AsyncValue<DateTime>>(currentTimeProvider);
+    final now = timeAsync.value ?? DateTime.now();
     final solarAsync = ref.watch(solarStateStreamProvider);
     final timeService = ref.watch(timeServiceProvider);
     final monitorListNotifier = ref.read(monitorListProvider.notifier);
@@ -428,7 +429,23 @@ class _Header extends ConsumerWidget {
 
     // Initial sync when monitors are detected
     ref.listen(monitorListProvider, (previous, next) {
-      if (next.hasValue && !next.isLoading) {
+      final wasLoading = previous == null || previous.isLoading || !previous.hasValue;
+      final isReady = next.hasValue && !next.isLoading;
+
+      // Sync if it is the first load, or if the list of monitors actually changed (e.g. plugged/unplugged device)
+      bool monitorsChanged = false;
+      if (previous?.hasValue == true && next.hasValue) {
+        final prevIds = previous!.value!.map((m) => m.deviceName).toSet();
+        final nextIds = next.value!.map((m) => m.deviceName).toSet();
+        if (prevIds.length != nextIds.length || !prevIds.containsAll(nextIds)) {
+          monitorsChanged = true;
+        }
+      }
+
+      if ((wasLoading && isReady) || monitorsChanged) {
+        debugPrint('[Dashboard ref.listen] monitorListProvider updated (Initial Sync). '
+            'HasValue: ${next.hasValue}, IsLoading: ${next.isLoading}. '
+            'Previous identity matches next: ${identical(previous?.value, next.value)}');
         final selection = ref.read(selectedMonitorsProvider);
         final monitors = next.value ?? [];
 
@@ -541,7 +558,6 @@ class _Header extends ConsumerWidget {
     String nextEventTime = l10n.calculating;
 
     solarAsync.whenData((state) {
-      final now = DateTime.now();
       final timeStr = timeService.formatCountdown(state.timeUntilNextEvent);
 
       // Helper to get localized event name
@@ -702,6 +718,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
     final l10n = AppLocalizations.of(context)!;
     final solarAsync = ref.watch(solarStateStreamProvider);
     final timeService = ref.watch(timeServiceProvider);
+    final now = ref.watch(currentTimeProvider).value ?? DateTime.now();
     final baseBrightness = ref.watch(currentBrightnessProvider);
     final currentTemperature = ref.watch(currentTemperatureProvider);
     final selection = ref.watch(selectedMonitorsProvider);
@@ -805,7 +822,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                 data: (s) => s.sunProgress,
                                 orElse: () {
                                   // Safe approximate progress for startup to avoid "sun flash"
-                                  final hour = DateTime.now().hour;
+                                  final hour = now.hour;
                                   if (hour >= 21 || hour < 5)
                                     return -0.5; // Night
                                   if (hour >= 5 && hour < 7)
@@ -959,7 +976,6 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                           Text(
                             solarAsync.maybeWhen(
                               data: (state) {
-                                final now = DateTime.now();
                                 final timeStr = timeService.formatCountdown(
                                   state.timeUntilNextEvent,
                                 );

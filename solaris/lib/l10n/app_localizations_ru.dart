@@ -58,14 +58,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get updatePosition => 'Обновить позицию';
 
   @override
-  String get precisionGps => 'Прецизионный GPS';
-
-  @override
-  String get gpsSubtitle =>
-      'Высокоточное определение местоположения для интеграции с оборудованием слежения за солнцем.';
-
-  @override
-  String get statusConnected => 'Статус: Подключено';
+  String get autoDetectSubtitle =>
+      'Автоматически определять местоположение по системным службам или IP';
 
   @override
   String get currentAnchor => 'ТЕКУЩИЙ ЯКОРЬ';

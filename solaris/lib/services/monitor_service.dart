@@ -108,8 +108,6 @@ class MonitorService {
         debugPrint('❌ [DDC/CI Debug] [$timing] Device: $deviceName | Target: $targetBrightness% | Real: Failed to read');
       } else if (real != targetBrightness) {
         debugPrint('⚠️ [DDC/CI Debug] [$timing] Device: $deviceName | MISMATCH! Target: $targetBrightness% | Real (DDC/CI): $real%');
-      } else {
-        debugPrint('✅ [DDC/CI Debug] [$timing] Device: $deviceName | MATCH! Target: $targetBrightness% | Real (DDC/CI): $real%');
       }
     });
   }

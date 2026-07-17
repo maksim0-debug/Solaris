@@ -58,14 +58,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get updatePosition => 'Оновити позицію';
 
   @override
-  String get precisionGps => 'Прецизійний GPS';
-
-  @override
-  String get gpsSubtitle =>
-      'Високоточне визначення місцезнаходження для інтеграції з обладнанням відстеження сонця.';
-
-  @override
-  String get statusConnected => 'Статус: Підключено';
+  String get autoDetectSubtitle =>
+      'Автоматично визначати місцеположення за системними службами або IP';
 
   @override
   String get currentAnchor => 'ПОТОЧНИЙ ЯКІР';

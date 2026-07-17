@@ -183,7 +183,7 @@ class SettingsSearchService {
       SettingItem(
         id: 'location_auto',
         title: l10n.autoDetect(''),
-        description: l10n.gpsSubtitle,
+        description: l10n.autoDetectSubtitle,
         tags: _splitTags(l10n.tags_location_auto),
         screen: AppScreen.location,
         anchorId: 'location_auto',

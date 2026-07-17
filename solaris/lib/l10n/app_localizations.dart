@@ -190,23 +190,11 @@ abstract class AppLocalizations {
   /// **'Update Position'**
   String get updatePosition;
 
-  /// No description provided for @precisionGps.
+  /// No description provided for @autoDetectSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Precision GPS'**
-  String get precisionGps;
-
-  /// No description provided for @gpsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'High-precision location services for solar-tracking hardware integration.'**
-  String get gpsSubtitle;
-
-  /// No description provided for @statusConnected.
-  ///
-  /// In en, this message translates to:
-  /// **'Status: Connected'**
-  String get statusConnected;
+  /// **'Automatically detect location via system services or IP'**
+  String get autoDetectSubtitle;
 
   /// No description provided for @currentAnchor.
   ///

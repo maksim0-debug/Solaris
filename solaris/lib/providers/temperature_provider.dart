@@ -412,6 +412,8 @@ class CurrentTemperatureNotifier extends Notifier<int> {
       final monitorIds = ref.watch(selectedMonitorsProvider);
       final settingsAsync = ref.watch(settingsProvider);
 
+      final now = ref.watch(minuteTimeProvider).value ?? DateTime.now();
+
       final id = monitorIds.firstOrNull ?? 'all';
 
       final globalSettings = settingsAsync.maybeWhen(
@@ -441,7 +443,7 @@ class CurrentTemperatureNotifier extends Notifier<int> {
                 final pos = locationAsync.value;
                 if (pos != null) {
                   final sunService = ref.read(sunCalculatorServiceProvider);
-                  final shiftedTime = DateTime.now().subtract(
+                  final shiftedTime = now.subtract(
                     smartData.timeOffset,
                   );
                   effectiveElevation = sunService.getSunElevation(
@@ -459,7 +461,7 @@ class CurrentTemperatureNotifier extends Notifier<int> {
               final result = circadianService.calculateTargetTemperature(
                 state.phases,
                 effectiveElevation,
-                DateTime.now(),
+                now,
                 curvePoints: tempSettings.curvePoints,
                 weather: globalSettings.isWeatherTemperatureAdjustmentEnabled
                     ? weatherAsync.value

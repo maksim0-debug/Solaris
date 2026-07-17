@@ -145,7 +145,7 @@ class LuminosityGraph extends StatelessWidget {
 
   List<FlSpot> _generateSpots() {
     List<FlSpot> spots = [];
-    final now = DateTime.now();
+    final now = phases.sunrise;
     final startOfDay = DateTime(now.year, now.month, now.day); // Полночь
 
     // Считаем высоту солнца каждые 30 минут (0.5 часа) для идеальной кривой

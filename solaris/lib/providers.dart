@@ -8,6 +8,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:solaris/services/location_service.dart';
 import 'package:solaris/services/time_service.dart';
+import 'package:lat_lng_to_timezone/lat_lng_to_timezone.dart' as tzmap;
+import 'package:timezone/timezone.dart' as tz;
 import 'package:solaris/services/monitor_service.dart';
 import 'package:solaris/services/circadian_service.dart';
 import 'package:solaris/services/sun_calculator_service.dart';
@@ -91,7 +93,8 @@ final gamingModeServiceProvider = Provider<GamingModeService>((ref) {
 });
 
 final minuteTimeProvider = StreamProvider<DateTime>((ref) {
-  final now = DateTime.now();
+  final timezoneVal = ref.watch(effectiveTimezoneProvider);
+  final now = tz.TZDateTime.now(timezoneVal);
   final delayUntilNextMinute = Duration(
     seconds: 60 - now.second,
     milliseconds: 1000 - now.millisecond,
@@ -104,9 +107,13 @@ final minuteTimeProvider = StreamProvider<DateTime>((ref) {
 
   Timer? timer;
   Timer(delayUntilNextMinute, () {
-    if (!controller.isClosed) controller.add(DateTime.now());
+    if (!controller.isClosed) {
+      controller.add(tz.TZDateTime.now(timezoneVal));
+    }
     timer = Timer.periodic(const Duration(minutes: 1), (_) {
-      if (!controller.isClosed) controller.add(DateTime.now());
+      if (!controller.isClosed) {
+        controller.add(tz.TZDateTime.now(timezoneVal));
+      }
     });
   });
 
@@ -523,8 +530,49 @@ final effectiveLocationProvider = Provider<AsyncValue<Position>>((ref) {
   return AsyncData(_defaultPosition);
 });
 
+final coordinatesAvailableProvider = Provider<bool>((ref) {
+  final settingsAsync = ref.watch(locationSettingsProvider);
+  final streamAsync = ref.watch(locationStreamProvider);
+
+  final settings = settingsAsync.value;
+  if (settings == null) return false;
+
+  if (settings.useManual &&
+      settings.manualLatitude != null &&
+      settings.manualLongitude != null) {
+    return true;
+  }
+
+  return streamAsync.hasValue && streamAsync.value != null;
+});
+
+final effectiveTimezoneProvider = Provider<tz.Location>((ref) {
+  final locationAvailable = ref.watch(coordinatesAvailableProvider);
+  if (!locationAvailable) {
+    return tz.local;
+  }
+
+  final locationAsync = ref.watch(effectiveLocationProvider);
+  final pos = locationAsync.value;
+  if (pos == null) {
+    return tz.local;
+  }
+
+  try {
+    var tzName = tzmap.latLngToTimezoneString(pos.latitude, pos.longitude);
+    if (tzName == 'Europe/Kiev') {
+      tzName = 'Europe/Kyiv';
+    }
+    return tz.getLocation(tzName);
+  } catch (e) {
+    debugPrint('Error looking up timezone for ${pos.latitude}, ${pos.longitude}: $e');
+    return tz.local;
+  }
+});
+
 final currentTimeProvider = StreamProvider<DateTime>((ref) async* {
   final visibility = ref.watch(appLifecycleProvider);
+  final timezoneVal = ref.watch(effectiveTimezoneProvider);
 
   // Adaptive delay for clock updates: 1s if visible, 1m if hidden
   final delay = visibility == AppVisibilityState.visible
@@ -532,7 +580,7 @@ final currentTimeProvider = StreamProvider<DateTime>((ref) async* {
       : const Duration(minutes: 1);
 
   while (true) {
-    yield DateTime.now();
+    yield tz.TZDateTime.now(timezoneVal);
     await Future<void>.delayed(delay);
   }
 });
@@ -547,6 +595,7 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
   final locationAsync = ref.watch(effectiveLocationProvider);
   final weatherAsync = ref.watch(currentWeatherProvider);
   final visibility = ref.watch(appLifecycleProvider);
+  final timezoneVal = ref.watch(effectiveTimezoneProvider);
 
   // Use location from provider, or default to Kyiv if loading
   final pos = locationAsync.value;
@@ -554,10 +603,11 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
   final lon = pos?.longitude ?? 30.52;
 
   // Initial calculation
-  SolarPhaseModel phases = await service.calculatePhases(lat, lon);
+  SolarPhaseModel phases = await service.calculatePhases(lat, lon, null, timezoneVal);
 
   // Current day tracker to trigger daily recalculation at midnight
-  int currentDay = DateTime.now().day;
+  final initialNow = tz.TZDateTime.now(timezoneVal);
+  int currentDay = initialNow.day;
 
   // Previous values for trend calculation
   double? prevAzimuth;
@@ -571,7 +621,6 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
   };
 
   // Immediate rough calculation to avoid "sun flash" at startup
-  final initialNow = DateTime.now();
   final roughElevation = service.getSunElevation(lat, lon, initialNow);
   final roughAzimuth = service.getSunAzimuth(lat, lon, initialNow);
   final roughProgress = service.getSunProgress(phases, initialNow);
@@ -593,11 +642,11 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
   );
 
   while (true) {
-    final now = DateTime.now();
+    final now = tz.TZDateTime.now(timezoneVal);
 
     // Check for day change
     if (now.day != currentDay) {
-      phases = await service.calculatePhases(lat, lon, now);
+      phases = await service.calculatePhases(lat, lon, now, timezoneVal);
       currentDay = now.day;
     }
 
@@ -738,6 +787,9 @@ class MonitorListNotifier extends AsyncNotifier<List<MonitorInfo>> {
           final newTemperature = temperature ?? m.realTemperature;
           if (newBrightness != m.realBrightness ||
               newTemperature != m.realTemperature) {
+            debugPrint('[MonitorListNotifier] State will change for $deviceName. '
+                'Old brightness: ${m.realBrightness}, new: $newBrightness. '
+                'Old temp: ${m.realTemperature}, new: $newTemperature.');
             changed = true;
             return MonitorInfo(
               name: m.name,

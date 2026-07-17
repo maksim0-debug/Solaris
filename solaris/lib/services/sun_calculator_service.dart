@@ -5,6 +5,8 @@ import 'package:solar_calculator/src/sunriseSunsetCalculator.dart';
 import '../models/solar_phase_model.dart';
 import '../models/current_day_phase.dart';
 
+import 'package:timezone/timezone.dart' as tz;
+
 /// Service for calculating solar phases based on location and time.
 class SunCalculatorService {
   static final SunCalculatorService _instance =
@@ -26,6 +28,7 @@ class SunCalculatorService {
     double lat,
     double lon, [
     DateTime? date,
+    tz.Location? timezone,
   ]) async {
     final targetDate = (date ?? DateTime.now()).toUtc();
     final dateOnly = DateTime.utc(
@@ -82,29 +85,27 @@ class SunCalculatorService {
       sunZenithDistance: 94.0,
     ).calculateSunset();
 
+    DateTime adjust(Instant instant) {
+      final utcTime = instant.toUtcDateTime();
+      if (timezone != null) {
+        return tz.TZDateTime.from(utcTime, timezone);
+      }
+      return utcTime.toLocal();
+    }
+
     final model = SolarPhaseModel(
-      sunrise: solarCalc.sunriseTime.toUtcDateTime().toLocal(),
-      sunset: solarCalc.sunsetTime.toUtcDateTime().toLocal(),
-      goldenHourMorning: morningGoldenStart.toUtcDateTime().toLocal(),
-      goldenHourMorningEnd: morningGoldenEnd.toUtcDateTime().toLocal(),
-      goldenHourEvening: eveningGoldenStart.toUtcDateTime().toLocal(),
-      goldenHourEveningEnd: eveningGoldenEnd.toUtcDateTime().toLocal(),
-      civilTwilightBegin: solarCalc.morningCivilTwilight.begining
-          .toUtcDateTime()
-          .toLocal(),
-      civilTwilightEnd: solarCalc.eveningCivilTwilight.ending
-          .toUtcDateTime()
-          .toLocal(),
-      astronomicalDawn: solarCalc.morningAstronomicalTwilight.begining
-          .toUtcDateTime()
-          .toLocal(),
-      civilDusk: solarCalc.eveningCivilTwilight.ending
-          .toUtcDateTime()
-          .toLocal(),
-      solarNoon: solarCalc.sunTransitTime.toUtcDateTime().toLocal(),
-      astronomicalDusk: solarCalc.eveningAstronomicalTwilight.ending
-          .toUtcDateTime()
-          .toLocal(),
+      sunrise: adjust(solarCalc.sunriseTime),
+      sunset: adjust(solarCalc.sunsetTime),
+      goldenHourMorning: adjust(morningGoldenStart),
+      goldenHourMorningEnd: adjust(morningGoldenEnd),
+      goldenHourEvening: adjust(eveningGoldenStart),
+      goldenHourEveningEnd: adjust(eveningGoldenEnd),
+      civilTwilightBegin: adjust(solarCalc.morningCivilTwilight.begining),
+      civilTwilightEnd: adjust(solarCalc.eveningCivilTwilight.ending),
+      astronomicalDawn: adjust(solarCalc.morningAstronomicalTwilight.begining),
+      civilDusk: adjust(solarCalc.eveningCivilTwilight.ending),
+      solarNoon: adjust(solarCalc.sunTransitTime),
+      astronomicalDusk: adjust(solarCalc.eveningAstronomicalTwilight.ending),
     );
 
     // Update cache
