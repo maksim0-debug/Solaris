@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/l10n/app_localizations.dart';
@@ -104,6 +105,10 @@ class _SleepScreenState extends ConsumerState<SleepScreen> {
               sleepState: sleepState,
             ),
           ),
+          const SizedBox(height: 24),
+
+          // Sleep Integration API Settings
+          const _LocalIpcServerCard(),
           const SizedBox(height: 24),
 
           // Circadian Regulation Section
@@ -1343,6 +1348,258 @@ class _AnalysisSlider extends StatelessWidget {
             divisions: (max - min).toInt() > 0 ? (max - min).toInt() : null,
             onChanged: onChanged,
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LocalIpcServerCard extends ConsumerStatefulWidget {
+  const _LocalIpcServerCard();
+
+  @override
+  ConsumerState<_LocalIpcServerCard> createState() => _LocalIpcServerCardState();
+}
+
+class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final settingsAsync = ref.watch(settingsProvider);
+
+    return GlassCard(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            onTap: () => setState(() => _isExpanded = !_isExpanded),
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFA78BFA).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      LucideIcons.server,
+                      color: Color(0xFFA78BFA),
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.sleepIntegrationTitle,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          l10n.sleepIntegrationSubtitle,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white.withOpacity(0.5),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Icon(
+                    _isExpanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
+                    color: Colors.white60,
+                    size: 20,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            firstChild: const SizedBox(width: double.infinity),
+            secondChild: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 24),
+                _SettingsRow(
+                  title: l10n.enableLocalIpcServer,
+                  subtitle: l10n.enableLocalIpcServerSubtitle,
+                  value: settingsAsync.maybeWhen(
+                    data: (map) => map['all']?.isLocalIpcServerEnabled ?? true,
+                    orElse: () => true,
+                  ),
+                  onChanged: (val) =>
+                      ref.read(settingsProvider.notifier).updateLocalIpcServerEnabled(val),
+                ),
+                if (settingsAsync.maybeWhen(
+                  data: (map) => map['all']?.isLocalIpcServerEnabled ?? true,
+                  orElse: () => true,
+                )) ...[
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.serverPort,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white70,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              l10n.serverPortSubtitle,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.white.withOpacity(0.4),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(
+                        width: 100,
+                        child: TextField(
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Color(0xFFA78BFA)),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          controller: TextEditingController(
+                            text: settingsAsync.maybeWhen(
+                              data: (map) => (map['all']?.localIpcServerPort ?? 45321).toString(),
+                              orElse: () => '45321',
+                            ),
+                          )..selection = TextSelection.collapsed(
+                              offset: settingsAsync.maybeWhen(
+                                data: (map) => (map['all']?.localIpcServerPort ?? 45321).toString().length,
+                                orElse: () => 5,
+                              ),
+                            ),
+                          onSubmitted: (val) {
+                            final port = int.tryParse(val);
+                            if (port != null && port > 0 && port < 65535) {
+                              ref.read(settingsProvider.notifier).updateLocalIpcServerPort(port);
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final ipcService = ref.watch(localIpcServiceProvider);
+                      final isRunning = ipcService.isRunning;
+                      final activePort = ipcService.port;
+                      return Row(
+                        children: [
+                          Icon(
+                            isRunning ? LucideIcons.checkCircle : LucideIcons.alertCircle,
+                            color: isRunning ? Colors.greenAccent : Colors.redAccent,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            isRunning
+                                ? l10n.serverRunningStatus(activePort ?? 45321)
+                                : l10n.serverStoppedStatus,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isRunning ? Colors.greenAccent : Colors.redAccent,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ],
+            ),
+            crossFadeState:
+                _isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 300),
+            sizeCurve: Curves.easeInOut,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingsRow extends StatelessWidget {
+  const _SettingsRow({
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String title;
+  final String subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white70,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.white.withOpacity(0.4),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Switch(
+          value: value,
+          onChanged: onChanged,
+          activeColor: const Color(0xFFFDBA74),
         ),
       ],
     );

@@ -91,6 +91,8 @@ class SettingsState {
   final double weatherAdjustmentIntensity;
   final WeatherProvider weatherProvider;
   final StartupMode startupMode;
+  final bool isLocalIpcServerEnabled;
+  final int localIpcServerPort;
 
   SettingsState({
     this.activePreset = PresetType.bright,
@@ -163,6 +165,8 @@ class SettingsState {
     this.weatherAdjustmentIntensity = 0.45,
     this.weatherProvider = WeatherProvider.auto,
     this.startupMode = StartupMode.minimized,
+    this.isLocalIpcServerEnabled = true,
+    this.localIpcServerPort = 45321,
   }) : curvesMap = curvesMap ?? PresetConstants.getAllDefaults(),
        presetOrder =
            presetOrder ??
@@ -245,6 +249,8 @@ class SettingsState {
     'weatherAdjustmentIntensity': weatherAdjustmentIntensity,
     'weatherProvider': weatherProvider.toJson(),
     'startupMode': startupMode.toJson(),
+    'isLocalIpcServerEnabled': isLocalIpcServerEnabled,
+    'localIpcServerPort': localIpcServerPort,
   };
 
   factory SettingsState.fromJson(Map<String, dynamic> json) {
@@ -410,6 +416,8 @@ class SettingsState {
       startupMode: StartupMode.fromJson(
         json['startupMode'] as String? ?? 'minimized',
       ),
+      isLocalIpcServerEnabled: json['isLocalIpcServerEnabled'] as bool? ?? true,
+      localIpcServerPort: json['localIpcServerPort'] as int? ?? 45321,
     );
   }
 
@@ -470,6 +478,8 @@ class SettingsState {
     double? weatherAdjustmentIntensity,
     WeatherProvider? weatherProvider,
     StartupMode? startupMode,
+    bool? isLocalIpcServerEnabled,
+    int? localIpcServerPort,
     bool clearNextPresetHotKey = false,
     bool clearPrevPresetHotKey = false,
     bool clearBrightnessUpHotKey = false,
@@ -569,6 +579,9 @@ class SettingsState {
           weatherAdjustmentIntensity ?? this.weatherAdjustmentIntensity,
       weatherProvider: weatherProvider ?? this.weatherProvider,
       startupMode: startupMode ?? this.startupMode,
+      isLocalIpcServerEnabled:
+          isLocalIpcServerEnabled ?? this.isLocalIpcServerEnabled,
+      localIpcServerPort: localIpcServerPort ?? this.localIpcServerPort,
     );
   }
 }

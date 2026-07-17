@@ -274,6 +274,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 24),
 
+
+
           // Weather Settings
           DeepLinkTarget(
             key: _anchorKeys['weather_adjustment'],
@@ -1366,7 +1368,7 @@ class _SettingsRow extends StatelessWidget {
                 subtitle,
                 style: TextStyle(
                   fontSize: 11,
-                  color: Colors.white.withOpacity(0.3),
+                  color: Colors.white.withOpacity(0.4),
                 ),
               ),
             ],

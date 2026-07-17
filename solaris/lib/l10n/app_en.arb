@@ -588,5 +588,20 @@
   "fixSslCert": "Fix SSL Certificate",
   "sslFixInstruction": "To fix this, we need to trigger a Root Certificate update in Windows. Clicking the button below will open a secure link in your browser - simply visiting it often forces Windows to fetch the missing certificate.",
   "trayOpen": "Open Solaris",
-  "trayExit": "Exit"
+  "trayExit": "Exit",
+  "sleepIntegrationTitle": "Sleep Integration (Local API)",
+  "sleepIntegrationSubtitle": "Connection with external sleep trackers and APIs",
+  "enableLocalIpcServer": "Enable local API server",
+  "enableLocalIpcServerSubtitle": "Allows receiving sleep sessions on localhost port",
+  "serverPort": "Server Port",
+  "serverPortSubtitle": "Server will restart automatically when changed",
+  "serverRunningStatus": "Server is running on port {port}",
+  "@serverRunningStatus": {
+    "placeholders": {
+      "port": {
+        "type": "int"
+      }
+    }
+  },
+  "serverStoppedStatus": "Server stopped or port in use"
 }

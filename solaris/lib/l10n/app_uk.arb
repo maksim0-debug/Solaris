@@ -586,5 +586,20 @@
   "fixSslCert": "Виправити SSL сертифікат",
   "sslFixInstruction": "Для виправлення потрібно ініціювати оновлення кореневих сертифікатів у Windows. Натискання кнопки нижче відкриє безпечне посилання у вашому браузері — сам візит на цю сторінку часто змушує Windows завантажити відсутній сертифікат.",
   "trayOpen": "Відкрити",
-  "trayExit": "Вихід"
+  "trayExit": "Вихід",
+  "sleepIntegrationTitle": "Інтеграція сну (Локальний API)",
+  "sleepIntegrationSubtitle": "Зв'язок зі сторонніми трекерами сну та API",
+  "enableLocalIpcServer": "Увімкнути локальний API сервер",
+  "enableLocalIpcServerSubtitle": "Дозволяє приймати сесії сну на порту localhost",
+  "serverPort": "Порт сервера",
+  "serverPortSubtitle": "При зміні сервер перезапуститься автоматично",
+  "serverRunningStatus": "Сервер запущений на порту {port}",
+  "@serverRunningStatus": {
+    "placeholders": {
+      "port": {
+        "type": "int"
+      }
+    }
+  },
+  "serverStoppedStatus": "Сервер зупинено або порт зайнятий"
 }

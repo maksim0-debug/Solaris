@@ -588,5 +588,20 @@
   "fixSslCert": "Исправить SSL сертификат",
   "sslFixInstruction": "Для исправления нужно инициировать обновление корневых сертификатов в Windows. Нажатие кнопки ниже откроет защищенную ссылку в вашем браузере — сам визит на эту страницу часто заставляет Windows загрузить недостающий сертификат.",
   "trayOpen": "Открыть Solaris",
-  "trayExit": "Выход"
+  "trayExit": "Выход",
+  "sleepIntegrationTitle": "Интеграция сна (Локальный API)",
+  "sleepIntegrationSubtitle": "Связь со сторонними трекерами сна и API",
+  "enableLocalIpcServer": "Включить локальный API сервер",
+  "enableLocalIpcServerSubtitle": "Позволяет принимать сессии сна на порту localhost",
+  "serverPort": "Порт сервера",
+  "serverPortSubtitle": "При изменении сервер перезапустится автоматически",
+  "serverRunningStatus": "Сервер запущен на порту {port}",
+  "@serverRunningStatus": {
+    "placeholders": {
+      "port": {
+        "type": "int"
+      }
+    }
+  },
+  "serverStoppedStatus": "Сервер остановлен или порт занят"
 }

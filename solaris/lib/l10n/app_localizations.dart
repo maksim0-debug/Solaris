@@ -2177,6 +2177,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Exit'**
   String get trayExit;
+
+  /// No description provided for @sleepIntegrationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep Integration (Local API)'**
+  String get sleepIntegrationTitle;
+
+  /// No description provided for @sleepIntegrationSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection with external sleep trackers and APIs'**
+  String get sleepIntegrationSubtitle;
+
+  /// No description provided for @enableLocalIpcServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable local API server'**
+  String get enableLocalIpcServer;
+
+  /// No description provided for @enableLocalIpcServerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Allows receiving sleep sessions on localhost port'**
+  String get enableLocalIpcServerSubtitle;
+
+  /// No description provided for @serverPort.
+  ///
+  /// In en, this message translates to:
+  /// **'Server Port'**
+  String get serverPort;
+
+  /// No description provided for @serverPortSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Server will restart automatically when changed'**
+  String get serverPortSubtitle;
+
+  /// No description provided for @serverRunningStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Server is running on port {port}'**
+  String serverRunningStatus(int port);
+
+  /// No description provided for @serverStoppedStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Server stopped or port in use'**
+  String get serverStoppedStatus;
 }
 
 class _AppLocalizationsDelegate

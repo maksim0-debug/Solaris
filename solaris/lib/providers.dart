@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:ui';
 import 'package:solaris/env/env.dart';
+import 'package:solaris/services/local_ipc_service.dart';
 
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -45,6 +46,45 @@ final smartCircadianServiceProvider = Provider<SmartCircadianService>(
   (ref) => SmartCircadianService(),
 );
 final mapHealthServiceProvider = Provider((ref) => MapHealthService());
+
+final localIpcServiceProvider = Provider((ref) {
+  final service = LocalIpcService(ref);
+  
+  ref.listen<AsyncValue<Map<String, SettingsState>>>(
+    settingsProvider,
+    (previous, next) {
+      next.whenData((settingsMap) async {
+        final settings = settingsMap['all'];
+        final prevSettings = previous?.value?['all'];
+        if (settings != null) {
+          final isEnabled = settings.isLocalIpcServerEnabled;
+          final port = settings.localIpcServerPort;
+          final prevPort = prevSettings?.localIpcServerPort;
+
+          if (isEnabled) {
+            if (!service.isRunning) {
+              await service.start();
+            } else if (port != prevPort) {
+              await service.stop();
+              await service.start();
+            }
+          } else {
+            if (service.isRunning) {
+              await service.stop();
+            }
+          }
+        }
+      });
+    },
+    fireImmediately: true,
+  );
+
+  ref.onDispose(() {
+    service.stop();
+  });
+
+  return service;
+});
 
 final gamingModeServiceProvider = Provider<GamingModeService>((ref) {
   return ref.watch<GamingModeService>(gamingModeProvider.notifier);
@@ -1234,6 +1274,20 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     ref
         .read(temperatureSettingsProvider.notifier)
         .updateSmartCircadian(enabled);
+  }
+
+  void updateLocalIpcServerEnabled(bool enabled) {
+    _updateSettings(
+      {'all'},
+      (s) => s.copyWith(isLocalIpcServerEnabled: enabled),
+    );
+  }
+
+  void updateLocalIpcServerPort(int port) {
+    _updateSettings(
+      {'all'},
+      (s) => s.copyWith(localIpcServerPort: port),
+    );
   }
 
   void updateWindDownMaster(bool enabled) {

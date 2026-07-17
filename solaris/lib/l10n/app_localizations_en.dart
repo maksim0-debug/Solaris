@@ -1191,4 +1191,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get trayExit => 'Exit';
+
+  @override
+  String get sleepIntegrationTitle => 'Sleep Integration (Local API)';
+
+  @override
+  String get sleepIntegrationSubtitle =>
+      'Connection with external sleep trackers and APIs';
+
+  @override
+  String get enableLocalIpcServer => 'Enable local API server';
+
+  @override
+  String get enableLocalIpcServerSubtitle =>
+      'Allows receiving sleep sessions on localhost port';
+
+  @override
+  String get serverPort => 'Server Port';
+
+  @override
+  String get serverPortSubtitle =>
+      'Server will restart automatically when changed';
+
+  @override
+  String serverRunningStatus(int port) {
+    return 'Server is running on port $port';
+  }
+
+  @override
+  String get serverStoppedStatus => 'Server stopped or port in use';
 }

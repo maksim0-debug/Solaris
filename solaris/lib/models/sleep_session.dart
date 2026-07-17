@@ -26,6 +26,8 @@ class SleepSession extends Equatable {
   final String? description;
   final List<SleepSegment> segments;
 
+  final String source;
+
   const SleepSession({
     required this.id,
     required this.startTime,
@@ -33,6 +35,7 @@ class SleepSession extends Equatable {
     this.title,
     this.description,
     this.segments = const [],
+    this.source = 'google_fit',
   });
 
   Duration get duration => endTime.difference(startTime);
@@ -44,6 +47,7 @@ class SleepSession extends Equatable {
     'title': title,
     'description': description,
     'segments': segments.map((s) => s.toJson()).toList(),
+    'source': source,
   };
 
   factory SleepSession.fromJson(Map<String, dynamic> json) => SleepSession(
@@ -57,6 +61,7 @@ class SleepSession extends Equatable {
             ?.map((s) => SleepSegment.fromJson(s as Map<String, dynamic>))
             .toList() ??
         [],
+    source: json['source'] as String? ?? 'google_fit',
   );
 
   @override
@@ -67,6 +72,7 @@ class SleepSession extends Equatable {
     title,
     description,
     segments,
+    source,
   ];
 }
 

@@ -31,7 +31,7 @@ class SleepService {
 
       if (googleFitSessions != null) {
         final sleepSessions = _mapToSleepSessions(googleFitSessions);
-        await _cacheSleepData(sleepSessions);
+        await cacheSleepData(sleepSessions);
         return (sessions: sleepSessions, isLive: true);
       } else if (forceNetwork) {
         // If forceNetwork is true, we should not fall back to cache quietly
@@ -69,7 +69,7 @@ class SleepService {
     }).toList();
   }
 
-  Future<void> _cacheSleepData(List<SleepSession> sessions) async {
+  Future<void> cacheSleepData(List<SleepSession> sessions) async {
     try {
       final jsonStr = jsonEncode(sessions.map((s) => s.toJson()).toList());
       await _storage.save(_cacheFilename, jsonStr);

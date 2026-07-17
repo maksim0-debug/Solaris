@@ -64,6 +64,7 @@ class SleepNotifier extends Notifier<SleepState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final result = await _sleepService.fetchSleepData(forceNetwork: false);
+      if (!ref.mounted) return;
       final sessions = result.sessions;
 
       if (sessions.isNotEmpty) {
@@ -76,11 +77,92 @@ class SleepNotifier extends Notifier<SleepState> {
       debugPrint('Error loading initial sleep data: $e');
     }
 
+    if (!ref.mounted) return;
     final gState = ref.read(googleFitProvider);
     if (gState.status == GoogleFitStatus.connected) {
       syncWithGoogleFit(forceSync: false);
     } else {
       state = state.copyWith(isLoading: false);
+    }
+  }
+
+  /// Checks if two sleep sessions overlap in time (with 1-hour buffer).
+  bool _areSessionsOverlapping(SleepSession a, SleepSession b) {
+    final aStart = a.startTime.subtract(const Duration(hours: 1));
+    final aEnd = a.endTime.add(const Duration(hours: 1));
+    final bStart = b.startTime;
+    final bEnd = b.endTime;
+
+    return aStart.isBefore(bEnd) && aEnd.isAfter(bStart);
+  }
+
+  /// Merges existing and incoming sleep sessions, deduplicating overlapping ones.
+  /// Gives absolute priority to 'local_api' source over 'google_fit'.
+  List<SleepSession> _mergeAndDeduplicate(
+    List<SleepSession> existing,
+    List<SleepSession> incoming,
+  ) {
+    final merged = <String, SleepSession>{};
+
+    for (final s in existing) {
+      merged[s.id] = s;
+    }
+
+    for (final s in incoming) {
+      final existingSession = merged[s.id];
+      // Overwrite if it is a new ID or if new session is local_api (override google_fit)
+      if (existingSession == null || s.source == 'local_api' || existingSession.source != 'local_api') {
+        merged[s.id] = s;
+      }
+    }
+
+    final list = merged.values.toList();
+    final localSessions = list.where((s) => s.source == 'local_api').toList();
+    final deduplicated = <SleepSession>[];
+
+    for (final s in list) {
+      if (s.source == 'local_api') {
+        deduplicated.add(s);
+      } else {
+        // Discard google_fit session if it overlaps with any local_api session
+        bool overlaps = false;
+        for (final local in localSessions) {
+          if (_areSessionsOverlapping(s, local)) {
+            overlaps = true;
+            break;
+          }
+        }
+        if (!overlaps) {
+          deduplicated.add(s);
+        }
+      }
+    }
+
+    deduplicated.sort((a, b) => b.startTime.compareTo(a.startTime));
+    return deduplicated;
+  }
+
+  /// Updates sleep sessions with data received from the Local IPC server.
+  Future<void> updateSessionsFromIpc(List<SleepSession> newSessions) async {
+    state = state.copyWith(isSyncing: true, error: null);
+    try {
+      final merged = _mergeAndDeduplicate(state.sessions, newSessions);
+      await _sleepService.cacheSleepData(merged);
+      if (!ref.mounted) return;
+
+      state = state.copyWith(
+        sessions: merged,
+        isSyncing: false,
+        lastFetchTime: DateTime.now(),
+        error: null,
+      );
+    } catch (e) {
+      debugPrint('Error updating sleep sessions from IPC: $e');
+      if (!ref.mounted) return;
+      state = state.copyWith(
+        isSyncing: false,
+        error: 'Failed to save IPC sleep data: ${e.toString()}',
+      );
     }
   }
 
@@ -92,6 +174,7 @@ class SleepNotifier extends Notifier<SleepState> {
       final result = await _sleepService.fetchSleepData(
         forceNetwork: forceSync,
       );
+      if (!ref.mounted) return;
       final sessions = result.sessions;
 
       if (sessions.isEmpty && state.sessions.isEmpty) {
@@ -106,8 +189,12 @@ class SleepNotifier extends Notifier<SleepState> {
         final now = DateTime.now();
         ref.read(googleFitProvider.notifier).updateLastFetchTime(now);
 
+        final merged = _mergeAndDeduplicate(state.sessions, sessions);
+        await _sleepService.cacheSleepData(merged);
+        if (!ref.mounted) return;
+
         state = state.copyWith(
-          sessions: sessions,
+          sessions: merged,
           isSyncing: false,
           lastFetchTime: now,
           error: null,
@@ -116,6 +203,7 @@ class SleepNotifier extends Notifier<SleepState> {
         state = state.copyWith(isSyncing: false);
       }
     } catch (e) {
+      if (!ref.mounted) return;
       state = state.copyWith(
         isSyncing: false,
         error: forceSync ? "Sync failed: ${e.toString()}" : null,

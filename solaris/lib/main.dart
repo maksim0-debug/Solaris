@@ -128,6 +128,9 @@ void main(List<String> args) {
       // Initialize Hotkey Service
       await container.read(hotkeyServiceProvider).init();
 
+      // Start Local IPC (HTTP) Server for sleep integration
+      container.read(localIpcServiceProvider);
+
       // Initial localized Tray Labels
       final initialLocale = container.read(localeProvider);
       final initialL10n = await AppLocalizations.delegate.load(initialLocale);

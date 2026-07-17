@@ -1194,4 +1194,33 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get trayExit => 'Выход';
+
+  @override
+  String get sleepIntegrationTitle => 'Интеграция сна (Локальный API)';
+
+  @override
+  String get sleepIntegrationSubtitle =>
+      'Связь со сторонними трекерами сна и API';
+
+  @override
+  String get enableLocalIpcServer => 'Включить локальный API сервер';
+
+  @override
+  String get enableLocalIpcServerSubtitle =>
+      'Позволяет принимать сессии сна на порту localhost';
+
+  @override
+  String get serverPort => 'Порт сервера';
+
+  @override
+  String get serverPortSubtitle =>
+      'При изменении сервер перезапустится автоматически';
+
+  @override
+  String serverRunningStatus(int port) {
+    return 'Сервер запущен на порту $port';
+  }
+
+  @override
+  String get serverStoppedStatus => 'Сервер остановлен или порт занят';
 }
