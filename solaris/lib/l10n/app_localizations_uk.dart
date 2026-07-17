@@ -387,7 +387,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get weatherAdjustmentSubtitle =>
-      'Зниження яскравості в хмарну або дощову погоду';
+      'Автоматичне коригування екрана залежно від погодних умов';
 
   @override
   String get weatherBrightnessAdjustmentTitle =>
@@ -395,7 +395,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get weatherBrightnessAdjustmentSubtitle =>
-      'Зниження яскравості в похмуру або дощову погоду';
+      'Зниження яскравості в похмуру або дощову погоду для комфорту очей';
 
   @override
   String get weatherTemperatureAdjustmentTitle =>
@@ -403,7 +403,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get weatherTemperatureAdjustmentSubtitle =>
-      'Зниження колірної температури в похмуру погоду для відпочинку очей';
+      'Зниження колірної температури в похмуру або дощову погоду для відпочинку очей';
 
   @override
   String get temperatureRegulationTitle => 'Регуляція температури';

@@ -322,8 +322,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   const SizedBox(height: 24),
                   _SettingsRow(
-                    title: l10n.weatherAdjustmentTitle,
-                    subtitle: l10n.weatherAdjustmentSubtitle,
+                    title: l10n.weatherBrightnessAdjustmentTitle,
+                    subtitle: l10n.weatherBrightnessAdjustmentSubtitle,
                     value: settingsAsync.maybeWhen(
                       data: (map) =>
                           map[selectedIds.firstOrNull ?? 'all']
@@ -335,7 +335,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         .read(settingsProvider.notifier)
                         .updateWeatherAdjustment(val),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
+                  const Divider(color: Colors.white10),
+                  const SizedBox(height: 16),
                   _SettingsRow(
                     title: l10n.weatherTemperatureAdjustmentTitle,
                     subtitle: l10n.weatherTemperatureAdjustmentSubtitle,

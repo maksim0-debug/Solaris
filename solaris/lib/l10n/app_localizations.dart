@@ -775,7 +775,7 @@ abstract class AppLocalizations {
   /// No description provided for @weatherAdjustmentSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Reduce brightness in cloudy or rainy weather'**
+  /// **'Automatic screen adjustment based on local weather conditions'**
   String get weatherAdjustmentSubtitle;
 
   /// No description provided for @weatherBrightnessAdjustmentTitle.
@@ -787,7 +787,7 @@ abstract class AppLocalizations {
   /// No description provided for @weatherBrightnessAdjustmentSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Reduce brightness in cloudy or rainy weather'**
+  /// **'Reduce brightness in cloudy or rainy weather for eye comfort'**
   String get weatherBrightnessAdjustmentSubtitle;
 
   /// No description provided for @weatherTemperatureAdjustmentTitle.
@@ -799,7 +799,7 @@ abstract class AppLocalizations {
   /// No description provided for @weatherTemperatureAdjustmentSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Reduce color temperature in overcast weather to ease eye strain'**
+  /// **'Reduce color temperature in cloudy or rainy weather to ease eye strain'**
   String get weatherTemperatureAdjustmentSubtitle;
 
   /// No description provided for @temperatureRegulationTitle.

@@ -387,7 +387,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get weatherAdjustmentSubtitle =>
-      'Reduce brightness in cloudy or rainy weather';
+      'Automatic screen adjustment based on local weather conditions';
 
   @override
   String get weatherBrightnessAdjustmentTitle =>
@@ -395,7 +395,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get weatherBrightnessAdjustmentSubtitle =>
-      'Reduce brightness in cloudy or rainy weather';
+      'Reduce brightness in cloudy or rainy weather for eye comfort';
 
   @override
   String get weatherTemperatureAdjustmentTitle =>
@@ -403,7 +403,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get weatherTemperatureAdjustmentSubtitle =>
-      'Reduce color temperature in overcast weather to ease eye strain';
+      'Reduce color temperature in cloudy or rainy weather to ease eye strain';
 
   @override
   String get temperatureRegulationTitle => 'Temperature Regulation';

@@ -386,14 +386,14 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get weatherAdjustmentSubtitle =>
-      'Снижение яркости в облачную или дождливую погоду';
+      'Автоматическая коррекция экрана в зависимости от погодных условий';
 
   @override
   String get weatherBrightnessAdjustmentTitle => 'Адаптация яркости по погоде';
 
   @override
   String get weatherBrightnessAdjustmentSubtitle =>
-      'Снижение яркости в пасмурную или дождливую погоду';
+      'Снижение яркости в пасмурную или дождливую погоду для комфорта глаз';
 
   @override
   String get weatherTemperatureAdjustmentTitle =>
@@ -401,7 +401,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get weatherTemperatureAdjustmentSubtitle =>
-      'Снижение цветовой температуры в пасмурную погоду для отдыха глаз';
+      'Снижение цветовой температуры в пасмурную или дождливую погоду для отдыха глаз';
 
   @override
   String get temperatureRegulationTitle => 'Регуляция температуры';

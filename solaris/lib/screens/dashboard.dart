@@ -1132,7 +1132,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                 activeTempAdjustments.add(
                                   _SmartAdjustmentIndicator(
                                     icon: getWeatherIcon(smartDataTemp.weatherCode),
-                                    label: '${l10n.weatherBrightnessAdjustmentTitle}: ${impactK} K',
+                                    label: '${l10n.weatherTemperatureAdjustmentTitle}: ${impactK} K',
                                     iconColor: const Color(0xFF818CF8),
                                   ),
                                 );
