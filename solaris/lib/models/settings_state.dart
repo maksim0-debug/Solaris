@@ -40,6 +40,7 @@ class SettingsState {
   final double curveSharpness;
   final bool isAutorunEnabled;
   final bool isWeatherAdjustmentEnabled;
+  final bool isWeatherTemperatureAdjustmentEnabled;
   final bool isAutoBrightnessEnabled;
   final bool isSmartCircadianEnabled;
   final bool isSleepDebtEnabled;
@@ -54,6 +55,7 @@ class SettingsState {
   final double windDownTemperatureIntensity;
   final double timeShiftIntensity;
   final double sleepPressureBrightnessIntensity;
+  final double sleepPressureTemperatureIntensity;
   final double sleepDebtBrightnessIntensity;
   final double sleepDebtTemperatureIntensity;
   final int windDownDurationMinutes;
@@ -96,6 +98,7 @@ class SettingsState {
     this.curveSharpness = 1.0,
     this.isAutorunEnabled = true,
     this.isWeatherAdjustmentEnabled = true,
+    this.isWeatherTemperatureAdjustmentEnabled = true,
     this.isAutoBrightnessEnabled = true,
     this.isSmartCircadianEnabled = false,
     this.isSleepDebtEnabled = false,
@@ -110,6 +113,7 @@ class SettingsState {
     this.windDownTemperatureIntensity = 1.0,
     this.timeShiftIntensity = 1.0,
     this.sleepPressureBrightnessIntensity = 1.0,
+    this.sleepPressureTemperatureIntensity = 1.0,
     this.sleepDebtBrightnessIntensity = 1.0,
     this.sleepDebtTemperatureIntensity = 1.0,
     this.windDownDurationMinutes = 120,
@@ -190,6 +194,7 @@ class SettingsState {
     'curveSharpness': curveSharpness,
     'isAutorunEnabled': isAutorunEnabled,
     'isWeatherAdjustmentEnabled': isWeatherAdjustmentEnabled,
+    'isWeatherTemperatureAdjustmentEnabled': isWeatherTemperatureAdjustmentEnabled,
     'isAutoBrightnessEnabled': isAutoBrightnessEnabled,
     'isSmartCircadianEnabled': isSmartCircadianEnabled,
     'isSleepDebtEnabled': isSleepDebtEnabled,
@@ -204,6 +209,7 @@ class SettingsState {
     'windDownTemperatureIntensity': windDownTemperatureIntensity,
     'timeShiftIntensity': timeShiftIntensity,
     'sleepPressureBrightnessIntensity': sleepPressureBrightnessIntensity,
+    'sleepPressureTemperatureIntensity': sleepPressureTemperatureIntensity,
     'sleepDebtBrightnessIntensity': sleepDebtBrightnessIntensity,
     'sleepDebtTemperatureIntensity': sleepDebtTemperatureIntensity,
     'windDownDurationMinutes': windDownDurationMinutes,
@@ -288,6 +294,10 @@ class SettingsState {
       isAutorunEnabled: json['isAutorunEnabled'] as bool? ?? true,
       isWeatherAdjustmentEnabled:
           json['isWeatherAdjustmentEnabled'] as bool? ?? true,
+      isWeatherTemperatureAdjustmentEnabled:
+          json['isWeatherTemperatureAdjustmentEnabled'] as bool? ??
+          json['isWeatherAdjustmentEnabled'] as bool? ??
+          true,
       isAutoBrightnessEnabled: json['isAutoBrightnessEnabled'] as bool? ?? true,
       isSmartCircadianEnabled:
           json['isSmartCircadianEnabled'] as bool? ?? false,
@@ -310,6 +320,8 @@ class SettingsState {
           (json['timeShiftIntensity'] as num?)?.toDouble() ?? 1.0,
       sleepPressureBrightnessIntensity:
           (json['sleepPressureBrightnessIntensity'] as num?)?.toDouble() ?? 1.0,
+      sleepPressureTemperatureIntensity:
+          (json['sleepPressureTemperatureIntensity'] as num?)?.toDouble() ?? 1.0,
       sleepDebtBrightnessIntensity:
           (json['sleepDebtBrightnessIntensity'] as num?)?.toDouble() ?? 1.0,
       sleepDebtTemperatureIntensity:
@@ -407,6 +419,7 @@ class SettingsState {
     double? curveSharpness,
     bool? isAutorunEnabled,
     bool? isWeatherAdjustmentEnabled,
+    bool? isWeatherTemperatureAdjustmentEnabled,
     bool? isAutoBrightnessEnabled,
     bool? isSmartCircadianEnabled,
     bool? isSleepDebtEnabled,
@@ -421,6 +434,7 @@ class SettingsState {
     double? windDownTemperatureIntensity,
     double? timeShiftIntensity,
     double? sleepPressureBrightnessIntensity,
+    double? sleepPressureTemperatureIntensity,
     double? sleepDebtBrightnessIntensity,
     double? sleepDebtTemperatureIntensity,
     int? windDownDurationMinutes,
@@ -470,6 +484,8 @@ class SettingsState {
       isAutorunEnabled: isAutorunEnabled ?? this.isAutorunEnabled,
       isWeatherAdjustmentEnabled:
           isWeatherAdjustmentEnabled ?? this.isWeatherAdjustmentEnabled,
+      isWeatherTemperatureAdjustmentEnabled:
+          isWeatherTemperatureAdjustmentEnabled ?? this.isWeatherTemperatureAdjustmentEnabled,
       isAutoBrightnessEnabled:
           isAutoBrightnessEnabled ?? this.isAutoBrightnessEnabled,
       isSmartCircadianEnabled:
@@ -495,6 +511,9 @@ class SettingsState {
       sleepPressureBrightnessIntensity:
           sleepPressureBrightnessIntensity ??
           this.sleepPressureBrightnessIntensity,
+      sleepPressureTemperatureIntensity:
+          sleepPressureTemperatureIntensity ??
+          this.sleepPressureTemperatureIntensity,
       sleepDebtBrightnessIntensity:
           sleepDebtBrightnessIntensity ?? this.sleepDebtBrightnessIntensity,
       sleepDebtTemperatureIntensity:

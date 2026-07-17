@@ -6,6 +6,7 @@ import 'package:solaris/models/temperature_state.dart';
 import 'package:solaris/models/preset_type.dart';
 import 'package:solaris/services/temperature_service.dart';
 import 'package:solaris/models/smart_circadian_data.dart';
+import 'package:solaris/models/settings_state.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 final temperatureServiceProvider = Provider((ref) => TemperatureService());
@@ -409,8 +410,14 @@ class CurrentTemperatureNotifier extends Notifier<int> {
       final tempSettingsAsync = ref.watch(temperatureSettingsProvider);
       final weatherAsync = ref.watch(currentWeatherProvider);
       final monitorIds = ref.watch(selectedMonitorsProvider);
+      final settingsAsync = ref.watch(settingsProvider);
 
       final id = monitorIds.firstOrNull ?? 'all';
+
+      final globalSettings = settingsAsync.maybeWhen(
+        data: (map) => map[id] ?? map['all'] ?? SettingsState(),
+        orElse: () => SettingsState(),
+      );
 
       return solarStateAsync.maybeWhen(
         data: (state) {
@@ -449,16 +456,19 @@ class CurrentTemperatureNotifier extends Notifier<int> {
                 }
               }
 
-              final target = circadianService.calculateTargetTemperature(
+              final result = circadianService.calculateTargetTemperature(
                 state.phases,
                 effectiveElevation,
                 DateTime.now(),
                 curvePoints: tempSettings.curvePoints,
-                weather: weatherAsync.value,
+                weather: globalSettings.isWeatherTemperatureAdjustmentEnabled
+                    ? weatherAsync.value
+                    : null,
+                weatherIntensity: globalSettings.weatherAdjustmentIntensity,
                 smartData: smartData,
               );
-              _saveTemperature(target);
-              return target;
+              _saveTemperature(result.finalTemperature);
+              return result.finalTemperature;
             },
             orElse: () => lastTemp,
           );

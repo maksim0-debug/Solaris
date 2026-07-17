@@ -24,6 +24,24 @@ class CircadianCalculationResult {
   });
 }
 
+class TemperatureCalculationResult {
+  final int baseTemperature;
+  final int weatherImpact;
+  final int sleepPressureImpact;
+  final int windDownImpact;
+  final int sleepDebtImpact;
+  final int finalTemperature;
+
+  TemperatureCalculationResult({
+    required this.baseTemperature,
+    this.weatherImpact = 0,
+    this.sleepPressureImpact = 0,
+    this.windDownImpact = 0,
+    this.sleepDebtImpact = 0,
+    required this.finalTemperature,
+  });
+}
+
 class CircadianService {
   final WeatherAdjustmentService weatherAdjustmentService =
       WeatherAdjustmentService();
@@ -124,38 +142,63 @@ class CircadianService {
     );
   }
 
-  int calculateTargetTemperature(
+  TemperatureCalculationResult calculateTargetTemperature(
     SolarPhaseModel phases,
     double elevation,
     DateTime now, {
     required List<FlSpot> curvePoints,
     WeatherData? weather,
+    double weatherIntensity = 1.0,
     SmartCircadianData smartData = const SmartCircadianData.neutral(),
   }) {
-    if (curvePoints.isEmpty) return 6500;
-
-    double baseTemperature = _calculateFromElevation(curvePoints, elevation);
-
-    // Weather impact on temperature: make it slightly cooler/warmer
-    final bool isWeatherActiveWindow =
-        now.isAfter(phases.sunrise) && now.isBefore(phases.astronomicalDusk);
-
-    if (weather != null && isWeatherActiveWindow) {
-      if (weather.weatherCode >= 50 || weather.cloudCover > 50) {
-        // Less blue light during dark/cloudy conditions
-        // Drop temperature depending on how heavy the cloud cover is, by up to ~500K.
-        double tempDrop = (weather.cloudCover / 100) * 500;
-        baseTemperature -= tempDrop;
-      }
+    if (curvePoints.isEmpty) {
+      return TemperatureCalculationResult(
+        baseTemperature: 6500,
+        finalTemperature: 6500,
+      );
     }
 
-    // Typical clamping for Kelvin
-    int finalTemp = baseTemperature.clamp(3300.0, 6500.0).toInt();
+    final int baseTemperature =
+        _calculateFromElevation(curvePoints, elevation).toInt();
 
-    // Apply Smart Offset (Wind-down, Sleep Debt)
-    finalTemp += smartData.temperatureOffset;
+    // Weather impact via centralised formula (D4)
+    double weatherDrop = 0.0;
+    if (weather != null) {
+      weatherDrop = weatherAdjustmentService.calculateWeatherTemperatureDrop(
+        weather: weather,
+        now: now,
+        phases: phases,
+        intensity: weatherIntensity,
+      );
+    }
 
-    return finalTemp.clamp(3300, 6500);
+    // Промежуточный clamp (предотвращает уход ниже минимума до применения smart-факторов)
+    final int afterWeatherClamped =
+        (baseTemperature - weatherDrop).clamp(3300.0, 6500.0).toInt();
+
+    // Эффективный погодный сдвиг (учитывает промежуточный clamp)
+    final int effectiveWeatherImpact = afterWeatherClamped - baseTemperature;
+
+    // Раскладка smart-факторов по компонентам
+    final int sleepPressureImpact = smartData.sleepPressureTemperatureOffset;
+    final int windDownImpact = smartData.windDownTemperatureOffset;
+    final int sleepDebtImpact = smartData.sleepDebtTemperatureOffset;
+
+    // Apply Smart Offsets (Sleep Pressure + Wind-down + Sleep Debt)
+    final int afterSmart =
+        afterWeatherClamped + sleepPressureImpact + windDownImpact + sleepDebtImpact;
+
+    // Финальный clamp
+    final int finalTemperature = afterSmart.clamp(3300, 6500);
+
+    return TemperatureCalculationResult(
+      baseTemperature: baseTemperature,
+      weatherImpact: effectiveWeatherImpact,
+      sleepPressureImpact: sleepPressureImpact,
+      windDownImpact: windDownImpact,
+      sleepDebtImpact: sleepDebtImpact,
+      finalTemperature: finalTemperature,
+    );
   }
 
   double _calculateFromElevation(List<FlSpot> points, double currentElevation) {

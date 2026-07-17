@@ -335,6 +335,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         .read(settingsProvider.notifier)
                         .updateWeatherAdjustment(val),
                   ),
+                  const SizedBox(height: 8),
+                  _SettingsRow(
+                    title: l10n.weatherTemperatureAdjustmentTitle,
+                    subtitle: l10n.weatherTemperatureAdjustmentSubtitle,
+                    value: settingsAsync.maybeWhen(
+                      data: (map) =>
+                          map[selectedIds.firstOrNull ?? 'all']
+                              ?.isWeatherTemperatureAdjustmentEnabled ??
+                          true,
+                      orElse: () => true,
+                    ),
+                    onChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateWeatherTemperatureAdjustment(val),
+                  ),
 
                   // Animated appearance of intensity slider
                   AnimatedCrossFade(
@@ -379,13 +394,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ],
                     ),
                     crossFadeState: settingsAsync.maybeWhen(
-                      data: (map) =>
-                          (map[selectedIds.firstOrNull ?? 'all']
-                                  ?.isWeatherAdjustmentEnabled ??
-                              map['all']?.isWeatherAdjustmentEnabled ??
-                              true)
-                          ? CrossFadeState.showSecond
-                          : CrossFadeState.showFirst,
+                      data: (map) {
+                        final s = map[selectedIds.firstOrNull ?? 'all'] ??
+                            map['all'];
+                        final anyEnabled =
+                            (s?.isWeatherAdjustmentEnabled ?? true) ||
+                            (s?.isWeatherTemperatureAdjustmentEnabled ?? true);
+                        return anyEnabled
+                            ? CrossFadeState.showSecond
+                            : CrossFadeState.showFirst;
+                      },
                       orElse: () => CrossFadeState.showFirst,
                     ),
                     duration: const Duration(milliseconds: 300),

@@ -20,6 +20,8 @@ import 'package:solaris/screens/sleep_screen.dart';
 import 'package:solaris/providers/lifecycle_provider.dart';
 import 'package:solaris/utils/status_helper.dart';
 import 'package:solaris/widgets/circadian_breakdown_tooltip.dart';
+import 'package:solaris/widgets/temperature_breakdown_tooltip.dart';
+import 'package:solaris/widgets/weather_icon_helper.dart';
 import 'package:solaris/widgets/about_dialog.dart';
 import 'package:solaris/providers/app_info_provider.dart';
 import 'package:solaris/models/settings_state.dart';
@@ -995,15 +997,19 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                             ),
                           ),
                           // Smart Circadian Indicators
+                          // Smart Circadian Indicators
                           Builder(
                             builder: (context) {
                               final currentSelection = ref.watch(
                                 selectedMonitorsProvider,
                               );
-                               final monitorId =
+                              final monitorId =
                                   currentSelection.firstOrNull ?? 'all';
                               final smartData = ref.watch(
                                 smartCircadianDataProvider(monitorId),
+                              );
+                              final smartDataTemp = ref.watch(
+                                smartCircadianTemperatureDataProvider(monitorId),
                               );
 
                               final settingsAsync = ref.watch(settingsProvider);
@@ -1014,17 +1020,16 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                               );
                               final isSmartEnabled = settings.isSmartCircadianEnabled;
 
-                              final activeAjustments = <Widget>[];
+                              // 1. Brightness adjustments
+                              final activeAdjustments = <Widget>[];
 
                               if (smartData.weatherAbsoluteImpact > 0.5) {
                                 final impactPercent = smartData
                                     .weatherAbsoluteImpact
                                     .round();
-                                activeAjustments.add(
+                                activeAdjustments.add(
                                   _SmartAdjustmentIndicator(
-                                    icon: _getWeatherIcon(
-                                      smartData.weatherCode,
-                                    ),
+                                    icon: getWeatherIcon(smartData.weatherCode),
                                     label: l10n.weatherBrightnessReduction(
                                       impactPercent,
                                     ),
@@ -1041,7 +1046,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                 final untilWakeUp =
                                     smartData.minutesUntilWakeUp;
 
-                                activeAjustments.add(
+                                activeAdjustments.add(
                                   _SmartAdjustmentIndicator(
                                     icon: LucideIcons.moon,
                                     label: remaining != null
@@ -1071,7 +1076,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                     .round();
                                 final remaining =
                                     smartData.timeShiftMinutesRemaining;
-                                activeAjustments.add(
+                                activeAdjustments.add(
                                   _SmartAdjustmentIndicator(
                                     icon: LucideIcons.sunrise,
                                     label: remaining != null
@@ -1093,9 +1098,9 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                 final impactPercent = smartData
                                     .sleepPressureAbsoluteImpact
                                     .round();
-                                activeAjustments.add(
+                                activeAdjustments.add(
                                   _SmartAdjustmentIndicator(
-                                    icon: LucideIcons.brain,
+                                    icon: LucideIcons.hourglass,
                                     label: l10n.circadianImpact(
                                       l10n.featureSleepPressureShort,
                                       -impactPercent,
@@ -1108,7 +1113,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                 final impactPercent = smartData
                                     .sleepDebtAbsoluteImpact
                                     .round();
-                                activeAjustments.add(
+                                activeAdjustments.add(
                                   _SmartAdjustmentIndicator(
                                     icon: LucideIcons.battery,
                                     label: l10n.circadianImpact(
@@ -1119,49 +1124,141 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                 );
                               }
 
-                              if (!isAutoBright || activeAjustments.isEmpty)
+                              // 2. Temperature adjustments
+                              final activeTempAdjustments = <Widget>[];
+
+                              if (smartDataTemp.weatherTemperatureImpact.abs() > 0.5) {
+                                final impactK = smartDataTemp.weatherTemperatureImpact.round();
+                                activeTempAdjustments.add(
+                                  _SmartAdjustmentIndicator(
+                                    icon: getWeatherIcon(smartDataTemp.weatherCode),
+                                    label: '${l10n.weatherBrightnessAdjustmentTitle}: ${impactK} K',
+                                    iconColor: const Color(0xFF818CF8),
+                                  ),
+                                );
+                              }
+
+                              if (isSmartEnabled && smartDataTemp.sleepPressureTemperatureImpact.abs() > 0.5) {
+                                final impactK = smartDataTemp.sleepPressureTemperatureImpact.round();
+                                activeTempAdjustments.add(
+                                  _SmartAdjustmentIndicator(
+                                    icon: LucideIcons.hourglass,
+                                    label: '${l10n.featureSleepPressureShort}: ${impactK} K',
+                                    iconColor: const Color(0xFFA78BFA),
+                                  ),
+                                );
+                              }
+
+                              if (isSmartEnabled && smartDataTemp.windDownTemperatureImpact.abs() > 0.5) {
+                                final impactK = smartDataTemp.windDownTemperatureImpact.round();
+                                activeTempAdjustments.add(
+                                  _SmartAdjustmentIndicator(
+                                    icon: LucideIcons.moon,
+                                    label: '${l10n.featureWindDownShort}: ${impactK} K',
+                                    iconColor: const Color(0xFF818CF8),
+                                  ),
+                                );
+                              }
+
+                              if (isSmartEnabled && smartDataTemp.sleepDebtTemperatureImpact.abs() > 0.5) {
+                                final impactK = smartDataTemp.sleepDebtTemperatureImpact.round();
+                                activeTempAdjustments.add(
+                                  _SmartAdjustmentIndicator(
+                                    icon: LucideIcons.battery,
+                                    label: '${l10n.featureSleepDebtShort}: ${impactK} K',
+                                    iconColor: const Color(0xFFF43F5E),
+                                  ),
+                                );
+                              }
+
+                              final bool showBright = isAutoBright && activeAdjustments.isNotEmpty;
+                              final bool showTemp = isAutoTemp && isColorTempEnabled && activeTempAdjustments.isNotEmpty;
+
+                              if (!showBright && !showTemp) {
                                 return const SizedBox.shrink();
+                              }
 
                               return Padding(
                                 padding: const EdgeInsets.only(top: 16.0),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          l10n.circadianRegulation
-                                              .toUpperCase(),
-                                          style: const TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w900,
-                                            color: Colors.white24,
-                                            letterSpacing: 1.2,
+                                    if (showBright) ...[
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            l10n.circadianRegulation
+                                                .toUpperCase(),
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w900,
+                                              color: Colors.white24,
+                                              letterSpacing: 1.2,
+                                            ),
                                           ),
-                                        ),
-                                        CircadianBreakdownTooltip(
-                                          smartData: smartData,
-                                          currentBrightness: targetBrightness,
-                                          isSmartCircadianEnabled: isSmartEnabled,
-                                          child: const Icon(
-                                            LucideIcons.info,
-                                            size: 14,
-                                            color: Colors.white24,
+                                          CircadianBreakdownTooltip(
+                                            smartData: smartData,
+                                            currentBrightness: targetBrightness,
+                                            isSmartCircadianEnabled: isSmartEnabled,
+                                            child: const Icon(
+                                              LucideIcons.info,
+                                              size: 14,
+                                              color: Colors.white24,
+                                            ),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    ...activeAjustments.map(
-                                      (w) => Padding(
-                                        padding: const EdgeInsets.only(
-                                          bottom: 6.0,
-                                        ),
-                                        child: w,
+                                        ],
                                       ),
-                                    ),
+                                      const SizedBox(height: 8),
+                                      ...activeAdjustments.map(
+                                        (w) => Padding(
+                                          padding: const EdgeInsets.only(
+                                            bottom: 6.0,
+                                          ),
+                                          child: w,
+                                        ),
+                                      ),
+                                    ],
+                                    if (showBright && showTemp)
+                                      const SizedBox(height: 16),
+                                    if (showTemp) ...[
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            l10n.temperatureRegulationTitle
+                                                .toUpperCase(),
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w900,
+                                              color: Colors.white24,
+                                              letterSpacing: 1.2,
+                                            ),
+                                          ),
+                                          TemperatureBreakdownTooltip(
+                                            smartData: smartDataTemp,
+                                            currentTemperature: tempVal.round(),
+                                            isSmartCircadianEnabled: isSmartEnabled,
+                                            child: const Icon(
+                                              LucideIcons.info,
+                                              size: 14,
+                                              color: Colors.white24,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      ...activeTempAdjustments.map(
+                                        (w) => Padding(
+                                          padding: const EdgeInsets.only(
+                                            bottom: 6.0,
+                                          ),
+                                          child: w,
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
                               );
@@ -1389,35 +1486,6 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
         ),
       ],
     );
-  }
-
-  IconData _getWeatherIcon(int? code) {
-    if (code == null) return LucideIcons.cloud;
-
-    // WMO Weather interpretation codes (WW)
-    // https://open-meteo.com/en/docs
-    if (code == 0) return LucideIcons.sun; // Clear sky
-    if (code >= 1 && code <= 2)
-      return LucideIcons.cloudSun; // Mainly clear, partly cloudy
-    if (code == 3) return LucideIcons.cloud; // Overcast
-    if (code == 45 || code == 48) return LucideIcons.cloudFog; // Fog
-    if (code >= 51 && code <= 55) return LucideIcons.cloudDrizzle; // Drizzle
-    if (code >= 56 && code <= 57)
-      return LucideIcons.snowflake; // Freezing Drizzle
-    if (code >= 61 && code <= 63)
-      return LucideIcons.cloudRain; // Rain: Slight, moderate
-    if (code == 65) return LucideIcons.cloudRainWind; // Rain: Heavy
-    if (code >= 66 && code <= 67) return LucideIcons.cloudRain; // Freezing Rain
-    if (code >= 71 && code <= 77)
-      return LucideIcons.snowflake; // Snow fall, grains
-    if (code >= 80 && code <= 81)
-      return LucideIcons.cloudRain; // Rain showers: Slight, moderate
-    if (code == 82) return LucideIcons.cloudRainWind; // Rain showers: Heavy
-    if (code >= 85 && code <= 86) return LucideIcons.snowflake; // Snow showers
-    if (code >= 95 && code <= 99)
-      return LucideIcons.cloudLightning; // Thunderstorm
-
-    return LucideIcons.cloud;
   }
 }
 
@@ -1841,16 +1909,21 @@ class _MultiMonitorOffsetPopover extends ConsumerWidget {
 }
 
 class _SmartAdjustmentIndicator extends StatelessWidget {
-  const _SmartAdjustmentIndicator({required this.icon, required this.label});
+  const _SmartAdjustmentIndicator({
+    required this.icon,
+    required this.label,
+    this.iconColor = const Color(0xFF818CF8),
+  });
 
   final IconData icon;
   final String label;
+  final Color iconColor;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 14, color: const Color(0xFF818CF8)),
+        Icon(icon, size: 14, color: iconColor),
         const SizedBox(width: 8),
         Expanded(
           child: Text(

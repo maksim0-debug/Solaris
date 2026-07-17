@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:solaris/services/circadian_service.dart';
 import 'package:solaris/models/solar_phase_model.dart';
 import 'package:solaris/services/weather_service.dart';
+import 'package:solaris/models/smart_circadian_data.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 void main() {
@@ -134,6 +135,83 @@ void main() {
       // Computed value falls below the configured minimum (first point = 40),
       // so the result must be clamped.
       expect(result.finalBrightness, 40.0);
+    });
+
+    group('calculateTargetTemperature', () {
+      final now = DateTime(2026, 3, 19, 12, 0); // Noon
+
+      final tempPoints = [
+        const FlSpot(-20, 3300),
+        const FlSpot(-6, 3300),
+        const FlSpot(0, 5000),
+        const FlSpot(10, 6500),
+        const FlSpot(90, 6500),
+      ];
+
+      test('should return base temperature without weather or smart offset', () {
+        final result = service.calculateTargetTemperature(
+          phases,
+          10.0,
+          now,
+          curvePoints: tempPoints,
+        );
+        expect(result.baseTemperature, 6500);
+        expect(result.finalTemperature, 6500);
+        expect(result.weatherImpact, 0);
+        expect(result.sleepPressureImpact, 0);
+      });
+
+      test('should apply weather temperature drop and respect intensity', () {
+        final weather = WeatherData(
+          temperature: 20,
+          humidity: 50,
+          uvIndex: 5,
+          directRadiation: 500,
+          diffuseRadiation: 150,
+          cloudCover: 100, // 100% cloud cover
+          windSpeed: 10,
+          weatherCode: 51,
+          lastUpdated: DateTime.now(),
+        );
+
+        final result = service.calculateTargetTemperature(
+          phases,
+          10.0,
+          now,
+          curvePoints: tempPoints,
+          weather: weather,
+          weatherIntensity: 0.8,
+        );
+
+        // drop = 100% * 500 * 0.8 = 400 K
+        // base = 6500 -> 6100 (inside clamp 3300-6500)
+        expect(result.baseTemperature, 6500);
+        expect(result.weatherImpact, -400);
+        expect(result.finalTemperature, 6100);
+      });
+
+      test('should apply smart offsets and respect double clamp logic', () {
+        final smartData = const SmartCircadianData.neutral().copyWith(
+          sleepPressureTemperatureOffset: -200,
+          windDownTemperatureOffset: -3000, // very low to trigger clamp
+        );
+
+        // base=6500. Weather=null. afterWeather=6500.
+        // smart total offset = -3200 -> 3300.
+        // final clamp should restrict it to 3300 K.
+        final result = service.calculateTargetTemperature(
+          phases,
+          10.0,
+          now,
+          curvePoints: tempPoints,
+          smartData: smartData,
+        );
+
+        expect(result.baseTemperature, 6500);
+        expect(result.sleepPressureImpact, -200);
+        expect(result.windDownImpact, -3000);
+        expect(result.finalTemperature, 3300); // clamped to 3300 (not 3100)
+      });
     });
   });
 }

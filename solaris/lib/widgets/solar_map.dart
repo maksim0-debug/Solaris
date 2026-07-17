@@ -88,7 +88,7 @@ class _SolarMapState extends ConsumerState<SolarMap> {
         initialZoom: widget.zoom,
         minZoom: 1.5,
         maxZoom: 18.0,
-        cameraConstraint: CameraConstraint.contain(
+        cameraConstraint: CameraConstraint.containCenter(
           bounds: LatLngBounds(const LatLng(-85, -180), const LatLng(85, 180)),
         ),
         interactionOptions: const InteractionOptions(

@@ -31,6 +31,16 @@ class SmartCircadianData extends Equatable {
   final PresetType? activeSystemPreset;
   final String? activeUserPresetName;
 
+  // Temperature Factor Breakdown (filled by smartCircadianTemperatureDataProvider)
+  final int sleepDebtTemperatureOffset;
+  final int windDownTemperatureOffset;
+  final int sleepPressureTemperatureOffset;
+  final int baseTemperature;
+  final int weatherTemperatureImpact;
+  final int sleepPressureTemperatureImpact;
+  final int windDownTemperatureImpact;
+  final int sleepDebtTemperatureImpact;
+
   const SmartCircadianData({
     this.brightnessMultiplier = 1.0,
     this.temperatureOffset = 0,
@@ -56,6 +66,14 @@ class SmartCircadianData extends Equatable {
     this.weatherAbsoluteImpact = 0.0,
     this.activeSystemPreset,
     this.activeUserPresetName,
+    this.sleepDebtTemperatureOffset = 0,
+    this.windDownTemperatureOffset = 0,
+    this.sleepPressureTemperatureOffset = 0,
+    this.baseTemperature = 0,
+    this.weatherTemperatureImpact = 0,
+    this.sleepPressureTemperatureImpact = 0,
+    this.windDownTemperatureImpact = 0,
+    this.sleepDebtTemperatureImpact = 0,
   });
 
   const SmartCircadianData.neutral()
@@ -82,7 +100,15 @@ class SmartCircadianData extends Equatable {
       sleepDebtAbsoluteImpact = 0.0,
       weatherAbsoluteImpact = 0.0,
       activeSystemPreset = null,
-      activeUserPresetName = null;
+      activeUserPresetName = null,
+      sleepDebtTemperatureOffset = 0,
+      windDownTemperatureOffset = 0,
+      sleepPressureTemperatureOffset = 0,
+      baseTemperature = 0,
+      weatherTemperatureImpact = 0,
+      sleepPressureTemperatureImpact = 0,
+      windDownTemperatureImpact = 0,
+      sleepDebtTemperatureImpact = 0;
 
   @override
   List<Object?> get props => [
@@ -110,6 +136,14 @@ class SmartCircadianData extends Equatable {
     weatherCode,
     activeSystemPreset,
     activeUserPresetName,
+    sleepDebtTemperatureOffset,
+    windDownTemperatureOffset,
+    sleepPressureTemperatureOffset,
+    baseTemperature,
+    weatherTemperatureImpact,
+    sleepPressureTemperatureImpact,
+    windDownTemperatureImpact,
+    sleepDebtTemperatureImpact,
   ];
 
   SmartCircadianData copyWith({
@@ -137,6 +171,14 @@ class SmartCircadianData extends Equatable {
     int? weatherCode,
     PresetType? activeSystemPreset,
     String? activeUserPresetName,
+    int? sleepDebtTemperatureOffset,
+    int? windDownTemperatureOffset,
+    int? sleepPressureTemperatureOffset,
+    int? baseTemperature,
+    int? weatherTemperatureImpact,
+    int? sleepPressureTemperatureImpact,
+    int? windDownTemperatureImpact,
+    int? sleepDebtTemperatureImpact,
   }) {
     return SmartCircadianData(
       brightnessMultiplier: brightnessMultiplier ?? this.brightnessMultiplier,
@@ -170,6 +212,21 @@ class SmartCircadianData extends Equatable {
       weatherCode: weatherCode ?? this.weatherCode,
       activeSystemPreset: activeSystemPreset ?? this.activeSystemPreset,
       activeUserPresetName: activeUserPresetName ?? this.activeUserPresetName,
+      sleepDebtTemperatureOffset:
+          sleepDebtTemperatureOffset ?? this.sleepDebtTemperatureOffset,
+      windDownTemperatureOffset:
+          windDownTemperatureOffset ?? this.windDownTemperatureOffset,
+      sleepPressureTemperatureOffset:
+          sleepPressureTemperatureOffset ?? this.sleepPressureTemperatureOffset,
+      baseTemperature: baseTemperature ?? this.baseTemperature,
+      weatherTemperatureImpact:
+          weatherTemperatureImpact ?? this.weatherTemperatureImpact,
+      sleepPressureTemperatureImpact:
+          sleepPressureTemperatureImpact ?? this.sleepPressureTemperatureImpact,
+      windDownTemperatureImpact:
+          windDownTemperatureImpact ?? this.windDownTemperatureImpact,
+      sleepDebtTemperatureImpact:
+          sleepDebtTemperatureImpact ?? this.sleepDebtTemperatureImpact,
     );
   }
 }

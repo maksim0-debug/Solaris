@@ -390,6 +390,43 @@ class AppLocalizationsEn extends AppLocalizations {
       'Reduce brightness in cloudy or rainy weather';
 
   @override
+  String get weatherBrightnessAdjustmentTitle =>
+      'Weather Brightness Adjustment';
+
+  @override
+  String get weatherBrightnessAdjustmentSubtitle =>
+      'Reduce brightness in cloudy or rainy weather';
+
+  @override
+  String get weatherTemperatureAdjustmentTitle =>
+      'Weather Temperature Adjustment';
+
+  @override
+  String get weatherTemperatureAdjustmentSubtitle =>
+      'Reduce color temperature in overcast weather to ease eye strain';
+
+  @override
+  String get temperatureRegulationTitle => 'Temperature Regulation';
+
+  @override
+  String get temperatureBreakdownBase => 'Base Temperature';
+
+  @override
+  String get temperatureBreakdownWeather => 'Weather (reduction)';
+
+  @override
+  String get temperatureBreakdownSleepPressure => 'Sleep Pressure';
+
+  @override
+  String get temperatureBreakdownWindDown => 'Wind-down Phase';
+
+  @override
+  String get temperatureBreakdownSleepDebt => 'Sleep Debt Compensation';
+
+  @override
+  String get temperatureBreakdownFinal => 'Final Temperature';
+
+  @override
   String get weatherIntensity => 'Weather Sensitivity Intensity';
 
   @override
@@ -567,7 +604,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Dynamic correction based on Google Fit sleep data (wind-down, bio-morning, sleep debt)';
 
   @override
-  String get circadianRegulation => 'Circadian Regulation (Beta)';
+  String get circadianRegulation => 'Circadian Regulation';
 
   @override
   String get featureWindDown => 'Wind-down Phase';

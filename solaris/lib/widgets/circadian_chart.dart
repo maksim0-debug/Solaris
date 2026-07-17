@@ -122,21 +122,40 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
     }
 
     double? adjustedBrightnessY;
-    if (!isTemp &&
-        currentSettings.isWeatherAdjustmentEnabled &&
-        weatherAsync.value != null) {
-      final baseFactor = circadianService.weatherAdjustmentService
-          .calculateWeatherFactor(weatherAsync.value, currentElevation);
+    if (isTemp) {
+      if (currentSettings.isWeatherTemperatureAdjustmentEnabled &&
+          weatherAsync.value != null &&
+          solarAsync.value != null) {
+        final drop = circadianService.weatherAdjustmentService
+            .calculateWeatherTemperatureDrop(
+              weather: weatherAsync.value!,
+              now: DateTime.now(),
+              phases: solarAsync.value!.phases,
+              intensity: currentSettings.weatherAdjustmentIntensity,
+            );
+        if (drop > 0) {
+          adjustedBrightnessY = (currentBrightnessY - drop).clamp(
+            points.first.y,
+            6500.0,
+          );
+        }
+      }
+    } else {
+      if (currentSettings.isWeatherAdjustmentEnabled &&
+          weatherAsync.value != null) {
+        final baseFactor = circadianService.weatherAdjustmentService
+            .calculateWeatherFactor(weatherAsync.value, currentElevation);
 
-      if (baseFactor < 0.99) {
-        final penalty = (1.0 - baseFactor) *
-            currentSettings.activePreset.weatherSensitivity *
-            currentSettings.weatherAdjustmentIntensity;
-        final finalFactor = 1.0 - penalty;
-        adjustedBrightnessY = (currentBrightnessY * finalFactor).clamp(
-          points.first.y,
-          isTemp ? 6500.0 : 100.0,
-        );
+        if (baseFactor < 0.99) {
+          final penalty = (1.0 - baseFactor) *
+              currentSettings.activePreset.weatherSensitivity *
+              currentSettings.weatherAdjustmentIntensity;
+          final finalFactor = 1.0 - penalty;
+          adjustedBrightnessY = (currentBrightnessY * finalFactor).clamp(
+            points.first.y,
+            100.0,
+          );
+        }
       }
     }
 

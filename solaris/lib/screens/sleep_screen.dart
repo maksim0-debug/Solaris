@@ -613,9 +613,18 @@ class _CircadianRegulationSection extends ConsumerWidget {
                           settings.sleepPressureBrightnessIntensity,
                       onBrightnessIntensityChanged: (val) => ref
                           .read(settingsProvider.notifier)
-                          .updateSleepPressureIntensity(val),
-                      showTemperatureIntensity:
-                          false, // Currently only brightness
+                          .updateSleepPressureIntensity(
+                            val,
+                            settings.sleepPressureTemperatureIntensity,
+                          ),
+                      temperatureIntensity:
+                          settings.sleepPressureTemperatureIntensity,
+                      onTemperatureIntensityChanged: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateSleepPressureIntensity(
+                            settings.sleepPressureBrightnessIntensity,
+                            val,
+                          ),
                       durationValue: settings.sleepPressureWakeLimitHours,
                       durationMin: 10,
                       durationMax: 20,

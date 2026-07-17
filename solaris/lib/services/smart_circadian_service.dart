@@ -18,6 +18,7 @@ class SmartCircadianService {
     double sleepDebtBrightnessIntensity = 1.0,
     double sleepDebtTemperatureIntensity = 1.0,
     double sleepPressureBrightnessIntensity = 1.0,
+    double sleepPressureTemperatureIntensity = 1.0,
     double timeShiftIntensity = 1.0,
     double windDownBrightnessIntensity = 1.0,
     double windDownTemperatureIntensity = 1.0,
@@ -132,6 +133,7 @@ class SmartCircadianService {
 
     // 5. Sleep Pressure (Time since wake)
     double sleepPressureFactor = 1.0;
+    int sleepPressureTempOffset = 0;
     if (useSleepPressure) {
       final actualWakeTime = lastAggSession.endTime;
       final timeSinceWake = now.difference(actualWakeTime);
@@ -142,11 +144,18 @@ class SmartCircadianService {
       if (isRealSleep && timeSinceWake.inHours >= sleepPressureLimit) {
         final hoursOver = timeSinceWake.inMinutes / 60.0 - sleepPressureLimit;
         final baseFactor = math.pow(0.95, hoursOver).toDouble();
-        final double adjIntensity = math
+        final double adjBrightnessIntensity = math
             .pow(sleepPressureBrightnessIntensity, 1.5)
             .toDouble();
 
-        sleepPressureFactor = 1.0 - (1.0 - baseFactor) * adjIntensity;
+        sleepPressureFactor = 1.0 - (1.0 - baseFactor) * adjBrightnessIntensity;
+
+        // Temperature: плавное снижение до -300K по мере превышения порога
+        final baseTempDrop = 1.0 - baseFactor;
+        final double adjTempIntensity = math
+            .pow(sleepPressureTemperatureIntensity, 1.5)
+            .toDouble();
+        sleepPressureTempOffset = -(baseTempDrop * 300 * adjTempIntensity).toInt();
       }
     }
 
@@ -255,7 +264,10 @@ class SmartCircadianService {
             0.1,
             1.0,
           ),
-      temperatureOffset: sleepDebtTempOffset + windDownTempOffset,
+      temperatureOffset: sleepDebtTempOffset + windDownTempOffset + sleepPressureTempOffset,
+      sleepDebtTemperatureOffset: sleepDebtTempOffset,
+      windDownTemperatureOffset: windDownTempOffset,
+      sleepPressureTemperatureOffset: sleepPressureTempOffset,
       timeOffset: timeOffset,
       timeShiftFactor: timeShiftFactorValue,
       isWindDownActive: isWindDownActive,

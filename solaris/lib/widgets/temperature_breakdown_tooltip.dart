@@ -1,27 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/l10n/app_localizations.dart';
-import 'package:solaris/models/preset_type.dart';
 import 'package:solaris/models/smart_circadian_data.dart';
 import 'package:solaris/widgets/weather_icon_helper.dart';
 
-class CircadianBreakdownTooltip extends StatelessWidget {
-  const CircadianBreakdownTooltip({
+class TemperatureBreakdownTooltip extends StatelessWidget {
+  const TemperatureBreakdownTooltip({
     super.key,
     required this.child,
     required this.smartData,
-    required this.currentBrightness,
+    required this.currentTemperature,
     required this.isSmartCircadianEnabled,
   });
 
   final Widget child;
   final SmartCircadianData smartData;
-  final double currentBrightness;
+  final int currentTemperature;
   final bool isSmartCircadianEnabled;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+
+    final int baseTemp = smartData.baseTemperature > 0 ? smartData.baseTemperature : 6500;
+    final int weatherImpact = smartData.weatherTemperatureImpact;
+    
+    final int sleepPressureImpact = isSmartCircadianEnabled ? smartData.sleepPressureTemperatureImpact : 0;
+    final int windDownImpact = isSmartCircadianEnabled ? smartData.windDownTemperatureImpact : 0;
+    final int sleepDebtImpact = isSmartCircadianEnabled ? smartData.sleepDebtTemperatureImpact : 0;
 
     return Tooltip(
       richMessage: TextSpan(
@@ -29,51 +35,41 @@ class CircadianBreakdownTooltip extends StatelessWidget {
           color: Colors.white,
           fontSize: 12,
           height: 1.5,
-          fontFamily: 'Outfit', // Consistent with AppTheme
+          fontFamily: 'Outfit',
         ),
         children: [
           _buildRow(
             icon: LucideIcons.sun,
-            label: '${l10n.sunBase} [${_getPresetName(l10n, smartData)}]'.toUpperCase(),
-            value: '${smartData.baseBrightness.round()}%',
-            iconColor: const Color(0xFFFDBA74),
+            label: l10n.temperatureBreakdownBase,
+            value: '${baseTemp} K',
+            iconColor: const Color(0xFF818CF8), // Blue-Indigo for temp base
           ),
-          if (smartData.weatherAbsoluteImpact > 0.5)
+          if (weatherImpact.abs() > 0.5)
             _buildRow(
               icon: getWeatherIcon(smartData.weatherCode),
-              label: l10n.weatherBrightnessAdjustmentTitle,
-              value: '-${smartData.weatherAbsoluteImpact.round()}%',
+              label: l10n.temperatureBreakdownWeather,
+              value: '${weatherImpact} K',
               iconColor: const Color(0xFF94A3B8),
             ),
-          if (isSmartCircadianEnabled &&
-              smartData.timeShiftBrightnessImpact.abs() > 0.5)
-            _buildRow(
-              icon: LucideIcons.sunrise,
-              label: l10n.featureTimeShiftShort,
-              value:
-                  '${smartData.timeShiftBrightnessImpact > 0 ? '+' : ''}${smartData.timeShiftBrightnessImpact.round()}%',
-              iconColor: const Color(0xFFFDBA74),
-            ),
-          if (isSmartCircadianEnabled && smartData.windDownAbsoluteImpact > 0.5)
-            _buildRow(
-              icon: LucideIcons.moon,
-              label: l10n.featureWindDownShort,
-              value: '-${smartData.windDownAbsoluteImpact.round()}%',
-              iconColor: const Color(0xFF818CF8),
-            ),
-          if (isSmartCircadianEnabled &&
-              smartData.sleepPressureAbsoluteImpact > 0.5)
+          if (isSmartCircadianEnabled && sleepPressureImpact.abs() > 0.5)
             _buildRow(
               icon: LucideIcons.hourglass,
-              label: l10n.featureSleepPressureShort,
-              value: '-${smartData.sleepPressureAbsoluteImpact.round()}%',
+              label: l10n.temperatureBreakdownSleepPressure,
+              value: '${sleepPressureImpact} K',
               iconColor: const Color(0xFFA78BFA),
             ),
-          if (isSmartCircadianEnabled && smartData.sleepDebtAbsoluteImpact > 0.5)
+          if (isSmartCircadianEnabled && windDownImpact.abs() > 0.5)
+            _buildRow(
+              icon: LucideIcons.moon,
+              label: l10n.temperatureBreakdownWindDown,
+              value: '${windDownImpact} K',
+              iconColor: const Color(0xFF818CF8),
+            ),
+          if (isSmartCircadianEnabled && sleepDebtImpact.abs() > 0.5)
             _buildRow(
               icon: LucideIcons.battery,
-              label: l10n.featureSleepDebtShort,
-              value: '-${smartData.sleepDebtAbsoluteImpact.round()}%',
+              label: l10n.temperatureBreakdownSleepDebt,
+              value: '${sleepDebtImpact} K',
               iconColor: const Color(0xFFF43F5E),
             ),
           const TextSpan(
@@ -82,8 +78,8 @@ class CircadianBreakdownTooltip extends StatelessWidget {
           ),
           _buildRow(
             icon: LucideIcons.checkCircle2,
-            label: l10n.finalValue.toUpperCase(),
-            value: '${currentBrightness.round()}%',
+            label: l10n.temperatureBreakdownFinal.toUpperCase(),
+            value: '${currentTemperature} K',
             iconColor: const Color(0xFF34D399),
             isBold: true,
           ),
@@ -106,26 +102,6 @@ class CircadianBreakdownTooltip extends StatelessWidget {
       preferBelow: false,
       child: child,
     );
-  }
-
-  String _getPresetName(AppLocalizations l10n, SmartCircadianData data) {
-    if (data.activeUserPresetName != null) {
-      return data.activeUserPresetName!;
-    }
-    switch (data.activeSystemPreset) {
-      case PresetType.brightest:
-        return l10n.presetBrightest;
-      case PresetType.bright:
-        return l10n.presetBright;
-      case PresetType.dim:
-        return l10n.presetDim;
-      case PresetType.dimmest:
-        return l10n.presetDimmest;
-      case PresetType.custom:
-        return l10n.presetCustom;
-      default:
-        return l10n.presetBright;
-    }
   }
 
   TextSpan _buildRow({

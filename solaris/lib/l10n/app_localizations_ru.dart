@@ -389,6 +389,42 @@ class AppLocalizationsRu extends AppLocalizations {
       'Снижение яркости в облачную или дождливую погоду';
 
   @override
+  String get weatherBrightnessAdjustmentTitle => 'Адаптация яркости по погоде';
+
+  @override
+  String get weatherBrightnessAdjustmentSubtitle =>
+      'Снижение яркости в пасмурную или дождливую погоду';
+
+  @override
+  String get weatherTemperatureAdjustmentTitle =>
+      'Адаптация температуры по погоде';
+
+  @override
+  String get weatherTemperatureAdjustmentSubtitle =>
+      'Снижение цветовой температуры в пасмурную погоду для отдыха глаз';
+
+  @override
+  String get temperatureRegulationTitle => 'Регуляция температуры';
+
+  @override
+  String get temperatureBreakdownBase => 'Базовая температура';
+
+  @override
+  String get temperatureBreakdownWeather => 'Погода (снижение)';
+
+  @override
+  String get temperatureBreakdownSleepPressure => 'Давление сна';
+
+  @override
+  String get temperatureBreakdownWindDown => 'Подготовка ко сну';
+
+  @override
+  String get temperatureBreakdownSleepDebt => 'Компенсация недосыпа';
+
+  @override
+  String get temperatureBreakdownFinal => 'Итоговая температура';
+
+  @override
   String get weatherIntensity => 'Интенсивность коррекции';
 
   @override
@@ -567,7 +603,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Динамическая коррекция на основе данных о сне из Google Fit (фаза засыпания, био-утро, недосып)';
 
   @override
-  String get circadianRegulation => 'Циркадная регуляция (Beta)';
+  String get circadianRegulation => 'Циркадная регуляция';
 
   @override
   String get featureWindDown => 'Фаза «Подготовки ко сну» (Wind-down)';

@@ -778,6 +778,72 @@ abstract class AppLocalizations {
   /// **'Reduce brightness in cloudy or rainy weather'**
   String get weatherAdjustmentSubtitle;
 
+  /// No description provided for @weatherBrightnessAdjustmentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather Brightness Adjustment'**
+  String get weatherBrightnessAdjustmentTitle;
+
+  /// No description provided for @weatherBrightnessAdjustmentSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduce brightness in cloudy or rainy weather'**
+  String get weatherBrightnessAdjustmentSubtitle;
+
+  /// No description provided for @weatherTemperatureAdjustmentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather Temperature Adjustment'**
+  String get weatherTemperatureAdjustmentTitle;
+
+  /// No description provided for @weatherTemperatureAdjustmentSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduce color temperature in overcast weather to ease eye strain'**
+  String get weatherTemperatureAdjustmentSubtitle;
+
+  /// No description provided for @temperatureRegulationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Temperature Regulation'**
+  String get temperatureRegulationTitle;
+
+  /// No description provided for @temperatureBreakdownBase.
+  ///
+  /// In en, this message translates to:
+  /// **'Base Temperature'**
+  String get temperatureBreakdownBase;
+
+  /// No description provided for @temperatureBreakdownWeather.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather (reduction)'**
+  String get temperatureBreakdownWeather;
+
+  /// No description provided for @temperatureBreakdownSleepPressure.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep Pressure'**
+  String get temperatureBreakdownSleepPressure;
+
+  /// No description provided for @temperatureBreakdownWindDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Wind-down Phase'**
+  String get temperatureBreakdownWindDown;
+
+  /// No description provided for @temperatureBreakdownSleepDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep Debt Compensation'**
+  String get temperatureBreakdownSleepDebt;
+
+  /// No description provided for @temperatureBreakdownFinal.
+  ///
+  /// In en, this message translates to:
+  /// **'Final Temperature'**
+  String get temperatureBreakdownFinal;
+
   /// No description provided for @weatherIntensity.
   ///
   /// In en, this message translates to:
@@ -1117,7 +1183,7 @@ abstract class AppLocalizations {
   /// No description provided for @circadianRegulation.
   ///
   /// In en, this message translates to:
-  /// **'Circadian Regulation (Beta)'**
+  /// **'Circadian Regulation'**
   String get circadianRegulation;
 
   /// No description provided for @featureWindDown.

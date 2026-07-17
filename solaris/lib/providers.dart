@@ -119,6 +119,8 @@ final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
             monitorSettings.sleepDebtTemperatureIntensity,
         sleepPressureBrightnessIntensity:
             monitorSettings.sleepPressureBrightnessIntensity,
+        sleepPressureTemperatureIntensity:
+            monitorSettings.sleepPressureTemperatureIntensity,
         timeShiftIntensity: monitorSettings.timeShiftIntensity,
         windDownBrightnessIntensity:
             monitorSettings.windDownBrightnessIntensity,
@@ -189,6 +191,8 @@ final smartCircadianTemperatureDataProvider =
       final service = ref.watch(smartCircadianServiceProvider);
       final tempSettingsAsync = ref.watch(temperatureSettingsProvider);
       final solarStateAsync = ref.watch(debouncedSolarStateProvider);
+      final weatherAsync = ref.watch(currentWeatherProvider);
+      final circadianService = ref.watch(circadianServiceProvider);
 
       final settings = tempSettingsAsync.value;
       if (settings == null) return const SmartCircadianData.neutral();
@@ -205,39 +209,65 @@ final smartCircadianTemperatureDataProvider =
       final now = ref.watch(minuteTimeProvider).value ?? DateTime.now();
 
       return solarStateAsync.maybeWhen(
-        data: (solar) => service.calculateSmartAdjustments(
-          regimes: regimes,
-          now: now,
-          astronomicalSunrise: solar.phases.sunrise,
-          useSleepDebt:
-              monitorSettings.isSleepDebtEnabled &&
-              globalSettings.isSleepDebtMasterEnabled,
-          useSleepPressure:
-              monitorSettings.isSleepPressureEnabled &&
-              globalSettings.isSleepPressureMasterEnabled,
-          useTimeShift:
-              monitorSettings.isTimeShiftEnabled &&
-              globalSettings.isTimeShiftMasterEnabled,
-          useWindDown:
-              monitorSettings.isWindDownEnabled &&
-              globalSettings.isWindDownMasterEnabled,
-          sleepDebtBrightnessIntensity:
-              globalSettings.sleepDebtBrightnessIntensity,
-          sleepDebtTemperatureIntensity:
-              globalSettings.sleepDebtTemperatureIntensity,
-          sleepPressureBrightnessIntensity:
-              globalSettings.sleepPressureBrightnessIntensity,
-          timeShiftIntensity: globalSettings.timeShiftIntensity,
-          windDownBrightnessIntensity:
-              globalSettings.windDownBrightnessIntensity,
-          windDownTemperatureIntensity:
-              globalSettings.windDownTemperatureIntensity,
-          windDownDurationMinutes: globalSettings.windDownDurationMinutes,
-          timeShiftDurationMinutes: globalSettings.timeShiftDurationMinutes,
-          sleepPressureWakeLimitHours:
-              globalSettings.sleepPressureWakeLimitHours,
-          sleepDebtThresholdMinutes: globalSettings.sleepDebtThresholdMinutes,
-        ),
+        data: (solar) {
+          final smartData = service.calculateSmartAdjustments(
+            regimes: regimes,
+            now: now,
+            astronomicalSunrise: solar.phases.sunrise,
+            useSleepDebt:
+                monitorSettings.isSleepDebtEnabled &&
+                globalSettings.isSleepDebtMasterEnabled,
+            useSleepPressure:
+                monitorSettings.isSleepPressureEnabled &&
+                globalSettings.isSleepPressureMasterEnabled,
+            useTimeShift:
+                monitorSettings.isTimeShiftEnabled &&
+                globalSettings.isTimeShiftMasterEnabled,
+            useWindDown:
+                monitorSettings.isWindDownEnabled &&
+                globalSettings.isWindDownMasterEnabled,
+            sleepDebtBrightnessIntensity:
+                globalSettings.sleepDebtBrightnessIntensity,
+            sleepDebtTemperatureIntensity:
+                globalSettings.sleepDebtTemperatureIntensity,
+            sleepPressureBrightnessIntensity:
+                globalSettings.sleepPressureBrightnessIntensity,
+            sleepPressureTemperatureIntensity:
+                globalSettings.sleepPressureTemperatureIntensity,
+            timeShiftIntensity: globalSettings.timeShiftIntensity,
+            windDownBrightnessIntensity:
+                globalSettings.windDownBrightnessIntensity,
+            windDownTemperatureIntensity:
+                globalSettings.windDownTemperatureIntensity,
+            windDownDurationMinutes: globalSettings.windDownDurationMinutes,
+            timeShiftDurationMinutes: globalSettings.timeShiftDurationMinutes,
+            sleepPressureWakeLimitHours:
+                globalSettings.sleepPressureWakeLimitHours,
+            sleepDebtThresholdMinutes: globalSettings.sleepDebtThresholdMinutes,
+          );
+
+          // Calculate temperature breakdown for tooltip
+          final tempResult = circadianService.calculateTargetTemperature(
+            solar.phases,
+            solar.sunElevation,
+            now,
+            curvePoints: monitorSettings.curvePoints,
+            weather: globalSettings.isWeatherTemperatureAdjustmentEnabled
+                ? weatherAsync.value
+                : null,
+            weatherIntensity: globalSettings.weatherAdjustmentIntensity,
+            smartData: smartData,
+          );
+
+          return smartData.copyWith(
+            baseTemperature: tempResult.baseTemperature,
+            weatherTemperatureImpact: tempResult.weatherImpact,
+            sleepPressureTemperatureImpact: tempResult.sleepPressureImpact,
+            windDownTemperatureImpact: tempResult.windDownImpact,
+            sleepDebtTemperatureImpact: tempResult.sleepDebtImpact,
+            weatherCode: weatherAsync.value?.weatherCode,
+          );
+        },
         orElse: () => const SmartCircadianData.neutral(),
       );
     });
@@ -1075,6 +1105,13 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     );
   }
 
+  void updateWeatherTemperatureAdjustment(bool enabled) {
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(isWeatherTemperatureAdjustmentEnabled: enabled),
+    );
+  }
+
   void updateWeatherAdjustmentIntensity(double intensity) {
     _updateSettings(
       ref.read(selectedMonitorsProvider),
@@ -1317,10 +1354,13 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     );
   }
 
-  void updateSleepPressureIntensity(double intensity) {
+  void updateSleepPressureIntensity(double brightness, double temperature) {
     _updateSettings(
       ref.read(selectedMonitorsProvider),
-      (s) => s.copyWith(sleepPressureBrightnessIntensity: intensity),
+      (s) => s.copyWith(
+        sleepPressureBrightnessIntensity: brightness,
+        sleepPressureTemperatureIntensity: temperature,
+      ),
     );
   }
 
@@ -1984,13 +2024,16 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                 effectiveElevation,
                 DateTime.now(),
                 curvePoints: globalTempSettings.curvePoints,
-                weather: weatherAsync.value,
+                weather: globalSettings.isWeatherTemperatureAdjustmentEnabled
+                    ? weatherAsync.value
+                    : null,
+                weatherIntensity: globalSettings.weatherAdjustmentIntensity,
                 smartData: effectiveSmartTempData,
               );
 
               tempService.applyTemperatureSmoothly(
                 selection: monitor.deviceName,
-                targetValue: targetTemp.toDouble(),
+                targetValue: targetTemp.finalTemperature.toDouble(),
                 monitors: monitors,
                 monitorService: monitorService,
                 isUIVisible: visibility == AppVisibilityState.visible,

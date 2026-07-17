@@ -1,3 +1,4 @@
+import 'package:solaris/models/solar_phase_model.dart';
 import 'package:solaris/services/weather_service.dart';
 
 class WeatherAdjustmentService {
@@ -36,5 +37,32 @@ class WeatherAdjustmentService {
     // Итоговый фактор
     final penalty = 1.0 - baseFactor;
     return 1.0 - (penalty * elevationMultiplier);
+  }
+
+  /// Единая точка расчёта погодного сдвига цветовой температуры (в Кельвинах).
+  ///
+  /// Возвращает величину снижения (>= 0). Вызывающий код вычитает это из базы.
+  /// Активно только в окне «восход → астрономические сумерки» и при
+  /// плохой погоде (weatherCode >= 50 || cloudCover > 50).
+  ///
+  /// Формула: `(cloudCover / 100) * 500 * intensity`.
+  /// Максимальный сдвиг при intensity=1.0: −500K.
+  double calculateWeatherTemperatureDrop({
+    required WeatherData weather,
+    required DateTime now,
+    required SolarPhaseModel phases,
+    double intensity = 1.0,
+  }) {
+    final bool isInActiveWindow =
+        now.isAfter(phases.sunrise) && now.isBefore(phases.astronomicalDusk);
+
+    if (!isInActiveWindow) return 0.0;
+
+    final bool isBadWeather =
+        weather.weatherCode >= 50 || weather.cloudCover > 50;
+
+    if (!isBadWeather) return 0.0;
+
+    return (weather.cloudCover / 100) * 500 * intensity;
   }
 }
