@@ -70,6 +70,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
     final l10n = AppLocalizations.of(context)!;
     final locationAsync = ref.watch(effectiveLocationProvider);
     final settingsAsync = ref.watch(locationSettingsProvider);
+    final cityAsync = ref.watch(locationCityProvider);
 
     // Update controllers when manual location is first loaded or changed outside
     ref.listen(locationSettingsProvider, (prev, next) {
@@ -180,7 +181,8 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                 ),
                                 IntrinsicWidth(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
                                     children: [
                                       settingsAsync.maybeWhen(
                                         data: (settings) => DeepLinkTarget(
@@ -191,14 +193,18 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                             onToggle: (val) {
                                               if (val) {
                                                 ref
-                                                    .read(locationSettingsProvider.notifier)
+                                                    .read(
+                                                      locationSettingsProvider
+                                                          .notifier,
+                                                    )
                                                     .setAutoLocation();
                                               } else {
                                                 final pos = locationAsync.value;
                                                 if (pos != null) {
                                                   ref
                                                       .read(
-                                                        locationSettingsProvider.notifier,
+                                                        locationSettingsProvider
+                                                            .notifier,
                                                       )
                                                       .setManualLocation(
                                                         pos.latitude,
@@ -216,9 +222,13 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                         data: (pos) {
                                           final lat = pos.latitude;
                                           final lon = pos.longitude;
-                                          final latDir = lat >= 0 ? l10n.north : l10n.south;
-                                          final lonDir = lon >= 0 ? l10n.east : l10n.west;
-                                          
+                                          final latDir = lat >= 0
+                                              ? l10n.north
+                                              : l10n.south;
+                                          final lonDir = lon >= 0
+                                              ? l10n.east
+                                              : l10n.west;
+
                                           final latDms = _toDMS(lat.abs());
                                           final lonDms = _toDMS(lon.abs());
 
@@ -275,23 +285,21 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                     },
                                   ),
                                 ),
-                                loading:
-                                    () => const AspectRatio(
-                                      aspectRatio: 16 / 9,
-                                      child: Center(
-                                        child: CircularProgressIndicator(),
-                                      ),
-                                    ),
-                                error:
-                                    (e, __) => AspectRatio(
-                                      aspectRatio: 16 / 9,
-                                      child: Center(child: Text('Error: $e')),
-                                    ),
+                                loading: () => const AspectRatio(
+                                  aspectRatio: 16 / 9,
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                ),
+                                error: (e, __) => AspectRatio(
+                                  aspectRatio: 16 / 9,
+                                  child: Center(child: Text('Error: $e')),
+                                ),
                               ),
                               // Overlay location info
                               Positioned(
-                                bottom: 24,
-                                left: 24,
+                                bottom: 12,
+                                left: 12,
                                 child: locationAsync.maybeWhen(
                                   data: (pos) => GlassCard(
                                     blur: 10,
@@ -314,13 +322,15 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                           ),
                                         ),
                                         const SizedBox(height: 4),
-                                        const Text(
-                                          "Global Coordinates",
-                                          style: TextStyle(
+                                        Text(
+                                          cityAsync.value ??
+                                              "Global Coordinates",
+                                          style: const TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
+                                        const SizedBox(height: 4),
                                         Text(
                                           l10n.latLonFormat(
                                             pos.latitude.toStringAsFixed(4),
@@ -348,16 +358,16 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
               const SizedBox(width: 32),
               // Controls Side
               Expanded(
-                    child: Column(
-                      children: [
-                        DeepLinkTarget(
-                          key: _anchorKeys['location_region'],
-                          id: 'location_region',
-                          child: StylishLocationCard(
-                            anchorKey: _anchorKeys['weather_animations'],
-                          ),
-                        ),
-                        const SizedBox(height: 24),
+                child: Column(
+                  children: [
+                    DeepLinkTarget(
+                      key: _anchorKeys['location_region'],
+                      id: 'location_region',
+                      child: StylishLocationCard(
+                        anchorKey: _anchorKeys['weather_animations'],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
                     GlassCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -428,7 +438,6 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                         ],
                       ),
                     ),
-
                   ],
                 ),
               ),

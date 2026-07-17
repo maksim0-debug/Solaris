@@ -48,7 +48,9 @@ We comply with the following principles:
 ## 4. Data Storage and Security
 
 - **Local Storage**: Your Google Fit data is stored locally on your device. We use secure storage mechanisms to prevent unauthorized access.
-- **Limited Third-Party Services**: We do not sell or trade your personal data. However, your approximate location may be sent securely and anonymously to third-party weather APIs solely to fetch current weather conditions necessary for the App's core functionality.
+- **Limited Third-Party Services**: We do not sell or trade your personal data. However:
+  - Your approximate location may be sent securely and anonymously to third-party weather APIs solely to fetch current weather conditions necessary for the App's core functionality.
+  - Your coordinates are sent securely via HTTPS to Mapbox to render the interactive map and resolve your city name on the Location screen.
 
 ## 5. Your Rights and Choices
 

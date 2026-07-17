@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:solaris/services/location_service.dart';
+import 'package:solaris/services/geocoding_service.dart';
 import 'package:solaris/services/time_service.dart';
 import 'package:lat_lng_to_timezone/lat_lng_to_timezone.dart' as tzmap;
 import 'package:timezone/timezone.dart' as tz;
@@ -528,6 +529,21 @@ final effectiveLocationProvider = Provider<AsyncValue<Position>>((ref) {
   }
 
   return AsyncData(_defaultPosition);
+});
+
+final geocodingServiceProvider = Provider((ref) => GeocodingService());
+
+final locationCityProvider = FutureProvider<String>((ref) async {
+  final locationAsync = ref.watch(effectiveLocationProvider);
+  final locale = ref.watch(localeProvider);
+  return locationAsync.maybeWhen(
+    data: (pos) => ref.read(geocodingServiceProvider).getCityName(
+      pos.latitude,
+      pos.longitude,
+      language: locale.languageCode,
+    ),
+    orElse: () => Future.value("Global Coordinates"),
+  );
 });
 
 final coordinatesAvailableProvider = Provider<bool>((ref) {
