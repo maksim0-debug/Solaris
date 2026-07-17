@@ -165,7 +165,7 @@ class SettingsState {
     this.weatherAdjustmentIntensity = 0.45,
     this.weatherProvider = WeatherProvider.auto,
     this.startupMode = StartupMode.minimized,
-    this.isLocalIpcServerEnabled = true,
+    this.isLocalIpcServerEnabled = false,
     this.localIpcServerPort = 45321,
   }) : curvesMap = curvesMap ?? PresetConstants.getAllDefaults(),
        presetOrder =
@@ -416,7 +416,7 @@ class SettingsState {
       startupMode: StartupMode.fromJson(
         json['startupMode'] as String? ?? 'minimized',
       ),
-      isLocalIpcServerEnabled: json['isLocalIpcServerEnabled'] as bool? ?? true,
+      isLocalIpcServerEnabled: json['isLocalIpcServerEnabled'] as bool? ?? false,
       localIpcServerPort: json['localIpcServerPort'] as int? ?? 45321,
     );
   }

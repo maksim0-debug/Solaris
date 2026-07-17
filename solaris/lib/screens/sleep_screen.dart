@@ -1436,15 +1436,15 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                   title: l10n.enableLocalIpcServer,
                   subtitle: l10n.enableLocalIpcServerSubtitle,
                   value: settingsAsync.maybeWhen(
-                    data: (map) => map['all']?.isLocalIpcServerEnabled ?? true,
-                    orElse: () => true,
+                    data: (map) => map['all']?.isLocalIpcServerEnabled ?? false,
+                    orElse: () => false,
                   ),
                   onChanged: (val) =>
                       ref.read(settingsProvider.notifier).updateLocalIpcServerEnabled(val),
                 ),
                 if (settingsAsync.maybeWhen(
-                  data: (map) => map['all']?.isLocalIpcServerEnabled ?? true,
-                  orElse: () => true,
+                  data: (map) => map['all']?.isLocalIpcServerEnabled ?? false,
+                  orElse: () => false,
                 )) ...[
                   const SizedBox(height: 16),
                   Row(

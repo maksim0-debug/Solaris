@@ -62,3 +62,5 @@ env.g.dart
 .agent/
 .agents/
 changes.txt
+sleep_data_cache.json
+sleep_data_cache.json.bak
