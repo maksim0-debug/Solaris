@@ -79,29 +79,11 @@ Control your environment without leaving your current app.
 
 ---
 
-## 🔐 Google Fit Integration (Advanced Mode)
+## 💤 Sleep Integration
 
-Solaris supports direct synchronization with **Google Fit** to retrieve your sleep history, enabling high-precision adjustments to monitor color temperature and brightness based on your personal circadian rhythms.
+Solaris supports sleep data integration to fine-tune monitor brightness and color temperature according to your sleep patterns. You can choose between a local offline integration or sync with Google Fit.
 
-> [!IMPORTANT]
-> **Access & Security Policy:** Due to Google's stringent security policies regarding health data (**Restricted Scopes**), public applications are prohibited from accessing sleep history without undergoing an extensive and costly independent security audit.
->
-> Consequently, the official release builds of Solaris cannot natively sync with your Google Fit account for automated adjustments.
-
-To utilize Google Fit synchronization, you must configure a private integration by following these steps:
-
-1. **Create a Project**: Set up a free personal project in the [Google Cloud Console](https://console.cloud.google.com/).
-2. **Configure OAuth**: Define your "OAuth Consent Screen" and generate a Client ID with the `fitness.sleep.read` scope enabled.
-3. **Local Setup**: Clone this repository to your local system.
-4. **Environment Variables**: Navigate to the `solaris/` directory, rename `.env.example` to `.env` and insert your personal **Client ID** (Client Secret is not required, as Solaris uses PKCE Desktop OAuth).
-5. **Manual Build**: Compile and execute the application from source using the Flutter SDK (`flutter run -d windows`).
-
-_By utilizing a personal API key, the application will operate as a private developer instance, bypassing the verification requirements typically imposed on public distributions._
-<img width="787" height="653" alt="Google Fit Sleep Data integration screen" src="https://github.com/user-attachments/assets/94ee4ba4-6a71-4227-b05e-1d858a9917c4" />
-
----
-
-## 💤 Local Sleep Integration
+### 💤 Local Sleep Integration
 
 If you prefer not to use Google Fit or want a completely offline, internet-free setup, Solaris features a built-in **Local API Web Server**. This allows third-party desktop sleep trackers, smart alarms, or automation scripts running on your PC to feed sleep data directly into the app.
 
@@ -129,6 +111,29 @@ If you prefer not to use Google Fit or want a completely offline, internet-free 
        "is_sleeping": true
      }
      ```
+
+---
+
+### 🔐 Google Fit Integration
+
+Solaris supports direct synchronization with **Google Fit** to retrieve your sleep history, enabling high-precision adjustments to monitor color temperature and brightness based on your personal circadian rhythms.
+
+> [!IMPORTANT]
+> **Access & Security Policy:** Due to Google's stringent security policies regarding health data (**Restricted Scopes**), public applications are prohibited from accessing sleep history without undergoing an extensive and costly independent security audit.
+>
+> Consequently, the official release builds of Solaris cannot natively sync with your Google Fit account for automated adjustments.
+
+To utilize Google Fit synchronization, you must configure a private integration by following these steps:
+
+1. **Create a Project**: Set up a free personal project in the [Google Cloud Console](https://console.cloud.google.com/).
+2. **Configure OAuth**: Define your "OAuth Consent Screen" and generate a Client ID with the `fitness.sleep.read` scope enabled.
+3. **Local Setup**: Clone this repository to your local system.
+4. **Environment Variables**: Navigate to the `solaris/` directory, rename `.env.example` to `.env` and insert your personal **Client ID** (Client Secret is not required, as Solaris uses PKCE Desktop OAuth).
+5. **Manual Build**: Compile and execute the application from source using the Flutter SDK (`flutter run -d windows`).
+
+_By utilizing a personal API key, the application will operate as a private developer instance, bypassing the verification requirements typically imposed on public distributions._
+<img width="787" height="653" alt="Google Fit Sleep Data integration screen" src="https://github.com/user-attachments/assets/94ee4ba4-6a71-4227-b05e-1d858a9917c4" />
+
 
 ---
 
@@ -212,7 +217,7 @@ Solaris can be compiled and executed **entirely without any API keys**. If you d
    Open the newly created `.env` file and insert your credentials to unlock advanced features:
    - **WeatherAPI**: To allow Solaris to adjust brightness based on real-time cloudiness and solar radiation with high precision, [register at WeatherAPI.com](https://www.weatherapi.com/signup.aspx) to get a free API key and paste it into `WEATHER_API_KEY`.
    - **Mapbox**: To use interactive maps for location selection, [get a Mapbox Access Token](https://docs.mapbox.com/help/getting-started/access-tokens/) and paste it into `MAPBOX_TOKEN`.
-   - **Google Fit**: If you want to sync your sleep history, follow the [Google Fit Integration](#-google-fit-integration-advanced-mode) guide above to get your `GOOGLE_CLIENT_ID` (Client Secret is not required).
+   - **Google Fit**: If you want to sync your sleep history, follow the [Google Fit Integration](#-google-fit-integration) guide above to get your `GOOGLE_CLIENT_ID` (Client Secret is not required).
 
 4. **Get dependencies & generate code**:
 
