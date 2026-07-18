@@ -1309,11 +1309,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mapboxTokenMissingTooltip =>
-      'Mapbox access token is missing. Configure it in API Keys or .env.';
+      'Mapbox access token is missing. Configure it in Settings (API Keys section).';
 
   @override
   String get weatherApiKeyMissingWarning =>
-      'WeatherAPI provider is disabled. Configure WEATHER_API_KEY in API Keys or .env.';
+      'WeatherAPI provider is disabled. Configure WEATHER_API_KEY in Settings (API Keys section).';
 
   @override
   String get googleFitKeysMissingWarning =>

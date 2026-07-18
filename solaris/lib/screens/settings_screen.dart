@@ -2653,6 +2653,8 @@ class _WeatherProviderSelector extends ConsumerWidget {
                         style: const TextStyle(
                           fontSize: 11,
                           color: Color(0xFFFDBA74),
+                          decoration: TextDecoration.underline,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
@@ -2670,6 +2672,8 @@ class _WeatherProviderSelector extends ConsumerWidget {
                         style: const TextStyle(
                           fontSize: 11,
                           color: Color(0xFFFDBA74),
+                          decoration: TextDecoration.underline,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
@@ -2947,6 +2951,8 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
                       style: const TextStyle(
                         fontSize: 11,
                         color: Color(0xFFFDBA74),
+                        decoration: TextDecoration.underline,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),

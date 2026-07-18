@@ -82,27 +82,35 @@ class StylishLocationCard extends ConsumerWidget {
                                   ),
                                 ),
                               ),
-                              Tooltip(
-                                message: l10n.mapboxTokenMissingTooltip,
-                                triggerMode: TooltipTriggerMode.tap,
-                                preferBelow: false,
-                                child: Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black54,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: accentColor.withOpacity(0.5),
-                                      width: 1.5,
-                                    ),
-                                  ),
-                                  child: Icon(
-                                    LucideIcons.lock,
-                                    color: accentColor,
-                                    size: 20,
-                                  ),
-                                ),
-                              ),
+                               GestureDetector(
+                                 onTap: () {
+                                   ref.read(activeScreenProvider.notifier).setScreen(AppScreen.settings);
+                                   ref.read(searchAnchorProvider.notifier).setAnchor('api_keys');
+                                 },
+                                 child: MouseRegion(
+                                   cursor: SystemMouseCursors.click,
+                                   child: Tooltip(
+                                     message: l10n.mapboxTokenMissingTooltip,
+                                     preferBelow: false,
+                                     child: Container(
+                                       padding: const EdgeInsets.all(10),
+                                       decoration: BoxDecoration(
+                                         color: Colors.black54,
+                                         shape: BoxShape.circle,
+                                         border: Border.all(
+                                           color: accentColor.withOpacity(0.5),
+                                           width: 1.5,
+                                         ),
+                                       ),
+                                       child: Icon(
+                                         LucideIcons.lock,
+                                         color: accentColor,
+                                         size: 20,
+                                       ),
+                                     ),
+                                   ),
+                                 ),
+                               ),
                             ],
                           )
                         : locationAsync.maybeWhen(
@@ -138,50 +146,55 @@ class StylishLocationCard extends ConsumerWidget {
                   ),
                 ),
                 Positioned.fill(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: settingsAsync.maybeWhen(
-                      data: (settingsMap) {
-                        final settings = settingsMap['all'] ?? SettingsState();
-                        final weather = weatherAsync.value;
-                        if (weather == null) return const SizedBox.shrink();
-                        return WeatherOverlay(
-                          weatherCode: weather.weatherCode,
-                          cloudCover: weather.cloudCover,
-                          showRain: settings.showRainAnimation,
-                          showSnow: settings.showSnowAnimation,
-                          showThunder: settings.showThunderAnimation,
-                          showClouds: settings.showCloudAnimation,
-                        );
-                      },
-                      orElse: () => const SizedBox.shrink(),
+                  child: IgnorePointer(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: settingsAsync.maybeWhen(
+                        data: (settingsMap) {
+                          final settings = settingsMap['all'] ?? SettingsState();
+                          final weather = weatherAsync.value;
+                          if (weather == null) return const SizedBox.shrink();
+                          return WeatherOverlay(
+                            weatherCode: weather.weatherCode,
+                            cloudCover: weather.cloudCover,
+                            showRain: settings.showRainAnimation,
+                            showSnow: settings.showSnowAnimation,
+                            showThunder: settings.showThunderAnimation,
+                            showClouds: settings.showCloudAnimation,
+                          );
+                        },
+                        orElse: () => const SizedBox.shrink(),
+                      ),
                     ),
                   ),
                 ),
 
                 // Gradient Overlay for contrast
                 Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withOpacity(0.8),
-                        ],
+                  child: IgnorePointer(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.8),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
 
                 // Pulsing Radar Marker
-                Positioned.fill(
-                  child: Center(
-                    child: PulsingLocationMarker(color: accentColor),
+                if (isMapTokenValid)
+                  Positioned.fill(
+                    child: Center(
+                      child: PulsingLocationMarker(color: accentColor),
+                    ),
                   ),
-                ),
 
                 // Card Content
                 Padding(

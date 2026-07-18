@@ -2361,13 +2361,13 @@ abstract class AppLocalizations {
   /// No description provided for @mapboxTokenMissingTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Mapbox access token is missing. Configure it in API Keys or .env.'**
+  /// **'Mapbox access token is missing. Configure it in Settings (API Keys section).'**
   String get mapboxTokenMissingTooltip;
 
   /// No description provided for @weatherApiKeyMissingWarning.
   ///
   /// In en, this message translates to:
-  /// **'WeatherAPI provider is disabled. Configure WEATHER_API_KEY in API Keys or .env.'**
+  /// **'WeatherAPI provider is disabled. Configure WEATHER_API_KEY in Settings (API Keys section).'**
   String get weatherApiKeyMissingWarning;
 
   /// No description provided for @googleFitKeysMissingWarning.

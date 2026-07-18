@@ -1311,11 +1311,11 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get mapboxTokenMissingTooltip =>
-      'Токен доступу Mapbox відсутній. Налаштуйте його в API Ключах або .env.';
+      'Токен доступу Mapbox відсутній. Налаштуйте його в Налаштуваннях (розділ «API Ключі»).';
 
   @override
   String get weatherApiKeyMissingWarning =>
-      'Провайдер WeatherAPI вимкнено. Налаштуйте WEATHER_API_KEY в API Ключах або .env.';
+      'Провайдер WeatherAPI вимкнено. Налаштуйте WEATHER_API_KEY у Налаштуваннях (розділ «API Ключі»).';
 
   @override
   String get googleFitKeysMissingWarning =>

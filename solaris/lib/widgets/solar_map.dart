@@ -173,24 +173,32 @@ class _SolarMapState extends ConsumerState<SolarMap> {
                 ),
               ),
               Center(
-                child: Tooltip(
-                  message: l10n.mapboxTokenMissingTooltip,
-                  triggerMode: TooltipTriggerMode.tap,
-                  preferBelow: false,
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.black54,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: const Color(0xFFFDBA74).withOpacity(0.5),
-                        width: 2,
+                child: GestureDetector(
+                  onTap: () {
+                    ref.read(activeScreenProvider.notifier).setScreen(AppScreen.settings);
+                    ref.read(searchAnchorProvider.notifier).setAnchor('api_keys');
+                  },
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: Tooltip(
+                      message: l10n.mapboxTokenMissingTooltip,
+                      preferBelow: false,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFFFDBA74).withOpacity(0.5),
+                            width: 2,
+                          ),
+                        ),
+                        child: const Icon(
+                          LucideIcons.lock,
+                          color: Color(0xFFFDBA74),
+                          size: 32,
+                        ),
                       ),
-                    ),
-                    child: const Icon(
-                      LucideIcons.lock,
-                      color: Color(0xFFFDBA74),
-                      size: 32,
                     ),
                   ),
                 ),
