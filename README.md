@@ -35,7 +35,7 @@ Full control over your entire workspace.
 - **DDC/CI Integration**: Direct hardware communication with monitors via system-level APIs.
 - **Individual Control**: Set unique brightness offsets or manual levels for each display.
 - **Unified Sync**: Adjust all monitors at once with a single click.
-  <img width="314" height="254" alt="Multi-monitor controls for individual display brightness offsets" src="https://github.com/user-attachments/assets/53066949-0c59-4fc8-afa5-79805fd59ef8" />
+<img width="314" height="254" alt="Multi-monitor controls for individual display brightness offsets" src="https://github.com/user-attachments/assets/53066949-0c59-4fc8-afa5-79805fd59ef8" />
 
 ### 🌡️ Dynamic Color Temperature (GPU-Assisted Filter)
 
