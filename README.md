@@ -35,7 +35,7 @@ Full control over your entire workspace.
 - **DDC/CI Integration**: Direct hardware communication with monitors via system-level APIs.
 - **Individual Control**: Set unique brightness offsets or manual levels for each display.
 - **Unified Sync**: Adjust all monitors at once with a single click.
-  <img width="314" height="254" alt="Multi-monitor controls for individual display brightness offsets" src="https://github.com/user-attachments/assets/53066949-0c59-4fc8-afa5-79805fd59ef8" />
+<img width="314" height="254" alt="Multi-monitor controls for individual display brightness offsets" src="https://github.com/user-attachments/assets/53066949-0c59-4fc8-afa5-79805fd59ef8" />
 
 ### 🌡️ Dynamic Color Temperature (GPU-Assisted Filter)
 
@@ -52,7 +52,7 @@ Focus on the win without distractions.
 
 - **Auto-Lock**: Solaris detects when you start a game and prevents brightness from shifting during intense sessions.
 - **Customizable Lists**: Add specific apps to a **Whitelist** (always lock) or **Blacklist** (never lock).
-  <img width="971" height="603" alt="Game Mode and Application Whitelist configuration" src="https://github.com/user-attachments/assets/4f2429b0-2470-42fb-b5a7-f6b6086cb091" />
+<img width="971" height="603" alt="Game Mode and Application Whitelist configuration" src="https://github.com/user-attachments/assets/4f2429b0-2470-42fb-b5a7-f6b6086cb091" />
 
 ### ☁️ Weather Influence
 
@@ -160,6 +160,8 @@ Once you have the credentials, you have two options to integrate them:
 ## 🔑 Dynamic API Keys Configuration
 
 Solaris is designed to be fully functional out-of-the-box, but advanced features (Mapbox maps, WeatherAPI forecasts, Google Fit sleep sync) require specific API credentials. Instead of forcing you to build the application from source code to insert these keys, Solaris features a **Dynamic API Keys Management System** built directly into the UI.
+<img width="838" height="560" alt="Custom API keys configuration menu in the Solaris app" src="https://github.com/user-attachments/assets/36035901-cb73-407c-96bf-62437f8b56fc" />
+
 
 ### How to Configure Custom Keys
 1. Open Solaris and navigate to the **Settings** tab.
