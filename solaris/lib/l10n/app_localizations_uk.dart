@@ -1246,6 +1246,21 @@ class AppLocalizationsUk extends AppLocalizations {
   String get serverStoppedStatus => 'Сервер зупинено або порт зайнятий';
 
   @override
+  String serverPortBusyAlertTitle(int port) {
+    return 'Порт $port зайнятий або недоступний';
+  }
+
+  @override
+  String serverPortBusyAlertExplanation(int port) {
+    return 'Solaris не вдалося запустити локальний API-сервер, оскільки порт $port наразі використовується іншою програмою або службою на вашому комп\'ютері.';
+  }
+
+  @override
+  String serverPortBusyAlertSolution(Object port) {
+    return 'Щоб вирішити цю проблему, ви можете ввести інший номер порту в полі вище (наприклад, 45322) або закрити програму, яка використовує порт $port.';
+  }
+
+  @override
   String get sleepIntegrationHelpTitle => 'Посібник з інтеграції сну';
 
   @override

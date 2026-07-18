@@ -609,6 +609,23 @@
     }
   },
   "serverStoppedStatus": "Server stopped or port in use",
+  "serverPortBusyAlertTitle": "Port {port} is busy or unavailable",
+  "@serverPortBusyAlertTitle": {
+    "placeholders": {
+      "port": {
+        "type": "int"
+      }
+    }
+  },
+  "serverPortBusyAlertExplanation": "Solaris could not start the local API server because port {port} is currently in use by another application or service on your computer.",
+  "@serverPortBusyAlertExplanation": {
+    "placeholders": {
+      "port": {
+        "type": "int"
+      }
+    }
+  },
+  "serverPortBusyAlertSolution": "To resolve this, you can enter a different port number in the field above (e.g., 45322), or close the application that is using port {port}.",
   "sleepIntegrationHelpTitle": "Sleep Integration Guide",
   "sleepIntegrationHelpIntro": "This integration allows third-party desktop sleep trackers, smart alarms, or automation scripts to send sleep data directly to this app over a secure local network connection.",
   "sleepIntegrationHelpSectionWhat": "What is it?",

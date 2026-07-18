@@ -3,25 +3,60 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solaris/models/sleep_session.dart';
+import 'package:solaris/models/local_ipc_server_state.dart';
+import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/providers/sleep_provider.dart';
 import 'package:solaris/providers.dart';
 
-class LocalIpcService {
-  final Ref _ref;
+class LocalIpcService extends Notifier<LocalIpcServerState> {
   HttpServer? _server;
   bool _isStarting = false;
 
-  LocalIpcService(this._ref);
+  @override
+  LocalIpcServerState build() {
+    ref.listen<AsyncValue<Map<String, SettingsState>>>(
+      settingsProvider,
+      (previous, next) {
+        next.whenData((settingsMap) async {
+          final settings = settingsMap['all'];
+          final prevSettings = previous?.value?['all'];
+          if (settings != null) {
+            final isEnabled = settings.isLocalIpcServerEnabled;
+            final port = settings.localIpcServerPort;
+            final prevPort = prevSettings?.localIpcServerPort;
 
-  bool get isRunning => _server != null;
-  int? get port => _server?.port;
+            if (isEnabled) {
+              if (!state.isRunning) {
+                await start();
+              } else if (port != prevPort) {
+                await stop();
+                await start();
+              }
+            } else {
+              if (state.isRunning) {
+                await stop();
+              }
+            }
+          }
+        });
+      },
+      fireImmediately: true,
+    );
+
+    ref.onDispose(() {
+      stop();
+    });
+
+    return const LocalIpcServerState(isRunning: false);
+  }
 
   /// Starts the HTTP server on the configured port if enabled.
   Future<void> start() async {
-    if (isRunning || _isStarting) return;
+    if (state.isRunning || _isStarting) return;
     _isStarting = true;
+    state = state.copyWith(isRunning: false, error: null, failedPort: null);
 
-    final settingsMap = _ref.read(settingsProvider).value;
+    final settingsMap = ref.read(settingsProvider).value;
     final settings = settingsMap?['all'];
     if (settings == null) {
       debugPrint('LocalIpcService: Settings not loaded yet. Delaying startup.');
@@ -44,10 +79,16 @@ class LocalIpcService {
         shared: true,
       );
       debugPrint('LocalIpcService: Server running on http://${_server!.address.address}:${_server!.port}');
+      state = LocalIpcServerState(isRunning: true, port: _server!.port);
       _listen();
     } catch (e) {
       debugPrint('LocalIpcService: Failed to bind server to port $portToBind: $e');
       _server = null;
+      state = LocalIpcServerState(
+        isRunning: false,
+        error: e.toString(),
+        failedPort: portToBind,
+      );
     } finally {
       _isStarting = false;
     }
@@ -60,6 +101,7 @@ class LocalIpcService {
       debugPrint('LocalIpcService: Server stopped.');
       _server = null;
     }
+    state = const LocalIpcServerState(isRunning: false);
   }
 
   /// REST Request Listener loop
@@ -120,7 +162,7 @@ class LocalIpcService {
       }
 
       // Update sessions in notifier
-      await _ref.read(sleepProvider.notifier).updateSessionsFromIpc(sessions);
+      await ref.read(sleepProvider.notifier).updateSessionsFromIpc(sessions);
 
       _sendResponse(request, HttpStatus.ok, {
         'status': 'success',
@@ -163,7 +205,7 @@ class LocalIpcService {
   }
 
   Future<void> _handleGetStatus(HttpRequest request) async {
-    final sleepState = _ref.read(sleepProvider);
+    final sleepState = ref.read(sleepProvider);
     _sendResponse(request, HttpStatus.ok, {
       'service': 'Solaris Local API',
       'running': true,

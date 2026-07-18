@@ -1244,6 +1244,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serverStoppedStatus => 'Server stopped or port in use';
 
   @override
+  String serverPortBusyAlertTitle(int port) {
+    return 'Port $port is busy or unavailable';
+  }
+
+  @override
+  String serverPortBusyAlertExplanation(int port) {
+    return 'Solaris could not start the local API server because port $port is currently in use by another application or service on your computer.';
+  }
+
+  @override
+  String serverPortBusyAlertSolution(Object port) {
+    return 'To resolve this, you can enter a different port number in the field above (e.g., 45322), or close the application that is using port $port.';
+  }
+
+  @override
   String get sleepIntegrationHelpTitle => 'Sleep Integration Guide';
 
   @override

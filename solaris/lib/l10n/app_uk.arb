@@ -607,6 +607,23 @@
     }
   },
   "serverStoppedStatus": "Сервер зупинено або порт зайнятий",
+  "serverPortBusyAlertTitle": "Порт {port} зайнятий або недоступний",
+  "@serverPortBusyAlertTitle": {
+    "placeholders": {
+      "port": {
+        "type": "int"
+      }
+    }
+  },
+  "serverPortBusyAlertExplanation": "Solaris не вдалося запустити локальний API-сервер, оскільки порт {port} наразі використовується іншою програмою або службою на вашому комп'ютері.",
+  "@serverPortBusyAlertExplanation": {
+    "placeholders": {
+      "port": {
+        "type": "int"
+      }
+    }
+  },
+  "serverPortBusyAlertSolution": "Щоб вирішити цю проблему, ви можете ввести інший номер порту в полі вище (наприклад, 45322) або закрити програму, яка використовує порт {port}.",
   "sleepIntegrationHelpTitle": "Посібник з інтеграції сну",
   "sleepIntegrationHelpIntro": "Ця інтеграція дозволяє стороннім програмам для відстеження сну, розумним будильникам або скриптам автоматизації надсилати дані про сон безпосередньо в цей додаток через безпечне локальне з'єднання.",
   "sleepIntegrationHelpSectionWhat": "Що це таке?",

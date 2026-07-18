@@ -12,6 +12,7 @@ import 'package:solaris/providers.dart';
 import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/models/temperature_state.dart';
+import 'package:solaris/models/local_ipc_server_state.dart';
 import 'package:intl/intl.dart';
 
 import 'package:solaris/widgets/deep_link_target.dart';
@@ -1414,9 +1415,24 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
   bool _isExpanded = false;
 
   @override
+  void initState() {
+    super.initState();
+    final ipcState = ref.read(localIpcServiceProvider);
+    if (ipcState.error != null) {
+      _isExpanded = true;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final settingsAsync = ref.watch(settingsProvider);
+
+    ref.listen<LocalIpcServerState>(localIpcServiceProvider, (previous, next) {
+      if (next.error != null && previous?.error == null) {
+        setState(() => _isExpanded = true);
+      }
+    });
 
     return GlassCard(
       padding: const EdgeInsets.all(24),
@@ -1587,24 +1603,88 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                       final ipcService = ref.watch(localIpcServiceProvider);
                       final isRunning = ipcService.isRunning;
                       final activePort = ipcService.port;
-                      return Row(
+                      final hasError = ipcService.error != null;
+                      final failedPort = ipcService.failedPort ?? 45321;
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
-                            isRunning ? LucideIcons.checkCircle : LucideIcons.alertCircle,
-                            color: isRunning ? Colors.greenAccent : Colors.redAccent,
-                            size: 16,
+                          Row(
+                            children: [
+                              Icon(
+                                isRunning ? LucideIcons.checkCircle : LucideIcons.alertCircle,
+                                color: isRunning ? Colors.greenAccent : Colors.redAccent,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                isRunning
+                                    ? l10n.serverRunningStatus(activePort ?? 45321)
+                                    : l10n.serverStoppedStatus,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isRunning ? Colors.greenAccent : Colors.redAccent,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            isRunning
-                                ? l10n.serverRunningStatus(activePort ?? 45321)
-                                : l10n.serverStoppedStatus,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isRunning ? Colors.greenAccent : Colors.redAccent,
-                              fontWeight: FontWeight.w500,
+                          if (!isRunning && hasError) ...[
+                            const SizedBox(height: 16),
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.redAccent.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.redAccent.withOpacity(0.2),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        LucideIcons.alertTriangle,
+                                        color: Colors.redAccent,
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          l10n.serverPortBusyAlertTitle(failedPort),
+                                          style: const TextStyle(
+                                            color: Colors.redAccent,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    l10n.serverPortBusyAlertExplanation(failedPort),
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.7),
+                                      fontSize: 12,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    l10n.serverPortBusyAlertSolution(failedPort),
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.7),
+                                      fontSize: 12,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
+                          ],
                         ],
                       );
                     },

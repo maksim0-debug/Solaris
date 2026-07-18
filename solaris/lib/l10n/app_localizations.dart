@@ -2256,6 +2256,24 @@ abstract class AppLocalizations {
   /// **'Server stopped or port in use'**
   String get serverStoppedStatus;
 
+  /// No description provided for @serverPortBusyAlertTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Port {port} is busy or unavailable'**
+  String serverPortBusyAlertTitle(int port);
+
+  /// No description provided for @serverPortBusyAlertExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Solaris could not start the local API server because port {port} is currently in use by another application or service on your computer.'**
+  String serverPortBusyAlertExplanation(int port);
+
+  /// No description provided for @serverPortBusyAlertSolution.
+  ///
+  /// In en, this message translates to:
+  /// **'To resolve this, you can enter a different port number in the field above (e.g., 45322), or close the application that is using port {port}.'**
+  String serverPortBusyAlertSolution(Object port);
+
   /// No description provided for @sleepIntegrationHelpTitle.
   ///
   /// In en, this message translates to:
