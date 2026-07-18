@@ -1317,7 +1317,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get googleFitKeysMissingWarning =>
-      'Google Fit integration is disabled. Configure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in API Keys or .env.';
+      'Google Fit integration is disabled. Configure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in Settings (API Keys section).';
 
   @override
   String get apiKeysTitle => 'API Keys';

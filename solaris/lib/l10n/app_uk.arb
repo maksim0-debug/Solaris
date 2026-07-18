@@ -640,7 +640,7 @@
   "sleepIntegrationHelpSectionFormatText": "Додаток очікує дані у форматі JSON. Деталі схеми:\n\n1. Сесії сну (POST на /api/sleep/sessions)\nОчікувані дані: Масив об'єктів сесій сну JSON.\nКожен об'єкт містить:\n• id: рядок (унікальний ідентифікатор сесії)\n• startTime: рядок (дата/час ISO 8601, наприклад, \"2026-07-17T00:30:00Z\")\n• endTime: рядок (дата/час ISO 8601, наприклад, \"2026-07-17T08:00:00Z\")\n• title: рядок (необов'язкова назва сесії)\n• source: рядок (необов'язково, за замовчуванням \"local_api\")\n\n2. Поточний статус сну (POST на /api/sleep/status)\nОчікувані дані: Об'єкт JSON, що містить:\n• is_sleeping: логічне значення (true, якщо користувач спить, false — якщо не спить)",
   "mapboxTokenMissingTooltip": "Токен доступу Mapbox відсутній. Налаштуйте його в API Ключах або .env.",
   "weatherApiKeyMissingWarning": "Провайдер WeatherAPI вимкнено. Налаштуйте WEATHER_API_KEY в API Ключах або .env.",
-  "googleFitKeysMissingWarning": "Інтеграція з Google Fit вимкнена. Налаштуйте GOOGLE_CLIENT_ID та GOOGLE_CLIENT_SECRET в API Ключах або .env.",
+  "googleFitKeysMissingWarning": "Інтеграція з Google Fit вимкнена. Налаштуйте GOOGLE_CLIENT_ID та GOOGLE_CLIENT_SECRET у Налаштуваннях (розділ «API Ключі»).",
   "apiKeysTitle": "API Ключі",
   "apiKeysSubtitle": "Налаштування персональних ключів доступу до сервісів",
   "customWeatherApiKey": "Персональний WeatherAPI ключ",

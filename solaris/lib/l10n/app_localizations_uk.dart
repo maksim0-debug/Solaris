@@ -1319,7 +1319,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get googleFitKeysMissingWarning =>
-      'Інтеграція з Google Fit вимкнена. Налаштуйте GOOGLE_CLIENT_ID та GOOGLE_CLIENT_SECRET в API Ключах або .env.';
+      'Інтеграція з Google Fit вимкнена. Налаштуйте GOOGLE_CLIENT_ID та GOOGLE_CLIENT_SECRET у Налаштуваннях (розділ «API Ключі»).';
 
   @override
   String get apiKeysTitle => 'API Ключі';

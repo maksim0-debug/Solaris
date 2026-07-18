@@ -327,21 +327,7 @@ class _GoogleFitSyncCard extends ConsumerWidget {
                 ),
                 if (!isGoogleKeysValid) ...[
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      const Icon(LucideIcons.alertCircle, color: Color(0xFFF87171), size: 16),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          l10n.googleFitKeysMissingWarning,
-                          style: const TextStyle(
-                            color: Color(0xFFF87171),
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  const _GoogleFitKeysWarning(),
                 ],
               ],
             )
@@ -375,21 +361,7 @@ class _GoogleFitSyncCard extends ConsumerWidget {
                 ),
                 if (!isGoogleKeysValid) ...[
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      const Icon(LucideIcons.alertCircle, color: Color(0xFFF87171), size: 16),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          l10n.googleFitKeysMissingWarning,
-                          style: const TextStyle(
-                            color: Color(0xFFF87171),
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  const _GoogleFitKeysWarning(),
                 ],
               ],
             )
@@ -1951,3 +1923,56 @@ class _SettingsRow extends StatelessWidget {
     );
   }
 }
+
+class _GoogleFitKeysWarning extends ConsumerStatefulWidget {
+  const _GoogleFitKeysWarning({Key? key}) : super(key: key);
+
+  @override
+  ConsumerState<_GoogleFitKeysWarning> createState() => _GoogleFitKeysWarningState();
+}
+
+class _GoogleFitKeysWarningState extends ConsumerState<_GoogleFitKeysWarning> {
+  bool _isHovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _isHovering = true),
+      onExit: (_) => setState(() => _isHovering = false),
+      child: GestureDetector(
+        onTap: () {
+          ref.read(activeScreenProvider.notifier).setScreen(AppScreen.settings);
+          ref.read(searchAnchorProvider.notifier).setAnchor('api_keys');
+        },
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(top: 2),
+              child: Icon(
+                LucideIcons.alertCircle,
+                color: Color(0xFFF87171),
+                size: 16,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                l10n.googleFitKeysMissingWarning,
+                style: TextStyle(
+                  color: const Color(0xFFF87171),
+                  fontSize: 13,
+                  decoration: _isHovering ? TextDecoration.underline : TextDecoration.none,
+                  decorationColor: const Color(0xFFF87171),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

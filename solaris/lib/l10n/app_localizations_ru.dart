@@ -1321,7 +1321,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get googleFitKeysMissingWarning =>
-      'Интеграция с Google Fit отключена. Настройте GOOGLE_CLIENT_ID и GOOGLE_CLIENT_SECRET в API Ключах или .env.';
+      'Интеграция с Google Fit отключена. Настройте GOOGLE_CLIENT_ID и GOOGLE_CLIENT_SECRET в Настройках (раздел «API Ключи»).';
 
   @override
   String get apiKeysTitle => 'API Ключи';
