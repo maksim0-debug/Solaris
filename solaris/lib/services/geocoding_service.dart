@@ -46,9 +46,11 @@ class GeocodingService {
       }
     }
 
-    // 2. Offline Fallback: Extract from Timezone name
     try {
-      final tzName = tzmap.latLngToTimezoneString(latitude, longitude);
+      var tzName = tzmap.latLngToTimezoneString(latitude, longitude);
+      if (tzName == 'Europe/Kiev') {
+        tzName = 'Europe/Kyiv';
+      }
       final parts = tzName.split('/');
       if (parts.isNotEmpty) {
         final city = parts.last.replaceAll('_', ' ');

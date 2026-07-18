@@ -11,6 +11,7 @@ import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/weather_overlay.dart';
 import 'package:intl/intl.dart';
 import 'package:solaris/env/env.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 import 'package:solaris/widgets/deep_link_target.dart';
 
@@ -26,6 +27,7 @@ class StylishLocationCard extends ConsumerWidget {
     final solarAsync = ref.watch(solarStateStreamProvider);
     final weatherAsync = ref.watch(currentWeatherProvider);
     final settingsAsync = ref.watch(settingsProvider);
+    final timezoneVal = ref.watch(effectiveTimezoneProvider);
 
     return solarAsync.maybeWhen(
       data: (solarState) {
@@ -242,7 +244,9 @@ class StylishLocationCard extends ConsumerWidget {
                             if (weather == null) return const SizedBox.shrink();
                             return Text(
                               l10n.lastUpdatedFormat(
-                                DateFormat.Hm().format(weather.lastUpdated),
+                                DateFormat.Hm().format(
+                                  tz.TZDateTime.from(weather.lastUpdated, timezoneVal),
+                                ),
                               ),
                               textAlign: TextAlign.left,
                               style: TextStyle(

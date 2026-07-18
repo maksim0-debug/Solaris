@@ -23,7 +23,7 @@ void main() {
       });
 
       final service = GeocodingService(client: mockClient);
-      final result = await service.getCityName(50.4547, 30.5238);
+      final result = await service.getCityName(50.4547, 30.5238, customToken: 'pk.mock_token');
       expect(result, 'Kyiv');
     });
 
@@ -44,7 +44,7 @@ void main() {
       });
 
       final service = GeocodingService(client: mockClient);
-      final result = await service.getCityName(50.4547, 30.5238, language: 'en');
+      final result = await service.getCityName(50.4547, 30.5238, language: 'en', customToken: 'pk.mock_token');
       expect(result, 'Kyiv');
     });
 
@@ -71,8 +71,8 @@ void main() {
       // Coordinates of Kyiv: 50.4547, 30.5238
       final result = await service.getCityName(50.4547, 30.5238);
       
-      // Timezone is Europe/Kyiv or Europe/Kiev
-      expect(result, anyOf('Kyiv', 'Kiev'));
+      // Timezone is Europe/Kyiv
+      expect(result, 'Kyiv');
     });
   });
 }

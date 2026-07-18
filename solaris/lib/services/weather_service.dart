@@ -113,7 +113,7 @@ class WeatherService {
         cloudCover: (current['cloud_cover'] as num).toDouble(),
         windSpeed: (current['wind_speed_10m'] as num).toDouble(),
         weatherCode: (current['weather_code'] as num).toInt(),
-        lastUpdated: DateTime.parse(current['time'] as String),
+        lastUpdated: DateTime.parse('${current['time'] as String}Z'),
       );
     } else {
       throw Exception('Open-Meteo returned code ${response.statusCode}');
@@ -191,7 +191,7 @@ class WeatherService {
         cloudCover: cloud,
         windSpeed: (current['wind_kph'] as num).toDouble(),
         weatherCode: _mapWeatherApiToWMO(weatherApiCode), // Convert code
-        lastUpdated: DateTime.fromMillisecondsSinceEpoch(lastUpdatedEpoch * 1000),
+        lastUpdated: DateTime.fromMillisecondsSinceEpoch(lastUpdatedEpoch * 1000, isUtc: true),
       );
     } else {
       throw Exception('WeatherAPI returned code ${response.statusCode}');
