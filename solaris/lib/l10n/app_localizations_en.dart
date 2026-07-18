@@ -1357,6 +1357,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'This official release downloaded from GitHub does not contain a built-in Google Client ID and Client Secret due to Google\'s stringent security policies regarding health data (Restricted Scopes). Public applications are prohibited from accessing sleep history without undergoing an extensive and costly independent security audit.\n\nTo enable synchronization:\n1. Input your custom Google Client ID and Client Secret in the settings card under \'API Keys\'.\n2. Alternatively, build the app from source with your own keys in your `.env` file.';
 
   @override
+  String get googleFitLocalWarningTitle => 'Google Fit Keys Missing';
+
+  @override
+  String get googleFitLocalWarningBody =>
+      'Google Fit integration requires Google OAuth credentials.\n\nTo enable synchronization:\n1. Input your custom Google Client ID and Client Secret in the settings card under \'API Keys\'.\n2. Alternatively, configure your local `.env` file and rebuild the application.';
+
+  @override
   String get goToSettings => 'Go to settings';
 
   @override

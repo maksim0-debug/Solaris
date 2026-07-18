@@ -2442,6 +2442,18 @@ abstract class AppLocalizations {
   /// **'This official release downloaded from GitHub does not contain a built-in Google Client ID and Client Secret due to Google\'s stringent security policies regarding health data (Restricted Scopes). Public applications are prohibited from accessing sleep history without undergoing an extensive and costly independent security audit.\n\nTo enable synchronization:\n1. Input your custom Google Client ID and Client Secret in the settings card under \'API Keys\'.\n2. Alternatively, build the app from source with your own keys in your `.env` file.'**
   String get googleFitReleaseWarningBody;
 
+  /// No description provided for @googleFitLocalWarningTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Fit Keys Missing'**
+  String get googleFitLocalWarningTitle;
+
+  /// No description provided for @googleFitLocalWarningBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Fit integration requires Google OAuth credentials.\n\nTo enable synchronization:\n1. Input your custom Google Client ID and Client Secret in the settings card under \'API Keys\'.\n2. Alternatively, configure your local `.env` file and rebuild the application.'**
+  String get googleFitLocalWarningBody;
+
   /// No description provided for @goToSettings.
   ///
   /// In en, this message translates to:

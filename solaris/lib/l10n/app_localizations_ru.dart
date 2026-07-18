@@ -1361,6 +1361,13 @@ class AppLocalizationsRu extends AppLocalizations {
       'Эта официальная версия приложения скачана с GitHub и не содержит встроенного Google Client ID и Client Secret из-за строгой политики безопасности Google в отношении данных о здоровье (Restricted Scopes). Публичным приложениям запрещено получать доступ к истории сна без прохождения дорогостоящего независимого аудита безопасности.\n\nЧтобы включить синхронизацию:\n1. Введите свои собственные Google Client ID и Client Secret в разделе настроек «API Ключи».\n2. Либо соберите приложение из исходников с вашими ключами в файле `.env`.';
 
   @override
+  String get googleFitLocalWarningTitle => 'Отсутствуют ключи Google Fit';
+
+  @override
+  String get googleFitLocalWarningBody =>
+      'Для интеграции с Google Fit требуются учетные данные Google OAuth.\n\nЧтобы включить синхронизацию:\n1. Введите свои собственные Google Client ID и Client Secret в разделе настроек «API Ключи».\n2. Либо настройте локальный файл `.env` и пересоберите приложение.';
+
+  @override
   String get goToSettings => 'В настройки';
 
   @override

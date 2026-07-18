@@ -446,6 +446,14 @@ class _GoogleFitSyncCard extends ConsumerWidget {
 
   void _showGoogleFitKeysMissingDialog(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final isOfficialRelease = Env.isOfficialRelease;
+    final title = isOfficialRelease
+        ? l10n.googleFitReleaseWarningTitle
+        : l10n.googleFitLocalWarningTitle;
+    final body = isOfficialRelease
+        ? l10n.googleFitReleaseWarningBody
+        : l10n.googleFitLocalWarningBody;
+
     showDialog<void>(
       context: context,
       builder: (BuildContext context) {
@@ -460,13 +468,13 @@ class _GoogleFitSyncCard extends ConsumerWidget {
               const Icon(LucideIcons.alertTriangle, color: Color(0xFFFDBA74)),
               const SizedBox(width: 12),
               Text(
-                l10n.googleFitReleaseWarningTitle,
+                title,
                 style: const TextStyle(color: Colors.white),
               ),
             ],
           ),
           content: Text(
-            l10n.googleFitReleaseWarningBody,
+            body,
             style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.4),
           ),
           actions: [

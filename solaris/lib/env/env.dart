@@ -16,6 +16,11 @@ abstract class Env {
   @EnviedField(varName: 'WEATHER_API_KEY', optional: true, defaultValue: '')
   static final String weatherApiKey = _Env.weatherApiKey;
 
+  @EnviedField(varName: 'IS_OFFICIAL_RELEASE', optional: true, defaultValue: 'false')
+  static final String isOfficialReleaseStr = _Env.isOfficialReleaseStr;
+
+  static bool get isOfficialRelease => isOfficialReleaseStr.toLowerCase() == 'true';
+
   static bool get isWeatherApiKeyValid {
     return weatherApiKey.isNotEmpty &&
         weatherApiKey != 'your_weather_api_key_here' &&
