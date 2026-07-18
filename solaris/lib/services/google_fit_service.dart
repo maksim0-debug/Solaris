@@ -22,21 +22,30 @@ class GoogleFitService {
 
   final _scopes = [FitnessApi.fitnessSleepReadScope];
 
-  String? _customGoogleClientId;
-  set customGoogleClientId(String? value) => _customGoogleClientId = value;
+  String? Function()? _customGoogleClientIdProvider;
+  String? Function()? _customGoogleClientSecretProvider;
 
-  String get googleClientId =>
-      (_customGoogleClientId != null && _customGoogleClientId!.isNotEmpty)
-          ? _customGoogleClientId!
-          : Env.googleClientId;
+  void configure({
+    required String? Function() customGoogleClientIdProvider,
+    required String? Function() customGoogleClientSecretProvider,
+  }) {
+    _customGoogleClientIdProvider = customGoogleClientIdProvider;
+    _customGoogleClientSecretProvider = customGoogleClientSecretProvider;
+  }
 
-  String? _customGoogleClientSecret;
-  set customGoogleClientSecret(String? value) => _customGoogleClientSecret = value;
+  String get googleClientId {
+    final customId = _customGoogleClientIdProvider?.call();
+    return (customId != null && customId.isNotEmpty)
+        ? customId
+        : Env.googleClientId;
+  }
 
-  String get googleClientSecret =>
-      (_customGoogleClientSecret != null && _customGoogleClientSecret!.isNotEmpty)
-          ? _customGoogleClientSecret!
-          : Env.googleClientSecret;
+  String get googleClientSecret {
+    final customSecret = _customGoogleClientSecretProvider?.call();
+    return (customSecret != null && customSecret.isNotEmpty)
+        ? customSecret
+        : Env.googleClientSecret;
+  }
 
   bool get isConnected => _client != null;
 

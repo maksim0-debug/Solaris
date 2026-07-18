@@ -1377,4 +1377,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get clearKey => 'Очистить';
+
+  @override
+  String get saved => 'Сохранено';
 }

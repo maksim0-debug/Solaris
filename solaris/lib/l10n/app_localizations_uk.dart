@@ -1375,4 +1375,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get clearKey => 'Очистити';
+
+  @override
+  String get saved => 'Збережено';
 }

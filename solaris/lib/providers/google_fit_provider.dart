@@ -159,18 +159,23 @@ class GoogleFitNotifier extends Notifier<GoogleFitState> {
 }
 
 final googleFitServiceProvider = Provider((ref) {
-  final settingsAsync = ref.watch(settingsProvider);
-  final customClientId = settingsAsync.maybeWhen(
-    data: (map) => map['all']?.customGoogleClientId,
-    orElse: () => null,
-  );
-  final customClientSecret = settingsAsync.maybeWhen(
-    data: (map) => map['all']?.customGoogleClientSecret,
-    orElse: () => null,
-  );
   final service = GoogleFitService();
-  service.customGoogleClientId = customClientId;
-  service.customGoogleClientSecret = customClientSecret;
+  service.configure(
+    customGoogleClientIdProvider: () {
+      final settingsAsync = ref.read(settingsProvider);
+      return settingsAsync.maybeWhen(
+        data: (map) => map['all']?.customGoogleClientId,
+        orElse: () => null,
+      );
+    },
+    customGoogleClientSecretProvider: () {
+      final settingsAsync = ref.read(settingsProvider);
+      return settingsAsync.maybeWhen(
+        data: (map) => map['all']?.customGoogleClientSecret,
+        orElse: () => null,
+      );
+    },
+  );
   return service;
 });
 

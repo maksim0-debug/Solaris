@@ -659,5 +659,6 @@
   "apiKeyActiveCustom": "Пользовательский активен",
   "apiKeyNotConfigured": "Ключ не настроен",
   "saveKey": "Сохранить",
-  "clearKey": "Очистить"
+  "clearKey": "Очистить",
+  "saved": "Сохранено"
 }

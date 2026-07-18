@@ -2805,7 +2805,7 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
                 onSave: (val) {
                   ref.read(settingsProvider.notifier).updateCustomWeatherApiKey(val);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${l10n.customWeatherApiKey}: Сохранено')),
+                    SnackBar(content: Text('${l10n.customWeatherApiKey}: ${l10n.saved}')),
                   );
                 },
                 onClear: () {
@@ -2826,7 +2826,7 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
                 onSave: (val) {
                   ref.read(settingsProvider.notifier).updateCustomMapboxToken(val);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${l10n.customMapboxToken}: Сохранено')),
+                    SnackBar(content: Text('${l10n.customMapboxToken}: ${l10n.saved}')),
                   );
                 },
                 onClear: () {
@@ -2847,7 +2847,7 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
                 onSave: (val) {
                   ref.read(settingsProvider.notifier).updateCustomGoogleClientId(val);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${l10n.customGoogleClientId}: Сохранено')),
+                    SnackBar(content: Text('${l10n.customGoogleClientId}: ${l10n.saved}')),
                   );
                 },
                 onClear: () {
@@ -2868,7 +2868,7 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
                 onSave: (val) {
                   ref.read(settingsProvider.notifier).updateCustomGoogleClientSecret(val);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${l10n.customGoogleClientSecret}: Сохранено')),
+                    SnackBar(content: Text('${l10n.customGoogleClientSecret}: ${l10n.saved}')),
                   );
                 },
                 onClear: () {

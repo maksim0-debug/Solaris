@@ -659,5 +659,6 @@
   "apiKeyActiveCustom": "Custom active",
   "apiKeyNotConfigured": "Key not configured",
   "saveKey": "Save",
-  "clearKey": "Clear"
+  "clearKey": "Clear",
+  "saved": "Saved"
 }

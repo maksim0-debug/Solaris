@@ -1373,4 +1373,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get clearKey => 'Clear';
+
+  @override
+  String get saved => 'Saved';
 }
