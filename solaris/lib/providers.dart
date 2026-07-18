@@ -628,6 +628,8 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
   // Previous values for trend calculation
   double? prevAzimuth;
   double? prevElevation;
+  double? prevZenith;
+  DateTime? prevTime;
 
   // Adaptive delay based on visibility
   final delaySeconds = switch (visibility) {
@@ -655,6 +657,7 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
     spectralIntensity: service.getSpectralIntensity(roughElevation),
     azimuthTrend: "constant",
     elevationTrend: "constant",
+    zenithTrend: "constant",
   );
 
   while (true) {
@@ -668,19 +671,47 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
 
     final currentElevation = service.getSunElevation(lat, lon, now);
     final currentAzimuth = service.getSunAzimuth(lat, lon, now);
+    final currentZenith = service.getSunZenith(lat, lon, now);
+
+    double? timeDiffSeconds;
+    if (prevTime != null) {
+      timeDiffSeconds = now.difference(prevTime).inMilliseconds / 1000.0;
+    }
 
     String azTrend = "constant";
-    if (prevAzimuth != null) {
-      final diff = currentAzimuth - prevAzimuth;
-      if (diff > 0.001) azTrend = "+${diff.toStringAsFixed(2)}";
-      if (diff < -0.001) azTrend = diff.toStringAsFixed(2);
+    if (prevAzimuth != null && timeDiffSeconds != null && timeDiffSeconds > 0) {
+      double diff = currentAzimuth - prevAzimuth;
+      if (diff > 180) diff -= 360;
+      if (diff < -180) diff += 360;
+
+      final degPerHour = (diff / timeDiffSeconds) * 3600;
+      if (degPerHour.abs() > 0.1) {
+        azTrend = degPerHour > 0
+            ? "+${degPerHour.toStringAsFixed(1)}°/ч"
+            : "${degPerHour.toStringAsFixed(1)}°/ч";
+      }
     }
 
     String elTrend = "constant";
-    if (prevElevation != null) {
+    if (prevElevation != null && timeDiffSeconds != null && timeDiffSeconds > 0) {
       final diff = currentElevation - prevElevation;
-      if (diff > 0.001) elTrend = "+${diff.toStringAsFixed(2)}";
-      if (diff < -0.001) elTrend = diff.toStringAsFixed(2);
+      final degPerHour = (diff / timeDiffSeconds) * 3600;
+      if (degPerHour.abs() > 0.1) {
+        elTrend = degPerHour > 0
+            ? "+${degPerHour.toStringAsFixed(1)}°/ч"
+            : "${degPerHour.toStringAsFixed(1)}°/ч";
+      }
+    }
+
+    String zenTrend = "constant";
+    if (prevZenith != null && timeDiffSeconds != null && timeDiffSeconds > 0) {
+      final diff = currentZenith - prevZenith;
+      final degPerHour = (diff / timeDiffSeconds) * 3600;
+      if (degPerHour.abs() > 0.1) {
+        zenTrend = degPerHour > 0
+            ? "+${degPerHour.toStringAsFixed(1)}°/ч"
+            : "${degPerHour.toStringAsFixed(1)}°/ч";
+      }
     }
 
     // Determine UV and Spectral Intensity
@@ -705,16 +736,19 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
       nextEventType: nextEvent.type,
       sunElevation: currentElevation,
       sunAzimuth: currentAzimuth,
-      sunZenith: service.getSunZenith(lat, lon, now),
+      sunZenith: currentZenith,
       sunProgress: service.getSunProgress(phases, now),
       uvIndex: uv,
       spectralIntensity: intensity,
       azimuthTrend: azTrend,
       elevationTrend: elTrend,
+      zenithTrend: zenTrend,
     );
 
     prevAzimuth = currentAzimuth;
     prevElevation = currentElevation;
+    prevZenith = currentZenith;
+    prevTime = now;
 
     await Future<void>.delayed(Duration(seconds: delaySeconds));
   }

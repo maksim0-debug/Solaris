@@ -100,7 +100,9 @@ class ScheduleScreen extends ConsumerWidget {
                                 child: _CoordinateCard(
                                   label: l10n.azimuth,
                                   value: l10n.sunAzimuthFormat(state.sunAzimuth.toStringAsFixed(1)),
-                                  trend: state.azimuthTrend,
+                                  trend: state.azimuthTrend == "constant"
+                                      ? l10n.constant
+                                      : state.azimuthTrend,
                                   trendIcon: state.azimuthTrend.startsWith('+')
                                       ? LucideIcons.trendingUp
                                       : (state.azimuthTrend.startsWith('-')
@@ -113,7 +115,9 @@ class ScheduleScreen extends ConsumerWidget {
                                 child: _CoordinateCard(
                                   label: l10n.elevation,
                                   value: l10n.sunElevationFormat(state.sunElevation.toStringAsFixed(1)),
-                                  trend: state.elevationTrend,
+                                  trend: state.elevationTrend == "constant"
+                                      ? l10n.constant
+                                      : state.elevationTrend,
                                   trendIcon:
                                       state.elevationTrend.startsWith('+')
                                       ? LucideIcons.trendingUp
@@ -131,7 +135,19 @@ class ScheduleScreen extends ConsumerWidget {
                                 child: _CoordinateCard(
                                   label: l10n.zenith,
                                   value: l10n.sunZenithFormat(state.sunZenith.toStringAsFixed(1)),
-                                  trend: l10n.constant,
+                                  trend: state.zenithTrend == "constant"
+                                      ? l10n.constant
+                                      : state.zenithTrend,
+                                  trendIcon:
+                                      state.zenithTrend.startsWith('+')
+                                      ? LucideIcons.trendingUp
+                                      : (state.zenithTrend.startsWith('-')
+                                            ? LucideIcons.trendingDown
+                                            : null),
+                                  trendColor:
+                                      state.zenithTrend.startsWith('+')
+                                      ? Colors.redAccent
+                                      : const Color(0xFFFDBA74),
                                 ),
                               ),
                             ],

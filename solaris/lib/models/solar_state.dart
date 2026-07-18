@@ -15,6 +15,7 @@ class SolarState {
   final double spectralIntensity;
   final String azimuthTrend;
   final String elevationTrend;
+  final String zenithTrend;
 
   SolarState({
     required this.phases,
@@ -29,5 +30,6 @@ class SolarState {
     required this.spectralIntensity,
     required this.azimuthTrend,
     required this.elevationTrend,
+    required this.zenithTrend,
   });
 }
