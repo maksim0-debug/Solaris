@@ -34,6 +34,7 @@ class _SleepScreenState extends ConsumerState<SleepScreen> {
     'sleep_debt': GlobalKey<DeepLinkTargetState>(),
     'sleep_regimes': GlobalKey<DeepLinkTargetState>(),
     'sleep_analysis': GlobalKey<DeepLinkTargetState>(),
+    'local_sleep_integration': GlobalKey<DeepLinkTargetState>(),
   };
 
   @override
@@ -109,7 +110,11 @@ class _SleepScreenState extends ConsumerState<SleepScreen> {
           const SizedBox(height: 24),
 
           // Sleep Integration API Settings
-          const _LocalIpcServerCard(),
+          DeepLinkTarget(
+            key: _anchorKeys['local_sleep_integration'],
+            id: 'local_sleep_integration',
+            child: const _LocalIpcServerCard(),
+          ),
           const SizedBox(height: 24),
 
           // Circadian Regulation Section

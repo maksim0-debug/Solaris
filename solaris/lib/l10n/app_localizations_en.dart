@@ -1140,6 +1140,34 @@ class AppLocalizationsEn extends AppLocalizations {
       'legal, license, disclaimer, hardware, liability, info, about';
 
   @override
+  String get tags_google_fit =>
+      'google fit, cloud, sync, account, authorize, oauth, google, fit, sleep tracker, rest, data';
+
+  @override
+  String get tags_time_shift =>
+      'bio morning, bio-morning, wake up, shift, schedule, dynamic, anchor, awake, circadian';
+
+  @override
+  String get tags_sleep_pressure =>
+      'sleep pressure, dimming, wake time, duration, limit, hours, fatigue, tiredness';
+
+  @override
+  String get tags_sleep_debt =>
+      'sleep debt, compensation, short sleep, rest deficit, recovery, muted mode, eyes strain';
+
+  @override
+  String get tags_local_sleep_integration =>
+      'local sleep integration, ipc server, http server, api, localhost, port, sleep sync';
+
+  @override
+  String get tags_weather_brightness =>
+      'weather brightness, overcast, clouds, rain, storm, sun, light adjustment';
+
+  @override
+  String get tags_weather_temperature =>
+      'weather temperature, warm, cool, blue light, overcast, storm, color adjustment';
+
+  @override
   String get mapIssueDetected => 'Map Issue Detected';
 
   @override

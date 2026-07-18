@@ -1142,6 +1142,34 @@ class AppLocalizationsRu extends AppLocalizations {
       'юридический, лицензия, отказ, ответственность, железо, инфо, о программе';
 
   @override
+  String get tags_google_fit =>
+      'гугл фит, облако, синхронизация, аккаунт, авторизация, гугл, фит, трекер сна, данные';
+
+  @override
+  String get tags_time_shift =>
+      'био утро, био-утро, пробуждение, смещение, график, динамический, якорь, бодрствование, циркадный';
+
+  @override
+  String get tags_sleep_pressure =>
+      'давление сна, диммирование, время бодрствования, длительность, лимит, часы, усталость';
+
+  @override
+  String get tags_sleep_debt =>
+      'долг сна, недосып, компенсация, короткий сон, дефицит отдыха, восстановление, приглушенный режим';
+
+  @override
+  String get tags_local_sleep_integration =>
+      'локальная интеграция сна, ipc сервер, http сервер, api, локалхост, порт, синхронизация сна';
+
+  @override
+  String get tags_weather_brightness =>
+      'яркость по погоде, облачность, дождь, гроза, солнце, регулировка яркости';
+
+  @override
+  String get tags_weather_temperature =>
+      'температура по погоде, теплый, холодный, синий свет, облачность, гроза, регулировка цвета';
+
+  @override
   String get mapIssueDetected => 'Обнаружена проблема с картой';
 
   @override

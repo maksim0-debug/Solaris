@@ -2082,6 +2082,48 @@ abstract class AppLocalizations {
   /// **'legal, license, disclaimer, hardware, liability, info, about'**
   String get tags_legal;
 
+  /// No description provided for @tags_google_fit.
+  ///
+  /// In en, this message translates to:
+  /// **'google fit, cloud, sync, account, authorize, oauth, google, fit, sleep tracker, rest, data'**
+  String get tags_google_fit;
+
+  /// No description provided for @tags_time_shift.
+  ///
+  /// In en, this message translates to:
+  /// **'bio morning, bio-morning, wake up, shift, schedule, dynamic, anchor, awake, circadian'**
+  String get tags_time_shift;
+
+  /// No description provided for @tags_sleep_pressure.
+  ///
+  /// In en, this message translates to:
+  /// **'sleep pressure, dimming, wake time, duration, limit, hours, fatigue, tiredness'**
+  String get tags_sleep_pressure;
+
+  /// No description provided for @tags_sleep_debt.
+  ///
+  /// In en, this message translates to:
+  /// **'sleep debt, compensation, short sleep, rest deficit, recovery, muted mode, eyes strain'**
+  String get tags_sleep_debt;
+
+  /// No description provided for @tags_local_sleep_integration.
+  ///
+  /// In en, this message translates to:
+  /// **'local sleep integration, ipc server, http server, api, localhost, port, sleep sync'**
+  String get tags_local_sleep_integration;
+
+  /// No description provided for @tags_weather_brightness.
+  ///
+  /// In en, this message translates to:
+  /// **'weather brightness, overcast, clouds, rain, storm, sun, light adjustment'**
+  String get tags_weather_brightness;
+
+  /// No description provided for @tags_weather_temperature.
+  ///
+  /// In en, this message translates to:
+  /// **'weather temperature, warm, cool, blue light, overcast, storm, color adjustment'**
+  String get tags_weather_temperature;
+
   /// No description provided for @mapIssueDetected.
   ///
   /// In en, this message translates to:
