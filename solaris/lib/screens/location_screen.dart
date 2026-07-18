@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers.dart';
+import 'package:solaris/services/geocoding_service.dart';
 import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/stylish_location_card.dart';
 import 'package:solaris/widgets/solar_map.dart';
@@ -63,6 +64,15 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
     int minutes = minutesFraction.floor();
     double seconds = (minutesFraction - minutes) * 60;
     return [degrees.toDouble(), minutes.toDouble(), seconds];
+  }
+
+  String _getOfflineTooltipText(BuildContext context, OfflineReason? reason) {
+    final l10n = AppLocalizations.of(context)!;
+    if (reason == OfflineReason.missingToken) {
+      return l10n.offlineReasonMissingToken;
+    } else {
+      return l10n.offlineReasonApiError;
+    }
   }
 
   @override
@@ -322,15 +332,29 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                           ),
                                         ),
                                         const SizedBox(height: 4),
-                                        Text(
-                                          cityAsync.value ??
-                                              "Global Coordinates",
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
+                                        Row(
+                                           children: [
+                                             Text(
+                                               cityAsync.value?.name ?? "Global Coordinates",
+                                               style: const TextStyle(
+                                                 fontSize: 16,
+                                                 fontWeight: FontWeight.bold,
+                                               ),
+                                             ),
+                                             if (cityAsync.value?.isOffline ?? false) ...[
+                                               const SizedBox(width: 6),
+                                               Tooltip(
+                                                 message: _getOfflineTooltipText(context, cityAsync.value?.offlineReason),
+                                                 child: const Icon(
+                                                   LucideIcons.helpCircle,
+                                                   size: 14,
+                                                   color: Colors.white54,
+                                                 ),
+                                               ),
+                                             ],
+                                           ],
+                                         ),
+                                         const SizedBox(height: 4),
                                         Text(
                                           l10n.latLonFormat(
                                             pos.latitude.toStringAsFixed(4),

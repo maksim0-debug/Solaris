@@ -24,7 +24,8 @@ void main() {
 
       final service = GeocodingService(client: mockClient);
       final result = await service.getCityName(50.4547, 30.5238, customToken: 'pk.mock_token');
-      expect(result, 'Kyiv');
+      expect(result.name, 'Kyiv');
+      expect(result.isOffline, false);
     });
 
     test('Successful online geocoding with custom language', () async {
@@ -45,7 +46,8 @@ void main() {
 
       final service = GeocodingService(client: mockClient);
       final result = await service.getCityName(50.4547, 30.5238, language: 'en', customToken: 'pk.mock_token');
-      expect(result, 'Kyiv');
+      expect(result.name, 'Kyiv');
+      expect(result.isOffline, false);
     });
 
     test('HTTP error falls back to offline timezone-based city', () async {
@@ -55,11 +57,12 @@ void main() {
 
       final service = GeocodingService(client: mockClient);
       // Coordinates of New York: 40.7128, -74.0060
-      final result = await service.getCityName(40.7128, -74.0060);
+      final result = await service.getCityName(40.7128, -74.0060, customToken: 'pk.mock_token');
       
       // Timezone identifier for NY is America/New_York
-      // Representative city extracted should be "New York"
-      expect(result, 'New York');
+      expect(result.name, 'America/New_York');
+      expect(result.isOffline, true);
+      expect(result.offlineReason, OfflineReason.apiError);
     });
 
     test('Offline timezone-based city for default Kyiv coordinates', () async {
@@ -72,7 +75,9 @@ void main() {
       final result = await service.getCityName(50.4547, 30.5238);
       
       // Timezone is Europe/Kyiv
-      expect(result, 'Kyiv');
+      expect(result.name, 'Europe/Kyiv');
+      expect(result.isOffline, true);
+      expect(result.offlineReason, OfflineReason.missingToken);
     });
   });
 }

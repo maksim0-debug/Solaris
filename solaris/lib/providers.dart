@@ -505,7 +505,7 @@ final effectiveLocationProvider = Provider<AsyncValue<Position>>((ref) {
 
 final geocodingServiceProvider = Provider((ref) => GeocodingService());
 
-final locationCityProvider = FutureProvider<String>((ref) async {
+final locationCityProvider = FutureProvider<GeocodingResult>((ref) async {
   final locationAsync = ref.watch(effectiveLocationProvider);
   final locale = ref.watch(localeProvider);
   final settingsAsync = ref.watch(settingsProvider);
@@ -520,7 +520,11 @@ final locationCityProvider = FutureProvider<String>((ref) async {
       language: locale.languageCode,
       customToken: customToken,
     ),
-    orElse: () => Future.value("Global Coordinates"),
+    orElse: () => Future.value(const GeocodingResult(
+      name: "Global Coordinates",
+      isOffline: true,
+      offlineReason: OfflineReason.missingToken,
+    )),
   );
 });
 

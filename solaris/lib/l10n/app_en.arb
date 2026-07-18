@@ -465,6 +465,8 @@
     }
   },
   "detectingLocation": "Detecting location...",
+  "offlineReasonMissingToken": "Mapbox API token is not configured. Falling back to timezone name.",
+  "offlineReasonApiError": "Failed to fetch city name from API. Falling back to timezone name.",
   "coordinatesUnavailable": "Coordinates unavailable",
   "north": "N",
   "south": "S",

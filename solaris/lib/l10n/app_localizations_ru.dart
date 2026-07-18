@@ -916,6 +916,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String get detectingLocation => 'Определение местоположения...';
 
   @override
+  String get offlineReasonMissingToken =>
+      'Токен доступа Mapbox не настроен. Используется резервное имя часового пояса.';
+
+  @override
+  String get offlineReasonApiError =>
+      'Не удалось получить название города через API. Используется резервное имя часового пояса.';
+
+  @override
   String get coordinatesUnavailable => 'Координаты недоступны';
 
   @override

@@ -1713,6 +1713,18 @@ abstract class AppLocalizations {
   /// **'Detecting location...'**
   String get detectingLocation;
 
+  /// No description provided for @offlineReasonMissingToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Mapbox API token is not configured. Falling back to timezone name.'**
+  String get offlineReasonMissingToken;
+
+  /// No description provided for @offlineReasonApiError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to fetch city name from API. Falling back to timezone name.'**
+  String get offlineReasonApiError;
+
   /// No description provided for @coordinatesUnavailable.
   ///
   /// In en, this message translates to:

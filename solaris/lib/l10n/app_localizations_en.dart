@@ -915,6 +915,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detectingLocation => 'Detecting location...';
 
   @override
+  String get offlineReasonMissingToken =>
+      'Mapbox API token is not configured. Falling back to timezone name.';
+
+  @override
+  String get offlineReasonApiError =>
+      'Failed to fetch city name from API. Falling back to timezone name.';
+
+  @override
   String get coordinatesUnavailable => 'Coordinates unavailable';
 
   @override
