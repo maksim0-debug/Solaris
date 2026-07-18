@@ -83,7 +83,7 @@ Control your environment without leaving your current app.
 
 Solaris supports sleep data integration to fine-tune monitor brightness and color temperature according to your sleep patterns. You can choose between a local offline integration or sync with Google Fit.
 
-### 💤 Local Sleep Integration
+### 🏠 Local Sleep Integration
 
 If you prefer not to use Google Fit or want a completely offline, internet-free setup, Solaris features a built-in **Local API Web Server**. This allows third-party desktop sleep trackers, smart alarms, or automation scripts running on your PC to feed sleep data directly into the app.
 
@@ -133,7 +133,6 @@ To utilize Google Fit synchronization, you must configure a private integration 
 
 _By utilizing a personal API key, the application will operate as a private developer instance, bypassing the verification requirements typically imposed on public distributions._
 <img width="787" height="653" alt="Google Fit Sleep Data integration screen" src="https://github.com/user-attachments/assets/94ee4ba4-6a71-4227-b05e-1d858a9917c4" />
-
 
 ---
 
@@ -244,11 +243,11 @@ flutter build windows
 
 If you compile or run Solaris without providing API keys, the application automatically handles this by disabling specific features while keeping the core circadian rhythm engine fully functional:
 
-| Feature / Integration          | Requirement        | Fallback Behavior when Key is Missing                                                                                                                                                                                                   |
-| ------------------------------ | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Interactive Map & Mini-Map** | `MAPBOX_TOKEN`     | Map areas display a padlock icon. Clicking it shows a tooltip informing that the token is missing. You can still set your coordinates manually. Reverse geocoding falls back to a timezone-based city lookup.                           |
-| **WeatherAPI Provider**        | `WEATHER_API_KEY`  | "WeatherAPI" option in Settings is disabled and displays a warning under the selector. Solaris automatically falls back to **Open-Meteo API** (free public endpoints), meaning weather-based brightness shifts remain functional.       |
-| **Google Fit Integration**     | `GOOGLE_CLIENT_ID` | "Connect Google Fit" button on the Sleep screen is disabled, and an informative warning message is shown. Offline sleep tracking can still be fully synced using the [Local Sleep Integration](#-local-sleep-integration). |
+| Feature / Integration          | Requirement        | Fallback Behavior when Key is Missing                                                                                                                                                                                             |
+| ------------------------------ | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Interactive Map & Mini-Map** | `MAPBOX_TOKEN`     | Map areas display a padlock icon. Clicking it shows a tooltip informing that the token is missing. You can still set your coordinates manually. Reverse geocoding falls back to a timezone-based city lookup.                     |
+| **WeatherAPI Provider**        | `WEATHER_API_KEY`  | "WeatherAPI" option in Settings is disabled and displays a warning under the selector. Solaris automatically falls back to **Open-Meteo API** (free public endpoints), meaning weather-based brightness shifts remain functional. |
+| **Google Fit Integration**     | `GOOGLE_CLIENT_ID` | "Connect Google Fit" button on the Sleep screen is disabled, and an informative warning message is shown. Offline sleep tracking can still be fully synced using the [Local Sleep Integration](#-local-sleep-integration).        |
 
 ---
 
