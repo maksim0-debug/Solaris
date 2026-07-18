@@ -60,6 +60,8 @@ The first monitor controller that cares about the sky.
 
 - **Real-time Precision**: Uses **WeatherAPI.com** to fetch highly accurate current weather conditions and solar radiation data for precise brightness adjustments.
 - **Cloudiness & Radiation Logic**: Naturally dims brightness when it's overcast, rainy, or snowy. Uses **Open-Meteo** as a secondary fallback source.
+  - **Precise Weather Correction**: Automatically adjusts daytime brightness based on current weather conditions (e.g., dims the screen during overcast skies, rain, or thunderstorms). Clear skies keep the screen at its standard daylight brightness, while partial cloudiness interpolates the adjustment smoothly. Weather corrections are active only during daylight hours and fade out near sunset.
+  - **Overcast Temperature Drop**: Lowers color temperature during bad weather (such as rain or heavy cloud cover) to align monitor tones with the ambient daylight ambiance and reduce blue light strain.
 - **Atmospheric UI**: Beautiful background animations for rain, snow, thunder, and clouds within the dashboard.
 
 ### ⌨️ Global Hotkeys
@@ -84,6 +86,21 @@ Control your environment without leaving your current app.
 Solaris supports sleep data integration to fine-tune monitor brightness and color temperature according to your sleep patterns. You can choose between a local offline integration or sync with Google Fit.
 <img width="787" height="653" alt="Google Fit Sleep Data integration screen" src="https://github.com/user-attachments/assets/94ee4ba4-6a71-4227-b05e-1d858a9917c4" />
 
+### ⚙️ Smart Circadian Features
+
+When Smart Circadian Regulation is enabled, Solaris applies four physiological models based on your sleep history:
+
+1. **Wind-down Phase**:
+   - Gradually reduces brightness and warms screen color temperature (shifting toward amber/red tones) before your target bedtime to stimulate melatonin production.
+   - Smoothly restores daytime settings in the morning shortly before your expected wake-up time.
+2. **Bio-Morning (Dynamic Anchor)**:
+   - Adapts the circadian schedule to your actual wake-up time. If you wake up earlier or later than usual, the system dynamically shifts the brightness and temperature peaks to sync with your body.
+3. **Sleep Pressure (Wake Time)**:
+   - Evaluates the duration of continuous wakefulness. If you stay awake for too long (over 16 hours), the system starts to gently dim the screen and reduce color temperature to minimize cognitive load.
+4. **Sleep Debt Compensation**:
+   - Automatically activates if your last sleep was shorter than 6.5 hours. It maintains a more comfortable, muted lighting mode throughout the entire next day to relieve eye strain and fatigue.
+
+---
 
 ### 🏠 Local Sleep Integration
 
