@@ -2361,20 +2361,122 @@ abstract class AppLocalizations {
   /// No description provided for @mapboxTokenMissingTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Mapbox access token is missing. Map is disabled.'**
+  /// **'Mapbox access token is missing. Configure it in API Keys or .env.'**
   String get mapboxTokenMissingTooltip;
 
   /// No description provided for @weatherApiKeyMissingWarning.
   ///
   /// In en, this message translates to:
-  /// **'WeatherAPI provider is disabled because WEATHER_API_KEY is not configured in .env.'**
+  /// **'WeatherAPI provider is disabled. Configure WEATHER_API_KEY in API Keys or .env.'**
   String get weatherApiKeyMissingWarning;
 
   /// No description provided for @googleFitKeysMissingWarning.
   ///
   /// In en, this message translates to:
-  /// **'Google Fit integration is disabled because GOOGLE_CLIENT_ID is not configured in .env.'**
+  /// **'Google Fit integration is disabled. Configure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in API Keys or .env.'**
   String get googleFitKeysMissingWarning;
+
+  /// No description provided for @apiKeysTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'API Keys'**
+  String get apiKeysTitle;
+
+  /// No description provided for @apiKeysSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure custom API keys for external services'**
+  String get apiKeysSubtitle;
+
+  /// No description provided for @customWeatherApiKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom WeatherAPI Key'**
+  String get customWeatherApiKey;
+
+  /// No description provided for @customMapboxToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Mapbox Token'**
+  String get customMapboxToken;
+
+  /// No description provided for @customGoogleClientId.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Google Client ID'**
+  String get customGoogleClientId;
+
+  /// No description provided for @customGoogleClientSecret.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Google Client Secret'**
+  String get customGoogleClientSecret;
+
+  /// No description provided for @apiKeysHelpText.
+  ///
+  /// In en, this message translates to:
+  /// **'This version of Solaris is built without pre-embedded API keys. To use Mapbox maps, WeatherAPI forecast, or Google Fit sync, please specify your custom keys here. They will be obfuscated and stored locally on your PC.'**
+  String get apiKeysHelpText;
+
+  /// No description provided for @apiKeysHelpTextWithDefaults.
+  ///
+  /// In en, this message translates to:
+  /// **'This version of Solaris is built with pre-embedded default keys. If desired, you can override any of them by specifying your custom keys here. They will be obfuscated and stored locally on your PC.'**
+  String get apiKeysHelpTextWithDefaults;
+
+  /// No description provided for @apiKeysGetKeyLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Get key'**
+  String get apiKeysGetKeyLink;
+
+  /// No description provided for @googleFitReleaseWarningTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub Release Build'**
+  String get googleFitReleaseWarningTitle;
+
+  /// No description provided for @googleFitReleaseWarningBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This official release downloaded from GitHub does not contain a built-in Google Client ID and Client Secret due to Google\'s stringent security policies regarding health data (Restricted Scopes). Public applications are prohibited from accessing sleep history without undergoing an extensive and costly independent security audit.\n\nTo enable synchronization:\n1. Input your custom Google Client ID and Client Secret in the settings card under \'API Keys\'.\n2. Alternatively, build the app from source with your own keys in your `.env` file.'**
+  String get googleFitReleaseWarningBody;
+
+  /// No description provided for @goToSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to settings'**
+  String get goToSettings;
+
+  /// No description provided for @apiKeyActiveBuiltIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Built-in active'**
+  String get apiKeyActiveBuiltIn;
+
+  /// No description provided for @apiKeyActiveCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom active'**
+  String get apiKeyActiveCustom;
+
+  /// No description provided for @apiKeyNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Key not configured'**
+  String get apiKeyNotConfigured;
+
+  /// No description provided for @saveKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get saveKey;
+
+  /// No description provided for @clearKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get clearKey;
 }
 
 class _AppLocalizationsDelegate

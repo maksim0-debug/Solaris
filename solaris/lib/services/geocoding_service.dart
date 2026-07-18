@@ -14,9 +14,9 @@ class GeocodingService {
   /// First, it attempts to fetch the city using Mapbox Geocoding API.
   /// If it fails (offline, bad token, error), it falls back to extracting
   /// the city from the timezone identifier using the offline `lat_lng_to_timezone` library.
-  Future<String> getCityName(double latitude, double longitude, {String? language}) async {
+  Future<String> getCityName(double latitude, double longitude, {String? language, String? customToken}) async {
     // 1. Try Mapbox Geocoding API if token is valid
-    final token = Env.mapboxToken;
+    final token = (customToken != null && customToken.isNotEmpty) ? customToken : Env.mapboxToken;
     if (token.isNotEmpty && !token.contains('your_mapbox_token_here')) {
       try {
         final lang = language ?? Platform.localeName.split('_').first;

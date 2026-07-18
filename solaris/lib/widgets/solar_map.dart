@@ -11,6 +11,7 @@ import 'package:solaris/widgets/map_health_dialog.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/models/map_health_report.dart';
 import 'package:solaris/l10n/app_localizations.dart';
+import 'package:solaris/models/settings_state.dart';
 
 
 class SolarMap extends ConsumerStatefulWidget {
@@ -77,9 +78,11 @@ class _SolarMapState extends ConsumerState<SolarMap> {
 
   @override
   Widget build(BuildContext context) {
-    final token = Env.mapboxToken;
+    final settings = ref.watch(settingsProvider).value?['all'] ?? SettingsState();
+    final customToken = settings.customMapboxToken;
+    final token = customToken.isNotEmpty ? customToken : Env.mapboxToken;
+    final isMapTokenValid = customToken.isNotEmpty || Env.isMapboxTokenValid;
     final healthAsync = ref.watch(mapHealthProvider);
-    final isMapTokenValid = Env.isMapboxTokenValid;
     final l10n = AppLocalizations.of(context)!;
 
     if (!isMapTokenValid) {

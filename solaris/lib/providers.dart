@@ -325,6 +325,11 @@ class WeatherNotifier extends AsyncNotifier<WeatherData?> {
       orElse: () => WeatherProvider.auto,
     );
 
+    final customWeatherApiKey = settingsAsync.maybeWhen(
+      data: (map) => map['all']?.customWeatherApiKey,
+      orElse: () => null,
+    );
+
     // При уничтожении - очищаем старый таймер
     ref.onDispose(() {
       _timer?.cancel();
@@ -344,6 +349,7 @@ class WeatherNotifier extends AsyncNotifier<WeatherData?> {
         pos.latitude,
         pos.longitude,
         provider: provider,
+        customApiKey: customWeatherApiKey,
       );
 
       if (newData != null) {
@@ -502,11 +508,17 @@ final geocodingServiceProvider = Provider((ref) => GeocodingService());
 final locationCityProvider = FutureProvider<String>((ref) async {
   final locationAsync = ref.watch(effectiveLocationProvider);
   final locale = ref.watch(localeProvider);
+  final settingsAsync = ref.watch(settingsProvider);
+  final customToken = settingsAsync.maybeWhen(
+    data: (map) => map['all']?.customMapboxToken,
+    orElse: () => null,
+  );
   return locationAsync.maybeWhen(
     data: (pos) => ref.read(geocodingServiceProvider).getCityName(
       pos.latitude,
       pos.longitude,
       language: locale.languageCode,
+      customToken: customToken,
     ),
     orElse: () => Future.value("Global Coordinates"),
   );
@@ -1250,6 +1262,22 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
       {'all'}, // Weather provider is likely intended to be global
       (s) => s.copyWith(weatherProvider: provider),
     );
+  }
+
+  void updateCustomWeatherApiKey(String value) {
+    _updateSettings({'all'}, (s) => s.copyWith(customWeatherApiKey: value));
+  }
+
+  void updateCustomMapboxToken(String value) {
+    _updateSettings({'all'}, (s) => s.copyWith(customMapboxToken: value));
+  }
+
+  void updateCustomGoogleClientId(String value) {
+    _updateSettings({'all'}, (s) => s.copyWith(customGoogleClientId: value));
+  }
+
+  void updateCustomGoogleClientSecret(String value) {
+    _updateSettings({'all'}, (s) => s.copyWith(customGoogleClientSecret: value));
   }
 
   void updateGameModeEnabled(bool enabled) {
@@ -2239,8 +2267,9 @@ String getStaticMapUrl(
   double lon, {
   String style = kMapboxNightStyle,
   double zoom = 15.1,
+  String? customToken,
 }) {
-  final token = Env.mapboxToken;
+  final token = (customToken != null && customToken.isNotEmpty) ? customToken : Env.mapboxToken;
   const width = 600;
   const height = 600;
 

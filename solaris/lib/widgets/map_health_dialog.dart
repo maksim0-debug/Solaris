@@ -50,6 +50,36 @@ class MapHealthDialog extends ConsumerWidget {
                 icon: LucideIcons.key,
                 title: "Mapbox Token",
                 description: l10n.mapboxTokenMissing,
+                action: Row(
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () => launchUrl(
+                        Uri.parse('https://www.mapbox.com/'),
+                        mode: LaunchMode.externalApplication,
+                      ),
+                      icon: const Icon(LucideIcons.externalLink, size: 14),
+                      label: Text(l10n.apiKeysGetKeyLink),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFDBA74),
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    TextButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        ref.read(activeScreenProvider.notifier).setScreen(AppScreen.settings);
+                        ref.read(searchAnchorProvider.notifier).setAnchor('api_keys');
+                      },
+                      icon: const Icon(LucideIcons.settings, size: 14),
+                      label: Text(l10n.goToSettings),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFFFDBA74),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             if (!report.isInternetAvailable)
               _IssueItem(

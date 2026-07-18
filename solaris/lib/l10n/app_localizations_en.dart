@@ -1309,13 +1309,68 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mapboxTokenMissingTooltip =>
-      'Mapbox access token is missing. Map is disabled.';
+      'Mapbox access token is missing. Configure it in API Keys or .env.';
 
   @override
   String get weatherApiKeyMissingWarning =>
-      'WeatherAPI provider is disabled because WEATHER_API_KEY is not configured in .env.';
+      'WeatherAPI provider is disabled. Configure WEATHER_API_KEY in API Keys or .env.';
 
   @override
   String get googleFitKeysMissingWarning =>
-      'Google Fit integration is disabled because GOOGLE_CLIENT_ID is not configured in .env.';
+      'Google Fit integration is disabled. Configure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in API Keys or .env.';
+
+  @override
+  String get apiKeysTitle => 'API Keys';
+
+  @override
+  String get apiKeysSubtitle =>
+      'Configure custom API keys for external services';
+
+  @override
+  String get customWeatherApiKey => 'Custom WeatherAPI Key';
+
+  @override
+  String get customMapboxToken => 'Custom Mapbox Token';
+
+  @override
+  String get customGoogleClientId => 'Custom Google Client ID';
+
+  @override
+  String get customGoogleClientSecret => 'Custom Google Client Secret';
+
+  @override
+  String get apiKeysHelpText =>
+      'This version of Solaris is built without pre-embedded API keys. To use Mapbox maps, WeatherAPI forecast, or Google Fit sync, please specify your custom keys here. They will be obfuscated and stored locally on your PC.';
+
+  @override
+  String get apiKeysHelpTextWithDefaults =>
+      'This version of Solaris is built with pre-embedded default keys. If desired, you can override any of them by specifying your custom keys here. They will be obfuscated and stored locally on your PC.';
+
+  @override
+  String get apiKeysGetKeyLink => 'Get key';
+
+  @override
+  String get googleFitReleaseWarningTitle => 'GitHub Release Build';
+
+  @override
+  String get googleFitReleaseWarningBody =>
+      'This official release downloaded from GitHub does not contain a built-in Google Client ID and Client Secret due to Google\'s stringent security policies regarding health data (Restricted Scopes). Public applications are prohibited from accessing sleep history without undergoing an extensive and costly independent security audit.\n\nTo enable synchronization:\n1. Input your custom Google Client ID and Client Secret in the settings card under \'API Keys\'.\n2. Alternatively, build the app from source with your own keys in your `.env` file.';
+
+  @override
+  String get goToSettings => 'Go to settings';
+
+  @override
+  String get apiKeyActiveBuiltIn => 'Built-in active';
+
+  @override
+  String get apiKeyActiveCustom => 'Custom active';
+
+  @override
+  String get apiKeyNotConfigured => 'Key not configured';
+
+  @override
+  String get saveKey => 'Save';
+
+  @override
+  String get clearKey => 'Clear';
 }

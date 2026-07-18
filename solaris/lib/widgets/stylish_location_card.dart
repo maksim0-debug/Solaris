@@ -31,6 +31,8 @@ class StylishLocationCard extends ConsumerWidget {
       data: (solarState) {
         // Determine style and colors based on settings or sun elevation
         final settings = settingsAsync.value?['all'] ?? SettingsState();
+        final customToken = settings.customMapboxToken;
+        final isMapTokenValid = customToken.isNotEmpty || Env.isMapboxTokenValid;
         final bool isNight = switch (settings.mapStyleMode) {
           MapStyleMode.auto => solarState.sunElevation < -6,
           MapStyleMode.day => false,
@@ -54,7 +56,7 @@ class StylishLocationCard extends ConsumerWidget {
                 Positioned.fill(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(24),
-                    child: !Env.isMapboxTokenValid
+                    child: !isMapTokenValid
                         ? Stack(
                             alignment: Alignment.center,
                             children: [
@@ -109,6 +111,7 @@ class StylishLocationCard extends ConsumerWidget {
                                 pos.latitude,
                                 pos.longitude,
                                 style: mapStyle,
+                                customToken: customToken,
                               ),
                               fit: BoxFit.cover,
                               fadeInDuration: const Duration(milliseconds: 500),

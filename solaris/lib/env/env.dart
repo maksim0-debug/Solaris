@@ -7,6 +7,9 @@ abstract class Env {
   @EnviedField(varName: 'GOOGLE_CLIENT_ID', optional: true, defaultValue: '')
   static final String googleClientId = _Env.googleClientId;
 
+  @EnviedField(varName: 'GOOGLE_CLIENT_SECRET', optional: true, defaultValue: '')
+  static final String googleClientSecret = _Env.googleClientSecret;
+
   @EnviedField(varName: 'MAPBOX_TOKEN', optional: true, defaultValue: '')
   static final String mapboxToken = _Env.mapboxToken;
 
@@ -27,7 +30,9 @@ abstract class Env {
 
   static bool get isGoogleFitKeysValid {
     return googleClientId.isNotEmpty &&
-        googleClientId != 'your_client_id_here';
+        googleClientId != 'your_client_id_here' &&
+        googleClientSecret.isNotEmpty &&
+        googleClientSecret != 'your_client_secret_here';
   }
 }
 

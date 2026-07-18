@@ -32,8 +32,9 @@ class WeatherService {
     double lat,
     double lon, {
     WeatherProvider provider = WeatherProvider.auto,
+    String? customApiKey,
   }) async {
-    final apiKey = Env.weatherApiKey;
+    final apiKey = (customApiKey != null && customApiKey.isNotEmpty) ? customApiKey : Env.weatherApiKey;
 
     // --- FORCED PROVIDER LOGIC ---
     if (provider == WeatherProvider.weatherApi) {
@@ -42,7 +43,7 @@ class WeatherService {
         return null;
       }
       try {
-        return await _fetchWeatherApi(lat, lon);
+        return await _fetchWeatherApi(lat, lon, apiKey);
       } catch (e) {
         print('WeatherService: Forced WeatherAPI failed: $e');
         return null;
@@ -63,7 +64,7 @@ class WeatherService {
     if (apiKey.isNotEmpty && apiKey != 'YOUR_API_KEY') {
       try {
         print('WeatherService: Attempting WeatherAPI (Primary)...');
-        final data = await _fetchWeatherApi(lat, lon);
+        final data = await _fetchWeatherApi(lat, lon, apiKey);
         print('WeatherService: WeatherAPI success.');
         return data;
       } catch (e) {
@@ -120,8 +121,7 @@ class WeatherService {
   }
 
   // --- WEATHER API ---
-  Future<WeatherData> _fetchWeatherApi(double lat, double lon) async {
-    final apiKey = Env.weatherApiKey;
+  Future<WeatherData> _fetchWeatherApi(double lat, double lon, String apiKey) async {
     final url = Uri.parse(
       'https://api.weatherapi.com/v1/current.json?key=$apiKey&q=$lat,$lon&aqi=no',
     );

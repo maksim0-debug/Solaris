@@ -244,7 +244,12 @@ class _GoogleFitSyncCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final isSyncing = sleepState.isSyncing ||
         googleFitState.status == GoogleFitStatus.connecting;
-    final isGoogleKeysValid = Env.isGoogleFitKeysValid;
+    
+    final settingsAsync = ref.watch(settingsProvider);
+    final isGoogleKeysValid = settingsAsync.maybeWhen(
+      data: (map) => map['all']?.isGoogleFitKeysAvailable ?? Env.isGoogleFitKeysValid,
+      orElse: () => Env.isGoogleFitKeysValid,
+    );
 
     return GlassCard(
       padding: const EdgeInsets.all(24),
@@ -302,9 +307,15 @@ class _GoogleFitSyncCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ElevatedButton(
-                  onPressed: (isSyncing || !isGoogleKeysValid)
+                  onPressed: isSyncing
                       ? null
-                      : () => ref.read(googleFitProvider.notifier).signIn(),
+                      : () {
+                          if (!isGoogleKeysValid) {
+                            _showGoogleFitKeysMissingDialog(context, ref);
+                          } else {
+                            ref.read(googleFitProvider.notifier).signIn();
+                          }
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF8B5CF6),
                     padding: const EdgeInsets.symmetric(
@@ -350,9 +361,13 @@ class _GoogleFitSyncCard extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
                 ElevatedButton(
-                  onPressed: !isGoogleKeysValid
-                      ? null
-                      : () => ref.read(googleFitProvider.notifier).signIn(),
+                  onPressed: () {
+                    if (!isGoogleKeysValid) {
+                      _showGoogleFitKeysMissingDialog(context, ref);
+                    } else {
+                      ref.read(googleFitProvider.notifier).signIn();
+                    }
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF8B5CF6),
                   ),
@@ -454,6 +469,57 @@ class _GoogleFitSyncCard extends ConsumerWidget {
           ],
         ],
       ),
+    );
+  }
+
+  void _showGoogleFitKeysMissingDialog(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF0F172A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: Colors.white.withOpacity(0.08)),
+          ),
+          title: Row(
+            children: [
+              const Icon(LucideIcons.alertTriangle, color: Color(0xFFFDBA74)),
+              const SizedBox(width: 12),
+              Text(
+                l10n.googleFitReleaseWarningTitle,
+                style: const TextStyle(color: Colors.white),
+              ),
+            ],
+          ),
+          content: Text(
+            l10n.googleFitReleaseWarningBody,
+            style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.4),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                l10n.cancel,
+                style: const TextStyle(color: Colors.white38),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF8B5CF6),
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+                ref.read(activeScreenProvider.notifier).setScreen(AppScreen.settings);
+                ref.read(searchAnchorProvider.notifier).setAnchor('api_keys');
+              },
+              child: Text(l10n.goToSettings),
+            ),
+          ],
+        );
+      },
     );
   }
 }

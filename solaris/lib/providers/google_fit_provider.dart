@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solaris/services/google_fit_service.dart';
+import 'package:solaris/providers.dart';
 import 'package:solaris/services/storage_service.dart';
 import 'package:solaris/providers/sleep_provider.dart';
 import 'package:equatable/equatable.dart';
@@ -157,7 +158,21 @@ class GoogleFitNotifier extends Notifier<GoogleFitState> {
   }
 }
 
-final googleFitServiceProvider = Provider((ref) => GoogleFitService());
+final googleFitServiceProvider = Provider((ref) {
+  final settingsAsync = ref.watch(settingsProvider);
+  final customClientId = settingsAsync.maybeWhen(
+    data: (map) => map['all']?.customGoogleClientId,
+    orElse: () => null,
+  );
+  final customClientSecret = settingsAsync.maybeWhen(
+    data: (map) => map['all']?.customGoogleClientSecret,
+    orElse: () => null,
+  );
+  final service = GoogleFitService();
+  service.customGoogleClientId = customClientId;
+  service.customGoogleClientSecret = customClientSecret;
+  return service;
+});
 
 final googleFitProvider = NotifierProvider<GoogleFitNotifier, GoogleFitState>(
   GoogleFitNotifier.new,

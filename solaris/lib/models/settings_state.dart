@@ -1,5 +1,8 @@
+import 'dart:convert';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:solaris/models/preset_type.dart';
+import 'package:solaris/env/env.dart';
+
 
 enum MapStyleMode {
   auto,
@@ -93,6 +96,10 @@ class SettingsState {
   final StartupMode startupMode;
   final bool isLocalIpcServerEnabled;
   final int localIpcServerPort;
+  final String customWeatherApiKey;
+  final String customMapboxToken;
+  final String customGoogleClientId;
+  final String customGoogleClientSecret;
 
   SettingsState({
     this.activePreset = PresetType.bright,
@@ -167,6 +174,10 @@ class SettingsState {
     this.startupMode = StartupMode.minimized,
     this.isLocalIpcServerEnabled = false,
     this.localIpcServerPort = 45321,
+    this.customWeatherApiKey = "",
+    this.customMapboxToken = "",
+    this.customGoogleClientId = "",
+    this.customGoogleClientSecret = "",
   }) : curvesMap = curvesMap ?? PresetConstants.getAllDefaults(),
        presetOrder =
            presetOrder ??
@@ -174,6 +185,28 @@ class SettingsState {
              ...PresetType.values.map((e) => 'system:${e.name}'),
              ...userPresets.map((e) => 'user:${e.id}'),
            ];
+
+  String get effectiveWeatherApiKey =>
+      customWeatherApiKey.isNotEmpty ? customWeatherApiKey : Env.weatherApiKey;
+
+  String get effectiveMapboxToken =>
+      customMapboxToken.isNotEmpty ? customMapboxToken : Env.mapboxToken;
+
+  String get effectiveGoogleClientId =>
+      customGoogleClientId.isNotEmpty ? customGoogleClientId : Env.googleClientId;
+
+  String get effectiveGoogleClientSecret =>
+      customGoogleClientSecret.isNotEmpty ? customGoogleClientSecret : Env.googleClientSecret;
+
+  bool get isWeatherKeyAvailable =>
+      customWeatherApiKey.isNotEmpty || Env.isWeatherApiKeyValid;
+
+  bool get isMapboxTokenAvailable =>
+      customMapboxToken.isNotEmpty || Env.isMapboxTokenValid;
+
+  bool get isGoogleFitKeysAvailable =>
+      (customGoogleClientId.isNotEmpty && customGoogleClientSecret.isNotEmpty) ||
+      Env.isGoogleFitKeysValid;
 
   List<FlSpot> get curvePoints {
     if (activeUserPresetId != null) {
@@ -251,6 +284,10 @@ class SettingsState {
     'startupMode': startupMode.toJson(),
     'isLocalIpcServerEnabled': isLocalIpcServerEnabled,
     'localIpcServerPort': localIpcServerPort,
+    'customWeatherApiKey': KeyObfuscator.encrypt(customWeatherApiKey),
+    'customMapboxToken': KeyObfuscator.encrypt(customMapboxToken),
+    'customGoogleClientId': KeyObfuscator.encrypt(customGoogleClientId),
+    'customGoogleClientSecret': KeyObfuscator.encrypt(customGoogleClientSecret),
   };
 
   factory SettingsState.fromJson(Map<String, dynamic> json) {
@@ -418,6 +455,18 @@ class SettingsState {
       ),
       isLocalIpcServerEnabled: json['isLocalIpcServerEnabled'] as bool? ?? false,
       localIpcServerPort: json['localIpcServerPort'] as int? ?? 45321,
+      customWeatherApiKey: json.containsKey('customWeatherApiKey')
+          ? KeyObfuscator.decrypt(json['customWeatherApiKey'] as String)
+          : "",
+      customMapboxToken: json.containsKey('customMapboxToken')
+          ? KeyObfuscator.decrypt(json['customMapboxToken'] as String)
+          : "",
+      customGoogleClientId: json.containsKey('customGoogleClientId')
+          ? KeyObfuscator.decrypt(json['customGoogleClientId'] as String)
+          : "",
+      customGoogleClientSecret: json.containsKey('customGoogleClientSecret')
+          ? KeyObfuscator.decrypt(json['customGoogleClientSecret'] as String)
+          : "",
     );
   }
 
@@ -480,6 +529,10 @@ class SettingsState {
     StartupMode? startupMode,
     bool? isLocalIpcServerEnabled,
     int? localIpcServerPort,
+    String? customWeatherApiKey,
+    String? customMapboxToken,
+    String? customGoogleClientId,
+    String? customGoogleClientSecret,
     bool clearNextPresetHotKey = false,
     bool clearPrevPresetHotKey = false,
     bool clearBrightnessUpHotKey = false,
@@ -582,6 +635,35 @@ class SettingsState {
       isLocalIpcServerEnabled:
           isLocalIpcServerEnabled ?? this.isLocalIpcServerEnabled,
       localIpcServerPort: localIpcServerPort ?? this.localIpcServerPort,
+      customWeatherApiKey: customWeatherApiKey ?? this.customWeatherApiKey,
+      customMapboxToken: customMapboxToken ?? this.customMapboxToken,
+      customGoogleClientId: customGoogleClientId ?? this.customGoogleClientId,
+      customGoogleClientSecret: customGoogleClientSecret ?? this.customGoogleClientSecret,
     );
+  }
+}
+
+class KeyObfuscator {
+  static const int _xorKey = 0x3F;
+  static const String _prefix = "obf:";
+
+  static String encrypt(String value) {
+    if (value.isEmpty) return "";
+    final bytes = utf8.encode(value);
+    final encryptedBytes = bytes.map((b) => b ^ _xorKey).toList();
+    return _prefix + base64Url.encode(encryptedBytes);
+  }
+
+  static String decrypt(String value) {
+    if (value.isEmpty) return "";
+    if (!value.startsWith(_prefix)) return value;
+    try {
+      final rawBase64 = value.substring(_prefix.length);
+      final encryptedBytes = base64Url.decode(rawBase64);
+      final decryptedBytes = encryptedBytes.map((b) => b ^ _xorKey).toList();
+      return utf8.decode(decryptedBytes);
+    } catch (_) {
+      return "";
+    }
   }
 }

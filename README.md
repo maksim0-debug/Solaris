@@ -35,7 +35,7 @@ Full control over your entire workspace.
 - **DDC/CI Integration**: Direct hardware communication with monitors via system-level APIs.
 - **Individual Control**: Set unique brightness offsets or manual levels for each display.
 - **Unified Sync**: Adjust all monitors at once with a single click.
-<img width="314" height="254" alt="Multi-monitor controls for individual display brightness offsets" src="https://github.com/user-attachments/assets/53066949-0c59-4fc8-afa5-79805fd59ef8" />
+  <img width="314" height="254" alt="Multi-monitor controls for individual display brightness offsets" src="https://github.com/user-attachments/assets/53066949-0c59-4fc8-afa5-79805fd59ef8" />
 
 ### 🌡️ Dynamic Color Temperature (GPU-Assisted Filter)
 
@@ -147,7 +147,7 @@ To utilize Google Fit synchronization, you must configure a private integration 
 1. **Create a Project**: Set up a free personal project in the [Google Cloud Console](https://console.cloud.google.com/).
 2. **Configure OAuth**: Define your "OAuth Consent Screen" and generate a Client ID with the `fitness.sleep.read` scope enabled.
 3. **Local Setup**: Clone this repository to your local system.
-4. **Environment Variables**: Navigate to the `solaris/` directory, rename `.env.example` to `.env` and insert your personal **Client ID** (Client Secret is not required, as Solaris uses PKCE Desktop OAuth).
+4. **Environment Variables**: Navigate to the `solaris/` directory, rename `.env.example` to `.env` and insert your personal **Client ID** and **Client Secret** (Google requires the Client Secret for Desktop applications during the code exchange step, even when using PKCE).
 5. **Manual Build**: Compile and execute the application from source using the Flutter SDK (`flutter run -d windows`).
 
 _By utilizing a personal API key, the application will operate as a private developer instance, bypassing the verification requirements typically imposed on public distributions._
@@ -234,7 +234,7 @@ Solaris can be compiled and executed **entirely without any API keys**. If you d
    Open the newly created `.env` file and insert your credentials to unlock advanced features:
    - **WeatherAPI**: To allow Solaris to adjust brightness based on real-time cloudiness and solar radiation with high precision, [register at WeatherAPI.com](https://www.weatherapi.com/signup.aspx) to get a free API key and paste it into `WEATHER_API_KEY`.
    - **Mapbox**: To use interactive maps for location selection, [get a Mapbox Access Token](https://docs.mapbox.com/help/getting-started/access-tokens/) and paste it into `MAPBOX_TOKEN`.
-   - **Google Fit**: If you want to sync your sleep history, follow the [Google Fit Integration](#-google-fit-integration) guide above to get your `GOOGLE_CLIENT_ID` (Client Secret is not required).
+   - **Google Fit**: If you want to sync your sleep history, follow the [Google Fit Integration](#-google-fit-integration) guide above to get your `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
 
 4. **Get dependencies & generate code**:
 

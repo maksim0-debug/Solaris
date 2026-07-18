@@ -19,6 +19,7 @@ import 'package:solaris/widgets/deep_link_target.dart';
 import 'package:solaris/screens/privacy_policy_screen.dart';
 import 'package:solaris/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -38,6 +39,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     'language': GlobalKey<DeepLinkTargetState>(),
     'schedule_view': GlobalKey<DeepLinkTargetState>(),
     'game_mode': GlobalKey<DeepLinkTargetState>(),
+    'api_keys': GlobalKey<DeepLinkTargetState>(),
   };
 
   @override
@@ -431,6 +433,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             key: _anchorKeys['hotkeys'],
             id: 'hotkeys',
             child: _GlobalHotkeysCard(anchorKeys: _anchorKeys),
+          ),
+          const SizedBox(height: 24),
+
+          DeepLinkTarget(
+            key: _anchorKeys['api_keys'],
+            id: 'api_keys',
+            child: const _ApiKeysCard(),
           ),
           const SizedBox(height: 24),
 
@@ -2513,7 +2522,7 @@ class _IntensitySlider extends StatelessWidget {
   }
 }
 
-class _WeatherProviderSelector extends StatelessWidget {
+class _WeatherProviderSelector extends ConsumerWidget {
   final WeatherProvider selectedProvider;
   final ValueChanged<WeatherProvider> onChanged;
 
@@ -2523,9 +2532,13 @@ class _WeatherProviderSelector extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final isWeatherKeyValid = Env.isWeatherApiKeyValid;
+    final settingsAsync = ref.watch(settingsProvider);
+    final isWeatherKeyValid = settingsAsync.maybeWhen(
+      data: (map) => map['all']?.isWeatherKeyAvailable ?? Env.isWeatherApiKeyValid,
+      orElse: () => Env.isWeatherApiKeyValid,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2613,17 +2626,443 @@ class _WeatherProviderSelector extends StatelessWidget {
               const Icon(LucideIcons.alertCircle, color: Color(0xFFFDBA74), size: 14),
               const SizedBox(width: 6),
               Expanded(
-                child: Text(
-                  l10n.weatherApiKeyMissingWarning,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFFFDBA74),
-                  ),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      l10n.weatherApiKeyMissingWarning,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFFFDBA74),
+                      ),
+                    ),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      onPressed: () => launchUrl(
+                        Uri.parse('https://www.weatherapi.com/'),
+                        mode: LaunchMode.externalApplication,
+                      ),
+                      child: Text(
+                        l10n.apiKeysGetKeyLink,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFFFDBA74),
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      onPressed: () {
+                        ref.read(searchAnchorProvider.notifier).setAnchor('api_keys');
+                      },
+                      child: Text(
+                        l10n.goToSettings,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFFFDBA74),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ],
+      ],
+    );
+  }
+}
+
+class _ApiKeysCard extends ConsumerStatefulWidget {
+  const _ApiKeysCard();
+
+  @override
+  ConsumerState<_ApiKeysCard> createState() => _ApiKeysCardState();
+}
+
+class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
+  late TextEditingController _weatherController;
+  late TextEditingController _mapboxController;
+  late TextEditingController _googleController;
+  late TextEditingController _googleSecretController;
+
+  bool _weatherObscured = true;
+  bool _mapboxObscured = true;
+  bool _googleObscured = true;
+  bool _googleSecretObscured = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _weatherController = TextEditingController();
+    _mapboxController = TextEditingController();
+    _googleController = TextEditingController();
+    _googleSecretController = TextEditingController();
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final settings = ref.read(settingsProvider).value?['all'] ?? SettingsState();
+      _weatherController.text = settings.customWeatherApiKey;
+      _mapboxController.text = settings.customMapboxToken;
+      _googleController.text = settings.customGoogleClientId;
+      _googleSecretController.text = settings.customGoogleClientSecret;
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _weatherController.dispose();
+    _mapboxController.dispose();
+    _googleController.dispose();
+    _googleSecretController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final settingsAsync = ref.watch(settingsProvider);
+
+    return settingsAsync.maybeWhen(
+      data: (map) {
+        final settings = map['all'] ?? SettingsState();
+
+        return GlassCard(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFDBA74).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      LucideIcons.key,
+                      color: Color(0xFFFDBA74),
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.apiKeysTitle,
+                        style: GoogleFonts.outfit(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        l10n.apiKeysSubtitle,
+                        style: GoogleFonts.outfit(
+                          fontSize: 12,
+                          color: Colors.white.withOpacity(0.5),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                (Env.isWeatherApiKeyValid || Env.isMapboxTokenValid || Env.isGoogleFitKeysValid)
+                    ? l10n.apiKeysHelpTextWithDefaults
+                    : l10n.apiKeysHelpText,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Colors.white70,
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Divider(color: Colors.white10),
+              const SizedBox(height: 16),
+
+              _buildKeyInputRow(
+                label: l10n.customWeatherApiKey,
+                controller: _weatherController,
+                savedValue: settings.customWeatherApiKey,
+                isEnvValid: Env.isWeatherApiKeyValid,
+                isObscured: _weatherObscured,
+                onObscureToggle: () => setState(() => _weatherObscured = !_weatherObscured),
+                getKeyUrl: 'https://www.weatherapi.com/',
+                onSave: (val) {
+                  ref.read(settingsProvider.notifier).updateCustomWeatherApiKey(val);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('${l10n.customWeatherApiKey}: Сохранено')),
+                  );
+                },
+                onClear: () {
+                  _weatherController.clear();
+                  ref.read(settingsProvider.notifier).updateCustomWeatherApiKey('');
+                },
+              ),
+              const SizedBox(height: 24),
+
+              _buildKeyInputRow(
+                label: l10n.customMapboxToken,
+                controller: _mapboxController,
+                savedValue: settings.customMapboxToken,
+                isEnvValid: Env.isMapboxTokenValid,
+                isObscured: _mapboxObscured,
+                onObscureToggle: () => setState(() => _mapboxObscured = !_mapboxObscured),
+                getKeyUrl: 'https://www.mapbox.com/',
+                onSave: (val) {
+                  ref.read(settingsProvider.notifier).updateCustomMapboxToken(val);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('${l10n.customMapboxToken}: Сохранено')),
+                  );
+                },
+                onClear: () {
+                  _mapboxController.clear();
+                  ref.read(settingsProvider.notifier).updateCustomMapboxToken('');
+                },
+              ),
+              const SizedBox(height: 24),
+
+              _buildKeyInputRow(
+                label: l10n.customGoogleClientId,
+                controller: _googleController,
+                savedValue: settings.customGoogleClientId,
+                isEnvValid: Env.isGoogleFitKeysValid,
+                isObscured: _googleObscured,
+                onObscureToggle: () => setState(() => _googleObscured = !_googleObscured),
+                getKeyUrl: 'https://console.cloud.google.com/',
+                onSave: (val) {
+                  ref.read(settingsProvider.notifier).updateCustomGoogleClientId(val);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('${l10n.customGoogleClientId}: Сохранено')),
+                  );
+                },
+                onClear: () {
+                  _googleController.clear();
+                  ref.read(settingsProvider.notifier).updateCustomGoogleClientId('');
+                },
+              ),
+              const SizedBox(height: 24),
+
+              _buildKeyInputRow(
+                label: l10n.customGoogleClientSecret,
+                controller: _googleSecretController,
+                savedValue: settings.customGoogleClientSecret,
+                isEnvValid: Env.isGoogleFitKeysValid,
+                isObscured: _googleSecretObscured,
+                onObscureToggle: () => setState(() => _googleSecretObscured = !_googleSecretObscured),
+                getKeyUrl: 'https://console.cloud.google.com/',
+                onSave: (val) {
+                  ref.read(settingsProvider.notifier).updateCustomGoogleClientSecret(val);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('${l10n.customGoogleClientSecret}: Сохранено')),
+                  );
+                },
+                onClear: () {
+                  _googleSecretController.clear();
+                  ref.read(settingsProvider.notifier).updateCustomGoogleClientSecret('');
+                },
+              ),
+            ],
+          ),
+        );
+      },
+      orElse: () => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildKeyInputRow({
+    required String label,
+    required TextEditingController controller,
+    required String savedValue,
+    required bool isEnvValid,
+    required bool isObscured,
+    required VoidCallback onObscureToggle,
+    required ValueChanged<String> onSave,
+    required VoidCallback onClear,
+    String? getKeyUrl,
+  }) {
+    final l10n = AppLocalizations.of(context)!;
+    final isModified = controller.text != savedValue;
+
+    final String statusText;
+    final Color statusColor;
+    if (savedValue.isNotEmpty) {
+      statusText = l10n.apiKeyActiveCustom;
+      statusColor = const Color(0xFF60A5FA);
+    } else if (isEnvValid) {
+      statusText = l10n.apiKeyActiveBuiltIn;
+      statusColor = const Color(0xFF34D399);
+    } else {
+      statusText = l10n.apiKeyNotConfigured;
+      statusColor = Colors.white24;
+    }
+
+    final placeholder = isEnvValid
+        ? '«${l10n.apiKeyActiveBuiltIn}»'
+        : '«${l10n.apiKeyNotConfigured}»';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Colors.white70,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Row(
+              children: [
+                if (getKeyUrl != null) ...[
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    onPressed: () => launchUrl(
+                      Uri.parse(getKeyUrl),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                    child: Text(
+                      l10n.apiKeysGetKeyLink,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFFFDBA74),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    statusText,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: statusColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.03),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.08),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: controller,
+                        obscureText: isObscured,
+                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        decoration: InputDecoration(
+                          hintText: placeholder,
+                          hintStyle: TextStyle(
+                            color: Colors.white.withOpacity(0.2),
+                            fontSize: 13,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          border: InputBorder.none,
+                          isDense: true,
+                        ),
+                        onChanged: (val) {
+                          setState(() {});
+                        },
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        isObscured ? LucideIcons.eyeOff : LucideIcons.eye,
+                        color: Colors.white38,
+                        size: 16,
+                      ),
+                      onPressed: onObscureToggle,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            if (isModified) ...[
+              IconButton(
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.white.withOpacity(0.05),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                icon: const Icon(LucideIcons.undo, color: Colors.white70, size: 16),
+                onPressed: () {
+                  setState(() {
+                    controller.text = savedValue;
+                  });
+                },
+              ),
+              const SizedBox(width: 4),
+              IconButton(
+                style: IconButton.styleFrom(
+                  backgroundColor: const Color(0xFF8B5CF6).withOpacity(0.2),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                icon: const Icon(LucideIcons.check, color: Color(0xFFC4B5FD), size: 16),
+                onPressed: () {
+                  onSave(controller.text.trim());
+                },
+              ),
+            ] else if (savedValue.isNotEmpty) ...[
+              IconButton(
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.red.withOpacity(0.1),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                icon: const Icon(LucideIcons.trash2, color: Colors.redAccent, size: 16),
+                onPressed: onClear,
+              ),
+            ],
+          ],
+        ),
       ],
     );
   }

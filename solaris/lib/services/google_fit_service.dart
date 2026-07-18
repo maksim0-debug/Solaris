@@ -22,6 +22,22 @@ class GoogleFitService {
 
   final _scopes = [FitnessApi.fitnessSleepReadScope];
 
+  String? _customGoogleClientId;
+  set customGoogleClientId(String? value) => _customGoogleClientId = value;
+
+  String get googleClientId =>
+      (_customGoogleClientId != null && _customGoogleClientId!.isNotEmpty)
+          ? _customGoogleClientId!
+          : Env.googleClientId;
+
+  String? _customGoogleClientSecret;
+  set customGoogleClientSecret(String? value) => _customGoogleClientSecret = value;
+
+  String get googleClientSecret =>
+      (_customGoogleClientSecret != null && _customGoogleClientSecret!.isNotEmpty)
+          ? _customGoogleClientSecret!
+          : Env.googleClientSecret;
+
   bool get isConnected => _client != null;
 
   Future<bool> initialize() async {
@@ -32,7 +48,8 @@ class GoogleFitService {
         if (decoded is Map<String, dynamic>) {
           var credentials = AccessCredentials.fromJson(decoded);
           final clientId = ClientId(
-            Env.googleClientId,
+            googleClientId,
+            googleClientSecret,
           );
 
           // Check if token is expired and refresh it proactively
@@ -76,7 +93,7 @@ class GoogleFitService {
 
   Future<bool> signIn() async {
     try {
-      final clientIdStr = Env.googleClientId;
+      final clientIdStr = googleClientId;
 
       // 1. Generate PKCE verifier and challenge
       final verifier = PkceService.generateCodeVerifier();
@@ -147,6 +164,7 @@ class GoogleFitService {
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {
           'client_id': clientIdStr,
+          'client_secret': googleClientSecret,
           'code': code,
           'code_verifier': verifier,
           'grant_type': 'authorization_code',
@@ -219,7 +237,8 @@ class GoogleFitService {
       if (credentials.accessToken.expiry.isBefore(DateTime.now())) {
         debugPrint('Google Fit token expired, attempting to refresh...');
         final clientId = ClientId(
-          Env.googleClientId,
+          googleClientId,
+          googleClientSecret,
         );
 
         // Use refreshCredentials instead of refreshAuthenticatedClient

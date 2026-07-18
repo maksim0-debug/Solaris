@@ -1313,13 +1313,68 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get mapboxTokenMissingTooltip =>
-      'Токен доступа Mapbox отсутствует. Карта отключена.';
+      'Токен доступа Mapbox отсутствует. Настройте его в API Ключах или .env.';
 
   @override
   String get weatherApiKeyMissingWarning =>
-      'Провайдер WeatherAPI отключен, так как WEATHER_API_KEY не настроен в .env.';
+      'Провайдер WeatherAPI отключен. Настройте WEATHER_API_KEY в API Ключах или .env.';
 
   @override
   String get googleFitKeysMissingWarning =>
-      'Интеграция с Google Fit отключена, так как GOOGLE_CLIENT_ID не настроен в .env.';
+      'Интеграция с Google Fit отключена. Настройте GOOGLE_CLIENT_ID и GOOGLE_CLIENT_SECRET в API Ключах или .env.';
+
+  @override
+  String get apiKeysTitle => 'API Ключи';
+
+  @override
+  String get apiKeysSubtitle =>
+      'Настройка персональных ключей доступа к сервисам';
+
+  @override
+  String get customWeatherApiKey => 'Персональный WeatherAPI ключ';
+
+  @override
+  String get customMapboxToken => 'Персональный Mapbox токен';
+
+  @override
+  String get customGoogleClientId => 'Персональный Google Client ID';
+
+  @override
+  String get customGoogleClientSecret => 'Персональный Google Client Secret';
+
+  @override
+  String get apiKeysHelpText =>
+      'Эта версия Solaris собрана без встроенных ключей. Чтобы использовать функции карт, детальной погоды или синхронизации Google Fit, укажите свои ключи здесь. Они будут обфусцированы и сохранены локально на вашем ПК.';
+
+  @override
+  String get apiKeysHelpTextWithDefaults =>
+      'Эта версия Solaris содержит встроенные ключи по умолчанию. При желании вы можете переопределить любой из них, указав здесь свой собственный ключ. Пользовательские ключи будут обфусцированы и сохранены локально на вашем ПК.';
+
+  @override
+  String get apiKeysGetKeyLink => 'Получить ключ';
+
+  @override
+  String get googleFitReleaseWarningTitle => 'Релизная версия с GitHub';
+
+  @override
+  String get googleFitReleaseWarningBody =>
+      'Эта официальная версия приложения скачана с GitHub и не содержит встроенного Google Client ID и Client Secret из-за строгой политики безопасности Google в отношении данных о здоровье (Restricted Scopes). Публичным приложениям запрещено получать доступ к истории сна без прохождения дорогостоящего независимого аудита безопасности.\n\nЧтобы включить синхронизацию:\n1. Введите свои собственные Google Client ID и Client Secret в разделе настроек «API Ключи».\n2. Либо соберите приложение из исходников с вашими ключами в файле `.env`.';
+
+  @override
+  String get goToSettings => 'В настройки';
+
+  @override
+  String get apiKeyActiveBuiltIn => 'Встроенный активен';
+
+  @override
+  String get apiKeyActiveCustom => 'Пользовательский активен';
+
+  @override
+  String get apiKeyNotConfigured => 'Ключ не настроен';
+
+  @override
+  String get saveKey => 'Сохранить';
+
+  @override
+  String get clearKey => 'Очистить';
 }
