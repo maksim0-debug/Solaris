@@ -58,8 +58,8 @@ Focus on the win without distractions.
 
 The first monitor controller that cares about the sky.
 
-- **Real-time Precision**: Uses **WeatherAPI.com** to fetch highly accurate current weather conditions and solar radiation data for precise brightness adjustments.
-- **Cloudiness & Radiation Logic**: Naturally dims brightness when it's overcast, rainy, or snowy. Uses **Open-Meteo** as a secondary fallback source.
+- **Real-time Precision**: Uses **WeatherAPI.com** to fetch highly accurate current weather conditions and cloudiness data for precise brightness adjustments.
+- **Cloudiness & Weather Logic**: Naturally dims brightness when it's overcast, rainy, or snowy. Uses **Open-Meteo** as a secondary fallback source.
   - **Precise Weather Correction**: Automatically adjusts daytime brightness based on current weather conditions (e.g., dims the screen during overcast skies, rain, or thunderstorms). Clear skies keep the screen at its standard daylight brightness, while partial cloudiness interpolates the adjustment smoothly. Weather corrections are active only during daylight hours and fade out near sunset.
   - **Overcast Temperature Drop**: Lowers color temperature during bad weather (such as rain or heavy cloud cover) to align monitor tones with the ambient daylight ambiance and reduce blue light strain.
 - **Atmospheric UI**: Beautiful background animations for rain, snow, thunder, and clouds within the dashboard.
@@ -135,22 +135,54 @@ If you prefer not to use Google Fit or want a completely offline, internet-free 
 
 ### 🔐 Google Fit Integration
 
-Solaris supports direct synchronization with **Google Fit** to retrieve your sleep history, enabling high-precision adjustments to monitor color temperature and brightness based on your personal circadian rhythms.
+Solaris supports direct synchronization with **Google Fit** to retrieve your sleep history, enabling high-precision adjustments to monitor color temperature and brightness.
 
 > [!IMPORTANT]
 > **Access & Security Policy:** Due to Google's stringent security policies regarding health data (**Restricted Scopes**), public applications are prohibited from accessing sleep history without undergoing an extensive and costly independent security audit.
 >
-> Consequently, the official release builds of Solaris cannot natively sync with your Google Fit account for automated adjustments.
+> Consequently, official releases of Solaris do not ship with built-in Google Fit credentials. However, you can easily bypass this restriction using your own personal Google Cloud credentials.
 
-To utilize Google Fit synchronization, you must configure a private integration by following these steps:
+To use Google Fit synchronization, you need to obtain your own Client ID and Client Secret:
 
-1. **Create a Project**: Set up a free personal project in the [Google Cloud Console](https://console.cloud.google.com/).
-2. **Configure OAuth**: Define your "OAuth Consent Screen" and generate a Client ID with the `fitness.sleep.read` scope enabled.
-3. **Local Setup**: Clone this repository to your local system.
-4. **Environment Variables**: Navigate to the `solaris/` directory, rename `.env.example` to `.env` and insert your personal **Client ID** and **Client Secret** (Google requires the Client Secret for Desktop applications during the code exchange step, even when using PKCE).
-5. **Manual Build**: Compile and execute the application from source using the Flutter SDK (`flutter run -d windows`).
+1. **Create a Google Cloud Project**: Set up a free project in the [Google Cloud Console](https://console.cloud.google.com/).
+2. **Configure OAuth Consent Screen**: Configure the consent screen, add the `fitness.sleep.read` scope, and add your Google account to the test users list.
+3. **Create Credentials**: Create an **OAuth Client ID** for a **Desktop Application** to get your **Client ID** and **Client Secret**.
 
-_By utilizing a personal API key, the application will operate as a private developer instance, bypassing the verification requirements typically imposed on public distributions._
+Once you have the credentials, you have two options to integrate them:
+
+* **Option A: Dynamic UI Configuration (Recommended)**
+  Simply launch Solaris, navigate to **Settings** -> **API Keys** section at the bottom of the page, paste your **Client ID** and **Client Secret** into the respective fields, and save them. The integration will unlock immediately without restarting.
+* **Option B: Build-time Configuration**
+  Rename `.env.example` to `.env` in the `solaris/` directory, insert your credentials, and compile the app from source.
+
+---
+
+## 🔑 Dynamic API Keys Configuration
+
+Solaris is designed to be fully functional out-of-the-box, but advanced features (Mapbox maps, WeatherAPI forecasts, Google Fit sleep sync) require specific API credentials. Instead of forcing you to build the application from source code to insert these keys, Solaris features a **Dynamic API Keys Management System** built directly into the UI.
+
+### How to Configure Custom Keys
+1. Open Solaris and navigate to the **Settings** tab.
+2. Scroll down to the **API Keys** section.
+3. Paste your custom credentials into the respective fields:
+   * **Custom WeatherAPI Key**: Get a free key from [WeatherAPI.com](https://www.weatherapi.com/) to enable highly accurate weather and cloudiness brightness adjustments.
+   * **Custom Mapbox Token**: Create a token on [Mapbox](https://www.mapbox.com/) to unlock the interactive coordinate selection map.
+   * **Custom Google Client ID** & **Custom Google Client Secret**: Obtain credentials from the [Google Cloud Console](https://console.cloud.google.com/) to sync your sleep history from Google Fit.
+4. Click **Save** next to the field.
+
+### Reactive Runtime Updates
+The application relies on Riverpod's reactive state architecture. When you save or clear a key in the settings UI:
+- The corresponding services and UI elements update **instantly and on the fly**.
+- **No application restart is required**: 
+  - Pasting a valid Mapbox token immediately unlocks and renders the location map, removing the padlock indicator.
+  - Adding a WeatherAPI key enables the "WeatherAPI" option in the weather provider dropdown.
+  - Providing Google Fit keys activates the "Connect Google Fit" button on the Sleep integration tab.
+
+### Local Security and Storage
+Your custom API keys are secure:
+* **Safe Local Storage**: Keys are stored on your local machine in the `monitor_settings.json` file inside the application support directory (e.g., `%APPDATA%\maksim0-debug\solaris\monitor_settings.json` on Windows).
+* **On-device Obfuscation**: Keys are obfuscated locally before being written to disk to prevent them from being stored in plain text, adding an extra layer of privacy.
+* **Key Priority**: Dynamic keys specified in the settings screen always take precedence over static build-time credentials (such as those configured in the `.env` file during compilation).
 
 ---
 
@@ -165,7 +197,7 @@ Solaris leverages cutting-edge technologies for peak performance on Windows:
   - Custom MethodChannels for hardware DDC/CI brightness control and GPU Gamma Ramp temperature manipulation.
 - **APIs & Services**:
   - **Google Fit API**: Health data synchronization.
-  - **WeatherAPI.com**: Advanced solar radiation and cloudiness data.
+  - **WeatherAPI.com**: Advanced weather and cloudiness data.
   - **Open-Meteo**: High-precision weather data fallback.
   - **Mapbox**: Location services.
 - **Math engine**: Spherical trigonometry and solar algorithms (`solar_calculator`, `sunrise_sunset_calc`).
@@ -197,14 +229,14 @@ If you just want to use the application, you can download the latest ready-to-us
 2. Extract it to your preferred location.
 3. Run `solaris.exe`.
 
-> [!WARNING]
-> **Google Fit Limitation:** Pre-built releases **do not** support Google Fit integration due to strict API security requirements. If you require this feature, you must build the application from source code as described below.
+> [!TIP]
+> **API Keys & Integrations:** Pre-built releases do not ship with embedded credentials. However, you can configure your own credentials for Google Fit, Mapbox, and WeatherAPI **directly in the app's Settings screen** (no compilation or command-line setup required).
 
 ---
 
 #### Building from Source
 
-Solaris can be compiled and executed **entirely without any API keys**. If you do not configure `.env` (or configure it with placeholders), the application will build successfully and run in **Graceful Fallback Mode** (see [Feature Limitations](#-graceful-fallback-mode--feature-limitations) below).
+Solaris can be compiled and executed **entirely without any API keys**. If you do not configure `.env` (or configure it with placeholders), the application will build successfully and run in **Graceful Fallback Mode** (see [Feature Limitations](#-graceful-fallback-mode--feature-limitations) below). However, you can still enter these keys dynamically in the running app's settings at any time.
 
 **Prerequisites:**
 
@@ -231,8 +263,8 @@ Solaris can be compiled and executed **entirely without any API keys**. If you d
 
 3. **Configure API Keys (Optional)**:
 
-   Open the newly created `.env` file and insert your credentials to unlock advanced features:
-   - **WeatherAPI**: To allow Solaris to adjust brightness based on real-time cloudiness and solar radiation with high precision, [register at WeatherAPI.com](https://www.weatherapi.com/signup.aspx) to get a free API key and paste it into `WEATHER_API_KEY`.
+   Open the newly created `.env` file and insert your credentials to unlock advanced features at build time:
+   - **WeatherAPI**: To allow Solaris to adjust brightness based on real-time cloudiness and weather conditions with high precision, [register at WeatherAPI.com](https://www.weatherapi.com/signup.aspx) to get a free API key and paste it into `WEATHER_API_KEY`.
    - **Mapbox**: To use interactive maps for location selection, [get a Mapbox Access Token](https://docs.mapbox.com/help/getting-started/access-tokens/) and paste it into `MAPBOX_TOKEN`.
    - **Google Fit**: If you want to sync your sleep history, follow the [Google Fit Integration](#-google-fit-integration) guide above to get your `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
 
@@ -259,9 +291,9 @@ flutter build windows
 
 ### ⚠️ Graceful Fallback Mode & Feature Limitations
 
-If you compile or run Solaris without providing API keys, the application automatically handles this by disabling specific features while keeping the core circadian rhythm engine fully functional:
+If you compile or run Solaris without providing API keys, the application automatically handles this by disabling specific features while keeping the core circadian rhythm engine fully functional. **You can unlock any of these features at runtime by supplying your custom keys in Settings -> API Keys**:
 
-| Feature / Integration          | Requirement        | Fallback Behavior when Key is Missing                                                                                                                                                                                             |
+| Feature / Integration          | Requirement        | Fallback Behavior when Key is Missing (Unlockable in Settings)                                                                                                                                                                    |
 | ------------------------------ | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Interactive Map & Mini-Map** | `MAPBOX_TOKEN`     | Map areas display a padlock icon. Clicking it shows a tooltip informing that the token is missing. You can still set your coordinates manually. Reverse geocoding falls back to a timezone-based city lookup.                     |
 | **WeatherAPI Provider**        | `WEATHER_API_KEY`  | "WeatherAPI" option in Settings is disabled and displays a warning under the selector. Solaris automatically falls back to **Open-Meteo API** (free public endpoints), meaning weather-based brightness shifts remain functional. |
