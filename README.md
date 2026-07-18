@@ -82,6 +82,8 @@ Control your environment without leaving your current app.
 ## 💤 Sleep Integration
 
 Solaris supports sleep data integration to fine-tune monitor brightness and color temperature according to your sleep patterns. You can choose between a local offline integration or sync with Google Fit.
+<img width="787" height="653" alt="Google Fit Sleep Data integration screen" src="https://github.com/user-attachments/assets/94ee4ba4-6a71-4227-b05e-1d858a9917c4" />
+
 
 ### 🏠 Local Sleep Integration
 
@@ -132,7 +134,6 @@ To utilize Google Fit synchronization, you must configure a private integration 
 5. **Manual Build**: Compile and execute the application from source using the Flutter SDK (`flutter run -d windows`).
 
 _By utilizing a personal API key, the application will operate as a private developer instance, bypassing the verification requirements typically imposed on public distributions._
-<img width="787" height="653" alt="Google Fit Sleep Data integration screen" src="https://github.com/user-attachments/assets/94ee4ba4-6a71-4227-b05e-1d858a9917c4" />
 
 ---
 
