@@ -182,7 +182,7 @@ The application relies on Riverpod's reactive state architecture. When you save 
 
 ### Local Security and Storage
 Your custom API keys are secure:
-* **Safe Local Storage**: Keys are stored on your local machine in the `monitor_settings.json` file inside the application support directory (e.g., `%APPDATA%\maksim0-debug\solaris\monitor_settings.json` on Windows).
+* **Safe Local Storage**: Keys are stored locally on your PC in the application support directory.
 * **On-device Obfuscation**: Keys are obfuscated locally before being written to disk to prevent them from being stored in plain text, adding an extra layer of privacy.
 * **Key Priority**: Dynamic keys specified in the settings screen always take precedence over static build-time credentials (such as those configured in the `.env` file during compilation).
 
