@@ -24,10 +24,13 @@ class StatusHelper {
   static StatusConfig getStatus(
     SolarState state,
     AppLocalizations l10n,
-    bool isAuto,
+    bool isAutoBright,
+    bool isAutoTemp,
+    DateTime now,
   ) {
     final phase = state.currentPhase;
-    final modeTitle = isAuto ? l10n.statusAdaptive : l10n.statusManual;
+    final isAdaptive = isAutoBright || isAutoTemp;
+    final modeTitle = isAdaptive ? l10n.statusAdaptive : l10n.statusManual;
 
     // Default values
     String title = l10n.calculating;
@@ -38,7 +41,7 @@ class StatusHelper {
     switch (phase) {
       case CurrentDayPhase.deepNight:
         title = l10n.phaseDeepNight;
-        description = isAuto
+        description = isAutoBright
             ? l10n.descDeepNightAuto
             : l10n.descDeepNightManual;
         icon = LucideIcons.moon;
@@ -47,14 +50,14 @@ class StatusHelper {
 
       case CurrentDayPhase.dawn:
         title = l10n.phaseDawn;
-        description = isAuto ? l10n.descDawnAuto : l10n.descDawnManual;
+        description = isAutoBright ? l10n.descDawnAuto : l10n.descDawnManual;
         icon = LucideIcons.sunrise;
         color = const Color(0xFF94A3B8); // Slate-400
         break;
 
       case CurrentDayPhase.morningSpike:
         title = l10n.phaseMorningSpike;
-        description = isAuto
+        description = isAutoBright
             ? l10n.descMorningSpikeAuto
             : l10n.descMorningSpikeManual;
         icon = LucideIcons.sunrise;
@@ -63,23 +66,38 @@ class StatusHelper {
 
       case CurrentDayPhase.zenith:
         title = l10n.phaseZenith;
-        description = isAuto ? l10n.descZenithAuto : l10n.descZenithManual;
+        description = isAutoBright ? l10n.descZenithAuto : l10n.descZenithManual;
         icon = LucideIcons.sun;
         color = const Color(0xFFFDE047); // Yellow-300
         break;
 
       case CurrentDayPhase.goldenHour:
         title = l10n.phaseGoldenHour;
-        description = isAuto
-            ? l10n.descGoldenHourAuto
-            : l10n.descGoldenHourManual;
+        final isMorning = now.isBefore(state.phases.solarNoon);
+        if (isMorning) {
+          description = isAutoTemp
+              ? (isAutoBright
+                  ? l10n.descGoldenHourMorningBothAuto
+                  : l10n.descGoldenHourMorningTempOnly)
+              : (isAutoBright
+                  ? l10n.descGoldenHourMorningBrightOnly
+                  : l10n.descGoldenHourMorningManual);
+        } else {
+          description = isAutoTemp
+              ? (isAutoBright
+                  ? l10n.descGoldenHourEveningBothAuto
+                  : l10n.descGoldenHourEveningTempOnly)
+              : (isAutoBright
+                  ? l10n.descGoldenHourEveningBrightOnly
+                  : l10n.descGoldenHourEveningManual);
+        }
         icon = LucideIcons.sparkles;
         color = const Color(0xFFFDBA74); // Amber-300
         break;
 
       case CurrentDayPhase.twilight:
         title = l10n.phaseTwilight;
-        description = isAuto ? l10n.descTwilightAuto : l10n.descTwilightManual;
+        description = isAutoBright ? l10n.descTwilightAuto : l10n.descTwilightManual;
         icon = LucideIcons.sunset;
         color = const Color(0xFF94A3B8); // Slate-400
         break;

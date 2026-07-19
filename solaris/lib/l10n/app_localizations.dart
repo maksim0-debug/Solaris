@@ -343,13 +343,13 @@ abstract class AppLocalizations {
   /// No description provided for @transitionNotice.
   ///
   /// In en, this message translates to:
-  /// **'System will transition to warm spectrum 2700K in approximately {hours} hours.'**
+  /// **'System will transition to warm spectrum in approximately {hours} hours.'**
   String transitionNotice(int hours);
 
   /// No description provided for @goldenHourNotice.
   ///
   /// In en, this message translates to:
-  /// **'System is currently in Golden Hour. Spectrum is shifted to warm 2700K.'**
+  /// **'System is currently in Golden Hour. Soft warm spectrum is active.'**
   String get goldenHourNotice;
 
   /// No description provided for @solarCycleEnded.
@@ -451,31 +451,31 @@ abstract class AppLocalizations {
   /// No description provided for @descDeepNightAuto.
   ///
   /// In en, this message translates to:
-  /// **'Night cycle. Adaptive control maintains minimum brightness.'**
+  /// **'Night cycle. Gentle backlighting protects your eyes in the dark.'**
   String get descDeepNightAuto;
 
   /// No description provided for @descDeepNightManual.
   ///
   /// In en, this message translates to:
-  /// **'Deep night. System is in manual mode waiting for sunrise.'**
+  /// **'Deep night. Auto-regulation is resting, waiting for the first rays of dawn.'**
   String get descDeepNightManual;
 
   /// No description provided for @descDawnAuto.
   ///
   /// In en, this message translates to:
-  /// **'Civil twilight. Smooth transition to day mode.'**
+  /// **'Dawn is breaking. The screen is gently waking up and transitioning to day mode.'**
   String get descDawnAuto;
 
   /// No description provided for @descDawnManual.
   ///
   /// In en, this message translates to:
-  /// **'Dawn. System is in manual mode waiting for sunrise.'**
+  /// **'The sky is brightening. You are controlling the brightness manually while waiting for sunrise.'**
   String get descDawnManual;
 
   /// No description provided for @descMorningSpikeAuto.
   ///
   /// In en, this message translates to:
-  /// **'Pre-dawn spike. Brightness is gradually rising towards sunrise.'**
+  /// **'First rays of sun. Brightness is gradually rising to help you wake up.'**
   String get descMorningSpikeAuto;
 
   /// No description provided for @descMorningSpikeManual.
@@ -487,37 +487,73 @@ abstract class AppLocalizations {
   /// No description provided for @descZenithAuto.
   ///
   /// In en, this message translates to:
-  /// **'Zenith. Maximum light efficiency according to schedule.'**
+  /// **'Sun is at its zenith. Optimal brightness is set for daytime work.'**
   String get descZenithAuto;
 
   /// No description provided for @descZenithManual.
   ///
   /// In en, this message translates to:
-  /// **'Full day. You are using manual brightness settings.'**
+  /// **'Middle of the day. Auto-adjust is disabled, brightness set manually.'**
   String get descZenithManual;
 
-  /// No description provided for @descGoldenHourAuto.
+  /// No description provided for @descGoldenHourMorningBothAuto.
   ///
   /// In en, this message translates to:
-  /// **'Golden Hour. Spectrum shifted to warm 2700K for comfort.'**
-  String get descGoldenHourAuto;
+  /// **'Morning golden hour. Soft warm light and brightness are adjusted for a gentle start to your day.'**
+  String get descGoldenHourMorningBothAuto;
 
-  /// No description provided for @descGoldenHourManual.
+  /// No description provided for @descGoldenHourMorningTempOnly.
   ///
   /// In en, this message translates to:
-  /// **'Golden Hour. Color correction is currently paused.'**
-  String get descGoldenHourManual;
+  /// **'Morning golden hour. The screen is shifted to a warm spectrum for your eyes\' comfort.'**
+  String get descGoldenHourMorningTempOnly;
+
+  /// No description provided for @descGoldenHourMorningBrightOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Morning golden hour. Brightness adapts to the soft light of early morning.'**
+  String get descGoldenHourMorningBrightOnly;
+
+  /// No description provided for @descGoldenHourMorningManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Morning golden hour. Auto-regulation is resting, parameters are set manually.'**
+  String get descGoldenHourMorningManual;
+
+  /// No description provided for @descGoldenHourEveningBothAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Evening golden hour. Soft warm light and brightness are adjusted for a cozy evening.'**
+  String get descGoldenHourEveningBothAuto;
+
+  /// No description provided for @descGoldenHourEveningTempOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Evening golden hour. The screen transitions to a warm spectrum, reducing strain before sleep.'**
+  String get descGoldenHourEveningTempOnly;
+
+  /// No description provided for @descGoldenHourEveningBrightOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Evening golden hour. Brightness gradually decreases to match the setting sun.'**
+  String get descGoldenHourEveningBrightOnly;
+
+  /// No description provided for @descGoldenHourEveningManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Evening golden hour. Auto-regulation is resting, parameters are set manually.'**
+  String get descGoldenHourEveningManual;
 
   /// No description provided for @descTwilightAuto.
   ///
   /// In en, this message translates to:
-  /// **'Civil Twilight. Smooth transition to night mode.'**
+  /// **'Twilight is gathering. The screen is smoothly transitioning to a cozy night mode.'**
   String get descTwilightAuto;
 
   /// No description provided for @descTwilightManual.
   ///
   /// In en, this message translates to:
-  /// **'Twilight. System is in manual mode with reduced intensity.'**
+  /// **'It\'s twilight. Auto-adjust is disabled, brightness set manually.'**
   String get descTwilightManual;
 
   /// No description provided for @panelTemperature.
@@ -1237,7 +1273,7 @@ abstract class AppLocalizations {
   /// No description provided for @featureWindDownInfo.
   ///
   /// In en, this message translates to:
-  /// **'Prepares your body for sleep by gradually reducing blue light and overall luminosity. This stimulates melatonin production and makes it easier to fall asleep.'**
+  /// **'Prepares your body for sleep by gradually reducing blue light and overall luminosity. This helps maintain natural melatonin levels and makes it easier to fall asleep.'**
   String get featureWindDownInfo;
 
   /// No description provided for @featureTimeShiftInfo.

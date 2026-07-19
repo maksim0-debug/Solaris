@@ -132,8 +132,12 @@ class LuminosityGraph extends StatelessWidget {
             getTooltipColor: (spot) => Colors.blueGrey.withOpacity(0.8),
             getTooltipItems: (touchedSpots) {
               return touchedSpots.map((spot) {
+                final totalMinutes = (spot.x * 60).round();
+                final hours = totalMinutes ~/ 60;
+                final minutes = totalMinutes % 60;
+                final timeString = '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}';
                 return LineTooltipItem(
-                  '${spot.x.toInt()}:00\n${spot.y.toStringAsFixed(1)}°',
+                  '$timeString\n${spot.y.toStringAsFixed(1)}°',
                   const TextStyle(color: Colors.white),
                 );
               }).toList();

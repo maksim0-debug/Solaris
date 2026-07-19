@@ -147,12 +147,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String transitionNotice(int hours) {
-    return 'Система перейдет на теплый спектр 2700K примерно через $hours ч.';
+    return 'Система перейдет на теплый спектр примерно через $hours ч.';
   }
 
   @override
   String get goldenHourNotice =>
-      'Сейчас Золотой час. Спектр смещен к теплому 2700K.';
+      'Сейчас Золотой час. Включен мягкий теплый спектр.';
 
   @override
   String get solarCycleEnded =>
@@ -206,51 +206,75 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get descDeepNightAuto =>
-      'Ночной цикл. Адаптивный контроль поддерживает минимальную яркость.';
+      'Ночной цикл. Мягкая подсветка заботится о зрении в темноте.';
 
   @override
   String get descDeepNightManual =>
-      'Глубокая ночь. Система в ручном режиме ожидания рассвета.';
+      'Глубокая ночь. Авторегулировка спит, ожидая первых лучей рассвета.';
 
   @override
   String get descDawnAuto =>
-      'Гражданские сумерки. Плавный переход к дневному режиму.';
+      'Наступает рассвет. Экран плавно просыпается и переходит на дневной режим.';
 
   @override
   String get descDawnManual =>
-      'Рассвет. Система в ручном режиме ожидания солнца.';
+      'Небо светлеет. Вы управляете яркостью вручную в ожидании восхода.';
 
   @override
   String get descMorningSpikeAuto =>
-      'Предрассветный пик. Яркость плавно растет к восходу.';
+      'Первые лучи солнца. Яркость плавно растет, помогая вам проснуться.';
 
   @override
   String get descMorningSpikeManual =>
-      'Предрассветный подъем. Установлена фиксированная яркость.';
+      'Предрассветный подъем. Вы перешли на ручное управление яркостью.';
 
   @override
   String get descZenithAuto =>
-      'Зенит. Максимальная световая эффективность по расписанию.';
+      'Солнце в зените. Установлена оптимальная яркость для дневной работы.';
 
   @override
   String get descZenithManual =>
-      'Полный день. Вы используете ручные настройки яркости.';
+      'Разгар дня. Автоподстройка отключена, яркость задана вручную.';
 
   @override
-  String get descGoldenHourAuto =>
-      'Золотой час. Спектр смещен к теплому 2700K для комфорта.';
+  String get descGoldenHourMorningBothAuto =>
+      'Утренний золотой час. Мягкий теплый свет и яркость настроены для легкого начала дня.';
 
   @override
-  String get descGoldenHourManual =>
-      'Золотой час. Цветовая коррекция приостановлена.';
+  String get descGoldenHourMorningTempOnly =>
+      'Утренний золотой час. Экран переведен в теплый спектр для комфорта ваших глаз.';
+
+  @override
+  String get descGoldenHourMorningBrightOnly =>
+      'Утренний золотой час. Яркость адаптируется под мягкий свет раннего утра.';
+
+  @override
+  String get descGoldenHourMorningManual =>
+      'Утренний золотой час. Авторегулировка отдыхает, параметры установлены вручную.';
+
+  @override
+  String get descGoldenHourEveningBothAuto =>
+      'Вечерний золотой час. Мягкий теплый свет и яркость адаптированы для уютного вечера.';
+
+  @override
+  String get descGoldenHourEveningTempOnly =>
+      'Вечерний золотой час. Экран переходит в теплый спектр, снижая нагрузку перед сном.';
+
+  @override
+  String get descGoldenHourEveningBrightOnly =>
+      'Вечерний золотой час. Яркость плавно снижается под стать заходящему солнцу.';
+
+  @override
+  String get descGoldenHourEveningManual =>
+      'Вечерний золотой час. Авторегулировка отдыхает, параметры установлены вручную.';
 
   @override
   String get descTwilightAuto =>
-      'Гражданские сумерки. Плавный переход к ночному режиму.';
+      'Сгущаются сумерки. Экран плавно переходит на уютный ночной режим.';
 
   @override
   String get descTwilightManual =>
-      'Сумерки. Система в ручном режиме пониженной яркости.';
+      'На дворе сумерки. Автоподстройка отключена, яркость установлена вручную.';
 
   @override
   String get panelTemperature => 'Температура панели';
@@ -635,7 +659,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get featureWindDownInfo =>
-      'Готовит организм ко сну, постепенно уменьшая количество синего света и общую освещенность. Это стимулирует выработку мелатонина и облегчает засыпание.';
+      'Готовит организм ко сну, постепенно уменьшая количество синего света и общую освещенность. Это помогает сохранить естественный уровень мелатонина и облегчает засыпание.';
 
   @override
   String get featureTimeShiftInfo =>

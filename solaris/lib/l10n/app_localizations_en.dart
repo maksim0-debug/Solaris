@@ -146,12 +146,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String transitionNotice(int hours) {
-    return 'System will transition to warm spectrum 2700K in approximately $hours hours.';
+    return 'System will transition to warm spectrum in approximately $hours hours.';
   }
 
   @override
   String get goldenHourNotice =>
-      'System is currently in Golden Hour. Spectrum is shifted to warm 2700K.';
+      'System is currently in Golden Hour. Soft warm spectrum is active.';
 
   @override
   String get solarCycleEnded =>
@@ -205,22 +205,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get descDeepNightAuto =>
-      'Night cycle. Adaptive control maintains minimum brightness.';
+      'Night cycle. Gentle backlighting protects your eyes in the dark.';
 
   @override
   String get descDeepNightManual =>
-      'Deep night. System is in manual mode waiting for sunrise.';
+      'Deep night. Auto-regulation is resting, waiting for the first rays of dawn.';
 
   @override
-  String get descDawnAuto => 'Civil twilight. Smooth transition to day mode.';
+  String get descDawnAuto =>
+      'Dawn is breaking. The screen is gently waking up and transitioning to day mode.';
 
   @override
   String get descDawnManual =>
-      'Dawn. System is in manual mode waiting for sunrise.';
+      'The sky is brightening. You are controlling the brightness manually while waiting for sunrise.';
 
   @override
   String get descMorningSpikeAuto =>
-      'Pre-dawn spike. Brightness is gradually rising towards sunrise.';
+      'First rays of sun. Brightness is gradually rising to help you wake up.';
 
   @override
   String get descMorningSpikeManual =>
@@ -228,27 +229,51 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get descZenithAuto =>
-      'Zenith. Maximum light efficiency according to schedule.';
+      'Sun is at its zenith. Optimal brightness is set for daytime work.';
 
   @override
   String get descZenithManual =>
-      'Full day. You are using manual brightness settings.';
+      'Middle of the day. Auto-adjust is disabled, brightness set manually.';
 
   @override
-  String get descGoldenHourAuto =>
-      'Golden Hour. Spectrum shifted to warm 2700K for comfort.';
+  String get descGoldenHourMorningBothAuto =>
+      'Morning golden hour. Soft warm light and brightness are adjusted for a gentle start to your day.';
 
   @override
-  String get descGoldenHourManual =>
-      'Golden Hour. Color correction is currently paused.';
+  String get descGoldenHourMorningTempOnly =>
+      'Morning golden hour. The screen is shifted to a warm spectrum for your eyes\' comfort.';
+
+  @override
+  String get descGoldenHourMorningBrightOnly =>
+      'Morning golden hour. Brightness adapts to the soft light of early morning.';
+
+  @override
+  String get descGoldenHourMorningManual =>
+      'Morning golden hour. Auto-regulation is resting, parameters are set manually.';
+
+  @override
+  String get descGoldenHourEveningBothAuto =>
+      'Evening golden hour. Soft warm light and brightness are adjusted for a cozy evening.';
+
+  @override
+  String get descGoldenHourEveningTempOnly =>
+      'Evening golden hour. The screen transitions to a warm spectrum, reducing strain before sleep.';
+
+  @override
+  String get descGoldenHourEveningBrightOnly =>
+      'Evening golden hour. Brightness gradually decreases to match the setting sun.';
+
+  @override
+  String get descGoldenHourEveningManual =>
+      'Evening golden hour. Auto-regulation is resting, parameters are set manually.';
 
   @override
   String get descTwilightAuto =>
-      'Civil Twilight. Smooth transition to night mode.';
+      'Twilight is gathering. The screen is smoothly transitioning to a cozy night mode.';
 
   @override
   String get descTwilightManual =>
-      'Twilight. System is in manual mode with reduced intensity.';
+      'It\'s twilight. Auto-adjust is disabled, brightness set manually.';
 
   @override
   String get panelTemperature => 'Panel Temperature';
@@ -636,7 +661,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get featureWindDownInfo =>
-      'Prepares your body for sleep by gradually reducing blue light and overall luminosity. This stimulates melatonin production and makes it easier to fall asleep.';
+      'Prepares your body for sleep by gradually reducing blue light and overall luminosity. This helps maintain natural melatonin levels and makes it easier to fall asleep.';
 
   @override
   String get featureTimeShiftInfo =>

@@ -30,12 +30,13 @@ class SunCalculatorService {
     DateTime? date,
     tz.Location? timezone,
   ]) async {
-    final targetDate = (date ?? DateTime.now()).toUtc();
-    final dateOnly = DateTime.utc(
-      targetDate.year,
-      targetDate.month,
-      targetDate.day,
+    final localDate = date ?? DateTime.now();
+    final targetDate = DateTime.utc(
+      localDate.year,
+      localDate.month,
+      localDate.day,
     );
+    final dateOnly = targetDate;
 
     // Cache hit criteria: same date (day) and same location
     if (_cachedPhases != null &&

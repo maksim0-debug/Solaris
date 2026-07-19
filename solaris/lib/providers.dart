@@ -600,12 +600,12 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
   final lat = pos?.latitude ?? 50.45;
   final lon = pos?.longitude ?? 30.52;
 
-  // Initial calculation
-  SolarPhaseModel phases = await service.calculatePhases(lat, lon, null, timezoneVal);
-
   // Current day tracker to trigger daily recalculation at midnight
   final initialNow = tz.TZDateTime.now(timezoneVal);
   int currentDay = initialNow.day;
+
+  // Initial calculation
+  SolarPhaseModel phases = await service.calculatePhases(lat, lon, initialNow, timezoneVal);
 
   // Previous values for trend calculation
   double? prevAzimuth;

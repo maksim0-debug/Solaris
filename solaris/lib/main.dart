@@ -245,7 +245,7 @@ class WindowEventHandler extends WindowListener {
 
   @override
   void onWindowEvent(String eventName) {
-    if (kDebugMode) {
+    if (kDebugMode && eventName != 'resize') {
       debugPrint('🪟 [Window Debug] Raw Event: $eventName');
     }
   }
