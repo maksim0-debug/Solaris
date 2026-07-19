@@ -392,7 +392,9 @@ final currentWeatherProvider = AsyncNotifierProvider<WeatherNotifier, WeatherDat
 
 final mapHealthProvider = FutureProvider<MapHealthReport>((ref) async {
   final service = ref.watch(mapHealthServiceProvider);
-  return await service.getHealthReport();
+  final settings = ref.watch(settingsProvider).value?['all'] ?? SettingsState();
+  final customToken = settings.customMapboxToken;
+  return await service.getHealthReport(customToken: customToken);
 });
 
 // SolarState moved to lib/models/solar_state.dart

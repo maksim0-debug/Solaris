@@ -5,12 +5,15 @@ import 'package:solaris/models/map_health_report.dart';
 
 class MapHealthService {
   static const String mapboxApiUrl = 'https://api.mapbox.com';
+  final http.Client _client;
 
-  Future<MapHealthReport> getHealthReport() async {
-    final isTokenValid = await _checkToken();
+  MapHealthService({http.Client? client}) : _client = client ?? http.Client();
+
+  Future<MapHealthReport> getHealthReport({String? customToken}) async {
+    final isTokenValid = await _checkToken(customToken);
     final isInternetAvailable = await _checkInternet();
     final isVCRedistInstalled = await _checkVCRedistInstalled();
-    final (isMapboxReachable, errorDetails) = await _checkMapboxReachable();
+    final (isMapboxReachable, errorDetails) = await _checkMapboxReachable(customToken);
 
     return MapHealthReport(
       isTokenValid: isTokenValid,
@@ -21,8 +24,8 @@ class MapHealthService {
     );
   }
 
-  Future<bool> _checkToken() async {
-    final token = Env.mapboxToken;
+  Future<bool> _checkToken(String? customToken) async {
+    final token = (customToken != null && customToken.isNotEmpty) ? customToken : Env.mapboxToken;
     // Mapbox tokens always start with pk. or sk.
     return token.isNotEmpty &&
         (token.startsWith('pk.') || token.startsWith('sk.')) &&
@@ -40,11 +43,12 @@ class MapHealthService {
     }
   }
 
-  Future<(bool, String?)> _checkMapboxReachable() async {
+  Future<(bool, String?)> _checkMapboxReachable(String? customToken) async {
     try {
+      final token = (customToken != null && customToken.isNotEmpty) ? customToken : Env.mapboxToken;
       // Use a standard style endpoint for reachability check
-      final url = Uri.parse('$mapboxApiUrl/styles/v1/mapbox/streets-v11?access_token=${Env.mapboxToken}');
-      final response = await http.get(url).timeout(const Duration(seconds: 5));
+      final url = Uri.parse('$mapboxApiUrl/styles/v1/mapbox/streets-v11?access_token=$token');
+      final response = await _client.get(url).timeout(const Duration(seconds: 5));
       
       if (response.statusCode == 200 || response.statusCode == 401) {
         return (true, null);
