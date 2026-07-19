@@ -17,7 +17,8 @@ The core of Solaris. The app automatically calculates the sun's position relativ
 - **Real-time Sun Tracking**: High-precision calculations for sunrise, sunset, solar noon, and twilight.
 - **Smooth Transitions**: Brightness changes are applied gradually to avoid sudden flashes.
 
-<img width="1377" height="865" alt="Solaris Dashboard showing global brightness control and circadian rhythm chart" src="https://github.com/user-attachments/assets/23223ab1-f9d8-491b-bf1d-d3ff2f39db58" />
+<img width="1284" height="881" alt="Solaris Dashboard showing global brightness control and circadian rhythm chart" src="https://github.com/user-attachments/assets/363bfcb9-094f-4d62-84fc-7389fcdc77b0" />
+
 
 ### 📈 Interactive Brightness Curves
 
