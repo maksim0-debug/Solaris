@@ -1109,6 +1109,24 @@ final manualBrightnessProvider =
       ManualBrightnessNotifier.new,
     );
 
+enum SettingsEncryptionError {
+  passwordChanged,
+  invalidData,
+  generic
+}
+
+class SettingsErrorNotifier extends Notifier<SettingsEncryptionError?> {
+  @override
+  SettingsEncryptionError? build() => null;
+
+  set state(SettingsEncryptionError? value) => super.state = value;
+}
+
+final settingsErrorProvider =
+    NotifierProvider<SettingsErrorNotifier, SettingsEncryptionError?>(
+      SettingsErrorNotifier.new,
+    );
+
 // SettingsState moved to lib/models/settings_state.dart
 
 class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
@@ -1153,7 +1171,45 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
       try {
         final decoded = jsonDecode(jsonStr) as Map<String, dynamic>;
         decoded.forEach((key, value) {
-          map[key] = SettingsState.fromJson(value as Map<String, dynamic>);
+          try {
+            map[key] = SettingsState.fromJson(value as Map<String, dynamic>);
+          } on DpapiPasswordChangedException catch (e) {
+            debugPrint('DPAPI Password Changed: $e');
+            Future.microtask(() {
+              ref.read(settingsErrorProvider.notifier).state = SettingsEncryptionError.passwordChanged;
+            });
+            // Clean credentials and parse the rest of settings to preserve user presets
+            final cleanedValue = Map<String, dynamic>.from(value as Map);
+            cleanedValue['customWeatherApiKey'] = "";
+            cleanedValue['customMapboxToken'] = "";
+            cleanedValue['customGoogleClientId'] = "";
+            cleanedValue['customGoogleClientSecret'] = "";
+            map[key] = SettingsState.fromJson(cleanedValue);
+          } on DpapiInvalidDataException catch (e) {
+            debugPrint('DPAPI Invalid Data: $e');
+            Future.microtask(() {
+              ref.read(settingsErrorProvider.notifier).state = SettingsEncryptionError.invalidData;
+            });
+            final cleanedValue = Map<String, dynamic>.from(value as Map);
+            cleanedValue['customWeatherApiKey'] = "";
+            cleanedValue['customMapboxToken'] = "";
+            cleanedValue['customGoogleClientId'] = "";
+            cleanedValue['customGoogleClientSecret'] = "";
+            map[key] = SettingsState.fromJson(cleanedValue);
+          } on DpapiGenericException catch (e) {
+            debugPrint('DPAPI Generic Error: $e');
+            Future.microtask(() {
+              ref.read(settingsErrorProvider.notifier).state = SettingsEncryptionError.generic;
+            });
+            final cleanedValue = Map<String, dynamic>.from(value as Map);
+            cleanedValue['customWeatherApiKey'] = "";
+            cleanedValue['customMapboxToken'] = "";
+            cleanedValue['customGoogleClientId'] = "";
+            cleanedValue['customGoogleClientSecret'] = "";
+            map[key] = SettingsState.fromJson(cleanedValue);
+          } catch (e) {
+            debugPrint('Error parsing settings state for key $key: $e');
+          }
         });
       } catch (e) {
         debugPrint('Error loading settings from file: $e');

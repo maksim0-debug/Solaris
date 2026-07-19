@@ -1881,7 +1881,7 @@ abstract class AppLocalizations {
   /// No description provided for @disclaimerText.
   ///
   /// In en, this message translates to:
-  /// **'DISCLAIMER: This software is provided \'AS IS\', WITHOUT WARRANTY OF ANY KIND, express or implied, including but not limited to the warranties of merchantability and fitness for a particular purpose. The developer shall not be liable for any hardware failures, firmware issues, or physical discomfort resulting from the use of this software. By using Solaris, you acknowledge that you do so at your own risk and assume full responsibility for equipment compatibility. In no event shall the author be liable for any special, incidental, or consequential damages.'**
+  /// **'DISCLAIMER: This software is provided \'AS IS\', WITHOUT WARRANTY OF ANY KIND, express or implied, including but not limited to the warranties of merchantability and fitness for a particular purpose. Under no circumstances shall the author or developer be liable for any hardware failures, firmware issues, physical discomfort, data loss, security breaches, unauthorized access, or leakage of custom API keys and credentials. By using Solaris, you acknowledge that you do so at your own sole risk and assume full responsibility for equipment compatibility, storage of keys, and any financial liabilities, costs, or expenses incurred as a result of key leakage, API quota overuses, or system compromise. In no event shall the author be liable for any special, incidental, direct, indirect, or consequential damages.'**
   String get disclaimerText;
 
   /// No description provided for @viewLicenses.
@@ -2543,6 +2543,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Saved'**
   String get saved;
+
+  /// No description provided for @dpapiErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Security Storage Alert'**
+  String get dpapiErrorTitle;
+
+  /// No description provided for @dpapiErrorPasswordChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Windows account credentials or password were changed. For security reasons, we could not decrypt your saved API keys. Please re-enter them in Settings.'**
+  String get dpapiErrorPasswordChanged;
+
+  /// No description provided for @dpapiErrorInvalidData.
+  ///
+  /// In en, this message translates to:
+  /// **'The saved settings security data is corrupted. Please re-enter your API keys.'**
+  String get dpapiErrorInvalidData;
+
+  /// No description provided for @dpapiErrorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'A Windows security subsystem error occurred while decrypting your settings. Please re-enter your API keys.'**
+  String get dpapiErrorGeneric;
+
+  /// No description provided for @dpapiErrorActionOk.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get dpapiErrorActionOk;
+
+  /// No description provided for @dpapiErrorActionSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Settings'**
+  String get dpapiErrorActionSettings;
 }
 
 class _AppLocalizationsDelegate

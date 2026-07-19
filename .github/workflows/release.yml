@@ -59,10 +59,12 @@ jobs:
           MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
+          DPAPI_ENTROPY: ${{ secrets.DPAPI_ENTROPY }}
         run: |
           printf "MAPBOX_TOKEN=%s\n" "${MAPBOX_TOKEN:-your_mapbox_token_here}" > .env
           printf "GOOGLE_CLIENT_ID=%s\n" "${GOOGLE_CLIENT_ID:-your_client_id_here}" >> .env
           printf "WEATHER_API_KEY=%s\n" "${WEATHER_API_KEY:-your_weather_api_key_here}" >> .env
+          printf "DPAPI_ENTROPY=%s\n" "${DPAPI_ENTROPY:-SolarisDefaultEntropySaltKey321!}" >> .env
           printf "IS_OFFICIAL_RELEASE=%s\n" "true" >> .env
           echo ".env file created successfully."
 

@@ -85,6 +85,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     // Keep the background brightness adjustment logic alive
     ref.watch(circadianAdjustmentProvider);
 
+    ref.listen<SettingsEncryptionError?>(settingsErrorProvider, (previous, next) {
+      if (next != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _showDpapiErrorDialog(context, next, ref);
+        });
+      }
+    });
+
     ref.listen<bool>(isSearchVisibleProvider, (previous, next) {
       if (previous == true && next == false) {
         _focusNode.requestFocus();
@@ -169,6 +177,60 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
       ),
       ),
+    );
+  }
+
+  void _showDpapiErrorDialog(
+    BuildContext context,
+    SettingsEncryptionError errorType,
+    WidgetRef ref,
+  ) {
+    final l10n = AppLocalizations.of(context)!;
+    String message = "";
+    switch (errorType) {
+      case SettingsEncryptionError.passwordChanged:
+        message = l10n.dpapiErrorPasswordChanged;
+        break;
+      case SettingsEncryptionError.invalidData:
+        message = l10n.dpapiErrorInvalidData;
+        break;
+      case SettingsEncryptionError.generic:
+        message = l10n.dpapiErrorGeneric;
+        break;
+    }
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              const Icon(Icons.security, color: Colors.orange),
+              const SizedBox(width: 8),
+              Text(l10n.dpapiErrorTitle),
+            ],
+          ),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: Text(l10n.dpapiErrorActionOk),
+              onPressed: () {
+                ref.read(settingsErrorProvider.notifier).state = null;
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+            ElevatedButton(
+              child: Text(l10n.dpapiErrorActionSettings),
+              onPressed: () {
+                ref.read(settingsErrorProvider.notifier).state = null;
+                Navigator.of(dialogContext).pop();
+                ref.read(activeScreenProvider.notifier).setScreen(AppScreen.settings);
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

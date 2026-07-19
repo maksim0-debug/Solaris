@@ -1023,7 +1023,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get disclaimerText =>
-      'DISCLAIMER: This software is provided \'AS IS\', WITHOUT WARRANTY OF ANY KIND, express or implied, including but not limited to the warranties of merchantability and fitness for a particular purpose. The developer shall not be liable for any hardware failures, firmware issues, or physical discomfort resulting from the use of this software. By using Solaris, you acknowledge that you do so at your own risk and assume full responsibility for equipment compatibility. In no event shall the author be liable for any special, incidental, or consequential damages.';
+      'DISCLAIMER: This software is provided \'AS IS\', WITHOUT WARRANTY OF ANY KIND, express or implied, including but not limited to the warranties of merchantability and fitness for a particular purpose. Under no circumstances shall the author or developer be liable for any hardware failures, firmware issues, physical discomfort, data loss, security breaches, unauthorized access, or leakage of custom API keys and credentials. By using Solaris, you acknowledge that you do so at your own sole risk and assume full responsibility for equipment compatibility, storage of keys, and any financial liabilities, costs, or expenses incurred as a result of key leakage, API quota overuses, or system compromise. In no event shall the author be liable for any special, incidental, direct, indirect, or consequential damages.';
 
   @override
   String get viewLicenses => 'View Licenses';
@@ -1416,4 +1416,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get saved => 'Saved';
+
+  @override
+  String get dpapiErrorTitle => 'Security Storage Alert';
+
+  @override
+  String get dpapiErrorPasswordChanged =>
+      'Your Windows account credentials or password were changed. For security reasons, we could not decrypt your saved API keys. Please re-enter them in Settings.';
+
+  @override
+  String get dpapiErrorInvalidData =>
+      'The saved settings security data is corrupted. Please re-enter your API keys.';
+
+  @override
+  String get dpapiErrorGeneric =>
+      'A Windows security subsystem error occurred while decrypting your settings. Please re-enter your API keys.';
+
+  @override
+  String get dpapiErrorActionOk => 'OK';
+
+  @override
+  String get dpapiErrorActionSettings => 'Go to Settings';
 }

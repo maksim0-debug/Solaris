@@ -19,6 +19,9 @@ abstract class Env {
   @EnviedField(varName: 'IS_OFFICIAL_RELEASE', optional: true, defaultValue: 'false')
   static final String isOfficialReleaseStr = _Env.isOfficialReleaseStr;
 
+  @EnviedField(varName: 'DPAPI_ENTROPY', optional: true, defaultValue: 'SolarisDefaultEntropySaltKey321!')
+  static final String dpapiEntropy = _Env.dpapiEntropy;
+
   static bool get isOfficialRelease => isOfficialReleaseStr.toLowerCase() == 'true';
 
   static bool get isWeatherApiKeyValid {

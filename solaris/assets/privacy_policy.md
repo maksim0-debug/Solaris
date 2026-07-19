@@ -1,6 +1,6 @@
 # Privacy Policy for Solaris
 
-Last Updated: July 18, 2026
+Last Updated: July 20, 2026
 
 This Privacy Policy describes how Solaris ("we," "us," or "our") collects, uses, and protects your information when you use our desktop application (the "App").
 
@@ -65,7 +65,18 @@ The App is not intended for use by children under the age of 13. We do not knowi
 
 We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy within the App.
 
-## 8. Contact Us
+## 8. Disclaimer and Limitation of Liability
+
+Solaris is provided "as is" and "as available" without any warranties of any kind. You explicitly understand and agree that we shall not be liable for any direct, indirect, incidental, special, consequential, or exemplary damages. This includes, but is not limited to, damages for loss of profits, goodwill, use, data, or other intangible losses resulting from:
+
+- The use or the inability to use the App.
+- Unauthorized access to, alteration of, or leakage of your locally stored settings, credentials, and custom API keys (including Mapbox tokens, WeatherAPI keys, Google OAuth client ID and secrets).
+- Security breaches, hacking, malware infections, or data loss occurring on your Windows device.
+- Financial expenses, costs, or liabilities incurred due to the exposure of your custom API keys, quota overruns, or third-party service charges.
+
+You assume full responsibility and risk for the secure configuration of your device and the safeguarding of your custom API keys.
+
+## 9. Contact Us
 
 If you have any questions about this Privacy Policy, please contact us at:
 <solaris.app.contact@gmail.com>

@@ -19,7 +19,6 @@ The core of Solaris. The app automatically calculates the sun's position relativ
 
 <img width="1284" height="881" alt="Solaris Dashboard showing global brightness control and circadian rhythm chart" src="https://github.com/user-attachments/assets/363bfcb9-094f-4d62-84fc-7389fcdc77b0" />
 
-
 ### 📈 Interactive Brightness Curves
 
 Don't settle for defaults. Visualize and refine your lighting profile.
@@ -71,7 +70,7 @@ Control your environment without leaving your current app.
 
 - **Custom Bindings**: Set shortcuts for Next/Prev Preset, Brightness Up/Down, and Toggling Auto-mode.
 - **Stepless Control**: Fine-tune brightness in precise increments (e.g., 5% per press).
-  <img width="985" height="541" alt="Global Hotkey settings for brightness and preset navigation" src="https://github.com/user-attachments/assets/1b8301c3-eeff-41b0-b240-2d76551cb641" />
+<img width="985" height="541" alt="Global Hotkey settings for brightness and preset navigation" src="https://github.com/user-attachments/assets/1b8301c3-eeff-41b0-b240-2d76551cb641" />
 
 ### 📍 Precise Location
 
@@ -151,9 +150,9 @@ To use Google Fit synchronization, you need to obtain your own Client ID and Cli
 
 Once you have the credentials, you have two options to integrate them:
 
-* **Option A: Dynamic UI Configuration (Recommended)**
+- **Option A: Dynamic UI Configuration (Recommended)**
   Simply launch Solaris, navigate to **Settings** -> **API Keys** section at the bottom of the page, paste your **Client ID** and **Client Secret** into the respective fields, and save them. The integration will unlock immediately without restarting.
-* **Option B: Build-time Configuration**
+- **Option B: Build-time Configuration**
   Rename `.env.example` to `.env` in the `solaris/` directory, insert your credentials, and compile the app from source.
 
 ---
@@ -163,29 +162,33 @@ Once you have the credentials, you have two options to integrate them:
 Solaris is designed to be fully functional out-of-the-box, but advanced features (Mapbox maps, WeatherAPI forecasts, Google Fit sleep sync) require specific API credentials. Instead of forcing you to build the application from source code to insert these keys, Solaris features a **Dynamic API Keys Management System** built directly into the UI.
 <img width="838" height="560" alt="Custom API keys configuration menu in the Solaris app" src="https://github.com/user-attachments/assets/36035901-cb73-407c-96bf-62437f8b56fc" />
 
-
 ### How to Configure Custom Keys
+
 1. Open Solaris and navigate to the **Settings** tab.
 2. Scroll down to the **API Keys** section.
 3. Paste your custom credentials into the respective fields:
-   * **Custom WeatherAPI Key**: Get a free key from [WeatherAPI.com](https://www.weatherapi.com/) to enable highly accurate weather and cloudiness brightness adjustments.
-   * **Custom Mapbox Token**: Create a token on [Mapbox](https://www.mapbox.com/) to unlock the interactive coordinate selection map.
-   * **Custom Google Client ID** & **Custom Google Client Secret**: Obtain credentials from the [Google Cloud Console](https://console.cloud.google.com/) to sync your sleep history from Google Fit.
+   - **Custom WeatherAPI Key**: Get a free key from [WeatherAPI.com](https://www.weatherapi.com/) to enable highly accurate weather and cloudiness brightness adjustments.
+   - **Custom Mapbox Token**: Create a token on [Mapbox](https://www.mapbox.com/) to unlock the interactive coordinate selection map.
+   - **Custom Google Client ID** & **Custom Google Client Secret**: Obtain credentials from the [Google Cloud Console](https://console.cloud.google.com/) to sync your sleep history from Google Fit.
 4. Click **Save** next to the field.
 
 ### Reactive Runtime Updates
+
 The application relies on Riverpod's reactive state architecture. When you save or clear a key in the settings UI:
+
 - The corresponding services and UI elements update **instantly and on the fly**.
-- **No application restart is required**: 
+- **No application restart is required**:
   - Pasting a valid Mapbox token immediately unlocks and renders the location map, removing the padlock indicator.
   - Adding a WeatherAPI key enables the "WeatherAPI" option in the weather provider dropdown.
   - Providing Google Fit keys activates the "Connect Google Fit" button on the Sleep integration tab.
 
 ### Local Security and Storage
+
 Your custom API keys are secure:
-* **Safe Local Storage**: Keys are stored locally on your PC in the application support directory.
-* **On-device Obfuscation**: Keys are obfuscated locally before being written to disk to prevent them from being stored in plain text, adding an extra layer of privacy.
-* **Key Priority**: Dynamic keys specified in the settings screen always take precedence over static build-time credentials (such as those configured in the `.env` file during compilation).
+
+- **Safe Local Storage**: Keys are stored locally on your PC in the application support directory.
+- **Hardware-dependent Encryption (Windows DPAPI)**: Keys are encrypted using the Windows Data Protection API (DPAPI). This ensures keys can only be decrypted on the same device by the same Windows user.
+- **Key Priority**: Dynamic keys specified in the settings screen always take precedence over static build-time credentials (such as those configured in the `.env` file during compilation).
 
 ---
 
