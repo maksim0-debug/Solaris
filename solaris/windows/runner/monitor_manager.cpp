@@ -3,29 +3,33 @@
 #endif
 #include "monitor_manager.h"
 
-#include <cmath>
-#include <initguid.h>
-#include <setupapi.h>
-#include <devguid.h>
-#include <ntddvdeo.h>
-#include <cfgmgr32.h>
 #include <algorithm>
 #include <cctype>
+#include <cfgmgr32.h>
+#include <cmath>
 #include <cwctype>
+#include <devguid.h>
 #include <highlevelmonitorconfigurationapi.h>
+#include <initguid.h>
+#include <ntddvdeo.h>
 #include <physicalmonitorenumerationapi.h>
+#include <setupapi.h>
+#include <unordered_map>
+
 
 #pragma comment(lib, "setupapi.lib")
 #pragma comment(lib, "dxva2.lib")
 #pragma comment(lib, "Psapi.lib")
 
 // GUID_DEVINTERFACE_MONITOR is usually {E6F07B5F-EE97-4a90-B076-33F57BF4EAA7}
-DEFINE_GUID(GUID_DEVINTERFACE_MONITOR_INTERNAL, 0xE6F07B5F, 0xEE97, 0x4a90, 0xB0, 0x76, 0x33, 0xF5, 0x7B, 0xF4, 0xEA, 0xA7);
+DEFINE_GUID(GUID_DEVINTERFACE_MONITOR_INTERNAL, 0xE6F07B5F, 0xEE97, 0x4a90,
+            0xB0, 0x76, 0x33, 0xF5, 0x7B, 0xF4, 0xEA, 0xA7);
 
 MonitorManager::MonitorManager() {
-  last_gaming_match_time_ = std::chrono::steady_clock::now() - std::chrono::hours(24);
+  last_gaming_match_time_ =
+      std::chrono::steady_clock::now() - std::chrono::hours(24);
   candidate_start_time_ = last_gaming_match_time_;
-  
+
   worker_thread_ = std::thread(&MonitorManager::WorkerLoop, this);
   detector_thread_ = std::thread(&MonitorManager::DetectorLoop, this);
 }
@@ -56,8 +60,10 @@ void MonitorManager::WorkerLoop() {
     std::function<void()> task;
     {
       std::unique_lock<std::mutex> lock(queue_mutex_);
-      condition_.wait(lock, [this] { return stop_worker_.load() || !task_queue_.empty(); });
-      if (stop_worker_ && task_queue_.empty()) return;
+      condition_.wait(
+          lock, [this] { return stop_worker_.load() || !task_queue_.empty(); });
+      if (stop_worker_ && task_queue_.empty())
+        return;
       if (!task_queue_.empty()) {
         task = std::move(task_queue_.front());
         task_queue_.pop();
@@ -83,38 +89,50 @@ std::map<std::string, std::string> MonitorManager::GetMonitorFriendlyNames() {
   SP_DEVICE_INTERFACE_DATA interface_data;
   interface_data.cbSize = sizeof(SP_DEVICE_INTERFACE_DATA);
 
-  for (DWORD i = 0; SetupDiEnumDeviceInterfaces(dev_info, nullptr, &GUID_DEVINTERFACE_MONITOR_INTERNAL, i, &interface_data); i++) {
+  for (DWORD i = 0; SetupDiEnumDeviceInterfaces(
+           dev_info, nullptr, &GUID_DEVINTERFACE_MONITOR_INTERNAL, i,
+           &interface_data);
+       i++) {
     SP_DEVINFO_DATA device_data;
     device_data.cbSize = sizeof(SP_DEVINFO_DATA);
 
     DWORD detail_size = 0;
-    SetupDiGetDeviceInterfaceDetailW(dev_info, &interface_data, nullptr, 0, &detail_size, nullptr);
+    SetupDiGetDeviceInterfaceDetailW(dev_info, &interface_data, nullptr, 0,
+                                     &detail_size, nullptr);
 
     std::vector<uint8_t> detail_buffer(detail_size);
-    auto detail_data = reinterpret_cast<PSP_DEVICE_INTERFACE_DETAIL_DATA_W>(detail_buffer.data());
+    auto detail_data = reinterpret_cast<PSP_DEVICE_INTERFACE_DETAIL_DATA_W>(
+        detail_buffer.data());
     detail_data->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
 
-    if (SetupDiGetDeviceInterfaceDetailW(dev_info, &interface_data, detail_data, detail_size, nullptr, &device_data)) {
+    if (SetupDiGetDeviceInterfaceDetailW(dev_info, &interface_data, detail_data,
+                                         detail_size, nullptr, &device_data)) {
       // Get the device path (e.g., \\?\DISPLAY#...)
       std::wstring device_path_w(detail_data->DevicePath);
       std::string device_path;
       for (wchar_t wc : device_path_w) {
         device_path += static_cast<char>(wc);
       }
-      
-      // Standardize the path for comparison (Windows might use different casing/separators)
-      std::transform(device_path.begin(), device_path.end(), device_path.begin(), 
-        [](unsigned char c) -> char { return static_cast<char>(std::tolower(c)); });
-      // Replace # with \ to match some EnumDisplayDevices outputs if needed, 
+
+      // Standardize the path for comparison (Windows might use different
+      // casing/separators)
+      std::transform(device_path.begin(), device_path.end(),
+                     device_path.begin(), [](unsigned char c) -> char {
+                       return static_cast<char>(std::tolower(c));
+                     });
+      // Replace # with \ to match some EnumDisplayDevices outputs if needed,
       // but usually the registry path matches the symbolic link path.
-      
+
       // Open registry key for this device
-      HKEY hkey = SetupDiOpenDevRegKey(dev_info, &device_data, DICS_FLAG_GLOBAL, 0, DIREG_DEV, KEY_READ);
+      HKEY hkey = SetupDiOpenDevRegKey(dev_info, &device_data, DICS_FLAG_GLOBAL,
+                                       0, DIREG_DEV, KEY_READ);
       if (hkey != INVALID_HANDLE_VALUE) {
         DWORD edid_size = 0;
-        if (RegQueryValueExW(hkey, L"EDID", nullptr, nullptr, nullptr, &edid_size) == ERROR_SUCCESS) {
+        if (RegQueryValueExW(hkey, L"EDID", nullptr, nullptr, nullptr,
+                             &edid_size) == ERROR_SUCCESS) {
           std::vector<uint8_t> edid(edid_size);
-          if (RegQueryValueExW(hkey, L"EDID", nullptr, nullptr, edid.data(), &edid_size) == ERROR_SUCCESS) {
+          if (RegQueryValueExW(hkey, L"EDID", nullptr, nullptr, edid.data(),
+                               &edid_size) == ERROR_SUCCESS) {
             std::string friendly_name = ParseEdid(edid);
             if (!friendly_name.empty()) {
               friendly_names[device_path] = friendly_name;
@@ -130,12 +148,76 @@ std::map<std::string, std::string> MonitorManager::GetMonitorFriendlyNames() {
   return friendly_names;
 }
 
-std::string MonitorManager::ParseEdid(const std::vector<uint8_t>& edid) {
-  if (edid.size() < 128) return "";
+namespace {
+std::string GetPrettyBrandName(const std::string &brand_code) {
+  static const std::unordered_map<std::string, std::string> kBrandMap = {
+      {"ACR", "Acer"},      {"CHE", "Acer"},
+      {"API", "Acer"},      {"AOC", "AOC"},
+      {"APP", "Apple"},     {"ASU", "ASUS"},
+      {"AUS", "ASUS"},      {"BNQ", "BenQ"},
+      {"BOE", "BOE"},       {"CMN", "Chimei Innolux"},
+      {"CHI", "Chimei"},    {"CPQ", "Compaq"},
+      {"CRM", "Corsair"},   {"DEL", "Dell"},
+      {"DFI", "DFI"},       {"EIZ", "Eizo"},
+      {"ELG", "Elgato"},    {"EPI", "Envision"},
+      {"FCM", "Funai"},     {"FUJ", "Fujitsu"},
+      {"FUS", "Fujitsu"},   {"GBT", "Gigabyte"},
+      {"GBY", "Gigabyte"},  {"GIG", "Gigabyte"},
+      {"GLD", "Goldstar"},  {"GSM", "LG"},
+      {"GWY", "Gateway"},
+      {"HKC", "HKC"},       {"HNM", "Honor"},
+      {"HPQ", "HP"},        {"HWP", "HP"},
+      {"HSD", "Hannspree"}, {"HSG", "Hannspree"},
+      {"HTC", "Hitachi"},   {"HWV", "Huawei"},
+      {"HYU", "Hyundai"},   {"IBM", "IBM"},
+      {"INL", "Innolux"},   {"IVM", "Iiyama"},
+      {"JVC", "JVC"},       {"KDS", "KDS"},
+      {"KTC", "KTC"},       {"LEN", "Lenovo"},
+      {"LNV", "Lenovo"},    {"LGD", "LG"},
+      {"LGP", "LG"},        {"LPL", "LG"},
+      {"MAX", "Maxdata"},   {"MEL", "Mitsubishi"},
+      {"MSI", "MSI"},       {"NEC", "NEC"},
+      {"NOK", "Nokia"},     {"NVD", "Nvidia"},
+      {"OVR", "Oculus"},    {"PAN", "Panasonic"},
+      {"RZR", "Razer"},     {"PHL", "Philips"},
+      {"PNR", "Planar"},    {"SAM", "Samsung"},
+      {"SEM", "Samsung"},   {"SDC", "Samsung"},
+      {"SHP", "Sharp"},     {"SNY", "Sony"},
+      {"SON", "Sony"},      {"SPT", "Sceptre"},
+      {"SUN", "Sun"},       {"TAT", "Tatung"},
+      {"TOS", "Toshiba"},   {"TSB", "Toshiba"},
+      {"TPV", "TPV"},       {"VSC", "ViewSonic"},
+      {"WAC", "Wacom"},     {"XMI", "Xiaomi"},
+      {"YMH", "Yamaha"}};
+
+  auto it = kBrandMap.find(brand_code);
+  if (it != kBrandMap.end()) {
+    return it->second;
+  }
+  return brand_code;
+}
+
+bool ContainsIgnoreCase(const std::string &str, const std::string &search) {
+  if (search.empty())
+    return true;
+  auto it =
+      std::search(str.begin(), str.end(), search.begin(), search.end(),
+                  [](char ch1, char ch2) {
+                    return std::tolower(static_cast<unsigned char>(ch1)) ==
+                           std::tolower(static_cast<unsigned char>(ch2));
+                  });
+  return it != str.end();
+}
+} // namespace
+
+std::string MonitorManager::ParseEdid(const std::vector<uint8_t> &edid) {
+  if (edid.size() < 128)
+    return "";
 
   // Extract Manufacturer Name (bytes 8-9)
   uint16_t manufacturer_id = (edid[8] << 8) | edid[9];
-  std::string brand = GetManufacturerName(manufacturer_id);
+  std::string brand_code = GetManufacturerName(manufacturer_id);
+  std::string brand = GetPrettyBrandName(brand_code);
 
   // Search for Monitor Name descriptor (Type 0xFC)
   // Descriptors are at bytes 54, 72, 90, 108
@@ -144,26 +226,39 @@ std::string MonitorManager::ParseEdid(const std::vector<uint8_t>& edid) {
     // Bytes 0-1 are 0, Byte 2 is 0, Byte 3 is type
     if (edid[offset] == 0 && edid[offset + 1] == 0 && edid[offset + 2] == 0) {
       if (edid[offset + 3] == 0xFC) {
-        // This is the monitor name
+        // This is the monitor name. In EDID, it starts at index 5 of the
+        // descriptor. Byte 4 is reserved (usually 0x00), so starting at 4 would
+        // immediately break the loop.
         std::string name;
-        for (int j = 4; j < 18; j++) {
+        for (int j = 5; j < 18; j++) {
           char c = static_cast<char>(edid[offset + j]);
-          if (c == 0x0A || c == 0x00) break;
+          if (c == 0x0A || c == 0x00)
+            break;
           name += c;
         }
         // Trim whitespace
-        name.erase(std::find_if(name.rbegin(), name.rend(), [](unsigned char ch) {
-          return !std::isspace(ch);
-        }).base(), name.end());
-        
-        if (!name.empty()) return name;
+        name.erase(
+            std::find_if(name.rbegin(), name.rend(),
+                         [](unsigned char ch) { return !std::isspace(ch); })
+                .base(),
+            name.end());
+
+        if (!name.empty()) {
+          // If the name already contains the brand (e.g. "LG IPS224" vs brand
+          // "LG"), return it. Otherwise, prepend the brand name.
+          if (ContainsIgnoreCase(name, brand)) {
+            return name;
+          } else {
+            return brand + " " + name;
+          }
+        }
       }
     }
   }
 
   // If no name found, return brand + product ID (minimal)
   uint16_t product_id = edid[10] | (edid[11] << 8);
-  char buf[32];
+  char buf[64];
   snprintf(buf, sizeof(buf), "%s %04X", brand.c_str(), product_id);
   return std::string(buf);
 }
@@ -179,7 +274,8 @@ std::string MonitorManager::GetManufacturerName(uint16_t id) {
   return std::string(name);
 }
 
-bool MonitorManager::SetBrightness(const std::string& device_path, int brightness) {
+bool MonitorManager::SetBrightness(const std::string &device_path,
+                                   int brightness) {
   // Clamp brightness to 0-100
   brightness = std::max(0, std::min(100, brightness));
 
@@ -188,7 +284,7 @@ bool MonitorManager::SetBrightness(const std::string& device_path, int brightnes
 
   DISPLAY_DEVICEW display_device;
   display_device.cb = sizeof(display_device);
-  
+
   // We need to find the HMONITOR for the given device_path
   struct MonitorContext {
     std::wstring target_name;
@@ -196,18 +292,21 @@ bool MonitorManager::SetBrightness(const std::string& device_path, int brightnes
   } context;
   context.target_name = target_device;
 
-  EnumDisplayMonitors(nullptr, nullptr, [](HMONITOR h_monitor, HDC hdc, LPRECT rect, LPARAM data) -> BOOL {
-    auto ctx = reinterpret_cast<MonitorContext*>(data);
-    MONITORINFOEXW info;
-    info.cbSize = sizeof(info);
-    if (GetMonitorInfoW(h_monitor, &info)) {
-      if (ctx->target_name == info.szDevice) {
-        ctx->h_monitor = h_monitor;
-        return FALSE; // Found it, stop enumeration
-      }
-    }
-    return TRUE;
-  }, reinterpret_cast<LPARAM>(&context));
+  EnumDisplayMonitors(
+      nullptr, nullptr,
+      [](HMONITOR h_monitor, HDC hdc, LPRECT rect, LPARAM data) -> BOOL {
+        auto ctx = reinterpret_cast<MonitorContext *>(data);
+        MONITORINFOEXW info;
+        info.cbSize = sizeof(info);
+        if (GetMonitorInfoW(h_monitor, &info)) {
+          if (ctx->target_name == info.szDevice) {
+            ctx->h_monitor = h_monitor;
+            return FALSE; // Found it, stop enumeration
+          }
+        }
+        return TRUE;
+      },
+      reinterpret_cast<LPARAM>(&context));
 
   if (!context.h_monitor) {
     return false;
@@ -215,18 +314,21 @@ bool MonitorManager::SetBrightness(const std::string& device_path, int brightnes
 
   // Get physical monitors from HMONITOR
   DWORD physical_count = 0;
-  if (!GetNumberOfPhysicalMonitorsFromHMONITOR(context.h_monitor, &physical_count)) {
+  if (!GetNumberOfPhysicalMonitorsFromHMONITOR(context.h_monitor,
+                                               &physical_count)) {
     return false;
   }
 
   std::vector<PHYSICAL_MONITOR> physical_monitors(physical_count);
-  if (!GetPhysicalMonitorsFromHMONITOR(context.h_monitor, physical_count, physical_monitors.data())) {
+  if (!GetPhysicalMonitorsFromHMONITOR(context.h_monitor, physical_count,
+                                       physical_monitors.data())) {
     return false;
   }
 
   bool success = false;
   for (DWORD i = 0; i < physical_count; i++) {
-    if (::SetMonitorBrightness(physical_monitors[i].hPhysicalMonitor, (DWORD)brightness)) {
+    if (::SetMonitorBrightness(physical_monitors[i].hPhysicalMonitor,
+                               (DWORD)brightness)) {
       success = true;
     }
   }
@@ -235,7 +337,8 @@ bool MonitorManager::SetBrightness(const std::string& device_path, int brightnes
   return success;
 }
 
-bool MonitorManager::GetBrightness(const std::string& device_path, int& current, int& maximum) {
+bool MonitorManager::GetBrightness(const std::string &device_path, int &current,
+                                   int &maximum) {
   // Convert device_path to wstring for EnumDisplayDevices
   std::wstring target_device(device_path.begin(), device_path.end());
 
@@ -246,18 +349,21 @@ bool MonitorManager::GetBrightness(const std::string& device_path, int& current,
   } context;
   context.target_name = target_device;
 
-  EnumDisplayMonitors(nullptr, nullptr, [](HMONITOR h_monitor, HDC hdc, LPRECT rect, LPARAM data) -> BOOL {
-    auto ctx = reinterpret_cast<MonitorContext*>(data);
-    MONITORINFOEXW info;
-    info.cbSize = sizeof(info);
-    if (GetMonitorInfoW(h_monitor, &info)) {
-      if (ctx->target_name == info.szDevice) {
-        ctx->h_monitor = h_monitor;
-        return FALSE; // Found it, stop enumeration
-      }
-    }
-    return TRUE;
-  }, reinterpret_cast<LPARAM>(&context));
+  EnumDisplayMonitors(
+      nullptr, nullptr,
+      [](HMONITOR h_monitor, HDC hdc, LPRECT rect, LPARAM data) -> BOOL {
+        auto ctx = reinterpret_cast<MonitorContext *>(data);
+        MONITORINFOEXW info;
+        info.cbSize = sizeof(info);
+        if (GetMonitorInfoW(h_monitor, &info)) {
+          if (ctx->target_name == info.szDevice) {
+            ctx->h_monitor = h_monitor;
+            return FALSE; // Found it, stop enumeration
+          }
+        }
+        return TRUE;
+      },
+      reinterpret_cast<LPARAM>(&context));
 
   if (!context.h_monitor) {
     return false;
@@ -265,19 +371,22 @@ bool MonitorManager::GetBrightness(const std::string& device_path, int& current,
 
   // Get physical monitors from HMONITOR
   DWORD physical_count = 0;
-  if (!GetNumberOfPhysicalMonitorsFromHMONITOR(context.h_monitor, &physical_count)) {
+  if (!GetNumberOfPhysicalMonitorsFromHMONITOR(context.h_monitor,
+                                               &physical_count)) {
     return false;
   }
 
   std::vector<PHYSICAL_MONITOR> physical_monitors(physical_count);
-  if (!GetPhysicalMonitorsFromHMONITOR(context.h_monitor, physical_count, physical_monitors.data())) {
+  if (!GetPhysicalMonitorsFromHMONITOR(context.h_monitor, physical_count,
+                                       physical_monitors.data())) {
     return false;
   }
 
   bool success = false;
   for (DWORD i = 0; i < physical_count; i++) {
     DWORD dwMinimum, dwCurrent, dwMaximum;
-    if (::GetMonitorBrightness(physical_monitors[i].hPhysicalMonitor, &dwMinimum, &dwCurrent, &dwMaximum)) {
+    if (::GetMonitorBrightness(physical_monitors[i].hPhysicalMonitor,
+                               &dwMinimum, &dwCurrent, &dwMaximum)) {
       current = static_cast<int>(dwCurrent);
       maximum = static_cast<int>(dwMaximum);
       success = true;
@@ -289,28 +398,29 @@ bool MonitorManager::GetBrightness(const std::string& device_path, int& current,
   return success;
 }
 
-bool MonitorManager::SetTemperature(const std::string& device_path, int kelvins) {
+bool MonitorManager::SetTemperature(const std::string &device_path,
+                                    int kelvins) {
   // Convert Kelvin to RGB multipliers (0.0 to 1.0)
   // Simplified Tanner Helland's algorithm adapted for 1000-40000K
   double temp = std::max(1000, std::min(40000, kelvins)) / 100.0;
-  
+
   double red = 1.0;
   double green = 1.0;
   double blue = 1.0;
 
   if (kelvins < 6500) {
     if (temp <= 66.0) {
-        red = 255.0;
-        green = 99.4708025861 * std::log(temp) - 161.1195681661;
-        if (temp <= 19.0) {
-            blue = 0.0;
-        } else {
-            blue = 138.5177312231 * std::log(temp - 10.0) - 305.0447927307;
-        }
+      red = 255.0;
+      green = 99.4708025861 * std::log(temp) - 161.1195681661;
+      if (temp <= 19.0) {
+        blue = 0.0;
+      } else {
+        blue = 138.5177312231 * std::log(temp - 10.0) - 305.0447927307;
+      }
     } else {
-        red = 329.698727446 * std::pow(temp - 60.0, -0.1332047592);
-        green = 288.1221695283 * std::pow(temp - 60.0, -0.0755148492);
-        blue = 255.0;
+      red = 329.698727446 * std::pow(temp - 60.0, -0.1332047592);
+      green = 288.1221695283 * std::pow(temp - 60.0, -0.0755148492);
+      blue = 255.0;
     }
   } else {
     // 6500K and above is treated as neutral (pure white multipliers)
@@ -329,41 +439,44 @@ bool MonitorManager::SetTemperature(const std::string& device_path, int kelvins)
 
   // Apply to Gamma Ramp
   HDC hDC = CreateDCW(L"DISPLAY", target_device.c_str(), NULL, NULL);
-  if (!hDC) return false;
+  if (!hDC)
+    return false;
 
   // Cache the original gamma ramp if not already cached
   {
-      std::lock_guard<std::mutex> lock(gamma_mutex_);
-      if (original_gamma_ramps_.find(device_path) == original_gamma_ramps_.end()) {
-          WORD orig_ramp[3][256];
-          if (GetDeviceGammaRamp(hDC, orig_ramp)) {
-              std::vector<WORD> flat_ramp(3 * 256);
-              std::memcpy(flat_ramp.data(), orig_ramp, sizeof(orig_ramp));
-              original_gamma_ramps_[device_path] = flat_ramp;
-          } else {
-              // If we fail to get original, we'll construct a linear one as fallback
-              std::vector<WORD> flat_ramp(3 * 256);
-              for (int i = 0; i < 256; i++) {
-                  int val = i * 257;
-                  flat_ramp[i] = flat_ramp[i + 256] = flat_ramp[i + 512] = (WORD)std::min(65535, val);
-              }
-              original_gamma_ramps_[device_path] = flat_ramp;
-          }
+    std::lock_guard<std::mutex> lock(gamma_mutex_);
+    if (original_gamma_ramps_.find(device_path) ==
+        original_gamma_ramps_.end()) {
+      WORD orig_ramp[3][256];
+      if (GetDeviceGammaRamp(hDC, orig_ramp)) {
+        std::vector<WORD> flat_ramp(3 * 256);
+        std::memcpy(flat_ramp.data(), orig_ramp, sizeof(orig_ramp));
+        original_gamma_ramps_[device_path] = flat_ramp;
+      } else {
+        // If we fail to get original, we'll construct a linear one as fallback
+        std::vector<WORD> flat_ramp(3 * 256);
+        for (int i = 0; i < 256; i++) {
+          int val = i * 257;
+          flat_ramp[i] = flat_ramp[i + 256] = flat_ramp[i + 512] =
+              (WORD)std::min(65535, val);
+        }
+        original_gamma_ramps_[device_path] = flat_ramp;
       }
+    }
   }
 
   std::vector<WORD> base_ramp;
   {
-      std::lock_guard<std::mutex> lock(gamma_mutex_);
-      base_ramp = original_gamma_ramps_[device_path];
+    std::lock_guard<std::mutex> lock(gamma_mutex_);
+    base_ramp = original_gamma_ramps_[device_path];
   }
-  
+
   WORD gammaArray[3][256];
   for (int i = 0; i < 256; i++) {
-      // Scale original ramp by our temperature factors
-      gammaArray[0][i] = (WORD)std::min(65535.0, base_ramp[i] * rFactor);
-      gammaArray[1][i] = (WORD)std::min(65535.0, base_ramp[i + 256] * gFactor);
-      gammaArray[2][i] = (WORD)std::min(65535.0, base_ramp[i + 512] * bFactor);
+    // Scale original ramp by our temperature factors
+    gammaArray[0][i] = (WORD)std::min(65535.0, base_ramp[i] * rFactor);
+    gammaArray[1][i] = (WORD)std::min(65535.0, base_ramp[i + 256] * gFactor);
+    gammaArray[2][i] = (WORD)std::min(65535.0, base_ramp[i + 512] * bFactor);
   }
 
   bool success = SetDeviceGammaRamp(hDC, gammaArray);
@@ -371,10 +484,11 @@ bool MonitorManager::SetTemperature(const std::string& device_path, int kelvins)
   return success;
 }
 
-bool MonitorManager::ResetTemperature(const std::string& device_path) {
+bool MonitorManager::ResetTemperature(const std::string &device_path) {
   std::wstring target_device(device_path.begin(), device_path.end());
   HDC hDC = CreateDCW(L"DISPLAY", target_device.c_str(), NULL, NULL);
-  if (!hDC) return false;
+  if (!hDC)
+    return false;
 
   WORD gammaArray[3][256];
   std::vector<WORD> base_ramp;
@@ -414,22 +528,30 @@ void MonitorManager::SetGamingModeCallback(std::function<void(bool)> callback) {
   on_gaming_mode_changed_ = callback;
 }
 
-void MonitorManager::UpdateWhitelist(const std::vector<std::string>& whitelist) {
+void MonitorManager::UpdateWhitelist(
+    const std::vector<std::string> &whitelist) {
   std::lock_guard<std::mutex> lock(lists_mutex_);
   whitelist_.clear();
-  for (const auto& app : whitelist) {
+  for (const auto &app : whitelist) {
     std::string lower_app = app;
-    std::transform(lower_app.begin(), lower_app.end(), lower_app.begin(), [](unsigned char c) -> char { return static_cast<char>(std::tolower(c)); });
+    std::transform(lower_app.begin(), lower_app.end(), lower_app.begin(),
+                   [](unsigned char c) -> char {
+                     return static_cast<char>(std::tolower(c));
+                   });
     whitelist_.insert(lower_app);
   }
 }
 
-void MonitorManager::UpdateBlacklist(const std::vector<std::string>& blacklist) {
+void MonitorManager::UpdateBlacklist(
+    const std::vector<std::string> &blacklist) {
   std::lock_guard<std::mutex> lock(lists_mutex_);
   blacklist_.clear();
-  for (const auto& app : blacklist) {
+  for (const auto &app : blacklist) {
     std::string lower_app = app;
-    std::transform(lower_app.begin(), lower_app.end(), lower_app.begin(), [](unsigned char c) -> char { return static_cast<char>(std::tolower(c)); });
+    std::transform(lower_app.begin(), lower_app.end(), lower_app.begin(),
+                   [](unsigned char c) -> char {
+                     return static_cast<char>(std::tolower(c));
+                   });
     blacklist_.insert(lower_app);
   }
 }
@@ -438,7 +560,7 @@ void MonitorManager::DetectorLoop() {
   while (!stop_detector_) {
     HWND hwnd = GetForegroundWindow();
     bool is_match = false;
-    
+
     if (hwnd) {
       DWORD processId;
       GetWindowThreadProcessId(hwnd, &processId);
@@ -478,51 +600,58 @@ void MonitorManager::DetectorLoop() {
         }
       }
     } else {
-      // hwnd is nullptr (desktop transition / system focus lost / resolution change)
+      // hwnd is nullptr (desktop transition / system focus lost / resolution
+      // change)
       is_match = false;
-      // We do NOT reset active_game_hwnd_ or active_game_pid_ here to survive temporary focus losses.
+      // We do NOT reset active_game_hwnd_ or active_game_pid_ here to survive
+      // temporary focus losses.
     }
 
     auto now = std::chrono::steady_clock::now();
     bool target_gaming_mode = false;
 
     if (is_match) {
-        if (!is_gaming_candidate_) {
-            is_gaming_candidate_ = true;
-            candidate_start_time_ = now;
-        }
-        
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - candidate_start_time_).count();
-        if (duration >= ENTRY_DELAY_MS) {
-            last_gaming_match_time_ = now;
-            target_gaming_mode = true;
-        }
-    } else {
-        is_gaming_candidate_ = false;
-        
-        bool is_game_process_running = false;
-        if (last_active_game_pid_ != 0) {
-            HANDLE hProcess = OpenProcess(SYNCHRONIZE, FALSE, last_active_game_pid_);
-            if (hProcess != NULL) {
-                DWORD waitResult = WaitForSingleObject(hProcess, 0);
-                if (waitResult == WAIT_TIMEOUT) {
-                    is_game_process_running = true;
-                }
-                CloseHandle(hProcess);
-            }
-        }
+      if (!is_gaming_candidate_) {
+        is_gaming_candidate_ = true;
+        candidate_start_time_ = now;
+      }
 
-        if (is_game_process_running) {
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_gaming_match_time_).count();
-            if (duration < EXIT_DELAY_MS) {
-                target_gaming_mode = true; // Hysteresis: Keep active
-            } else {
-                target_gaming_mode = false;
-            }
-        } else {
-            target_gaming_mode = false;
-            last_active_game_pid_ = 0;
+      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+                          now - candidate_start_time_)
+                          .count();
+      if (duration >= ENTRY_DELAY_MS) {
+        last_gaming_match_time_ = now;
+        target_gaming_mode = true;
+      }
+    } else {
+      is_gaming_candidate_ = false;
+
+      bool is_game_process_running = false;
+      if (last_active_game_pid_ != 0) {
+        HANDLE hProcess =
+            OpenProcess(SYNCHRONIZE, FALSE, last_active_game_pid_);
+        if (hProcess != NULL) {
+          DWORD waitResult = WaitForSingleObject(hProcess, 0);
+          if (waitResult == WAIT_TIMEOUT) {
+            is_game_process_running = true;
+          }
+          CloseHandle(hProcess);
         }
+      }
+
+      if (is_game_process_running) {
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+                            now - last_gaming_match_time_)
+                            .count();
+        if (duration < EXIT_DELAY_MS) {
+          target_gaming_mode = true; // Hysteresis: Keep active
+        } else {
+          target_gaming_mode = false;
+        }
+      } else {
+        target_gaming_mode = false;
+        last_active_game_pid_ = 0;
+      }
     }
 
     if (target_gaming_mode != is_gaming_mode_) {
@@ -531,68 +660,79 @@ void MonitorManager::DetectorLoop() {
         on_gaming_mode_changed_(is_gaming_mode_);
       }
     }
-    
+
     // Detector poll interval: 2 seconds. With per-PID caching the per-tick
     // cost is a handful of cheap Win32 calls (class, rect, cursor, clip), so
     // 2s polling is more than enough for fullscreen-toggle / alt-tab detection
     // and keeps background CPU near zero. Hysteresis (ENTRY/EXIT_DELAY_MS)
     // still protects against flaps.
     for (int i = 0; i < 40 && !stop_detector_; i++) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+      std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
   }
 }
 
 bool MonitorManager::IsWindowFullscreen(HWND hwnd) {
-  if (!hwnd || IsIconic(hwnd)) return false;
+  if (!hwnd || IsIconic(hwnd))
+    return false;
 
   HMONITOR hMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
-  MONITORINFO mi = { sizeof(mi) };
-  if (!GetMonitorInfoW(hMonitor, &mi)) return false;
+  MONITORINFO mi = {sizeof(mi)};
+  if (!GetMonitorInfoW(hMonitor, &mi))
+    return false;
 
   RECT wr;
-  if (!GetWindowRect(hwnd, &wr)) return false;
+  if (!GetWindowRect(hwnd, &wr))
+    return false;
 
   return (wr.left <= mi.rcMonitor.left + 1 && wr.top <= mi.rcMonitor.top + 1 &&
-          wr.right >= mi.rcMonitor.right - 1 && wr.bottom >= mi.rcMonitor.bottom - 1);
+          wr.right >= mi.rcMonitor.right - 1 &&
+          wr.bottom >= mi.rcMonitor.bottom - 1);
 }
 
 int MonitorManager::EvaluateGamingScore(HWND hwnd, DWORD processId) {
-  if (!hwnd) return 0;
+  if (!hwnd)
+    return 0;
 
   // --- Early Exit: Class Check ---
   wchar_t className[256];
   if (GetClassNameW(hwnd, className, 256)) {
     std::wstring wsClassName(className);
-    if (wsClassName == L"WorkerW" || wsClassName == L"Progman" || wsClassName == L"Shell_TrayWnd" || 
-        wsClassName == L"MultitaskingViewFrame" || wsClassName == L"NotifyIconOverflowWindow" || 
-        wsClassName == L"SimplePopupMenu" || wsClassName == L"RainmeterMeterWindow") {
+    if (wsClassName == L"WorkerW" || wsClassName == L"Progman" ||
+        wsClassName == L"Shell_TrayWnd" ||
+        wsClassName == L"MultitaskingViewFrame" ||
+        wsClassName == L"NotifyIconOverflowWindow" ||
+        wsClassName == L"SimplePopupMenu" ||
+        wsClassName == L"RainmeterMeterWindow") {
       return 0;
     }
   }
 
   // --- Size Check ---
-  if (!IsWindowFullscreen(hwnd)) return 0;
+  if (!IsWindowFullscreen(hwnd))
+    return 0;
 
   HMONITOR hMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
-  MONITORINFO mi = { sizeof(mi) };
-  if (!GetMonitorInfoW(hMonitor, &mi)) return 0;
+  MONITORINFO mi = {sizeof(mi)};
+  if (!GetMonitorInfoW(hMonitor, &mi))
+    return 0;
 
   RECT wr;
-  if (!GetWindowRect(hwnd, &wr)) return 0;
+  if (!GetWindowRect(hwnd, &wr))
+    return 0;
 
   // --- Style Analysis ---
   LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
-  // Real games don't have systemic frames or captions in fullscreen. 
+  // Real games don't have systemic frames or captions in fullscreen.
   // If they have them, it's likely an app (Telegram viewer, etc)
   if ((style & WS_CAPTION) || (style & WS_THICKFRAME)) {
-    return 0; 
+    return 0;
   }
 
   // --- Per-PID cached scoring ---
   // The path heuristic, parent-process check, and loaded-DLL scan are all
   // stable for a process lifetime. Compute them once per PID and reuse.
-  CachedProcessInfo* cached = nullptr;
+  CachedProcessInfo *cached = nullptr;
   auto cache_it = process_cache_.find(processId);
   if (cache_it != process_cache_.end() && cache_it->second.scanned) {
     cached = &cache_it->second;
@@ -600,18 +740,23 @@ int MonitorManager::EvaluateGamingScore(HWND hwnd, DWORD processId) {
     CachedProcessInfo info;
     std::wstring fullPathLower;
 
-    HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, processId);
+    HANDLE hProcess =
+        OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, processId);
     if (hProcess) {
       wchar_t buffer[MAX_PATH];
       DWORD size = MAX_PATH;
       if (QueryFullProcessImageNameW(hProcess, 0, buffer, &size)) {
         fullPathLower = buffer;
-        std::transform(fullPathLower.begin(), fullPathLower.end(), fullPathLower.begin(), ::towlower);
+        std::transform(fullPathLower.begin(), fullPathLower.end(),
+                       fullPathLower.begin(), ::towlower);
 
         size_t lastSlash = fullPathLower.find_last_of(L"\\/");
-        std::wstring fileName = (lastSlash == std::wstring::npos) ? fullPathLower : fullPathLower.substr(lastSlash + 1);
+        std::wstring fileName = (lastSlash == std::wstring::npos)
+                                    ? fullPathLower
+                                    : fullPathLower.substr(lastSlash + 1);
         for (wchar_t wc : fileName) {
-          info.process_name_lower += static_cast<char>(std::tolower(static_cast<unsigned char>(wc)));
+          info.process_name_lower +=
+              static_cast<char>(std::tolower(static_cast<unsigned char>(wc)));
         }
       }
       CloseHandle(hProcess);
@@ -641,21 +786,28 @@ int MonitorManager::EvaluateGamingScore(HWND hwnd, DWORD processId) {
     }
 
     // --- DLL Scanning (one-shot per PID) ---
-    HANDLE hProcDll = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
+    HANDLE hProcDll = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+                                  FALSE, processId);
     if (hProcDll) {
       HMODULE hMods[1024];
       DWORD cbNeeded;
       if (EnumProcessModules(hProcDll, hMods, sizeof(hMods), &cbNeeded)) {
         for (unsigned int i = 0; i < (cbNeeded / sizeof(HMODULE)); i++) {
           wchar_t szModName[MAX_PATH];
-          if (GetModuleBaseNameW(hProcDll, hMods[i], szModName, sizeof(szModName) / sizeof(wchar_t))) {
+          if (GetModuleBaseNameW(hProcDll, hMods[i], szModName,
+                                 sizeof(szModName) / sizeof(wchar_t))) {
             std::wstring modName(szModName);
-            std::transform(modName.begin(), modName.end(), modName.begin(), ::towlower);
+            std::transform(modName.begin(), modName.end(), modName.begin(),
+                           ::towlower);
 
-            if (modName.find(L"xinput") != std::wstring::npos) static_score += 60;
-            if (modName == L"dinput8.dll") static_score += 50;
-            if (modName.find(L"xaudio2") != std::wstring::npos) static_score += 30;
-            if (modName == L"d3d11.dll" || modName == L"d3d12.dll" || modName == L"vulkan-1.dll") {
+            if (modName.find(L"xinput") != std::wstring::npos)
+              static_score += 60;
+            if (modName == L"dinput8.dll")
+              static_score += 50;
+            if (modName.find(L"xaudio2") != std::wstring::npos)
+              static_score += 30;
+            if (modName == L"d3d11.dll" || modName == L"d3d12.dll" ||
+                modName == L"vulkan-1.dll") {
               static_score += 10;
             }
           }
@@ -680,40 +832,45 @@ int MonitorManager::EvaluateGamingScore(HWND hwnd, DWORD processId) {
   {
     std::lock_guard<std::mutex> lock(lists_mutex_);
     if (!cached->process_name_lower.empty()) {
-      if (whitelist_.count(cached->process_name_lower)) return 1000;
-      if (blacklist_.count(cached->process_name_lower)) return -1000;
+      if (whitelist_.count(cached->process_name_lower))
+        return 1000;
+      if (blacklist_.count(cached->process_name_lower))
+        return -1000;
     }
   }
 
   int score = cached->static_score;
 
   // --- Cursor Behavior ---
-  CURSORINFO ci = { sizeof(ci) };
+  CURSORINFO ci = {sizeof(ci)};
   if (GetCursorInfo(&ci)) {
-      if (!(ci.flags & CURSOR_SHOWING)) {
-          score += 40; // Hidden cursor is very common in games
-      }
+    if (!(ci.flags & CURSOR_SHOWING)) {
+      score += 40; // Hidden cursor is very common in games
+    }
   }
 
   RECT clipRect;
   if (GetClipCursor(&clipRect)) {
-      // If the clip rect matches the window exactly or is significantly smaller than monitor
-      if (abs(clipRect.left - wr.left) < 5 && abs(clipRect.top - wr.top) < 5 &&
-          abs(clipRect.right - wr.right) < 5 && abs(clipRect.bottom - wr.bottom) < 5) {
-          
-          if ((clipRect.right - clipRect.left) < (mi.rcMonitor.right - mi.rcMonitor.left - 10)) {
-              score += 60; // Isolated to small area
-          } else {
-              score += 30; // Exactly window size
-          }
+    // If the clip rect matches the window exactly or is significantly smaller
+    // than monitor
+    if (abs(clipRect.left - wr.left) < 5 && abs(clipRect.top - wr.top) < 5 &&
+        abs(clipRect.right - wr.right) < 5 &&
+        abs(clipRect.bottom - wr.bottom) < 5) {
+
+      if ((clipRect.right - clipRect.left) <
+          (mi.rcMonitor.right - mi.rcMonitor.left - 10)) {
+        score += 60; // Isolated to small area
+      } else {
+        score += 30; // Exactly window size
       }
+    }
   }
 
   // --- Shell notification flag ---
   QUERY_USER_NOTIFICATION_STATE notification_state;
   if (SHQueryUserNotificationState(&notification_state) == S_OK) {
     if (notification_state == QUNS_RUNNING_D3D_FULL_SCREEN) {
-        score += 20;
+      score += 20;
     }
   }
 
@@ -734,7 +891,7 @@ std::string MonitorManager::GetParentProcessName(DWORD processId) {
         }
       } while (Process32NextW(hSnapshot, &pe32));
     }
-    
+
     if (ppid != 0) {
       // Reuse snapshot or close/re-open? Toolhelp says we can reuse.
       if (Process32FirstW(hSnapshot, &pe32)) {
@@ -743,7 +900,8 @@ std::string MonitorManager::GetParentProcessName(DWORD processId) {
             std::wstring wsParent(pe32.szExeFile);
             std::string parentName = "";
             for (wchar_t wc : wsParent) {
-              parentName += static_cast<char>(std::tolower(static_cast<unsigned char>(wc)));
+              parentName += static_cast<char>(
+                  std::tolower(static_cast<unsigned char>(wc)));
             }
             CloseHandle(hSnapshot);
             return parentName;
@@ -755,4 +913,3 @@ std::string MonitorManager::GetParentProcessName(DWORD processId) {
   }
   return "";
 }
-
