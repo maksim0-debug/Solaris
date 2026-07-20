@@ -121,4 +121,4 @@ jobs:
           '@
           
           # Use GitHub CLI to create the release and upload the asset
-          gh release create "${{ github.ref_name }}" Solaris-Windows.zip --generate-notes --title "${{ github.ref_name }}" --notes $body
+          gh release create "${{ github.ref_name }}" ../Solaris-Windows.zip --generate-notes --title "${{ github.ref_name }}" --notes $body
