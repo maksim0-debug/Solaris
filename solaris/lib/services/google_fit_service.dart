@@ -7,6 +7,7 @@ import 'package:googleapis_auth/auth_io.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:solaris/services/storage_service.dart';
 import 'package:solaris/services/pkce_service.dart';
+import 'package:solaris/utils/key_obfuscator.dart';
 import 'package:http/http.dart' as http;
 
 class GoogleFitService {
@@ -53,8 +54,21 @@ class GoogleFitService {
     try {
       final tokenJson = await _storage.load(_tokenFilename);
       if (tokenJson != null) {
-        final decoded = jsonDecode(tokenJson);
+        final decrypted = KeyObfuscator.decrypt(tokenJson);
+        final decoded = jsonDecode(decrypted);
         if (decoded is Map<String, dynamic>) {
+          // Выполняем миграцию на диск, если токен хранился в открытом виде
+          if (!tokenJson.startsWith('dpapi:') && !tokenJson.startsWith('obf:')) {
+            try {
+              await _storage.save(
+                _tokenFilename,
+                KeyObfuscator.encrypt(tokenJson),
+              );
+              debugPrint('Google Fit token migrated to encrypted format.');
+            } catch (e) {
+              debugPrint('Failed to migrate Google Fit token: $e');
+            }
+          }
           var credentials = AccessCredentials.fromJson(decoded);
           final clientId = ClientId(
             googleClientId,
@@ -73,7 +87,7 @@ class GoogleFitService {
               );
               await _storage.save(
                 _tokenFilename,
-                jsonEncode(credentials.toJson()),
+                KeyObfuscator.encrypt(jsonEncode(credentials.toJson())),
               );
             } catch (e) {
               debugPrint('Error refreshing token during initialization: $e');
@@ -95,7 +109,8 @@ class GoogleFitService {
         }
       }
     } catch (e) {
-      debugPrint('Error initializing Google Fit: $e');
+      debugPrint('Error initializing Google Fit (corrupted token?): $e');
+      await signOut();
     }
     return false;
   }
@@ -214,7 +229,7 @@ class GoogleFitService {
       // Save credentials for later
       await _storage.save(
         _tokenFilename,
-        jsonEncode(_client!.credentials.toJson()),
+        KeyObfuscator.encrypt(jsonEncode(_client!.credentials.toJson())),
       );
 
       return true;
@@ -263,7 +278,7 @@ class GoogleFitService {
 
         await _storage.save(
           _tokenFilename,
-          jsonEncode(refreshedCredentials.toJson()),
+          KeyObfuscator.encrypt(jsonEncode(refreshedCredentials.toJson())),
         );
       }
     } catch (e) {

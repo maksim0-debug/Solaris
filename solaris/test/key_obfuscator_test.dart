@@ -3,7 +3,7 @@ import 'dart:ffi';
 import 'dart:io';
 import 'package:ffi/ffi.dart';
 import 'package:test/test.dart';
-import 'package:solaris/models/settings_state.dart';
+import 'package:solaris/utils/key_obfuscator.dart';
 
 void main() {
   group('KeyObfuscator (DPAPI & Legacy XOR) Tests', () {

@@ -22,6 +22,7 @@ import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/models/solar_state.dart';
 import 'package:solaris/models/current_day_phase.dart';
 import 'package:solaris/models/settings_state.dart';
+import 'package:solaris/utils/key_obfuscator.dart';
 import 'package:solaris/models/solar_phase_model.dart';
 import 'package:solaris/models/smart_circadian_data.dart';
 import 'package:solaris/services/smart_circadian_service.dart';

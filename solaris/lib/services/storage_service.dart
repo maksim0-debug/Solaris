@@ -62,8 +62,11 @@ class StorageService {
       if (await file.exists()) {
         try {
           final data = await file.readAsString();
-          // Optional: validate JSON if expected
-          if (filename.endsWith('.json')) jsonDecode(data);
+          // Optional: validate JSON if expected and data looks like plaintext JSON
+          if (filename.endsWith('.json') &&
+              (data.startsWith('{') || data.startsWith('['))) {
+            jsonDecode(data);
+          }
           return data;
         } catch (e) {
           debugPrint('Error loading $filename, trying backup: $e');
