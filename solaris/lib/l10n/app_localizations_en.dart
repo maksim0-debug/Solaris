@@ -1437,4 +1437,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dpapiErrorActionSettings => 'Go to Settings';
+
+  @override
+  String get invalidCoordinatesError =>
+      'Invalid coordinates. Latitude must be between -90 and 90, longitude between -180 and 180.';
 }

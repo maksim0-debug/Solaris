@@ -341,17 +341,18 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                                  fontWeight: FontWeight.bold,
                                                ),
                                              ),
-                                             if (cityAsync.value?.isOffline ?? false) ...[
-                                               const SizedBox(width: 6),
-                                               Tooltip(
-                                                 message: _getOfflineTooltipText(context, cityAsync.value?.offlineReason),
-                                                 child: const Icon(
-                                                   LucideIcons.helpCircle,
-                                                   size: 14,
-                                                   color: Colors.white54,
-                                                 ),
-                                               ),
-                                             ],
+                                              if ((cityAsync.value?.isOffline ?? false) &&
+                                                  !(cityAsync.value?.isCachedCity ?? false)) ...[
+                                                const SizedBox(width: 6),
+                                                Tooltip(
+                                                  message: _getOfflineTooltipText(context, cityAsync.value?.offlineReason),
+                                                  child: const Icon(
+                                                    LucideIcons.helpCircle,
+                                                    size: 14,
+                                                    color: Colors.white54,
+                                                  ),
+                                                ),
+                                              ],
                                            ],
                                          ),
                                          const SizedBox(height: 4),
@@ -436,6 +437,15 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                   _lonController.text,
                                 );
                                 if (lat != null && lon != null) {
+                                  if (lat < -90.0 || lat > 90.0 || lon < -180.0 || lon > 180.0) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(l10n.invalidCoordinatesError),
+                                        backgroundColor: Colors.redAccent,
+                                      ),
+                                    );
+                                    return;
+                                  }
                                   ref
                                       .read(locationSettingsProvider.notifier)
                                       .setManualLocation(lat, lon);

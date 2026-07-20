@@ -1440,4 +1440,8 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get dpapiErrorActionSettings => 'В настройки';
+
+  @override
+  String get invalidCoordinatesError =>
+      'Некорректные координаты. Широта должна быть от -90 до 90, долгота от -180 до 180.';
 }

@@ -676,5 +676,6 @@
   "dpapiErrorInvalidData": "The saved settings security data is corrupted. Please re-enter your API keys.",
   "dpapiErrorGeneric": "A Windows security subsystem error occurred while decrypting your settings. Please re-enter your API keys.",
   "dpapiErrorActionOk": "OK",
-  "dpapiErrorActionSettings": "Go to Settings"
+  "dpapiErrorActionSettings": "Go to Settings",
+  "invalidCoordinatesError": "Invalid coordinates. Latitude must be between -90 and 90, longitude between -180 and 180."
 }

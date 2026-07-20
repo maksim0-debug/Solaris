@@ -13,11 +13,13 @@ class GeocodingResult {
   final String name;
   final bool isOffline;
   final OfflineReason? offlineReason;
+  final bool isCachedCity;
 
   const GeocodingResult({
     required this.name,
     required this.isOffline,
     this.offlineReason,
+    this.isCachedCity = false,
   });
 
   @override
@@ -27,13 +29,19 @@ class GeocodingResult {
           runtimeType == other.runtimeType &&
           name == other.name &&
           isOffline == other.isOffline &&
-          offlineReason == other.offlineReason;
+          offlineReason == other.offlineReason &&
+          isCachedCity == other.isCachedCity;
 
   @override
-  int get hashCode => name.hashCode ^ isOffline.hashCode ^ offlineReason.hashCode;
+  int get hashCode =>
+      name.hashCode ^
+      isOffline.hashCode ^
+      offlineReason.hashCode ^
+      isCachedCity.hashCode;
 
   @override
-  String toString() => 'GeocodingResult(name: $name, isOffline: $isOffline, offlineReason: $offlineReason)';
+  String toString() =>
+      'GeocodingResult(name: $name, isOffline: $isOffline, offlineReason: $offlineReason, isCachedCity: $isCachedCity)';
 }
 
 class GeocodingService {

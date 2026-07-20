@@ -674,5 +674,6 @@
   "dpapiErrorInvalidData": "Збережені захищені дані налаштувань пошкоджено. Будь ласка, введіть ваші API-ключі заново.",
   "dpapiErrorGeneric": "Сталася помилка підсистеми безпеки Windows при розшифруванні налаштувань. Будь ласка, введіть ваші API-ключі заново.",
   "dpapiErrorActionOk": "ОК",
-  "dpapiErrorActionSettings": "У налаштування"
+  "dpapiErrorActionSettings": "У налаштування",
+  "invalidCoordinatesError": "Некоректні координати. Широта має бути від -90 до 90, довгота від -180 до 180."
 }

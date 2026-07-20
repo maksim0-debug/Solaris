@@ -414,11 +414,12 @@ class LocationSettingsNotifier extends AsyncNotifier<model.LocationSettings> {
     final jsonStr = await storage.load(_filename);
     if (jsonStr != null) {
       try {
+        final decrypted = KeyObfuscator.decrypt(jsonStr);
         return model.LocationSettings.fromJson(
-          jsonDecode(jsonStr) as Map<String, dynamic>,
+          jsonDecode(decrypted) as Map<String, dynamic>,
         );
       } catch (e) {
-        debugPrint('Error parsing location settings: $e');
+        debugPrint('Error parsing/decrypting location settings: $e');
       }
     }
     return const model.LocationSettings();
@@ -427,7 +428,23 @@ class LocationSettingsNotifier extends AsyncNotifier<model.LocationSettings> {
   Future<void> updateSettings(model.LocationSettings settings) async {
     state = AsyncData(settings);
     final storage = ref.read(storageServiceProvider);
-    await storage.save(_filename, jsonEncode(settings.toJson()));
+    final encryptedData = KeyObfuscator.encrypt(jsonEncode(settings.toJson()));
+    await storage.save(_filename, encryptedData);
+  }
+
+  Future<void> saveResolvedCity(String cityName, double lat, double lon) async {
+    final current = state.value ?? const model.LocationSettings();
+    if (current.lastCityName != cityName ||
+        current.lastResolvedLatitude != lat ||
+        current.lastResolvedLongitude != lon) {
+      await updateSettings(
+        current.copyWith(
+          lastCityName: cityName,
+          lastResolvedLatitude: lat,
+          lastResolvedLongitude: lon,
+        ),
+      );
+    }
   }
 
   Future<void> setManualLocation(double lat, double lon) async {
@@ -466,19 +483,24 @@ final _defaultPosition = Position(
 );
 
 final effectiveLocationProvider = Provider<AsyncValue<Position>>((ref) {
-  final settingsAsync = ref.watch(locationSettingsProvider);
+  final settingsVal = ref.watch(
+    locationSettingsProvider.select((asyncVal) {
+      final s = asyncVal.value;
+      if (s == null) return null;
+      return (s.useManual, s.manualLatitude, s.manualLongitude);
+    }),
+  );
   final streamAsync = ref.watch(locationStreamProvider);
 
-  final settings = settingsAsync.value;
-
-  if (settings != null) {
-    if (settings.useManual &&
-        settings.manualLatitude != null &&
-        settings.manualLongitude != null) {
+  if (settingsVal != null) {
+    final (useManual, manualLatitude, manualLongitude) = settingsVal;
+    if (useManual &&
+        manualLatitude != null &&
+        manualLongitude != null) {
       return AsyncData(
         Position(
-          latitude: settings.manualLatitude!,
-          longitude: settings.manualLongitude!,
+          latitude: manualLatitude,
+          longitude: manualLongitude,
           timestamp: DateTime.now(),
           accuracy: 0,
           altitude: 0,
@@ -508,21 +530,56 @@ final effectiveLocationProvider = Provider<AsyncValue<Position>>((ref) {
 
 final geocodingServiceProvider = Provider((ref) => GeocodingService());
 
+const _maxCityCacheDistanceDegrees = 0.01;
+
 final locationCityProvider = FutureProvider<GeocodingResult>((ref) async {
   final locationAsync = ref.watch(effectiveLocationProvider);
   final locale = ref.watch(localeProvider);
   final settingsAsync = ref.watch(settingsProvider);
+  final locationSettings = await ref.read(locationSettingsProvider.future);
+
   final customToken = settingsAsync.maybeWhen(
     data: (map) => map['all']?.customMapboxToken,
     orElse: () => null,
   );
+
   return locationAsync.maybeWhen(
-    data: (pos) => ref.read(geocodingServiceProvider).getCityName(
-      pos.latitude,
-      pos.longitude,
-      language: locale.languageCode,
-      customToken: customToken,
-    ),
+    data: (pos) async {
+      final result = await ref.read(geocodingServiceProvider).getCityName(
+        pos.latitude,
+        pos.longitude,
+        language: locale.languageCode,
+        customToken: customToken,
+      );
+
+      if (!result.isOffline) {
+        Future.microtask(() {
+          ref.read(locationSettingsProvider.notifier).saveResolvedCity(
+            result.name,
+            pos.latitude,
+            pos.longitude,
+          );
+        });
+        return result;
+      } else {
+        if (locationSettings.lastCityName != null &&
+            locationSettings.lastResolvedLatitude != null &&
+            locationSettings.lastResolvedLongitude != null) {
+          final latDiff = (pos.latitude - locationSettings.lastResolvedLatitude!).abs();
+          final lonDiff = (pos.longitude - locationSettings.lastResolvedLongitude!).abs();
+          
+          if (latDiff < _maxCityCacheDistanceDegrees && lonDiff < _maxCityCacheDistanceDegrees) {
+            return GeocodingResult(
+              name: locationSettings.lastCityName!,
+              isOffline: true,
+              offlineReason: result.offlineReason,
+              isCachedCity: true,
+            );
+          }
+        }
+        return result;
+      }
+    },
     orElse: () => Future.value(const GeocodingResult(
       name: "Global Coordinates",
       isOffline: true,

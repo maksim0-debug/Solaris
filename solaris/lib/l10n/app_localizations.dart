@@ -2579,6 +2579,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Go to Settings'**
   String get dpapiErrorActionSettings;
+
+  /// No description provided for @invalidCoordinatesError.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid coordinates. Latitude must be between -90 and 90, longitude between -180 and 180.'**
+  String get invalidCoordinatesError;
 }
 
 class _AppLocalizationsDelegate
