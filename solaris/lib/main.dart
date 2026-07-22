@@ -19,6 +19,7 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:solaris/services/hotkey_service.dart';
+import 'package:solaris/models/settings_state.dart';
 
 void main(List<String> args) {
   final format = DateFormat('yyyy-MM-dd HH:mm:ss.SSS');
@@ -135,6 +136,18 @@ void main(List<String> args) {
       final initialLocale = container.read(localeProvider);
       final initialL10n = await AppLocalizations.delegate.load(initialLocale);
       await trayService.updateLabels(initialL10n);
+
+      // Execute Post-Update Processing (log parsing, retention rotation, backup cleanup, autorun & temp GC)
+      final postUpdateService = container.read(postUpdateServiceProvider);
+      final settingsMap = container.read(settingsProvider).value;
+      final currentStartupMode =
+          settingsMap?['all']?.startupMode ?? StartupMode.minimized;
+      final postUpdateResult = await postUpdateService.processPostUpdate(
+        startupMode: currentStartupMode,
+      );
+      container
+          .read(postUpdateResultProvider.notifier)
+          .setResult(postUpdateResult);
 
       runApp(
         UncontrolledProviderScope(container: container, child: const SolarisApp()),

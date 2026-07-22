@@ -17,34 +17,37 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
     ref.listen<AsyncValue<Map<String, SettingsState>>>(
       settingsProvider,
       (previous, next) {
-        next.whenData((settingsMap) async {
-          final settings = settingsMap['all'];
-          final prevSettings = previous?.value?['all'];
-          if (settings != null) {
-            final isEnabled = settings.isLocalIpcServerEnabled;
-            final port = settings.localIpcServerPort;
-            final prevPort = prevSettings?.localIpcServerPort;
+        next.whenData((settingsMap) {
+          Future.microtask(() async {
+            final settings = settingsMap['all'];
+            final prevSettings = previous?.value?['all'];
+            if (settings != null) {
+              final isEnabled = settings.isLocalIpcServerEnabled;
+              final port = settings.localIpcServerPort;
+              final prevPort = prevSettings?.localIpcServerPort;
 
-            if (isEnabled) {
-              if (!state.isRunning) {
-                await start();
-              } else if (port != prevPort) {
-                await stop();
-                await start();
-              }
-            } else {
-              if (state.isRunning) {
-                await stop();
+              if (isEnabled) {
+                if (!state.isRunning) {
+                  await start();
+                } else if (port != prevPort) {
+                  await stop();
+                  await start();
+                }
+              } else {
+                if (state.isRunning) {
+                  await stop();
+                }
               }
             }
-          }
+          });
         });
       },
       fireImmediately: true,
     );
 
     ref.onDispose(() {
-      stop();
+      _server?.close(force: true);
+      _server = null;
     });
 
     return const LocalIpcServerState(isRunning: false);
@@ -100,8 +103,10 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
       await _server!.close(force: true);
       debugPrint('LocalIpcService: Server stopped.');
       _server = null;
+      state = const LocalIpcServerState(isRunning: false);
+    } else if (state.isRunning) {
+      state = const LocalIpcServerState(isRunning: false);
     }
-    state = const LocalIpcServerState(isRunning: false);
   }
 
   /// REST Request Listener loop

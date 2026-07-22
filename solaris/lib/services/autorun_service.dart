@@ -134,4 +134,47 @@ class AutorunService {
       free(phkResult);
     }
   }
+
+  /// Checks if the Solaris autorun registry key exists in Windows Registry,
+  /// regardless of whether the registered path matches [Platform.resolvedExecutable].
+  static Future<bool> isRegisteredAnywhere() async {
+    if (!Platform.isWindows) return false;
+
+    final phkResult = calloc<HKEY>();
+    try {
+      final subKeyPtr = _runKeyPath.toNativeUtf16();
+      final status = RegOpenKeyEx(
+        HKEY_CURRENT_USER,
+        subKeyPtr,
+        0,
+        KEY_QUERY_VALUE,
+        phkResult,
+      );
+      free(subKeyPtr);
+
+      if (status != ERROR_SUCCESS) return false;
+
+      final hKey = phkResult.value;
+      final valueNamePtr = _keyName.toNativeUtf16();
+
+      final lpcbData = calloc<DWORD>();
+      final queryStatus = RegQueryValueEx(
+        hKey,
+        valueNamePtr,
+        nullptr,
+        nullptr,
+        nullptr,
+        lpcbData,
+      );
+
+      RegCloseKey(hKey);
+      free(valueNamePtr);
+      free(lpcbData);
+
+      return queryStatus == ERROR_SUCCESS;
+    } finally {
+      free(phkResult);
+    }
+  }
 }
+

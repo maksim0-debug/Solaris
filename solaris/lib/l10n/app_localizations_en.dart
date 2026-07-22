@@ -1441,4 +1441,74 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get invalidCoordinatesError =>
       'Invalid coordinates. Latitude must be between -90 and 90, longitude between -180 and 180.';
+
+  @override
+  String get updateAvailable => 'Update available';
+
+  @override
+  String updateAvailableVersion(Object version) => 'Update: v$version ⬆';
+
+  @override
+  String updateDownloadingPercent(Object percent) => 'Downloading: $percent% ↓';
+
+  @override
+  String get updateVerifying => 'Verifying integrity...';
+
+  @override
+  String get updateVerified => 'Verified';
+
+  @override
+  String get updateIntegrityError => 'Integrity error';
+
+  @override
+  String get updateReady => 'Ready to install ✓';
+
+  @override
+  String get updateInstallRestart => 'Install & Restart';
+
+  @override
+  String get updateLater => 'Later';
+
+  @override
+  String get updateRetry => 'Retry';
+
+  @override
+  String get updateError => 'Update error ⚠';
+
+  @override
+  String get updateReleaseNotes => 'Release Notes';
+
+  @override
+  String updateFileSize(Object size) => 'File size: $size';
+
+  @override
+  String get updateRestartWarning =>
+      'Application will restart to apply the update.';
+
+  @override
+  String get updateCheckForUpdates => 'Check for updates';
+
+  @override
+  String get updateChecking => 'Checking for updates...';
+
+  @override
+  String get updateSuccessTitle => 'Application Updated';
+
+  @override
+  String updateSuccessBody(Object version) =>
+      'Solaris has been successfully updated to version $version.';
+
+  @override
+  String get updateRolledBackTitle => 'Update Rolled Back';
+
+  @override
+  String updateRolledBackBody(Object reason) =>
+      'Update failed. Application was restored to the previous version.\nReason: $reason';
+
+  @override
+  String get updateFailedTitle => 'Update Error';
+
+  @override
+  String updateFailedBody(Object reason) =>
+      'An error occurred while applying the update.\nDetails: $reason';
 }

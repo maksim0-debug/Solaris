@@ -1442,4 +1442,74 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get invalidCoordinatesError =>
       'Некоректні координати. Широта має бути від -90 до 90, довгота від -180 до 180.';
+
+  @override
+  String get updateAvailable => 'Доступне оновлення';
+
+  @override
+  String updateAvailableVersion(Object version) => 'Оновлення: v$version ⬆';
+
+  @override
+  String updateDownloadingPercent(Object percent) => 'Завантаження: $percent% ↓';
+
+  @override
+  String get updateVerifying => 'Перевірка цілісності...';
+
+  @override
+  String get updateVerified => 'Перевірено';
+
+  @override
+  String get updateIntegrityError => 'Помилка цілісності';
+
+  @override
+  String get updateReady => 'Готово до встановлення ✓';
+
+  @override
+  String get updateInstallRestart => 'Встановити та перезапустити';
+
+  @override
+  String get updateLater => 'Пізніше';
+
+  @override
+  String get updateRetry => 'Повторити';
+
+  @override
+  String get updateError => 'Помилка оновлення ⚠';
+
+  @override
+  String get updateReleaseNotes => 'Що нового';
+
+  @override
+  String updateFileSize(Object size) => 'Розмір: $size';
+
+  @override
+  String get updateRestartWarning =>
+      'Програма буде перезапущена для встановлення оновлення.';
+
+  @override
+  String get updateCheckForUpdates => 'Перевірити наявність оновлень';
+
+  @override
+  String get updateChecking => 'Перевірка оновлень...';
+
+  @override
+  String get updateSuccessTitle => 'Застосунок оновлено';
+
+  @override
+  String updateSuccessBody(Object version) =>
+      'Solaris успішно оновлено до версії $version.';
+
+  @override
+  String get updateRolledBackTitle => 'Відкат оновлення';
+
+  @override
+  String updateRolledBackBody(Object reason) =>
+      'Оновлення не вдалося. Застосунок відновлено до попередньої версії.\nПричина: $reason';
+
+  @override
+  String get updateFailedTitle => 'Помилка оновлення';
+
+  @override
+  String updateFailedBody(Object reason) =>
+      'Сталася помилка під час встановлення оновлення.\nДеталі: $reason';
 }

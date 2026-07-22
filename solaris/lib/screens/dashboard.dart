@@ -23,11 +23,11 @@ import 'package:solaris/widgets/circadian_breakdown_tooltip.dart';
 import 'package:solaris/widgets/temperature_breakdown_tooltip.dart';
 import 'package:solaris/widgets/weather_icon_helper.dart';
 import 'package:solaris/widgets/about_dialog.dart';
-import 'package:solaris/providers/app_info_provider.dart';
 import 'package:solaris/models/settings_state.dart';
 import 'package:flutter/services.dart';
 import 'package:solaris/widgets/settings_search_overlay.dart';
 import 'package:solaris/widgets/deep_link_target.dart';
+import 'package:solaris/widgets/update_status_widget.dart';
 
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -92,6 +92,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         });
       }
     });
+
+    ref.listen<PostUpdateResult?>(postUpdateResultProvider, (previous, next) {
+      if (next != null && next.status != PostUpdateStatus.none) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _showPostUpdateNotification(context, next, ref);
+        });
+      }
+    });
+
+    // Check initial post update result on startup
+    final initialPostUpdateResult = ref.read<PostUpdateResult?>(postUpdateResultProvider);
+    if (initialPostUpdateResult != null && initialPostUpdateResult.status != PostUpdateStatus.none) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showPostUpdateNotification(context, initialPostUpdateResult, ref);
+      });
+    }
 
     ref.listen<bool>(isSearchVisibleProvider, (previous, next) {
       if (previous == true && next == false) {
@@ -232,6 +248,108 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         );
       },
     );
+  }
+
+  void _showPostUpdateNotification(
+    BuildContext context,
+    PostUpdateResult result,
+    WidgetRef ref,
+  ) {
+    if (result.status == PostUpdateStatus.none) return;
+
+    final l10n = AppLocalizations.of(context);
+    if (l10n == null) return;
+
+    // Reset postUpdateResultProvider state so dialog/snackbar is shown only once
+    ref.read(postUpdateResultProvider.notifier).setResult(null);
+
+    if (result.status == PostUpdateStatus.success) {
+      final versionText = result.newVersion ?? 'latest';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF1E1E28),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: Colors.greenAccent, width: 1),
+          ),
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle_rounded, color: Colors.greenAccent, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  l10n.updateSuccessBody(versionText),
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    } else if (result.status == PostUpdateStatus.rollback ||
+        result.status == PostUpdateStatus.error) {
+      final isRollback = result.status == PostUpdateStatus.rollback;
+      final titleText = isRollback
+          ? l10n.updateRolledBackTitle
+          : l10n.updateFailedTitle;
+      final reasonText = result.reason ?? 'Unknown reason';
+      final bodyText = isRollback
+          ? l10n.updateRolledBackBody(reasonText)
+          : l10n.updateFailedBody(reasonText);
+
+      showDialog<void>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            backgroundColor: const Color(0xFF1E1E28),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: isRollback ? Colors.orangeAccent : Colors.redAccent,
+                width: 1,
+              ),
+            ),
+            title: Row(
+              children: [
+                Icon(
+                  isRollback ? Icons.warning_amber_rounded : Icons.error_outline_rounded,
+                  color: isRollback ? Colors.orangeAccent : Colors.redAccent,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  titleText,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              bodyText,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.85),
+                fontSize: 13,
+                height: 1.4,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 }
 
@@ -1699,30 +1817,8 @@ class _Footer extends ConsumerWidget {
               style: const TextStyle(fontSize: 10, color: Colors.redAccent),
             ),
           ),
-          Row(
-            children: [
-              Consumer(
-                builder: (context, ref, child) {
-                  final versionAsync = ref.watch(appVersionProvider);
-                  return Text(
-                    l10n.appVersion(versionAsync.value ?? '--'),
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(fontSize: 10),
-                  );
-                },
-              ),
-              const SizedBox(width: 8),
-              Container(
-                width: 6,
-                height: 6,
-                decoration: const BoxDecoration(
-                  color: Colors.orange,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ],
-          ),
+          const UpdateStatusWidget(),
+
         ],
       ),
     );

@@ -1444,4 +1444,74 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get invalidCoordinatesError =>
       'Некорректные координаты. Широта должна быть от -90 до 90, долгота от -180 до 180.';
+
+  @override
+  String get updateAvailable => 'Доступно обновление';
+
+  @override
+  String updateAvailableVersion(Object version) => 'Обновление: v$version ⬆';
+
+  @override
+  String updateDownloadingPercent(Object percent) => 'Скачивание: $percent% ↓';
+
+  @override
+  String get updateVerifying => 'Проверка целостности...';
+
+  @override
+  String get updateVerified => 'Проверено';
+
+  @override
+  String get updateIntegrityError => 'Ошибка целостности';
+
+  @override
+  String get updateReady => 'Готово к установке ✓';
+
+  @override
+  String get updateInstallRestart => 'Установить и перезапустить';
+
+  @override
+  String get updateLater => 'Позже';
+
+  @override
+  String get updateRetry => 'Повторить';
+
+  @override
+  String get updateError => 'Ошибка обновления ⚠';
+
+  @override
+  String get updateReleaseNotes => 'Что нового';
+
+  @override
+  String updateFileSize(Object size) => 'Размер: $size';
+
+  @override
+  String get updateRestartWarning =>
+      'Приложение будет перезапущено для установки обновления.';
+
+  @override
+  String get updateCheckForUpdates => 'Проверить обновления';
+
+  @override
+  String get updateChecking => 'Проверка обновлений...';
+
+  @override
+  String get updateSuccessTitle => 'Приложение обновлено';
+
+  @override
+  String updateSuccessBody(Object version) =>
+      'Solaris успешно обновлен до версии $version.';
+
+  @override
+  String get updateRolledBackTitle => 'Откат обновления';
+
+  @override
+  String updateRolledBackBody(Object reason) =>
+      'Обновление не удалось. Приложение восстановлено до предыдущей версии.\nПричина: $reason';
+
+  @override
+  String get updateFailedTitle => 'Ошибка обновления';
+
+  @override
+  String updateFailedBody(Object reason) =>
+      'Произошла ошибка при установке обновления.\nДетали: $reason';
 }

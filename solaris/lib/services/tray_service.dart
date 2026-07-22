@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:solaris/l10n/app_localizations.dart';
-import 'package:solaris/providers.dart';
+import 'package:solaris/services/app_shutdown_service.dart';
 
 class TrayService with TrayListener {
   static final TrayService _instance = TrayService._internal();
@@ -75,14 +75,12 @@ class TrayService with TrayListener {
       await windowManager.focus();
     } else if (menuItem.key == 'exit_app') {
       if (_container != null) {
-        try {
-          await _container!.read(settingsProvider.notifier).savePendingSettings();
-        } catch (e) {
-          debugPrint('Error saving pending settings on exit: $e');
-        }
+        final shutdownService = AppShutdownService(_container!);
+        await shutdownService.performShutdown();
+      } else {
+        await trayManager.destroy();
+        exit(0);
       }
-      await trayManager.destroy();
-      exit(0);
     }
   }
 }

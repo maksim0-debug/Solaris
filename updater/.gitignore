@@ -1,0 +1,43 @@
+# Build output directory
+/build/
+/bin/
+/out/
+
+# Visual Studio / MSVC build & IDE artifacts
+.vs/
+*.user
+*.vcxproj.user
+*.suo
+*.userosv
+*.sln.docstates
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+Testing/
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+
+# Object and binary outputs
+*.exe
+*.dll
+*.so
+*.dylib
+*.lib
+*.a
+*.obj
+*.o
+*.pch
+*.idb
+*.pdb
+*.ilk
+*.exp
+*.res
+
+# Temporary & Log files
+*.log
+*.tmp

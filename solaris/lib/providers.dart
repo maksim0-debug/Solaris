@@ -39,6 +39,10 @@ import 'package:solaris/providers/lifecycle_provider.dart';
 import 'package:solaris/services/gaming_mode_service.dart';
 import 'package:solaris/services/map_health_service.dart';
 import 'package:solaris/models/map_health_report.dart';
+export 'package:solaris/providers/update_provider.dart';
+export 'package:solaris/providers/post_update_provider.dart';
+export 'package:solaris/models/post_update_result.dart';
+export 'package:solaris/services/post_update_service.dart';
 
 final locationServiceProvider = Provider((ref) => LocationService());
 final sunCalculatorServiceProvider = Provider((ref) => SunCalculatorService());

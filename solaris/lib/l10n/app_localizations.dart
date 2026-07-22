@@ -2585,6 +2585,29 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Invalid coordinates. Latitude must be between -90 and 90, longitude between -180 and 180.'**
   String get invalidCoordinatesError;
+
+  String get updateAvailable;
+  String updateAvailableVersion(Object version);
+  String updateDownloadingPercent(Object percent);
+  String get updateVerifying;
+  String get updateVerified;
+  String get updateIntegrityError;
+  String get updateReady;
+  String get updateInstallRestart;
+  String get updateLater;
+  String get updateRetry;
+  String get updateError;
+  String get updateReleaseNotes;
+  String updateFileSize(Object size);
+  String get updateRestartWarning;
+  String get updateCheckForUpdates;
+  String get updateChecking;
+  String get updateSuccessTitle;
+  String updateSuccessBody(Object version);
+  String get updateRolledBackTitle;
+  String updateRolledBackBody(Object reason);
+  String get updateFailedTitle;
+  String updateFailedBody(Object reason);
 }
 
 class _AppLocalizationsDelegate

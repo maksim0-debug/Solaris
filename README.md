@@ -311,6 +311,9 @@ If you compile or run Solaris without providing API keys, the application automa
 
 - **Privacy Policy**: [Read our Privacy Policy](https://maksim0-debug.github.io/Solaris/docs)
 - **License**: This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
+- **Third-Party Libraries**:
+  - [miniz](https://github.com/richgel999/miniz/blob/master/LICENSE) ([MIT License](https://github.com/richgel999/miniz/blob/master/LICENSE)) — lossless, data compression library used by updater.
+
 
 ---
 
