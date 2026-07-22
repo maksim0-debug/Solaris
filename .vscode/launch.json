@@ -8,14 +8,16 @@
             "name": "solaris",
             "cwd": "solaris",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+            "preLaunchTask": "Build and Copy Updater (Debug)"
         },
         {
             "name": "solaris (profile mode)",
             "cwd": "solaris",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "profile"
+            "flutterMode": "profile",
+            "preLaunchTask": "Build and Copy Updater (Release)"
         },
         {
             "name": "solaris (release mode)",
@@ -23,6 +25,7 @@
             "request": "launch",
             "type": "dart",
             "flutterMode": "release",
+            "preLaunchTask": "Build and Copy Updater (Release)",
             "args": []
         },
         {
@@ -31,6 +34,7 @@
             "request": "launch",
             "type": "dart",
             "flutterMode": "debug",
+            "preLaunchTask": "Build and Copy Updater (Debug)",
             "args": []
         }
     ]

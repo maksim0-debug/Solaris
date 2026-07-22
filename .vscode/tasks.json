@@ -1,0 +1,27 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build and Copy Updater (Release)",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-Command",
+                "cmake -S updater -B updater/build -G \"Visual Studio 17 2022\" -A x64; cmake --build updater/build --config Release; New-Item -ItemType Directory -Force -Path solaris/build/windows/x64/runner/Release; Copy-Item updater/build/Release/updater.exe -Destination solaris/build/windows/x64/runner/Release/ -Force"
+            ],
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "Build and Copy Updater (Debug)",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-Command",
+                "cmake -S updater -B updater/build -G \"Visual Studio 17 2022\" -A x64; cmake --build updater/build --config Release; New-Item -ItemType Directory -Force -Path solaris/build/windows/x64/runner/Debug; Copy-Item updater/build/Release/updater.exe -Destination solaris/build/windows/x64/runner/Debug/ -Force"
+            ],
+            "problemMatcher": [],
+            "group": "build"
+        }
+    ]
+}
