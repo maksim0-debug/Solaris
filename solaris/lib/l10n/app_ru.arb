@@ -680,6 +680,7 @@
   "invalidCoordinatesError": "Некорректные координаты. Широта должна быть от -90 до 90, долгота от -180 до 180.",
   "updateAvailable": "Доступно обновление",
   "updateAvailableVersion": "Обновление: v{version} ⬆",
+  "updateCurrentVersion": "Текущая версия: v{version}",
   "updateDownloadingPercent": "Скачивание: {percent}% ↓",
   "updateVerifying": "Проверка целостности...",
   "updateVerified": "Проверено",

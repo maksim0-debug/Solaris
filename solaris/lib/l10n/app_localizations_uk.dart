@@ -1447,10 +1447,19 @@ class AppLocalizationsUk extends AppLocalizations {
   String get updateAvailable => 'Доступне оновлення';
 
   @override
-  String updateAvailableVersion(Object version) => 'Оновлення: v$version ⬆';
+  String updateAvailableVersion(Object version) {
+    return 'Оновлення: v$version ⬆';
+  }
 
   @override
-  String updateDownloadingPercent(Object percent) => 'Завантаження: $percent% ↓';
+  String updateCurrentVersion(Object version) {
+    return 'Поточна версія: v$version';
+  }
+
+  @override
+  String updateDownloadingPercent(Object percent) {
+    return 'Завантаження: $percent% ↓';
+  }
 
   @override
   String get updateVerifying => 'Перевірка цілісності...';
@@ -1480,7 +1489,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get updateReleaseNotes => 'Що нового';
 
   @override
-  String updateFileSize(Object size) => 'Розмір: $size';
+  String updateFileSize(Object size) {
+    return 'Розмір: $size';
+  }
 
   @override
   String get updateRestartWarning =>
@@ -1496,20 +1507,23 @@ class AppLocalizationsUk extends AppLocalizations {
   String get updateSuccessTitle => 'Застосунок оновлено';
 
   @override
-  String updateSuccessBody(Object version) =>
-      'Solaris успішно оновлено до версії $version.';
+  String updateSuccessBody(Object version) {
+    return 'Solaris успішно оновлено до версії $version.';
+  }
 
   @override
   String get updateRolledBackTitle => 'Відкат оновлення';
 
   @override
-  String updateRolledBackBody(Object reason) =>
-      'Оновлення не вдалося. Застосунок відновлено до попередньої версії.\nПричина: $reason';
+  String updateRolledBackBody(Object reason) {
+    return 'Оновлення не вдалося. Застосунок відновлено до попередньої версії.\nПричина: $reason';
+  }
 
   @override
   String get updateFailedTitle => 'Помилка оновлення';
 
   @override
-  String updateFailedBody(Object reason) =>
-      'Сталася помилка під час встановлення оновлення.\nДеталі: $reason';
+  String updateFailedBody(Object reason) {
+    return 'Сталася помилка під час встановлення оновлення.\nДеталі: $reason';
+  }
 }

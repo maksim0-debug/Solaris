@@ -1446,10 +1446,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updateAvailable => 'Update available';
 
   @override
-  String updateAvailableVersion(Object version) => 'Update: v$version ⬆';
+  String updateAvailableVersion(Object version) {
+    return 'Update: v$version ⬆';
+  }
 
   @override
-  String updateDownloadingPercent(Object percent) => 'Downloading: $percent% ↓';
+  String updateCurrentVersion(Object version) {
+    return 'Current version: v$version';
+  }
+
+  @override
+  String updateDownloadingPercent(Object percent) {
+    return 'Downloading: $percent% ↓';
+  }
 
   @override
   String get updateVerifying => 'Verifying integrity...';
@@ -1479,7 +1488,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updateReleaseNotes => 'Release Notes';
 
   @override
-  String updateFileSize(Object size) => 'File size: $size';
+  String updateFileSize(Object size) {
+    return 'File size: $size';
+  }
 
   @override
   String get updateRestartWarning =>
@@ -1495,20 +1506,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updateSuccessTitle => 'Application Updated';
 
   @override
-  String updateSuccessBody(Object version) =>
-      'Solaris has been successfully updated to version $version.';
+  String updateSuccessBody(Object version) {
+    return 'Solaris has been successfully updated to version $version.';
+  }
 
   @override
   String get updateRolledBackTitle => 'Update Rolled Back';
 
   @override
-  String updateRolledBackBody(Object reason) =>
-      'Update failed. Application was restored to the previous version.\nReason: $reason';
+  String updateRolledBackBody(Object reason) {
+    return 'Update failed. Application was restored to the previous version.\nReason: $reason';
+  }
 
   @override
   String get updateFailedTitle => 'Update Error';
 
   @override
-  String updateFailedBody(Object reason) =>
-      'An error occurred while applying the update.\nDetails: $reason';
+  String updateFailedBody(Object reason) {
+    return 'An error occurred while applying the update.\nDetails: $reason';
+  }
 }

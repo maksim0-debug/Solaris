@@ -678,6 +678,7 @@
   "invalidCoordinatesError": "Некоректні координати. Широта має бути від -90 до 90, довгота від -180 до 180.",
   "updateAvailable": "Доступне оновлення",
   "updateAvailableVersion": "Оновлення: v{version} ⬆",
+  "updateCurrentVersion": "Поточна версія: v{version}",
   "updateDownloadingPercent": "Завантаження: {percent}% ↓",
   "updateVerifying": "Перевірка цілісності...",
   "updateVerified": "Перевірено",

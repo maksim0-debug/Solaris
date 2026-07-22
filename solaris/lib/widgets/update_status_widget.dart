@@ -230,7 +230,7 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
         break;
       case UpdatePhase.available:
         if (status.updateInfo != null) {
-          _showAvailableDialog(context, ref, status.updateInfo!);
+          _showAvailableDialog(context, ref, status.updateInfo!, currentVersion);
         }
         break;
       case UpdatePhase.ready:
@@ -254,12 +254,16 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
     String currentVersion,
   ) {
     final l10n = AppLocalizations.of(context);
+    final currentVerText = l10n?.updateCurrentVersion(currentVersion) ??
+        'Current version: v$currentVersion';
+
     showDialog<void>(
       context: context,
       builder: (dialogContext) => _StyledDialog(
         icon: LucideIcons.info,
         iconColor: Colors.orangeAccent,
         title: 'Solaris v$currentVersion',
+        subtitle: currentVerText,
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -302,9 +306,12 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
     BuildContext context,
     WidgetRef ref,
     UpdateInfo updateInfo,
+    String currentVersion,
   ) {
     final l10n = AppLocalizations.of(context);
     final sizeMb = (updateInfo.assetSize / (1024 * 1024)).toStringAsFixed(1);
+    final currentVerText = l10n?.updateCurrentVersion(currentVersion) ??
+        'Current version: v$currentVersion';
 
     showDialog<void>(
       context: context,
@@ -313,60 +320,58 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
         iconColor: Colors.orangeAccent,
         title: l10n?.updateAvailableVersion(updateInfo.version) ??
             'Update: v${updateInfo.version}',
-        content: SizedBox(
-          width: 440,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Chip(
-                    avatar: const Icon(LucideIcons.hardDrive, size: 12),
-                    label: Text(
-                      l10n?.updateFileSize('$sizeMb MB') ?? '$sizeMb MB',
-                      style: const TextStyle(fontSize: 11),
-                    ),
-                    backgroundColor: Colors.white.withOpacity(0.08),
-                    side: BorderSide.none,
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
+        subtitle: currentVerText,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Chip(
+                  avatar: const Icon(LucideIcons.hardDrive, size: 12),
+                  label: Text(
+                    l10n?.updateFileSize('$sizeMb MB') ?? '$sizeMb MB',
+                    style: const TextStyle(fontSize: 11),
                   ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                l10n?.updateReleaseNotes ?? 'Release Notes',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
+                  backgroundColor: Colors.white.withOpacity(0.08),
+                  side: BorderSide.none,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                 ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text(
+              l10n?.updateReleaseNotes ?? 'Release Notes',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
               ),
-              const SizedBox(height: 6),
-              Container(
-                constraints: const BoxConstraints(maxHeight: 220),
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white10),
-                ),
-                child: SingleChildScrollView(
-                  child: MarkdownBody(
-                    data: updateInfo.releaseNotes.isNotEmpty
-                        ? updateInfo.releaseNotes
-                        : 'No release notes provided.',
-                    styleSheet: MarkdownStyleSheet(
-                      p: const TextStyle(color: Colors.white70, fontSize: 12),
-                      h1: const TextStyle(color: Colors.white, fontSize: 14),
-                      h2: const TextStyle(color: Colors.white, fontSize: 13),
-                      listBullet: const TextStyle(color: Colors.orangeAccent),
-                    ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              constraints: const BoxConstraints(maxHeight: 360),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white10),
+              ),
+              child: SingleChildScrollView(
+                child: MarkdownBody(
+                  data: updateInfo.releaseNotes.isNotEmpty
+                      ? updateInfo.releaseNotes
+                      : 'No release notes provided.',
+                  styleSheet: MarkdownStyleSheet(
+                    p: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.4),
+                    h1: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                    h2: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                    listBullet: const TextStyle(color: Colors.orangeAccent),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -502,6 +507,7 @@ class _StyledDialog extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final String title;
+  final String? subtitle;
   final Widget content;
   final List<Widget> actions;
 
@@ -509,6 +515,7 @@ class _StyledDialog extends StatelessWidget {
     required this.icon,
     required this.iconColor,
     required this.title,
+    this.subtitle,
     required this.content,
     required this.actions,
   });
@@ -517,52 +524,101 @@ class _StyledDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(24),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1E1E28),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.1),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.5),
-              blurRadius: 24,
-              spreadRadius: 4,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 460),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1E28),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.1),
+              width: 1,
             ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.5),
+                blurRadius: 24,
+                spreadRadius: 4,
+              ),
+            ],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Icon(icon, color: iconColor, size: 22),
-                const SizedBox(width: 10),
+                Container(
+                  width: 4,
+                  decoration: BoxDecoration(
+                    color: iconColor,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      bottomLeft: Radius.circular(16),
+                    ),
+                  ),
+                ),
                 Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: iconColor.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(icon, color: iconColor, size: 20),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    title,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  if (subtitle != null) ...[
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      subtitle!,
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(0.6),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 18),
+                        content,
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: actions,
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            content,
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: actions,
-            ),
-          ],
+          ),
         ),
       ),
     );

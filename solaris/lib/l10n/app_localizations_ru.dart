@@ -1449,10 +1449,19 @@ class AppLocalizationsRu extends AppLocalizations {
   String get updateAvailable => 'Доступно обновление';
 
   @override
-  String updateAvailableVersion(Object version) => 'Обновление: v$version ⬆';
+  String updateAvailableVersion(Object version) {
+    return 'Обновление: v$version ⬆';
+  }
 
   @override
-  String updateDownloadingPercent(Object percent) => 'Скачивание: $percent% ↓';
+  String updateCurrentVersion(Object version) {
+    return 'Текущая версия: v$version';
+  }
+
+  @override
+  String updateDownloadingPercent(Object percent) {
+    return 'Скачивание: $percent% ↓';
+  }
 
   @override
   String get updateVerifying => 'Проверка целостности...';
@@ -1482,7 +1491,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get updateReleaseNotes => 'Что нового';
 
   @override
-  String updateFileSize(Object size) => 'Размер: $size';
+  String updateFileSize(Object size) {
+    return 'Размер: $size';
+  }
 
   @override
   String get updateRestartWarning =>
@@ -1498,20 +1509,23 @@ class AppLocalizationsRu extends AppLocalizations {
   String get updateSuccessTitle => 'Приложение обновлено';
 
   @override
-  String updateSuccessBody(Object version) =>
-      'Solaris успешно обновлен до версии $version.';
+  String updateSuccessBody(Object version) {
+    return 'Solaris успешно обновлен до версии $version.';
+  }
 
   @override
   String get updateRolledBackTitle => 'Откат обновления';
 
   @override
-  String updateRolledBackBody(Object reason) =>
-      'Обновление не удалось. Приложение восстановлено до предыдущей версии.\nПричина: $reason';
+  String updateRolledBackBody(Object reason) {
+    return 'Обновление не удалось. Приложение восстановлено до предыдущей версии.\nПричина: $reason';
+  }
 
   @override
   String get updateFailedTitle => 'Ошибка обновления';
 
   @override
-  String updateFailedBody(Object reason) =>
-      'Произошла ошибка при установке обновления.\nДетали: $reason';
+  String updateFailedBody(Object reason) {
+    return 'Произошла ошибка при установке обновления.\nДетали: $reason';
+  }
 }

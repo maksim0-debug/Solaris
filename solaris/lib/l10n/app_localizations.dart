@@ -2586,27 +2586,142 @@ abstract class AppLocalizations {
   /// **'Invalid coordinates. Latitude must be between -90 and 90, longitude between -180 and 180.'**
   String get invalidCoordinatesError;
 
+  /// No description provided for @updateAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Update available'**
   String get updateAvailable;
+
+  /// No description provided for @updateAvailableVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Update: v{version} ⬆'**
   String updateAvailableVersion(Object version);
+
+  /// No description provided for @updateCurrentVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Current version: v{version}'**
+  String updateCurrentVersion(Object version);
+
+  /// No description provided for @updateDownloadingPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading: {percent}% ↓'**
   String updateDownloadingPercent(Object percent);
+
+  /// No description provided for @updateVerifying.
+  ///
+  /// In en, this message translates to:
+  /// **'Verifying integrity...'**
   String get updateVerifying;
+
+  /// No description provided for @updateVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified'**
   String get updateVerified;
+
+  /// No description provided for @updateIntegrityError.
+  ///
+  /// In en, this message translates to:
+  /// **'Integrity error'**
   String get updateIntegrityError;
+
+  /// No description provided for @updateReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to install ✓'**
   String get updateReady;
+
+  /// No description provided for @updateInstallRestart.
+  ///
+  /// In en, this message translates to:
+  /// **'Install & Restart'**
   String get updateInstallRestart;
+
+  /// No description provided for @updateLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
   String get updateLater;
+
+  /// No description provided for @updateRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
   String get updateRetry;
+
+  /// No description provided for @updateError.
+  ///
+  /// In en, this message translates to:
+  /// **'Update error ⚠'**
   String get updateError;
+
+  /// No description provided for @updateReleaseNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Release Notes'**
   String get updateReleaseNotes;
+
+  /// No description provided for @updateFileSize.
+  ///
+  /// In en, this message translates to:
+  /// **'File size: {size}'**
   String updateFileSize(Object size);
+
+  /// No description provided for @updateRestartWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Application will restart to apply the update.'**
   String get updateRestartWarning;
+
+  /// No description provided for @updateCheckForUpdates.
+  ///
+  /// In en, this message translates to:
+  /// **'Check for updates'**
   String get updateCheckForUpdates;
+
+  /// No description provided for @updateChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking for updates...'**
   String get updateChecking;
+
+  /// No description provided for @updateSuccessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Application Updated'**
   String get updateSuccessTitle;
+
+  /// No description provided for @updateSuccessBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Solaris has been successfully updated to version {version}.'**
   String updateSuccessBody(Object version);
+
+  /// No description provided for @updateRolledBackTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Rolled Back'**
   String get updateRolledBackTitle;
+
+  /// No description provided for @updateRolledBackBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Update failed. Application was restored to the previous version.\nReason: {reason}'**
   String updateRolledBackBody(Object reason);
+
+  /// No description provided for @updateFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Error'**
   String get updateFailedTitle;
+
+  /// No description provided for @updateFailedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred while applying the update.\nDetails: {reason}'**
   String updateFailedBody(Object reason);
 }
 
