@@ -79,6 +79,17 @@ Control your environment without leaving your current app.
 - **Persistence**: Remembers your preferred location across sessions.
   ![Interactive map for setting geographical coordinates for solar calculations](https://github.com/user-attachments/assets/a984424a-3b9e-45de-8c8d-a601f4b8b2d0)
 
+### 🔄 Automatic Updates
+
+Solaris supports automatic updates directly from within the app:
+
+- **Background Checks**: Checks for new GitHub releases on launch and every 24 hours.
+- **Status Bar**: Interactive widget in the footer displays download progress, SHA-256 verification, and readiness for installation.
+- **Native Updater (`updater.exe`)**: Written in C++17 (using `miniz`), creates a backup, protects against vulnerabilities (*Zip Slip*), and performs an **automatic rollback** in case of failure.
+
+> [!NOTE]
+> **Custom Builds (`IS_OFFICIAL_RELEASE=false`)**: Automatic updates are disabled by default. Note that updating from a custom build to an official release may reset your saved API keys due to Windows DPAPI encryption mechanics.
+
 ---
 
 ## 💤 Sleep Integration
