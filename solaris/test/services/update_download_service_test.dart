@@ -88,6 +88,74 @@ void main() {
       await downloadedFile.delete();
     });
 
+    test('downloadUpdate blocks non-HTTPS redirect', () async {
+      final mockClient = MockClient((request) async {
+        if (request.url.toString() == 'https://github.com/maksim0-debug/Solaris/releases/download/v1.0.18/Solaris-Windows.zip') {
+          return http.Response('', 302, headers: {
+            'location': 'http://objects.githubusercontent.com/download/Solaris-Windows.zip',
+          });
+        }
+        return http.Response('Not Found', 404);
+      });
+
+      final service = UpdateDownloadService(client: mockClient);
+
+      expect(
+        () => service.downloadUpdate(
+          'https://github.com/maksim0-debug/Solaris/releases/download/v1.0.18/Solaris-Windows.zip',
+          '1.0.18',
+        ),
+        throwsA(isA<HttpException>()),
+      );
+    });
+
+    test('downloadUpdate blocks untrusted domain redirect', () async {
+      final mockClient = MockClient((request) async {
+        if (request.url.toString() == 'https://github.com/maksim0-debug/Solaris/releases/download/v1.0.18/Solaris-Windows.zip') {
+          return http.Response('', 302, headers: {
+            'location': 'https://malicious-domain.com/download/Solaris-Windows.zip',
+          });
+        }
+        return http.Response('Not Found', 404);
+      });
+
+      final service = UpdateDownloadService(client: mockClient);
+
+      expect(
+        () => service.downloadUpdate(
+          'https://github.com/maksim0-debug/Solaris/releases/download/v1.0.18/Solaris-Windows.zip',
+          '1.0.18',
+        ),
+        throwsA(isA<HttpException>()),
+      );
+    });
+
+    test('downloadUpdate supports HTTP 303 and 308 redirects', () async {
+      final dummyPackageData = utf8.encode('Solaris 1.0.18 Redirect 308 Payload');
+
+      final mockClient = MockClient((request) async {
+        if (request.url.toString() == 'https://github.com/maksim0-debug/Solaris/releases/download/v1.0.18/Solaris-Windows.zip') {
+          return http.Response('', 308, headers: {
+            'location': 'https://objects.githubusercontent.com/download/Solaris-Windows.zip',
+          });
+        } else if (request.url.toString() == 'https://objects.githubusercontent.com/download/Solaris-Windows.zip') {
+          return http.Response.bytes(dummyPackageData, 200);
+        }
+        return http.Response('Not Found', 404);
+      });
+
+      final service = UpdateDownloadService(client: mockClient);
+
+      final downloadedPath = await service.downloadUpdate(
+        'https://github.com/maksim0-debug/Solaris/releases/download/v1.0.18/Solaris-Windows.zip',
+        '1.0.18',
+      );
+
+      final downloadedFile = File(downloadedPath);
+      expect(await downloadedFile.exists(), isTrue);
+      await downloadedFile.delete();
+    });
+
     test('finalizeDownload promotes .tmp file to .zip and getCachedUpdate locates it', () async {
       final service = UpdateDownloadService();
       final updatesDir = service.updatesDirectory;

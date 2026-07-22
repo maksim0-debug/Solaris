@@ -188,8 +188,8 @@ class PostUpdateService {
           final stat = await entity.stat();
           final age = now.difference(stat.modified);
 
-          // Immediate cleanup for empty/temporary folders or older than 24 hours
-          if (age.inHours >= 24 || isUpdaterFolder) {
+          // Cleanup temporary update folders older than 24 hours
+          if (age.inHours >= 24) {
             if (entity is Directory) {
               await entity.delete(recursive: true);
             } else if (entity is File) {

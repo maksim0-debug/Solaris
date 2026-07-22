@@ -118,12 +118,20 @@ class UpdateDownloadService {
 
     var response = await _client.send(request);
 
-    // Handle HTTP 301/302/307 redirects manually
+    // Handle HTTP redirects (301, 302, 303, 307, 308) manually with HTTPS and domain validation
     if (response.statusCode == 301 ||
         response.statusCode == 302 ||
-        response.statusCode == 307) {
+        response.statusCode == 303 ||
+        response.statusCode == 307 ||
+        response.statusCode == 308) {
       final redirectUrl = response.headers['location'];
       if (redirectUrl != null && redirectUrl.isNotEmpty) {
+        if (!_isTrustedSecureRedirect(redirectUrl)) {
+          throw HttpException(
+            'Unsecure or untrusted redirect blocked: $redirectUrl',
+            uri: Uri.parse(redirectUrl),
+          );
+        }
         request = http.Request('GET', Uri.parse(redirectUrl));
         request.headers['User-Agent'] = 'Solaris-App-Updater/1.0';
         response = await _client.send(request);
@@ -240,5 +248,21 @@ class UpdateDownloadService {
         name: 'UpdateDownloadService',
       );
     }
+  }
+
+  /// Validates that [redirectUrl] uses the HTTPS scheme and targets a trusted domain
+  /// (`github.com`, `*.githubusercontent.com`, `*.amazonaws.com`).
+  bool _isTrustedSecureRedirect(String redirectUrl) {
+    final uri = Uri.tryParse(redirectUrl);
+    if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) {
+      return false;
+    }
+    final host = uri.host.toLowerCase();
+    return host == 'github.com' ||
+        host.endsWith('.github.com') ||
+        host == 'githubusercontent.com' ||
+        host.endsWith('.githubusercontent.com') ||
+        host == 'amazonaws.com' ||
+        host.endsWith('.amazonaws.com');
   }
 }

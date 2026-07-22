@@ -172,29 +172,39 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
       // Phase: verifying
       state = state.copyWith(phase: UpdatePhase.verifying);
 
-      if (info.assetDigest != null && info.assetDigest!.isNotEmpty) {
-        final isValid = await downloadService.verifyFileIntegrity(
-          tmpFilePath,
-          info.assetDigest!,
-        );
-
-        if (!isValid) {
-          final tmpFile = File(tmpFilePath);
-          if (await tmpFile.exists()) {
-            await tmpFile.delete();
-          }
-          state = state.copyWith(
-            phase: UpdatePhase.error,
-            errorMessage:
-                'Integrity verification failed: downloaded file hash does not match expected',
-          );
-          return;
+      if (info.assetDigest == null || info.assetDigest!.isEmpty) {
+        final tmpFile = File(tmpFilePath);
+        if (await tmpFile.exists()) {
+          await tmpFile.delete();
         }
-      } else {
         developer.log(
-          'digest missing from API, integrity verification skipped',
+          'Integrity verification failed: SHA-256 digest is missing from release metadata',
           name: 'UpdateNotifier',
         );
+        state = state.copyWith(
+          phase: UpdatePhase.error,
+          errorMessage:
+              'Integrity verification failed: SHA-256 digest is missing from release metadata',
+        );
+        return;
+      }
+
+      final isValid = await downloadService.verifyFileIntegrity(
+        tmpFilePath,
+        info.assetDigest!,
+      );
+
+      if (!isValid) {
+        final tmpFile = File(tmpFilePath);
+        if (await tmpFile.exists()) {
+          await tmpFile.delete();
+        }
+        state = state.copyWith(
+          phase: UpdatePhase.error,
+          errorMessage:
+              'Integrity verification failed: downloaded file hash does not match expected',
+        );
+        return;
       }
 
       final finalZipPath = await downloadService.finalizeDownload(
@@ -292,7 +302,8 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
           mode: ProcessStartMode.detached,
         );
       } else {
-        _launchElevated(updaterTempPath, argsList.join(' '));
+        final formattedArgs = argsList.map((arg) => '"$arg"').join(' ');
+        _launchElevated(updaterTempPath, formattedArgs);
       }
 
       // Perform full graceful shutdown of all sub-systems before handing control over to updater.exe

@@ -106,7 +106,10 @@ class UpdateInfo {
         return null;
       }
 
-      final assetDigest = targetAsset['digest'] as String?;
+      var assetDigest = targetAsset['digest'] as String?;
+      if (assetDigest == null || assetDigest.isEmpty) {
+        assetDigest = _extractDigestFromBody(releaseNotes, targetAssetName);
+      }
 
       return UpdateInfo(
         version: cleanVersion,
@@ -120,6 +123,21 @@ class UpdateInfo {
     } catch (_) {
       return null;
     }
+  }
+
+  /// Extracts a 64-character hex SHA-256 hash strictly associated with [targetAssetName] from [body] if present.
+  static String? _extractDigestFromBody(String body, String targetAssetName) {
+    if (body.isEmpty || targetAssetName.isEmpty) return null;
+    final escapedName = RegExp.escape(targetAssetName);
+    final regExp = RegExp(
+      '$escapedName[\\s:=]+(?:sha-?256[\\s:=]+)?([a-fA-F0-9]{64})',
+      caseSensitive: false,
+    );
+    final match = regExp.firstMatch(body);
+    if (match != null) {
+      return 'sha256:${match.group(1)!.toLowerCase()}';
+    }
+    return null;
   }
 
   Map<String, dynamic> toJson() {

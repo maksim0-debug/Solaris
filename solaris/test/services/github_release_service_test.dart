@@ -134,5 +134,62 @@ void main() {
       );
       expect(phishingDomainInfo.releasePageUrl, equals('https://github.com/maksim0-debug/Solaris/releases/tag/v1.0.18'));
     });
+
+    test('UpdateInfo.fromGithubRelease extracts SHA-256 bound to targetAssetName from release body', () {
+      final jsonResponse = {
+        'tag_name': 'v1.0.18',
+        'body': 'Release notes...\nSolaris-Windows.zip SHA256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\nThanks!',
+        'published_at': '2026-07-22T00:00:00Z',
+        'assets': [
+          {
+            'name': 'Solaris-Windows.zip',
+            'browser_download_url': 'https://objects.githubusercontent.com/Solaris-Windows.zip',
+            'size': 1024,
+          }
+        ]
+      };
+
+      final info = UpdateInfo.fromGithubRelease(jsonResponse);
+      expect(info, isNotNull);
+      expect(info!.assetDigest, equals('sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'));
+    });
+
+    test('UpdateInfo.fromGithubRelease ignores SHA-256 bound to other file names in body', () {
+      final jsonResponse = {
+        'tag_name': 'v1.0.18',
+        'body': 'Release notes...\nSolaris-Linux.tar.gz SHA256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\nThanks!',
+        'published_at': '2026-07-22T00:00:00Z',
+        'assets': [
+          {
+            'name': 'Solaris-Windows.zip',
+            'browser_download_url': 'https://objects.githubusercontent.com/Solaris-Windows.zip',
+            'size': 1024,
+          }
+        ]
+      };
+
+      final info = UpdateInfo.fromGithubRelease(jsonResponse);
+      expect(info, isNotNull);
+      expect(info!.assetDigest, isNull);
+    });
+
+    test('UpdateInfo.fromGithubRelease leaves assetDigest null when missing from both asset and body', () {
+      final jsonResponse = {
+        'tag_name': 'v1.0.18',
+        'body': 'Just release notes without hash',
+        'published_at': '2026-07-22T00:00:00Z',
+        'assets': [
+          {
+            'name': 'Solaris-Windows.zip',
+            'browser_download_url': 'https://objects.githubusercontent.com/Solaris-Windows.zip',
+            'size': 1024,
+          }
+        ]
+      };
+
+      final info = UpdateInfo.fromGithubRelease(jsonResponse);
+      expect(info, isNotNull);
+      expect(info!.assetDigest, isNull);
+    });
   });
 }
