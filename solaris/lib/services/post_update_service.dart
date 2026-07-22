@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
@@ -216,6 +217,3 @@ class PostUpdateService {
     }
   }
 }
-
-/// Helper function to execute Future without waiting.
-void unawaited(Future<void> future) {}

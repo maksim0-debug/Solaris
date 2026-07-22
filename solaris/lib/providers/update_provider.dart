@@ -295,15 +295,26 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
         backupDir,
       ];
 
+      bool launched = false;
       if (hasWriteAccess) {
         await Process.start(
           updaterTempPath,
           argsList,
           mode: ProcessStartMode.detached,
         );
+        launched = true;
       } else {
         final formattedArgs = argsList.map((arg) => '"$arg"').join(' ');
-        _launchElevated(updaterTempPath, formattedArgs);
+        launched = _launchElevated(updaterTempPath, formattedArgs);
+      }
+
+      if (!launched) {
+        state = state.copyWith(
+          phase: UpdatePhase.error,
+          errorMessage:
+              'User cancelled admin elevation (UAC) or update execution failed.',
+        );
+        return;
       }
 
       // Perform full graceful shutdown of all sub-systems before handing control over to updater.exe
@@ -324,10 +335,11 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
   }
 
   /// Helper to launch executable with UAC admin elevation using Win32 ShellExecuteEx.
-  void _launchElevated(String executable, String arguments) {
-    if (!Platform.isWindows) return;
+  /// Returns `true` if process was launched successfully, `false` otherwise (e.g. UAC cancelled).
+  bool _launchElevated(String executable, String arguments) {
+    if (!Platform.isWindows) return false;
     try {
-      using((arena) {
+      return using((arena) {
         final pExec = executable.toNativeUtf16(allocator: arena);
         final pArgs = arguments.toNativeUtf16(allocator: arena);
         final pVerb = 'runas'.toNativeUtf16(allocator: arena);
@@ -340,13 +352,14 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
           ..ref.lpParameters = pArgs
           ..ref.nShow = SW_SHOW;
 
-        ShellExecuteEx(sei);
+        return ShellExecuteEx(sei) != 0;
       });
     } catch (e) {
       developer.log(
         'Error launching elevated process: $e',
         name: 'UpdateNotifier',
       );
+      return false;
     }
   }
 
