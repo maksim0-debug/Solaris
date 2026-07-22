@@ -7,7 +7,9 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:win32/win32.dart';
 
+import '../env/env.dart';
 import '../models/update_status.dart';
+import '../providers.dart';
 import '../services/app_shutdown_service.dart';
 import '../services/github_release_service.dart';
 import '../services/update_download_service.dart';
@@ -52,6 +54,22 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
     String? currentVersionOverride,
   }) async {
     if (!isManual) {
+      try {
+        final settingsMap = await ref.read(settingsProvider.future);
+        final isAutoUpdateEnabled =
+            settingsMap['all']?.isAutoUpdateEnabled ?? Env.isOfficialRelease;
+        if (!isAutoUpdateEnabled) {
+          developer.log(
+            'Skipping automatic update check because auto-update is disabled in settings.',
+            name: 'UpdateNotifier',
+          );
+          return;
+        }
+      } catch (e) {
+        developer.log('Failed to read auto-update setting: $e', name: 'UpdateNotifier');
+        return;
+      }
+
       try {
         final prefs = await SharedPreferences.getInstance();
         final lastCheckEpoch = prefs.getInt(_lastCheckPrefKey) ?? 0;

@@ -2729,6 +2729,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'An error occurred while applying the update.\nDetails: {reason}'**
   String updateFailedBody(Object reason);
+
+  /// No description provided for @autoUpdatesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic updates'**
+  String get autoUpdatesTitle;
+
+  /// No description provided for @autoUpdatesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically check for updates on startup and in the background'**
+  String get autoUpdatesSubtitle;
+
+  /// No description provided for @tags_auto_updates.
+  ///
+  /// In en, this message translates to:
+  /// **'updates,autoupdate,version,github'**
+  String get tags_auto_updates;
+
+  /// No description provided for @customBuildNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom build: automatic update check is disabled by default'**
+  String get customBuildNotice;
+
+  /// No description provided for @customBuildWarningTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Warning'**
+  String get customBuildWarningTitle;
+
+  /// No description provided for @customBuildWarningBody.
+  ///
+  /// In en, this message translates to:
+  /// **'When updating from a custom build to an official release, your saved API keys (Mapbox, WeatherAPI, Google Fit) may be reset. You will need to enter them again in Settings upon next launch.'**
+  String get customBuildWarningBody;
+
+  /// No description provided for @continueButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continueButton;
+
+  /// No description provided for @dialogOk.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get dialogOk;
 }
 
 class _AppLocalizationsDelegate

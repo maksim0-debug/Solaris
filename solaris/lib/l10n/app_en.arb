@@ -701,5 +701,13 @@
   "updateRolledBackTitle": "Update Rolled Back",
   "updateRolledBackBody": "Update failed. Application was restored to the previous version.\nReason: {reason}",
   "updateFailedTitle": "Update Error",
-  "updateFailedBody": "An error occurred while applying the update.\nDetails: {reason}"
+  "updateFailedBody": "An error occurred while applying the update.\nDetails: {reason}",
+  "autoUpdatesTitle": "Automatic updates",
+  "autoUpdatesSubtitle": "Automatically check for updates on startup and in the background",
+  "tags_auto_updates": "updates,autoupdate,version,github",
+  "customBuildNotice": "Custom build: automatic update check is disabled by default",
+  "customBuildWarningTitle": "Update Warning",
+  "customBuildWarningBody": "When updating from a custom build to an official release, your saved API keys (Mapbox, WeatherAPI, Google Fit) may be reset. You will need to enter them again in Settings upon next launch.",
+  "continueButton": "Continue",
+  "dialogOk": "OK"
 }

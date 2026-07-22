@@ -701,5 +701,13 @@
   "updateRolledBackTitle": "Откат обновления",
   "updateRolledBackBody": "Обновление не удалось. Приложение восстановлено до предыдущей версии.\nПричина: {reason}",
   "updateFailedTitle": "Ошибка обновления",
-  "updateFailedBody": "Произошла ошибка при установке обновления.\nДетали: {reason}"
+  "updateFailedBody": "Произошла ошибка при установке обновления.\nДетали: {reason}",
+  "autoUpdatesTitle": "Автоматические обновления",
+  "autoUpdatesSubtitle": "Автоматически проверять наличие обновлений при запуске и в фоновом режиме",
+  "tags_auto_updates": "обновления,автообновления,версия,github,updates,autoupdate",
+  "customBuildNotice": "Пользовательская сборка: автоматическая проверка отключена по умолчанию",
+  "customBuildWarningTitle": "Предупреждение об обновлении",
+  "customBuildWarningBody": "При обновлении с неофициальной версии на официальную вы можете потерять сохраненные API-ключи (Mapbox, WeatherAPI, Google Fit). При следующем запуске их придется ввести заново.",
+  "continueButton": "Продолжить",
+  "dialogOk": "ОК"
 }

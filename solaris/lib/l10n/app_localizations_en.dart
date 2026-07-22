@@ -1528,4 +1528,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String updateFailedBody(Object reason) {
     return 'An error occurred while applying the update.\nDetails: $reason';
   }
+
+  @override
+  String get autoUpdatesTitle => 'Automatic updates';
+
+  @override
+  String get autoUpdatesSubtitle =>
+      'Automatically check for updates on startup and in the background';
+
+  @override
+  String get tags_auto_updates => 'updates,autoupdate,version,github';
+
+  @override
+  String get customBuildNotice =>
+      'Custom build: automatic update check is disabled by default';
+
+  @override
+  String get customBuildWarningTitle => 'Update Warning';
+
+  @override
+  String get customBuildWarningBody =>
+      'When updating from a custom build to an official release, your saved API keys (Mapbox, WeatherAPI, Google Fit) may be reset. You will need to enter them again in Settings upon next launch.';
+
+  @override
+  String get continueButton => 'Continue';
+
+  @override
+  String get dialogOk => 'OK';
 }

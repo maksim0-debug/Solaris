@@ -100,12 +100,14 @@ class SettingsState {
   final String customMapboxToken;
   final String customGoogleClientId;
   final String customGoogleClientSecret;
+  final bool isAutoUpdateEnabled;
 
   SettingsState({
     this.activePreset = PresetType.bright,
     Map<PresetType, List<FlSpot>>? curvesMap,
     this.curveSharpness = 1.0,
     this.isAutorunEnabled = true,
+    bool? isAutoUpdateEnabled,
     this.isWeatherAdjustmentEnabled = true,
     this.isWeatherTemperatureAdjustmentEnabled = true,
     this.isAutoBrightnessEnabled = true,
@@ -178,7 +180,8 @@ class SettingsState {
     this.customMapboxToken = "",
     this.customGoogleClientId = "",
     this.customGoogleClientSecret = "",
-  }) : curvesMap = curvesMap ?? PresetConstants.getAllDefaults(),
+  }) : isAutoUpdateEnabled = isAutoUpdateEnabled ?? Env.isOfficialRelease,
+       curvesMap = curvesMap ?? PresetConstants.getAllDefaults(),
        presetOrder =
            presetOrder ??
            [
@@ -230,6 +233,7 @@ class SettingsState {
     ),
     'curveSharpness': curveSharpness,
     'isAutorunEnabled': isAutorunEnabled,
+    'isAutoUpdateEnabled': isAutoUpdateEnabled,
     'isWeatherAdjustmentEnabled': isWeatherAdjustmentEnabled,
     'isWeatherTemperatureAdjustmentEnabled': isWeatherTemperatureAdjustmentEnabled,
     'isAutoBrightnessEnabled': isAutoBrightnessEnabled,
@@ -335,6 +339,7 @@ class SettingsState {
       curvesMap: curvesMap,
       curveSharpness: (json['curveSharpness'] as num?)?.toDouble() ?? 1.0,
       isAutorunEnabled: json['isAutorunEnabled'] as bool? ?? true,
+      isAutoUpdateEnabled: json['isAutoUpdateEnabled'] as bool? ?? Env.isOfficialRelease,
       isWeatherAdjustmentEnabled:
           json['isWeatherAdjustmentEnabled'] as bool? ?? true,
       isWeatherTemperatureAdjustmentEnabled:
@@ -475,6 +480,7 @@ class SettingsState {
     Map<PresetType, List<FlSpot>>? curvesMap,
     double? curveSharpness,
     bool? isAutorunEnabled,
+    bool? isAutoUpdateEnabled,
     bool? isWeatherAdjustmentEnabled,
     bool? isWeatherTemperatureAdjustmentEnabled,
     bool? isAutoBrightnessEnabled,
@@ -545,6 +551,7 @@ class SettingsState {
       curvesMap: curvesMap ?? this.curvesMap,
       curveSharpness: curveSharpness ?? this.curveSharpness,
       isAutorunEnabled: isAutorunEnabled ?? this.isAutorunEnabled,
+      isAutoUpdateEnabled: isAutoUpdateEnabled ?? this.isAutoUpdateEnabled,
       isWeatherAdjustmentEnabled:
           isWeatherAdjustmentEnabled ?? this.isWeatherAdjustmentEnabled,
       isWeatherTemperatureAdjustmentEnabled:

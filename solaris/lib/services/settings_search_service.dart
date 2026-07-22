@@ -171,6 +171,14 @@ class SettingsSearchService {
         anchorId: 'autorun',
       ),
       SettingItem(
+        id: 'auto_updates',
+        title: l10n.autoUpdatesTitle,
+        description: l10n.autoUpdatesSubtitle,
+        tags: _splitTags(l10n.tags_auto_updates),
+        screen: AppScreen.settings,
+        anchorId: 'updates',
+      ),
+      SettingItem(
         id: 'weather',
         title: l10n.weatherAdjustmentTitle,
         description: l10n.weatherAdjustmentSubtitle,

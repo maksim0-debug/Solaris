@@ -1353,6 +1353,13 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     AutorunService.setEnabled(enabled, startupMode);
   }
 
+  void updateAutoUpdateEnabled(bool enabled) {
+    _updateSettings(
+      {'all'}, // AutoUpdate is globally replicated
+      (s) => s.copyWith(isAutoUpdateEnabled: enabled),
+    );
+  }
+
   void updateStartupMode(StartupMode mode) {
     ref.read(sharedPreferencesProvider)?.setString('startup_mode', mode.name);
     _updateSettings({'all'}, (s) => s.copyWith(startupMode: mode));

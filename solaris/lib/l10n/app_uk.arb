@@ -699,5 +699,13 @@
   "updateRolledBackTitle": "Відкат оновлення",
   "updateRolledBackBody": "Оновлення не вдалося. Застосунок відновлено до попередньої версії.\nПричина: {reason}",
   "updateFailedTitle": "Помилка оновлення",
-  "updateFailedBody": "Сталася помилка під час встановлення оновлення.\nДеталі: {reason}"
+  "updateFailedBody": "Сталася помилка під час встановлення оновлення.\nДеталі: {reason}",
+  "autoUpdatesTitle": "Автоматичні оновлення",
+  "autoUpdatesSubtitle": "Автоматично перевіряти наявність оновлень під час запуску та у фоновому режимі",
+  "tags_auto_updates": "оновлення,автооновлення,версія,github,updates",
+  "customBuildNotice": "Власна збірка: автоматичну перевірку вимкнено за замовчуванням",
+  "customBuildWarningTitle": "Попередження про оновлення",
+  "customBuildWarningBody": "При оновленні з власної збірки на офіційну версію ви можете втратити збережені API-ключі (Mapbox, WeatherAPI, Google Fit). Під час наступного запуску їх доведеться ввести заново.",
+  "continueButton": "Продовжити",
+  "dialogOk": "ОК"
 }

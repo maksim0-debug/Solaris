@@ -5,11 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../env/env.dart';
 import '../l10n/app_localizations.dart';
 import '../models/update_info.dart';
 import '../models/update_status.dart';
 import '../providers/app_info_provider.dart';
 import '../providers/update_provider.dart';
+import 'custom_build_warning_dialog.dart';
 
 /// Interactive update status widget integrated into the Dashboard status bar.
 ///
@@ -280,6 +282,20 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
     }
   }
 
+  void _triggerManualCheck(BuildContext context, WidgetRef ref) {
+    if (!Env.isOfficialRelease) {
+      showCustomBuildUpdateWarningDialog(
+        context,
+        isConfirmation: true,
+        onConfirm: () {
+          ref.read(updateProvider.notifier).checkForUpdate(isManual: true);
+        },
+      );
+    } else {
+      ref.read(updateProvider.notifier).checkForUpdate(isManual: true);
+    }
+  }
+
   void _showIdleDialog(
     BuildContext context,
     WidgetRef ref,
@@ -326,7 +342,7 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
           ElevatedButton.icon(
             onPressed: () {
               Navigator.pop(dialogContext);
-              ref.read(updateProvider.notifier).checkForUpdate(isManual: true);
+              _triggerManualCheck(context, ref);
             },
             icon: const Icon(LucideIcons.refreshCw, size: 14),
             label: Text(l10n?.updateCheckForUpdates ?? 'Check for updates'),
@@ -536,7 +552,7 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
           ElevatedButton.icon(
             onPressed: () {
               Navigator.pop(dialogContext);
-              ref.read(updateProvider.notifier).checkForUpdate(isManual: true);
+              _triggerManualCheck(context, ref);
             },
             icon: const Icon(LucideIcons.refreshCw, size: 14),
             label: Text(l10n?.updateRetry ?? 'Retry'),

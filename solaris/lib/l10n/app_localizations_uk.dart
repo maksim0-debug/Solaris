@@ -1529,4 +1529,32 @@ class AppLocalizationsUk extends AppLocalizations {
   String updateFailedBody(Object reason) {
     return 'Сталася помилка під час встановлення оновлення.\nДеталі: $reason';
   }
+
+  @override
+  String get autoUpdatesTitle => 'Автоматичні оновлення';
+
+  @override
+  String get autoUpdatesSubtitle =>
+      'Автоматично перевіряти наявність оновлень під час запуску та у фоновому режимі';
+
+  @override
+  String get tags_auto_updates =>
+      'оновлення,автооновлення,версія,github,updates';
+
+  @override
+  String get customBuildNotice =>
+      'Власна збірка: автоматичну перевірку вимкнено за замовчуванням';
+
+  @override
+  String get customBuildWarningTitle => 'Попередження про оновлення';
+
+  @override
+  String get customBuildWarningBody =>
+      'При оновленні з власної збірки на офіційну версію ви можете втратити збережені API-ключі (Mapbox, WeatherAPI, Google Fit). Під час наступного запуску їх доведеться ввести заново.';
+
+  @override
+  String get continueButton => 'Продовжити';
+
+  @override
+  String get dialogOk => 'ОК';
 }

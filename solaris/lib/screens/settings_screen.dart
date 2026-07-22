@@ -16,6 +16,7 @@ import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'dart:ui';
 import 'package:solaris/widgets/deep_link_target.dart';
+import 'package:solaris/widgets/custom_build_warning_dialog.dart';
 import 'package:solaris/screens/privacy_policy_screen.dart';
 import 'package:solaris/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -40,6 +41,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     'schedule_view': GlobalKey<DeepLinkTargetState>(),
     'game_mode': GlobalKey<DeepLinkTargetState>(),
     'api_keys': GlobalKey<DeepLinkTargetState>(),
+    'updates': GlobalKey<DeepLinkTargetState>(),
   };
 
   @override
@@ -277,7 +279,124 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 24),
 
-
+          // Application Updates Settings
+          DeepLinkTarget(
+            key: _anchorKeys['updates'],
+            id: 'updates',
+            child: GlassCard(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF38BDF8).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          LucideIcons.refreshCw,
+                          color: Color(0xFF38BDF8),
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.autoUpdatesTitle,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              l10n.autoUpdatesSubtitle,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white.withOpacity(0.5),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: settingsAsync.maybeWhen(
+                          data: (map) => map['all']?.isAutoUpdateEnabled ?? Env.isOfficialRelease,
+                          orElse: () => Env.isOfficialRelease,
+                        ),
+                        onChanged: (val) {
+                          if (val && !Env.isOfficialRelease) {
+                            showCustomBuildUpdateWarningDialog(
+                              context,
+                              isConfirmation: true,
+                              onConfirm: () {
+                                ref.read(settingsProvider.notifier).updateAutoUpdateEnabled(true);
+                              },
+                            );
+                          } else {
+                            ref.read(settingsProvider.notifier).updateAutoUpdateEnabled(val);
+                          }
+                        },
+                        activeColor: const Color(0xFFFDBA74),
+                      ),
+                    ],
+                  ),
+                  if (!Env.isOfficialRelease &&
+                      !(settingsAsync.maybeWhen(
+                        data: (map) => map['all']?.isAutoUpdateEnabled ?? false,
+                        orElse: () => false,
+                      ))) ...[
+                    const SizedBox(height: 12),
+                    MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: () => showCustomBuildUpdateWarningDialog(
+                          context,
+                          isConfirmation: false,
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF59E0B).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: const Color(0xFFF59E0B).withOpacity(0.3),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                LucideIcons.info,
+                                color: Color(0xFFF59E0B),
+                                size: 16,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  l10n.customBuildNotice,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFFFDBA74),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
 
           // Weather Settings
           DeepLinkTarget(

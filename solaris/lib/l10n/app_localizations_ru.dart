@@ -1531,4 +1531,32 @@ class AppLocalizationsRu extends AppLocalizations {
   String updateFailedBody(Object reason) {
     return 'Произошла ошибка при установке обновления.\nДетали: $reason';
   }
+
+  @override
+  String get autoUpdatesTitle => 'Автоматические обновления';
+
+  @override
+  String get autoUpdatesSubtitle =>
+      'Автоматически проверять наличие обновлений при запуске и в фоновом режиме';
+
+  @override
+  String get tags_auto_updates =>
+      'обновления,автообновления,версия,github,updates,autoupdate';
+
+  @override
+  String get customBuildNotice =>
+      'Пользовательская сборка: автоматическая проверка отключена по умолчанию';
+
+  @override
+  String get customBuildWarningTitle => 'Предупреждение об обновлении';
+
+  @override
+  String get customBuildWarningBody =>
+      'При обновлении с неофициальной версии на официальную вы можете потерять сохраненные API-ключи (Mapbox, WeatherAPI, Google Fit). При следующем запуске их придется ввести заново.';
+
+  @override
+  String get continueButton => 'Продолжить';
+
+  @override
+  String get dialogOk => 'ОК';
 }
