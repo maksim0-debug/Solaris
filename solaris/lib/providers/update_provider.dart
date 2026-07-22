@@ -125,7 +125,7 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
       );
       state = state.copyWith(
         phase: UpdatePhase.error,
-        errorMessage: 'Ошибка при проверке обновлений: $e',
+        errorMessage: 'Error checking for updates: $e',
       );
     }
   }
@@ -140,10 +140,15 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
     // Minimum required disk space: 100 MB
     const minBytes = 100 * 1024 * 1024;
     final tempDir = downloadService.updatesDirectory.path;
-    if (!downloadService.hasEnoughDiskSpace(tempDir, minBytes)) {
+    final appExecutable = Platform.resolvedExecutable;
+    final appDir = File(appExecutable).parent.path;
+
+    if (!downloadService.hasEnoughDiskSpace(tempDir, minBytes) ||
+        !downloadService.hasEnoughDiskSpace(appDir, minBytes)) {
       state = state.copyWith(
         phase: UpdatePhase.error,
-        errorMessage: 'Недостаточно свободного места на диске (требуется минимум 100 МБ)',
+        errorMessage:
+            'Insufficient free disk space (minimum 100 MB required for temporary directory and target drive)',
       );
       return;
     }
@@ -181,13 +186,13 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
           state = state.copyWith(
             phase: UpdatePhase.error,
             errorMessage:
-                'Ошибка целостности: хеш скачанного файла не совпадает с ожидаемым',
+                'Integrity verification failed: downloaded file hash does not match expected',
           );
           return;
         }
       } else {
         developer.log(
-          'digest отсутствует в API, верификация пропущена',
+          'digest missing from API, integrity verification skipped',
           name: 'UpdateNotifier',
         );
       }
@@ -214,7 +219,7 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
         phase: UpdatePhase.error,
         errorMessage: e is InsufficientDiskSpaceException
             ? e.message
-            : 'Ошибка при скачивании обновления: $e',
+            : 'Error downloading update: $e',
       );
     }
   }
@@ -252,7 +257,7 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
         await sourceFile.copy(updaterTempPath);
       } else {
         throw Exception(
-          'Вспомогательный исполняемый файл updater.exe не найден в $updaterSource',
+          'Helper executable updater.exe not found at $updaterSource',
         );
       }
 
@@ -302,7 +307,7 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
       );
       state = state.copyWith(
         phase: UpdatePhase.error,
-        errorMessage: 'Не удалось запустить установку обновления: $e',
+        errorMessage: 'Failed to launch update installation: $e',
       );
     }
   }

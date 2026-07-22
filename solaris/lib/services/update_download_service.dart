@@ -108,7 +108,7 @@ class UpdateDownloadService {
     const minRequiredBytes = 100 * 1024 * 1024;
     if (!hasEnoughDiskSpace(updatesDir.path, minRequiredBytes)) {
       throw InsufficientDiskSpaceException(
-        'Недостаточно свободного места на диске (требуется минимум 100 МБ)',
+        'Insufficient free disk space (minimum 100 MB required)',
       );
     }
 
@@ -132,7 +132,7 @@ class UpdateDownloadService {
 
     if (response.statusCode != 200) {
       throw HttpException(
-        'HTTP ${response.statusCode}: Не удалось скачать файл обновления',
+        'HTTP ${response.statusCode}: Failed to download update file',
         uri: Uri.parse(url),
       );
     }
@@ -167,7 +167,7 @@ class UpdateDownloadService {
         await tempFile.delete();
       }
       throw HttpException(
-        'Размер скачанного файла ($downloadedBytes B) не совпадает с ожидаемым ($expectedSize B)',
+        'Downloaded file size ($downloadedBytes B) does not match expected ($expectedSize B)',
       );
     }
 

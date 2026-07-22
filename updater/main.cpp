@@ -299,6 +299,10 @@ bool IsPathSafe(const fs::path& targetDir, const fs::path& entryRelativePath) {
         std::wstring strFull = fullPath.wstring();
         std::wstring strTarget = canonicalTarget.wstring();
 
+        if (!strTarget.empty() && strTarget.back() != L'\\' && strTarget.back() != L'/') {
+            strTarget += L'\\';
+        }
+
         if (strFull.length() < strTarget.length()) return false;
         std::wstring prefix = strFull.substr(0, strTarget.length());
         return (_wcsnicmp(prefix.c_str(), strTarget.c_str(), strTarget.length()) == 0);
@@ -472,14 +476,21 @@ int wmain(int argc, wchar_t* argv[]) {
             break;
         }
 
-        // Convert filename from UTF-8 to UTF-16
-        wchar_t wEntry[512] = { 0 };
-        int wLen = MultiByteToWideChar(CP_UTF8, 0, stat.m_filename, -1, wEntry, 512);
+        // Convert filename from UTF-8 to UTF-16 using dynamic buffer sizing
+        int reqLen = MultiByteToWideChar(CP_UTF8, 0, stat.m_filename, -1, NULL, 0);
+        if (reqLen <= 0) {
+            extractionOk = false;
+            extractErrorReason = "UTF-8 path conversion error (invalid length)";
+            break;
+        }
+        std::vector<wchar_t> wEntryBuf(reqLen);
+        int wLen = MultiByteToWideChar(CP_UTF8, 0, stat.m_filename, -1, wEntryBuf.data(), reqLen);
         if (wLen <= 0) {
             extractionOk = false;
             extractErrorReason = "UTF-8 path conversion error";
             break;
         }
+        wchar_t* wEntry = wEntryBuf.data();
 
         // Replace '/' with '\'
         for (int k = 0; wEntry[k] != L'\0'; ++k) {

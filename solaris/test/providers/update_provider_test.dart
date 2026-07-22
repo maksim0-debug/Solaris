@@ -169,7 +169,7 @@ void main() {
 
       final state = container.read(updateProvider);
       expect(state.phase, equals(UpdatePhase.error));
-      expect(state.errorMessage, contains('хеш скачанного файла не совпадает с ожидаемым'));
+      expect(state.errorMessage, contains('Integrity verification failed'));
     });
 
     test('dismissUpdate and resetError reset state back to idle', () async {

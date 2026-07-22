@@ -149,6 +149,12 @@ void main(List<String> args) {
           .read(postUpdateResultProvider.notifier)
           .setResult(postUpdateResult);
 
+      // Automatic update check on cold startup & 24-hour periodic timer
+      unawaited(container.read(updateProvider.notifier).checkForUpdate());
+      Timer.periodic(const Duration(hours: 24), (_) {
+        container.read(updateProvider.notifier).checkForUpdate();
+      });
+
       runApp(
         UncontrolledProviderScope(container: container, child: const SolarisApp()),
       );
