@@ -2670,6 +2670,12 @@ abstract class AppLocalizations {
   /// **'File size: {size}'**
   String updateFileSize(Object size);
 
+  /// No description provided for @updateViewOnGithub.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub Release'**
+  String get updateViewOnGithub;
+
   /// No description provided for @updateRestartWarning.
   ///
   /// In en, this message translates to:

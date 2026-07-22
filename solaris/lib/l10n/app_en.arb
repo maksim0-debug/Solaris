@@ -692,6 +692,7 @@
   "updateError": "Update error ⚠",
   "updateReleaseNotes": "Release Notes",
   "updateFileSize": "File size: {size}",
+  "updateViewOnGithub": "GitHub Release",
   "updateRestartWarning": "Application will restart to apply the update.",
   "updateCheckForUpdates": "Check for updates",
   "updateChecking": "Checking for updates...",

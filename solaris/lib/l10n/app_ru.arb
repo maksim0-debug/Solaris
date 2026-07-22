@@ -692,6 +692,7 @@
   "updateError": "Ошибка обновления ⚠",
   "updateReleaseNotes": "Что нового",
   "updateFileSize": "Размер: {size}",
+  "updateViewOnGithub": "Релиз на GitHub",
   "updateRestartWarning": "Приложение будет перезапущено для установки обновления.",
   "updateCheckForUpdates": "Проверить обновления",
   "updateChecking": "Проверка обновлений...",

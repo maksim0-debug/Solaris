@@ -1,7 +1,9 @@
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/update_info.dart';
@@ -218,6 +220,36 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
     }
   }
 
+  Future<void> _launchExternalUrl(String url) async {
+    try {
+      final uri = Uri.parse(url);
+      if (uri.scheme == 'https' || uri.scheme == 'http') {
+        final launched = await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+        if (!launched) {
+          developer.log(
+            'Could not launch URL in external browser: $url',
+            name: 'UpdateStatusWidget',
+          );
+        }
+      } else {
+        developer.log(
+          'Rejected non-HTTP/HTTPS URL scheme: $url',
+          name: 'UpdateStatusWidget',
+        );
+      }
+    } catch (e, stackTrace) {
+      developer.log(
+        'Error launching external URL ($url): $e',
+        name: 'UpdateStatusWidget',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
   void _handleTap(
     BuildContext context,
     WidgetRef ref,
@@ -275,6 +307,15 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
           ],
         ),
         actions: [
+          TextButton.icon(
+            onPressed: () => _launchExternalUrl(UpdateInfo.defaultReleasesUrl),
+            icon: const Icon(LucideIcons.externalLink, size: 12),
+            label: Text(l10n?.updateViewOnGithub ?? 'GitHub Releases'),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white60,
+            ),
+          ),
+          const Spacer(),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
             child: Text(
@@ -337,6 +378,18 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
                   side: BorderSide.none,
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                 ),
+                const SizedBox(width: 8),
+                ActionChip(
+                  avatar: const Icon(LucideIcons.externalLink, size: 12, color: Colors.orangeAccent),
+                  label: Text(
+                    l10n?.updateViewOnGithub ?? 'GitHub Release',
+                    style: const TextStyle(fontSize: 11, color: Colors.white70),
+                  ),
+                  backgroundColor: Colors.white.withOpacity(0.08),
+                  side: BorderSide.none,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  onPressed: () => _launchExternalUrl(updateInfo.releasePageUrl),
+                ),
               ],
             ),
             const SizedBox(height: 14),
@@ -377,7 +430,6 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
           TextButton(
             onPressed: () {
               Navigator.pop(dialogContext);
-              ref.read(updateProvider.notifier).dismissUpdate();
             },
             child: Text(
               l10n?.updateLater ?? 'Later',

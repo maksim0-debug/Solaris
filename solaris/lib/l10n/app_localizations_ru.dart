@@ -1496,6 +1496,9 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get updateViewOnGithub => 'Релиз на GitHub';
+
+  @override
   String get updateRestartWarning =>
       'Приложение будет перезапущено для установки обновления.';
 

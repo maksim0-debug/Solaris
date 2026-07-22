@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:solaris/models/update_info.dart';
 import 'package:solaris/services/github_release_service.dart';
 
 void main() {
@@ -100,6 +101,38 @@ void main() {
       final updateInfo = await service.checkForUpdate('1.0.17');
 
       expect(updateInfo, isNull);
+    });
+
+    test('UpdateInfo.releasePageUrl validates github.com domain and scheme', () {
+      final validInfo = UpdateInfo(
+        version: '1.0.18',
+        downloadUrl: 'https://example.com/zip',
+        releaseNotes: 'Notes',
+        publishedAt: DateTime.now(),
+        assetSize: 100,
+        htmlUrl: 'https://github.com/maksim0-debug/Solaris/releases/tag/v1.0.18',
+      );
+      expect(validInfo.releasePageUrl, equals('https://github.com/maksim0-debug/Solaris/releases/tag/v1.0.18'));
+
+      final maliciousSchemeInfo = UpdateInfo(
+        version: '1.0.18',
+        downloadUrl: 'https://example.com/zip',
+        releaseNotes: 'Notes',
+        publishedAt: DateTime.now(),
+        assetSize: 100,
+        htmlUrl: 'file:///C:/Windows/system32/cmd.exe',
+      );
+      expect(maliciousSchemeInfo.releasePageUrl, equals('https://github.com/maksim0-debug/Solaris/releases/tag/v1.0.18'));
+
+      final phishingDomainInfo = UpdateInfo(
+        version: '1.0.18',
+        downloadUrl: 'https://example.com/zip',
+        releaseNotes: 'Notes',
+        publishedAt: DateTime.now(),
+        assetSize: 100,
+        htmlUrl: 'https://phishing-github.com/malicious/tag',
+      );
+      expect(phishingDomainInfo.releasePageUrl, equals('https://github.com/maksim0-debug/Solaris/releases/tag/v1.0.18'));
     });
   });
 }

@@ -1493,6 +1493,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get updateViewOnGithub => 'GitHub Release';
+
+  @override
   String get updateRestartWarning =>
       'Application will restart to apply the update.';
 

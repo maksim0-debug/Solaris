@@ -21,6 +21,9 @@ class UpdateInfo {
   /// Optional SHA-256 digest from GitHub API (e.g. "sha256:af2b3c4d...").
   final String? assetDigest;
 
+  /// Direct URL to GitHub Release page (e.g. "https://github.com/maksim0-debug/Solaris/releases/tag/v1.0.18").
+  final String? htmlUrl;
+
   const UpdateInfo({
     required this.version,
     required this.downloadUrl,
@@ -28,7 +31,33 @@ class UpdateInfo {
     required this.publishedAt,
     required this.assetSize,
     this.assetDigest,
+    this.htmlUrl,
   });
+
+  /// Default base URL for GitHub Releases repository.
+  static const String defaultReleasesUrl =
+      'https://github.com/maksim0-debug/Solaris/releases';
+
+  /// Generates the safe GitHub Release tag URL for a specific version.
+  static String getReleaseTagUrl(String version) =>
+      '$defaultReleasesUrl/tag/v$version';
+
+  /// Returns a validated and sanitized release URL on GitHub.
+  ///
+  /// Validates that [htmlUrl] is an HTTP/HTTPS URL belonging to the `github.com` domain.
+  /// If invalid, unsafe, or null, falls back to [getReleaseTagUrl].
+  String get releasePageUrl {
+    if (htmlUrl != null && htmlUrl!.isNotEmpty) {
+      try {
+        final uri = Uri.parse(htmlUrl!);
+        if ((uri.scheme == 'https' || uri.scheme == 'http') &&
+            (uri.host == 'github.com' || uri.host.endsWith('.github.com'))) {
+          return htmlUrl!;
+        }
+      } catch (_) {}
+    }
+    return getReleaseTagUrl(version);
+  }
 
   /// Creates an [UpdateInfo] instance from GitHub Release API JSON response.
   ///
@@ -52,6 +81,8 @@ class UpdateInfo {
       final publishedAt = publishedAtStr != null
           ? DateTime.tryParse(publishedAtStr) ?? DateTime.now()
           : DateTime.now();
+
+      final htmlUrl = json['html_url'] as String?;
 
       final assets = json['assets'] as List<dynamic>?;
       if (assets == null || assets.isEmpty) return null;
@@ -84,6 +115,7 @@ class UpdateInfo {
         publishedAt: publishedAt,
         assetSize: assetSize,
         assetDigest: assetDigest,
+        htmlUrl: htmlUrl,
       );
     } catch (_) {
       return null;
@@ -98,6 +130,7 @@ class UpdateInfo {
       'publishedAt': publishedAt.toIso8601String(),
       'assetSize': assetSize,
       'assetDigest': assetDigest,
+      'htmlUrl': htmlUrl,
     };
   }
 
@@ -111,7 +144,8 @@ class UpdateInfo {
           releaseNotes == other.releaseNotes &&
           publishedAt == other.publishedAt &&
           assetSize == other.assetSize &&
-          assetDigest == other.assetDigest;
+          assetDigest == other.assetDigest &&
+          htmlUrl == other.htmlUrl;
 
   @override
   int get hashCode =>
@@ -120,10 +154,11 @@ class UpdateInfo {
       releaseNotes.hashCode ^
       publishedAt.hashCode ^
       assetSize.hashCode ^
-      assetDigest.hashCode;
+      assetDigest.hashCode ^
+      htmlUrl.hashCode;
 
   @override
   String toString() {
-    return 'UpdateInfo(version: $version, downloadUrl: $downloadUrl, assetSize: $assetSize, assetDigest: $assetDigest)';
+    return 'UpdateInfo(version: $version, downloadUrl: $downloadUrl, assetSize: $assetSize, assetDigest: $assetDigest, htmlUrl: $htmlUrl)';
   }
 }
