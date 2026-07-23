@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 import 'dart:ffi';
 import 'dart:io';
@@ -12,6 +13,7 @@ import '../providers.dart';
 import '../services/app_shutdown_service.dart';
 import '../services/github_release_service.dart';
 import '../services/update_download_service.dart';
+import 'temperature_provider.dart';
 
 /// Provider for [GitHubReleaseService].
 final githubReleaseServiceProvider = Provider<GitHubReleaseService>((ref) {
@@ -328,6 +330,12 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
         backupDir,
       ];
 
+      // Lock temperature control and reset monitor color temperature to neutral (6500K) prior to launching updater
+      ref.read(temperatureServiceProvider).lockTemperatureControl();
+      await ref
+          .read(isColorTemperatureEnabledProvider.notifier)
+          .resetToNeutralNow();
+
       bool launched = false;
       if (hasWriteAccess) {
         await Process.start(
@@ -342,6 +350,7 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
       }
 
       if (!launched) {
+        await _restoreTemperatureAfterFailure();
         state = state.copyWith(
           phase: UpdatePhase.error,
           errorMessage:
@@ -354,6 +363,7 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
       final shutdownService = AppShutdownService(ref.container);
       await shutdownService.performShutdown();
     } catch (e, stackTrace) {
+      await _restoreTemperatureAfterFailure();
       developer.log(
         'Error initiating update installation: $e',
         name: 'UpdateNotifier',
@@ -364,6 +374,27 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
         phase: UpdatePhase.error,
         errorMessage: 'Failed to launch update installation: $e',
       );
+    }
+  }
+
+  Future<void> _restoreTemperatureAfterFailure() async {
+    final tempService = ref.read(temperatureServiceProvider);
+    tempService.unlockTemperatureControl();
+
+    if (ref.read(isColorTemperatureEnabledProvider) &&
+        !ref.read(autoTemperatureAdjustmentProvider)) {
+      final targetTemp = ref.read(currentTemperatureProvider);
+      try {
+        final monitors = await ref.read(monitorListProvider.future);
+        final monitorService = ref.read(monitorServiceProvider);
+        await tempService.setTemperatureInstant(
+          selection: 'all',
+          targetValue: targetTemp.toDouble(),
+          monitors: monitors,
+          monitorService: monitorService,
+          updateTemperatureCallback: (id, val) {},
+        );
+      } catch (_) {}
     }
   }
 
@@ -403,6 +434,7 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
 
   /// Resets error state back to idle phase.
   void resetError() {
+    unawaited(_restoreTemperatureAfterFailure());
     state = state.copyWith(
       phase: UpdatePhase.idle,
       nullifyErrorMessage: true,

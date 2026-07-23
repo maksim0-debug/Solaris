@@ -9,6 +9,17 @@ class TemperatureService {
 
   final Map<String, int> _lastTempSentTime = {};
 
+  bool _isResetLocked = false;
+  bool get isResetLocked => _isResetLocked;
+
+  void lockTemperatureControl() {
+    _isResetLocked = true;
+  }
+
+  void unlockTemperatureControl() {
+    _isResetLocked = false;
+  }
+
   void stopTemperatureControlForDevice(String deviceName) {
     _adjustmentTimers[deviceName]?.cancel();
     _adjustmentTimers[deviceName] = null;
@@ -39,6 +50,9 @@ class TemperatureService {
     required void Function(String, int) updateTemperatureCallback,
   }) async {
     final target = targetValue.round();
+    if (_isResetLocked && target != 6500) {
+      return;
+    }
     final now = DateTime.now().millisecondsSinceEpoch;
 
     for (final monitor in monitors) {
@@ -80,6 +94,9 @@ class TemperatureService {
     bool isUIVisible = true,
   }) {
     final target = targetValue.round();
+    if (_isResetLocked && target != 6500) {
+      return;
+    }
 
     for (final monitor in monitors) {
       if (selection == 'all' || selection == monitor.deviceName) {

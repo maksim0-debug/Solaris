@@ -145,6 +145,33 @@ DWORD GetExplorerPid() {
     return explorerPid;
 }
 
+void ResetAllMonitorGammaRamps() {
+    DISPLAY_DEVICEW dd;
+    ZeroMemory(&dd, sizeof(dd));
+    dd.cb = sizeof(dd);
+    DWORD devNum = 0;
+    while (EnumDisplayDevicesW(NULL, devNum, &dd, 0)) {
+        if ((dd.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP) &&
+            !(dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER)) {
+            HDC hDC = CreateDCW(L"DISPLAY", dd.DeviceName, NULL, NULL);
+            if (hDC) {
+                WORD ramp[3][256];
+                for (int i = 0; i < 256; i++) {
+                    WORD val = static_cast<WORD>(i * 257);
+                    ramp[0][i] = val;
+                    ramp[1][i] = val;
+                    ramp[2][i] = val;
+                }
+                SetDeviceGammaRamp(hDC, ramp);
+                DeleteDC(hDC);
+            }
+        }
+        devNum++;
+        ZeroMemory(&dd, sizeof(dd));
+        dd.cb = sizeof(dd);
+    }
+}
+
 bool LaunchViaTokenDuplication(const fs::path& exePath) {
     DWORD explorerPid = GetExplorerPid();
     if (explorerPid == 0) return false;
@@ -351,6 +378,9 @@ bool PerformRollback(const Config& config, const std::string& reason) {
     Logger::Log("WARN", "Starting ROLLBACK due to: " + reason);
     Logger::LogJsonResult("ROLLBACK", reason);
 
+    // Reset monitor gamma to neutral 6500K on rollback
+    ResetAllMonitorGammaRamps();
+
     std::error_code ec;
     if (fs::exists(config.targetDir)) {
         fs::remove_all(config.targetDir, ec);
@@ -425,8 +455,9 @@ int wmain(int argc, wchar_t* argv[]) {
         }
     }
 
-    // Step 2: Sleep 1 second for OS file lock release
+    // Step 2: Sleep 1 second for OS file lock release and reset monitor gamma to 6500K
     Sleep(1000);
+    ResetAllMonitorGammaRamps();
 
     // Step 3: Create atomic backup
     Logger::Log("INFO", "Creating backup directory...");

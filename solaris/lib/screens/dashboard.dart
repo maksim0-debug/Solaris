@@ -576,8 +576,9 @@ class _Header extends ConsumerWidget {
 
     // Apply temperature to monitors whenever it changes significantly
     ref.listen<int>(currentTemperatureProvider, (previous, next) {
-      if (ref.read(autoTemperatureAdjustmentProvider))
-        return; // Already handled by background loop
+      if (ref.read(autoTemperatureAdjustmentProvider) ||
+          temperatureService.isResetLocked)
+        return; // Already handled by background loop or reset lock active
 
       if (previous != next) {
         final selection = ref.read(selectedMonitorsProvider);
@@ -648,9 +649,10 @@ class _Header extends ConsumerWidget {
           }
         }
 
-        // Sync temperature only if color temperature is enabled and auto temperature is disabled
+        // Sync temperature only if color temperature is enabled and auto temperature is disabled and reset lock is inactive
         if (ref.read(isColorTemperatureEnabledProvider) &&
-            !ref.read(autoTemperatureAdjustmentProvider)) {
+            !ref.read(autoTemperatureAdjustmentProvider) &&
+            !temperatureService.isResetLocked) {
           final targetTemp = ref.read(currentTemperatureProvider);
           debugPrint('Initial sync: applying temperature $targetTemp');
           for (final id in selection) {
@@ -689,9 +691,10 @@ class _Header extends ConsumerWidget {
           );
         }
 
-        // Apply temperature only if color temperature is enabled and auto temperature is disabled
+        // Apply temperature only if color temperature is enabled and auto temperature is disabled and reset lock is inactive
         if (ref.read(isColorTemperatureEnabledProvider) &&
-            !ref.read(autoTemperatureAdjustmentProvider)) {
+            !ref.read(autoTemperatureAdjustmentProvider) &&
+            !temperatureService.isResetLocked) {
           final targetTemp = ref.read(currentTemperatureProvider);
           temperatureService.setTemperatureInstant(
             selection: 'all',
