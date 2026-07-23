@@ -1562,4 +1562,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get updateNoUpdatesFound =>
       'No updates found. You are running the latest version.';
+
+  @override
+  String get updateInstallingTitle => 'Updating...';
+
+  @override
+  String get updateInstallingStatus => 'Installing update...';
+
+  @override
+  String get updateDownloadingPackage => 'Downloading update package...';
+
+  @override
+  String get updateBackgroundNotice =>
+      'You can close this window. Process will continue in the background.';
 }

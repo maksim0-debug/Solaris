@@ -481,7 +481,6 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
             ),
             ElevatedButton.icon(
               onPressed: () {
-                Navigator.pop(context);
                 ref.read(updateProvider.notifier).startDownload();
               },
               icon: const Icon(LucideIcons.download, size: 14),
@@ -568,6 +567,7 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
             ),
             ElevatedButton.icon(
               onPressed: () {
+                ref.read(updateProvider.notifier).resetError();
                 _triggerManualCheck(context);
               },
               icon: const Icon(LucideIcons.refreshCw, size: 14),
@@ -587,22 +587,104 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
       case UpdatePhase.downloading:
       case UpdatePhase.verifying:
       case UpdatePhase.installing:
-        final pct = (status.downloadProgress * 100).toInt().toString();
+        final pctVal = (status.downloadProgress * 100).toInt().clamp(0, 100);
+        final pctStr = '$pctVal%';
+        final isVerifying = status.phase == UpdatePhase.verifying;
+        final isInstalling = status.phase == UpdatePhase.installing;
+        final dialogTitle = isVerifying
+            ? (l10n?.updateVerifying ?? 'Verifying integrity...')
+            : isInstalling
+                ? (l10n?.updateInstallingTitle ?? 'Updating...')
+                : (l10n?.updateDownloadingPercent(pctVal.toString()) ?? 'Downloading: $pctStr');
+
+        final dialogIcon = isVerifying
+            ? LucideIcons.shieldCheck
+            : isInstalling
+                ? LucideIcons.refreshCw
+                : LucideIcons.download;
+
+        final dialogIconColor = isVerifying
+            ? Colors.cyanAccent
+            : isInstalling
+                ? Colors.blueAccent
+                : Colors.lightBlueAccent;
+
+        final statusText = isVerifying
+            ? (l10n?.updateVerifying ?? 'Verifying integrity...')
+            : isInstalling
+                ? (l10n?.updateInstallingStatus ?? 'Installing update...')
+                : (l10n?.updateDownloadingPackage ?? 'Downloading update package...');
+
+        final backgroundNotice = l10n?.updateBackgroundNotice ??
+            'You can close this window. Process will continue in the background.';
+
         return _StyledDialog(
-          icon: LucideIcons.download,
-          iconColor: Colors.lightBlueAccent,
-          title: status.phase == UpdatePhase.verifying
-              ? (l10n?.updateVerifying ?? 'Verifying integrity...')
-              : status.phase == UpdatePhase.installing
-                  ? 'Updating...'
-                  : (l10n?.updateDownloadingPercent(pct) ?? 'Downloading: $pct%'),
+          icon: dialogIcon,
+          iconColor: dialogIconColor,
+          title: dialogTitle,
           subtitle: currentVerText,
-          content: LinearProgressIndicator(
-            value: status.phase == UpdatePhase.downloading
-                ? status.downloadProgress
-                : null,
-            backgroundColor: Colors.white10,
-            color: Colors.lightBlueAccent,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      statusText,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (status.phase == UpdatePhase.downloading)
+                    Text(
+                      pctStr,
+                      style: const TextStyle(
+                        color: Colors.lightBlueAccent,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: status.phase == UpdatePhase.downloading
+                      ? status.downloadProgress
+                      : null,
+                  minHeight: 8,
+                  backgroundColor: Colors.white.withOpacity(0.08),
+                  color: dialogIconColor,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Icon(
+                    LucideIcons.info,
+                    size: 13,
+                    color: Colors.white.withOpacity(0.4),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      backgroundNotice,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.45),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
           actions: [
             TextButton(

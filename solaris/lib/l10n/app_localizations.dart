@@ -2789,6 +2789,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No updates found. You are running the latest version.'**
   String get updateNoUpdatesFound;
+
+  /// No description provided for @updateInstallingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Updating...'**
+  String get updateInstallingTitle;
+
+  /// No description provided for @updateInstallingStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Installing update...'**
+  String get updateInstallingStatus;
+
+  /// No description provided for @updateDownloadingPackage.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading update package...'**
+  String get updateDownloadingPackage;
+
+  /// No description provided for @updateBackgroundNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'You can close this window. Process will continue in the background.'**
+  String get updateBackgroundNotice;
 }
 
 class _AppLocalizationsDelegate

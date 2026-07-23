@@ -1564,4 +1564,17 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get updateNoUpdatesFound =>
       'Оновлень не знайдено, у вас актуальна версія.';
+
+  @override
+  String get updateInstallingTitle => 'Оновлення...';
+
+  @override
+  String get updateInstallingStatus => 'Встановлення оновлення...';
+
+  @override
+  String get updateDownloadingPackage => 'Завантаження пакета оновлення...';
+
+  @override
+  String get updateBackgroundNotice =>
+      'Ви можете закрити це вікно. Процес триватиме у фоновому режимі.';
 }

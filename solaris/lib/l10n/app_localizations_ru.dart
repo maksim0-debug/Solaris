@@ -1566,4 +1566,17 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get updateNoUpdatesFound =>
       'Обновлений не найдено, у вас актуальная версия.';
+
+  @override
+  String get updateInstallingTitle => 'Обновление...';
+
+  @override
+  String get updateInstallingStatus => 'Установка обновления...';
+
+  @override
+  String get updateDownloadingPackage => 'Загрузка пакета обновления...';
+
+  @override
+  String get updateBackgroundNotice =>
+      'Вы можете закрыть это окно. Процесс продолжится в фоновом режиме.';
 }

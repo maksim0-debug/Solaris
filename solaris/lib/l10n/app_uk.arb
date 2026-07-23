@@ -709,5 +709,9 @@
   "continueButton": "Продовжити",
   "dialogOk": "ОК",
   "updateNoUpdatesTitle": "Оновлень не знайдено",
-  "updateNoUpdatesFound": "Оновлень не знайдено, у вас актуальна версія."
+  "updateNoUpdatesFound": "Оновлень не знайдено, у вас актуальна версія.",
+  "updateInstallingTitle": "Оновлення...",
+  "updateInstallingStatus": "Встановлення оновлення...",
+  "updateDownloadingPackage": "Завантаження пакета оновлення...",
+  "updateBackgroundNotice": "Ви можете закрити це вікно. Процес триватиме у фоновому режимі."
 }

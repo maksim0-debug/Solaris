@@ -711,5 +711,9 @@
   "continueButton": "Continue",
   "dialogOk": "OK",
   "updateNoUpdatesTitle": "No updates found",
-  "updateNoUpdatesFound": "No updates found. You are running the latest version."
+  "updateNoUpdatesFound": "No updates found. You are running the latest version.",
+  "updateInstallingTitle": "Updating...",
+  "updateInstallingStatus": "Installing update...",
+  "updateDownloadingPackage": "Downloading update package...",
+  "updateBackgroundNotice": "You can close this window. Process will continue in the background."
 }
