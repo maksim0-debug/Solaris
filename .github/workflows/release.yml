@@ -99,8 +99,8 @@ jobs:
           Copy-Item -Path "$buildDir/data" -Destination "$releaseDir/data" -Recurse
 
           # Copy native updater
-          if (Test-Path "../updater/build/Release/updater.exe") {
-              Copy-Item "../updater/build/Release/updater.exe" -Destination $releaseDir/
+          if (Test-Path "../updater/build/Release/solaris_updater.exe") {
+              Copy-Item "../updater/build/Release/solaris_updater.exe" -Destination $releaseDir/
           }
 
           # Copy LICENSE and README.md

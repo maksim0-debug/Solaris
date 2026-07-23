@@ -20,12 +20,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "Solaris Project"
-            VALUE "FileDescription", "Solaris Native Updater"
+            VALUE "FileDescription", "Solaris Native Auto-Update Utility"
             VALUE "FileVersion", "1.0.0.0"
-            VALUE "InternalName", "updater.exe"
+            VALUE "InternalName", "solaris_updater.exe"
             VALUE "LegalCopyright", "Copyright (C) 2026 Solaris"
-            VALUE "OriginalFilename", "updater.exe"
-            VALUE "ProductName", "Solaris Native Updater"
+            VALUE "OriginalFilename", "solaris_updater.exe"
+            VALUE "ProductName", "Solaris Native Auto-Update Utility"
             VALUE "ProductVersion", "1.0.0.0"
         END
     END

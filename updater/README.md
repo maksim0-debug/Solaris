@@ -1,4 +1,4 @@
-# Solaris Native Updater (`updater.exe`)
+# Solaris Native Updater (`solaris_updater.exe`)
 
 Component of the Solaris auto-update system. A highly reliable, standalone C++17 console application with no GUI and no external MSVC Runtime dependencies (static linking `/MT`).
 
@@ -9,16 +9,16 @@ Component of the Solaris auto-update system. A highly reliable, standalone C++17
 - Safely extracting the update ZIP archive using the `miniz` library with built-in protection against the Zip Slip vulnerability (CWE-22).
 - Automatic cleanup of the downloaded ZIP archive upon successful extraction.
 - Automatic rollback to a working version in case of any extraction or verification failures.
-- Safely restarting Solaris with proper UAC privilege de-escalation (Token Duplication / Explorer COM) if `updater.exe` was executed with elevated privileges (Administrator), with an emergency direct-launch fallback.
+- Safely restarting Solaris with proper UAC privilege de-escalation (Token Duplication / Explorer COM) if `solaris_updater.exe` was executed with elevated privileges (Administrator), with an emergency direct-launch fallback.
 
 ## Executable Lifecycle & Execution Flow
 
-Before triggering an update, the main Solaris application copies `updater.exe` from its installation directory to a unique temporary folder (`%TEMP%\solaris_updater_<timestamp>\updater.exe`). Running `updater.exe` out of `%TEMP%` ensures that the updater binary itself does not lock any files inside the target installation directory, allowing complete overwrite or atomic renaming of the entire application folder.
+Before triggering an update, the main Solaris application copies `solaris_updater.exe` from its installation directory to a unique temporary folder (`%TEMP%\solaris_updater_<timestamp>\solaris_updater.exe`). Running `solaris_updater.exe` out of `%TEMP%` ensures that the updater binary itself does not lock any files inside the target installation directory, allowing complete overwrite or atomic renaming of the entire application folder.
 
 ## Command-Line Arguments
 
 ```cmd
-updater.exe --pid <PID> --zip <path_to_zip> --target <install_dir> [--exe <exe_name>] [--backup <backup_dir>]
+solaris_updater.exe --pid <PID> --zip <path_to_zip> --target <install_dir> [--exe <exe_name>] [--backup <backup_dir>]
 ```
 
 | Argument   | Description                                                                             |
@@ -33,28 +33,28 @@ _Note: The main Solaris application always passes `--backup` explicitly as `<par
 
 ## 🔒 Security, Privileges & UAC Mechanism
 
-Because `updater.exe` performs low-level file replacement in the Solaris installation directory, it incorporates robust privilege management and security checks.
+Because `solaris_updater.exe` performs low-level file replacement in the Solaris installation directory, it incorporates robust privilege management and security checks.
 
 ### 1. When is UAC Elevation Required?
 
 - **User-space installations** (e.g., `%LOCALAPPDATA%\Solaris`): The updater runs under standard user privileges (`asInvoker` in `app.manifest`) without triggering any UAC prompts.
-- **System-wide installations** (e.g., `C:\Program Files\Solaris`): Standard users lack write permissions to Program Files. If the main application detects it cannot write to the target directory, it invokes `updater.exe` via `ShellExecuteEx` with the `runas` verb to request administrator elevation (UAC prompt).
+- **System-wide installations** (e.g., `C:\Program Files\Solaris`): Standard users lack write permissions to Program Files. If the main application detects it cannot write to the target directory, it invokes `solaris_updater.exe` via `ShellExecuteEx` with the `runas` verb to request administrator elevation (UAC prompt).
 
 ### 2. The Principle of Least Privilege: De-escalation
 
 Running a desktop GUI application (like Solaris, which interacts with the system tray, user context, and IPC servers) permanently with Administrator privileges is a security anti-pattern.
 
-To prevent this, `updater.exe` implements a strict **privilege de-escalation** mechanism before restarting `solaris.exe`:
+To prevent this, `solaris_updater.exe` implements a strict **privilege de-escalation** mechanism before restarting `solaris.exe`:
 
-1. If `updater.exe` itself was elevated to Administrator via UAC, it checks its elevation status (`IsElevated()`).
+1. If `solaris_updater.exe` itself was elevated to Administrator via UAC, it checks its elevation status (`IsElevated()`).
 2. Before launching the newly updated `solaris.exe`, it attempts to drop privileges back to the standard logged-in user context using two resilient fallback methods:
    - **Token Duplication (`CreateProcessWithTokenW`)**: It locates the running instance of Windows Explorer (`explorer.exe`), opens its process token, duplicates it, and spawns `solaris.exe` using that user token.
    - **Explorer COM Automation (`IShellDispatch2::ShellExecute`)**: As a fallback, it invokes the active desktop shell COM object to execute `solaris.exe` in the standard user session.
-3. **Emergency Fallback**: If both de-escalation methods fail (e.g., Explorer shell unavailable or restricted COM policies), `updater.exe` logs a `WARN` message and falls back to a direct `CreateProcessW` launch (preserving elevated privileges) to ensure the application restarts reliably without user interruption.
+3. **Emergency Fallback**: If both de-escalation methods fail (e.g., Explorer shell unavailable or restricted COM policies), `solaris_updater.exe` logs a `WARN` message and falls back to a direct `CreateProcessW` launch (preserving elevated privileges) to ensure the application restarts reliably without user interruption.
 
 ### 3. Protection Against Zip Slip (CWE-22)
 
-During archive extraction, `updater.exe` validates every single file path inside the downloaded ZIP using strict canonicalization checks (`IsPathSafe`). If an archive attempts a directory traversal attack (e.g., extracting a file to `../../System32/`), the updater immediately aborts the process and triggers an automatic rollback.
+During archive extraction, `solaris_updater.exe` validates every single file path inside the downloaded ZIP using strict canonicalization checks (`IsPathSafe`). If an archive attempts a directory traversal attack (e.g., extracting a file to `../../System32/`), the updater immediately aborts the process and triggers an automatic rollback.
 
 ### 4. Atomic Backup & Automatic Rollback (Fail-Safe)
 
@@ -72,7 +72,7 @@ cmake -B build -G "Visual Studio 17 2022" -A x64
 cmake --build build --config Release
 ```
 
-The compiled binary will be located at `updater/build/Release/updater.exe`.
+The compiled binary will be located at `updater/build/Release/solaris_updater.exe`.
 
 ## Exit Codes
 
@@ -82,7 +82,7 @@ The compiled binary will be located at `updater/build/Release/updater.exe`.
 
 ## Logging & Inter-Process Communication (IPC)
 
-Because `updater.exe` runs as an independent, detached process while the main Solaris application is fully terminated, standard IPC mechanisms (like named pipes or local sockets) cannot be used across the process lifecycle boundary. Instead, Solaris uses a file-based IPC pattern via a shared log file.
+Because `solaris_updater.exe` runs as an independent, detached process while the main Solaris application is fully terminated, standard IPC mechanisms (like named pipes or local sockets) cannot be used across the process lifecycle boundary. Instead, Solaris uses a file-based IPC pattern via a shared log file.
 
 ### 1. Log File Location
 
@@ -91,7 +91,7 @@ All operational events, warnings, critical errors, and final status summaries ar
 
 ### 2. Structured JSON Result Output
 
-Upon completing its workflow (whether successful, failed, or rolled back), `updater.exe` appends a structured JSON block to `update.log`. This acts as the return code payload for the main application:
+Upon completing its workflow (whether successful, failed, or rolled back), `solaris_updater.exe` appends a structured JSON block to `update.log`. This acts as the return code payload for the main application:
 
 - **Success Example:**
 

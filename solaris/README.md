@@ -85,7 +85,7 @@ Solaris supports automatic updates directly from within the app:
 
 - **Background Checks**: Checks for new GitHub releases on launch and every 24 hours.
 - **Status Bar**: Interactive widget in the footer displays download progress, SHA-256 verification, and readiness for installation.
-- **Native Updater (`updater.exe`)**: Written in C++17 (using `miniz`), creates a backup, protects against vulnerabilities (*Zip Slip*), and performs an **automatic rollback** in case of failure.
+- **Native Updater (`solaris_updater.exe`)**: Written in C++17 (using `miniz`), creates a backup, protects against vulnerabilities (*Zip Slip*), and performs an **automatic rollback** in case of failure.
 
 > [!NOTE]
 > **Custom Builds (`IS_OFFICIAL_RELEASE=false`)**: Automatic updates are disabled by default. Note that updating from a custom build to an official release may reset your saved API keys due to Windows DPAPI encryption mechanics.

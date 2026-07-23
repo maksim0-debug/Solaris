@@ -3,7 +3,6 @@ import 'dart:ffi';
 import 'dart:io';
 import 'package:ffi/ffi.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:win32/win32.dart';
 
@@ -92,16 +91,18 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
     );
 
     try {
-      String currentVersion = currentVersionOverride ?? '1.0.17';
-      if (currentVersionOverride == null) {
+      String currentVersion;
+      if (currentVersionOverride != null) {
+        currentVersion = currentVersionOverride;
+      } else {
         try {
-          final pkgInfo = await PackageInfo.fromPlatform();
-          currentVersion = pkgInfo.version;
+          currentVersion = await ref.read(appVersionProvider.future);
         } catch (e) {
           developer.log(
-            'Could not read package version from platform, defaulting to $currentVersion: $e',
+            'Could not read package version from provider: $e',
             name: 'UpdateNotifier',
           );
+          currentVersion = fallbackAppVersion;
         }
       }
 
@@ -252,7 +253,7 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
     }
   }
 
-  /// Triggers the installation process: copies `updater.exe` to a temporary folder
+  /// Triggers the installation process: copies `solaris_updater.exe` to a temporary folder
   /// and launches it with arguments, handing over execution before shutting down Solaris.
   Future<void> installAndRestart() async {
     if (state.phase != UpdatePhase.ready || state.downloadedFilePath == null) {
@@ -265,7 +266,7 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
       final downloadedZipPath = sanitizePath(state.downloadedFilePath!);
       final appExecutable = Platform.resolvedExecutable;
       final appDir = sanitizePath(File(appExecutable).parent.path);
-      final updaterSource = '$appDir\\updater.exe';
+      final updaterSource = '$appDir\\solaris_updater.exe';
 
       final tempDir = Directory(
         '${Directory.systemTemp.path}\\solaris_updater_${DateTime.now().millisecondsSinceEpoch}',
@@ -273,19 +274,19 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
       if (!await tempDir.exists()) {
         await tempDir.create(recursive: true);
       }
-      final updaterTempPath = '${tempDir.path}\\updater.exe';
+      final updaterTempPath = '${tempDir.path}\\solaris_updater.exe';
 
       // Ensure target backup folder sits alongside the app directory on the same drive
       final parentDir = File(appDir).parent.path;
       final backupDir = sanitizePath('$parentDir\\solaris_backup');
 
-      // Copy updater.exe to temp directory so it can overwrite files in appDir without locking
+      // Copy solaris_updater.exe to temp directory so it can overwrite files in appDir without locking
       final sourceFile = File(updaterSource);
       if (await sourceFile.exists()) {
         await sourceFile.copy(updaterTempPath);
       } else {
         throw Exception(
-          'Helper executable updater.exe not found at $updaterSource',
+          'Helper executable solaris_updater.exe not found at $updaterSource',
         );
       }
 
@@ -335,7 +336,7 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
         return;
       }
 
-      // Perform full graceful shutdown of all sub-systems before handing control over to updater.exe
+      // Perform full graceful shutdown of all sub-systems before handing control over to solaris_updater.exe
       final shutdownService = AppShutdownService(ref.container);
       await shutdownService.performShutdown();
     } catch (e, stackTrace) {

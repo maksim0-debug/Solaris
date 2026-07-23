@@ -21,7 +21,7 @@ enum UpdatePhase {
   /// Downloaded and verified, ready for installation.
   ready,
 
-  /// Control handed off to native `updater.exe` for installation.
+  /// Control handed off to native `solaris_updater.exe` for installation.
   installing,
 
   /// Error occurred during check, download, or verification.

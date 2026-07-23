@@ -43,6 +43,7 @@ export 'package:solaris/providers/update_provider.dart';
 export 'package:solaris/providers/post_update_provider.dart';
 export 'package:solaris/models/post_update_result.dart';
 export 'package:solaris/services/post_update_service.dart';
+export 'package:solaris/providers/app_info_provider.dart';
 
 final locationServiceProvider = Provider((ref) => LocationService());
 final sunCalculatorServiceProvider = Provider((ref) => SunCalculatorService());

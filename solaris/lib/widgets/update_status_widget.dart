@@ -77,7 +77,7 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
   Widget build(BuildContext context) {
     final updateStatus = ref.watch(updateProvider);
     final versionAsync = ref.watch(appVersionProvider);
-    final currentVersion = versionAsync.value ?? '1.0.17';
+    final currentVersion = versionAsync.value ?? fallbackAppVersion;
 
     _updateAnimationState(updateStatus.phase);
 

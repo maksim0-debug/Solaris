@@ -168,7 +168,7 @@ class PostUpdateService {
   /// Cleans up temporary download artifacts and performs background garbage collection
   /// on updater temporary folders older than 24 hours.
   Future<void> cleanupTempFilesAndGC() async {
-    // 3-second delay to give Windows OS time to release file handles for updater.exe
+    // 3-second delay to give Windows OS time to release file handles for solaris_updater.exe
     await Future<void>.delayed(const Duration(seconds: 3));
 
     final tempDir = Directory.systemTemp;
