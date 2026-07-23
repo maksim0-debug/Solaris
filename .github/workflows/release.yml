@@ -120,15 +120,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $zipPath = "../Solaris-Windows.zip"
-          $hash = (Get-FileHash $zipPath -Algorithm SHA256).Hash.ToLower()
-
-          $body = @"
-          ### 🛡️ Build Integrity & Verification
-          - **SHA-256 Digest**: ``$hash``
-          - **Asset**: ``Solaris-Windows.zip``
-
-          This release is signed with a GitHub Artifact Attestation (SLSA Provenance v1).
+          $body = @'
+          ### 🛡️ Verification
+          This release is signed with a GitHub Artifact Attestation.
           To verify the authenticity of the archive, run:
           ```bash
           gh attestation verify Solaris-Windows.zip --owner ${{ github.repository_owner }}
@@ -136,7 +130,7 @@ jobs:
 
           You can view the build attestation history here:
           https://github.com/${{ github.repository }}/attestations
-          "@
+          '@
 
           # Use GitHub CLI to create the release and upload the asset
-          gh release create "${{ github.ref_name }}" $zipPath --generate-notes --title "${{ github.ref_name }}" --notes $body
+          gh release create "${{ github.ref_name }}" ../Solaris-Windows.zip --generate-notes --title "${{ github.ref_name }}" --notes $body
