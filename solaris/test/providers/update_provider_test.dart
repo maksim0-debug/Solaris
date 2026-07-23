@@ -10,11 +10,18 @@ import 'package:solaris/services/update_download_service.dart';
 
 class MockGitHubReleaseService extends GitHubReleaseService {
   final UpdateInfo? mockInfo;
-  MockGitHubReleaseService(this.mockInfo);
+  final bool mockAttestationResult;
+
+  MockGitHubReleaseService(this.mockInfo, {this.mockAttestationResult = true});
 
   @override
   Future<UpdateInfo?> checkForUpdate(String currentVersion) async {
     return mockInfo;
+  }
+
+  @override
+  Future<bool> verifyArtifactAttestation(String sha256Hash) async {
+    return mockAttestationResult;
   }
 }
 
@@ -26,6 +33,11 @@ class MockUpdateDownloadService extends UpdateDownloadService {
     required this.mockDownloadedPath,
     this.mockIntegrityResult = true,
   });
+
+  @override
+  Future<String?> computeFileSha256(String filePath) async {
+    return 'b66c37961131b0e52e3662f154bc68aa2a65a9c367966d2a2cf604056691c013';
+  }
 
   @override
   Future<String> downloadUpdate(
@@ -50,7 +62,11 @@ class MockUpdateDownloadService extends UpdateDownloadService {
   }
 
   @override
-  Future<String?> getCachedUpdate(String version) async {
+  Future<String?> getCachedUpdate(
+    String version, {
+    GitHubReleaseService? releaseService,
+    String? expectedDigest,
+  }) async {
     return null;
   }
 
@@ -208,6 +224,39 @@ void main() {
       final state = container.read(updateProvider);
       expect(state.phase, equals(UpdatePhase.error));
       expect(state.errorMessage, contains('SHA-256 digest is missing from release metadata'));
+    });
+
+    test('startDownload sets error state when SLSA provenance attestation check fails', () async {
+      final mockZipFile = File('${tempDir.path}/Solaris-Windows-v1.0.18.zip.tmp');
+      await mockZipFile.writeAsString('Tampered Content');
+
+      final mockGithubService = MockGitHubReleaseService(
+        sampleUpdateInfo,
+        mockAttestationResult: false, // Force SLSA attestation check failure (HTTP 404)
+      );
+      final mockDownloadService = MockUpdateDownloadService(
+        mockDownloadedPath: mockZipFile.path,
+        mockIntegrityResult: true,
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          githubReleaseServiceProvider.overrideWithValue(mockGithubService),
+          updateDownloadServiceProvider.overrideWithValue(mockDownloadService),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(updateProvider.notifier).checkForUpdate(
+            isManual: true,
+            currentVersionOverride: '1.0.17',
+          );
+
+      await container.read(updateProvider.notifier).startDownload();
+
+      final state = container.read(updateProvider);
+      expect(state.phase, equals(UpdatePhase.error));
+      expect(state.errorMessage, contains('SLSA attestation'));
     });
 
     test('dismissUpdate and resetError reset state back to idle', () async {

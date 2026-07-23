@@ -7,6 +7,7 @@ import 'package:crypto/crypto.dart';
 import 'package:ffi/ffi.dart';
 import 'package:http/http.dart' as http;
 import 'package:win32/win32.dart';
+import 'github_release_service.dart';
 
 /// Exception thrown when there is insufficient disk space for downloading or installing an update.
 class InsufficientDiskSpaceException implements Exception {
@@ -68,15 +69,78 @@ class UpdateDownloadService {
     }
   }
 
-  /// Checks if an update archive for [version] is already downloaded and cached.
-  ///
-  /// Returns the absolute path if it exists, otherwise `null`.
-  Future<String?> getCachedUpdate(String version) async {
-    final targetFile = File('${updatesDirectory.path}\\Solaris-Windows-v$version.zip');
-    if (await targetFile.exists()) {
-      return targetFile.path;
+  /// Computes the lower-case 64-character SHA-256 hex hash of a file on disk.
+  Future<String?> computeFileSha256(String filePath) async {
+    final file = File(filePath);
+    if (!await file.exists()) return null;
+    try {
+      final digest = await sha256.bind(file.openRead()).first;
+      return digest.toString().toLowerCase();
+    } catch (e, stackTrace) {
+      developer.log(
+        'Failed to compute SHA-256 for $filePath: $e',
+        name: 'UpdateDownloadService',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return null;
     }
-    return null;
+  }
+
+  /// Checks if an update archive for [version] is already downloaded and cached,
+  /// and verifies its SLSA attestation via [releaseService] and expected SHA-256 digest [expectedDigest].
+  ///
+  /// If the cached file does not exist, or fails SLSA attestation / integrity checks,
+  /// the cached file is deleted and `null` is returned.
+  Future<String?> getCachedUpdate(
+    String version, {
+    GitHubReleaseService? releaseService,
+    String? expectedDigest,
+  }) async {
+    final targetFile = File('${updatesDirectory.path}\\Solaris-Windows-v$version.zip');
+    if (!await targetFile.exists()) {
+      return null;
+    }
+
+    final fileHash = await computeFileSha256(targetFile.path);
+    if (fileHash == null) {
+      await _safeDeleteFile(targetFile);
+      return null;
+    }
+
+    if (expectedDigest != null && expectedDigest.isNotEmpty) {
+      final cleanExpected = expectedDigest.replaceFirst('sha256:', '').trim().toLowerCase();
+      if (fileHash != cleanExpected) {
+        developer.log(
+          'Cached update file hash ($fileHash) does not match expected digest ($cleanExpected). Deleting invalid cache.',
+          name: 'UpdateDownloadService',
+        );
+        await _safeDeleteFile(targetFile);
+        return null;
+      }
+    }
+
+    if (releaseService != null) {
+      final isAttested = await releaseService.verifyArtifactAttestation(fileHash);
+      if (!isAttested) {
+        developer.log(
+          'Cached update file failed SLSA attestation verification ($fileHash). Deleting invalid cache.',
+          name: 'UpdateDownloadService',
+        );
+        await _safeDeleteFile(targetFile);
+        return null;
+      }
+    }
+
+    return targetFile.path;
+  }
+
+  Future<void> _safeDeleteFile(File file) async {
+    try {
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (_) {}
   }
 
   /// Downloads the update package from [url] into a temporary file (`.zip.tmp`).

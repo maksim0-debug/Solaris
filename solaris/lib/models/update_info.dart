@@ -128,15 +128,39 @@ class UpdateInfo {
   /// Extracts a 64-character hex SHA-256 hash strictly associated with [targetAssetName] from [body] if present.
   static String? _extractDigestFromBody(String body, String targetAssetName) {
     if (body.isEmpty || targetAssetName.isEmpty) return null;
+
     final escapedName = RegExp.escape(targetAssetName);
-    final regExp = RegExp(
-      '$escapedName[\\s:=]+(?:sha-?256[\\s:=]+)?([a-fA-F0-9]{64})',
+
+    // Matches targetAssetName followed by sha256 hash (e.g. "Solaris-Windows.zip sha256: 01234...")
+    final assetPattern = RegExp(
+      '$escapedName[\\s:=`*]+(?:sha-?256[\\s:=`*]+)?([a-fA-F0-9]{64})',
       caseSensitive: false,
     );
-    final match = regExp.firstMatch(body);
+    var match = assetPattern.firstMatch(body);
     if (match != null) {
       return 'sha256:${match.group(1)!.toLowerCase()}';
     }
+
+    // Matches sha256 hash followed by targetAssetName (e.g. "01234... Solaris-Windows.zip")
+    final reverseAssetPattern = RegExp(
+      '([a-fA-F0-9]{64})[\\s:=`*]+$escapedName',
+      caseSensitive: false,
+    );
+    match = reverseAssetPattern.firstMatch(body);
+    if (match != null) {
+      return 'sha256:${match.group(1)!.toLowerCase()}';
+    }
+
+    // Matches "SHA-256 Digest: <hash>" or "sha256: <hash>" ONLY if not preceded by another file extension (e.g. .tar.gz)
+    final genericPattern = RegExp(
+      '(?<!\\.[a-zA-Z0-9]{1,5}\\s)sha-?256[\\s:=`*]+([a-fA-F0-9]{64})',
+      caseSensitive: false,
+    );
+    match = genericPattern.firstMatch(body);
+    if (match != null) {
+      return 'sha256:${match.group(1)!.toLowerCase()}';
+    }
+
     return null;
   }
 

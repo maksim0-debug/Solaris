@@ -191,5 +191,31 @@ void main() {
       expect(info, isNotNull);
       expect(info!.assetDigest, isNull);
     });
+
+    test('verifyArtifactAttestation returns true for HTTP 200 with non-empty attestations list', () async {
+      const validHash = 'b66c37961131b0e52e3662f154bc68aa2a65a9c367966d2a2cf604056691c013';
+      final mockClient = MockClient((request) async {
+        expect(request.url.toString(), equals('https://api.github.com/repos/maksim0-debug/Solaris/attestations/sha256:$validHash'));
+        expect(request.headers['Accept'], equals('application/vnd.github+json'));
+        return http.Response('{"attestations": [{"bundle": {}}]}', 200);
+      });
+
+      final service = GitHubReleaseService(client: mockClient);
+      final isAttested = await service.verifyArtifactAttestation(validHash);
+
+      expect(isAttested, isTrue);
+    });
+
+    test('verifyArtifactAttestation returns false for HTTP 404 Not Found (tampered file)', () async {
+      const tamperedHash = '5ba3827a9565f9098ba239192773d14bd6d97f83c4a947534f7baae662f10326';
+      final mockClient = MockClient((request) async {
+        return http.Response('{"message": "Not Found"}', 404);
+      });
+
+      final service = GitHubReleaseService(client: mockClient);
+      final isAttested = await service.verifyArtifactAttestation(tamperedHash);
+
+      expect(isAttested, isFalse);
+    });
   });
 }

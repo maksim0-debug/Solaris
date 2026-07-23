@@ -121,7 +121,11 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
       } catch (_) {}
 
       if (updateInfo != null) {
-        final cachedPath = await downloadService.getCachedUpdate(updateInfo.version);
+        final cachedPath = await downloadService.getCachedUpdate(
+          updateInfo.version,
+          releaseService: githubService,
+          expectedDigest: updateInfo.assetDigest,
+        );
         if (cachedPath != null) {
           state = state.copyWith(
             phase: UpdatePhase.ready,
@@ -224,12 +228,10 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
         return;
       }
 
-      final isValid = await downloadService.verifyFileIntegrity(
-        tmpFilePath,
-        info.assetDigest!,
-      );
+      final githubService = ref.read(githubReleaseServiceProvider);
 
-      if (!isValid) {
+      final fileHash = await downloadService.computeFileSha256(tmpFilePath);
+      if (fileHash == null) {
         final tmpFile = File(tmpFilePath);
         if (await tmpFile.exists()) {
           await tmpFile.delete();
@@ -237,7 +239,44 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
         state = state.copyWith(
           phase: UpdatePhase.error,
           errorMessage:
-              'Integrity verification failed: downloaded file hash does not match expected',
+              'Integrity verification failed: Could not calculate SHA-256 hash of downloaded update file',
+        );
+        return;
+      }
+
+      // Check SHA-256 digest against release metadata
+      final isValidDigest = await downloadService.verifyFileIntegrity(
+        tmpFilePath,
+        info.assetDigest!,
+      );
+      if (!isValidDigest) {
+        final tmpFile = File(tmpFilePath);
+        if (await tmpFile.exists()) {
+          await tmpFile.delete();
+        }
+        state = state.copyWith(
+          phase: UpdatePhase.error,
+          errorMessage:
+              'Integrity verification failed: downloaded file hash does not match expected release digest',
+        );
+        return;
+      }
+
+      // Verify SLSA provenance attestation against GitHub Attestations API
+      final isAttested = await githubService.verifyArtifactAttestation(fileHash);
+      if (!isAttested) {
+        final tmpFile = File(tmpFilePath);
+        if (await tmpFile.exists()) {
+          await tmpFile.delete();
+        }
+        developer.log(
+          'Integrity verification failed: SLSA attestation check failed for hash $fileHash',
+          name: 'UpdateNotifier',
+        );
+        state = state.copyWith(
+          phase: UpdatePhase.error,
+          errorMessage:
+              'Security verification failed: Update package lacks a valid GitHub Actions SLSA attestation. The file may have been tampered with.',
         );
         return;
       }

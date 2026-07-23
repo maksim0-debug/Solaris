@@ -85,6 +85,7 @@ Solaris supports automatic updates directly from within the app:
 
 - **Background Checks**: Checks for new GitHub releases on launch and every 24 hours.
 - **Status Bar**: Interactive widget in the footer displays download progress, SHA-256 verification, and readiness for installation.
+- **Cryptographic SLSA Security**: Validates downloaded update archives against GitHub's immutable Artifact Attestations API (`actions/attest-build-provenance@v4` / SLSA Provenance v1). Ensures that updates were compiled directly by GitHub Actions CI/CD from open-source code and rejects any manually modified or replaced files.
 - **Native Updater (`solaris_updater.exe`)**: Written in C++17 (using `miniz`), creates a backup, protects against vulnerabilities (*Zip Slip*), and performs an **automatic rollback** in case of failure.
 
 > [!NOTE]
