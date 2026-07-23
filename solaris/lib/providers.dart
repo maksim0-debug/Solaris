@@ -2341,6 +2341,17 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                   monitorListNotifier.updateTemperature(id, val);
                 },
               );
+            } else if (isTempEnabled) {
+              final manualTemp = ref.read(manualTemperatureProvider);
+              tempService.setTemperatureInstant(
+                selection: monitor.deviceName,
+                targetValue: manualTemp.toDouble(),
+                monitors: monitors,
+                monitorService: monitorService,
+                updateTemperatureCallback: (id, val) {
+                  monitorListNotifier.updateTemperature(id, val);
+                },
+              );
             } else {
               // Disabled means no further temperature writes from circadian loop.
               tempService.stopTemperatureControlForDevice(monitor.deviceName);

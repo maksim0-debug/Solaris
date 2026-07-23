@@ -18,7 +18,7 @@ class ColorTemperatureEnabledNotifier extends Notifier<bool> {
   bool build() {
     _loadInit();
     final prefs = ref.watch(sharedPreferencesProvider);
-    return prefs?.getBool('color_temperature_enabled') ?? false;
+    return prefs?.getBool('color_temperature_enabled') ?? true;
   }
 
   Future<void> _loadInit() async {
@@ -398,13 +398,17 @@ class CurrentTemperatureNotifier extends Notifier<int> {
 
   @override
   int build() {
+    final isTempEnabled = ref.watch(isColorTemperatureEnabledProvider);
+    if (!isTempEnabled) {
+      return 6500;
+    }
+
     final prefs = ref.watch(sharedPreferencesProvider);
     final lastTemp = prefs?.getInt(_lastTempKey) ?? 6500;
 
     final isAuto = ref.watch(autoTemperatureAdjustmentProvider);
-    final isTempEnabled = ref.watch(isColorTemperatureEnabledProvider);
 
-    if (isAuto && isTempEnabled) {
+    if (isAuto) {
       final solarStateAsync = ref.watch(solarStateStreamProvider);
       final circadianService = ref.watch(circadianServiceProvider);
       final tempSettingsAsync = ref.watch(temperatureSettingsProvider);
@@ -482,6 +486,9 @@ class CurrentTemperatureNotifier extends Notifier<int> {
   }
 
   void setManualTemperature(int val) {
+    if (!ref.read(isColorTemperatureEnabledProvider)) {
+      ref.read(isColorTemperatureEnabledProvider.notifier).set(true);
+    }
     ref.read(temperatureSettingsProvider.notifier).setEnabled(false);
     ref.read(manualTemperatureProvider.notifier).setTemperature(val);
     _saveTemperature(val);
