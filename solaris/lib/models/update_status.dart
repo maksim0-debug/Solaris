@@ -36,6 +36,7 @@ class UpdateStatus {
   final double downloadProgress;
   final String? errorMessage;
   final String? downloadedFilePath;
+  final bool isUpToDateNotice;
 
   const UpdateStatus({
     this.phase = UpdatePhase.idle,
@@ -43,6 +44,7 @@ class UpdateStatus {
     this.downloadProgress = 0.0,
     this.errorMessage,
     this.downloadedFilePath,
+    this.isUpToDateNotice = false,
   });
 
   UpdateStatus copyWith({
@@ -54,6 +56,7 @@ class UpdateStatus {
     bool nullifyErrorMessage = false,
     String? downloadedFilePath,
     bool nullifyDownloadedFilePath = false,
+    bool? isUpToDateNotice,
   }) {
     return UpdateStatus(
       phase: phase ?? this.phase,
@@ -63,6 +66,7 @@ class UpdateStatus {
       downloadedFilePath: nullifyDownloadedFilePath
           ? null
           : (downloadedFilePath ?? this.downloadedFilePath),
+      isUpToDateNotice: isUpToDateNotice ?? this.isUpToDateNotice,
     );
   }
 
@@ -75,7 +79,8 @@ class UpdateStatus {
           updateInfo == other.updateInfo &&
           downloadProgress == other.downloadProgress &&
           errorMessage == other.errorMessage &&
-          downloadedFilePath == other.downloadedFilePath;
+          downloadedFilePath == other.downloadedFilePath &&
+          isUpToDateNotice == other.isUpToDateNotice;
 
   @override
   int get hashCode =>
@@ -83,10 +88,11 @@ class UpdateStatus {
       updateInfo.hashCode ^
       downloadProgress.hashCode ^
       errorMessage.hashCode ^
-      downloadedFilePath.hashCode;
+      downloadedFilePath.hashCode ^
+      isUpToDateNotice.hashCode;
 
   @override
   String toString() {
-    return 'UpdateStatus(phase: $phase, updateInfo: ${updateInfo?.version}, progress: $downloadProgress, error: $errorMessage)';
+    return 'UpdateStatus(phase: $phase, updateInfo: ${updateInfo?.version}, progress: $downloadProgress, error: $errorMessage, isUpToDateNotice: $isUpToDateNotice)';
   }
 }

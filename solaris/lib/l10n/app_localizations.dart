@@ -2777,6 +2777,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'OK'**
   String get dialogOk;
+
+  /// No description provided for @updateNoUpdatesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No updates found'**
+  String get updateNoUpdatesTitle;
+
+  /// No description provided for @updateNoUpdatesFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No updates found. You are running the latest version.'**
+  String get updateNoUpdatesFound;
 }
 
 class _AppLocalizationsDelegate

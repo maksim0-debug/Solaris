@@ -222,6 +222,66 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
     }
   }
 
+  void _handleTap(
+    BuildContext context,
+    WidgetRef ref,
+    UpdateStatus status,
+    String currentVersion,
+  ) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => const _UpdateReactiveDialog(),
+    ).then((_) {
+      if (context.mounted) {
+        ref.read(updateProvider.notifier).resetUpToDateNotice();
+      }
+    });
+  }
+}
+
+/// Reactive dialog container observing [updateProvider] to transition seamlessly
+/// between checking, available, ready, error, and idle states without closing.
+class _UpdateReactiveDialog extends ConsumerStatefulWidget {
+  const _UpdateReactiveDialog();
+
+  @override
+  ConsumerState<_UpdateReactiveDialog> createState() => _UpdateReactiveDialogState();
+}
+
+class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _spinController;
+
+  @override
+  void initState() {
+    super.initState();
+    _spinController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+    if (ref.read(updateProvider).phase == UpdatePhase.checking) {
+      _spinController.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _spinController.dispose();
+    super.dispose();
+  }
+
+  void _updateAnimationState(UpdatePhase phase) {
+    if (phase == UpdatePhase.checking) {
+      if (!_spinController.isAnimating) {
+        _spinController.repeat();
+      }
+    } else {
+      if (_spinController.isAnimating) {
+        _spinController.stop();
+      }
+    }
+  }
+
   Future<void> _launchExternalUrl(String url) async {
     try {
       final uri = Uri.parse(url);
@@ -233,56 +293,26 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
         if (!launched) {
           developer.log(
             'Could not launch URL in external browser: $url',
-            name: 'UpdateStatusWidget',
+            name: 'UpdateReactiveDialog',
           );
         }
       } else {
         developer.log(
           'Rejected non-HTTP/HTTPS URL scheme: $url',
-          name: 'UpdateStatusWidget',
+          name: 'UpdateReactiveDialog',
         );
       }
     } catch (e, stackTrace) {
       developer.log(
         'Error launching external URL ($url): $e',
-        name: 'UpdateStatusWidget',
+        name: 'UpdateReactiveDialog',
         error: e,
         stackTrace: stackTrace,
       );
     }
   }
 
-  void _handleTap(
-    BuildContext context,
-    WidgetRef ref,
-    UpdateStatus status,
-    String currentVersion,
-  ) {
-    switch (status.phase) {
-      case UpdatePhase.idle:
-        _showIdleDialog(context, ref, currentVersion);
-        break;
-      case UpdatePhase.available:
-        if (status.updateInfo != null) {
-          _showAvailableDialog(context, ref, status.updateInfo!, currentVersion);
-        }
-        break;
-      case UpdatePhase.ready:
-        _showReadyDialog(context, ref);
-        break;
-      case UpdatePhase.error:
-        _showErrorDialog(context, ref, status.errorMessage);
-        break;
-      case UpdatePhase.checking:
-      case UpdatePhase.downloading:
-      case UpdatePhase.verifying:
-      case UpdatePhase.installing:
-        // Operational phases — non-interactive during action
-        break;
-    }
-  }
-
-  void _triggerManualCheck(BuildContext context, WidgetRef ref) {
+  void _triggerManualCheck(BuildContext context) {
     if (!Env.isOfficialRelease) {
       showCustomBuildUpdateWarningDialog(
         context,
@@ -296,277 +326,392 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
     }
   }
 
-  void _showIdleDialog(
-    BuildContext context,
-    WidgetRef ref,
-    String currentVersion,
-  ) {
+  @override
+  Widget build(BuildContext context) {
+    ref.listen<UpdateStatus>(updateProvider, (previous, next) {
+      _updateAnimationState(next.phase);
+    });
+
+    final status = ref.watch(updateProvider);
+    final versionAsync = ref.watch(appVersionProvider);
+    final currentVersion = versionAsync.value ?? fallbackAppVersion;
     final l10n = AppLocalizations.of(context);
     final currentVerText = l10n?.updateCurrentVersion(currentVersion) ??
         'Current version: v$currentVersion';
 
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => _StyledDialog(
-        icon: LucideIcons.info,
-        iconColor: Colors.orangeAccent,
-        title: 'Solaris v$currentVersion',
-        subtitle: currentVerText,
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n?.appVersion(currentVersion) ?? 'Solaris is up to date.',
-              style: const TextStyle(color: Colors.white70, fontSize: 13),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton.icon(
+    switch (status.phase) {
+      case UpdatePhase.checking:
+        return _StyledDialog(
+          icon: LucideIcons.refreshCw,
+          iconColor: Colors.amberAccent,
+          isSpinningIcon: true,
+          spinAnimation: _spinController,
+          title: l10n?.updateChecking ?? 'Checking for updates...',
+          subtitle: currentVerText,
+          content: Row(
+            children: [
+              const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.amberAccent),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  l10n?.updateChecking ?? 'Checking for updates...',
+                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+          leftAction: TextButton.icon(
             onPressed: () => _launchExternalUrl(UpdateInfo.defaultReleasesUrl),
             icon: const Icon(LucideIcons.externalLink, size: 12),
             label: Text(l10n?.updateViewOnGithub ?? 'GitHub Releases'),
             style: TextButton.styleFrom(
               foregroundColor: Colors.white60,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             ),
           ),
-          const Spacer(),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(
-              l10n?.dpapiErrorActionOk ?? 'Close',
-              style: const TextStyle(color: Colors.white60),
-            ),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              _triggerManualCheck(context, ref);
-            },
-            icon: const Icon(LucideIcons.refreshCw, size: 14),
-            label: Text(l10n?.updateCheckForUpdates ?? 'Check for updates'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orangeAccent,
-              foregroundColor: Colors.black87,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                l10n?.dpapiErrorActionOk ?? 'Close',
+                style: const TextStyle(color: Colors.white60),
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
+          ],
+        );
 
-  void _showAvailableDialog(
-    BuildContext context,
-    WidgetRef ref,
-    UpdateInfo updateInfo,
-    String currentVersion,
-  ) {
-    final l10n = AppLocalizations.of(context);
-    final sizeMb = (updateInfo.assetSize / (1024 * 1024)).toStringAsFixed(1);
-    final currentVerText = l10n?.updateCurrentVersion(currentVersion) ??
-        'Current version: v$currentVersion';
-
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => _StyledDialog(
-        icon: LucideIcons.arrowUpCircle,
-        iconColor: Colors.orangeAccent,
-        title: l10n?.updateAvailableVersion(updateInfo.version) ??
-            'Update: v${updateInfo.version}',
-        subtitle: currentVerText,
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Chip(
-                  avatar: const Icon(LucideIcons.hardDrive, size: 12),
-                  label: Text(
-                    l10n?.updateFileSize('$sizeMb MB') ?? '$sizeMb MB',
-                    style: const TextStyle(fontSize: 11),
+      case UpdatePhase.available:
+        final updateInfo = status.updateInfo;
+        if (updateInfo == null) {
+          return const SizedBox.shrink();
+        }
+        final sizeMb = (updateInfo.assetSize / (1024 * 1024)).toStringAsFixed(1);
+        return _StyledDialog(
+          icon: LucideIcons.arrowUpCircle,
+          iconColor: Colors.orangeAccent,
+          title: l10n?.updateAvailableVersion(updateInfo.version) ??
+              'Update: v${updateInfo.version}',
+          subtitle: currentVerText,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Chip(
+                    avatar: const Icon(LucideIcons.hardDrive, size: 12),
+                    label: Text(
+                      l10n?.updateFileSize('$sizeMb MB') ?? '$sizeMb MB',
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                    backgroundColor: Colors.white.withOpacity(0.08),
+                    side: BorderSide.none,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
                   ),
-                  backgroundColor: Colors.white.withOpacity(0.08),
-                  side: BorderSide.none,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  const SizedBox(width: 8),
+                  ActionChip(
+                    avatar: const Icon(LucideIcons.externalLink,
+                        size: 12, color: Colors.orangeAccent),
+                    label: Text(
+                      l10n?.updateViewOnGithub ?? 'GitHub Release',
+                      style: const TextStyle(fontSize: 11, color: Colors.white70),
+                    ),
+                    backgroundColor: Colors.white.withOpacity(0.08),
+                    side: BorderSide.none,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    onPressed: () => _launchExternalUrl(updateInfo.releasePageUrl),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Text(
+                l10n?.updateReleaseNotes ?? 'Release Notes',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
                 ),
-                const SizedBox(width: 8),
-                ActionChip(
-                  avatar: const Icon(LucideIcons.externalLink, size: 12, color: Colors.orangeAccent),
-                  label: Text(
-                    l10n?.updateViewOnGithub ?? 'GitHub Release',
-                    style: const TextStyle(fontSize: 11, color: Colors.white70),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                constraints: const BoxConstraints(maxHeight: 360),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.white10),
+                ),
+                child: SingleChildScrollView(
+                  child: MarkdownBody(
+                    data: updateInfo.releaseNotes.isNotEmpty
+                        ? updateInfo.releaseNotes
+                        : 'No release notes provided.',
+                    styleSheet: MarkdownStyleSheet(
+                      p: const TextStyle(
+                          color: Colors.white70, fontSize: 12, height: 1.4),
+                      h1: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold),
+                      h2: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold),
+                      listBullet: const TextStyle(color: Colors.orangeAccent),
+                    ),
                   ),
-                  backgroundColor: Colors.white.withOpacity(0.08),
-                  side: BorderSide.none,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  onPressed: () => _launchExternalUrl(updateInfo.releasePageUrl),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                l10n?.updateLater ?? 'Later',
+                style: const TextStyle(color: Colors.white60),
+              ),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                ref.read(updateProvider.notifier).startDownload();
+              },
+              icon: const Icon(LucideIcons.download, size: 14),
+              label: Text(l10n?.updateAvailable ?? 'Download'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orangeAccent,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ],
+        );
+
+      case UpdatePhase.ready:
+        return _StyledDialog(
+          icon: LucideIcons.checkCircle2,
+          iconColor: Colors.greenAccent,
+          title: l10n?.updateReady ?? 'Ready to install ✓',
+          subtitle: currentVerText,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n?.updateRestartWarning ??
+                    'Application will restart to apply the update.',
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                l10n?.updateLater ?? 'Later',
+                style: const TextStyle(color: Colors.white60),
+              ),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                ref.read(updateProvider.notifier).installAndRestart();
+              },
+              icon: const Icon(LucideIcons.refreshCw, size: 14),
+              label: Text(l10n?.updateInstallRestart ?? 'Install & Restart'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.greenAccent,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ],
+        );
+
+      case UpdatePhase.error:
+        return _StyledDialog(
+          icon: LucideIcons.alertTriangle,
+          iconColor: Colors.redAccent,
+          title: l10n?.updateError ?? 'Update Error ⚠',
+          subtitle: currentVerText,
+          content: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Text(
+              status.errorMessage ?? 'An error occurred during update process.',
+              style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                ref.read(updateProvider.notifier).resetError();
+                Navigator.pop(context);
+              },
+              child: Text(
+                l10n?.dpapiErrorActionOk ?? 'Close',
+                style: const TextStyle(color: Colors.white60),
+              ),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                _triggerManualCheck(context);
+              },
+              icon: const Icon(LucideIcons.refreshCw, size: 14),
+              label: Text(l10n?.updateRetry ?? 'Retry'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ],
+        );
+
+      case UpdatePhase.downloading:
+      case UpdatePhase.verifying:
+      case UpdatePhase.installing:
+        final pct = (status.downloadProgress * 100).toInt().toString();
+        return _StyledDialog(
+          icon: LucideIcons.download,
+          iconColor: Colors.lightBlueAccent,
+          title: status.phase == UpdatePhase.verifying
+              ? (l10n?.updateVerifying ?? 'Verifying integrity...')
+              : status.phase == UpdatePhase.installing
+                  ? 'Updating...'
+                  : (l10n?.updateDownloadingPercent(pct) ?? 'Downloading: $pct%'),
+          subtitle: currentVerText,
+          content: LinearProgressIndicator(
+            value: status.phase == UpdatePhase.downloading
+                ? status.downloadProgress
+                : null,
+            backgroundColor: Colors.white10,
+            color: Colors.lightBlueAccent,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                l10n?.dpapiErrorActionOk ?? 'Close',
+                style: const TextStyle(color: Colors.white60),
+              ),
+            ),
+          ],
+        );
+
+      case UpdatePhase.idle:
+        if (status.isUpToDateNotice) {
+          return _StyledDialog(
+            icon: LucideIcons.checkCircle2,
+            iconColor: Colors.greenAccent,
+            title: l10n?.updateNoUpdatesTitle ?? 'No updates found',
+            subtitle: currentVerText,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n?.updateNoUpdatesFound ??
+                      'No updates found. You are running the latest version.',
+                  style: const TextStyle(color: Colors.white70, fontSize: 13),
                 ),
               ],
             ),
-            const SizedBox(height: 14),
-            Text(
-              l10n?.updateReleaseNotes ?? 'Release Notes',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
+            leftAction: TextButton.icon(
+              onPressed: () => _launchExternalUrl(UpdateInfo.defaultReleasesUrl),
+              icon: const Icon(LucideIcons.externalLink, size: 12),
+              label: Text(l10n?.updateViewOnGithub ?? 'GitHub Releases'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white60,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               ),
             ),
-            const SizedBox(height: 8),
-            Container(
-              constraints: const BoxConstraints(maxHeight: 360),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.white10),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  ref.read(updateProvider.notifier).resetUpToDateNotice();
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orangeAccent,
+                  foregroundColor: Colors.black87,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(l10n?.dialogOk ?? 'OK'),
               ),
-              child: SingleChildScrollView(
-                child: MarkdownBody(
-                  data: updateInfo.releaseNotes.isNotEmpty
-                      ? updateInfo.releaseNotes
-                      : 'No release notes provided.',
-                  styleSheet: MarkdownStyleSheet(
-                    p: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.4),
-                    h1: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-                    h2: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
-                    listBullet: const TextStyle(color: Colors.orangeAccent),
+            ],
+          );
+        } else {
+          return _StyledDialog(
+            icon: LucideIcons.info,
+            iconColor: Colors.orangeAccent,
+            title: 'Solaris v$currentVersion',
+            subtitle: currentVerText,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n?.appVersion(currentVersion) ?? 'Solaris is up to date.',
+                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+              ],
+            ),
+            leftAction: TextButton.icon(
+              onPressed: () => _launchExternalUrl(UpdateInfo.defaultReleasesUrl),
+              icon: const Icon(LucideIcons.externalLink, size: 12),
+              label: Text(l10n?.updateViewOnGithub ?? 'GitHub Releases'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white60,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  l10n?.dpapiErrorActionOk ?? 'Close',
+                  style: const TextStyle(color: Colors.white60),
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  _triggerManualCheck(context);
+                },
+                icon: const Icon(LucideIcons.refreshCw, size: 14),
+                label: Text(l10n?.updateCheckForUpdates ?? 'Check for updates'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orangeAccent,
+                  foregroundColor: Colors.black87,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-            },
-            child: Text(
-              l10n?.updateLater ?? 'Later',
-              style: const TextStyle(color: Colors.white60),
-            ),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              ref.read(updateProvider.notifier).startDownload();
-            },
-            icon: const Icon(LucideIcons.download, size: 14),
-            label: Text(l10n?.updateAvailable ?? 'Download'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orangeAccent,
-              foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showReadyDialog(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => _StyledDialog(
-        icon: LucideIcons.checkCircle2,
-        iconColor: Colors.greenAccent,
-        title: l10n?.updateReady ?? 'Ready to install ✓',
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n?.updateRestartWarning ??
-                  'Application will restart to apply the update.',
-              style: const TextStyle(color: Colors.white70, fontSize: 13),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(
-              l10n?.updateLater ?? 'Later',
-              style: const TextStyle(color: Colors.white60),
-            ),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              ref.read(updateProvider.notifier).installAndRestart();
-            },
-            icon: const Icon(LucideIcons.refreshCw, size: 14),
-            label: Text(l10n?.updateInstallRestart ?? 'Install & Restart'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.greenAccent,
-              foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showErrorDialog(
-    BuildContext context,
-    WidgetRef ref,
-    String? errorMessage,
-  ) {
-    final l10n = AppLocalizations.of(context);
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => _StyledDialog(
-        icon: LucideIcons.alertTriangle,
-        iconColor: Colors.redAccent,
-        title: l10n?.updateError ?? 'Update Error ⚠',
-        content: Container(
-          constraints: const BoxConstraints(maxWidth: 400),
-          child: Text(
-            errorMessage ?? 'An error occurred during update process.',
-            style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              ref.read(updateProvider.notifier).resetError();
-            },
-            child: Text(
-              l10n?.dpapiErrorActionOk ?? 'Close',
-              style: const TextStyle(color: Colors.white60),
-            ),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              _triggerManualCheck(context, ref);
-            },
-            icon: const Icon(LucideIcons.refreshCw, size: 14),
-            label: Text(l10n?.updateRetry ?? 'Retry'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+            ],
+          );
+        }
+    }
   }
 }
 
@@ -577,7 +722,10 @@ class _StyledDialog extends StatelessWidget {
   final String title;
   final String? subtitle;
   final Widget content;
+  final Widget? leftAction;
   final List<Widget> actions;
+  final bool isSpinningIcon;
+  final Animation<double>? spinAnimation;
 
   const _StyledDialog({
     required this.icon,
@@ -585,16 +733,27 @@ class _StyledDialog extends StatelessWidget {
     required this.title,
     this.subtitle,
     required this.content,
+    this.leftAction,
     required this.actions,
+    this.isSpinningIcon = false,
+    this.spinAnimation,
   });
 
   @override
   Widget build(BuildContext context) {
+    Widget iconWidget = Icon(icon, color: iconColor, size: 20);
+    if (isSpinningIcon && spinAnimation != null) {
+      iconWidget = RotationTransition(
+        turns: spinAnimation!,
+        child: iconWidget,
+      );
+    }
+
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 460),
+        constraints: const BoxConstraints(maxWidth: 480),
         child: Container(
           decoration: BoxDecoration(
             color: const Color(0xFF1E1E28),
@@ -642,7 +801,7 @@ class _StyledDialog extends StatelessWidget {
                                 color: iconColor.withOpacity(0.12),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: Icon(icon, color: iconColor, size: 20),
+                              child: iconWidget,
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -677,8 +836,24 @@ class _StyledDialog extends StatelessWidget {
                         content,
                         const SizedBox(height: 20),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: actions,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            if (leftAction != null)
+                              Flexible(child: leftAction!)
+                            else
+                              const SizedBox.shrink(),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              flex: 2,
+                              child: Wrap(
+                                alignment: WrapAlignment.end,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: actions,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

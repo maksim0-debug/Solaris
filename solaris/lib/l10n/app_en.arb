@@ -709,5 +709,7 @@
   "customBuildWarningTitle": "Update Warning",
   "customBuildWarningBody": "When updating from a custom build to an official release, your saved API keys (Mapbox, WeatherAPI, Google Fit) may be reset. You will need to enter them again in Settings upon next launch.",
   "continueButton": "Continue",
-  "dialogOk": "OK"
+  "dialogOk": "OK",
+  "updateNoUpdatesTitle": "No updates found",
+  "updateNoUpdatesFound": "No updates found. You are running the latest version."
 }

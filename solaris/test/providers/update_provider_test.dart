@@ -221,5 +221,46 @@ void main() {
       expect(container.read(updateProvider).phase, equals(UpdatePhase.idle));
       expect(container.read(updateProvider).errorMessage, isNull);
     });
+
+    test('checkForUpdate sets isUpToDateNotice true when manual check returns no update', () async {
+      final mockGithubService = MockGitHubReleaseService(null);
+      final container = ProviderContainer(
+        overrides: [
+          githubReleaseServiceProvider.overrideWithValue(mockGithubService),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(updateProvider.notifier).checkForUpdate(
+            isManual: true,
+            currentVersionOverride: '1.0.17',
+          );
+
+      final state = container.read(updateProvider);
+      expect(state.phase, equals(UpdatePhase.idle));
+      expect(state.isUpToDateNotice, isTrue);
+
+      container.read(updateProvider.notifier).resetUpToDateNotice();
+      expect(container.read(updateProvider).isUpToDateNotice, isFalse);
+    });
+
+    test('checkForUpdate leaves isUpToDateNotice false when automatic check returns no update', () async {
+      final mockGithubService = MockGitHubReleaseService(null);
+      final container = ProviderContainer(
+        overrides: [
+          githubReleaseServiceProvider.overrideWithValue(mockGithubService),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(updateProvider.notifier).checkForUpdate(
+            isManual: false,
+            currentVersionOverride: '1.0.17',
+          );
+
+      final state = container.read(updateProvider);
+      expect(state.phase, equals(UpdatePhase.idle));
+      expect(state.isUpToDateNotice, isFalse);
+    });
   });
 }

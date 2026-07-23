@@ -1555,4 +1555,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dialogOk => 'OK';
+
+  @override
+  String get updateNoUpdatesTitle => 'No updates found';
+
+  @override
+  String get updateNoUpdatesFound =>
+      'No updates found. You are running the latest version.';
 }

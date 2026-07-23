@@ -161,6 +161,40 @@ void main() {
 
     expect(find.textContaining('Checksum verification failed'), findsOneWidget);
   });
+
+  testWidgets('renders checking state with spinner inside dialog', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      createTestableWidget(
+        updateStatus: const UpdateStatus(
+          phase: UpdatePhase.checking,
+        ),
+      ),
+    );
+
+    await tester.tap(find.byType(UpdateStatusWidget));
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.byType(Dialog), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.textContaining('Checking for updates...'), findsAtLeast(1));
+  });
+
+  testWidgets('renders up to date notice when isUpToDateNotice is true', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      createTestableWidget(
+        updateStatus: const UpdateStatus(
+          phase: UpdatePhase.idle,
+          isUpToDateNotice: true,
+        ),
+      ),
+    );
+
+    await tester.tap(find.byType(UpdateStatusWidget));
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.byType(Dialog), findsOneWidget);
+    expect(find.textContaining('No updates found'), findsAtLeast(1));
+  });
 }
 
 class _FakeUpdateNotifier extends UpdateNotifier {

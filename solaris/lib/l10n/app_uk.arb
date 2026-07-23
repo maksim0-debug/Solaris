@@ -707,5 +707,7 @@
   "customBuildWarningTitle": "Попередження про оновлення",
   "customBuildWarningBody": "При оновленні з власної збірки на офіційну версію ви можете втратити збережені API-ключі (Mapbox, WeatherAPI, Google Fit). Під час наступного запуску їх доведеться ввести заново.",
   "continueButton": "Продовжити",
-  "dialogOk": "ОК"
+  "dialogOk": "ОК",
+  "updateNoUpdatesTitle": "Оновлень не знайдено",
+  "updateNoUpdatesFound": "Оновлень не знайдено, у вас актуальна версія."
 }

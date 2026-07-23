@@ -88,6 +88,7 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
     state = state.copyWith(
       phase: UpdatePhase.checking,
       nullifyErrorMessage: true,
+      isUpToDateNotice: false,
     );
 
     try {
@@ -125,15 +126,20 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
             updateInfo: updateInfo,
             downloadedFilePath: cachedPath,
             downloadProgress: 1.0,
+            isUpToDateNotice: false,
           );
         } else {
           state = state.copyWith(
             phase: UpdatePhase.available,
             updateInfo: updateInfo,
+            isUpToDateNotice: false,
           );
         }
       } else {
-        state = state.copyWith(phase: UpdatePhase.idle);
+        state = state.copyWith(
+          phase: UpdatePhase.idle,
+          isUpToDateNotice: isManual,
+        );
       }
     } catch (e, stackTrace) {
       developer.log(
@@ -145,7 +151,15 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
       state = state.copyWith(
         phase: UpdatePhase.error,
         errorMessage: 'Error checking for updates: $e',
+        isUpToDateNotice: false,
       );
+    }
+  }
+
+  /// Resets the [isUpToDateNotice] flag back to false.
+  void resetUpToDateNotice() {
+    if (state.isUpToDateNotice) {
+      state = state.copyWith(isUpToDateNotice: false);
     }
   }
 

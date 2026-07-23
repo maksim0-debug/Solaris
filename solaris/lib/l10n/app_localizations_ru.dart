@@ -1559,4 +1559,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get dialogOk => 'ОК';
+
+  @override
+  String get updateNoUpdatesTitle => 'Обновлений не найдено';
+
+  @override
+  String get updateNoUpdatesFound =>
+      'Обновлений не найдено, у вас актуальная версия.';
 }
