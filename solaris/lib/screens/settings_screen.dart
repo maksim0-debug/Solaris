@@ -22,6 +22,8 @@ import 'package:solaris/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:solaris/widgets/settings/api_settings_card.dart';
+import 'package:solaris/widgets/settings/webhooks_management_card.dart';
+
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -406,6 +408,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             child: const ApiSettingsCard(),
           ),
           const SizedBox(height: 24),
+
+          // Outbound Webhooks Card
+          DeepLinkTarget(
+            key: _anchorKeys['webhooks'],
+            id: 'webhooks',
+            child: const WebhooksManagementCard(),
+          ),
+          const SizedBox(height: 24),
+
 
           // Weather Settings
           DeepLinkTarget(

@@ -22,6 +22,8 @@ import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/models/solar_state.dart';
 import 'package:solaris/models/current_day_phase.dart';
 import 'package:solaris/models/settings_state.dart';
+import 'package:solaris/models/webhook_config.dart';
+import 'package:solaris/services/webhook_service.dart';
 import 'package:solaris/utils/key_obfuscator.dart';
 import 'package:solaris/models/solar_phase_model.dart';
 import 'package:solaris/models/smart_circadian_data.dart';
@@ -1550,6 +1552,34 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     );
   }
 
+  void setWebhooks(List<WebhookConfig> webhooks) {
+    _updateSettings(
+      {'all'},
+      (s) => s.copyWith(webhooks: webhooks),
+    );
+  }
+
+  void addWebhook(WebhookConfig config) {
+    _updateSettings({'all'}, (s) {
+      final updated = List<WebhookConfig>.from(s.webhooks)..add(config);
+      return s.copyWith(webhooks: updated);
+    });
+  }
+
+  void updateWebhook(WebhookConfig config) {
+    _updateSettings({'all'}, (s) {
+      final updated = s.webhooks.map((w) => w.id == config.id ? config : w).toList();
+      return s.copyWith(webhooks: updated);
+    });
+  }
+
+  void deleteWebhook(String id) {
+    _updateSettings({'all'}, (s) {
+      final updated = s.webhooks.where((w) => w.id != id).toList();
+      return s.copyWith(webhooks: updated);
+    });
+  }
+
   void updateWindDownMaster(bool enabled) {
     _updateSettings(
       ref.read(selectedMonitorsProvider),
@@ -2072,6 +2102,12 @@ final settingsProvider =
     AsyncNotifierProvider<SettingsNotifier, Map<String, SettingsState>>(
       SettingsNotifier.new,
     );
+
+final webhookServiceProvider =
+    NotifierProvider<WebhookService, WebhookServiceState>(
+      WebhookService.new,
+    );
+
 
 class CurrentBrightnessNotifier extends Notifier<double> {
   static const _lastBrightnessKey = 'last_known_brightness';

@@ -12,6 +12,9 @@ import 'package:solaris/services/api_monitors_handler.dart';
 import 'package:solaris/services/api_router.dart';
 import 'package:solaris/services/api_status_handler.dart';
 
+import 'package:solaris/models/webhook_config.dart';
+
+
 class LocalIpcService extends Notifier<LocalIpcServerState> {
   HttpServer? _server;
   bool _isStarting = false;
@@ -19,6 +22,8 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
   late final ApiStatusHandler _statusHandler;
   late final ApiControlHandler _controlHandler;
   late final ApiMonitorsHandler _monitorsHandler;
+
+  ApiRouter get router => _router;
 
   @override
   LocalIpcServerState build() {
@@ -99,11 +104,21 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
     _router.post('/api/v1/monitors/:slug/brightness', (HttpRequest req, Map<String, String> params) => _monitorsHandler.handleSetMonitorBrightness(req, params));
     _router.post('/api/v1/monitors/:slug/temperature', (HttpRequest req, Map<String, String> params) => _monitorsHandler.handleSetMonitorTemperature(req, params));
 
-    // 4. Register Legacy Endpoints Aliases (100% Backward Compatibility)
+    // 4. Register Phase 4 Webhook Management Endpoints
+    _router.get('/api/v1/webhooks', (HttpRequest req, Map<String, String> params) => _handleGetWebhooks(req, params));
+    _router.post('/api/v1/webhooks', (HttpRequest req, Map<String, String> params) => _handleCreateWebhook(req, params));
+    _router.delete('/api/v1/webhooks/:id', (HttpRequest req, Map<String, String> params) => _handleDeleteWebhook(req, params));
+    _router.post('/api/v1/webhooks/:id/test', (HttpRequest req, Map<String, String> params) => _handleTestWebhook(req, params));
+    _router.get('/api/v1/webhooks/events', (HttpRequest req, Map<String, String> params) => _handleGetWebhookEvents(req, params));
+    _router.get('/api/v1/webhooks/dlq', (HttpRequest req, Map<String, String> params) => _handleGetDLQ(req, params));
+    _router.post('/api/v1/webhooks/dlq/retry', (HttpRequest req, Map<String, String> params) => _handleRetryDLQ(req, params));
+
+    // 5. Register Legacy Endpoints Aliases (100% Backward Compatibility)
     _router.post('/api/sleep/sessions', (HttpRequest req, Map<String, String> params) => _handleSleepSessions(req));
     _router.post('/api/sleep/status', (HttpRequest req, Map<String, String> params) => _handleSleepStatus(req));
     _router.get('/api/sleep/status', (HttpRequest req, Map<String, String> params) => _handleGetStatus(req));
   }
+
 
   /// Starts the HTTP server on configured port with auto-fallback to ports 45322..45330
   Future<void> start() async {
@@ -268,6 +283,112 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
     });
   }
 
+  Future<void> _handleGetWebhooks(HttpRequest request, Map<String, String> params) async {
+    final settingsMap = ref.read(settingsProvider).value;
+    final webhooks = settingsMap?['all']?.webhooks ?? [];
+    _sendResponse(request, HttpStatus.ok, {
+      'total': webhooks.length,
+      'webhooks': webhooks.map((w) => w.toJson()).toList(),
+    });
+  }
+
+  Future<void> _handleCreateWebhook(HttpRequest request, Map<String, String> params) async {
+    try {
+      final content = await utf8.decoder.bind(request).join();
+      final Map<String, dynamic> json = jsonDecode(content) as Map<String, dynamic>;
+
+
+      final url = json['url'] as String?;
+      if (url == null || url.isEmpty || Uri.tryParse(url)?.hasAbsolutePath != true) {
+        _sendResponse(request, HttpStatus.badRequest, {
+          'error': 'validation_error',
+          'message': 'Valid absolute URL is required',
+        });
+        return;
+      }
+
+      final String id = json['id'] as String? ?? 'wh_${DateTime.now().millisecondsSinceEpoch}';
+      final eventsList = (json['events'] as List<dynamic>?)
+              ?.map((e) => WebhookEventType.fromString(e.toString()))
+              .whereType<WebhookEventType>()
+              .toSet() ??
+          <WebhookEventType>{};
+
+      Map<String, String>? customHeaders;
+      if (json['headers'] != null && json['headers'] is Map) {
+        customHeaders = (json['headers'] as Map<String, dynamic>).map((k, v) => MapEntry(k, v.toString()));
+      }
+
+      final webhook = WebhookConfig(
+        id: id,
+        url: url,
+        name: json['name'] as String?,
+        events: eventsList.isEmpty ? WebhookEventType.values.toSet() : eventsList,
+        isEnabled: json['isEnabled'] as bool? ?? true,
+        secretKey: json['secretKey'] as String?,
+        customHeaders: customHeaders,
+      );
+
+      ref.read(settingsProvider.notifier).addWebhook(webhook);
+      _sendResponse(request, HttpStatus.created, {
+        'status': 'created',
+        'webhook': webhook.toJson(),
+      });
+    } catch (e) {
+      _sendResponse(request, HttpStatus.badRequest, {
+        'error': 'invalid_json',
+        'message': e.toString(),
+      });
+    }
+  }
+
+  Future<void> _handleDeleteWebhook(HttpRequest request, Map<String, String> params) async {
+    final id = params['id'];
+    if (id == null || id.isEmpty) {
+      _sendResponse(request, HttpStatus.badRequest, {'error': 'Missing webhook id'});
+      return;
+    }
+    ref.read(settingsProvider.notifier).deleteWebhook(id);
+    _sendResponse(request, HttpStatus.ok, {'status': 'ok', 'deleted_id': id});
+  }
+
+  Future<void> _handleTestWebhook(HttpRequest request, Map<String, String> params) async {
+    final id = params['id'];
+    if (id == null || id.isEmpty) {
+      _sendResponse(request, HttpStatus.badRequest, {'error': 'Missing webhook id'});
+      return;
+    }
+    final success = await ref.read(webhookServiceProvider.notifier).sendTestPing(id);
+    _sendResponse(request, success ? HttpStatus.ok : HttpStatus.badGateway, {
+      'status': success ? 'ok' : 'failed',
+      'ping_delivered': success,
+    });
+  }
+
+  Future<void> _handleGetWebhookEvents(HttpRequest request, Map<String, String> params) async {
+    final events = WebhookEventType.values.map((e) => {
+      'type': e.name,
+      'wire_name': e.wireName,
+    }).toList();
+    _sendResponse(request, HttpStatus.ok, {'events': events});
+  }
+
+  Future<void> _handleGetDLQ(HttpRequest request, Map<String, String> params) async {
+    final dlq = await ref.read(webhookServiceProvider.notifier).getDLQEntries();
+    _sendResponse(request, HttpStatus.ok, {
+      'total': dlq.length,
+      'dlq': dlq.map((e) => e.toJson()).toList(),
+    });
+  }
+
+  Future<void> _handleRetryDLQ(HttpRequest request, Map<String, String> params) async {
+    await ref.read(webhookServiceProvider.notifier).clearDLQ();
+    _sendResponse(request, HttpStatus.ok, {
+      'status': 'ok',
+      'message': 'DLQ cleared',
+    });
+  }
+
   void _sendResponse(
     HttpRequest request,
     int statusCode,
@@ -280,3 +401,4 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
     request.response.close();
   }
 }
+

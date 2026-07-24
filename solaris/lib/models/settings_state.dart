@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:solaris/models/preset_type.dart';
+import 'package:solaris/models/webhook_config.dart';
 import 'package:solaris/env/env.dart';
 import 'package:solaris/utils/key_obfuscator.dart';
 
@@ -105,6 +106,7 @@ class SettingsState {
   final String customGoogleClientId;
   final String customGoogleClientSecret;
   final bool isAutoUpdateEnabled;
+  final List<WebhookConfig> webhooks;
 
   SettingsState({
     this.activePreset = PresetType.bright,
@@ -188,6 +190,7 @@ class SettingsState {
     this.customMapboxToken = "",
     this.customGoogleClientId = "",
     this.customGoogleClientSecret = "",
+    this.webhooks = const [],
   }) : apiServerPort = apiServerPort ?? localIpcServerPort,
        isAutoUpdateEnabled = isAutoUpdateEnabled ?? Env.isOfficialRelease,
        curvesMap = curvesMap ?? PresetConstants.getAllDefaults(),
@@ -305,6 +308,7 @@ class SettingsState {
     'customMapboxToken': KeyObfuscator.encrypt(customMapboxToken),
     'customGoogleClientId': KeyObfuscator.encrypt(customGoogleClientId),
     'customGoogleClientSecret': KeyObfuscator.encrypt(customGoogleClientSecret),
+    'webhooks': webhooks.map((w) => w.toJson()).toList(),
   };
 
   factory SettingsState.fromJson(Map<String, dynamic> json) {
@@ -491,8 +495,13 @@ class SettingsState {
       customGoogleClientSecret: json.containsKey('customGoogleClientSecret')
           ? KeyObfuscator.decrypt(json['customGoogleClientSecret'] as String)
           : "",
+      webhooks: (json['webhooks'] as List<dynamic>?)
+              ?.map((w) => WebhookConfig.fromJson(w as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
   }
+
 
   SettingsState copyWith({
     PresetType? activePreset,
@@ -562,7 +571,9 @@ class SettingsState {
     String? customMapboxToken,
     String? customGoogleClientId,
     String? customGoogleClientSecret,
+    List<WebhookConfig>? webhooks,
     bool clearNextPresetHotKey = false,
+
     bool clearPrevPresetHotKey = false,
     bool clearBrightnessUpHotKey = false,
     bool clearBrightnessDownHotKey = false,
@@ -675,8 +686,10 @@ class SettingsState {
       customMapboxToken: customMapboxToken ?? this.customMapboxToken,
       customGoogleClientId: customGoogleClientId ?? this.customGoogleClientId,
       customGoogleClientSecret: customGoogleClientSecret ?? this.customGoogleClientSecret,
+      webhooks: webhooks ?? this.webhooks,
     );
   }
+
 }
 
 
