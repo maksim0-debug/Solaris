@@ -1538,7 +1538,7 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   void updateApiLanAccessEnabled(bool enabled) {
     _updateSettings(
       {'all'},
-      (s) => s.copyWith(isApiLanAccessEnabled: enabled, isLocalIpcServerEnabled: enabled),
+      (s) => s.copyWith(isApiLanAccessEnabled: enabled),
     );
   }
 

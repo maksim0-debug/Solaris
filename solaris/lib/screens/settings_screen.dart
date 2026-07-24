@@ -43,6 +43,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     'language': GlobalKey<DeepLinkTargetState>(),
     'schedule_view': GlobalKey<DeepLinkTargetState>(),
     'game_mode': GlobalKey<DeepLinkTargetState>(),
+    'solaris_api': GlobalKey<DeepLinkTargetState>(),
+    'webhooks': GlobalKey<DeepLinkTargetState>(),
     'api_keys': GlobalKey<DeepLinkTargetState>(),
     'updates': GlobalKey<DeepLinkTargetState>(),
   };
@@ -163,25 +165,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                       ),
                       const SizedBox(width: 16),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.settings,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.settings,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
-                          ),
-                          Text(
-                            l10n.autorunSubtitle,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.white.withOpacity(0.5),
+                            Text(
+                              l10n.autorunSubtitle,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white.withOpacity(0.5),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -403,8 +407,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           // Solaris Control API v1 Card
           DeepLinkTarget(
-            key: _anchorKeys['api_keys'],
-            id: 'api_keys',
+            key: _anchorKeys['solaris_api'],
+            id: 'solaris_api',
             child: const ApiSettingsCard(),
           ),
           const SizedBox(height: 24),
@@ -442,25 +446,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                       ),
                       const SizedBox(width: 16),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.weatherAdjustmentTitle,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.weatherAdjustmentTitle,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
-                          ),
-                          Text(
-                            l10n.weatherAdjustmentSubtitle,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.white.withOpacity(0.5),
+                            Text(
+                              l10n.weatherAdjustmentSubtitle,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white.withOpacity(0.5),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),

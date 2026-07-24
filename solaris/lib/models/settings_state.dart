@@ -478,7 +478,7 @@ class SettingsState {
       isLocalIpcServerEnabled: json['isLocalIpcServerEnabled'] as bool? ?? false,
       localIpcServerPort: json['localIpcServerPort'] as int? ?? 45321,
       apiServerPort: json['apiServerPort'] as int? ?? json['localIpcServerPort'] as int? ?? 45321,
-      isApiLanAccessEnabled: json['isApiLanAccessEnabled'] as bool? ?? json['isLocalIpcServerEnabled'] as bool? ?? false,
+      isApiLanAccessEnabled: json['isApiLanAccessEnabled'] as bool? ?? false,
       apiAccessToken: json.containsKey('apiAccessToken')
           ? KeyObfuscator.decrypt(json['apiAccessToken'] as String)
           : "",

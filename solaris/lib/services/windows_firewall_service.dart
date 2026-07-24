@@ -89,14 +89,31 @@ class WindowsFirewallService {
     return false;
   }
 
-  /// Removes all firewall rules created by Solaris with prefix [rulePrefix].
-  Future<void> removeAllSolarisRules() async {
+  /// Removes firewall rules created by Solaris for [port] or all Solaris rules.
+  Future<void> removeAllSolarisRules({int port = 45321}) async {
     if (!Platform.isWindows) return;
+
+    final ruleName = getRuleName(port);
+    try {
+      final netshResult = await Process.run('netsh', [
+        'advfirewall',
+        'firewall',
+        'delete',
+        'rule',
+        'name=$ruleName',
+      ]);
+      if (netshResult.exitCode == 0) {
+        debugPrint('WindowsFirewallService: Fast netsh rule removed for port $port');
+        return;
+      }
+    } catch (e) {
+      debugPrint('WindowsFirewallService: Fast netsh rule removal failed: $e');
+    }
 
     try {
       final psCommand = "Remove-NetFirewallRule -DisplayName '$rulePrefix*' -ErrorAction SilentlyContinue";
       await Process.run('powershell', ['-Command', psCommand]);
-      debugPrint('WindowsFirewallService: Removed all Solaris firewall rules');
+      debugPrint('WindowsFirewallService: Removed all Solaris firewall rules via PowerShell');
     } catch (e) {
       debugPrint('WindowsFirewallService: Error removing firewall rules: $e');
     }

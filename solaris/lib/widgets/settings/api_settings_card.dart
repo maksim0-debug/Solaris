@@ -177,12 +177,22 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                   selected: {isLanEnabled},
                   onSelectionChanged: (Set<bool> selection) async {
                     final enableLan = selection.first;
+
+                    // 1. Immediately update UI state for zero-latency response
+                    ref
+                        .read(settingsProvider.notifier)
+                        .updateApiLanAccessEnabled(enableLan);
+
                     if (enableLan) {
                       // Request UAC Firewall rule creation
                       final firewallService = ref.read(windowsFirewallServiceProvider);
                       final success = await firewallService.ensureRuleAdded(port: port);
 
                       if (!success) {
+                        // Rollback state if UAC is rejected
+                        ref
+                            .read(settingsProvider.notifier)
+                            .updateApiLanAccessEnabled(false);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -206,15 +216,8 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                     } else {
                       // Clean firewall rules when disabling LAN
                       final firewallService = ref.read(windowsFirewallServiceProvider);
-                      await firewallService.removeAllSolarisRules();
+                      await firewallService.removeAllSolarisRules(port: port);
                     }
-
-                    ref
-                        .read(settingsProvider.notifier)
-                        .updateApiLanAccessEnabled(enableLan);
-                    await ref
-                        .read(localIpcServiceProvider.notifier)
-                        .restartServer();
                   },
                 ),
 
