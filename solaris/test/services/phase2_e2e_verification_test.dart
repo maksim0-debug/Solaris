@@ -182,7 +182,7 @@ void main() {
       });
       expect(resp.statusCode, equals(HttpStatus.ok));
 
-      resp = await sendPost('/api/v1/control', {'action': 'set_manual_location', 'latitude': 55.7558, 'longitude': 37.6173});
+      resp = await sendPost('/api/v1/control', {'action': 'set_manual_location', 'latitude': 50.4495, 'longitude': 30.5253});
       expect(resp.statusCode, equals(HttpStatus.ok));
 
       resp = await sendPost('/api/v1/control', {'action': 'set_weather_provider', 'provider': 'openMeteo'});

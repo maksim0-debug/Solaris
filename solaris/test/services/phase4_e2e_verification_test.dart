@@ -339,11 +339,11 @@ void main() {
     group('6. Privacy-First Data Sanitization Verification', () {
       test('onWeatherUpdated sanitization removes GPS coordinates and city name', () {
         final rawWeatherData = {
-          'lat': 55.7558,
-          'latitude': 55.7558,
-          'lon': 37.6173,
-          'longitude': 37.6173,
-          'city': 'Moscow',
+          'lat': 50.4495,
+          'latitude': 50.4495,
+          'lon': 30.5253,
+          'longitude': 30.5253,
+          'city': 'Kyiv',
           'temperature': 22.5,
           'cloudiness': 15,
           'uv_index': 3.2,
@@ -369,8 +369,8 @@ void main() {
 
       test('onLocationChanged payload is transformed to signal_only', () {
         final rawLocation = {
-          'lat': 55.7558,
-          'lon': 37.6173,
+          'lat': 50.4495,
+          'lon': 30.5253,
           'address': 'Secret Street 123',
         };
 

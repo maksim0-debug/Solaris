@@ -45,8 +45,8 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   final dummyPosition = Position(
-    latitude: 55.75,
-    longitude: 37.61,
+    latitude: 50.4495,
+    longitude: 30.5253,
     timestamp: DateTime.now(),
     accuracy: 0,
     altitude: 0,
