@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:solaris/models/preset_type.dart';
 import 'package:solaris/models/webhook_config.dart';
+import 'package:solaris/models/api_permissions_config.dart';
 import 'package:solaris/env/env.dart';
 import 'package:solaris/utils/key_obfuscator.dart';
 
@@ -107,9 +108,11 @@ class SettingsState {
   final String customGoogleClientSecret;
   final bool isAutoUpdateEnabled;
   final List<WebhookConfig> webhooks;
+  final ApiPermissionsConfig apiPermissions;
 
   SettingsState({
     this.activePreset = PresetType.bright,
+    this.apiPermissions = const ApiPermissionsConfig(),
     Map<PresetType, List<FlSpot>>? curvesMap,
     this.curveSharpness = 1.0,
     this.isAutorunEnabled = true,
@@ -309,6 +312,7 @@ class SettingsState {
     'customGoogleClientId': KeyObfuscator.encrypt(customGoogleClientId),
     'customGoogleClientSecret': KeyObfuscator.encrypt(customGoogleClientSecret),
     'webhooks': webhooks.map((w) => w.toJson()).toList(),
+    'apiPermissions': apiPermissions.toJson(),
   };
 
   factory SettingsState.fromJson(Map<String, dynamic> json) {
@@ -499,6 +503,11 @@ class SettingsState {
               ?.map((w) => WebhookConfig.fromJson(w as Map<String, dynamic>))
               .toList() ??
           [],
+      apiPermissions: json.containsKey('apiPermissions') && json['apiPermissions'] != null
+          ? ApiPermissionsConfig.fromJson(
+              json['apiPermissions'] as Map<String, dynamic>,
+            )
+          : const ApiPermissionsConfig(),
     );
   }
 
@@ -572,6 +581,7 @@ class SettingsState {
     String? customGoogleClientId,
     String? customGoogleClientSecret,
     List<WebhookConfig>? webhooks,
+    ApiPermissionsConfig? apiPermissions,
     bool clearNextPresetHotKey = false,
 
     bool clearPrevPresetHotKey = false,
@@ -687,6 +697,7 @@ class SettingsState {
       customGoogleClientId: customGoogleClientId ?? this.customGoogleClientId,
       customGoogleClientSecret: customGoogleClientSecret ?? this.customGoogleClientSecret,
       webhooks: webhooks ?? this.webhooks,
+      apiPermissions: apiPermissions ?? this.apiPermissions,
     );
   }
 
