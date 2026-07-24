@@ -52,7 +52,7 @@ Focus on the win without distractions.
 
 - **Auto-Lock**: Solaris detects when you start a game and prevents brightness from shifting during intense sessions.
 - **Customizable Lists**: Add specific apps to a **Whitelist** (always lock) or **Blacklist** (never lock).
-<img width="971" height="603" alt="Game Mode and Application Whitelist configuration" src="https://github.com/user-attachments/assets/4f2429b0-2470-42fb-b5a7-f6b6086cb091" />
+  <img width="971" height="603" alt="Game Mode and Application Whitelist configuration" src="https://github.com/user-attachments/assets/4f2429b0-2470-42fb-b5a7-f6b6086cb091" />
 
 ### ☁️ Weather Influence
 
@@ -70,7 +70,7 @@ Control your environment without leaving your current app.
 
 - **Custom Bindings**: Set shortcuts for Next/Prev Preset, Brightness Up/Down, and Toggling Auto-mode.
 - **Stepless Control**: Fine-tune brightness in precise increments (e.g., 5% per press).
-<img width="985" height="541" alt="Global Hotkey settings for brightness and preset navigation" src="https://github.com/user-attachments/assets/1b8301c3-eeff-41b0-b240-2d76551cb641" />
+  <img width="985" height="541" alt="Global Hotkey settings for brightness and preset navigation" src="https://github.com/user-attachments/assets/1b8301c3-eeff-41b0-b240-2d76551cb641" />
 
 ### 📍 Precise Location
 
@@ -86,7 +86,7 @@ Solaris supports automatic updates directly from within the app:
 - **Background Checks**: Checks for new GitHub releases on launch and every 24 hours.
 - **Status Bar**: Interactive widget in the footer displays download progress, SHA-256 verification, and readiness for installation.
 - **Cryptographic SLSA Security**: Validates downloaded update archives against GitHub's immutable Artifact Attestations API (`actions/attest-build-provenance@v4` / SLSA Provenance v1). Ensures that updates were compiled directly by GitHub Actions CI/CD from open-source code and rejects any manually modified or replaced files.
-- **Native Updater (`solaris_updater.exe`)**: Written in C++17 (using `miniz`), creates a backup, protects against vulnerabilities (*Zip Slip*), and performs an **automatic rollback** in case of failure.
+- **Native Updater (`solaris_updater.exe`)**: Written in C++17 (using `miniz`), creates a backup, protects against vulnerabilities (_Zip Slip_), and performs an **automatic rollback** in case of failure.
 
 > [!NOTE]
 > **Custom Builds (`IS_OFFICIAL_RELEASE=false`)**: Automatic updates are disabled by default. Note that updating from a custom build to an official release may reset your saved API keys due to Windows DPAPI encryption mechanics.
@@ -201,6 +201,34 @@ Your custom API keys are secure:
 - **Safe Local Storage**: Keys are stored locally on your PC in the application support directory.
 - **Hardware-dependent Encryption (Windows DPAPI)**: Keys are encrypted using the Windows Data Protection API (DPAPI). This ensures keys can only be decrypted on the same device by the same Windows user.
 - **Key Priority**: Dynamic keys specified in the settings screen always take precedence over static build-time credentials (such as those configured in the `.env` file during compilation).
+
+---
+
+## 🔌 Solaris Control API v1, Outbound Webhooks & WebSocket
+
+Solaris includes a built-in, local HTTP & WebSocket control server that enables third-party applications (Home Assistant, BitFocus Companion, Stream Deck, Raycast, Node-RED, or custom scripts) to query state, adjust monitor parameters, trigger presets, subscribe to real-time events, and receive outbound webhooks.
+
+### 🌟 Key Capabilities
+
+- **Full Automation Gateway**: 26 supported Action System commands (`set_brightness`, `set_temperature`, `set_auto_brightness`, `manage_game_mode_whitelist`, etc.).
+- **Friendly Monitor Slugs**: Target displays using human-readable identifiers (`display-1`, `lg-ultragear-a1f9`, `primary`) or system paths (`\\\\.\\DISPLAY1`).
+- **Hardened Middleware Defense**: 6-layer protection pipeline including Host Header DNS Rebinding guard, Payload limiters (64 KB), CSWSH/Drive-by cross-origin guard, per-IP rate limiting, and constant-time SHA-256 token authorization.
+- **Outbound Webhooks Engine**: 23 supported event types, SSRF safe validator, True IP-Pinning (TLS SNI Handshake), HMAC-SHA256 delivery signatures (`X-Solaris-Signature-256`), WAL Staging Buffer, and Dead Letter Queue (DLQ).
+- **Real-Time WebSocket API**: Bi-directional JSON streaming channel at `/api/v1/ws` with `cmd_id` request correlation, selective module subscriptions, and Windows Power S3/S4 sleep/resume broadcasts.
+- **Interactive OpenAPI Docs**: Embedded Swagger UI playground hosted locally at `/api/v1/docs` and raw spec at `/api/v1/openapi.json`.
+
+---
+
+### 📚 API Documentation Catalog
+
+Detailed technical documentation for integrating with Solaris Control API v1 is available in the [`docs/`](docs/) directory:
+
+| Document                                               | Description                                                                                                                                                                 |
+| :----------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **[Architecture & Core Guide](docs/API.md)**           | Core design, security pipeline, authentication formats (`X-API-Key`, `Bearer`, `?token`), RFC 7807 error format, and Swagger UI setup.                                      |
+| **[REST Endpoints & Action System](docs/REST_API.md)** | State endpoints (`/api/v1/status`, `/api/v1/health`, `/api/v1/presets`, `/api/v1/sleep/sessions`), Friendly Slugs, and comprehensive catalog of **all 26 Action commands**. |
+| **[Outbound Webhooks Engine](docs/WEBHOOKS.md)**       | Webhook management REST endpoints, **23 Webhook events catalog**, SSRF protection, True IP-Pinning, HMAC-SHA256 signatures, WAL buffer, and DLQ handling.                   |
+| **[Real-Time WebSocket API](docs/WEBSOCKET.md)**       | Socket endpoint (`/api/v1/ws`), authentication headers, `cmd_id` correlation, selective module subscriptions, and OS/Hardware error broadcasts.                             |
 
 ---
 
@@ -324,8 +352,7 @@ If you compile or run Solaris without providing API keys, the application automa
 - **Privacy Policy**: [Read our Privacy Policy](https://maksim0-debug.github.io/Solaris/docs)
 - **License**: This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
 - **Third-Party Libraries**:
-  - [miniz](https://github.com/richgel999/miniz/blob/master/LICENSE) ([MIT License](https://github.com/richgel999/miniz/blob/master/LICENSE)) — lossless, data compression library used by updater.
-
+  - [miniz](https://github.com/richgel999/miniz) ([MIT License](https://github.com/richgel999/miniz/blob/master/LICENSE)) — lossless, data compression library used by updater.
 
 ---
 
