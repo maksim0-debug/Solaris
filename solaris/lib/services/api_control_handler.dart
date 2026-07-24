@@ -3,12 +3,14 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:solaris/models/api_permissions_config.dart';
 import 'package:solaris/models/preset_type.dart';
 import 'package:solaris/models/rfc7807_error.dart';
 import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/providers/sleep_provider.dart';
+import 'package:solaris/services/api_permissions_checker.dart';
 import 'package:solaris/services/monitor_slug_resolver.dart';
 
 /// Safe Riverpod state mutation outside Flutter frame rendering phase.
@@ -93,12 +95,63 @@ class ApiControlHandler {
     }
   }
 
+  ApiPermissionsConfig _getPermissions() {
+    final settingsMap = _container.read(settingsProvider).value ??
+        _container.read(settingsProvider).asData?.value;
+    return settingsMap?['all']?.apiPermissions ?? const ApiPermissionsConfig();
+  }
+
   Future<void> _handleBatchControl(
     HttpRequest request,
     Map<String, dynamic> jsonPayload,
   ) async {
+    final permissions = _getPermissions();
+
+    final roCheck = ApiPermissionsChecker.checkReadOnly(permissions);
+    if (!roCheck.isAllowed) {
+      await _sendError(
+        request,
+        HttpStatus.forbidden,
+        roCheck.title,
+        roCheck.detail,
+      );
+      return;
+    }
+
     final rawActions = jsonPayload['actions'] as List;
     final mode = (jsonPayload['mode'] as String?)?.toLowerCase() ?? 'fail_fast';
+
+    // Pre-flight ACL check for fail_fast mode: validate all actions BEFORE executing any mutations
+    if (mode == 'fail_fast') {
+      for (int i = 0; i < rawActions.length; i++) {
+        final actionItem = rawActions[i];
+        if (actionItem is Map<String, dynamic>) {
+          if (actionItem.containsKey('apiPermissions') || actionItem.containsKey('permissions')) {
+            await _sendError(
+              request,
+              HttpStatus.forbidden,
+              'Privilege Escalation Prohibited',
+              'Modifying API permissions via mutation endpoints is strictly prohibited.',
+            );
+            return;
+          }
+          final actionStr = actionItem['action'] as String?;
+          final category = ApiPermissionsConfig.getCategoryForAction(actionStr ?? '');
+          if (category != null) {
+            final catCheck = ApiPermissionsChecker.checkCategory(permissions, category);
+            if (!catCheck.isAllowed) {
+              await _sendError(
+                request,
+                HttpStatus.forbidden,
+                catCheck.title,
+                catCheck.detail,
+              );
+              return;
+            }
+          }
+        }
+      }
+    }
 
     final List<Map<String, dynamic>> results = [];
     int successfulActions = 0;
@@ -149,12 +202,41 @@ class ApiControlHandler {
   }
 
   Future<_ActionResult> _executeSingleAction(Map<String, dynamic> payload) async {
+    if (payload.containsKey('apiPermissions') || payload.containsKey('permissions')) {
+      return _ActionResult.error(
+        HttpStatus.forbidden,
+        'Privilege Escalation Prohibited',
+        'Modifying API permissions via mutation endpoints is strictly prohibited.',
+      );
+    }
+
+    final permissions = _getPermissions();
+
+    final roCheck = ApiPermissionsChecker.checkReadOnly(permissions);
+    if (!roCheck.isAllowed) {
+      return _ActionResult.error(
+        HttpStatus.forbidden,
+        roCheck.title,
+        roCheck.detail,
+      );
+    }
+
     final action = payload['action'] as String?;
     if (action == null || action.isEmpty) {
       return _ActionResult.error(
         HttpStatus.unprocessableEntity,
         'Missing Action',
         "Field 'action' is required.",
+      );
+    }
+
+    final category = ApiPermissionsConfig.getCategoryForAction(action);
+    final catCheck = ApiPermissionsChecker.checkCategory(permissions, category);
+    if (!catCheck.isAllowed) {
+      return _ActionResult.error(
+        HttpStatus.forbidden,
+        catCheck.title,
+        catCheck.detail,
       );
     }
 

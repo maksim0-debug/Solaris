@@ -2,11 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:solaris/models/api_permissions_config.dart';
 import 'package:solaris/models/rfc7807_error.dart';
 import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/services/api_control_handler.dart';
+import 'package:solaris/services/api_permissions_checker.dart';
 import 'package:solaris/services/monitor_service.dart';
 import 'package:solaris/services/monitor_slug_resolver.dart';
 
@@ -149,11 +151,22 @@ class ApiMonitorsHandler {
     await request.response.close();
   }
 
+  ApiPermissionsConfig _getPermissions() {
+    final settingsMap = _container.read(settingsProvider).value ??
+        _container.read(settingsProvider).asData?.value;
+    return settingsMap?['all']?.apiPermissions ?? const ApiPermissionsConfig();
+  }
+
   /// POST /api/v1/monitors/:slug/brightness
   Future<void> handleSetMonitorBrightness(
     HttpRequest request,
     Map<String, String> pathParams,
   ) async {
+    final permissions = _getPermissions();
+
+    final catCheck = ApiPermissionsChecker.checkCategory(permissions, ApiActionCategory.monitors);
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, catCheck)) return;
+
     final rawSlug = pathParams['slug'] ?? '';
     final resolvedId = MonitorSlugResolver.resolveToSystemId(rawSlug);
 
@@ -197,6 +210,11 @@ class ApiMonitorsHandler {
     HttpRequest request,
     Map<String, String> pathParams,
   ) async {
+    final permissions = _getPermissions();
+
+    final catCheck = ApiPermissionsChecker.checkCategory(permissions, ApiActionCategory.monitors);
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, catCheck)) return;
+
     final rawSlug = pathParams['slug'] ?? '';
     final resolvedId = MonitorSlugResolver.resolveToSystemId(rawSlug);
 

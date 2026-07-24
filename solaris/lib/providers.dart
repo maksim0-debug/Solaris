@@ -21,6 +21,7 @@ import 'package:solaris/services/autorun_service.dart';
 import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/models/solar_state.dart';
 import 'package:solaris/models/current_day_phase.dart';
+import 'package:solaris/models/api_permissions_config.dart';
 import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/models/webhook_config.dart';
 import 'package:solaris/services/webhook_service.dart';
@@ -1397,6 +1398,10 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
       ref.read(selectedMonitorsProvider),
       (s) => s.copyWith(weatherAdjustmentIntensity: intensity),
     );
+  }
+
+  void updateApiPermissions(ApiPermissionsConfig config) {
+    _updateSettings({'all'}, (s) => s.copyWith(apiPermissions: config));
   }
 
   void updateWeatherProvider(WeatherProvider provider) {
