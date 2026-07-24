@@ -12,7 +12,7 @@ import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/providers/sleep_provider.dart';
 import 'package:solaris/services/monitor_slug_resolver.dart';
 
-/// Безопасная мутация состояния Riverpod вне фазы рендеринга Flutter кадра.
+/// Safe Riverpod state mutation outside Flutter frame rendering phase.
 Future<void> safeStateMutator(VoidCallback mutation) async {
   final completer = Completer<void>();
   Future.microtask(() {
@@ -26,7 +26,7 @@ Future<void> safeStateMutator(VoidCallback mutation) async {
   return completer.future;
 }
 
-/// Обработчик POST /api/v1/control
+/// Handler for POST /api/v1/control
 class ApiControlHandler {
   final ProviderContainer _container;
 

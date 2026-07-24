@@ -10,7 +10,7 @@ import 'package:solaris/services/api_control_handler.dart';
 import 'package:solaris/services/monitor_service.dart';
 import 'package:solaris/services/monitor_slug_resolver.dart';
 
-/// Обработчик эндпоинтов чтения и управления конкретными экранами (/api/v1/monitors)
+/// Handler for per-monitor reading and control endpoints (/api/v1/monitors)
 class ApiMonitorsHandler {
   final ProviderContainer _container;
 

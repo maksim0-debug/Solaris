@@ -196,6 +196,11 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
     state = const LocalIpcServerState(isRunning: false);
   }
 
+  Future<void> restartServer() async {
+    await stop();
+    await start();
+  }
+
   Future<void> _handleSleepSessions(HttpRequest request) async {
     try {
       final String content = await utf8.decoder.bind(request).join();

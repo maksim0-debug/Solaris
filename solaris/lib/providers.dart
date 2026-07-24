@@ -42,6 +42,7 @@ import 'package:solaris/models/map_health_report.dart';
 export 'package:solaris/providers/update_provider.dart';
 export 'package:solaris/providers/post_update_provider.dart';
 export 'package:solaris/models/post_update_result.dart';
+import 'package:solaris/services/windows_firewall_service.dart';
 export 'package:solaris/services/post_update_service.dart';
 export 'package:solaris/providers/app_info_provider.dart';
 
@@ -56,6 +57,7 @@ final smartCircadianServiceProvider = Provider<SmartCircadianService>(
   (ref) => SmartCircadianService(),
 );
 final mapHealthServiceProvider = Provider((ref) => MapHealthService());
+final windowsFirewallServiceProvider = Provider((ref) => WindowsFirewallService());
 
 final localIpcServiceProvider = NotifierProvider<LocalIpcService, LocalIpcServerState>(
   LocalIpcService.new,
@@ -1516,7 +1518,35 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   void updateLocalIpcServerPort(int port) {
     _updateSettings(
       {'all'},
-      (s) => s.copyWith(localIpcServerPort: port),
+      (s) => s.copyWith(localIpcServerPort: port, apiServerPort: port),
+    );
+  }
+
+  void updateApiServerPort(int port) {
+    _updateSettings(
+      {'all'},
+      (s) => s.copyWith(apiServerPort: port, localIpcServerPort: port),
+    );
+  }
+
+  void updateApiLanAccessEnabled(bool enabled) {
+    _updateSettings(
+      {'all'},
+      (s) => s.copyWith(isApiLanAccessEnabled: enabled, isLocalIpcServerEnabled: enabled),
+    );
+  }
+
+  void updateApiAccessToken(String token) {
+    _updateSettings(
+      {'all'},
+      (s) => s.copyWith(apiAccessToken: token),
+    );
+  }
+
+  void updateApiRateLimitPerMinute(int rateLimit) {
+    _updateSettings(
+      {'all'},
+      (s) => s.copyWith(apiRateLimitPerMinute: rateLimit),
     );
   }
 

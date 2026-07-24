@@ -21,6 +21,7 @@ import 'package:solaris/screens/privacy_policy_screen.dart';
 import 'package:solaris/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:solaris/widgets/settings/api_settings_card.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -395,6 +396,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ],
               ),
             ),
+          ),
+          const SizedBox(height: 24),
+
+          // Solaris Control API v1 Card
+          DeepLinkTarget(
+            key: _anchorKeys['api_keys'],
+            id: 'api_keys',
+            child: const ApiSettingsCard(),
           ),
           const SizedBox(height: 24),
 

@@ -68,6 +68,7 @@ void main() {
       expect(json['action'], equals('set_brightness'));
       expect(json['queued']['value'], equals(75.0));
 
+      await Future.microtask(() {});
       final isAutoBr = container.read(autoBrightnessAdjustmentProvider);
       expect(isAutoBr, isFalse);
     });
