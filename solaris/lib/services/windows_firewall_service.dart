@@ -69,16 +69,18 @@ class WindowsFirewallService {
     // 2. PowerShell RunAs (UAC Elevation prompt for normal non-admin user)
     try {
       final psCommand =
-          "Start-Process powershell -Verb RunAs -ArgumentList '-NoProfile -ExecutionPolicy Bypass -Command \"New-NetFirewallRule -DisplayName ''$ruleName'' -Direction Inbound -LocalPort $port -Protocol TCP -Action Allow\"'";
+          "Start-Process powershell -Verb RunAs -Wait -ArgumentList '-NoProfile -ExecutionPolicy Bypass -Command \"New-NetFirewallRule -DisplayName ''$ruleName'' -Direction Inbound -LocalPort $port -Protocol TCP -Action Allow\"'";
       final psResult = await Process.run('powershell', ['-Command', psCommand]);
 
       if (psResult.exitCode == 0) {
-        // Double check after elevated creation
-        await Future<void>.delayed(const Duration(milliseconds: 500));
-        final verified = await isRuleConfigured(port: port);
-        if (verified) {
-          debugPrint('WindowsFirewallService: Elevated PowerShell rule verified for port $port');
-          return true;
+        // Polling verification: check rule status up to 5 seconds to ensure Windows Firewall service registered it
+        for (int i = 0; i < 10; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 500));
+          final verified = await isRuleConfigured(port: port);
+          if (verified) {
+            debugPrint('WindowsFirewallService: Elevated PowerShell rule verified for port $port');
+            return true;
+          }
         }
       }
     } catch (e) {
@@ -111,7 +113,7 @@ class WindowsFirewallService {
     }
 
     try {
-      final psCommand = "Remove-NetFirewallRule -DisplayName '$rulePrefix*' -ErrorAction SilentlyContinue";
+      final psCommand = "Start-Process powershell -Verb RunAs -Wait -ArgumentList '-NoProfile -ExecutionPolicy Bypass -Command \"Remove-NetFirewallRule -DisplayName ''$rulePrefix*'' -ErrorAction SilentlyContinue\"'";
       await Process.run('powershell', ['-Command', psCommand]);
       debugPrint('WindowsFirewallService: Removed all Solaris firewall rules via PowerShell');
     } catch (e) {

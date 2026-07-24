@@ -163,7 +163,7 @@ Future<bool> securityHeadersMiddleware(HttpRequest request) async {
   if (request.uri.path.startsWith('/api/v1/docs')) {
     response.headers.set(
       'Content-Security-Policy',
-      "default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;",
+      "default-src 'self'; connect-src 'self' http: https: ws: wss:; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;",
     );
   } else {
     response.headers.set(

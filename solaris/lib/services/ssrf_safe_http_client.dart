@@ -77,12 +77,25 @@ class SsrfSafeHttpClient {
 
       final validatedIp = addresses.first;
 
-      // 2. HttpClient with custom connectionFactory (True IP-Pinning)
+      // 2. HttpClient with custom connectionFactory (True IP-Pinning & TLS SNI for HTTPS)
       final client = HttpClient()
         ..autoUncompress = true
         ..connectionTimeout = const Duration(seconds: 5)
-        ..connectionFactory = (uri, proxyHost, proxyPort) =>
-            Socket.startConnect(validatedIp, uri.port);
+        ..connectionFactory = (uri, proxyHost, proxyPort) async {
+          final task = await Socket.startConnect(validatedIp, uri.port);
+          final socketFuture = task.socket.then((rawSocket) async {
+            if (uri.scheme == 'https') {
+              return await SecureSocket.secure(
+                rawSocket,
+                host: uri.host,
+              );
+            }
+            return rawSocket;
+          });
+          return ConnectionTask.fromSocket(socketFuture, () {
+            task.cancel();
+          });
+        };
 
 
       try {

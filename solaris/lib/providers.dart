@@ -742,8 +742,8 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
       final degPerHour = (diff / timeDiffSeconds) * 3600;
       if (degPerHour.abs() > 0.1) {
         azTrend = degPerHour > 0
-            ? "+${degPerHour.toStringAsFixed(1)}°/ч"
-            : "${degPerHour.toStringAsFixed(1)}°/ч";
+            ? "+${degPerHour.toStringAsFixed(1)}°/h"
+            : "${degPerHour.toStringAsFixed(1)}°/h";
       }
     }
 
@@ -753,8 +753,8 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
       final degPerHour = (diff / timeDiffSeconds) * 3600;
       if (degPerHour.abs() > 0.1) {
         elTrend = degPerHour > 0
-            ? "+${degPerHour.toStringAsFixed(1)}°/ч"
-            : "${degPerHour.toStringAsFixed(1)}°/ч";
+            ? "+${degPerHour.toStringAsFixed(1)}°/h"
+            : "${degPerHour.toStringAsFixed(1)}°/h";
       }
     }
 
@@ -764,8 +764,8 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
       final degPerHour = (diff / timeDiffSeconds) * 3600;
       if (degPerHour.abs() > 0.1) {
         zenTrend = degPerHour > 0
-            ? "+${degPerHour.toStringAsFixed(1)}°/ч"
-            : "${degPerHour.toStringAsFixed(1)}°/ч";
+            ? "+${degPerHour.toStringAsFixed(1)}°/h"
+            : "${degPerHour.toStringAsFixed(1)}°/h";
       }
     }
 
