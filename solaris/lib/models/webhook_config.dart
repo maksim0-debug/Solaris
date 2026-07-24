@@ -44,7 +44,9 @@ enum WebhookEventType {
   // System & Hardware
   onMonitorConnected('on_monitor_connected'),
   onMonitorDisconnected('on_monitor_disconnected'),
-  onApiServerStarted('on_api_server_started');
+  onApiServerStarted('on_api_server_started'),
+  onSystemResume('on_system_resume'),
+  onHardwareError('on_hardware_error');
 
   final String wireName;
   const WebhookEventType(this.wireName);

@@ -24,6 +24,7 @@ class ColorTemperatureEnabledNotifier extends Notifier<bool> {
   Future<void> _loadInit() async {
     final storage = ref.read(storageServiceProvider);
     final data = await storage.load(_filename);
+    if (!ref.mounted) return;
     if (data != null && data == 'true') {
       if (state != true) {
         state = true;

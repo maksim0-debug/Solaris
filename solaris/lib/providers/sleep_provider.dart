@@ -61,6 +61,7 @@ class SleepNotifier extends Notifier<SleepState> {
   }
 
   Future<void> loadSleepData() async {
+    if (!ref.mounted) return;
     state = state.copyWith(isLoading: true, error: null);
     try {
       final result = await _sleepService.fetchSleepData(forceNetwork: false);

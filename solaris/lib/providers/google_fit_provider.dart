@@ -66,18 +66,21 @@ class GoogleFitNotifier extends Notifier<GoogleFitState> {
   }
 
   Future<void> _initialize() async {
+    if (!ref.mounted) return;
     state = state.copyWith(status: GoogleFitStatus.connecting);
     final service = ref.read(googleFitServiceProvider);
 
     // Load last sync time from storage
     DateTime? lastSync;
     final lastSyncStr = await _storage.load(_lastSyncFilename);
+    if (!ref.mounted) return;
     if (lastSyncStr != null) {
       lastSync = DateTime.tryParse(lastSyncStr);
     }
 
     try {
       final connected = await service.initialize();
+      if (!ref.mounted) return;
       if (connected) {
         state = state.copyWith(
           status: GoogleFitStatus.connected,
@@ -91,6 +94,7 @@ class GoogleFitNotifier extends Notifier<GoogleFitState> {
         );
       }
     } catch (e) {
+      if (!ref.mounted) return;
       state = state.copyWith(
         status: GoogleFitStatus.error,
         errorMessage: e.toString(),

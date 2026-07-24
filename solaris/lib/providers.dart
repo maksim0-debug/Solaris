@@ -45,6 +45,8 @@ export 'package:solaris/providers/update_provider.dart';
 export 'package:solaris/providers/post_update_provider.dart';
 export 'package:solaris/models/post_update_result.dart';
 import 'package:solaris/services/windows_firewall_service.dart';
+import 'package:solaris/services/websocket_service.dart';
+import 'package:solaris/services/windows_power_listener.dart';
 export 'package:solaris/services/post_update_service.dart';
 export 'package:solaris/providers/app_info_provider.dart';
 
@@ -60,6 +62,8 @@ final smartCircadianServiceProvider = Provider<SmartCircadianService>(
 );
 final mapHealthServiceProvider = Provider((ref) => MapHealthService());
 final windowsFirewallServiceProvider = Provider((ref) => WindowsFirewallService());
+final webSocketServiceProvider = Provider((ref) => WebSocketService(ref));
+final windowsPowerListenerProvider = Provider((ref) => WindowsPowerListener(ref));
 
 final localIpcServiceProvider = NotifierProvider<LocalIpcService, LocalIpcServerState>(
   LocalIpcService.new,

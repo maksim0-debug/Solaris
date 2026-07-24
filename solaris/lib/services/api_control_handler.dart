@@ -143,6 +143,12 @@ class ApiControlHandler {
     await request.response.close();
   }
 
+  /// Public wrapper for executing a control action (used by WebSocket, etc.)
+  Future<Map<String, dynamic>> executeAction(Map<String, dynamic> payload) async {
+    final result = await _executeSingleAction(payload);
+    return result.toResponseBody();
+  }
+
   Future<_ActionResult> _executeSingleAction(Map<String, dynamic> payload) async {
     final action = payload['action'] as String?;
     if (action == null || action.isEmpty) {

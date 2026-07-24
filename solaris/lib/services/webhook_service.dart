@@ -151,6 +151,7 @@ class WebhookService extends Notifier<WebhookServiceState> {
 
       await _recoverOrphanedWALFiles(_walFile!);
       await _loadTransactionsFromWAL();
+      if (!ref.mounted) return;
       _openWALSink();
 
       _setupProviderListeners();
@@ -249,6 +250,7 @@ class WebhookService extends Notifier<WebhookServiceState> {
           }
         } catch (_) {}
       }
+      if (!ref.mounted) return;
       _updateStateQueue();
     } catch (e) {
       debugPrint('Failed to load WAL queue: $e');

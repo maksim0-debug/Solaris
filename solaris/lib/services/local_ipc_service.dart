@@ -171,8 +171,27 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
   }
 
   void _listen() {
+    // Ensure WindowsPowerListener is instantiated
+    ref.read(windowsPowerListenerProvider);
+
     _server?.listen((HttpRequest request) async {
       try {
+        // WebSocket Upgrade Check for /api/v1/ws
+        if (WebSocketTransformer.isUpgradeRequest(request) &&
+            request.uri.path == '/api/v1/ws') {
+          final settingsMap = ref.read(settingsProvider).value;
+          final globalSettings = settingsMap?['all'];
+          final expectedToken = globalSettings?.apiAccessToken ?? _router.expectedToken;
+          final isLanEnabled = globalSettings?.isApiLanAccessEnabled ?? _router.isLanEnabled;
+
+          await ref.read(webSocketServiceProvider).handleUpgrade(
+                request,
+                expectedToken: expectedToken,
+                isLanEnabled: isLanEnabled,
+              );
+          return;
+        }
+
         final handled = await _router.handle(request);
         if (!handled) {
           _sendResponse(request, HttpStatus.notFound, {
@@ -184,6 +203,9 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
               'GET /api/v1/presets',
               'GET /api/v1/solar',
               'POST /api/v1/control',
+              'GET /api/v1/webhooks',
+              'POST /api/v1/webhooks',
+              'ws://host:port/api/v1/ws',
               'GET /api/v1/docs',
               'GET /api/v1/openapi.json',
             ],
@@ -201,11 +223,27 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
 
   Future<void> stop() async {
     if (_server != null) {
-      await _server!.close(force: false).timeout(
-        const Duration(seconds: 2),
-        onTimeout: () => _server!.close(force: true),
-      );
+      final s = _server!;
       _server = null;
+
+      // 1. Close all active WebSocket clients gracefully with code 1001 (Going Away)
+      try {
+        ref.read(webSocketServiceProvider).closeAll(code: 1001, reason: 'Solaris API Server Stopping');
+      } catch (_) {}
+
+      // 2. Pause Webhook delivery queue
+      try {
+        ref.read(webhookServiceProvider.notifier).pauseQueue();
+      } catch (_) {}
+
+      // 3. Close HTTP Server
+      try {
+        await s.close(force: false).timeout(
+          const Duration(seconds: 2),
+          onTimeout: () => s.close(force: true),
+        );
+      } catch (_) {}
+
       debugPrint('LocalIpcService: Gracefully stopped API server.');
     }
     state = const LocalIpcServerState(isRunning: false);
