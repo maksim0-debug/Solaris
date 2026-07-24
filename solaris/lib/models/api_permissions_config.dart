@@ -96,6 +96,8 @@ class ApiPermissionsConfig {
 
       case 'clear_failed_webhooks':
       case 'set_map_animations':
+      case 'on_system_resume':
+      case 'on_hardware_error':
         return ApiActionCategory.system;
 
       default:

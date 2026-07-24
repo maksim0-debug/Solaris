@@ -3,16 +3,19 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:solaris/models/api_permissions_config.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/providers/sleep_provider.dart';
 import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/services/api_control_handler.dart';
+import 'package:solaris/services/api_permissions_checker.dart';
+import 'package:solaris/services/api_permissions_filter.dart';
 import 'package:solaris/services/api_router.dart';
 import 'package:solaris/services/gaming_mode_service.dart';
 import 'package:solaris/services/monitor_slug_resolver.dart';
 
 /// High-performance WebSocket streaming service with CSWSH protection,
-/// module-level updates, correlation IDs, selective subscriptions,
+/// granular permissions filtering, selective subscriptions, runtime ACL auditing,
 /// and Slow Consumer OOM protection.
 class WebSocketService {
   static const int maxClients = 20;
@@ -31,6 +34,11 @@ class WebSocketService {
   }
 
   int get connectedClientsCount => _clients.length;
+
+  ApiPermissionsConfig _getPermissions() {
+    final settingsMap = ref.read(settingsProvider).value;
+    return settingsMap?['all']?.apiPermissions ?? const ApiPermissionsConfig();
+  }
 
   void _startHeartbeat() {
     _heartbeatTimer?.cancel();
@@ -60,6 +68,16 @@ class WebSocketService {
   }
 
   void _setupProviderListeners() {
+    // Listen to API Permissions toggles in runtime for instant synchronous subscription audit
+    ref.listen(settingsProvider, (prev, next) {
+      final prevPerms = prev?.value?['all']?.apiPermissions;
+      final nextPerms = next.value?['all']?.apiPermissions;
+
+      if (nextPerms != null && (prevPerms == null || prevPerms != nextPerms)) {
+        _auditSubscriptions(prevPerms, nextPerms);
+      }
+    });
+
     // Listen to Solar State changes
     ref.listen(solarStateStreamProvider, (prev, next) {
       next.whenData((solar) {
@@ -123,6 +141,43 @@ class WebSocketService {
         'last_session_end': next.lastSessionEnd?.toIso8601String(),
       });
     });
+  }
+
+  void _auditSubscriptions(
+    ApiPermissionsConfig? prevPerms,
+    ApiPermissionsConfig nextPerms,
+  ) {
+    for (final ws in _clients.toList()) {
+      final subs = _subscriptionsPerClient[ws];
+      if (subs == null) continue;
+
+      void checkRevoked(String moduleName, bool wasAllowed, bool isAllowed) {
+        if (wasAllowed && !isAllowed) {
+          final isExplicitlySubscribed = subs.contains(moduleName);
+          final isImplicitlySubscribed = subs.isEmpty;
+
+          if (isExplicitlySubscribed || isImplicitlySubscribed) {
+            if (isExplicitlySubscribed) {
+              subs.remove(moduleName);
+            }
+            try {
+              ws.add(jsonEncode({
+                'type': 'subscription_revoked',
+                'module': moduleName,
+              }));
+            } catch (_) {}
+          }
+        }
+      }
+
+      final prev = prevPerms ?? const ApiPermissionsConfig();
+      checkRevoked('monitors', prev.allowReadMonitors, nextPerms.allowReadMonitors);
+      checkRevoked('solar', prev.allowReadSolar, nextPerms.allowReadSolar);
+      checkRevoked('weather', prev.allowReadWeather, nextPerms.allowReadWeather);
+      checkRevoked('sleep', prev.allowReadSleep, nextPerms.allowReadSleep);
+      checkRevoked('circadian', prev.allowReadCircadian, nextPerms.allowReadCircadian);
+      checkRevoked('smart_circadian', prev.allowReadCircadian, nextPerms.allowReadCircadian);
+    }
   }
 
   Map<String, dynamic> _buildAutomationData() {
@@ -229,11 +284,12 @@ class WebSocketService {
 
     _clients.add(ws);
     _pendingBytesPerClient[ws] = 0;
-    _subscriptionsPerClient[ws] = <String>{}; // Empty set = receive all modules
+    _subscriptionsPerClient[ws] = <String>{}; // Empty set = receive all allowed modules
 
-    // 5. Send Initial Snapshot
+    // 5. Send Initial Snapshot with Granular Permission Filtering
     try {
-      final snapshotMap = await _buildSnapshotMap();
+      final permissions = _getPermissions();
+      final snapshotMap = await _buildSnapshotMap(permissions);
       final snapshotStr = jsonEncode({
         'type': 'snapshot',
         'data': snapshotMap,
@@ -260,45 +316,79 @@ class WebSocketService {
     );
   }
 
-  Future<Map<String, dynamic>> _buildSnapshotMap() async {
+  Future<Map<String, dynamic>> _buildSnapshotMap(
+    ApiPermissionsConfig permissions,
+  ) async {
     final appVersionAsync = ref.read(appVersionProvider);
     final version = appVersionAsync.value ?? '1.1.0';
-    final solar = ref.read(solarStateStreamProvider).value;
-    final weather = ref.read(currentWeatherProvider).value;
-    final monitors = await ref.read(monitorServiceProvider).getConnectedMonitors();
-    MonitorSlugResolver.updateMonitors(monitors);
 
-    final currentBrightness = ref.read(currentBrightnessProvider);
-    final currentTemp = ref.read(currentTemperatureProvider);
-
-    return {
+    final map = <String, dynamic>{
       'version': version,
       'timestamp': DateTime.now().toUtc().toIso8601String(),
-      'solar': solar != null ? {
-        'elevation': solar.sunElevation,
-        'azimuth': solar.sunAzimuth,
-        'zenith': solar.sunZenith,
-        'progress': solar.sunProgress,
-        'current_phase': solar.currentPhase.name,
-        'uv_index': solar.uvIndex,
-        'spectral_intensity': solar.spectralIntensity,
-      } : null,
-      'weather': weather != null ? {
-        'available': true,
-        'temperature_celsius': weather.temperature,
-        'weather_code': weather.weatherCode,
-      } : {'available': false},
-      'monitors': monitors.map((mon) => {
-        'id': mon.id,
-        'name': mon.name,
-        'friendly_name': mon.friendlyName,
-        'slug': MonitorSlugResolver.getSlugForSystemId(mon.id),
-        'is_primary': mon.isPrimary,
-        'brightness': mon.realBrightness ?? currentBrightness.round(),
-        'temperature': mon.realTemperature ?? currentTemp,
-      }).toList(),
-      'automation': _buildAutomationData(),
     };
+
+    if (permissions.allowReadSolar) {
+      final solar = ref.read(solarStateStreamProvider).value;
+      if (solar != null) {
+        map['solar'] = {
+          'elevation': solar.sunElevation,
+          'azimuth': solar.sunAzimuth,
+          'zenith': solar.sunZenith,
+          'progress': solar.sunProgress,
+          'current_phase': solar.currentPhase.name,
+          'uv_index': solar.uvIndex,
+          'spectral_intensity': solar.spectralIntensity,
+        };
+      } else {
+        map['solar'] = null;
+      }
+    }
+
+    if (permissions.allowReadWeather) {
+      final weather = ref.read(currentWeatherProvider).value;
+      map['weather'] = weather != null
+          ? {
+              'available': true,
+              'temperature_celsius': weather.temperature,
+              'weather_code': weather.weatherCode,
+            }
+          : {'available': false};
+    }
+
+    if (permissions.allowReadMonitors) {
+      final monitors =
+          await ref.read(monitorServiceProvider).getConnectedMonitors();
+      MonitorSlugResolver.updateMonitors(monitors);
+      final currentBrightness = ref.read(currentBrightnessProvider);
+      final currentTemp = ref.read(currentTemperatureProvider);
+
+      map['monitors'] = monitors
+          .map((mon) => {
+                'id': mon.id,
+                'name': mon.name,
+                'friendly_name': mon.friendlyName,
+                'slug': MonitorSlugResolver.getSlugForSystemId(mon.id),
+                'is_primary': mon.isPrimary,
+                'brightness': mon.realBrightness ?? currentBrightness.round(),
+                'temperature': mon.realTemperature ?? currentTemp,
+              })
+          .toList();
+    }
+
+    if (permissions.allowReadSleep) {
+      final sleepState = ref.read(sleepProvider);
+      map['sleep'] = {
+        'is_sleeping': sleepState.isCurrentlySleeping,
+        'sessions_count': sleepState.sessions.length,
+        'last_session_end': sleepState.lastSessionEnd?.toIso8601String(),
+      };
+    }
+
+    final rawAutomation = _buildAutomationData();
+    map['automation'] =
+        ApiPermissionsFilter.filterAutomation(rawAutomation, permissions);
+
+    return map;
   }
 
   void _handleClientMessage(WebSocket ws, String messageText) async {
@@ -315,15 +405,37 @@ class WebSocketService {
       }
 
       if (type == 'subscribe') {
-        final modulesList = (jsonMap['modules'] as List<dynamic>?)
+        final requestedModules = (jsonMap['modules'] as List<dynamic>?)
             ?.map((e) => e.toString().toLowerCase())
             .toSet() ?? <String>{};
 
-        _subscriptionsPerClient[ws] = modulesList;
+        final permissions = _getPermissions();
+        final allowedModules = <String>{};
+
+        for (final mod in requestedModules) {
+          bool isAllowed = true;
+          if (mod == 'solar' && !permissions.allowReadSolar) isAllowed = false;
+          if (mod == 'weather' && !permissions.allowReadWeather) isAllowed = false;
+          if (mod == 'monitors' && !permissions.allowReadMonitors) isAllowed = false;
+          if (mod == 'sleep' && !permissions.allowReadSleep) isAllowed = false;
+          if ((mod == 'circadian' || mod == 'smart_circadian') && !permissions.allowReadCircadian) isAllowed = false;
+
+          if (isAllowed) {
+            allowedModules.add(mod);
+          } else {
+            ws.add(jsonEncode({
+              'type': 'subscription_denied',
+              'module': mod,
+              'reason': 'Read access disabled in API permissions',
+            }));
+          }
+        }
+
+        _subscriptionsPerClient[ws] = allowedModules;
 
         ws.add(jsonEncode({
           'type': 'subscribed',
-          'active_modules': modulesList.toList(),
+          'active_modules': allowedModules.toList(),
         }));
         return;
       }
@@ -338,6 +450,36 @@ class WebSocketService {
             'cmd_id': cmdId,
             'status': 'error',
             'message': 'Missing "action" field',
+          }));
+          return;
+        }
+
+        // Privilege Escalation Guard
+        if (jsonMap.containsKey('apiPermissions') || jsonMap.containsKey('permissions')) {
+          ws.add(jsonEncode({
+            'type': 'response',
+            'cmd_id': cmdId,
+            'status': 'error',
+            'action': action,
+            'error': 'Forbidden',
+            'message': 'Modifying API permissions via WebSocket commands is strictly prohibited.',
+          }));
+          return;
+        }
+
+        // ACL Evaluation
+        final permissions = _getPermissions();
+        final category = ApiPermissionsConfig.getCategoryForAction(action);
+        final checkResult = ApiPermissionsChecker.checkCategory(permissions, category);
+
+        if (!checkResult.isAllowed) {
+          ws.add(jsonEncode({
+            'type': 'response',
+            'cmd_id': cmdId,
+            'status': 'error',
+            'action': action,
+            'error': 'Forbidden',
+            'message': checkResult.detail,
           }));
           return;
         }
@@ -361,15 +503,33 @@ class WebSocketService {
     }
   }
 
-  /// Broadcast module update to subscribers
+  /// Broadcast module update to subscribers with granular permissions filtering
   void broadcastModule(String moduleName, dynamic data) {
     if (_clients.isEmpty) return;
+
+    final permissions = _getPermissions();
+    final moduleLower = moduleName.toLowerCase();
+
+    // Check read permissions for module
+    if (moduleLower == 'solar' && !permissions.allowReadSolar) return;
+    if (moduleLower == 'weather' && !permissions.allowReadWeather) return;
+    if (moduleLower == 'monitors' && !permissions.allowReadMonitors) return;
+    if (moduleLower == 'sleep' && !permissions.allowReadSleep) return;
+    if ((moduleLower == 'circadian' || moduleLower == 'smart_circadian') && !permissions.allowReadCircadian) return;
+
+    dynamic filteredData = data;
+    if (moduleLower == 'automation' && data is Map<String, dynamic>) {
+      filteredData = ApiPermissionsFilter.filterAutomation(data, permissions);
+    } else if ((moduleLower == 'circadian' || moduleLower == 'smart_circadian') && data is Map<String, dynamic>) {
+      filteredData = ApiPermissionsFilter.filterSmartCircadian(data, permissions);
+      if (filteredData == null) return;
+    }
 
     final payloadStr = jsonEncode({
       'type': 'update',
       'module': moduleName,
       'timestamp': DateTime.now().toUtc().toIso8601String(),
-      'data': data,
+      'data': filteredData,
     });
 
     final payloadBytesLen = utf8.encode(payloadStr).length;
@@ -378,7 +538,7 @@ class WebSocketService {
       try {
         final subs = _subscriptionsPerClient[client];
         // If client specified explicit subscriptions and this module isn't included, skip
-        if (subs != null && subs.isNotEmpty && !subs.contains(moduleName.toLowerCase())) {
+        if (subs != null && subs.isNotEmpty && !subs.contains(moduleLower)) {
           continue;
         }
 
@@ -396,9 +556,15 @@ class WebSocketService {
     }
   }
 
-  /// Broadcast event payload to all clients
+  /// Broadcast event payload to allowed clients
   void broadcastEvent(String eventName, Map<String, dynamic> data) {
     if (_clients.isEmpty) return;
+
+    final permissions = _getPermissions();
+    final category = ApiPermissionsConfig.getCategoryForAction(eventName) ?? ApiActionCategory.system;
+    if (!permissions.allowedCategories.contains(category)) {
+      return;
+    }
 
     final payloadStr = jsonEncode({
       'type': 'event',
