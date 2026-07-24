@@ -1,11 +1,14 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:solaris/models/api_permissions_config.dart';
 import 'package:solaris/models/preset_type.dart';
 import 'package:solaris/models/rfc7807_error.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/providers/sleep_provider.dart';
 import 'package:solaris/providers/temperature_provider.dart';
+import 'package:solaris/services/api_permissions_checker.dart';
+import 'package:solaris/services/api_permissions_filter.dart';
 import 'package:solaris/services/api_router.dart';
 import 'package:solaris/services/gaming_mode_service.dart';
 import 'package:solaris/services/monitor_service.dart';
@@ -19,6 +22,12 @@ class ApiStatusHandler {
   ApiStatusHandler(this.container);
 
   int get uptimeSeconds => DateTime.now().difference(_startTime).inSeconds;
+
+  ApiPermissionsConfig _getPermissions() {
+    final settingsMap = container.read(settingsProvider).value ??
+        container.read(settingsProvider).asData?.value;
+    return settingsMap?['all']?.apiPermissions ?? const ApiPermissionsConfig();
+  }
 
   /// GET /api/v1/health
   Future<void> handleHealth(HttpRequest request, Map<String, String> pathParams) async {
@@ -35,6 +44,8 @@ class ApiStatusHandler {
 
   /// GET /api/v1/status
   Future<void> handleStatus(HttpRequest request, Map<String, String> pathParams) async {
+    final permissions = _getPermissions();
+
     final appVersionAsync = container.read(appVersionProvider);
     final version = appVersionAsync.value ?? fallbackAppVersion;
 
@@ -94,11 +105,14 @@ class ApiStatusHandler {
       };
     }).toList();
 
-    final responseJson = {
+    final responseJson = <String, dynamic>{
       'version': version,
       'uptime_seconds': uptimeSeconds,
       'timestamp': DateTime.now().toUtc().toIso8601String(),
-      'solar': solar != null
+    };
+
+    if (permissions.allowReadSolar) {
+      responseJson['solar'] = solar != null
           ? {
               'elevation': solar.sunElevation,
               'azimuth': solar.sunAzimuth,
@@ -112,8 +126,11 @@ class ApiStatusHandler {
               'uv_index': solar.uvIndex,
               'spectral_intensity': solar.spectralIntensity,
             }
-          : null,
-      'weather': weather != null
+          : null;
+    }
+
+    if (permissions.allowReadWeather) {
+      responseJson['weather'] = weather != null
           ? {
               'available': true,
               'cloud_cover': weather.cloudCover,
@@ -122,32 +139,40 @@ class ApiStatusHandler {
               'uv_index': weather.uvIndex,
               'provider': globalSettings?.weatherProvider.name ?? 'auto',
             }
-          : {'available': false},
-      'monitors': monitorsJson,
-      'automation': {
-        'auto_brightness': autoBrightnessEnabled,
-        'auto_temperature': autoTempEnabled,
-        'color_temperature_hardware_enabled': isColorTempEnabled,
-        'weather_brightness_adjustment': globalSettings?.isWeatherAdjustmentEnabled ?? true,
-        'weather_temperature_adjustment': globalSettings?.isWeatherTemperatureAdjustmentEnabled ?? true,
-        'weather_adjustment_intensity': globalSettings?.weatherAdjustmentIntensity ?? 0.45,
-        'smart_circadian': globalSettings?.isSmartCircadianEnabled ?? false,
-        'game_mode': {
-          'enabled': globalSettings?.isGameModeEnabled ?? true,
-          'active': gamingModeActive,
-          'brightness_override': globalSettings?.gameModeBrightness ?? 80.0,
-          'whitelist_count': globalSettings?.gameModeWhitelist.length ?? 0,
-          'blacklist_count': globalSettings?.gameModeBlacklist.length ?? 0,
-        },
-        'multi_monitor_offset': globalSettings?.isMultiMonitorOffsetEnabled ?? false,
-        'map_animations': {
-          'rain': globalSettings?.showRainAnimation ?? true,
-          'snow': globalSettings?.showSnowAnimation ?? true,
-          'thunder': globalSettings?.showThunderAnimation ?? true,
-          'cloud': globalSettings?.showCloudAnimation ?? true,
-        },
+          : {'available': false};
+    }
+
+    if (permissions.allowReadMonitors) {
+      responseJson['monitors'] = monitorsJson;
+    }
+
+    final rawAutomation = {
+      'auto_brightness': autoBrightnessEnabled,
+      'auto_temperature': autoTempEnabled,
+      'color_temperature_hardware_enabled': isColorTempEnabled,
+      'weather_brightness_adjustment': globalSettings?.isWeatherAdjustmentEnabled ?? true,
+      'weather_temperature_adjustment': globalSettings?.isWeatherTemperatureAdjustmentEnabled ?? true,
+      'weather_adjustment_intensity': globalSettings?.weatherAdjustmentIntensity ?? 0.45,
+      'smart_circadian': globalSettings?.isSmartCircadianEnabled ?? false,
+      'game_mode': {
+        'enabled': globalSettings?.isGameModeEnabled ?? true,
+        'active': gamingModeActive,
+        'brightness_override': globalSettings?.gameModeBrightness ?? 80.0,
+        'whitelist_count': globalSettings?.gameModeWhitelist.length ?? 0,
+        'blacklist_count': globalSettings?.gameModeBlacklist.length ?? 0,
       },
-      'smart_circadian': {
+      'multi_monitor_offset': globalSettings?.isMultiMonitorOffsetEnabled ?? false,
+      'map_animations': {
+        'rain': globalSettings?.showRainAnimation ?? true,
+        'snow': globalSettings?.showSnowAnimation ?? true,
+        'thunder': globalSettings?.showThunderAnimation ?? true,
+        'cloud': globalSettings?.showCloudAnimation ?? true,
+      },
+    };
+    responseJson['automation'] = ApiPermissionsFilter.filterAutomation(rawAutomation, permissions);
+
+    if (permissions.allowReadCircadian) {
+      final rawSmartCircadian = {
         'master_enabled': globalSettings?.isSmartCircadianEnabled ?? false,
         'submodules': {
           'wind_down_master': globalSettings?.isWindDownMasterEnabled ?? true,
@@ -174,25 +199,39 @@ class ApiStatusHandler {
           'active': smartCircadianData.isTimeShiftActive,
           'offset_minutes': smartCircadianData.timeOffset.inMinutes,
         },
-      },
-      'sleep': {
+      };
+      final filteredCircadian = ApiPermissionsFilter.filterSmartCircadian(rawSmartCircadian, permissions);
+      if (filteredCircadian != null) {
+        responseJson['smart_circadian'] = filteredCircadian;
+      }
+    }
+
+    if (permissions.allowReadSleep) {
+      responseJson['sleep'] = {
         'is_sleeping': sleepState.isCurrentlySleeping,
         'sessions_count': sleepState.sessions.length,
         'last_session_end': sleepState.lastSessionEnd?.toIso8601String(),
-      },
-      'server': {
+      };
+    }
+
+    if (permissions.allowedCategories.contains(ApiActionCategory.system)) {
+      responseJson['server'] = {
         'port': ipcState.port ?? globalSettings?.apiServerPort ?? 45321,
         'bind_address': globalSettings?.isApiLanAccessEnabled == true ? '0.0.0.0' : '127.0.0.1',
         'lan_access': globalSettings?.isApiLanAccessEnabled ?? false,
         'rate_limit_per_minute': globalSettings?.apiRateLimitPerMinute ?? 120,
-      },
-    };
+      };
+    }
 
     ApiRouter.sendJson(request, HttpStatus.ok, responseJson);
   }
 
   /// GET /api/v1/solar
   Future<void> handleSolar(HttpRequest request, Map<String, String> pathParams) async {
+    final permissions = _getPermissions();
+    final check = ApiPermissionsChecker.checkReadFlag(permissions.allowReadSolar, 'solar');
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
+
     final solar = container.read(solarStateStreamProvider).value;
     if (solar == null) {
       ApiRouter.sendJson(request, HttpStatus.ok, {'available': false, 'message': 'Solar calculations pending.'});
@@ -221,10 +260,11 @@ class ApiStatusHandler {
 
   /// GET /api/v1/presets
   Future<void> handlePresets(HttpRequest request, Map<String, String> pathParams) async {
+    final permissions = _getPermissions();
     final settings = container.read(settingsProvider).value?['all'];
     final tempSettings = container.read(temperatureSettingsProvider).value?['all'];
 
-    ApiRouter.sendJson(request, HttpStatus.ok, {
+    final rawPresets = {
       'brightness': {
         'system': PresetType.values.map((e) => e.name).toList(),
         'user': settings?.userPresets.map((p) => {
@@ -249,11 +289,24 @@ class ApiStatusHandler {
           'name': tempSettings?.activeUserPresetId ?? tempSettings?.activePreset.name ?? 'cool',
         },
       },
-    });
+    };
+
+    final filtered = ApiPermissionsFilter.filterPresets(rawPresets, permissions);
+    if (filtered == null) {
+      final check = ApiPermissionsChecker.checkReadFlag(false, 'presets');
+      await ApiPermissionsChecker.sendRfc7807IfDenied(request, check);
+      return;
+    }
+
+    ApiRouter.sendJson(request, HttpStatus.ok, filtered);
   }
 
   /// GET /api/v1/monitors
   Future<void> handleMonitors(HttpRequest request, Map<String, String> pathParams) async {
+    final permissions = _getPermissions();
+    final check = ApiPermissionsChecker.checkReadFlag(permissions.allowReadMonitors, 'monitors');
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
+
     final monitors = await container.read(monitorServiceProvider).getConnectedMonitors();
     MonitorSlugResolver.updateMonitors(monitors);
     final currentBrightness = container.read(currentBrightnessProvider);
@@ -274,6 +327,10 @@ class ApiStatusHandler {
 
   /// GET /api/v1/monitors/:slug
   Future<void> handleMonitorBySlug(HttpRequest request, Map<String, String> pathParams) async {
+    final permissions = _getPermissions();
+    final check = ApiPermissionsChecker.checkReadFlag(permissions.allowReadMonitors, 'monitors');
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
+
     final slug = pathParams['slug'];
     if (slug == null || slug.isEmpty) {
       final error = Rfc7807Error(
@@ -331,6 +388,9 @@ class ApiStatusHandler {
 
   /// GET /api/v1/sleep/sessions (Paginated)
   Future<void> handleSleepSessions(HttpRequest request, Map<String, String> pathParams) async {
+    final permissions = _getPermissions();
+    final check = ApiPermissionsChecker.checkReadFlag(permissions.allowReadSleep, 'sleep');
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
     final query = request.uri.queryParameters;
     final limitParam = int.tryParse(query['limit'] ?? '50') ?? 50;
     final limit = limitParam.clamp(1, 200);

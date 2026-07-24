@@ -231,6 +231,14 @@ class ApiControlHandler {
     }
 
     final category = ApiPermissionsConfig.getCategoryForAction(action);
+    if (category == null) {
+      return _ActionResult.error(
+        HttpStatus.unprocessableEntity,
+        'Unknown Action',
+        'Action "$action" is not supported.',
+      );
+    }
+
     final catCheck = ApiPermissionsChecker.checkCategory(permissions, category);
     if (!catCheck.isAllowed) {
       return _ActionResult.error(

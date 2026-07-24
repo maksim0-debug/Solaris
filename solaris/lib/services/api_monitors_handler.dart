@@ -23,6 +23,10 @@ class ApiMonitorsHandler {
     HttpRequest request,
     Map<String, String> pathParams,
   ) async {
+    final permissions = _getPermissions();
+    final check = ApiPermissionsChecker.checkReadFlag(permissions.allowReadMonitors, 'monitors');
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
+
     try {
       final monitors = _container.read(monitorListProvider).value ?? [];
       MonitorSlugResolver.updateMonitors(monitors);
@@ -95,6 +99,10 @@ class ApiMonitorsHandler {
     HttpRequest request,
     Map<String, String> pathParams,
   ) async {
+    final permissions = _getPermissions();
+    final check = ApiPermissionsChecker.checkReadFlag(permissions.allowReadMonitors, 'monitors');
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
+
     final rawSlug = pathParams['slug'] ?? '';
     if (rawSlug.isEmpty) {
       await _sendError(request, HttpStatus.badRequest, 'Missing Parameter', 'Slug parameter is required.');
