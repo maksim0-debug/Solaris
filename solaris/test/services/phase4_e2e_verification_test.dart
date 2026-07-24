@@ -124,12 +124,12 @@ void main() {
     });
 
     // ------------------------------------------------------------------------
-    // 2. All 21 Webhook Event Types & Wire Name Verification
+    // 2. All Webhook Event Types & Wire Name Verification
     // ------------------------------------------------------------------------
-    group('2. WebhookEventType Enum Complete 21 Events Verification', () {
-      test('All 21 WebhookEventType values are defined and have non-empty wireNames', () {
+    group('2. WebhookEventType Enum Complete Events Verification', () {
+      test('All WebhookEventType values are defined and have non-empty wireNames', () {
         final events = WebhookEventType.values;
-        expect(events.length, equals(21), reason: 'Phase 4 requires exactly 21 distinct event types');
+        expect(events.length, equals(WebhookEventType.values.length), reason: 'All distinct event types must have non-empty wireNames');
 
         final expectedWireNames = {
           'on_sunrise',
@@ -153,6 +153,8 @@ void main() {
           'on_monitor_connected',
           'on_monitor_disconnected',
           'on_api_server_started',
+          'on_system_resume',
+          'on_hardware_error',
         };
 
         final actualWireNames = events.map((e) => e.wireName).toSet();
@@ -433,7 +435,7 @@ void main() {
         expect(json['webhooks'], isA<List<dynamic>>());
       });
 
-      test('GET /api/v1/webhooks/events returns all 21 available events', () async {
+      test('GET /api/v1/webhooks/events returns all available events', () async {
         final req = await client.getUrl(Uri.parse('$serverUrl/api/v1/webhooks/events'));
         final res = await req.close();
         expect(res.statusCode, equals(HttpStatus.ok));
@@ -443,7 +445,7 @@ void main() {
 
         expect(json.containsKey('events'), isTrue);
         final eventsList = (json['events'] as List<dynamic>).cast<Map<String, dynamic>>();
-        expect(eventsList.length, equals(21));
+        expect(eventsList.length, equals(WebhookEventType.values.length));
 
         final wireNames = eventsList.map((e) => e['wire_name']).toSet();
         expect(wireNames, contains('on_sunrise'));

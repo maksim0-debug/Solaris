@@ -1577,4 +1577,197 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get updateBackgroundNotice =>
       'Ви можете закрити це вікно. Процес триватиме у фоновому режимі.';
+
+  @override
+  String get apiTitle => 'Solaris Control API v1';
+
+  @override
+  String apiStatusActiveLan(int port) {
+    return 'Активний (LAN: 0.0.0.0:$port)';
+  }
+
+  @override
+  String apiStatusActiveLocalhost(int port) {
+    return 'Активний (Localhost: 127.0.0.1:$port)';
+  }
+
+  @override
+  String get apiStatusDisabled => 'Вимкнений';
+
+  @override
+  String get apiNetworkAccessMode => 'Режим мережевого доступу';
+
+  @override
+  String get apiModeLocalhost => 'Тільки Localhost (127.0.0.1)';
+
+  @override
+  String get apiModeLan => 'Доступ по LAN (0.0.0.0)';
+
+  @override
+  String get apiFirewallUacError =>
+      'Помилка: Відмовлено в дозволі UAC Windows Firewall. Доступ по LAN скасовано.';
+
+  @override
+  String get apiServerPort => 'Порт API сервера';
+
+  @override
+  String get apiDocumentation => 'Інтерактивна документація';
+
+  @override
+  String get apiOpenSwagger => 'Відкрити Swagger UI';
+
+  @override
+  String apiOpenDocsError(String error) {
+    return 'Не вдалося відкрити документацію: $error';
+  }
+
+  @override
+  String get apiAccessKey => 'Ключ доступу API (X-API-Key)';
+
+  @override
+  String get apiTokenHintRequiredLan => 'Обов\'язковий для LAN';
+
+  @override
+  String get apiTokenHintOptionalLocalhost => 'Опціонально для Localhost';
+
+  @override
+  String get apiCopyKeyTooltip => 'Скопіювати ключ API';
+
+  @override
+  String get apiKeyCopied => 'Ключ API скопійовано в буфер обміну';
+
+  @override
+  String get apiGenerateKeyTooltip => 'Згенерувати новий ключ';
+
+  @override
+  String get apiKeyGenerated => 'Згенеровано новий ключ API';
+
+  @override
+  String get webhooksTitle => 'Вихідні вебхуки';
+
+  @override
+  String webhooksSubtitle(int count, int queueCount) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count налаштовано',
+      few: '$count налаштовано',
+      one: '1 налаштовано',
+    );
+    return '$_temp0 | Черга WAL: $queueCount';
+  }
+
+  @override
+  String get webhooksViewDlqTooltip =>
+      'Переглянути чергу необроблених повідомлень (DLQ)';
+
+  @override
+  String get webhooksAddButton => 'Додати вебхук';
+
+  @override
+  String get webhooksEmptyMessage =>
+      'Вихідні вебхуки не налаштовані.\nНатисніть \"Додати вебхук\" для інтеграції з Home Assistant, Node-RED або n8n.';
+
+  @override
+  String get webhooksDefaultName => 'Вебхук';
+
+  @override
+  String webhooksEventsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count подій',
+      few: '$count події',
+      one: '1 подія',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get webhooksSendTestPingTooltip => 'Надіслати тестовий запит';
+
+  @override
+  String get webhooksSendingTestPing => 'Надсилання тестового запиту...';
+
+  @override
+  String get webhooksTestPingSuccess => 'Тестовий запит успішно доставлено!';
+
+  @override
+  String get webhooksTestPingFailed => 'Не вдалося доставити тестовий запит.';
+
+  @override
+  String get webhooksEditTooltip => 'Редагувати вебхук';
+
+  @override
+  String get webhooksDeleteTooltip => 'Видалити вебхук';
+
+  @override
+  String get webhooksAddTitle => 'Додати вихідний вебхук';
+
+  @override
+  String get webhooksEditTitle => 'Редагувати вебхук';
+
+  @override
+  String get webhooksUrlLabel => 'URL цільового вебхука *';
+
+  @override
+  String get webhooksNameLabel => 'Назва (Опціонально)';
+
+  @override
+  String get webhooksSecretLabel => 'Секретний ключ HMAC (Опціонально)';
+
+  @override
+  String get webhooksSecretHint => 'Секрет для перевірки X-Solaris-Signature';
+
+  @override
+  String get webhooksSubscribedEvents => 'Підписки на події:';
+
+  @override
+  String get webhooksSelectAll => 'Вибрати всі';
+
+  @override
+  String get webhooksDeselectAll => 'Зняти вибір з усіх';
+
+  @override
+  String get webhooksInvalidUrlError =>
+      'Будь ласка, введіть коректний абсолютний URL (наприклад, http://...)';
+
+  @override
+  String get webhooksSaveChangesButton => 'Зберегти зміни';
+
+  @override
+  String webhooksDlqTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Черга необроблених повідомлень ($count)',
+      few: 'Черга необроблених повідомлень ($count)',
+      one: 'Черга необроблених повідомлень (1)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get webhooksDlqEmpty =>
+      'Черга необроблених повідомлень порожня! Усі вебхуки успішно доставлені.';
+
+  @override
+  String webhooksDlqEvent(String eventName, String url) {
+    return 'Подія: $eventName -> $url';
+  }
+
+  @override
+  String webhooksDlqDetails(int count, String error, String id) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count спроб',
+      few: '$count спроби',
+      one: '1 спроба',
+    );
+    return '$_temp0 | Помилка: $error\nID доставки: $id';
+  }
+
+  @override
+  String get webhooksClearDlq => 'Очистити DLQ';
 }

@@ -1575,4 +1575,193 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get updateBackgroundNotice =>
       'You can close this window. Process will continue in the background.';
+
+  @override
+  String get apiTitle => 'Solaris Control API v1';
+
+  @override
+  String apiStatusActiveLan(int port) {
+    return 'Active (LAN: 0.0.0.0:$port)';
+  }
+
+  @override
+  String apiStatusActiveLocalhost(int port) {
+    return 'Active (Localhost: 127.0.0.1:$port)';
+  }
+
+  @override
+  String get apiStatusDisabled => 'Disabled';
+
+  @override
+  String get apiNetworkAccessMode => 'Network Access Mode';
+
+  @override
+  String get apiModeLocalhost => 'Localhost Only (127.0.0.1)';
+
+  @override
+  String get apiModeLan => 'LAN Access (0.0.0.0)';
+
+  @override
+  String get apiFirewallUacError =>
+      'Error: Windows Firewall UAC permission denied. LAN access canceled.';
+
+  @override
+  String get apiServerPort => 'API Server Port';
+
+  @override
+  String get apiDocumentation => 'Interactive Documentation';
+
+  @override
+  String get apiOpenSwagger => 'Open Swagger UI';
+
+  @override
+  String apiOpenDocsError(String error) {
+    return 'Failed to open documentation: $error';
+  }
+
+  @override
+  String get apiAccessKey => 'API Access Key (X-API-Key)';
+
+  @override
+  String get apiTokenHintRequiredLan => 'Required for LAN';
+
+  @override
+  String get apiTokenHintOptionalLocalhost => 'Optional for Localhost';
+
+  @override
+  String get apiCopyKeyTooltip => 'Copy API Key';
+
+  @override
+  String get apiKeyCopied => 'API key copied to clipboard';
+
+  @override
+  String get apiGenerateKeyTooltip => 'Generate New Key';
+
+  @override
+  String get apiKeyGenerated => 'New API key generated';
+
+  @override
+  String get webhooksTitle => 'Outbound Webhooks';
+
+  @override
+  String webhooksSubtitle(int count, int queueCount) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count configured',
+      one: '1 configured',
+    );
+    return '$_temp0 | WAL Queue: $queueCount';
+  }
+
+  @override
+  String get webhooksViewDlqTooltip => 'View Dead Letter Queue (DLQ)';
+
+  @override
+  String get webhooksAddButton => 'Add Webhook';
+
+  @override
+  String get webhooksEmptyMessage =>
+      'No Outbound Webhooks configured.\nClick \"Add Webhook\" to integrate with Home Assistant, Node-RED, or n8n.';
+
+  @override
+  String get webhooksDefaultName => 'Webhook';
+
+  @override
+  String webhooksEventsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count events',
+      one: '1 event',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get webhooksSendTestPingTooltip => 'Send Test Ping';
+
+  @override
+  String get webhooksSendingTestPing => 'Sending test ping payload...';
+
+  @override
+  String get webhooksTestPingSuccess => 'Test ping delivered successfully!';
+
+  @override
+  String get webhooksTestPingFailed => 'Test ping failed to deliver.';
+
+  @override
+  String get webhooksEditTooltip => 'Edit Webhook';
+
+  @override
+  String get webhooksDeleteTooltip => 'Delete Webhook';
+
+  @override
+  String get webhooksAddTitle => 'Add Outbound Webhook';
+
+  @override
+  String get webhooksEditTitle => 'Edit Webhook';
+
+  @override
+  String get webhooksUrlLabel => 'Target Webhook URL *';
+
+  @override
+  String get webhooksNameLabel => 'Name (Optional)';
+
+  @override
+  String get webhooksSecretLabel => 'HMAC Secret Key (Optional)';
+
+  @override
+  String get webhooksSecretHint =>
+      'Secret for X-Solaris-Signature verification';
+
+  @override
+  String get webhooksSubscribedEvents => 'Subscribed Events:';
+
+  @override
+  String get webhooksSelectAll => 'Select All';
+
+  @override
+  String get webhooksDeselectAll => 'Deselect All';
+
+  @override
+  String get webhooksInvalidUrlError =>
+      'Please enter a valid absolute URL (e.g. http://...)';
+
+  @override
+  String get webhooksSaveChangesButton => 'Save Changes';
+
+  @override
+  String webhooksDlqTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Dead Letter Queue ($count)',
+      one: 'Dead Letter Queue (1)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get webhooksDlqEmpty =>
+      'Dead Letter Queue is empty! All webhooks delivered cleanly.';
+
+  @override
+  String webhooksDlqEvent(String eventName, String url) {
+    return 'Event: $eventName -> $url';
+  }
+
+  @override
+  String webhooksDlqDetails(int count, String error, String id) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count attempts',
+      one: '1 attempt',
+    );
+    return '$_temp0 | Error: $error\nDelivery ID: $id';
+  }
+
+  @override
+  String get webhooksClearDlq => 'Clear DLQ';
 }

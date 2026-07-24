@@ -2813,6 +2813,294 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You can close this window. Process will continue in the background.'**
   String get updateBackgroundNotice;
+
+  /// No description provided for @apiTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Solaris Control API v1'**
+  String get apiTitle;
+
+  /// No description provided for @apiStatusActiveLan.
+  ///
+  /// In en, this message translates to:
+  /// **'Active (LAN: 0.0.0.0:{port})'**
+  String apiStatusActiveLan(int port);
+
+  /// No description provided for @apiStatusActiveLocalhost.
+  ///
+  /// In en, this message translates to:
+  /// **'Active (Localhost: 127.0.0.1:{port})'**
+  String apiStatusActiveLocalhost(int port);
+
+  /// No description provided for @apiStatusDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
+  String get apiStatusDisabled;
+
+  /// No description provided for @apiNetworkAccessMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Network Access Mode'**
+  String get apiNetworkAccessMode;
+
+  /// No description provided for @apiModeLocalhost.
+  ///
+  /// In en, this message translates to:
+  /// **'Localhost Only (127.0.0.1)'**
+  String get apiModeLocalhost;
+
+  /// No description provided for @apiModeLan.
+  ///
+  /// In en, this message translates to:
+  /// **'LAN Access (0.0.0.0)'**
+  String get apiModeLan;
+
+  /// No description provided for @apiFirewallUacError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: Windows Firewall UAC permission denied. LAN access canceled.'**
+  String get apiFirewallUacError;
+
+  /// No description provided for @apiServerPort.
+  ///
+  /// In en, this message translates to:
+  /// **'API Server Port'**
+  String get apiServerPort;
+
+  /// No description provided for @apiDocumentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Interactive Documentation'**
+  String get apiDocumentation;
+
+  /// No description provided for @apiOpenSwagger.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Swagger UI'**
+  String get apiOpenSwagger;
+
+  /// No description provided for @apiOpenDocsError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to open documentation: {error}'**
+  String apiOpenDocsError(String error);
+
+  /// No description provided for @apiAccessKey.
+  ///
+  /// In en, this message translates to:
+  /// **'API Access Key (X-API-Key)'**
+  String get apiAccessKey;
+
+  /// No description provided for @apiTokenHintRequiredLan.
+  ///
+  /// In en, this message translates to:
+  /// **'Required for LAN'**
+  String get apiTokenHintRequiredLan;
+
+  /// No description provided for @apiTokenHintOptionalLocalhost.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional for Localhost'**
+  String get apiTokenHintOptionalLocalhost;
+
+  /// No description provided for @apiCopyKeyTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy API Key'**
+  String get apiCopyKeyTooltip;
+
+  /// No description provided for @apiKeyCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'API key copied to clipboard'**
+  String get apiKeyCopied;
+
+  /// No description provided for @apiGenerateKeyTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate New Key'**
+  String get apiGenerateKeyTooltip;
+
+  /// No description provided for @apiKeyGenerated.
+  ///
+  /// In en, this message translates to:
+  /// **'New API key generated'**
+  String get apiKeyGenerated;
+
+  /// No description provided for @webhooksTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Outbound Webhooks'**
+  String get webhooksTitle;
+
+  /// No description provided for @webhooksSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 configured} other{{count} configured}} | WAL Queue: {queueCount}'**
+  String webhooksSubtitle(int count, int queueCount);
+
+  /// No description provided for @webhooksViewDlqTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'View Dead Letter Queue (DLQ)'**
+  String get webhooksViewDlqTooltip;
+
+  /// No description provided for @webhooksAddButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Webhook'**
+  String get webhooksAddButton;
+
+  /// No description provided for @webhooksEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No Outbound Webhooks configured.\nClick \"Add Webhook\" to integrate with Home Assistant, Node-RED, or n8n.'**
+  String get webhooksEmptyMessage;
+
+  /// No description provided for @webhooksDefaultName.
+  ///
+  /// In en, this message translates to:
+  /// **'Webhook'**
+  String get webhooksDefaultName;
+
+  /// No description provided for @webhooksEventsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 event} other{{count} events}}'**
+  String webhooksEventsCount(int count);
+
+  /// No description provided for @webhooksSendTestPingTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Send Test Ping'**
+  String get webhooksSendTestPingTooltip;
+
+  /// No description provided for @webhooksSendingTestPing.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending test ping payload...'**
+  String get webhooksSendingTestPing;
+
+  /// No description provided for @webhooksTestPingSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Test ping delivered successfully!'**
+  String get webhooksTestPingSuccess;
+
+  /// No description provided for @webhooksTestPingFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Test ping failed to deliver.'**
+  String get webhooksTestPingFailed;
+
+  /// No description provided for @webhooksEditTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Webhook'**
+  String get webhooksEditTooltip;
+
+  /// No description provided for @webhooksDeleteTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Webhook'**
+  String get webhooksDeleteTooltip;
+
+  /// No description provided for @webhooksAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Outbound Webhook'**
+  String get webhooksAddTitle;
+
+  /// No description provided for @webhooksEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Webhook'**
+  String get webhooksEditTitle;
+
+  /// No description provided for @webhooksUrlLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Target Webhook URL *'**
+  String get webhooksUrlLabel;
+
+  /// No description provided for @webhooksNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name (Optional)'**
+  String get webhooksNameLabel;
+
+  /// No description provided for @webhooksSecretLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'HMAC Secret Key (Optional)'**
+  String get webhooksSecretLabel;
+
+  /// No description provided for @webhooksSecretHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Secret for X-Solaris-Signature verification'**
+  String get webhooksSecretHint;
+
+  /// No description provided for @webhooksSubscribedEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribed Events:'**
+  String get webhooksSubscribedEvents;
+
+  /// No description provided for @webhooksSelectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select All'**
+  String get webhooksSelectAll;
+
+  /// No description provided for @webhooksDeselectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Deselect All'**
+  String get webhooksDeselectAll;
+
+  /// No description provided for @webhooksInvalidUrlError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid absolute URL (e.g. http://...)'**
+  String get webhooksInvalidUrlError;
+
+  /// No description provided for @webhooksSaveChangesButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get webhooksSaveChangesButton;
+
+  /// No description provided for @webhooksDlqTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Dead Letter Queue (1)} other{Dead Letter Queue ({count})}}'**
+  String webhooksDlqTitle(int count);
+
+  /// No description provided for @webhooksDlqEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Dead Letter Queue is empty! All webhooks delivered cleanly.'**
+  String get webhooksDlqEmpty;
+
+  /// No description provided for @webhooksDlqEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Event: {eventName} -> {url}'**
+  String webhooksDlqEvent(String eventName, String url);
+
+  /// No description provided for @webhooksDlqDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 attempt} other{{count} attempts}} | Error: {error}\nDelivery ID: {id}'**
+  String webhooksDlqDetails(int count, String error, String id);
+
+  /// No description provided for @webhooksClearDlq.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear DLQ'**
+  String get webhooksClearDlq;
 }
 
 class _AppLocalizationsDelegate

@@ -4,7 +4,7 @@ import 'dart:convert';
 class OpenApiSpec {
   static Map<String, dynamic> generateSpec({
     String title = 'Solaris Control API v1',
-    String version = '1.0.26',
+    String version = '1.0.0',
     int port = 45321,
   }) {
     return {
@@ -46,7 +46,7 @@ class OpenApiSpec {
           'StatusResponse': {
             'type': 'object',
             'properties': {
-              'version': {'type': 'string', 'example': '1.0.26'},
+              'version': {'type': 'string', 'example': '1.0.0'},
               'uptime_seconds': {'type': 'integer', 'example': 3600},
               'timestamp': {'type': 'string', 'format': 'date-time'},
               'solar': {'type': 'object'},
@@ -76,7 +76,7 @@ class OpenApiSpec {
             'type': 'object',
             'properties': {
               'status': {'type': 'string', 'example': 'ok'},
-              'version': {'type': 'string', 'example': '1.0.26'},
+              'version': {'type': 'string', 'example': '1.0.0'},
               'uptime_seconds': {'type': 'integer', 'example': 3600},
             },
           },
@@ -228,7 +228,7 @@ class OpenApiSpec {
 
   static String generateJsonSpec({
     String title = 'Solaris Control API v1',
-    String version = '1.0.26',
+    String version = '1.0.0',
     int port = 45321,
   }) {
     return jsonEncode(generateSpec(title: title, version: version, port: port));

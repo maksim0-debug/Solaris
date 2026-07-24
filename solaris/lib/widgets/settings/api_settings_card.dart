@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/widgets/glass_card.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -42,6 +44,7 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
   }
 
   Future<void> _openDocumentation(int port) async {
+    final l10n = AppLocalizations.of(context)!;
     final docsUri = Uri.parse('http://localhost:$port/api/v1/docs');
     try {
       if (await canLaunchUrl(docsUri)) {
@@ -52,7 +55,9 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to open documentation: $e')),
+          SnackBar(
+            content: Text(l10n.apiOpenDocsError(e.toString())),
+          ),
         );
       }
     }
@@ -60,6 +65,7 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final settingsAsync = ref.watch(settingsProvider);
     final serverState = ref.watch(localIpcServiceProvider);
 
@@ -83,7 +89,7 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
         }
 
         return GlassCard(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -91,27 +97,27 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.blueAccent.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(12),
+                      color: const Color(0xFFFDBA74).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
-                      Icons.api_rounded,
-                      color: Colors.blueAccent,
-                      size: 24,
+                      LucideIcons.code,
+                      color: Color(0xFFFDBA74),
+                      size: 20,
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Solaris Control API v1',
-                          style: TextStyle(
+                        Text(
+                          l10n.apiTitle,
+                          style: const TextStyle(
                             fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w600,
                             color: Colors.white,
                           ),
                         ),
@@ -119,14 +125,14 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                         Text(
                           serverState.isRunning
                               ? (isLanEnabled
-                                  ? '🟢 Active (LAN: 0.0.0.0:$port)'
-                                  : '🟢 Active (Localhost: 127.0.0.1:$port)')
-                              : '🔴 Disabled',
+                                  ? '🟢 ${l10n.apiStatusActiveLan(port)}'
+                                  : '🟢 ${l10n.apiStatusActiveLocalhost(port)}')
+                              : '🔴 ${l10n.apiStatusDisabled}',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 12,
                             color: serverState.isRunning
-                                ? Colors.greenAccent
-                                : Colors.white54,
+                                ? const Color(0xFF4ADE80)
+                                : Colors.white.withOpacity(0.5),
                           ),
                         ),
                       ],
@@ -134,6 +140,7 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                   ),
                   Switch(
                     value: isEnabled,
+                    activeColor: const Color(0xFFFDBA74),
                     onChanged: (val) async {
                       ref
                           .read(settingsProvider.notifier)
@@ -152,53 +159,76 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                 const Divider(height: 32, color: Colors.white10),
 
                 // Network Mode Selector (Localhost / LAN)
-                const Text(
-                  'Network Access Mode',
-                  style: TextStyle(
-                    fontSize: 14,
+                Text(
+                  l10n.apiNetworkAccessMode,
+                  style: const TextStyle(
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: Colors.white70,
                   ),
                 ),
                 const SizedBox(height: 10),
                 SegmentedButton<bool>(
-                  segments: const [
+                  segments: [
                     ButtonSegment<bool>(
                       value: false,
-                      label: Text('Localhost Only (127.0.0.1)'),
-                      icon: Icon(Icons.computer_rounded, size: 18),
+                      label: Text(
+                        l10n.apiModeLocalhost,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      icon: const Icon(LucideIcons.laptop, size: 14),
                     ),
                     ButtonSegment<bool>(
                       value: true,
-                      label: Text('LAN Access (0.0.0.0)'),
-                      icon: Icon(Icons.lan_rounded, size: 18),
+                      label: Text(
+                        l10n.apiModeLan,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      icon: const Icon(LucideIcons.wifi, size: 14),
                     ),
                   ],
                   selected: {isLanEnabled},
+                  showSelectedIcon: false,
+                  style: ButtonStyle(
+                    visualDensity: VisualDensity.compact,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    backgroundColor: WidgetStateProperty.resolveWith<Color>((
+                      Set<WidgetState> states,
+                    ) {
+                      if (states.contains(WidgetState.selected)) {
+                        return const Color(0xFFFDBA74).withOpacity(0.2);
+                      }
+                      return Colors.white.withOpacity(0.05);
+                    }),
+                    foregroundColor: WidgetStateProperty.resolveWith<Color>((
+                      Set<WidgetState> states,
+                    ) {
+                      if (states.contains(WidgetState.selected)) {
+                        return const Color(0xFFFDBA74);
+                      }
+                      return Colors.white38;
+                    }),
+                    side: WidgetStateProperty.all(BorderSide.none),
+                  ),
                   onSelectionChanged: (Set<bool> selection) async {
                     final enableLan = selection.first;
 
-                    // 1. Immediately update UI state for zero-latency response
                     ref
                         .read(settingsProvider.notifier)
                         .updateApiLanAccessEnabled(enableLan);
 
                     if (enableLan) {
-                      // Request UAC Firewall rule creation
                       final firewallService = ref.read(windowsFirewallServiceProvider);
                       final success = await firewallService.ensureRuleAdded(port: port);
 
                       if (!success) {
-                        // Rollback state if UAC is rejected
                         ref
                             .read(settingsProvider.notifier)
                             .updateApiLanAccessEnabled(false);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Error: Windows Firewall UAC permission denied. LAN access canceled.',
-                              ),
+                            SnackBar(
+                              content: Text(l10n.apiFirewallUacError),
                               backgroundColor: Colors.redAccent,
                             ),
                           );
@@ -206,7 +236,6 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                         return;
                       }
 
-                      // Auto-generate token if empty on LAN enable
                       if (token.isEmpty) {
                         final newToken = _generateSecureToken();
                         ref
@@ -214,7 +243,6 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                             .updateApiAccessToken(newToken);
                       }
                     } else {
-                      // Clean firewall rules when disabling LAN
                       final firewallService = ref.read(windowsFirewallServiceProvider);
                       await firewallService.removeAllSolarisRules(port: port);
                     }
@@ -231,10 +259,10 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'API Server Port',
-                            style: TextStyle(
-                              fontSize: 14,
+                          Text(
+                            l10n.apiServerPort,
+                            style: const TextStyle(
+                              fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: Colors.white70,
                             ),
@@ -243,7 +271,7 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                           TextField(
                             controller: _portController,
                             keyboardType: TextInputType.number,
-                            style: const TextStyle(color: Colors.white),
+                            style: const TextStyle(color: Colors.white, fontSize: 13),
                             decoration: InputDecoration(
                               isDense: true,
                               filled: true,
@@ -252,7 +280,7 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
                               ),
-                              prefixIcon: const Icon(Icons.numbers, size: 18),
+                              prefixIcon: const Icon(LucideIcons.terminal, size: 16, color: Colors.white54),
                             ),
                             onSubmitted: (val) async {
                               final newPort = int.tryParse(val) ?? 45321;
@@ -275,10 +303,10 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Interactive Documentation',
-                            style: TextStyle(
-                              fontSize: 14,
+                          Text(
+                            l10n.apiDocumentation,
+                            style: const TextStyle(
+                              fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: Colors.white70,
                             ),
@@ -286,12 +314,22 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                           const SizedBox(height: 6),
                           OutlinedButton.icon(
                             onPressed: () => _openDocumentation(port),
-                            icon: const Icon(Icons.menu_book_rounded, size: 18),
-                            label: const Text('Open Swagger UI'),
+                            icon: const Icon(LucideIcons.bookOpen, size: 15, color: Colors.white70),
+                            label: Text(
+                              l10n.apiOpenSwagger,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white70,
+                              ),
+                            ),
                             style: OutlinedButton.styleFrom(
+                              backgroundColor: Colors.white.withOpacity(0.05),
+                              foregroundColor: Colors.white,
+                              side: BorderSide(color: Colors.white.withOpacity(0.1)),
                               padding: const EdgeInsets.symmetric(
-                                vertical: 14,
-                                horizontal: 16,
+                                vertical: 12,
+                                horizontal: 14,
                               ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
@@ -307,10 +345,10 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                 const SizedBox(height: 20),
 
                 // API Access Token Field
-                const Text(
-                  'API Access Key (X-API-Key)',
-                  style: TextStyle(
-                    fontSize: 14,
+                Text(
+                  l10n.apiAccessKey,
+                  style: const TextStyle(
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: Colors.white70,
                   ),
@@ -324,25 +362,29 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                         obscureText: !_isTokenVisible,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontFamily: 'monospace',
+                          fontSize: 13,
                         ),
                         decoration: InputDecoration(
                           isDense: true,
                           filled: true,
                           fillColor: Colors.white.withOpacity(0.05),
-                          hintText: isLanEnabled ? 'Required for LAN' : 'Optional for Localhost',
-                          hintStyle: const TextStyle(color: Colors.white38),
+                          hintText: isLanEnabled ? l10n.apiTokenHintRequiredLan : l10n.apiTokenHintOptionalLocalhost,
+                          hintStyle: TextStyle(
+                            color: Colors.white.withOpacity(0.3),
+                            fontSize: 13,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide.none,
                           ),
-                          prefixIcon: const Icon(Icons.key_rounded, size: 18),
+                          prefixIcon: const Icon(LucideIcons.key, size: 16, color: Colors.white54),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _isTokenVisible
-                                  ? Icons.visibility_off_rounded
-                                  : Icons.visibility_rounded,
-                              size: 18,
+                                  ? LucideIcons.eyeOff
+                                  : LucideIcons.eye,
+                              size: 16,
+                              color: Colors.white54,
                             ),
                             onPressed: () {
                               setState(() {
@@ -359,23 +401,32 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    IconButton.filledTonal(
-                      tooltip: 'Copy API Key',
-                      icon: const Icon(Icons.copy_rounded, size: 18),
+                    IconButton(
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white.withOpacity(0.05),
+                        shape: const CircleBorder(),
+                      ),
+                      tooltip: l10n.apiCopyKeyTooltip,
+                      icon: const Icon(LucideIcons.copy, color: Colors.white70, size: 16),
                       onPressed: token.isEmpty
                           ? null
                           : () {
                               Clipboard.setData(ClipboardData(text: token));
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('API key copied to clipboard'),
+                                SnackBar(
+                                  content: Text(l10n.apiKeyCopied),
                                 ),
                               );
                             },
                     ),
-                    IconButton.filledTonal(
-                      tooltip: 'Generate New Key',
-                      icon: const Icon(Icons.refresh_rounded, size: 18),
+                    const SizedBox(width: 6),
+                    IconButton(
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white.withOpacity(0.05),
+                        shape: const CircleBorder(),
+                      ),
+                      tooltip: l10n.apiGenerateKeyTooltip,
+                      icon: const Icon(LucideIcons.refreshCw, color: Colors.white70, size: 16),
                       onPressed: () {
                         final newToken = _generateSecureToken();
                         _tokenController.text = newToken;
@@ -384,8 +435,8 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                             .updateApiAccessToken(newToken);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('New API key generated'),
+                            SnackBar(
+                              content: Text(l10n.apiKeyGenerated),
                             ),
                           );
                         }

@@ -715,5 +715,98 @@
   "updateInstallingTitle": "Updating...",
   "updateInstallingStatus": "Installing update...",
   "updateDownloadingPackage": "Downloading update package...",
-  "updateBackgroundNotice": "You can close this window. Process will continue in the background."
+  "updateBackgroundNotice": "You can close this window. Process will continue in the background.",
+  "apiTitle": "Solaris Control API v1",
+  "apiStatusActiveLan": "Active (LAN: 0.0.0.0:{port})",
+  "@apiStatusActiveLan": {
+    "placeholders": {
+      "port": { "type": "int" }
+    }
+  },
+  "apiStatusActiveLocalhost": "Active (Localhost: 127.0.0.1:{port})",
+  "@apiStatusActiveLocalhost": {
+    "placeholders": {
+      "port": { "type": "int" }
+    }
+  },
+  "apiStatusDisabled": "Disabled",
+  "apiNetworkAccessMode": "Network Access Mode",
+  "apiModeLocalhost": "Localhost Only (127.0.0.1)",
+  "apiModeLan": "LAN Access (0.0.0.0)",
+  "apiFirewallUacError": "Error: Windows Firewall UAC permission denied. LAN access canceled.",
+  "apiServerPort": "API Server Port",
+  "apiDocumentation": "Interactive Documentation",
+  "apiOpenSwagger": "Open Swagger UI",
+  "apiOpenDocsError": "Failed to open documentation: {error}",
+  "@apiOpenDocsError": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "apiAccessKey": "API Access Key (X-API-Key)",
+  "apiTokenHintRequiredLan": "Required for LAN",
+  "apiTokenHintOptionalLocalhost": "Optional for Localhost",
+  "apiCopyKeyTooltip": "Copy API Key",
+  "apiKeyCopied": "API key copied to clipboard",
+  "apiGenerateKeyTooltip": "Generate New Key",
+  "apiKeyGenerated": "New API key generated",
+  "webhooksTitle": "Outbound Webhooks",
+  "webhooksSubtitle": "{count, plural, =1{1 configured} other{{count} configured}} | WAL Queue: {queueCount}",
+  "@webhooksSubtitle": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "queueCount": { "type": "int" }
+    }
+  },
+  "webhooksViewDlqTooltip": "View Dead Letter Queue (DLQ)",
+  "webhooksAddButton": "Add Webhook",
+  "webhooksEmptyMessage": "No Outbound Webhooks configured.\nClick \"Add Webhook\" to integrate with Home Assistant, Node-RED, or n8n.",
+  "webhooksDefaultName": "Webhook",
+  "webhooksEventsCount": "{count, plural, =1{1 event} other{{count} events}}",
+  "@webhooksEventsCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "webhooksSendTestPingTooltip": "Send Test Ping",
+  "webhooksSendingTestPing": "Sending test ping payload...",
+  "webhooksTestPingSuccess": "Test ping delivered successfully!",
+  "webhooksTestPingFailed": "Test ping failed to deliver.",
+  "webhooksEditTooltip": "Edit Webhook",
+  "webhooksDeleteTooltip": "Delete Webhook",
+  "webhooksAddTitle": "Add Outbound Webhook",
+  "webhooksEditTitle": "Edit Webhook",
+  "webhooksUrlLabel": "Target Webhook URL *",
+  "webhooksNameLabel": "Name (Optional)",
+  "webhooksSecretLabel": "HMAC Secret Key (Optional)",
+  "webhooksSecretHint": "Secret for X-Solaris-Signature verification",
+  "webhooksSubscribedEvents": "Subscribed Events:",
+  "webhooksSelectAll": "Select All",
+  "webhooksDeselectAll": "Deselect All",
+  "webhooksInvalidUrlError": "Please enter a valid absolute URL (e.g. http://...)",
+  "webhooksSaveChangesButton": "Save Changes",
+  "webhooksDlqTitle": "{count, plural, =1{Dead Letter Queue (1)} other{Dead Letter Queue ({count})}}",
+  "@webhooksDlqTitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "webhooksDlqEmpty": "Dead Letter Queue is empty! All webhooks delivered cleanly.",
+  "webhooksDlqEvent": "Event: {eventName} -> {url}",
+  "@webhooksDlqEvent": {
+    "placeholders": {
+      "eventName": { "type": "String" },
+      "url": { "type": "String" }
+    }
+  },
+  "webhooksDlqDetails": "{count, plural, =1{1 attempt} other{{count} attempts}} | Error: {error}\nDelivery ID: {id}",
+  "@webhooksDlqDetails": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "error": { "type": "String" },
+      "id": { "type": "String" }
+    }
+  },
+  "webhooksClearDlq": "Clear DLQ"
 }
+
