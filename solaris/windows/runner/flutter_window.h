@@ -40,6 +40,10 @@ class FlutterWindow : public Win32Window {
   std::unique_ptr<flutter::EventChannel<flutter::EncodableValue>> event_channel_;
   std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> event_sink_;
 
+  // EventChannel for system & hardware events.
+  std::unique_ptr<flutter::EventChannel<flutter::EncodableValue>> system_event_channel_;
+  std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> system_event_sink_;
+
   // Keep one manager instance alive to preserve cached original gamma ramps.
   MonitorManager monitor_manager_;
 };

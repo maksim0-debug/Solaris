@@ -44,6 +44,40 @@ class GamingModeStreamHandler : public flutter::StreamHandler<flutter::Encodable
   std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> event_sink_;
 };
 
+// StreamHandler for System & Hardware Events
+class SystemEventsStreamHandler : public flutter::StreamHandler<flutter::EncodableValue> {
+ public:
+  SystemEventsStreamHandler(MonitorManager& manager, std::unique_ptr<flutter::EventSink<flutter::EncodableValue>>& sink_ref)
+      : manager_(manager), sink_ref_(sink_ref) {}
+
+ protected:
+  std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> OnListenInternal(
+      const flutter::EncodableValue* arguments,
+      std::unique_ptr<flutter::EventSink<flutter::EncodableValue>>&& events) override {
+    sink_ref_ = std::move(events);
+    manager_.SetHardwareErrorCallback([this](const std::string& err_msg) {
+      if (sink_ref_) {
+        flutter::EncodableMap map;
+        map[flutter::EncodableValue("event")] = flutter::EncodableValue("on_hardware_error");
+        map[flutter::EncodableValue("detail")] = flutter::EncodableValue(err_msg);
+        sink_ref_->Success(flutter::EncodableValue(map));
+      }
+    });
+    return nullptr;
+  }
+
+  std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> OnCancelInternal(
+      const flutter::EncodableValue* arguments) override {
+    manager_.SetHardwareErrorCallback(nullptr);
+    sink_ref_ = nullptr;
+    return nullptr;
+  }
+
+ private:
+  MonitorManager& manager_;
+  std::unique_ptr<flutter::EventSink<flutter::EncodableValue>>& sink_ref_;
+};
+
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
 
@@ -179,13 +213,21 @@ bool FlutterWindow::OnCreate() {
         }
       });
 
-  // Set up EventChannel
+  // Set up EventChannel for Gaming Mode
   event_channel_ = std::make_unique<flutter::EventChannel<flutter::EncodableValue>>(
       flutter_controller_->engine()->messenger(), "com.solaris.monitor/events",
       &flutter::StandardMethodCodec::GetInstance());
   
   auto stream_handler = std::make_unique<GamingModeStreamHandler>(monitor_manager_);
   event_channel_->SetStreamHandler(std::move(stream_handler));
+
+  // Set up EventChannel for System & Hardware events
+  system_event_channel_ = std::make_unique<flutter::EventChannel<flutter::EncodableValue>>(
+      flutter_controller_->engine()->messenger(), "com.solaris.monitor/system_events",
+      &flutter::StandardMethodCodec::GetInstance());
+
+  auto sys_stream_handler = std::make_unique<SystemEventsStreamHandler>(monitor_manager_, system_event_sink_);
+  system_event_channel_->SetStreamHandler(std::move(sys_stream_handler));
 
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
@@ -218,6 +260,24 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
   switch (message) {
     case WM_FONTCHANGE:
       flutter_controller_->engine()->ReloadSystemFonts();
+      break;
+
+    case WM_POWERBROADCAST:
+      if (system_event_sink_ && (wparam == PBT_APMSUSPEND || wparam == PBT_APMRESUMEAUTOMATIC || wparam == PBT_APMRESUMESUSPEND)) {
+        flutter::EncodableMap map;
+        map[flutter::EncodableValue("event")] = flutter::EncodableValue("WM_POWERBROADCAST");
+        map[flutter::EncodableValue("wparam")] = flutter::EncodableValue(static_cast<int64_t>(wparam));
+        system_event_sink_->Success(flutter::EncodableValue(map));
+      }
+      break;
+
+    case WM_DISPLAYCHANGE:
+      monitor_manager_.InvalidateMonitorHandlesDebounced(1000);
+      if (system_event_sink_) {
+        flutter::EncodableMap map;
+        map[flutter::EncodableValue("event")] = flutter::EncodableValue("WM_DISPLAYCHANGE");
+        system_event_sink_->Success(flutter::EncodableValue(map));
+      }
       break;
   }
 

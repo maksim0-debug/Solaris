@@ -17,6 +17,7 @@
 #include <psapi.h>
 #include <tlhelp32.h>
 #include <chrono>
+#include <physicalmonitorenumerationapi.h>
 
 class MonitorManager {
  public:
@@ -41,6 +42,13 @@ class MonitorManager {
   // Enqueues a task to be executed on the background worker thread.
   void EnqueueTask(std::function<void()> task);
 
+  // Handles caching & invalidation of Win32 PHYSICAL_MONITOR handles
+  void InvalidateMonitorHandles();
+  void InvalidateMonitorHandlesDebounced(int delay_ms);
+
+  // System & Hardware feedback callbacks
+  void SetHardwareErrorCallback(std::function<void(const std::string&)> callback);
+
   // Game Detection
   void SetGamingModeCallback(std::function<void(bool)> callback);
   void UpdateWhitelist(const std::vector<std::string>& whitelist);
@@ -48,6 +56,12 @@ class MonitorManager {
   bool IsGamingMode() const { return is_gaming_mode_; }
 
  private:
+  // Persistent Physical Monitor Handle Cache
+  std::mutex handles_mutex_;
+  std::map<std::string, std::vector<PHYSICAL_MONITOR>> physical_monitors_cache_;
+  std::vector<PHYSICAL_MONITOR> GetOrCreatePhysicalMonitors(const std::string& device_path);
+  void DestroyPhysicalMonitorsCache();
+
   // Caches the original gamma ramps for displays.
   std::map<std::string, std::vector<WORD>> original_gamma_ramps_;
   std::mutex gamma_mutex_;
@@ -60,6 +74,10 @@ class MonitorManager {
   std::atomic<bool> stop_worker_{false};
 
   void WorkerLoop();
+
+  // Hardware error feedback callback
+  std::mutex error_cb_mutex_;
+  std::function<void(const std::string&)> on_hardware_error_;
 
   // Game Detection state
   std::thread detector_thread_;
@@ -87,17 +105,13 @@ class MonitorManager {
   bool is_gaming_candidate_ = false;
   std::chrono::steady_clock::time_point candidate_start_time_;
 
-  // Per-PID cache of the expensive parts of EvaluateGamingScore (path, parent,
-  // loaded DLLs). These are stable for a process lifetime, so we only compute
-  // them once per PID and reuse on subsequent detector ticks.
   struct CachedProcessInfo {
-    int static_score = 0;            // path + parent-process + DLL scan
-    std::string process_name_lower;  // lowercase file name (for whitelist/blacklist)
+    int static_score = 0;
+    std::string process_name_lower;
     bool scanned = false;
   };
   std::unordered_map<DWORD, CachedProcessInfo> process_cache_;
 
-  // Game session lock context
   HWND active_game_hwnd_ = nullptr;
   DWORD active_game_pid_ = 0;
   DWORD last_active_game_pid_ = 0;

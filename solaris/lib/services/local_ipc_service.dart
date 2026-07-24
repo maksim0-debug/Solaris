@@ -2,18 +2,33 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:solaris/models/sleep_session.dart';
 import 'package:solaris/models/local_ipc_server_state.dart';
 import 'package:solaris/models/settings_state.dart';
-import 'package:solaris/providers/sleep_provider.dart';
+import 'package:solaris/models/sleep_session.dart';
 import 'package:solaris/providers.dart';
+import 'package:solaris/providers/sleep_provider.dart';
+import 'package:solaris/services/api_control_handler.dart';
+import 'package:solaris/services/api_monitors_handler.dart';
+import 'package:solaris/services/api_router.dart';
+import 'package:solaris/services/api_status_handler.dart';
 
 class LocalIpcService extends Notifier<LocalIpcServerState> {
   HttpServer? _server;
   bool _isStarting = false;
+  late final ApiRouter _router;
+  late final ApiStatusHandler _statusHandler;
+  late final ApiControlHandler _controlHandler;
+  late final ApiMonitorsHandler _monitorsHandler;
 
   @override
   LocalIpcServerState build() {
+    _router = ApiRouter();
+    _statusHandler = ApiStatusHandler(ref);
+    _controlHandler = ApiControlHandler(ref.container);
+    _monitorsHandler = ApiMonitorsHandler(ref.container);
+
+    _setupRouter();
+
     ref.listen<AsyncValue<Map<String, SettingsState>>>(
       settingsProvider,
       (previous, next) {
@@ -23,13 +38,18 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
             final prevSettings = previous?.value?['all'];
             if (settings != null) {
               final isEnabled = settings.isLocalIpcServerEnabled;
-              final port = settings.localIpcServerPort;
-              final prevPort = prevSettings?.localIpcServerPort;
+              final port = settings.apiServerPort;
+              final prevPort = prevSettings?.apiServerPort ?? prevSettings?.localIpcServerPort;
+              final lanEnabled = settings.isApiLanAccessEnabled;
+              final prevLanEnabled = prevSettings?.isApiLanAccessEnabled;
+
+              _router.expectedToken = settings.apiAccessToken;
+              _router.isLanEnabled = lanEnabled;
 
               if (isEnabled) {
                 if (!state.isRunning) {
                   await start();
-                } else if (port != prevPort) {
+                } else if (port != prevPort || lanEnabled != prevLanEnabled) {
                   await stop();
                   await start();
                 }
@@ -53,192 +73,205 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
     return const LocalIpcServerState(isRunning: false);
   }
 
-  /// Starts the HTTP server on the configured port if enabled.
+  void _setupRouter() {
+    // 1. Register Middlewares
+    _router.use((HttpRequest req) => securityHeadersMiddleware(req));
+    _router.use((HttpRequest req) => payloadSizeGuardMiddleware(req));
+    _router.use((HttpRequest req) => contentTypeGuardMiddleware(req));
+    _router.use((HttpRequest req) => hostHeaderValidationMiddleware(req));
+    _router.use((HttpRequest req) => corsMiddleware(req, _router));
+    _router.use((HttpRequest req) => authMiddleware(req, _router));
+    _router.use((HttpRequest req) => rateLimiterMiddleware(req));
+
+    // 2. Register Phase 1 Status & Read-Only Routes
+    _router.get('/api/v1/health', (HttpRequest req, Map<String, String> params) => _statusHandler.handleHealth(req, params));
+    _router.get('/api/v1/status', (HttpRequest req, Map<String, String> params) => _statusHandler.handleStatus(req, params));
+    _router.get('/api/v1/solar', (HttpRequest req, Map<String, String> params) => _statusHandler.handleSolar(req, params));
+    _router.get('/api/v1/presets', (HttpRequest req, Map<String, String> params) => _statusHandler.handlePresets(req, params));
+    _router.get('/api/v1/monitors', (HttpRequest req, Map<String, String> params) => _monitorsHandler.handleGetMonitors(req, params));
+    _router.get('/api/v1/monitors/:slug', (HttpRequest req, Map<String, String> params) => _monitorsHandler.handleGetMonitorBySlug(req, params));
+    _router.get('/api/v1/sleep/sessions', (HttpRequest req, Map<String, String> params) => _statusHandler.handleSleepSessions(req, params));
+    _router.get('/api/v1/docs', (HttpRequest req, Map<String, String> params) => _statusHandler.handleDocs(req, params));
+    _router.get('/api/v1/openapi.json', (HttpRequest req, Map<String, String> params) => _statusHandler.handleOpenApiJson(req, params));
+
+    // 3. Register Phase 2 Control & Per-Monitor Endpoints
+    _router.post('/api/v1/control', (HttpRequest req, Map<String, String> params) => _controlHandler.handleControl(req, params));
+    _router.post('/api/v1/monitors/:slug/brightness', (HttpRequest req, Map<String, String> params) => _monitorsHandler.handleSetMonitorBrightness(req, params));
+    _router.post('/api/v1/monitors/:slug/temperature', (HttpRequest req, Map<String, String> params) => _monitorsHandler.handleSetMonitorTemperature(req, params));
+
+    // 4. Register Legacy Endpoints Aliases (100% Backward Compatibility)
+    _router.post('/api/sleep/sessions', (HttpRequest req, Map<String, String> params) => _handleSleepSessions(req));
+    _router.post('/api/sleep/status', (HttpRequest req, Map<String, String> params) => _handleSleepStatus(req));
+    _router.get('/api/sleep/status', (HttpRequest req, Map<String, String> params) => _handleGetStatus(req));
+  }
+
+  /// Starts the HTTP server on configured port with auto-fallback to ports 45322..45330
   Future<void> start() async {
     if (state.isRunning || _isStarting) return;
     _isStarting = true;
     state = state.copyWith(isRunning: false, error: null, failedPort: null);
 
     final settingsMap = ref.read(settingsProvider).value;
-    final settings = settingsMap?['all'];
-    if (settings == null) {
-      debugPrint('LocalIpcService: Settings not loaded yet. Delaying startup.');
-      _isStarting = false;
-      return;
+    final configuredPort = settingsMap?['all']?.apiServerPort ?? 45321;
+    final isLanEnabled = settingsMap?['all']?.isApiLanAccessEnabled ?? false;
+
+    final bindAddress = isLanEnabled ? InternetAddress.anyIPv4 : InternetAddress.loopbackIPv4;
+
+    int targetPort = configuredPort;
+    HttpServer? boundServer;
+
+    for (int offset = 0; offset <= 9; offset++) {
+      final currentPort = configuredPort + offset;
+      try {
+        boundServer = await HttpServer.bind(bindAddress, currentPort);
+        targetPort = currentPort;
+        break;
+      } on SocketException catch (e) {
+        if (offset == 9) {
+          debugPrint('LocalIpcService: Failed to bind to any port in range $configuredPort..${configuredPort + 9}: $e');
+          _isStarting = false;
+          state = state.copyWith(
+            isRunning: false,
+            error: 'Failed to bind port: ${e.message}',
+            failedPort: configuredPort,
+          );
+          return;
+        }
+      }
     }
 
-    if (!settings.isLocalIpcServerEnabled) {
-      debugPrint('LocalIpcService: Server is disabled in settings.');
-      _isStarting = false;
-      return;
-    }
+    _server = boundServer;
+    _server?.autoCompress = true;
 
-    final portToBind = settings.localIpcServerPort;
+    _listen();
+    _isStarting = false;
 
-    try {
-      _server = await HttpServer.bind(
-        InternetAddress.loopbackIPv4, // 127.0.0.1 for security
-        portToBind,
-        shared: true,
-      );
-      debugPrint('LocalIpcService: Server running on http://${_server!.address.address}:${_server!.port}');
-      state = LocalIpcServerState(isRunning: true, port: _server!.port);
-      _listen();
-    } catch (e) {
-      debugPrint('LocalIpcService: Failed to bind server to port $portToBind: $e');
-      _server = null;
-      state = LocalIpcServerState(
-        isRunning: false,
-        error: e.toString(),
-        failedPort: portToBind,
-      );
-    } finally {
-      _isStarting = false;
-    }
+    state = state.copyWith(
+      isRunning: true,
+      port: targetPort,
+      error: null,
+      failedPort: null,
+    );
+    debugPrint('LocalIpcService: Server bound and listening at http://${bindAddress.address}:$targetPort');
   }
 
-  /// Stops the HTTP server.
-  Future<void> stop() async {
-    if (_server != null) {
-      await _server!.close(force: true);
-      debugPrint('LocalIpcService: Server stopped.');
-      _server = null;
-      state = const LocalIpcServerState(isRunning: false);
-    } else if (state.isRunning) {
-      state = const LocalIpcServerState(isRunning: false);
-    }
-  }
-
-  /// REST Request Listener loop
   void _listen() {
     _server?.listen((HttpRequest request) async {
       try {
-        final path = request.uri.path;
-        final method = request.method;
-
-        if (method == 'POST' && path == '/api/sleep/sessions') {
-          await _handleSleepSessions(request);
-        } else if (method == 'POST' && path == '/api/sleep/status') {
-          await _handleSleepStatus(request);
-        } else if (method == 'GET' && path == '/api/sleep/status') {
-          await _handleGetStatus(request);
-        } else {
-          _sendResponse(request, HttpStatus.notFound, {'error': 'Not Found'});
+        final handled = await _router.handle(request);
+        if (!handled) {
+          _sendResponse(request, HttpStatus.notFound, {
+            'error': 'Not Found',
+            'available_endpoints': [
+              'GET /api/v1/status',
+              'GET /api/v1/health',
+              'GET /api/v1/monitors',
+              'GET /api/v1/presets',
+              'GET /api/v1/solar',
+              'POST /api/v1/control',
+              'GET /api/v1/docs',
+              'GET /api/v1/openapi.json',
+            ],
+          });
         }
-      } catch (e) {
-        debugPrint('LocalIpcService: Exception handling request: $e');
-        _sendResponse(
-          request,
-          HttpStatus.internalServerError,
-          {'error': 'Internal Server Error', 'details': e.toString()},
-        );
+      } catch (e, st) {
+        debugPrint('Error handling IPC request: $e\n$st');
+        _sendResponse(request, HttpStatus.internalServerError, {
+          'error': 'Internal Server Error',
+          'detail': e.toString(),
+        });
       }
-    }, onError: (Object error) {
-      debugPrint('LocalIpcService: Server error: $error');
     });
   }
 
-  Future<void> _handleSleepSessions(HttpRequest request) async {
-    final body = await _readRequestBody(request);
-    if (body == null) {
-      _sendResponse(request, HttpStatus.badRequest, {'error': 'Empty request body'});
-      return;
+  Future<void> stop() async {
+    if (_server != null) {
+      await _server!.close(force: false).timeout(
+        const Duration(seconds: 2),
+        onTimeout: () => _server!.close(force: true),
+      );
+      _server = null;
+      debugPrint('LocalIpcService: Gracefully stopped API server.');
     }
+    state = const LocalIpcServerState(isRunning: false);
+  }
 
+  Future<void> _handleSleepSessions(HttpRequest request) async {
     try {
-      final decoded = jsonDecode(body);
-      if (decoded is! List) {
-        _sendResponse(request, HttpStatus.badRequest, {'error': 'Expected JSON array of sleep sessions'});
-        return;
-      }
+      final String content = await utf8.decoder.bind(request).join();
+      final dynamic body = jsonDecode(content);
 
-      final sessions = decoded.map((item) {
-        final map = item as Map<String, dynamic>;
-        // Force source to local_api when received via local API endpoint
-        return SleepSession.fromJson({
-          ...map,
-          'source': map['source'] ?? 'local_api',
+      if (body is List) {
+        final sessions = body
+            .map((e) => SleepSession.fromJson(e as Map<String, dynamic>))
+            .toList();
+        await ref.read(sleepProvider.notifier).updateSessionsFromIpc(sessions);
+        _sendResponse(request, HttpStatus.ok, {'status': 'success'});
+      } else {
+        _sendResponse(request, HttpStatus.badRequest, {
+          'error': 'Invalid format. Expected array of sessions.',
         });
-      }).toList();
-
-      if (sessions.isEmpty) {
-        _sendResponse(request, HttpStatus.badRequest, {'error': 'No valid sessions provided'});
-        return;
       }
-
-      // Update sessions in notifier
-      await ref.read(sleepProvider.notifier).updateSessionsFromIpc(sessions);
-
-      _sendResponse(request, HttpStatus.ok, {
-        'status': 'success',
-        'message': 'Successfully processed ${sessions.length} sleep sessions.',
-      });
     } catch (e) {
-      debugPrint('LocalIpcService: Failed to parse sleep sessions: $e');
-      _sendResponse(request, HttpStatus.badRequest, {'error': 'Invalid JSON or session format', 'details': e.toString()});
+      _sendResponse(request, HttpStatus.badRequest, {
+        'error': 'Failed to parse JSON: $e',
+      });
     }
   }
 
   Future<void> _handleSleepStatus(HttpRequest request) async {
-    final body = await _readRequestBody(request);
-    if (body == null) {
-      _sendResponse(request, HttpStatus.badRequest, {'error': 'Empty request body'});
-      return;
-    }
-
     try {
-      final decoded = jsonDecode(body) as Map<String, dynamic>;
-      final isSleeping = decoded['is_sleeping'] as bool?;
+      final String content = await utf8.decoder.bind(request).join();
+      final dynamic body = jsonDecode(content);
 
-      if (isSleeping == null) {
-        _sendResponse(request, HttpStatus.badRequest, {'error': 'Missing required parameter "is_sleeping"'});
-        return;
+      if (body is Map<String, dynamic> && body.containsKey('is_sleeping')) {
+        final bool isSleeping = body['is_sleeping'] as bool;
+        final now = DateTime.now();
+        final session = SleepSession(
+          id: 'ipc_${now.millisecondsSinceEpoch}',
+          startTime: isSleeping ? now : now.subtract(const Duration(hours: 8)),
+          endTime: now,
+          source: 'local_api',
+        );
+
+        await ref
+            .read(sleepProvider.notifier)
+            .updateSessionsFromIpc([session]);
+        _sendResponse(request, HttpStatus.ok, {'status': 'success'});
+      } else {
+        _sendResponse(request, HttpStatus.badRequest, {
+          'error': 'Invalid format. Expected object with is_sleeping.',
+        });
       }
-
-      debugPrint('LocalIpcService: Received sleep status change: isSleeping = $isSleeping');
-
-      // TODO: Реализовать реакцию на реальный статус сна (включение Wind-Down/Снижение яркости)
-
-      _sendResponse(request, HttpStatus.ok, {
-        'status': 'success',
-        'is_sleeping': isSleeping,
-        'message': 'Status received (processing logic pending implementation)',
-      });
     } catch (e) {
-      _sendResponse(request, HttpStatus.badRequest, {'error': 'Invalid JSON format', 'details': e.toString()});
+      _sendResponse(request, HttpStatus.badRequest, {
+        'error': 'Failed to parse JSON: $e',
+      });
     }
   }
 
   Future<void> _handleGetStatus(HttpRequest request) async {
     final sleepState = ref.read(sleepProvider);
+    final isSleeping = sleepState.sessions.isNotEmpty &&
+        sleepState.sessions.first.endTime.isAfter(DateTime.now());
+
     _sendResponse(request, HttpStatus.ok, {
-      'service': 'Solaris Local API',
-      'running': true,
-      'port': _server?.port,
-      'cached_sessions_count': sleepState.sessions.length,
+      'status': 'success',
+      'is_sleeping': isSleeping,
+      'sessions_count': sleepState.sessions.length,
       'last_fetch': sleepState.lastFetchTime?.toIso8601String(),
     });
   }
 
-  Future<String?> _readRequestBody(HttpRequest request) async {
-    try {
-      final content = await utf8.decoder.bind(request).join();
-      return content.trim().isEmpty ? null : content;
-    } catch (e) {
-      debugPrint('LocalIpcService: Error reading request body: $e');
-      return null;
-    }
-  }
-
-  void _sendResponse(HttpRequest request, int statusCode, Map<String, dynamic> data) {
-    try {
-      request.response
-        ..statusCode = statusCode
-        ..headers.contentType = ContentType.json
-        ..write(jsonEncode(data));
-      request.response.close();
-    } catch (e) {
-      debugPrint('LocalIpcService: Error sending response: $e');
-    }
+  void _sendResponse(
+    HttpRequest request,
+    int statusCode,
+    Map<String, dynamic> data,
+  ) {
+    request.response
+      ..statusCode = statusCode
+      ..headers.contentType = ContentType.json
+      ..write(jsonEncode(data));
+    request.response.close();
   }
 }

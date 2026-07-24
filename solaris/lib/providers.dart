@@ -889,9 +889,11 @@ class MonitorListNotifier extends AsyncNotifier<List<MonitorInfo>> {
                 'Old temp: ${m.realTemperature}, new: $newTemperature.');
             changed = true;
             return MonitorInfo(
+              id: m.id,
               name: m.name,
               friendlyName: m.friendlyName,
               deviceName: m.deviceName,
+              deviceIdHash: m.deviceIdHash,
               isPrimary: m.isPrimary,
               realBrightness: newBrightness,
               realTemperature: newTemperature,

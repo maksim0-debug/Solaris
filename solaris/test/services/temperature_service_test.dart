@@ -28,9 +28,11 @@ void main() {
       expect(service.isResetLocked, false);
 
       final monitor = MonitorInfo(
+        id: r'\\.\DISPLAY1\Monitor0',
         deviceName: 'DISPLAY1',
         name: 'Monitor 1',
         friendlyName: 'Monitor 1',
+        deviceIdHash: 'a1b2c3d4',
         isPrimary: true,
       );
 
@@ -47,9 +49,11 @@ void main() {
 
     test('setTemperatureInstant ignores non-6500K target when reset lock is active', () async {
       final monitor = MonitorInfo(
+        id: r'\\.\DISPLAY1\Monitor0',
         deviceName: 'DISPLAY1',
         name: 'Monitor 1',
         friendlyName: 'Monitor 1',
+        deviceIdHash: 'a1b2c3d4',
         isPrimary: true,
       );
 

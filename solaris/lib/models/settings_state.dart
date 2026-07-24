@@ -96,6 +96,10 @@ class SettingsState {
   final StartupMode startupMode;
   final bool isLocalIpcServerEnabled;
   final int localIpcServerPort;
+  final int apiServerPort;
+  final bool isApiLanAccessEnabled;
+  final String apiAccessToken;
+  final int apiRateLimitPerMinute;
   final String customWeatherApiKey;
   final String customMapboxToken;
   final String customGoogleClientId;
@@ -176,11 +180,16 @@ class SettingsState {
     this.startupMode = StartupMode.minimized,
     this.isLocalIpcServerEnabled = false,
     this.localIpcServerPort = 45321,
+    int? apiServerPort,
+    this.isApiLanAccessEnabled = false,
+    this.apiAccessToken = "",
+    this.apiRateLimitPerMinute = 120,
     this.customWeatherApiKey = "",
     this.customMapboxToken = "",
     this.customGoogleClientId = "",
     this.customGoogleClientSecret = "",
-  }) : isAutoUpdateEnabled = isAutoUpdateEnabled ?? Env.isOfficialRelease,
+  }) : apiServerPort = apiServerPort ?? localIpcServerPort,
+       isAutoUpdateEnabled = isAutoUpdateEnabled ?? Env.isOfficialRelease,
        curvesMap = curvesMap ?? PresetConstants.getAllDefaults(),
        presetOrder =
            presetOrder ??
@@ -288,6 +297,10 @@ class SettingsState {
     'startupMode': startupMode.toJson(),
     'isLocalIpcServerEnabled': isLocalIpcServerEnabled,
     'localIpcServerPort': localIpcServerPort,
+    'apiServerPort': apiServerPort,
+    'isApiLanAccessEnabled': isApiLanAccessEnabled,
+    'apiAccessToken': KeyObfuscator.encrypt(apiAccessToken),
+    'apiRateLimitPerMinute': apiRateLimitPerMinute,
     'customWeatherApiKey': KeyObfuscator.encrypt(customWeatherApiKey),
     'customMapboxToken': KeyObfuscator.encrypt(customMapboxToken),
     'customGoogleClientId': KeyObfuscator.encrypt(customGoogleClientId),
@@ -460,6 +473,12 @@ class SettingsState {
       ),
       isLocalIpcServerEnabled: json['isLocalIpcServerEnabled'] as bool? ?? false,
       localIpcServerPort: json['localIpcServerPort'] as int? ?? 45321,
+      apiServerPort: json['apiServerPort'] as int? ?? json['localIpcServerPort'] as int? ?? 45321,
+      isApiLanAccessEnabled: json['isApiLanAccessEnabled'] as bool? ?? json['isLocalIpcServerEnabled'] as bool? ?? false,
+      apiAccessToken: json.containsKey('apiAccessToken')
+          ? KeyObfuscator.decrypt(json['apiAccessToken'] as String)
+          : "",
+      apiRateLimitPerMinute: json['apiRateLimitPerMinute'] as int? ?? 120,
       customWeatherApiKey: json.containsKey('customWeatherApiKey')
           ? KeyObfuscator.decrypt(json['customWeatherApiKey'] as String)
           : "",
@@ -535,6 +554,10 @@ class SettingsState {
     StartupMode? startupMode,
     bool? isLocalIpcServerEnabled,
     int? localIpcServerPort,
+    int? apiServerPort,
+    bool? isApiLanAccessEnabled,
+    String? apiAccessToken,
+    int? apiRateLimitPerMinute,
     String? customWeatherApiKey,
     String? customMapboxToken,
     String? customGoogleClientId,
@@ -642,6 +665,12 @@ class SettingsState {
       isLocalIpcServerEnabled:
           isLocalIpcServerEnabled ?? this.isLocalIpcServerEnabled,
       localIpcServerPort: localIpcServerPort ?? this.localIpcServerPort,
+      apiServerPort: apiServerPort ?? this.apiServerPort,
+      isApiLanAccessEnabled:
+          isApiLanAccessEnabled ?? this.isApiLanAccessEnabled,
+      apiAccessToken: apiAccessToken ?? this.apiAccessToken,
+      apiRateLimitPerMinute:
+          apiRateLimitPerMinute ?? this.apiRateLimitPerMinute,
       customWeatherApiKey: customWeatherApiKey ?? this.customWeatherApiKey,
       customMapboxToken: customMapboxToken ?? this.customMapboxToken,
       customGoogleClientId: customGoogleClientId ?? this.customGoogleClientId,
@@ -649,5 +678,6 @@ class SettingsState {
     );
   }
 }
+
 
 

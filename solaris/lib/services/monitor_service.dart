@@ -6,17 +6,21 @@ import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 
 class MonitorInfo {
+  final String id;
   final String name;
   final String friendlyName;
   final String deviceName;
+  final String deviceIdHash;
   final bool isPrimary;
   final int? realBrightness;
   final int? realTemperature;
 
   MonitorInfo({
+    required this.id,
     required this.name,
     required this.friendlyName,
     required this.deviceName,
+    required this.deviceIdHash,
     required this.isPrimary,
     this.realBrightness,
     this.realTemperature,
@@ -148,23 +152,18 @@ class MonitorService {
         if (EnumDisplayDevices(deviceNamePtr, 0, monitorDevice, 0) != 0) {
           final monitorName = monitorDevice.ref.DeviceString;
           final deviceID = monitorDevice.ref.DeviceID.toLowerCase();
+          final deviceIdHash = deviceID.hashCode.toRadixString(16).toLowerCase();
 
           // Fetch real brightness for this monitor
           final realBrightness = await getBrightness(deviceName);
-
-          // Try to find a friendly name from our native map
-          // The deviceID from EnumDisplayDevices looks like:
-          // \\.\DISPLAY1\Monitor0
-          // But our C++ code gets the symbolic link path, which might look different.
-          // Actually, let's use a simpler heuristic or improve the C++ to return something matching.
-          // In C++, we used SetupDi to get the path. Let's see if we can match it.
 
           String friendly = friendlyNames[deviceID] ?? monitorName;
 
           // Match by searching for the deviceID substring if exact match fails
           if (friendly == monitorName) {
             for (final entry in friendlyNames.entries) {
-              if (deviceID.contains(entry.key.split('#')[1].toLowerCase())) {
+              final parts = entry.key.split('#');
+              if (parts.length > 1 && deviceID.contains(parts[1].toLowerCase())) {
                 friendly = entry.value;
                 break;
               }
@@ -173,9 +172,11 @@ class MonitorService {
 
           monitors.add(
             MonitorInfo(
+              id: deviceName,
               name: monitorName,
               friendlyName: friendly,
               deviceName: deviceName,
+              deviceIdHash: deviceIdHash,
               isPrimary: isPrimary,
               realBrightness: realBrightness,
             ),
@@ -193,9 +194,11 @@ class MonitorService {
     if (monitors.isEmpty) {
       monitors.add(
         MonitorInfo(
+          id: 'DISPLAY1',
           name: 'Generic Monitor',
           friendlyName: 'Generic Monitor',
           deviceName: 'DISPLAY1',
+          deviceIdHash: 'generic',
           isPrimary: true,
           realBrightness: null,
         ),

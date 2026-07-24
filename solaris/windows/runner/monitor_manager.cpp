@@ -45,6 +45,82 @@ MonitorManager::~MonitorManager() {
   if (detector_thread_.joinable()) {
     detector_thread_.join();
   }
+
+  DestroyPhysicalMonitorsCache();
+}
+
+void MonitorManager::SetHardwareErrorCallback(std::function<void(const std::string&)> callback) {
+  std::lock_guard<std::mutex> lock(error_cb_mutex_);
+  on_hardware_error_ = callback;
+}
+
+void MonitorManager::InvalidateMonitorHandles() {
+  std::lock_guard<std::mutex> lock(handles_mutex_);
+  DestroyPhysicalMonitorsCache();
+}
+
+void MonitorManager::InvalidateMonitorHandlesDebounced(int delay_ms) {
+  EnqueueTask([this, delay_ms]() {
+    std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
+    InvalidateMonitorHandles();
+  });
+}
+
+void MonitorManager::DestroyPhysicalMonitorsCache() {
+  for (auto& pair : physical_monitors_cache_) {
+    if (!pair.second.empty()) {
+      ::DestroyPhysicalMonitors(static_cast<DWORD>(pair.second.size()), pair.second.data());
+    }
+  }
+  physical_monitors_cache_.clear();
+}
+
+std::vector<PHYSICAL_MONITOR> MonitorManager::GetOrCreatePhysicalMonitors(const std::string& device_path) {
+  std::lock_guard<std::mutex> lock(handles_mutex_);
+  auto it = physical_monitors_cache_.find(device_path);
+  if (it != physical_monitors_cache_.end() && !it->second.empty()) {
+    return it->second;
+  }
+
+  std::wstring target_device(device_path.begin(), device_path.end());
+  struct MonitorContext {
+    std::wstring target_name;
+    HMONITOR h_monitor = nullptr;
+  } context;
+  context.target_name = target_device;
+
+  EnumDisplayMonitors(
+      nullptr, nullptr,
+      [](HMONITOR h_monitor, HDC hdc, LPRECT rect, LPARAM data) -> BOOL {
+        auto ctx = reinterpret_cast<MonitorContext *>(data);
+        MONITORINFOEXW info;
+        info.cbSize = sizeof(info);
+        if (GetMonitorInfoW(h_monitor, &info)) {
+          if (ctx->target_name == info.szDevice) {
+            ctx->h_monitor = h_monitor;
+            return FALSE;
+          }
+        }
+        return TRUE;
+      },
+      reinterpret_cast<LPARAM>(&context));
+
+  if (!context.h_monitor) {
+    return {};
+  }
+
+  DWORD physical_count = 0;
+  if (!GetNumberOfPhysicalMonitorsFromHMONITOR(context.h_monitor, &physical_count) || physical_count == 0) {
+    return {};
+  }
+
+  std::vector<PHYSICAL_MONITOR> physical_monitors(physical_count);
+  if (!GetPhysicalMonitorsFromHMONITOR(context.h_monitor, physical_count, physical_monitors.data())) {
+    return {};
+  }
+
+  physical_monitors_cache_[device_path] = physical_monitors;
+  return physical_monitors;
 }
 
 void MonitorManager::EnqueueTask(std::function<void()> task) {
@@ -273,128 +349,51 @@ std::string MonitorManager::GetManufacturerName(uint16_t id) {
   name[3] = '\0';
   return std::string(name);
 }
-
-bool MonitorManager::SetBrightness(const std::string &device_path,
-                                   int brightness) {
+bool MonitorManager::SetBrightness(const std::string &device_path, int brightness) {
   // Clamp brightness to 0-100
   brightness = std::max(0, std::min(100, brightness));
 
-  // Convert device_path to wstring for EnumDisplayDevices
-  std::wstring target_device(device_path.begin(), device_path.end());
-
-  DISPLAY_DEVICEW display_device;
-  display_device.cb = sizeof(display_device);
-
-  // We need to find the HMONITOR for the given device_path
-  struct MonitorContext {
-    std::wstring target_name;
-    HMONITOR h_monitor = nullptr;
-  } context;
-  context.target_name = target_device;
-
-  EnumDisplayMonitors(
-      nullptr, nullptr,
-      [](HMONITOR h_monitor, HDC hdc, LPRECT rect, LPARAM data) -> BOOL {
-        auto ctx = reinterpret_cast<MonitorContext *>(data);
-        MONITORINFOEXW info;
-        info.cbSize = sizeof(info);
-        if (GetMonitorInfoW(h_monitor, &info)) {
-          if (ctx->target_name == info.szDevice) {
-            ctx->h_monitor = h_monitor;
-            return FALSE; // Found it, stop enumeration
-          }
-        }
-        return TRUE;
-      },
-      reinterpret_cast<LPARAM>(&context));
-
-  if (!context.h_monitor) {
-    return false;
-  }
-
-  // Get physical monitors from HMONITOR
-  DWORD physical_count = 0;
-  if (!GetNumberOfPhysicalMonitorsFromHMONITOR(context.h_monitor,
-                                               &physical_count)) {
-    return false;
-  }
-
-  std::vector<PHYSICAL_MONITOR> physical_monitors(physical_count);
-  if (!GetPhysicalMonitorsFromHMONITOR(context.h_monitor, physical_count,
-                                       physical_monitors.data())) {
+  auto physical_monitors = GetOrCreatePhysicalMonitors(device_path);
+  if (physical_monitors.empty()) {
     return false;
   }
 
   bool success = false;
-  for (DWORD i = 0; i < physical_count; i++) {
-    if (::SetMonitorBrightness(physical_monitors[i].hPhysicalMonitor,
-                               (DWORD)brightness)) {
+  for (size_t i = 0; i < physical_monitors.size(); i++) {
+    if (::SetMonitorBrightness(physical_monitors[i].hPhysicalMonitor, (DWORD)brightness)) {
       success = true;
+    } else {
+      DWORD err = GetLastError();
+      if (err == 0xC0262588 /* STATUS_GRAPHICS_MC_INVALID_PHYSICAL_MONITOR_HANDLE */) {
+        InvalidateMonitorHandles();
+      }
+      std::lock_guard<std::mutex> lock(error_cb_mutex_);
+      if (on_hardware_error_) {
+        on_hardware_error_("DDC/CI SetMonitorBrightness failed for " + device_path);
+      }
     }
   }
 
-  DestroyPhysicalMonitors(physical_count, physical_monitors.data());
   return success;
 }
 
-bool MonitorManager::GetBrightness(const std::string &device_path, int &current,
-                                   int &maximum) {
-  // Convert device_path to wstring for EnumDisplayDevices
-  std::wstring target_device(device_path.begin(), device_path.end());
-
-  // We need to find the HMONITOR for the given device_path
-  struct MonitorContext {
-    std::wstring target_name;
-    HMONITOR h_monitor = nullptr;
-  } context;
-  context.target_name = target_device;
-
-  EnumDisplayMonitors(
-      nullptr, nullptr,
-      [](HMONITOR h_monitor, HDC hdc, LPRECT rect, LPARAM data) -> BOOL {
-        auto ctx = reinterpret_cast<MonitorContext *>(data);
-        MONITORINFOEXW info;
-        info.cbSize = sizeof(info);
-        if (GetMonitorInfoW(h_monitor, &info)) {
-          if (ctx->target_name == info.szDevice) {
-            ctx->h_monitor = h_monitor;
-            return FALSE; // Found it, stop enumeration
-          }
-        }
-        return TRUE;
-      },
-      reinterpret_cast<LPARAM>(&context));
-
-  if (!context.h_monitor) {
-    return false;
-  }
-
-  // Get physical monitors from HMONITOR
-  DWORD physical_count = 0;
-  if (!GetNumberOfPhysicalMonitorsFromHMONITOR(context.h_monitor,
-                                               &physical_count)) {
-    return false;
-  }
-
-  std::vector<PHYSICAL_MONITOR> physical_monitors(physical_count);
-  if (!GetPhysicalMonitorsFromHMONITOR(context.h_monitor, physical_count,
-                                       physical_monitors.data())) {
+bool MonitorManager::GetBrightness(const std::string &device_path, int &current, int &maximum) {
+  auto physical_monitors = GetOrCreatePhysicalMonitors(device_path);
+  if (physical_monitors.empty()) {
     return false;
   }
 
   bool success = false;
-  for (DWORD i = 0; i < physical_count; i++) {
+  for (size_t i = 0; i < physical_monitors.size(); i++) {
     DWORD dwMinimum, dwCurrent, dwMaximum;
-    if (::GetMonitorBrightness(physical_monitors[i].hPhysicalMonitor,
-                               &dwMinimum, &dwCurrent, &dwMaximum)) {
+    if (::GetMonitorBrightness(physical_monitors[i].hPhysicalMonitor, &dwMinimum, &dwCurrent, &dwMaximum)) {
       current = static_cast<int>(dwCurrent);
       maximum = static_cast<int>(dwMaximum);
       success = true;
-      break; // Just take the first one for now
+      break;
     }
   }
 
-  DestroyPhysicalMonitors(physical_count, physical_monitors.data());
   return success;
 }
 
