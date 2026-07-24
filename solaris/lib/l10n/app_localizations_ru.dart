@@ -1772,4 +1772,83 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get webhooksClearDlq => 'Очистить DLQ';
+
+  @override
+  String get apiPermissionsDialogTitle =>
+      'Права доступа API и гранулярный контроль';
+
+  @override
+  String get apiPermissionsReadOnlyLabel => 'Режим «Только чтение» (Read-Only)';
+
+  @override
+  String get apiPermissionsReadOnlyHint =>
+      'Если включено, все мутирующие API-запросы (POST/PUT/DELETE) блокируются с кодом HTTP 403 Forbidden.';
+
+  @override
+  String get apiPermissionsDataSharingSection =>
+      'Разрешения на передачу данных (Чтение)';
+
+  @override
+  String get apiPermissionsAllowMonitors => 'Мониторы и состояние яркости';
+
+  @override
+  String get apiPermissionsAllowSolar => 'Солнечные и астрономические данные';
+
+  @override
+  String get apiPermissionsAllowWeather =>
+      'Погодные корректировки и данные провайдера';
+
+  @override
+  String get apiPermissionsAllowSleep => 'Метрики сна и циркадного ритма';
+
+  @override
+  String get apiPermissionsAllowCircadian =>
+      'Состояние системы Smart Circadian';
+
+  @override
+  String get apiPermissionsControlCategoriesSection =>
+      'Разрешенные категории команд (Мутации)';
+
+  @override
+  String get apiPermissionsCategoryMonitors =>
+      'Мониторы (яркость, температура, смещения)';
+
+  @override
+  String get apiPermissionsCategoryPresets => 'Пресеты и профили яркости';
+
+  @override
+  String get apiPermissionsCategoryCircadian =>
+      'Циркадный ритм и авто-настройки';
+
+  @override
+  String get apiPermissionsCategoryGaming => 'Игровой режим и белые списки ПО';
+
+  @override
+  String get apiPermissionsCategoryEnvironment =>
+      'Окружение и погодные настройки';
+
+  @override
+  String get apiPermissionsCategorySleep => 'Действия сна и обновление статуса';
+
+  @override
+  String get apiPermissionsCategorySystem =>
+      'Системные действия (вебхуки, анимации)';
+
+  @override
+  String get apiPermissionsConfigureButton => 'Настроить права API...';
+
+  @override
+  String get apiPermissionsSummaryReadOnly => 'Режим «Только чтение» активен';
+
+  @override
+  String apiPermissionsSummaryCustom(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Разрешено $count категорий',
+      few: 'Разрешено $count категории',
+      one: 'Разрешена $count категория',
+    );
+    return '$_temp0';
+  }
 }

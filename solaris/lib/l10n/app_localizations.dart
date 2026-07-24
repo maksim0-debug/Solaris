@@ -3101,6 +3101,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear DLQ'**
   String get webhooksClearDlq;
+
+  /// No description provided for @apiPermissionsDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'API Permissions & Access Control'**
+  String get apiPermissionsDialogTitle;
+
+  /// No description provided for @apiPermissionsReadOnlyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-Only Mode'**
+  String get apiPermissionsReadOnlyLabel;
+
+  /// No description provided for @apiPermissionsReadOnlyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'When enabled, all mutating API requests (POST/PUT/DELETE) will be blocked with HTTP 403 Forbidden.'**
+  String get apiPermissionsReadOnlyHint;
+
+  /// No description provided for @apiPermissionsDataSharingSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Data Sharing Permissions (Read Operations)'**
+  String get apiPermissionsDataSharingSection;
+
+  /// No description provided for @apiPermissionsAllowMonitors.
+  ///
+  /// In en, this message translates to:
+  /// **'Monitors & Brightness State'**
+  String get apiPermissionsAllowMonitors;
+
+  /// No description provided for @apiPermissionsAllowSolar.
+  ///
+  /// In en, this message translates to:
+  /// **'Solar & Astronomical Data'**
+  String get apiPermissionsAllowSolar;
+
+  /// No description provided for @apiPermissionsAllowWeather.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather Adjustments & Provider Info'**
+  String get apiPermissionsAllowWeather;
+
+  /// No description provided for @apiPermissionsAllowSleep.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep & Circadian Rhythm Metrics'**
+  String get apiPermissionsAllowSleep;
+
+  /// No description provided for @apiPermissionsAllowCircadian.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart Circadian System State'**
+  String get apiPermissionsAllowCircadian;
+
+  /// No description provided for @apiPermissionsControlCategoriesSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Action Control Categories (Mutations)'**
+  String get apiPermissionsControlCategoriesSection;
+
+  /// No description provided for @apiPermissionsCategoryMonitors.
+  ///
+  /// In en, this message translates to:
+  /// **'Monitors (Brightness, Temp, Offsets)'**
+  String get apiPermissionsCategoryMonitors;
+
+  /// No description provided for @apiPermissionsCategoryPresets.
+  ///
+  /// In en, this message translates to:
+  /// **'Presets & Brightness Profiles'**
+  String get apiPermissionsCategoryPresets;
+
+  /// No description provided for @apiPermissionsCategoryCircadian.
+  ///
+  /// In en, this message translates to:
+  /// **'Circadian Rhythm & Auto-Adjustments'**
+  String get apiPermissionsCategoryCircadian;
+
+  /// No description provided for @apiPermissionsCategoryGaming.
+  ///
+  /// In en, this message translates to:
+  /// **'Game Mode & App Whitelists'**
+  String get apiPermissionsCategoryGaming;
+
+  /// No description provided for @apiPermissionsCategoryEnvironment.
+  ///
+  /// In en, this message translates to:
+  /// **'Environment & Weather Adjustments'**
+  String get apiPermissionsCategoryEnvironment;
+
+  /// No description provided for @apiPermissionsCategorySleep.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep Actions & Status Pushes'**
+  String get apiPermissionsCategorySleep;
+
+  /// No description provided for @apiPermissionsCategorySystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System Actions (Webhooks, Animations)'**
+  String get apiPermissionsCategorySystem;
+
+  /// No description provided for @apiPermissionsConfigureButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure API Permissions...'**
+  String get apiPermissionsConfigureButton;
+
+  /// No description provided for @apiPermissionsSummaryReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-Only Mode Active'**
+  String get apiPermissionsSummaryReadOnly;
+
+  /// No description provided for @apiPermissionsSummaryCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 category allowed} other{{count} categories allowed}}'**
+  String apiPermissionsSummaryCustom(int count);
 }
 
 class _AppLocalizationsDelegate

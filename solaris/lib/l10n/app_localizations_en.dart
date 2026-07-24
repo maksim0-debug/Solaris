@@ -1764,4 +1764,80 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get webhooksClearDlq => 'Clear DLQ';
+
+  @override
+  String get apiPermissionsDialogTitle => 'API Permissions & Access Control';
+
+  @override
+  String get apiPermissionsReadOnlyLabel => 'Read-Only Mode';
+
+  @override
+  String get apiPermissionsReadOnlyHint =>
+      'When enabled, all mutating API requests (POST/PUT/DELETE) will be blocked with HTTP 403 Forbidden.';
+
+  @override
+  String get apiPermissionsDataSharingSection =>
+      'Data Sharing Permissions (Read Operations)';
+
+  @override
+  String get apiPermissionsAllowMonitors => 'Monitors & Brightness State';
+
+  @override
+  String get apiPermissionsAllowSolar => 'Solar & Astronomical Data';
+
+  @override
+  String get apiPermissionsAllowWeather =>
+      'Weather Adjustments & Provider Info';
+
+  @override
+  String get apiPermissionsAllowSleep => 'Sleep & Circadian Rhythm Metrics';
+
+  @override
+  String get apiPermissionsAllowCircadian => 'Smart Circadian System State';
+
+  @override
+  String get apiPermissionsControlCategoriesSection =>
+      'Action Control Categories (Mutations)';
+
+  @override
+  String get apiPermissionsCategoryMonitors =>
+      'Monitors (Brightness, Temp, Offsets)';
+
+  @override
+  String get apiPermissionsCategoryPresets => 'Presets & Brightness Profiles';
+
+  @override
+  String get apiPermissionsCategoryCircadian =>
+      'Circadian Rhythm & Auto-Adjustments';
+
+  @override
+  String get apiPermissionsCategoryGaming => 'Game Mode & App Whitelists';
+
+  @override
+  String get apiPermissionsCategoryEnvironment =>
+      'Environment & Weather Adjustments';
+
+  @override
+  String get apiPermissionsCategorySleep => 'Sleep Actions & Status Pushes';
+
+  @override
+  String get apiPermissionsCategorySystem =>
+      'System Actions (Webhooks, Animations)';
+
+  @override
+  String get apiPermissionsConfigureButton => 'Configure API Permissions...';
+
+  @override
+  String get apiPermissionsSummaryReadOnly => 'Read-Only Mode Active';
+
+  @override
+  String apiPermissionsSummaryCustom(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count categories allowed',
+      one: '1 category allowed',
+    );
+    return '$_temp0';
+  }
 }

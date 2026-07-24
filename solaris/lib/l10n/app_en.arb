@@ -807,6 +807,31 @@
       "id": { "type": "String" }
     }
   },
-  "webhooksClearDlq": "Clear DLQ"
+  "webhooksClearDlq": "Clear DLQ",
+  "apiPermissionsDialogTitle": "API Permissions & Access Control",
+  "apiPermissionsReadOnlyLabel": "Read-Only Mode",
+  "apiPermissionsReadOnlyHint": "When enabled, all mutating API requests (POST/PUT/DELETE) will be blocked with HTTP 403 Forbidden.",
+  "apiPermissionsDataSharingSection": "Data Sharing Permissions (Read Operations)",
+  "apiPermissionsAllowMonitors": "Monitors & Brightness State",
+  "apiPermissionsAllowSolar": "Solar & Astronomical Data",
+  "apiPermissionsAllowWeather": "Weather Adjustments & Provider Info",
+  "apiPermissionsAllowSleep": "Sleep & Circadian Rhythm Metrics",
+  "apiPermissionsAllowCircadian": "Smart Circadian System State",
+  "apiPermissionsControlCategoriesSection": "Action Control Categories (Mutations)",
+  "apiPermissionsCategoryMonitors": "Monitors (Brightness, Temp, Offsets)",
+  "apiPermissionsCategoryPresets": "Presets & Brightness Profiles",
+  "apiPermissionsCategoryCircadian": "Circadian Rhythm & Auto-Adjustments",
+  "apiPermissionsCategoryGaming": "Game Mode & App Whitelists",
+  "apiPermissionsCategoryEnvironment": "Environment & Weather Adjustments",
+  "apiPermissionsCategorySleep": "Sleep Actions & Status Pushes",
+  "apiPermissionsCategorySystem": "System Actions (Webhooks, Animations)",
+  "apiPermissionsConfigureButton": "Configure API Permissions...",
+  "apiPermissionsSummaryReadOnly": "Read-Only Mode Active",
+  "apiPermissionsSummaryCustom": "{count, plural, =1{1 category allowed} other{{count} categories allowed}}",
+  "@apiPermissionsSummaryCustom": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  }
 }
 
