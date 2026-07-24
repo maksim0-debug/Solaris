@@ -7,8 +7,9 @@ class BedtimeNormalization {
   /// 6:00 AM = 1080
   /// 11:59 AM = 1439
   static int minutesFromNoon(DateTime time) {
-    final hour = time.hour;
-    final minute = time.minute;
+    final localTime = time.toLocal();
+    final hour = localTime.hour;
+    final minute = localTime.minute;
 
     if (hour >= 12) {
       // From 12:00 PM to 11:59 PM

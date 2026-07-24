@@ -9,12 +9,15 @@ import 'package:solaris/providers.dart';
 import 'package:solaris/models/regime_settings.dart';
 import 'package:equatable/equatable.dart';
 
+const _pushedIsSleepingSentinel = Object();
+
 class SleepState extends Equatable {
   final List<SleepSession> sessions;
   final bool isLoading;
   final String? error;
   final bool isSyncing;
   final DateTime? lastFetchTime;
+  final bool? pushedIsSleeping;
 
   const SleepState({
     required this.sessions,
@@ -22,7 +25,22 @@ class SleepState extends Equatable {
     this.isSyncing = false,
     this.error,
     this.lastFetchTime,
+    this.pushedIsSleeping,
   });
+
+  bool get isCurrentlySleeping {
+    if (pushedIsSleeping != null) return pushedIsSleeping!;
+    if (sessions.isEmpty) return false;
+    final latest = sessions.first;
+    final now = DateTime.now();
+    return (now.isAfter(latest.startTime) || now.isAtSameMomentAs(latest.startTime)) &&
+        now.isBefore(latest.endTime);
+  }
+
+  DateTime? get lastSessionEnd {
+    if (sessions.isEmpty) return null;
+    return sessions.first.endTime;
+  }
 
   SleepState copyWith({
     List<SleepSession>? sessions,
@@ -30,6 +48,7 @@ class SleepState extends Equatable {
     bool? isSyncing,
     String? error,
     DateTime? lastFetchTime,
+    Object? pushedIsSleeping = _pushedIsSleepingSentinel,
   }) {
     return SleepState(
       sessions: sessions ?? this.sessions,
@@ -37,6 +56,9 @@ class SleepState extends Equatable {
       isSyncing: isSyncing ?? this.isSyncing,
       error: error ?? this.error,
       lastFetchTime: lastFetchTime ?? this.lastFetchTime,
+      pushedIsSleeping: pushedIsSleeping == _pushedIsSleepingSentinel
+          ? this.pushedIsSleeping
+          : (pushedIsSleeping as bool?),
     );
   }
 
@@ -47,6 +69,7 @@ class SleepState extends Equatable {
     isSyncing,
     error,
     lastFetchTime,
+    pushedIsSleeping,
   ];
 }
 
@@ -141,6 +164,11 @@ class SleepNotifier extends Notifier<SleepState> {
 
     deduplicated.sort((a, b) => b.startTime.compareTo(a.startTime));
     return deduplicated;
+  }
+
+  /// Updates the real-time pushed sleep status from external IPC/API clients.
+  void updatePushedSleepStatus(bool isSleeping) {
+    state = state.copyWith(pushedIsSleeping: isSleeping);
   }
 
   /// Updates sleep sessions with data received from the Local IPC server.

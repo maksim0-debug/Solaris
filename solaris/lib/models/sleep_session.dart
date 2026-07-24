@@ -52,8 +52,8 @@ class SleepSession extends Equatable {
 
   factory SleepSession.fromJson(Map<String, dynamic> json) => SleepSession(
     id: json['id'] as String,
-    startTime: DateTime.parse(json['startTime'] as String),
-    endTime: DateTime.parse(json['endTime'] as String),
+    startTime: DateTime.parse(json['startTime'] as String).toUtc(),
+    endTime: DateTime.parse(json['endTime'] as String).toUtc(),
     title: json['title'] as String?,
     description: json['description'] as String?,
     segments:

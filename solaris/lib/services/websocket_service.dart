@@ -70,7 +70,7 @@ class WebSocketService {
           'progress': solar.sunProgress,
           'current_phase': solar.currentPhase.name,
           'next_event': {
-            'type': solar.nextEventType,
+            'type': solar.nextEventType.name,
             'in_seconds': solar.timeUntilNextEvent.inSeconds,
           },
           'uv_index': solar.uvIndex,
@@ -118,9 +118,9 @@ class WebSocketService {
     // Listen to Sleep State changes
     ref.listen(sleepProvider, (prev, next) {
       broadcastModule('sleep', {
-        'is_sleeping': next.sessions.isNotEmpty,
+        'is_sleeping': next.isCurrentlySleeping,
         'sessions_count': next.sessions.length,
-        'last_session_end': next.sessions.isNotEmpty ? next.sessions.last.endTime.toIso8601String() : null,
+        'last_session_end': next.lastSessionEnd?.toIso8601String(),
       });
     });
   }

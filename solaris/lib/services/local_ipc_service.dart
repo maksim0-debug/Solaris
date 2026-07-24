@@ -28,7 +28,7 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
   @override
   LocalIpcServerState build() {
     _router = ApiRouter();
-    _statusHandler = ApiStatusHandler(ref);
+    _statusHandler = ApiStatusHandler(ref.container);
     _controlHandler = ApiControlHandler(ref.container);
     _monitorsHandler = ApiMonitorsHandler(ref.container);
 
@@ -284,17 +284,7 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
 
       if (body is Map<String, dynamic> && body.containsKey('is_sleeping')) {
         final bool isSleeping = body['is_sleeping'] as bool;
-        final now = DateTime.now();
-        final session = SleepSession(
-          id: 'ipc_${now.millisecondsSinceEpoch}',
-          startTime: isSleeping ? now : now.subtract(const Duration(hours: 8)),
-          endTime: now,
-          source: 'local_api',
-        );
-
-        await ref
-            .read(sleepProvider.notifier)
-            .updateSessionsFromIpc([session]);
+        ref.read(sleepProvider.notifier).updatePushedSleepStatus(isSleeping);
         _sendResponse(request, HttpStatus.ok, {'status': 'success'});
       } else {
         _sendResponse(request, HttpStatus.badRequest, {
@@ -310,12 +300,10 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
 
   Future<void> _handleGetStatus(HttpRequest request) async {
     final sleepState = ref.read(sleepProvider);
-    final isSleeping = sleepState.sessions.isNotEmpty &&
-        sleepState.sessions.first.endTime.isAfter(DateTime.now());
 
     _sendResponse(request, HttpStatus.ok, {
       'status': 'success',
-      'is_sleeping': isSleeping,
+      'is_sleeping': sleepState.isCurrentlySleeping,
       'sessions_count': sleepState.sessions.length,
       'last_fetch': sleepState.lastFetchTime?.toIso8601String(),
     });

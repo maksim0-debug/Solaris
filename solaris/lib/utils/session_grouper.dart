@@ -105,15 +105,16 @@ class SessionGrouper {
   }
 
   static DateTime _getNightStart(DateTime time) {
-    if (time.hour >= 12) {
+    final localTime = time.toLocal();
+    if (localTime.hour >= 12) {
       // It's the same calendar day
-      return DateTime(time.year, time.month, time.day);
+      return DateTime(localTime.year, localTime.month, localTime.day);
     } else {
       // It belongs to the previous calendar day's night
       return DateTime(
-        time.year,
-        time.month,
-        time.day,
+        localTime.year,
+        localTime.month,
+        localTime.day,
       ).subtract(const Duration(days: 1));
     }
   }

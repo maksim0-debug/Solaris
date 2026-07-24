@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solaris/models/preset_type.dart';
 import 'package:solaris/models/rfc7807_error.dart';
 import 'package:solaris/models/settings_state.dart';
-import 'package:solaris/models/sleep_session.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/providers/sleep_provider.dart';
@@ -516,15 +515,8 @@ class ApiControlHandler {
             "Field 'is_sleeping' (boolean) is required.",
           );
         }
-        final now = DateTime.now();
-        final session = SleepSession(
-          id: 'ipc_${now.millisecondsSinceEpoch}',
-          startTime: isSleeping ? now : now.subtract(const Duration(hours: 8)),
-          endTime: now,
-          source: 'local_api',
-        );
         await safeStateMutator(() {
-          _container.read(sleepProvider.notifier).updateSessionsFromIpc([session]);
+          _container.read(sleepProvider.notifier).updatePushedSleepStatus(isSleeping);
         });
         return _ActionResult.ok('push_sleep_status', {'is_sleeping': isSleeping});
 

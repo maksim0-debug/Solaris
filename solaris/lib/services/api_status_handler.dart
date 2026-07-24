@@ -13,16 +13,16 @@ import 'package:solaris/services/monitor_slug_resolver.dart';
 import 'package:solaris/services/openapi_spec.dart';
 
 class ApiStatusHandler {
-  final Ref ref;
+  final ProviderContainer container;
   final DateTime _startTime = DateTime.now();
 
-  ApiStatusHandler(this.ref);
+  ApiStatusHandler(this.container);
 
   int get uptimeSeconds => DateTime.now().difference(_startTime).inSeconds;
 
   /// GET /api/v1/health
   Future<void> handleHealth(HttpRequest request, Map<String, String> pathParams) async {
-    final appVersionAsync = ref.read(appVersionProvider);
+    final appVersionAsync = container.read(appVersionProvider);
     final version = appVersionAsync.value ?? fallbackAppVersion;
 
     ApiRouter.sendJson(request, HttpStatus.ok, {
@@ -35,34 +35,34 @@ class ApiStatusHandler {
 
   /// GET /api/v1/status
   Future<void> handleStatus(HttpRequest request, Map<String, String> pathParams) async {
-    final appVersionAsync = ref.read(appVersionProvider);
+    final appVersionAsync = container.read(appVersionProvider);
     final version = appVersionAsync.value ?? fallbackAppVersion;
 
-    final solarStateAsync = ref.read(solarStateStreamProvider);
+    final solarStateAsync = container.read(solarStateStreamProvider);
     final solar = solarStateAsync.value;
 
-    final weatherAsync = ref.read(currentWeatherProvider);
+    final weatherAsync = container.read(currentWeatherProvider);
     final weather = weatherAsync.value;
 
-    final monitors = await ref.read(monitorServiceProvider).getConnectedMonitors();
+    final monitors = await container.read(monitorServiceProvider).getConnectedMonitors();
     MonitorSlugResolver.updateMonitors(monitors);
 
-    final settingsMap = ref.read(settingsProvider).value;
+    final settingsMap = container.read(settingsProvider).value;
     final globalSettings = settingsMap?['all'];
 
-    final tempSettingsMap = ref.read(temperatureSettingsProvider).value;
-    final isColorTempEnabled = ref.read(isColorTemperatureEnabledProvider);
-    final currentTemp = ref.read(currentTemperatureProvider);
+    final tempSettingsMap = container.read(temperatureSettingsProvider).value;
+    final isColorTempEnabled = container.read(isColorTemperatureEnabledProvider);
+    final currentTemp = container.read(currentTemperatureProvider);
 
-    final currentBrightness = ref.read(currentBrightnessProvider);
-    final autoBrightnessEnabled = ref.read(autoBrightnessAdjustmentProvider);
-    final autoTempEnabled = ref.read(autoTemperatureAdjustmentProvider);
+    final currentBrightness = container.read(currentBrightnessProvider);
+    final autoBrightnessEnabled = container.read(autoBrightnessAdjustmentProvider);
+    final autoTempEnabled = container.read(autoTemperatureAdjustmentProvider);
 
-    final sleepState = ref.read(sleepProvider);
-    final gamingModeActive = ref.read(gamingModeProvider);
-    final ipcState = ref.read(localIpcServiceProvider);
+    final sleepState = container.read(sleepProvider);
+    final gamingModeActive = container.read(gamingModeProvider);
+    final ipcState = container.read(localIpcServiceProvider);
 
-    final smartCircadianData = ref.read(smartCircadianDataProvider('all'));
+    final smartCircadianData = container.read(smartCircadianDataProvider('all'));
 
     final monitorsJson = monitors.map((mon) {
       final monSettings = settingsMap?[mon.id] ?? globalSettings;
@@ -106,7 +106,7 @@ class ApiStatusHandler {
               'progress': solar.sunProgress,
               'current_phase': solar.currentPhase.name,
               'next_event': {
-                'type': solar.nextEventType,
+                'type': solar.nextEventType.name,
                 'in_seconds': solar.timeUntilNextEvent.inSeconds,
               },
               'uv_index': solar.uvIndex,
@@ -176,11 +176,9 @@ class ApiStatusHandler {
         },
       },
       'sleep': {
-        'is_sleeping': sleepState.sessions.isNotEmpty,
+        'is_sleeping': sleepState.isCurrentlySleeping,
         'sessions_count': sleepState.sessions.length,
-        'last_session_end': sleepState.sessions.isNotEmpty
-            ? sleepState.sessions.last.endTime.toIso8601String()
-            : null,
+        'last_session_end': sleepState.lastSessionEnd?.toIso8601String(),
       },
       'server': {
         'port': ipcState.port ?? globalSettings?.apiServerPort ?? 45321,
@@ -195,7 +193,7 @@ class ApiStatusHandler {
 
   /// GET /api/v1/solar
   Future<void> handleSolar(HttpRequest request, Map<String, String> pathParams) async {
-    final solar = ref.read(solarStateStreamProvider).value;
+    final solar = container.read(solarStateStreamProvider).value;
     if (solar == null) {
       ApiRouter.sendJson(request, HttpStatus.ok, {'available': false, 'message': 'Solar calculations pending.'});
       return;
@@ -208,7 +206,7 @@ class ApiStatusHandler {
       'progress': solar.sunProgress,
       'current_phase': solar.currentPhase.name,
       'next_event': {
-        'type': solar.nextEventType,
+        'type': solar.nextEventType.name,
         'in_seconds': solar.timeUntilNextEvent.inSeconds,
       },
       'uv_index': solar.uvIndex,
@@ -223,8 +221,8 @@ class ApiStatusHandler {
 
   /// GET /api/v1/presets
   Future<void> handlePresets(HttpRequest request, Map<String, String> pathParams) async {
-    final settings = ref.read(settingsProvider).value?['all'];
-    final tempSettings = ref.read(temperatureSettingsProvider).value?['all'];
+    final settings = container.read(settingsProvider).value?['all'];
+    final tempSettings = container.read(temperatureSettingsProvider).value?['all'];
 
     ApiRouter.sendJson(request, HttpStatus.ok, {
       'brightness': {
@@ -256,10 +254,10 @@ class ApiStatusHandler {
 
   /// GET /api/v1/monitors
   Future<void> handleMonitors(HttpRequest request, Map<String, String> pathParams) async {
-    final monitors = await ref.read(monitorServiceProvider).getConnectedMonitors();
+    final monitors = await container.read(monitorServiceProvider).getConnectedMonitors();
     MonitorSlugResolver.updateMonitors(monitors);
-    final currentBrightness = ref.read(currentBrightnessProvider);
-    final currentTemp = ref.read(currentTemperatureProvider);
+    final currentBrightness = container.read(currentBrightnessProvider);
+    final currentTemp = container.read(currentTemperatureProvider);
 
     final list = monitors.map((mon) => {
       'id': mon.id,
@@ -289,7 +287,7 @@ class ApiStatusHandler {
       return;
     }
 
-    final monitors = await ref.read(monitorServiceProvider).getConnectedMonitors();
+    final monitors = await container.read(monitorServiceProvider).getConnectedMonitors();
     MonitorSlugResolver.updateMonitors(monitors);
 
     final resolvedSystemId = MonitorSlugResolver.resolveToSystemId(slug);
@@ -316,8 +314,8 @@ class ApiStatusHandler {
       return;
     }
 
-    final currentBrightness = ref.read(currentBrightnessProvider);
-    final currentTemp = ref.read(currentTemperatureProvider);
+    final currentBrightness = container.read(currentBrightnessProvider);
+    final currentTemp = container.read(currentTemperatureProvider);
 
     ApiRouter.sendJson(request, HttpStatus.ok, {
       'id': matchedMon.id,
@@ -344,7 +342,7 @@ class ApiStatusHandler {
     final fromDate = fromStr != null ? DateTime.tryParse(fromStr) : null;
     final toDate = toStr != null ? DateTime.tryParse(toStr) : null;
 
-    final sleepState = ref.read(sleepProvider);
+    final sleepState = container.read(sleepProvider);
     var filtered = sleepState.sessions.toList();
 
     if (fromDate != null) {
@@ -373,7 +371,7 @@ class ApiStatusHandler {
 
   /// GET /api/v1/docs (Interactive Swagger UI / RapiDoc HTML)
   Future<void> handleDocs(HttpRequest request, Map<String, String> pathParams) async {
-    final settings = ref.read(settingsProvider).value?['all'];
+    final settings = container.read(settingsProvider).value?['all'];
     final port = settings?.apiServerPort ?? 45321;
 
     final html = '''
@@ -414,7 +412,7 @@ class ApiStatusHandler {
 
   /// GET /api/v1/openapi.json
   Future<void> handleOpenApiJson(HttpRequest request, Map<String, String> pathParams) async {
-    final settings = ref.read(settingsProvider).value?['all'];
+    final settings = container.read(settingsProvider).value?['all'];
     final port = settings?.apiServerPort ?? 45321;
     final jsonSpec = OpenApiSpec.generateSpec(port: port);
     ApiRouter.sendJson(request, HttpStatus.ok, jsonSpec);

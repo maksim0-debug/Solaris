@@ -177,8 +177,8 @@ class _SessionDetailRow extends StatelessWidget {
                       children: [
                         Text(
                           _formatDateRange(
-                            start: session.startTime,
-                            end: session.endTime,
+                            start: session.startTime.toLocal(),
+                            end: session.endTime.toLocal(),
                             locale: l10n.localeName,
                           ),
                           style: const TextStyle(
@@ -215,7 +215,7 @@ class _SessionDetailRow extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${DateFormat('HH:mm').format(session.startTime)} — ${DateFormat('HH:mm').format(session.endTime)}',
+                      '${DateFormat('HH:mm').format(session.startTime.toLocal())} — ${DateFormat('HH:mm').format(session.endTime.toLocal())}',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.3),
                         fontSize: 12,
@@ -268,7 +268,7 @@ class _SessionChip extends StatelessWidget {
         border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
       ),
       child: Text(
-        '${timeFormat.format(session.startTime)}–${timeFormat.format(session.endTime)}',
+        '${timeFormat.format(session.startTime.toLocal())}–${timeFormat.format(session.endTime.toLocal())}',
         style: TextStyle(
           color: Colors.white.withOpacity(0.7),
           fontSize: 11,

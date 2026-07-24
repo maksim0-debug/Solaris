@@ -197,8 +197,7 @@ void main() {
       expect(resp.statusCode, equals(HttpStatus.ok));
 
       await Future<void>.delayed(Duration.zero);
-      final sessions = container.read(sleepProvider).sessions;
-      expect(sessions.isNotEmpty, isTrue);
+      expect(container.read(sleepProvider).isCurrentlySleeping, isTrue);
 
       resp = await sendPost('/api/v1/control', {'action': 'clear_failed_webhooks', 'webhook_id': 'wh_12345'});
       expect(resp.statusCode, equals(HttpStatus.ok));
