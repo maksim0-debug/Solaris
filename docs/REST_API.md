@@ -214,6 +214,7 @@ Solaris Control API features a **Friendly Slug Resolver** (`MonitorSlugResolver`
 ### 1. `GET /api/v1/monitors`
 Returns a list of all currently connected physical monitors with their calculated slugs.
 * **Granular Security**: Rejects with `HTTP 403 Forbidden` if `allowReadMonitors = false`.
+* **Per-Monitor Preset Isolation**: Each monitor object inside the `monitors` array returns its specific `active_preset` and `active_user_preset`. When `ALL MONITORS` mode is active, all connected displays automatically synchronize with the unified global preset (`'all'`).
 
 ---
 

@@ -91,8 +91,8 @@ class ApiStatusHandler {
           'target': currentBrightness,
           'offset': monSettings?.brightnessOffset ?? 0.0,
           'mode': autoBrightnessEnabled ? 'auto' : 'manual',
-          'active_preset': globalSettings?.activePreset.name ?? 'bright',
-          'active_user_preset': globalSettings?.activeUserPresetId,
+          'active_preset': monSettings?.activePreset.name ?? 'bright',
+          'active_user_preset': monSettings?.activeUserPresetId,
         },
         'temperature': {
           'enabled': isColorTempEnabled,

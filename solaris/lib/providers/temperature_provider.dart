@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solaris/providers.dart';
 import 'dart:async';
@@ -155,6 +156,30 @@ class TemperatureSettingsNotifier
 
     state = AsyncData(newStateMap);
     await _saveSettingsMap(newStateMap);
+  }
+
+  void syncAllMonitorsToGlobal() {
+    final currentMap = state.value ?? {'all': TemperatureState()};
+    final global = currentMap['all'] ?? TemperatureState();
+    final newStateMap = Map<String, TemperatureState>.from(currentMap);
+
+    for (final key in newStateMap.keys.toList()) {
+      if (key != 'all') {
+        newStateMap[key] = newStateMap[key]!.copyWith(
+          activePreset: global.activePreset,
+          activeUserPresetId: global.activeUserPresetId,
+          clearActiveUserPresetId: global.activeUserPresetId == null,
+          curvesMap: global.curvesMap,
+          userPresets: global.userPresets,
+        );
+      }
+    }
+
+    debugPrint(
+      '[TemperatureSettingsNotifier] Synchronized all monitor temperature presets with global preset (${global.activePreset.name})',
+    );
+    state = AsyncData(newStateMap);
+    _saveSettingsMap(newStateMap);
   }
 
   void setEnabled(bool value) {

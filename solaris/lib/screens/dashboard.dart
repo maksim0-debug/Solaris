@@ -1768,7 +1768,7 @@ class _Footer extends ConsumerWidget {
                     isSelected: isAllEffectivelySelected,
                     onTap: () => ref
                         .read(selectedMonitorsProvider.notifier)
-                        .toggle('all'),
+                        .selectOnly('all'),
                   ),
                   const SizedBox(width: 24),
                   ...monitors.asMap().entries.map((entry) {
@@ -1778,7 +1778,7 @@ class _Footer extends ConsumerWidget {
                         ? '${monitor.realBrightness}%'
                         : '--';
                     final isSelected =
-                        selectedIds.contains('all') ||
+                        !selectedIds.contains('all') &&
                         selectedIds.contains(monitor.deviceName);
 
                     return Padding(
@@ -1789,9 +1789,15 @@ class _Footer extends ConsumerWidget {
                         label:
                             '${monitor.friendlyName.toUpperCase()}: $brightnessStr',
                         isSelected: isSelected,
-                        onTap: () => ref
-                            .read(selectedMonitorsProvider.notifier)
-                            .toggle(monitor.deviceName),
+                        onTap: () {
+                          final notifier =
+                              ref.read(selectedMonitorsProvider.notifier);
+                          if (isSelected) {
+                            notifier.selectOnly('all');
+                          } else {
+                            notifier.selectOnly(monitor.deviceName);
+                          }
+                        },
                       ),
                     );
                   }),

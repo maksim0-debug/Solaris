@@ -984,6 +984,20 @@ class _PresetSelectorState extends ConsumerState<_PresetSelector> {
     required Widget resetButton,
     required Widget saveButton,
   }) {
+    final validPresetOrder = presetOrder.where((orderId) {
+      if (orderId.startsWith('system:')) {
+        final typeName = orderId.substring(7);
+        return isTemp
+            ? TemperaturePresetType.values.any((e) => e.name == typeName)
+            : PresetType.values.any((e) => e.name == typeName);
+      }
+      if (orderId.startsWith('user:')) {
+        final userId = orderId.substring(5);
+        return userPresets.any((p) => p.id == userId);
+      }
+      return false;
+    }).toList();
+
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
@@ -993,7 +1007,7 @@ class _PresetSelectorState extends ConsumerState<_PresetSelector> {
               height: 40,
               child: ReorderableListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: presetOrder.length,
+                itemCount: validPresetOrder.length,
                 buildDefaultDragHandles: false,
                 onReorder: onReorder,
                 proxyDecorator: (child, index, animation) {
@@ -1019,7 +1033,7 @@ class _PresetSelectorState extends ConsumerState<_PresetSelector> {
                   );
                 },
                 itemBuilder: (context, index) {
-                  final orderId = presetOrder[index];
+                  final orderId = validPresetOrder[index];
                   if (orderId.startsWith('system:')) {
                     final typeName = orderId.substring(7);
                     final type = isTemp

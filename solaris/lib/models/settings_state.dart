@@ -233,9 +233,7 @@ class SettingsState {
           (p) => p.id == activeUserPresetId,
         );
         return userPreset.points;
-      } catch (_) {
-        if (userPresets.isNotEmpty) return userPresets.first.points;
-      }
+      } catch (_) {}
     }
     return curvesMap[activePreset]!;
   }

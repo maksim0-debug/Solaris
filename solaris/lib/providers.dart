@@ -933,6 +933,8 @@ class SelectedMonitorsNotifier extends Notifier<Set<String>> {
   void toggle(String id) {
     if (id == 'all') {
       state = {'all'};
+      _syncAll();
+      debugPrint('[MonitorSelection] Active monitors changed: $state');
       return;
     }
     final newState = Set<String>.from(state);
@@ -942,10 +944,27 @@ class SelectedMonitorsNotifier extends Notifier<Set<String>> {
     } else {
       newState.add(id);
     }
-    state = newState;
+    if (newState.isEmpty) {
+      state = {'all'};
+      _syncAll();
+    } else {
+      state = newState;
+    }
+    debugPrint('[MonitorSelection] Active monitors changed: $state');
   }
 
-  void selectOnly(String id) => state = {id};
+  void selectOnly(String id) {
+    state = {id};
+    if (id == 'all') {
+      _syncAll();
+    }
+    debugPrint('[MonitorSelection] Active monitors changed: $state');
+  }
+
+  void _syncAll() {
+    ref.read(settingsProvider.notifier).syncAllMonitorsToGlobal();
+    ref.read(temperatureSettingsProvider.notifier).syncAllMonitorsToGlobal();
+  }
 }
 
 final selectedMonitorsProvider =
@@ -1067,42 +1086,8 @@ class AutoBrightnessAdjustmentNotifier extends Notifier<bool> {
   }
 
   void toggle() {
-    final currentState = state;
-    if (currentState) {
-      final monitor = _getBaselineMonitor(ref);
-      if (monitor?.realBrightness != null) {
-        final settingsAsync = ref.read(settingsProvider);
-        final settings =
-            settingsAsync.value?[monitor!.deviceName] ??
-            settingsAsync.value?['all'] ??
-            SettingsState();
-
-        ref
-            .read(manualBrightnessProvider.notifier)
-            .update(
-              (monitor!.realBrightness! - settings.brightnessOffset)
-                  .clamp(0.0, 100.0)
-                  .toDouble(),
-            );
-      }
-    }
-
-    setEnabled(!currentState);
+    setEnabled(!state);
   }
-}
-
-/// Finds the most relevant monitor to use as a baseline when switching modes.
-MonitorInfo? _getBaselineMonitor(Ref ref) {
-  final monitors = ref.read(monitorListProvider).value;
-  if (monitors == null || monitors.isEmpty) return null;
-
-  final selection = ref.read(selectedMonitorsProvider);
-  final firstId = selection.firstOrNull ?? 'all';
-
-  return monitors.firstWhere(
-    (m) => m.deviceName == firstId,
-    orElse: () => monitors.first,
-  );
 }
 
 final autoBrightnessAdjustmentProvider =
@@ -1140,17 +1125,7 @@ class AutoTemperatureAdjustmentNotifier extends Notifier<bool> {
   }
 
   void toggle() {
-    final currentState = state;
-    if (currentState) {
-      final monitor = _getBaselineMonitor(ref);
-      if (monitor?.realTemperature != null) {
-        ref
-            .read(manualTemperatureProvider.notifier)
-            .setTemperature(monitor!.realTemperature!);
-      }
-    }
-
-    final newState = !currentState;
+    final newState = !state;
     ref
         .read(sharedPreferencesProvider)
         ?.setBool(_autoTemperatureEnabledKey, newState);
@@ -1341,12 +1316,38 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
           }
         }
       } else {
-        newStateMap[id] = transform(newStateMap[id]!);
+        final current = newStateMap[id] ?? newStateMap['all']!;
+        newStateMap[id] = transform(current);
       }
     }
 
+    debugPrint('[SettingsNotifier] Updated settings for monitors $monitorIds');
     state = AsyncData(newStateMap);
     await _saveSettings();
+  }
+
+  void syncAllMonitorsToGlobal() {
+    final currentMap = state.value ?? {'all': SettingsState()};
+    final global = currentMap['all'] ?? SettingsState();
+    final newStateMap = Map<String, SettingsState>.from(currentMap);
+
+    for (final key in newStateMap.keys.toList()) {
+      if (key != 'all') {
+        newStateMap[key] = newStateMap[key]!.copyWith(
+          activePreset: global.activePreset,
+          activeUserPresetId: global.activeUserPresetId,
+          clearActiveUserPresetId: global.activeUserPresetId == null,
+          curvesMap: global.curvesMap,
+          userPresets: global.userPresets,
+        );
+      }
+    }
+
+    debugPrint(
+      '[SettingsNotifier] Synchronized all monitor presets with global preset (${global.activePreset.name})',
+    );
+    state = AsyncData(newStateMap);
+    _saveSettings();
   }
 
   void updateCurveSharpness(double value) {
@@ -1483,24 +1484,6 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
 
   void updateAutoBrightness(bool enabled) {
     final ids = ref.read(selectedMonitorsProvider);
-    final firstId = ids.firstOrNull ?? 'all';
-    final current = _getSettings(firstId);
-
-    // Only perform sync if we are actually switching from Auto to Manual
-    if (current.isAutoBrightnessEnabled && !enabled) {
-      final monitor = _getBaselineMonitor(ref);
-      if (monitor?.realBrightness != null) {
-        final monitorSettings = _getSettings(monitor!.deviceName);
-        ref
-            .read(manualBrightnessProvider.notifier)
-            .update(
-              (monitor.realBrightness! - monitorSettings.brightnessOffset)
-                  .clamp(0.0, 100.0)
-                  .toDouble(),
-            );
-      }
-    }
-
     ref
         .read(sharedPreferencesProvider)
         ?.setBool('auto_brightness_enabled', enabled);
@@ -2273,14 +2256,7 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
   final visibility = ref.watch(appLifecycleProvider);
   final weatherAsync = ref.watch(currentWeatherProvider);
 
-  // Watch extra providers that were previously illegal in callbacks
-  final primaryId = ref.watch(selectedMonitorsProvider).firstOrNull ?? 'all';
-  final smartDataProvider = smartCircadianDataProvider(primaryId);
-  final smartData = ref.watch(smartDataProvider);
   final isGamingMode = ref.watch<bool>(gamingModeProvider);
-  final smartTempData = ref.watch(
-    smartCircadianTemperatureDataProvider(primaryId),
-  );
   final offsets = ref.watch(brightnessOffsetsProvider);
 
   final circadianService = ref.read(circadianServiceProvider);
@@ -2303,14 +2279,21 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
             final tempSettings =
                 tempSettingsMap[monitor.deviceName] ?? globalTempSettings;
 
+            final monitorSmartData = ref.watch(
+              smartCircadianDataProvider(monitor.deviceName),
+            );
+            final monitorSmartTempData = ref.watch(
+              smartCircadianTemperatureDataProvider(monitor.deviceName),
+            );
+
             // Calculate and Apply Brightness
             if (settings.isAutoBrightnessEnabled) {
-              final effectiveSmartData = globalSettings.isSmartCircadianEnabled
-                  ? smartData
+              final effectiveSmartData = settings.isSmartCircadianEnabled
+                  ? monitorSmartData
                   : const SmartCircadianData.neutral();
 
               double effectiveElevation = state.sunElevation;
-              if (globalSettings.isSmartCircadianEnabled &&
+              if (settings.isSmartCircadianEnabled &&
                   effectiveSmartData.timeOffset != Duration.zero) {
                 final locationAsync = ref.read(effectiveLocationProvider);
                 final pos = locationAsync.value;
@@ -2333,26 +2316,30 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
 
               double targetBrightness;
 
-              if (isGamingMode && globalSettings.isGameModeEnabled) {
-                targetBrightness = globalSettings.gameModeBrightness;
+              if (isGamingMode && settings.isGameModeEnabled) {
+                targetBrightness = settings.gameModeBrightness;
               } else {
                 final calculationResult = circadianService
                     .calculateTargetBrightness(
                       state.phases,
                       effectiveElevation,
                       DateTime.now(),
-                      curveSharpness: globalSettings.curveSharpness,
-                      curvePoints: globalSettings.curvePoints,
-                      weather: globalSettings.isWeatherAdjustmentEnabled
+                      curveSharpness: settings.curveSharpness,
+                      curvePoints: settings.curvePoints,
+                      weather: settings.isWeatherAdjustmentEnabled
                           ? weatherAsync.value
                           : null,
                       presetSensitivity:
-                          globalSettings.activePreset.weatherSensitivity,
-                      weatherIntensity: globalSettings.weatherAdjustmentIntensity,
+                          settings.activePreset.weatherSensitivity,
+                      weatherIntensity: settings.weatherAdjustmentIntensity,
                       smartData: effectiveSmartData,
                     );
                 targetBrightness = calculationResult.finalBrightness;
               }
+
+              debugPrint(
+                '[CircadianLoop] Device: ${monitor.deviceName} | AutoBright: true | Preset: ${settings.activePreset.name} | TargetBrightness: ${targetBrightness.toStringAsFixed(1)}% | Sharpness: ${settings.curveSharpness}',
+              );
 
               brightnessService.applyBrightnessSmoothly(
                 selection: monitor.deviceName,
@@ -2370,12 +2357,12 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
             // Calculate and Apply Temperature
             if (tempSettings.isEnabled && isTempEnabled) {
               final effectiveSmartTempData =
-                  globalTempSettings.isSmartCircadianEnabled
-                  ? smartTempData
+                  tempSettings.isSmartCircadianEnabled
+                  ? monitorSmartTempData
                   : const SmartCircadianData.neutral();
 
               double effectiveElevation = state.sunElevation;
-              if (globalTempSettings.isSmartCircadianEnabled &&
+              if (tempSettings.isSmartCircadianEnabled &&
                   effectiveSmartTempData.timeOffset != Duration.zero) {
                 final locationAsync = ref.read(effectiveLocationProvider);
                 final pos = locationAsync.value;
@@ -2400,12 +2387,16 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                 state.phases,
                 effectiveElevation,
                 DateTime.now(),
-                curvePoints: globalTempSettings.curvePoints,
-                weather: globalSettings.isWeatherTemperatureAdjustmentEnabled
+                curvePoints: tempSettings.curvePoints,
+                weather: settings.isWeatherTemperatureAdjustmentEnabled
                     ? weatherAsync.value
                     : null,
-                weatherIntensity: globalSettings.weatherAdjustmentIntensity,
+                weatherIntensity: settings.weatherAdjustmentIntensity,
                 smartData: effectiveSmartTempData,
+              );
+
+              debugPrint(
+                '[CircadianLoop] Device: ${monitor.deviceName} | AutoTemp: true | Preset: ${tempSettings.activePreset.name} | TargetTemp: ${targetTemp.finalTemperature}K',
               );
 
               tempService.applyTemperatureSmoothly(

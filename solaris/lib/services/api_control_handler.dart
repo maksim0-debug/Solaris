@@ -398,12 +398,17 @@ class ApiControlHandler {
         final dir = payload['direction'] as String? ?? 'next';
         final isBrighter = dir == 'next';
         await safeStateMutator(() {
-          final settings = _container.read(settingsProvider).value?['all'] ?? SettingsState();
+          final selection = _container.read(selectedMonitorsProvider);
+          final firstId = selection.firstOrNull ?? 'all';
+          final settingsMap = _container.read(settingsProvider).value;
+          final settings = settingsMap?[firstId] ?? settingsMap?['all'] ?? SettingsState();
           final currentType = settings.activePreset;
           final nextIndex = isBrighter
               ? (currentType.index + 1) % PresetType.values.length
               : (currentType.index - 1 + PresetType.values.length) % PresetType.values.length;
-          _container.read(settingsProvider.notifier).setActivePreset(PresetType.values[nextIndex]);
+          final nextPreset = PresetType.values[nextIndex];
+          _container.read(settingsProvider.notifier).setActivePreset(nextPreset);
+          debugPrint('[ApiControl] Action: cycle_preset | Selection: $selection | Old: ${currentType.name} -> New: ${nextPreset.name}');
         });
         return _ActionResult.ok('cycle_preset', {'direction': dir});
 
