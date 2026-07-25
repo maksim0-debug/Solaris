@@ -832,6 +832,52 @@
     "placeholders": {
       "count": { "type": "int" }
     }
-  }
+  },
+  "apiKeysManagementDialogTitle": "API Access Keys Management",
+  "apiKeysManagementSubtitle": "Least Privilege Architecture: Configure scoped keys for external integrations",
+  "apiKeysManageButton": "Manage API Keys...",
+  "apiKeysCreateButton": "Create New Key",
+  "apiKeysTableHeaderName": "Key Name",
+  "apiKeysTableHeaderScopes": "Scopes & Permissions",
+  "apiKeysTableHeaderCreated": "Created",
+  "apiKeysTableHeaderActions": "Actions",
+  "apiKeysReadOnlyChip": "Read-Only ({count}/7)",
+  "@apiKeysReadOnlyChip": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "apiKeysActiveScopesChip": "{count} of 7 Categories",
+  "@apiKeysActiveScopesChip": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "apiKeysCopySuccessSnackbar": "API key token copied to clipboard!",
+  "apiKeysRegenerateConfirmTitle": "Regenerate Token?",
+  "apiKeysRegenerateConfirmMessage": "All devices and integrations using the current token will lose access to the API.",
+  "apiKeysDeleteConfirmTitle": "Revoke API Key?",
+  "apiKeysDeleteConfirmMessage": "Are you sure you want to revoke key \"{name}\"? This action cannot be undone.",
+  "@apiKeysDeleteConfirmMessage": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "apiKeysDpapiWarningBanner": "Token for key \"{name}\" was reset due to Windows account password change. Copy the new token to your external devices.",
+  "@apiKeysDpapiWarningBanner": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "apiKeysDpapiBadge": "Token Reset (OS Auth Change)",
+  "apiKeysSoleKeyDeleteWarning": "Cannot delete the sole remaining API key.",
+  "createApiKeyDialogTitle": "Create API Key",
+  "createApiKeyNameFieldLabel": "Key Name",
+  "requireLocalTokenLabel": "Require Authentication for Local Requests",
+  "requireLocalTokenSubtitle": "Requests from 127.0.0.1 without API key will be rejected with HTTP 401 Unauthorized",
+  "showNewTokenDialogTitle": "Your New API Key",
+  "showNewTokenWarning": "Copy this token right now. For security reasons, it will never be displayed in plain text again.",
+  "copyTokenButton": "Copy Token",
+  "savedTokenButton": "I Have Saved the Token"
 }
 

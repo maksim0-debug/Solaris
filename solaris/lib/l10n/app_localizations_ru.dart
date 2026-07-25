@@ -1851,4 +1851,104 @@ class AppLocalizationsRu extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get apiKeysManagementDialogTitle => 'Управление ключами доступа API';
+
+  @override
+  String get apiKeysManagementSubtitle =>
+      'Принцип наименьших привилегий: индивидуальные ключи для внешних интеграций';
+
+  @override
+  String get apiKeysManageButton => 'Управление API-ключами...';
+
+  @override
+  String get apiKeysCreateButton => 'Создать новый ключ';
+
+  @override
+  String get apiKeysTableHeaderName => 'Название';
+
+  @override
+  String get apiKeysTableHeaderScopes => 'Права (Scopes)';
+
+  @override
+  String get apiKeysTableHeaderCreated => 'Создан';
+
+  @override
+  String get apiKeysTableHeaderActions => 'Действия';
+
+  @override
+  String apiKeysReadOnlyChip(int count) {
+    return 'Read-Only ($count/7)';
+  }
+
+  @override
+  String apiKeysActiveScopesChip(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count из 7 категорий',
+      few: '$count из 7 категорий',
+      one: '1 из 7 категорий',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get apiKeysCopySuccessSnackbar =>
+      'Токен API-ключа скопирован в буфер обмена!';
+
+  @override
+  String get apiKeysRegenerateConfirmTitle => 'Перегенерировать токен?';
+
+  @override
+  String get apiKeysRegenerateConfirmMessage =>
+      'Все устройства и сервисы, использующие текущий токен, потеряют доступ к API.';
+
+  @override
+  String get apiKeysDeleteConfirmTitle => 'Отозвать API-ключ?';
+
+  @override
+  String apiKeysDeleteConfirmMessage(String name) {
+    return 'Вы уверены, что хотите отозвать ключ «$name»? Это действие нельзя отменить.';
+  }
+
+  @override
+  String apiKeysDpapiWarningBanner(String name) {
+    return 'Токен ключа «$name» автоматически пересоздан из-за смены пароля Windows. Скопируйте новый токен в ваши внешние устройства.';
+  }
+
+  @override
+  String get apiKeysDpapiBadge => 'Токен сброшен (смена пароля ОС)';
+
+  @override
+  String get apiKeysSoleKeyDeleteWarning =>
+      'Нельзя удалить единственный API-ключ.';
+
+  @override
+  String get createApiKeyDialogTitle => 'Создание API-ключа';
+
+  @override
+  String get createApiKeyNameFieldLabel => 'Название ключа';
+
+  @override
+  String get requireLocalTokenLabel =>
+      'Требовать авторизацию для локальных запросов';
+
+  @override
+  String get requireLocalTokenSubtitle =>
+      'Запросы с 127.0.0.1 без API-токена будут отклоняться со статусом HTTP 401 Unauthorized';
+
+  @override
+  String get showNewTokenDialogTitle => 'Ваш новый API-ключ';
+
+  @override
+  String get showNewTokenWarning =>
+      'Скопируйте этот токен прямо сейчас. Из соображений безопасности он больше никогда не будет показан в открытом виде.';
+
+  @override
+  String get copyTokenButton => 'Скопировать токен';
+
+  @override
+  String get savedTokenButton => 'Я сохранил токен';
 }

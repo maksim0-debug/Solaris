@@ -1847,4 +1847,104 @@ class AppLocalizationsUk extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get apiKeysManagementDialogTitle => 'Управління ключами доступу API';
+
+  @override
+  String get apiKeysManagementSubtitle =>
+      'Принцип найменших привілеїв: індивідуальні ключі для зовнішніх інтеграцій';
+
+  @override
+  String get apiKeysManageButton => 'Управління API-ключами...';
+
+  @override
+  String get apiKeysCreateButton => 'Створити новий ключ';
+
+  @override
+  String get apiKeysTableHeaderName => 'Назва';
+
+  @override
+  String get apiKeysTableHeaderScopes => 'Права (Scopes)';
+
+  @override
+  String get apiKeysTableHeaderCreated => 'Створено';
+
+  @override
+  String get apiKeysTableHeaderActions => 'Дії';
+
+  @override
+  String apiKeysReadOnlyChip(int count) {
+    return 'Read-Only ($count/7)';
+  }
+
+  @override
+  String apiKeysActiveScopesChip(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count з 7 категорій',
+      few: '$count з 7 категорій',
+      one: '1 з 7 категорій',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get apiKeysCopySuccessSnackbar =>
+      'Токен API-ключа скопійовано в буфер обміну!';
+
+  @override
+  String get apiKeysRegenerateConfirmTitle => 'Перегенерувати токен?';
+
+  @override
+  String get apiKeysRegenerateConfirmMessage =>
+      'Усі пристрої та сервіси, що використовують поточний токен, втратять доступ до API.';
+
+  @override
+  String get apiKeysDeleteConfirmTitle => 'Відкликати API-ключ?';
+
+  @override
+  String apiKeysDeleteConfirmMessage(String name) {
+    return 'Ви впевнені, що хочете відкликати ключ «$name»? Цю дію неможливо скасувати.';
+  }
+
+  @override
+  String apiKeysDpapiWarningBanner(String name) {
+    return 'Токен ключа «$name» було автоматично перестворено через зміну пароля Windows. Скопіюйте новий токен у ваші зовнішні пристрої.';
+  }
+
+  @override
+  String get apiKeysDpapiBadge => 'Токен скинуто (зміна пароля ОС)';
+
+  @override
+  String get apiKeysSoleKeyDeleteWarning =>
+      'Неможливо видалити єдиний API-ключ.';
+
+  @override
+  String get createApiKeyDialogTitle => 'Створення API-ключа';
+
+  @override
+  String get createApiKeyNameFieldLabel => 'Назва ключа';
+
+  @override
+  String get requireLocalTokenLabel =>
+      'Вимагати авторизацію для локальних запитів';
+
+  @override
+  String get requireLocalTokenSubtitle =>
+      'Запити з 127.0.0.1 без API-токена будуть відхилятися зі статусом HTTP 401 Unauthorized';
+
+  @override
+  String get showNewTokenDialogTitle => 'Ваш новий API-ключ';
+
+  @override
+  String get showNewTokenWarning =>
+      'Скопіюйте цей токен просто зараз. З міркувань безпеки він більше ніколи не буде показаний у відкритому вигляді.';
+
+  @override
+  String get copyTokenButton => 'Скопіювати токен';
+
+  @override
+  String get savedTokenButton => 'Я зберіг токен';
 }

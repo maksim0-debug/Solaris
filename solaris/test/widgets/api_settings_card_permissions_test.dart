@@ -3,10 +3,10 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:solaris/l10n/app_localizations.dart';
-import 'package:solaris/models/api_permissions_config.dart';
+import 'package:solaris/models/api_key_entry.dart';
 import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/providers.dart';
-import 'package:solaris/widgets/settings/api_permissions_dialog.dart';
+import 'package:solaris/widgets/settings/api_keys_management_dialog.dart';
 import 'package:solaris/widgets/settings/api_settings_card.dart';
 
 void main() {
@@ -50,99 +50,57 @@ void main() {
     });
   }
 
-  group('ApiSettingsCard Granular Security Section Zero-Trust Widget Tests', () {
-    testWidgets('1. Displays Read-Only red summary status badge when isReadOnly is true', (WidgetTester tester) async {
+  group('ApiSettingsCard Phase 3 Multiple Scoped API Keys Widget Tests', () {
+    testWidgets('1. Displays active keys count and Manage API Keys button', (WidgetTester tester) async {
       configureLargeScreen(tester);
       final settings = SettingsState(
         isLocalIpcServerEnabled: true,
-        apiPermissions: const ApiPermissionsConfig(isReadOnly: true),
+        apiKeys: [ApiKeyEntry.create(name: 'Default Key')],
       );
 
       await tester.pumpWidget(buildTestableWidget(initialSettings: settings));
       await tester.pumpAndSettle();
 
-      // Verify status text in red
-      expect(find.text('Read-Only Mode Active'), findsOneWidget);
-      expect(find.widgetWithText(OutlinedButton, 'Configure API Permissions...'), findsOneWidget);
-
-      final statusText = tester.widget<Text>(find.text('Read-Only Mode Active'));
-      expect(statusText.style?.color, equals(const Color(0xFFEF4444)));
+      expect(find.text('1 active key(s) configured'), findsOneWidget);
+      expect(find.text('Manage API Keys...'), findsOneWidget);
     });
 
-    testWidgets('2. Displays Custom Allowed Categories green summary status badge when isReadOnly is false', (WidgetTester tester) async {
+    testWidgets('2. Displays requireLocalToken toggle and allows updating setting', (WidgetTester tester) async {
       configureLargeScreen(tester);
       final settings = SettingsState(
         isLocalIpcServerEnabled: true,
-        apiPermissions: const ApiPermissionsConfig(
-          isReadOnly: false,
-          allowedCategories: {
-            ApiActionCategory.monitors,
-            ApiActionCategory.presets,
-            ApiActionCategory.circadian,
-          },
-        ),
+        requireLocalToken: false,
       );
 
       await tester.pumpWidget(buildTestableWidget(initialSettings: settings));
       await tester.pumpAndSettle();
 
-      // Verify status text in green with pluralization 3
-      expect(find.text('3 categories allowed'), findsOneWidget);
-      expect(find.widgetWithText(OutlinedButton, 'Configure API Permissions...'), findsOneWidget);
+      expect(find.text('Require Authentication for Local Requests'), findsOneWidget);
 
-      final statusText = tester.widget<Text>(find.text('3 categories allowed'));
-      expect(statusText.style?.color, equals(const Color(0xFF4ADE80)));
+      final switches = find.byType(Switch);
+      expect(switches, findsNWidgets(2)); // Server enable switch & Require local token switch
+
+      // Tap requireLocalToken switch
+      await tester.tap(switches.last);
+      await tester.pumpAndSettle();
     });
 
-    testWidgets('3. Tapping Configure Permissions button opens ApiPermissionsDialog', (WidgetTester tester) async {
+    testWidgets('3. Tapping Manage API Keys button opens ApiKeysManagementDialog', (WidgetTester tester) async {
       configureLargeScreen(tester);
       final settings = SettingsState(isLocalIpcServerEnabled: true);
 
       await tester.pumpWidget(buildTestableWidget(initialSettings: settings));
       await tester.pumpAndSettle();
 
-      final configureBtn = find.widgetWithText(OutlinedButton, 'Configure API Permissions...');
-      expect(configureBtn, findsOneWidget);
+      final manageBtn = find.text('Manage API Keys...');
+      expect(manageBtn, findsOneWidget);
 
-      await tester.tap(configureBtn);
+      await tester.tap(manageBtn);
       await tester.pumpAndSettle();
 
-      // Verify ApiPermissionsDialog is displayed
-      expect(find.byType(ApiPermissionsDialog), findsOneWidget);
-      expect(find.text('API Permissions & Access Control'), findsAtLeastNWidgets(1));
-    });
-
-    testWidgets('4. Dynamic GUI reactivity: updating permissions in dialog immediately updates ApiSettingsCard status badge', (WidgetTester tester) async {
-      configureLargeScreen(tester);
-      final settings = SettingsState(isLocalIpcServerEnabled: true);
-
-      await tester.pumpWidget(buildTestableWidget(initialSettings: settings));
-      await tester.pumpAndSettle();
-
-      expect(find.text('7 categories allowed'), findsOneWidget);
-
-      // Open Dialog
-      final configureBtn = find.widgetWithText(OutlinedButton, 'Configure API Permissions...');
-      await tester.tap(configureBtn);
-      await tester.pumpAndSettle();
-
-      // Enable Read-Only switch inside dialog
-      final readOnlySwitch = find.descendant(
-        of: find.byType(ApiPermissionsDialog),
-        matching: find.byType(Switch),
-      ).first;
-
-      await tester.tap(readOnlySwitch);
-      await tester.pumpAndSettle();
-
-      // Tap Save
-      final saveBtn = find.text('Save');
-      await tester.tap(saveBtn);
-      await tester.pumpAndSettle();
-
-      // Verify ApiSettingsCard now displays Read-Only badge!
-      expect(find.text('Read-Only Mode Active'), findsOneWidget);
-      expect(find.text('7 categories allowed'), findsNothing);
+      // Verify ApiKeysManagementDialog is displayed
+      expect(find.byType(ApiKeysManagementDialog), findsOneWidget);
+      expect(find.text('API Access Keys Management'), findsAtLeastNWidgets(2));
     });
   });
 }
@@ -158,11 +116,8 @@ class TestSettingsNotifier extends SettingsNotifier {
   }
 
   @override
-  Future<void> updateApiPermissions(ApiPermissionsConfig permissions) async {
-    _currentSettings = _currentSettings.copyWith(
-      isLocalIpcServerEnabled: true,
-      apiPermissions: permissions,
-    );
+  void updateRequireLocalToken(bool value) {
+    _currentSettings = _currentSettings.copyWith(requireLocalToken: value);
     state = AsyncData({'all': _currentSettings});
   }
 }

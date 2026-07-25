@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/models/api_permissions_config.dart';
-import 'package:solaris/providers.dart';
 
 /// Shows the API Permissions configuration dialog.
 Future<ApiPermissionsConfig?> showApiPermissionsDialog(
@@ -71,7 +70,6 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
       allowedCategories: _allowedCategories,
     );
 
-    ref.read(settingsProvider.notifier).updateApiPermissions(updatedConfig);
     Navigator.of(context).pop(updatedConfig);
   }
 

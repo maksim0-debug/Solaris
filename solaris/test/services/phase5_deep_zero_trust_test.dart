@@ -95,20 +95,10 @@ void main() {
     });
 
     test('1. WebSocket Subprotocol Auth (Sec-WebSocket-Protocol: bearer.<token>)', () async {
-      final client = HttpClient();
-      final request = await client.openUrl('GET', Uri.parse('http://127.0.0.1:$port/api/v1/ws'));
-      request.headers.set('Connection', 'Upgrade');
-      request.headers.set('Upgrade', 'websocket');
-      request.headers.set('Sec-WebSocket-Key', 'dGhlIHNhbXBsZSBub25jZQ==');
-      request.headers.set('Sec-WebSocket-Version', '13');
-      request.headers.set('Sec-WebSocket-Protocol', 'bearer.$authToken');
-
-      final response = await request.close();
-      expect(response.statusCode, equals(HttpStatus.switchingProtocols));
-      
-      final socket = await response.detachSocket();
+      final wsUri = Uri.parse('ws://127.0.0.1:$port/api/v1/ws');
+      final socket = await WebSocket.connect(wsUri.toString(), protocols: ['bearer.$authToken']);
+      expect(socket.readyState, equals(WebSocket.open));
       await socket.close();
-      client.close();
     });
 
     test('2. WebSocket Subprotocol Auth with Invalid Token is Rejected (401 Unauthorized)', () async {

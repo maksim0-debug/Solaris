@@ -1840,4 +1840,96 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get apiKeysManagementDialogTitle => 'API Access Keys Management';
+
+  @override
+  String get apiKeysManagementSubtitle =>
+      'Least Privilege Architecture: Configure scoped keys for external integrations';
+
+  @override
+  String get apiKeysManageButton => 'Manage API Keys...';
+
+  @override
+  String get apiKeysCreateButton => 'Create New Key';
+
+  @override
+  String get apiKeysTableHeaderName => 'Key Name';
+
+  @override
+  String get apiKeysTableHeaderScopes => 'Scopes & Permissions';
+
+  @override
+  String get apiKeysTableHeaderCreated => 'Created';
+
+  @override
+  String get apiKeysTableHeaderActions => 'Actions';
+
+  @override
+  String apiKeysReadOnlyChip(int count) {
+    return 'Read-Only ($count/7)';
+  }
+
+  @override
+  String apiKeysActiveScopesChip(int count) {
+    return '$count of 7 Categories';
+  }
+
+  @override
+  String get apiKeysCopySuccessSnackbar => 'API key token copied to clipboard!';
+
+  @override
+  String get apiKeysRegenerateConfirmTitle => 'Regenerate Token?';
+
+  @override
+  String get apiKeysRegenerateConfirmMessage =>
+      'All devices and integrations using the current token will lose access to the API.';
+
+  @override
+  String get apiKeysDeleteConfirmTitle => 'Revoke API Key?';
+
+  @override
+  String apiKeysDeleteConfirmMessage(String name) {
+    return 'Are you sure you want to revoke key \"$name\"? This action cannot be undone.';
+  }
+
+  @override
+  String apiKeysDpapiWarningBanner(String name) {
+    return 'Token for key \"$name\" was reset due to Windows account password change. Copy the new token to your external devices.';
+  }
+
+  @override
+  String get apiKeysDpapiBadge => 'Token Reset (OS Auth Change)';
+
+  @override
+  String get apiKeysSoleKeyDeleteWarning =>
+      'Cannot delete the sole remaining API key.';
+
+  @override
+  String get createApiKeyDialogTitle => 'Create API Key';
+
+  @override
+  String get createApiKeyNameFieldLabel => 'Key Name';
+
+  @override
+  String get requireLocalTokenLabel =>
+      'Require Authentication for Local Requests';
+
+  @override
+  String get requireLocalTokenSubtitle =>
+      'Requests from 127.0.0.1 without API key will be rejected with HTTP 401 Unauthorized';
+
+  @override
+  String get showNewTokenDialogTitle => 'Your New API Key';
+
+  @override
+  String get showNewTokenWarning =>
+      'Copy this token right now. For security reasons, it will never be displayed in plain text again.';
+
+  @override
+  String get copyTokenButton => 'Copy Token';
+
+  @override
+  String get savedTokenButton => 'I Have Saved the Token';
 }

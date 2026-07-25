@@ -3221,6 +3221,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 category allowed} other{{count} categories allowed}}'**
   String apiPermissionsSummaryCustom(int count);
+
+  /// No description provided for @apiKeysManagementDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'API Access Keys Management'**
+  String get apiKeysManagementDialogTitle;
+
+  /// No description provided for @apiKeysManagementSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Least Privilege Architecture: Configure scoped keys for external integrations'**
+  String get apiKeysManagementSubtitle;
+
+  /// No description provided for @apiKeysManageButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage API Keys...'**
+  String get apiKeysManageButton;
+
+  /// No description provided for @apiKeysCreateButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Create New Key'**
+  String get apiKeysCreateButton;
+
+  /// No description provided for @apiKeysTableHeaderName.
+  ///
+  /// In en, this message translates to:
+  /// **'Key Name'**
+  String get apiKeysTableHeaderName;
+
+  /// No description provided for @apiKeysTableHeaderScopes.
+  ///
+  /// In en, this message translates to:
+  /// **'Scopes & Permissions'**
+  String get apiKeysTableHeaderScopes;
+
+  /// No description provided for @apiKeysTableHeaderCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Created'**
+  String get apiKeysTableHeaderCreated;
+
+  /// No description provided for @apiKeysTableHeaderActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions'**
+  String get apiKeysTableHeaderActions;
+
+  /// No description provided for @apiKeysReadOnlyChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-Only ({count}/7)'**
+  String apiKeysReadOnlyChip(int count);
+
+  /// No description provided for @apiKeysActiveScopesChip.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of 7 Categories'**
+  String apiKeysActiveScopesChip(int count);
+
+  /// No description provided for @apiKeysCopySuccessSnackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'API key token copied to clipboard!'**
+  String get apiKeysCopySuccessSnackbar;
+
+  /// No description provided for @apiKeysRegenerateConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate Token?'**
+  String get apiKeysRegenerateConfirmTitle;
+
+  /// No description provided for @apiKeysRegenerateConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'All devices and integrations using the current token will lose access to the API.'**
+  String get apiKeysRegenerateConfirmMessage;
+
+  /// No description provided for @apiKeysDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke API Key?'**
+  String get apiKeysDeleteConfirmTitle;
+
+  /// No description provided for @apiKeysDeleteConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to revoke key \"{name}\"? This action cannot be undone.'**
+  String apiKeysDeleteConfirmMessage(String name);
+
+  /// No description provided for @apiKeysDpapiWarningBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Token for key \"{name}\" was reset due to Windows account password change. Copy the new token to your external devices.'**
+  String apiKeysDpapiWarningBanner(String name);
+
+  /// No description provided for @apiKeysDpapiBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Token Reset (OS Auth Change)'**
+  String get apiKeysDpapiBadge;
+
+  /// No description provided for @apiKeysSoleKeyDeleteWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot delete the sole remaining API key.'**
+  String get apiKeysSoleKeyDeleteWarning;
+
+  /// No description provided for @createApiKeyDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create API Key'**
+  String get createApiKeyDialogTitle;
+
+  /// No description provided for @createApiKeyNameFieldLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Key Name'**
+  String get createApiKeyNameFieldLabel;
+
+  /// No description provided for @requireLocalTokenLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Require Authentication for Local Requests'**
+  String get requireLocalTokenLabel;
+
+  /// No description provided for @requireLocalTokenSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Requests from 127.0.0.1 without API key will be rejected with HTTP 401 Unauthorized'**
+  String get requireLocalTokenSubtitle;
+
+  /// No description provided for @showNewTokenDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your New API Key'**
+  String get showNewTokenDialogTitle;
+
+  /// No description provided for @showNewTokenWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy this token right now. For security reasons, it will never be displayed in plain text again.'**
+  String get showNewTokenWarning;
+
+  /// No description provided for @copyTokenButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Token'**
+  String get copyTokenButton;
+
+  /// No description provided for @savedTokenButton.
+  ///
+  /// In en, this message translates to:
+  /// **'I Have Saved the Token'**
+  String get savedTokenButton;
 }
 
 class _AppLocalizationsDelegate

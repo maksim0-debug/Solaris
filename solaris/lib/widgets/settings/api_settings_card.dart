@@ -1,13 +1,11 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/widgets/glass_card.dart';
-import 'package:solaris/widgets/settings/api_permissions_dialog.dart';
+import 'package:solaris/widgets/settings/api_keys_management_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Interactive Flutter GUI Card for managing Solaris Control API, Key Authentication & LAN Firewall.
@@ -19,29 +17,18 @@ class ApiSettingsCard extends ConsumerStatefulWidget {
 }
 
 class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
-  bool _isTokenVisible = false;
   late TextEditingController _portController;
-  late TextEditingController _tokenController;
 
   @override
   void initState() {
     super.initState();
     _portController = TextEditingController();
-    _tokenController = TextEditingController();
   }
 
   @override
   void dispose() {
     _portController.dispose();
-    _tokenController.dispose();
     super.dispose();
-  }
-
-  String _generateSecureToken() {
-    final random = DateTime.now().microsecondsSinceEpoch.toString();
-    final bytes = utf8.encode('solaris_token_${random}_1000');
-    final hash = base64Url.encode(bytes).replaceAll('=', '');
-    return 'sol_${hash.substring(0, hash.length > 32 ? 32 : hash.length)}';
   }
 
   Future<void> _openDocumentation(int port) async {
@@ -80,21 +67,54 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
         final isEnabled = settings.isLocalIpcServerEnabled;
         final isLanEnabled = settings.isApiLanAccessEnabled;
         final port = settings.apiServerPort;
-        final token = settings.apiAccessToken;
-        final permissions = settings.apiPermissions;
+        final apiKeys = settings.apiKeys;
+        final requireLocalToken = settings.requireLocalToken;
 
         if (_portController.text != port.toString()) {
           _portController.text = port.toString();
         }
-        if (_tokenController.text != token) {
-          _tokenController.text = token;
-        }
+
+        final fallbackKeys = apiKeys.where((k) => k.isDpapiFallback).toList();
 
         return GlassCard(
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Non-auto-hiding DPAPI Fallback Warning Banners
+              for (final fallbackKey in fallbackKeys)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B).withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.4)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(LucideIcons.alertTriangle, color: Color(0xFFF59E0B), size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          l10n.apiKeysDpapiWarningBanner(fallbackKey.name),
+                          style: const TextStyle(
+                            color: Color(0xFFFDE68A),
+                            fontSize: 12.5,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(LucideIcons.x, color: Colors.white54, size: 16),
+                        onPressed: () {
+                          ref.read(settingsProvider.notifier).dismissDpapiFallbackWarning(fallbackKey.id);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
               // Header Row
               Row(
                 children: [
@@ -237,13 +257,6 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                         }
                         return;
                       }
-
-                      if (token.isEmpty) {
-                        final newToken = _generateSecureToken();
-                        ref
-                            .read(settingsProvider.notifier)
-                            .updateApiAccessToken(newToken);
-                      }
                     } else {
                       final firewallService = ref.read(windowsFirewallServiceProvider);
                       await firewallService.removeAllSolarisRules(port: port);
@@ -253,7 +266,7 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
 
                 const SizedBox(height: 20),
 
-                // Server Port Field
+                // Server Port Field & Documentation
                 Row(
                   children: [
                     Expanded(
@@ -344,112 +357,9 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                   ],
                 ),
 
-                const SizedBox(height: 20),
-
-                // API Access Token Field
-                Text(
-                  l10n.apiAccessKey,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white70,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _tokenController,
-                        obscureText: !_isTokenVisible,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                        ),
-                        decoration: InputDecoration(
-                          isDense: true,
-                          filled: true,
-                          fillColor: Colors.white.withOpacity(0.05),
-                          hintText: isLanEnabled ? l10n.apiTokenHintRequiredLan : l10n.apiTokenHintOptionalLocalhost,
-                          hintStyle: TextStyle(
-                            color: Colors.white.withOpacity(0.3),
-                            fontSize: 13,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide.none,
-                          ),
-                          prefixIcon: const Icon(LucideIcons.key, size: 16, color: Colors.white54),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _isTokenVisible
-                                  ? LucideIcons.eyeOff
-                                  : LucideIcons.eye,
-                              size: 16,
-                              color: Colors.white54,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _isTokenVisible = !_isTokenVisible;
-                              });
-                            },
-                          ),
-                        ),
-                        onChanged: (val) {
-                          ref
-                              .read(settingsProvider.notifier)
-                              .updateApiAccessToken(val.trim());
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.white.withOpacity(0.05),
-                        shape: const CircleBorder(),
-                      ),
-                      tooltip: l10n.apiCopyKeyTooltip,
-                      icon: const Icon(LucideIcons.copy, color: Colors.white70, size: 16),
-                      onPressed: token.isEmpty
-                          ? null
-                          : () {
-                              Clipboard.setData(ClipboardData(text: token));
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(l10n.apiKeyCopied),
-                                ),
-                              );
-                            },
-                    ),
-                    const SizedBox(width: 6),
-                    IconButton(
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.white.withOpacity(0.05),
-                        shape: const CircleBorder(),
-                      ),
-                      tooltip: l10n.apiGenerateKeyTooltip,
-                      icon: const Icon(LucideIcons.refreshCw, color: Colors.white70, size: 16),
-                      onPressed: () {
-                        final newToken = _generateSecureToken();
-                        _tokenController.text = newToken;
-                        ref
-                            .read(settingsProvider.notifier)
-                            .updateApiAccessToken(newToken);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(l10n.apiKeyGenerated),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                  ],
-                ),
-
                 const Divider(height: 32, color: Colors.white10),
 
-                // Granular API Permissions Security Section
+                // Multiple API Access Keys Management Section
                 Row(
                   children: [
                     Expanded(
@@ -457,52 +367,34 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            l10n.apiPermissionsDialogTitle,
+                            l10n.apiKeysManagementDialogTitle,
                             style: const TextStyle(
-                              fontSize: 13,
+                              fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: Colors.white70,
+                              color: Colors.white,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            permissions.isReadOnly
-                                ? l10n.apiPermissionsSummaryReadOnly
-                                : l10n.apiPermissionsSummaryCustom(
-                                    permissions.allowedCategories.length,
-                                  ),
+                            '${apiKeys.length} active key(s) configured',
                             style: TextStyle(
                               fontSize: 12,
-                              color: permissions.isReadOnly
-                                  ? const Color(0xFFEF4444)
-                                  : const Color(0xFF4ADE80),
+                              color: Colors.white.withOpacity(0.6),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        showApiPermissionsDialog(
-                          context,
-                          initialConfig: permissions,
-                        );
-                      },
-                      icon: const Icon(LucideIcons.shieldCheck, size: 15, color: Color(0xFFFDBA74)),
-                      label: Text(
-                        l10n.apiPermissionsConfigureButton,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: Colors.white.withOpacity(0.05),
-                        side: BorderSide(color: const Color(0xFFFDBA74).withOpacity(0.3)),
+                    ElevatedButton.icon(
+                      onPressed: () => showApiKeysManagementDialog(context),
+                      icon: const Icon(LucideIcons.key, size: 15),
+                      label: Text(l10n.apiKeysManageButton),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFDBA74),
+                        foregroundColor: Colors.black87,
                         padding: const EdgeInsets.symmetric(
                           vertical: 12,
-                          horizontal: 14,
+                          horizontal: 16,
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -510,6 +402,54 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                       ),
                     ),
                   ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Require Local Token Toggle Tile
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.03),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.white10),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(LucideIcons.shieldAlert, color: Color(0xFFFDBA74), size: 18),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.requireLocalTokenLabel,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              l10n.requireLocalTokenSubtitle,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.5),
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: requireLocalToken,
+                        activeColor: const Color(0xFFFDBA74),
+                        onChanged: (val) {
+                          ref.read(settingsProvider.notifier).updateRequireLocalToken(val);
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ],
