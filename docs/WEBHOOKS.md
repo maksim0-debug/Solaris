@@ -1,6 +1,6 @@
 # Solaris Outbound Webhooks Engine — Developer Guide
 
-This document describes the architecture, event catalog, security controls, delivery guarantees, and integration patterns for the **Solaris Outbound Webhooks Engine**.
+This document describes the architecture, event catalog, security controls, delivery guarantees, Granular ACL requirements, and integration patterns for the **Solaris Outbound Webhooks Engine**.
 
 ---
 
@@ -12,7 +12,7 @@ The Outbound Webhooks Engine enables Solaris to broadcast state changes, solar p
 [ Solaris Event Stream ]
          │
          ▼
-[ Webhook Filter Engine ] ──(Matches event subscriptions)
+[ Webhook Filter Engine ] ──(Matches event subscriptions & Granular ACL)
          │
          ▼
 [ Write-Ahead Log Buffer (WAL) ] ──(Persists event delivery state)
@@ -35,7 +35,12 @@ The Outbound Webhooks Engine enables Solaris to broadcast state changes, solar p
 
 ---
 
-## 🛠️ Management REST Endpoints
+## 🛠️ Management REST Endpoints & Granular Security
+
+All webhook administration endpoints are guarded by **Solaris Granular Security (`ApiPermissionsConfig`)**:
+* **Read Operations** (`GET /api/v1/webhooks`, `GET /api/v1/webhooks/dlq`): Require category `system` in `allowedCategories`.
+* **Mutating Operations** (`POST /api/v1/webhooks`, `DELETE /api/v1/webhooks/:id`, `POST /api/v1/webhooks/:id/test`, `POST /api/v1/webhooks/dlq/retry`): Require `isReadOnly = false` AND category `system` in `allowedCategories`.
+* **Violation Response**: Rejects with `HTTP 403 Forbidden` (`Action Category Prohibited` or `Read-Only Mode Enabled`).
 
 ### 1. `GET /api/v1/webhooks`
 Returns all configured outbound webhooks.
@@ -71,56 +76,61 @@ Returns entries from the Dead Letter Queue (failed deliveries that exceeded retr
 
 ---
 
+### 5. `POST /api/v1/webhooks/dlq/retry`
+Retries execution of dead-lettered webhook payloads.
+
+---
+
 ## ⚡ Complete Webhook Event Catalog (23 Events)
 
 Solaris supports 23 distinct webhook event types categorized into 6 functional groups:
 
 ### 1. Solar & Twilight Events
-| Event Name (`wireName`) | Trigger Condition |
-| :--- | :--- |
-| `on_sunrise` | Solar elevation crosses horizon upwards (0°). |
-| `on_sunset` | Solar elevation crosses horizon downwards (0°). |
-| `on_civil_twilight_begin` | Civil twilight begins (-6° solar elevation). |
-| `on_civil_twilight_end` | Civil twilight ends (-6° solar elevation). |
-| `on_golden_hour_begin` | Golden hour begins (6° solar elevation). |
-| `on_golden_hour_end` | Golden hour ends (6° solar elevation). |
-| `on_day_phase_changed` | Day phase transitions (e.g. `day` -> `sunset` -> `night` -> `sunrise`). |
+| Event Name (`wireName`) | Trigger Condition | Required Read Flag |
+| :--- | :--- | :--- |
+| `on_sunrise` | Solar elevation crosses horizon upwards (0°). | `allowReadSolar` |
+| `on_sunset` | Solar elevation crosses horizon downwards (0°). | `allowReadSolar` |
+| `on_civil_twilight_begin` | Civil twilight begins (-6° solar elevation). | `allowReadSolar` |
+| `on_civil_twilight_end` | Civil twilight ends (-6° solar elevation). | `allowReadSolar` |
+| `on_golden_hour_begin` | Golden hour begins (6° solar elevation). | `allowReadSolar` |
+| `on_golden_hour_end` | Golden hour ends (6° solar elevation). | `allowReadSolar` |
+| `on_day_phase_changed` | Day phase transitions (e.g. `day` -> `sunset` -> `night` -> `sunrise`). | `allowReadSolar` |
 
 ### 2. Weather & Location (Privacy-First)
-| Event Name (`wireName`) | Trigger Condition |
-| :--- | :--- |
-| `on_weather_updated` | New weather condition or temperature fetch completed. |
-| `on_location_changed` | Geographic coordinates updated (latitude/longitude sanitized). |
+| Event Name (`wireName`) | Trigger Condition | Required Read Flag |
+| :--- | :--- | :--- |
+| `on_weather_updated` | New weather condition or temperature fetch completed. | `allowReadWeather` |
+| `on_location_changed` | Geographic coordinates updated (latitude/longitude sanitized). | `allowReadWeather` |
 
 ### 3. Control & Preset Events
-| Event Name (`wireName`) | Trigger Condition |
-| :--- | :--- |
-| `on_brightness_preset_changed` | Active brightness preset modified (`brightest`, `bright`, `dim`, `dimmest`). |
-| `on_temperature_preset_changed`| Active color temperature preset modified (`coolest`, `cool`, `warm`, `warmest`). |
-| `on_auto_brightness_toggled` | Automatic brightness adjustment state toggled. |
-| `on_auto_temperature_toggled` | Automatic temperature adjustment state toggled. |
-| `on_brightness_threshold_crossed`| Target display brightness crosses configured threshold limit. |
+| Event Name (`wireName`) | Trigger Condition | Required Category |
+| :--- | :--- | :--- |
+| `on_brightness_preset_changed` | Active brightness preset modified (`brightest`, `bright`, `dim`, `dimmest`). | `presets` |
+| `on_temperature_preset_changed`| Active color temperature preset modified (`coolest`, `cool`, `warm`, `warmest`). | `presets` |
+| `on_auto_brightness_toggled` | Automatic brightness adjustment state toggled. | `circadian` |
+| `on_auto_temperature_toggled` | Automatic temperature adjustment state toggled. | `circadian` |
+| `on_brightness_threshold_crossed`| Target display brightness crosses configured threshold limit. | `monitors` |
 
 ### 4. Gaming Mode Events
-| Event Name (`wireName`) | Trigger Condition |
-| :--- | :--- |
-| `on_game_mode_activated` | Whitelisted game process detected & Gaming Mode activated. |
-| `on_game_mode_deactivated` | Game process exited & Gaming Mode deactivated. |
+| Event Name (`wireName`) | Trigger Condition | Required Category |
+| :--- | :--- | :--- |
+| `on_game_mode_activated` | Whitelisted game process detected & Gaming Mode activated. | `gaming` |
+| `on_game_mode_deactivated` | Game process exited & Gaming Mode deactivated. | `gaming` |
 
 ### 5. Smart Circadian & Sleep Events
-| Event Name (`wireName`) | Trigger Condition |
-| :--- | :--- |
-| `on_wind_down_started` | Circadian Wind Down phase initiated before target bedtime. |
-| `on_sleep_status_changed` | User sleep state changes (asleep vs. awake). |
+| Event Name (`wireName`) | Trigger Condition | Required Read Flag |
+| :--- | :--- | :--- |
+| `on_wind_down_started` | Circadian Wind Down phase initiated before target bedtime. | `allowReadCircadian` |
+| `on_sleep_status_changed` | User sleep state changes (asleep vs. awake). | `allowReadSleep` |
 
 ### 6. System & Hardware Events
-| Event Name (`wireName`) | Trigger Condition |
-| :--- | :--- |
-| `on_monitor_connected` | Physical monitor plugged in or DDC/CI handle discovered. |
-| `on_monitor_disconnected` | Physical monitor unplugged or display connection lost. |
-| `on_api_server_started` | Solaris Control API server listening socket started. |
-| `on_system_resume` | Windows power state resumes from S3/S4 sleep/hibernate (`WM_POWERBROADCAST`). |
-| `on_hardware_error` | Physical DDC/CI read/write error or I2C bus collision detected. |
+| Event Name (`wireName`) | Trigger Condition | Required Category |
+| :--- | :--- | :--- |
+| `on_monitor_connected` | Physical monitor plugged in or DDC/CI handle discovered. | `monitors` |
+| `on_monitor_disconnected` | Physical monitor unplugged or display connection lost. | `monitors` |
+| `on_api_server_started` | Solaris Control API server listening socket started. | `system` |
+| `on_system_resume` | Windows power state resumes from S3/S4 sleep/hibernate (`WM_POWERBROADCAST`). | `system` |
+| `on_hardware_error` | Physical DDC/CI read/write error or I2C bus collision detected. | `system` |
 
 ---
 

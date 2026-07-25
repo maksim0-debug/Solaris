@@ -1,6 +1,6 @@
 # Solaris Real-Time WebSocket API — Developer Guide
 
-This document describes the architecture, protocol specification, subscription model, command correlation, and event broadcasting for the **Solaris Real-Time WebSocket API** (`ws://localhost:45321/api/v1/ws`).
+This document describes the architecture, protocol specification, Granular Security protections, subscription model, command correlation, and event broadcasting for the **Solaris Real-Time WebSocket API** (`ws://localhost:45321/api/v1/ws`).
 
 ---
 
@@ -10,10 +10,11 @@ The WebSocket Streaming API provides a full-duplex, low-latency communication ch
 
 ### Key Capabilities:
 * **Real-time State Pushes**: Instant updates when monitor brightness, color temperature, solar position, or sleep status changes.
-* **Bi-directional Command Execution**: Execute any of the 26 Action Control System commands over WebSocket with response correlation IDs (`cmd_id`).
-* **Selective Subscriptions**: Subscribe only to specific state modules (`solar`, `monitors`, `sleep`, `automation`, `system`) to minimize bandwidth.
+* **Granular Data Privacy & Snapshot Protection**: Initial `snapshot` frame (`_buildSnapshotMap`) and real-time broadcasts (`broadcastModule`, `broadcastEvent`) are filtered dynamically according to `ApiPermissionsConfig`.
+* **Dynamic Runtime Subscription Revocation**: Toggling read permissions in the host GUI automatically revokes active topic subscriptions and sends `subscription_revoked` frames without severing TCP/WS connections.
+* **Bi-directional Command Execution**: Execute any of the 26 Action Control System commands over WebSocket with response correlation IDs (`cmd_id`) subject to category permissions (`allowedCategories`).
 * **Windows Power & Hardware Error Broadcasts**: Broadcasts S3/S4 sleep/resume system events (`WM_POWERBROADCAST`) and DDC/CI physical hardware errors.
-* **Slow Consumer OOM Protection**: Automatic client disconnection if unconsumed pending frame buffer exceeds 512 KB.
+* **Slow Consumer OOM Protection & Zero Memory Leak Guard**: Automatic client disconnection if unconsumed pending frame buffer exceeds 512 KB, and client sub-maps (`_subscriptionsPerClient`) are pruned cleanly on disconnect.
 
 ---
 
@@ -56,6 +57,33 @@ X-API-Key: your_secret_api_token_here
 
 ---
 
+## 🛡️ Granular Security & Initial Snapshot Protection
+
+Upon connection, Solaris sends an initial `snapshot` frame containing current subsystem states.
+
+### Masking Rules (`_buildSnapshotMap` & `ApiPermissionsFilter`):
+* `monitors`: Key omitted if `allowReadMonitors = false`.
+* `solar`: Key omitted if `allowReadSolar = false`.
+* `weather`: Key omitted if `allowReadWeather = false`.
+* `sleep`: Key omitted if `allowReadSleep = false`.
+* `automation`: Key-level masking removes `weather_*` fields if `allowReadWeather = false`, and `circadian_*` fields if `allowReadCircadian = false`.
+* `smart_circadian`: Sensitive sleep metrics (`sleep_pressure`, `sleep_debt`) are stripped if `allowReadSleep = false`.
+
+#### Example Initial Snapshot Frame:
+```json
+{
+  "type": "snapshot",
+  "data": {
+    "monitors": [ ... ],
+    "solar": { "elevation": 42.5, "current_phase": "day" },
+    "automation": { "auto_brightness": true, "game_mode": false },
+    "smart_circadian": { "enabled": true, "current_phase": "day" }
+  }
+}
+```
+
+---
+
 ## 📡 Message Frame Structure
 
 All WebSocket messages are JSON objects containing a `type` string field.
@@ -65,7 +93,7 @@ Solaris sends a periodic heartbeat ping frame every **30 seconds**:
 ```json
 {
   "type": "ping",
-  "timestamp": "2026-07-24T10:45:00.000Z"
+  "timestamp": "2026-07-25T03:00:00.000Z"
 }
 ```
 Clients may respond with a pong frame or rely on socket TCP keep-alive:
@@ -115,7 +143,7 @@ Solaris responds with a `command_result` frame matching the client's `cmd_id`:
 }
 ```
 
-#### Error Response:
+#### Error Response (Validation Failure):
 ```json
 {
   "type": "command_result",
@@ -129,9 +157,20 @@ Solaris responds with a `command_result` frame matching the client's `cmd_id`:
 }
 ```
 
+#### Error Response (Forbidden by Granular Permissions / Read-Only):
+```json
+{
+  "type": "command_result",
+  "cmd_id": "req_1001",
+  "status": "error",
+  "error": "Forbidden",
+  "message": "Action category \"monitors\" is disabled in API permissions settings."
+}
+```
+
 ---
 
-## 🔔 Selective Subscriptions
+## 🔔 Selective Subscriptions & Dynamic Runtime Revocation
 
 By default, newly connected WebSocket clients receive updates across all module channels. Clients can filter module updates by sending a `subscribe` or `unsubscribe` frame.
 
@@ -155,6 +194,31 @@ By default, newly connected WebSocket clients receive updates across all module 
 {
   "type": "unsubscribe",
   "modules": ["automation"]
+}
+```
+
+### Subscription Denial (`subscription_denied`)
+If a client attempts to subscribe to a module whose read flag is disabled (e.g. `allowReadSleep = false`), Solaris rejects the module and responds with a `subscription_denied` frame:
+```json
+{
+  "type": "subscription_denied",
+  "module": "sleep",
+  "reason": "Read access to resource \"sleep\" is disabled in host API permissions settings."
+}
+```
+
+### Dynamic Runtime Subscription Revocation (`subscription_revoked`)
+If the host user toggles an API permission flag OFF in the Flutter GUI (`ApiPermissionsDialog`) while WebSocket clients are connected:
+1. `WebSocketService` detects the setting change via `ref.listen(settingsProvider)`.
+2. A **synchronous atomic audit** is performed over `_subscriptionsPerClient`.
+3. The disabled module topic is revoked from active subscription sets.
+4. Solaris transmits a `subscription_revoked` frame to affected clients **without closing the WebSocket connection**:
+
+```json
+{
+  "type": "subscription_revoked",
+  "module": "sleep",
+  "reason": "Read permission for this module was disabled by host user in GUI"
 }
 ```
 
@@ -192,7 +256,7 @@ Broadcasting Windows OS power state changes (`WM_POWERBROADCAST` S3/S4 transitio
   "event": "on_system_suspend",
   "data": {
     "reason": "S3 Sleep State Entered",
-    "timestamp": "2026-07-24T10:45:00.000Z"
+    "timestamp": "2026-07-25T03:00:00.000Z"
   }
 }
 ```
