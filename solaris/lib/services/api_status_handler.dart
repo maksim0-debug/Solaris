@@ -472,9 +472,12 @@ class ApiStatusHandler {
 
   /// GET /api/v1/openapi.json
   Future<void> handleOpenApiJson(HttpRequest request, Map<String, String> pathParams) async {
-    final settings = container.read(settingsProvider).value?['all'];
-    final port = settings?.apiServerPort ?? 45321;
-    final jsonSpec = OpenApiSpec.generateSpec(port: port);
+    final permissions = _getPermissions();
+    final settingsMap = container.read(settingsProvider).value ??
+        container.read(settingsProvider).asData?.value;
+    final port = settingsMap?['all']?.apiServerPort ?? 45321;
+    final jsonSpec = OpenApiSpec.generateSpec(port: port, permissions: permissions);
     ApiRouter.sendJson(request, HttpStatus.ok, jsonSpec);
   }
 }
+
