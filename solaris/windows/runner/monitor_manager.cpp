@@ -46,6 +46,7 @@ MonitorManager::~MonitorManager() {
     detector_thread_.join();
   }
 
+  ResetAllMonitorsTemperatureSync();
   DestroyPhysicalMonitorsCache();
 }
 
@@ -399,6 +400,10 @@ bool MonitorManager::GetBrightness(const std::string &device_path, int &current,
 
 bool MonitorManager::SetTemperature(const std::string &device_path,
                                     int kelvins) {
+  if (kelvins >= 6500) {
+    return ResetTemperature(device_path);
+  }
+
   // Convert Kelvin to RGB multipliers (0.0 to 1.0)
   // Simplified Tanner Helland's algorithm adapted for 1000-40000K
   double temp = std::max(1000, std::min(40000, kelvins)) / 100.0;
@@ -407,24 +412,17 @@ bool MonitorManager::SetTemperature(const std::string &device_path,
   double green = 1.0;
   double blue = 1.0;
 
-  if (kelvins < 6500) {
-    if (temp <= 66.0) {
-      red = 255.0;
-      green = 99.4708025861 * std::log(temp) - 161.1195681661;
-      if (temp <= 19.0) {
-        blue = 0.0;
-      } else {
-        blue = 138.5177312231 * std::log(temp - 10.0) - 305.0447927307;
-      }
+  if (temp <= 66.0) {
+    red = 255.0;
+    green = 99.4708025861 * std::log(temp) - 161.1195681661;
+    if (temp <= 19.0) {
+      blue = 0.0;
     } else {
-      red = 329.698727446 * std::pow(temp - 60.0, -0.1332047592);
-      green = 288.1221695283 * std::pow(temp - 60.0, -0.0755148492);
-      blue = 255.0;
+      blue = 138.5177312231 * std::log(temp - 10.0) - 305.0447927307;
     }
   } else {
-    // 6500K and above is treated as neutral (pure white multipliers)
-    red = 255.0;
-    green = 255.0;
+    red = 329.698727446 * std::pow(temp - 60.0, -0.1332047592);
+    green = 288.1221695283 * std::pow(temp - 60.0, -0.0755148492);
     blue = 255.0;
   }
 
@@ -434,40 +432,50 @@ bool MonitorManager::SetTemperature(const std::string &device_path,
   double bFactor = std::max(0.0, std::min(255.0, blue)) / 255.0;
 
   // Convert device_path to wstring
-  std::wstring target_device(device_path.begin(), device_path.end());
+  std::wstring target_device;
+  target_device.reserve(device_path.length());
+  for (char c : device_path) {
+    target_device.push_back(static_cast<wchar_t>(c));
+  }
 
   // Apply to Gamma Ramp
   HDC hDC = CreateDCW(L"DISPLAY", target_device.c_str(), NULL, NULL);
   if (!hDC)
     return false;
 
-  // Cache the original gamma ramp if not already cached
+  std::vector<WORD> base_ramp;
   {
     std::lock_guard<std::mutex> lock(gamma_mutex_);
-    if (original_gamma_ramps_.find(device_path) ==
-        original_gamma_ramps_.end()) {
+    auto it = original_gamma_ramps_.find(device_path);
+    if (it == original_gamma_ramps_.end()) {
       WORD orig_ramp[3][256];
+      bool is_valid_neutral = false;
       if (GetDeviceGammaRamp(hDC, orig_ramp)) {
-        std::vector<WORD> flat_ramp(3 * 256);
+        // Validate if captured ramp isn't pre-tinted by checking blue vs red channel ratio at midpoint (L128)
+        if (orig_ramp[0][128] > 0) {
+          double blue_red_ratio = (double)orig_ramp[2][128] / (double)orig_ramp[0][128];
+          if (blue_red_ratio >= 0.95) {
+            is_valid_neutral = true;
+          }
+        }
+      }
+
+      std::vector<WORD> flat_ramp(3 * 256);
+      if (is_valid_neutral) {
         std::memcpy(flat_ramp.data(), orig_ramp, sizeof(orig_ramp));
-        original_gamma_ramps_[device_path] = flat_ramp;
       } else {
-        // If we fail to get original, we'll construct a linear one as fallback
-        std::vector<WORD> flat_ramp(3 * 256);
+        // Construct pure linear baseline if captured ramp was warm/invalid
         for (int i = 0; i < 256; i++) {
           int val = i * 257;
           flat_ramp[i] = flat_ramp[i + 256] = flat_ramp[i + 512] =
               (WORD)std::min(65535, val);
         }
-        original_gamma_ramps_[device_path] = flat_ramp;
       }
+      original_gamma_ramps_[device_path] = flat_ramp;
+      base_ramp = flat_ramp;
+    } else {
+      base_ramp = it->second;
     }
-  }
-
-  std::vector<WORD> base_ramp;
-  {
-    std::lock_guard<std::mutex> lock(gamma_mutex_);
-    base_ramp = original_gamma_ramps_[device_path];
   }
 
   WORD gammaArray[3][256];
@@ -484,14 +492,18 @@ bool MonitorManager::SetTemperature(const std::string &device_path,
 }
 
 bool MonitorManager::ResetTemperature(const std::string &device_path) {
-  std::wstring target_device(device_path.begin(), device_path.end());
+  std::wstring target_device;
+  target_device.reserve(device_path.length());
+  for (char c : device_path) {
+    target_device.push_back(static_cast<wchar_t>(c));
+  }
   HDC hDC = CreateDCW(L"DISPLAY", target_device.c_str(), NULL, NULL);
   if (!hDC)
     return false;
 
   WORD gammaArray[3][256];
-  std::vector<WORD> base_ramp;
   bool found = false;
+  std::vector<WORD> base_ramp;
 
   {
     std::lock_guard<std::mutex> lock(gamma_mutex_);
@@ -503,13 +515,14 @@ bool MonitorManager::ResetTemperature(const std::string &device_path) {
   }
 
   if (found) {
+    // Restore user's original calibrated baseline ramp (preserving DisplayCAL / ICC profile)
     for (int i = 0; i < 256; i++) {
       gammaArray[0][i] = base_ramp[i];
       gammaArray[1][i] = base_ramp[i + 256];
       gammaArray[2][i] = base_ramp[i + 512];
     }
   } else {
-    // Fallback for fresh app starts without cached baseline.
+    // Pure linear fallback
     for (int i = 0; i < 256; i++) {
       WORD linear = static_cast<WORD>(i * 257);
       gammaArray[0][i] = linear;
@@ -521,6 +534,25 @@ bool MonitorManager::ResetTemperature(const std::string &device_path) {
   bool success = SetDeviceGammaRamp(hDC, gammaArray);
   DeleteDC(hDC);
   return success;
+}
+
+bool MonitorManager::ResetAllMonitorsTemperatureSync() {
+  DISPLAY_DEVICEA displayDevice;
+  ZeroMemory(&displayDevice, sizeof(displayDevice));
+  displayDevice.cb = sizeof(displayDevice);
+
+  DWORD deviceIndex = 0;
+  bool all_success = true;
+  while (EnumDisplayDevicesA(NULL, deviceIndex, &displayDevice, 0)) {
+    if ((displayDevice.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP) != 0) {
+      std::string device_path(displayDevice.DeviceName);
+      if (!ResetTemperature(device_path)) {
+        all_success = false;
+      }
+    }
+    deviceIndex++;
+  }
+  return all_success;
 }
 
 void MonitorManager::SetGamingModeCallback(std::function<void(bool)> callback) {

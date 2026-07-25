@@ -102,5 +102,39 @@ void main() {
 
       expect(reportedTemp, 3500);
     });
+
+    test('setTemperatureInstant dispatches native commands to ALL monitors when selection is all', () async {
+      final monitor1 = MonitorInfo(
+        id: r'\\.\DISPLAY1',
+        deviceName: r'\\.\DISPLAY1',
+        name: 'ASUS',
+        friendlyName: 'ASUS',
+        deviceIdHash: 'hash1',
+        isPrimary: true,
+      );
+      final monitor2 = MonitorInfo(
+        id: r'\\.\DISPLAY2',
+        deviceName: r'\\.\DISPLAY2',
+        name: 'LG',
+        friendlyName: 'LG',
+        deviceIdHash: 'hash2',
+        isPrimary: false,
+      );
+
+      final updatedMonitors = <String, int>{};
+
+      await service.setTemperatureInstant(
+        selection: 'all',
+        targetValue: 4000.0,
+        monitors: [monitor1, monitor2],
+        monitorService: mockMonitorService,
+        updateTemperatureCallback: (id, val) {
+          updatedMonitors[id] = val;
+        },
+      );
+
+      expect(updatedMonitors[r'\\.\DISPLAY1'], 4000);
+      expect(updatedMonitors[r'\\.\DISPLAY2'], 4000);
+    });
   });
 }

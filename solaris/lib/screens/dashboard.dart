@@ -584,7 +584,11 @@ class _Header extends ConsumerWidget {
         final selection = ref.read(selectedMonitorsProvider);
         final monitors = ref.read(monitorListProvider).value ?? [];
 
-        for (final id in selection) {
+        final targetMonitors = selection.contains('all')
+            ? monitors.map((m) => m.deviceName).toList()
+            : selection.toList();
+
+        for (final id in targetMonitors) {
           if (ref.read(autoTemperatureAdjustmentProvider)) {
             temperatureService.applyTemperatureSmoothly(
               selection: id,

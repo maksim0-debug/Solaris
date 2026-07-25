@@ -86,9 +86,13 @@ class AppShutdownService {
   Future<void> _resetMonitorGamma() async {
     try {
       debugPrint('AppShutdownService: Step 5 - Resetting monitor gamma to neutral...');
+      final monitorService = container.read(monitorServiceProvider);
+      await monitorService.resetAllMonitorsTemperature();
       await container
           .read(isColorTemperatureEnabledProvider.notifier)
           .resetToNeutralNow();
+      // Allow 200ms for OS GPU driver to settle gamma ramp changes across all displays before exit(0)
+      await Future<void>.delayed(const Duration(milliseconds: 200));
     } catch (e) {
       debugPrint('AppShutdownService: Error resetting monitor gamma: $e');
     }

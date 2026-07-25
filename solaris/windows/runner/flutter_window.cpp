@@ -162,6 +162,10 @@ bool FlutterWindow::OnCreate() {
             }
           }
           result->Error("invalid_arguments", "Expected devicePath");
+        } else if (call.method_name().compare("resetAllMonitorsTemperature") == 0) {
+          bool success = monitor_manager_.ResetAllMonitorsTemperatureSync();
+          result->Success(flutter::EncodableValue(success));
+          return;
         } else if (call.method_name().compare("getMonitorBrightness") == 0) {
           const auto* arguments = std::get_if<flutter::EncodableMap>(call.arguments());
           if (arguments) {

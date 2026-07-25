@@ -59,6 +59,18 @@ class MonitorService {
     }
   }
 
+  Future<bool> resetAllMonitorsTemperature() async {
+    try {
+      final bool? success = await _channel.invokeMethod<bool>(
+        'resetAllMonitorsTemperature',
+      );
+      return success ?? false;
+    } catch (e) {
+      print('Failed to reset all monitors temperature: $e');
+      return false;
+    }
+  }
+
   Future<bool> setBrightness(String deviceName, int brightness) async {
     // Avoid redundant calls to slow native DDC/CI methods if brightness hasn't changed.
     if (_lastSentBrightness[deviceName] == brightness) {

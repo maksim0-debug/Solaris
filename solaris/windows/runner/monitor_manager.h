@@ -39,6 +39,9 @@ class MonitorManager {
   // Resets monitor gamma ramp to cached original (or linear neutral fallback).
   bool ResetTemperature(const std::string& device_path);
 
+  // Synchronously resets color temperature to pure linear 6500K for ALL attached monitors.
+  bool ResetAllMonitorsTemperatureSync();
+
   // Enqueues a task to be executed on the background worker thread.
   void EnqueueTask(std::function<void()> task);
 
