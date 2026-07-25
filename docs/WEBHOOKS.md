@@ -45,6 +45,23 @@ All webhook administration endpoints are guarded by **Solaris Granular Security 
 ### 1. `GET /api/v1/webhooks`
 Returns all configured outbound webhooks.
 
+* **Response (HTTP 200 OK)**:
+```json
+{
+  "total": 1,
+  "webhooks": [
+    {
+      "id": "wh_1784978461855",
+      "url": "https://ha.example.com/api/webhook/solaris_events",
+      "name": "Home Assistant Automation",
+      "events": ["on_sunset", "on_sunrise"],
+      "isEnabled": true,
+      "secretKey": "my_super_secret_hmac_key"
+    }
+  ]
+}
+```
+
 ---
 
 ### 2. `POST /api/v1/webhooks`
@@ -56,10 +73,25 @@ Creates or updates a webhook endpoint configuration.
   "name": "Home Assistant Automation",
   "url": "https://ha.example.com/api/webhook/solaris_events",
   "events": ["on_day_phase_changed", "on_sleep_status_changed", "on_hardware_error"],
-  "is_enabled": true,
-  "secret_key": "my_super_secret_hmac_key",
+  "isEnabled": true,
+  "secretKey": "my_super_secret_hmac_key",
   "custom_headers": {
     "X-Custom-Auth": "SecretToken123"
+  }
+}
+```
+
+* **Response (HTTP 201 Created)**:
+```json
+{
+  "status": "created",
+  "webhook": {
+    "id": "wh_1784978461855",
+    "url": "https://ha.example.com/api/webhook/solaris_events",
+    "name": "Home Assistant Automation",
+    "events": ["on_day_phase_changed", "on_sleep_status_changed", "on_hardware_error"],
+    "isEnabled": true,
+    "secretKey": "my_super_secret_hmac_key"
   }
 }
 ```
@@ -68,6 +100,8 @@ Creates or updates a webhook endpoint configuration.
 
 ### 3. `DELETE /api/v1/webhooks/:id`
 Deletes a webhook configuration by ID.
+
+* **Response (HTTP 200 OK)**: `{"status": "deleted", "id": "wh_1784978461855"}`
 
 ---
 
@@ -78,6 +112,17 @@ Returns entries from the Dead Letter Queue (failed deliveries that exceeded retr
 
 ### 5. `POST /api/v1/webhooks/dlq/retry`
 Retries execution of dead-lettered webhook payloads.
+
+---
+
+### 6. Cleared Failed Webhooks via Control API (`clear_failed_webhooks`)
+Dead-letter entries for a specific webhook can also be cleared via the Action Control System (`POST /api/v1/control`):
+```json
+{
+  "action": "clear_failed_webhooks",
+  "webhook_id": "wh_1784978461855"
+}
+```
 
 ---
 
@@ -148,7 +193,7 @@ To prevent DNS Rebinding attacks during execution:
 3. For HTTPS URLs, `SsrfSafeHttpClient` performs explicit **TLS Server Name Indication (SNI)** handshakes using `SecureSocket.secure()` to verify certificate host validity.
 
 ### 3. HMAC-SHA256 Signature Verification
-When a webhook is configured with a `secret_key`, Solaris includes cryptographic signature headers on every HTTP POST delivery:
+When a webhook is configured with a `secretKey`, Solaris includes cryptographic signature headers on every HTTP POST delivery:
 
 #### Delivery Headers:
 ```http
@@ -162,7 +207,7 @@ X-Solaris-Signature-256: sha256=a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b
 #### Signature Calculation Algorithm:
 ```
 signature_input = timestamp + "." + raw_json_payload
-signature = HMAC-SHA256(secret_key, signature_input).toHexString()
+signature = HMAC-SHA256(secretKey, signature_input).toHexString()
 ```
 
 #### Verifying Signature in Node.js / Express:

@@ -10,11 +10,12 @@ The WebSocket Streaming API provides a full-duplex, low-latency communication ch
 
 ### Key Capabilities:
 * **Real-time State Pushes**: Instant updates when monitor brightness, color temperature, solar position, or sleep status changes.
-* **Granular Data Privacy & Snapshot Protection**: Initial `snapshot` frame (`_buildSnapshotMap`) and real-time broadcasts (`broadcastModule`, `broadcastEvent`) are filtered dynamically according to `ApiPermissionsConfig`.
+* **Granular Data Privacy & Snapshot Protection**: Initial `snapshot` frame (`_buildSnapshotMap`) and real-time broadcasts (`broadcastModule`, `broadcastEvent`) are filtered dynamically according to per-key `ApiPermissionsConfig`.
 * **Dynamic Runtime Subscription Revocation**: Toggling read permissions in the host GUI automatically revokes active topic subscriptions and sends `subscription_revoked` frames without severing TCP/WS connections.
+* **Reactive Disconnect Revocation (Code 4001)**: Instant socket termination with WebSocket status code `4001` when an API key is deleted, token is regenerated, or `requireLocalToken` is enabled.
 * **Bi-directional Command Execution**: Execute any of the 26 Action Control System commands over WebSocket with response correlation IDs (`cmd_id`) subject to category permissions (`allowedCategories`).
 * **Windows Power & Hardware Error Broadcasts**: Broadcasts S3/S4 sleep/resume system events (`WM_POWERBROADCAST`) and DDC/CI physical hardware errors.
-* **Slow Consumer OOM Protection & Zero Memory Leak Guard**: Automatic client disconnection if unconsumed pending frame buffer exceeds 512 KB, and client sub-maps (`_subscriptionsPerClient`) are pruned cleanly on disconnect.
+* **Slow Consumer OOM Protection & Zero Memory Leak Guard**: Automatic client disconnection if unconsumed pending frame buffer exceeds 512 KB (`1008`), and client sub-maps (`_subscriptionsPerClient`) are pruned cleanly on disconnect.
 
 ---
 
@@ -35,7 +36,7 @@ Tokens can be passed using any of the following 3 formats:
 
 #### Format A: Query Parameter (Most convenient for web clients)
 ```http
-GET /api/v1/ws?token=your_secret_api_token_here HTTP/1.1
+GET /api/v1/ws?token=sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368eae HTTP/1.1
 Host: localhost:45321
 Upgrade: websocket
 Connection: Upgrade
@@ -43,17 +44,34 @@ Connection: Upgrade
 
 #### Format B: Subprotocol Header (Standard browser WebSocket API)
 ```javascript
-const token = 'your_secret_api_token_here';
+const token = 'sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368eae';
 const socket = new WebSocket('ws://localhost:45321/api/v1/ws', [`bearer.${token}`]);
 ```
 
 #### Format C: Request Header
 ```http
-X-API-Key: your_secret_api_token_here
+X-API-Key: sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368eae
 ```
 
 > [!CAUTION]
 > **Cross-Site WebSocket Hijacking (CSWSH) Guard**: WebSockets originating from browser origins (carrying an `Origin` header) will be rejected with HTTP 403 unless a valid auth token is supplied.
+>
+> **requireLocalToken Enforcement**: When `requireLocalToken = true` is enabled in GUI, anonymous localhost connections without a valid token are rejected with `HTTP 401 Unauthorized`.
+
+---
+
+## ⚡ Disconnect & Reactive Revocation Status Codes
+
+When a WebSocket connection closes, Solaris transmits precise status codes and reason strings:
+
+| Close Code | Reason String | Trigger Condition |
+| :--- | :--- | :--- |
+| `1000` | Normal Closure | Client gracefully disconnected. |
+| `1001` | `Solaris API Server Stopping` | Host user turned off Control API server in GUI. |
+| `1008` | `Slow Consumer OOM Guard` | Pending frame queue exceeded 512 KB memory limit. |
+| `4001` | `Key Revoked` | Host user deleted the API key associated with this connection. |
+| `4001` | `Token Regenerated` | Host user regenerated the secret token for this key. |
+| `4001` | `Local Auth Required` | Host user enabled `requireLocalToken = true` while an anonymous socket was open. |
 
 ---
 
@@ -93,13 +111,14 @@ Solaris sends a periodic heartbeat ping frame every **30 seconds**:
 ```json
 {
   "type": "ping",
-  "timestamp": "2026-07-25T03:00:00.000Z"
+  "timestamp": "2026-07-25T14:30:00.000Z"
 }
 ```
-Clients may respond with a pong frame or rely on socket TCP keep-alive:
+Clients may respond with a pong frame or send application-level pings:
 ```json
 {
-  "type": "pong"
+  "type": "pong",
+  "timestamp": "2026-07-25T14:30:00.000Z"
 }
 ```
 
@@ -119,52 +138,65 @@ Clients can send commands over the WebSocket connection using the `command` type
 ```json
 {
   "type": "command",
-  "cmd_id": "req_1001",
+  "cmd_id": "ws-cmd-001",
   "action": "set_brightness",
   "value": 90.0,
-  "monitor_id": "lg-ultragear-a1f9"
+  "monitor_id": "display-1"
 }
 ```
 
-### Response Frame Schema:
-Solaris responds with a `command_result` frame matching the client's `cmd_id`:
+### Response Frame Schema (`type: "response"`):
+Solaris responds with a `response` frame matching the client's `cmd_id`:
 
 #### Success Response:
 ```json
 {
-  "type": "command_result",
-  "cmd_id": "req_1001",
+  "type": "response",
+  "cmd_id": "ws-cmd-001",
   "status": "ok",
   "action": "set_brightness",
-  "data": {
+  "applied": {
     "value": 90.0,
-    "monitor_id": "lg-ultragear-a1f9"
-  }
+    "monitor_id": "display-1"
+  },
+  "error": null,
+  "message": null
 }
 ```
 
 #### Error Response (Validation Failure):
 ```json
 {
-  "type": "command_result",
-  "cmd_id": "req_1001",
+  "type": "response",
+  "cmd_id": "ws-cmd-001",
   "status": "error",
-  "error": {
-    "status": 422,
-    "title": "Validation Error",
-    "detail": "Field 'value' must be a number between 0.0 and 100.0."
-  }
+  "action": "set_brightness",
+  "error": "Validation Error",
+  "message": "Field 'value' must be a number between 0.0 and 100.0."
 }
 ```
 
 #### Error Response (Forbidden by Granular Permissions / Read-Only):
 ```json
 {
-  "type": "command_result",
-  "cmd_id": "req_1001",
+  "type": "response",
+  "cmd_id": "ws-cmd-001",
   "status": "error",
+  "action": "set_brightness",
   "error": "Forbidden",
   "message": "Action category \"monitors\" is disabled in API permissions settings."
+}
+```
+
+#### Error Response (Privilege Escalation Guard):
+```json
+{
+  "type": "response",
+  "cmd_id": "ws-cmd-esc",
+  "status": "error",
+  "action": "set_brightness",
+  "error": "Forbidden",
+  "message": "Modifying API permissions or keys via WebSocket commands is strictly prohibited."
 }
 ```
 
@@ -189,6 +221,14 @@ By default, newly connected WebSocket clients receive updates across all module 
 }
 ```
 
+### Confirmation Frame (`type: "subscribed"`):
+```json
+{
+  "type": "subscribed",
+  "active_modules": ["solar", "monitors"]
+}
+```
+
 ### Unsubscribe Frame Example:
 ```json
 {
@@ -210,7 +250,7 @@ If a client attempts to subscribe to a module whose read flag is disabled (e.g. 
 ### Dynamic Runtime Subscription Revocation (`subscription_revoked`)
 If the host user toggles an API permission flag OFF in the Flutter GUI (`ApiPermissionsDialog`) while WebSocket clients are connected:
 1. `WebSocketService` detects the setting change via `ref.listen(settingsProvider)`.
-2. A **synchronous atomic audit** is performed over `_subscriptionsPerClient`.
+2. A **synchronous atomic audit** is performed over active subscription contexts.
 3. The disabled module topic is revoked from active subscription sets.
 4. Solaris transmits a `subscription_revoked` frame to affected clients **without closing the WebSocket connection**:
 
@@ -273,3 +313,4 @@ Hardware DDC/CI Read/Write Failure Broadcast:
   }
 }
 ```
+

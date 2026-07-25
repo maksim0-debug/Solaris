@@ -34,14 +34,14 @@ This document provides a comprehensive REST endpoint reference for **Solaris Con
 Lightweight health check endpoint. Useful for liveness probes, load balancers, and status pinging.
 
 * **Authentication**: Not required / Optional.
-* **Granular Security Note**: This endpoint is a public **Liveness Probe**. It remains **100% accessible** under all security configurations, even when `isReadOnly = true` or all read flags are disabled.
+* **Granular Security Note**: This endpoint is a public **Liveness Probe**. It remains **100% accessible** under all security configurations, even when `isReadOnly = true`, `requireLocalToken = true`, or all read flags are disabled.
 * **Response (HTTP 200 OK)**:
 ```json
 {
   "status": "ok",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "uptime_seconds": 14250,
-  "timestamp": "2026-07-25T03:00:00.000Z"
+  "timestamp": "2026-07-25T14:30:00.000Z"
 }
 ```
 
@@ -50,7 +50,7 @@ Lightweight health check endpoint. Useful for liveness probes, load balancers, a
 ### 2. `GET /api/v1/status`
 Returns the complete application state graph: connected monitors, hardware brightness/temperature readings, active presets, solar elevation/azimuth, weather adjustments, sleep tracking engine status, smart circadian state, and LAN API server configuration.
 
-* **Authentication**: Required (`X-API-Key` or `Authorization: Bearer`).
+* **Authentication**: Required (`X-API-Key` or `Authorization: Bearer`). If `requireLocalToken = true` is enabled in GUI, requests without a token (even on `127.0.0.1`) return `HTTP 401 Unauthorized`.
 * **Granular Masking Rules (`ApiPermissionsFilter`)**:
   * If `allowReadMonitors = false`: Root section `monitors` is completely omitted.
   * If `allowReadSolar = false`: Root section `solar` is omitted.
@@ -63,16 +63,16 @@ Returns the complete application state graph: connected monitors, hardware brigh
 * **Response (HTTP 200 OK)**:
 ```json
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "uptime_seconds": 14250,
-  "timestamp": "2026-07-25T03:00:00.000Z",
+  "timestamp": "2026-07-25T14:30:00.000Z",
   "monitors": [
     {
       "id": "\\\\.\\DISPLAY1",
       "name": "LG UltraGear 27GP850",
       "friendly_name": "LG UltraGear A1F9",
-      "slug": "lg-ultragear-a1f9",
-      "device_id_hash": "a1f9b3c4...",
+      "slug": "display-1",
+      "hardware_slug": "lg-ultragear-a1f9",
       "is_primary": true,
       "brightness": {
         "current": 80,
@@ -117,17 +117,16 @@ Returns the complete application state graph: connected monitors, hardware brigh
     "is_sleeping": false,
     "last_session_end": "2026-07-24T06:30:00.000Z"
   },
-  "gaming_mode": {
-    "is_active": false,
-    "active_process": null
+  "automation": {
+    "auto_brightness": true,
+    "auto_temperature": true,
+    "game_mode": false
   },
   "smart_circadian": {
     "enabled": true,
-    "wind_down_active": false,
-    "sleep_pressure": 0.35,
-    "sleep_debt_minutes": 12
+    "current_phase": "day"
   },
-  "api_server": {
+  "server": {
     "port": 45321,
     "lan_access_enabled": false
   }
@@ -205,7 +204,7 @@ Returns paginated sleep tracking sessions stored in the SQLite database.
 Solaris Control API features a **Friendly Slug Resolver** (`MonitorSlugResolver`) allowing monitors to be targeted by easy-to-read identifiers instead of long Windows device paths (`\\\\.\\DISPLAY1`).
 
 ### Supported Slug Matchers:
-1. **Ordinal Slugs**: `display-1`, `display-2`, `display-3`
+1. **Ordinal Slugs**: `display-1`, `display-2`, `display-3` (Recommended)
 2. **Friendly Name Slugs**: `lg-ultragear-a1f9`, `dell-u2720q-e34b` (Generated from Monitor Name + 4-char Device ID hash)
 3. **Keyword Slugs**: `primary`, `main` (Resolves to primary display), `all` (Targets all displays).
 
@@ -225,10 +224,39 @@ Returns detailed status for a single monitor identified by `:slug` (e.g. `displa
 ---
 
 ### 3. Point-Mutation Endpoints
-* **`POST /api/v1/monitors/:slug/brightness`**: Body `{"brightness": 75.0}`
-* **`POST /api/v1/monitors/:slug/temperature`**: Body `{"temperature": 5000}`
+
+> [!IMPORTANT]
+> **Payload Field Name**: Point-mutation endpoints require the field name **`"value"`** (number). Passing `"brightness"` or `"temperature"` as key name will result in `HTTP 400 Bad Request`.
+
+* **`POST /api/v1/monitors/:slug/brightness`**: Body `{"value": 75.0}` (double, `0.0..100.0`)
+* **`POST /api/v1/monitors/:slug/temperature`**: Body `{"value": 5000}` (integer Kelvin, `3300..6500`)
 * **`POST /api/v1/monitors/:slug/control`**: Executes an action command targeting `:slug`. Alias for `POST /api/v1/control` with `monitor_id` pre-filled.
 * **Granular Security**: Blocked with `HTTP 403 Forbidden` if `isReadOnly = true` or if category `monitors` is disabled in `allowedCategories`.
+
+#### Example Request:
+```http
+POST /api/v1/monitors/display-1/brightness HTTP/1.1
+Content-Type: application/json
+X-API-Key: sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368eae
+
+{
+  "value": 70.0
+}
+```
+
+#### Example Response (HTTP 202 Accepted):
+```json
+{
+  "status": "accepted",
+  "action": "set_monitor_brightness",
+  "slug": "display-1",
+  "target_monitor": "\\\\.\\DISPLAY1",
+  "queued": {
+    "value": 70.0
+  },
+  "timestamp": "2026-07-25T14:30:00.000Z"
+}
+```
 
 ---
 
@@ -546,7 +574,8 @@ Clears dead-letter queue (DLQ) entries for a specific webhook ID.
 
 ### Webhook Management (`/api/v1/webhooks*`)
 * `GET /api/v1/webhooks`, `GET /api/v1/webhooks/dlq`: Requires category `system` in `allowedCategories`.
-* `POST /api/v1/webhooks`, `DELETE /api/v1/webhooks/:id`, `POST /api/v1/webhooks/:id/test`, `POST /api/v1/webhooks/dlq/retry`: Requires `isReadOnly = false` AND category `system`. Rejects with `HTTP 403 Forbidden` if restricted.
+* `POST /api/v1/webhooks`: Creates webhook. Response: `HTTP 201 Created` with body `{"status": "created", "webhook": {...}}`.
+* `DELETE /api/v1/webhooks/:id`, `POST /api/v1/webhooks/:id/test`, `POST /api/v1/webhooks/dlq/retry`: Requires `isReadOnly = false` AND category `system`. Rejects with `HTTP 403 Forbidden` if restricted.
 
 ### Legacy Sleep Endpoints (`/api/sleep/*`)
 * `GET /api/sleep/status`: Requires `allowReadSleep = true`.

@@ -1,6 +1,6 @@
 # Solaris Control API v1 — Architecture & Core Guide
 
-Welcome to the official developer documentation for **Solaris Control API v1**. This document covers the high-level architecture, security layer, authentication schemes, **Granular Security & Data Privacy Framework**, RFC 7807 error format, rate-limiting, and interactive OpenAPI documentation for Solaris.
+Welcome to the official developer documentation for **Solaris Control API v1**. This document covers the high-level architecture, security layer, **Multiple Scoped API Keys Architecture**, authentication schemes, **Granular Security & Data Privacy Framework**, RFC 7807 error format, rate-limiting, and interactive OpenAPI documentation for Solaris.
 
 ---
 
@@ -10,8 +10,9 @@ Welcome to the official developer documentation for **Solaris Control API v1**. 
 
 ### Key Architecture Features
 * **Zero External Dependencies**: Built directly on `dart:io` `HttpServer` with zero third-party HTTP framework dependencies.
+* **Multiple Scoped API Keys Architecture**: Granular per-client authentication keys (`ApiKeyEntry`) with individual names, access scope configurations (`ApiPermissionsConfig`), and DPAPI token security.
 * **Asynchronous Trie-Router**: Fast path-segment matching with support for dynamic path variables (e.g. `:slug`).
-* **7-Layer Defense & Isolation Pipeline**: Built-in protection against Host Header Spoofing/DNS Rebinding, Payload Buffer Overflows, Unsupported Media Types, CSWSH (Cross-Site WebSocket Hijacking), Drive-by attacks, and **Granular Zero-Trust ACL Isolation**.
+* **8-Layer Defense & Isolation Pipeline**: Built-in protection against Host Header Spoofing/DNS Rebinding, Payload Buffer Overflows, Unsupported Media Types, CSWSH (Cross-Site WebSocket Hijacking), Drive-by attacks, and **Granular Zero-Trust ACL Isolation**.
 * **Headless-Safe Execution (`safeStateMutator`)**: State mutations are deferred via `Future.microtask()` to avoid Flutter widget rendering cycle conflicts (`setState() or markNeedsBuild() called during build`).
 * **OpenAPI 3.0.3 Spec & Swagger UI**: Built-in Swagger UI interactive playground hosted at `/api/v1/docs` with dynamic permission status annotations.
 
@@ -19,16 +20,24 @@ Welcome to the official developer documentation for **Solaris Control API v1**. 
 
 ## 🔒 Network Modes & Security Architecture
 
-Solaris Control API can operate in two distinct binding modes configurable via the application settings:
+Solaris Control API can operate in two distinct binding modes configurable via application settings:
 
 1. **Localhost Only (Default)**: Bound strictly to loopback interfaces (`127.0.0.1`, `::1`). No external LAN traffic is accepted.
 2. **LAN Access Mode**: Bound to `0.0.0.0` or `::` (all network interfaces).
    * Automatically configures Windows Defender Firewall rules via `WindowsFirewallService` with a 3-stage UAC elevation fallback (`netsh` direct -> `powershell -Verb RunAs` -> fallback).
    * All old rules with prefix `Solaris_Control_API_*` are automatically pruned prior to rule updates.
 
-### 7-Layer Defense Pipeline
+### Local Authorization Requirement (`requireLocalToken`)
+By default, anonymous requests from loopback (`127.0.0.1`) are permitted if no key authentication is required. When **"Require Authorization for Local Requests"** (`requireLocalToken = true`) is enabled in the host GUI:
+* ALL incoming HTTP and WebSocket requests (including localhost `127.0.0.1`) MUST supply a valid API key token.
+* Requests without a token are rejected immediately with `HTTP 401 Unauthorized`.
+* Public liveness probe `GET /api/v1/health` remains **100% unrestricted** under all configurations.
 
-Every HTTP and WebSocket request flows sequentially through 7 security layers:
+---
+
+### 8-Layer Defense Pipeline
+
+Every HTTP and WebSocket request flows sequentially through 8 security layers:
 
 ```
 [ Incoming Request ]
@@ -52,10 +61,10 @@ Every HTTP and WebSocket request flows sequentially through 7 security layers:
  6. LruCache Rate Limiter (Per-IP token bucket rate limiting, default 120 req/min)
          │
          ▼
- 7. Constant-Time Auth Guard (Constant-time SHA-256 token comparison)
+ 7. Constant-Time Auth & requireLocalToken Guard (Constant-time SHA-256 token lookup via constantTimeEquals)
          │
          ▼
- 8. Granular ACL & Data Privacy Guard (ApiPermissionsChecker & ApiPermissionsFilter)
+ 8. Granular ACL & Data Privacy Guard (ApiPermissionsChecker & ApiPermissionsFilter per-key scoping)
          │
          ▼
 [ Route Handler / Controller ]
@@ -65,7 +74,7 @@ Every HTTP and WebSocket request flows sequentially through 7 security layers:
 
 ## 🛡️ Granular Security & Data Privacy Access Control Framework
 
-Solaris Control API v1 incorporates an enterprise-grade Zero-Trust access control system (`ApiPermissionsConfig`) configured locally via the Flutter GUI (`ApiPermissionsDialog`).
+Solaris Control API v1 incorporates an enterprise-grade Zero-Trust access control system (`ApiPermissionsConfig`) configured locally per-key via the Flutter GUI (`ApiKeysManagementDialog` & `ApiPermissionsDialog`).
 
 ### 1. Data Sharing Flags (Read Permissions)
 Controls visibility of telemetry and subsystem data in `GET /api/v1/status`, queries, and WebSocket streaming:
@@ -89,7 +98,7 @@ Mutating commands (`POST /api/v1/control`, point-mutations, webhooks, and WebSoc
 7. `system`: System animations, failed webhook management (`clear_failed_webhooks`, `set_map_animations`).
 
 ### 3. Read-Only Mode (`isReadOnly`)
-When `isReadOnly = true` is enabled in the host GUI:
+When `isReadOnly = true` is enabled for a specific key or globally:
 * ALL mutation attempts (`POST /api/v1/control`, `POST /api/v1/monitors/:slug/*`, `POST /api/v1/webhooks*`, `POST /api/sleep/*`) are immediately rejected with `HTTP 403 Forbidden` (`Read-Only Mode Enabled`).
 * Public liveness probe `GET /api/v1/health` remains 100% accessible.
 
@@ -100,33 +109,69 @@ To prevent external API clients or WebSocket payloads from tampering with permis
 
 ---
 
-## 🔑 Authentication
+## 🔑 Multiple Scoped API Keys System
 
-Authentication uses an **API Access Token** generated in the Solaris GUI (Settings -> API Keys).
+Solaris manages access tokens through a **Multiple Scoped API Keys System** (`ApiKeyEntry`). Each key possesses an isolated security context and granular scope.
+
+### Key Attributes (`ApiKeyEntry`)
+* `id`: Unique string identifier (e.g. `key_1721800000123`).
+* `name`: Custom human-readable label (e.g. `"Home Assistant Key"`, `"Stream Deck"`). Max 50 chars, auto-trimmed.
+* `token`: Cryptographically secure random token starting with prefix `sol_sec_` (68 characters total).
+* `createdAt`: UTC timestamp of creation.
+* `lastUsedAt`: UTC timestamp of most recent successful request execution.
+* `permissions`: Independent `ApiPermissionsConfig` instance controlling read flags and mutation categories.
+
+### Single Key Protection Guard
+To prevent accidental total lockout, Solaris enforces a strict Single Key Protection Guard:
+* The system WILL NOT allow deleting or revoking the sole remaining API key in the application.
+* Attempts to delete the final key via Notifier or GUI are rejected with `SingleKeyProtectionException`, and the delete icon 🗑️ is disabled in the GUI.
+
+### Windows DPAPI Storage & Fallback Banner
+* On Windows, API keys are encrypted at rest using DPAPI (`crypt32.dll`) via `win32` API bindings.
+* If a Windows user password change prevents DPAPI decryption, Solaris safely regenerates fallback key structures and displays an un-dismissible orange warning banner (`ApiSettingsCard`) until acknowledged by the user.
+
+---
+
+## 🌐 Passing Auth Tokens
 
 Tokens can be passed using any of the following standard methods:
 
 ### 1. HTTP Request Header (Recommended for REST)
 ```http
-X-API-Key: your_secret_api_token_here
+X-API-Key: sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368eae
 ```
 or standard HTTP Bearer token:
 ```http
-Authorization: Bearer your_secret_api_token_here
+Authorization: Bearer sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368eae
 ```
 
 ### 2. URL Query Parameter (Recommended for WebSocket / Simple Scripts)
 ```http
-GET /api/v1/status?token=your_secret_api_token_here HTTP/1.1
+GET /api/v1/status?token=sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368eae HTTP/1.1
 ```
 
 ### 3. WebSocket Subprotocol Header
 ```http
-Sec-WebSocket-Protocol: bearer.your_secret_api_token_here
+Sec-WebSocket-Protocol: bearer.sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368eae
 ```
 
 > [!IMPORTANT]
-> **Constant-Time Verification**: Auth checks perform a SHA-256 `constantTimeEquals` hash comparison to protect against timing side-channel attacks. Rejections trigger HTTP 401 Unauthorized responses.
+> **Constant-Time Verification**: Auth checks perform a SHA-256 `constantTimeEquals` hash comparison across all stored keys to protect against timing side-channel attacks. Rejections trigger `HTTP 401 Unauthorized` responses.
+
+---
+
+## ⚡ WebSocket Disconnect & Revocation Status Codes
+
+When WebSocket sessions end, Solaris transmits explicit status codes:
+
+| Code | Reason String | Trigger Condition |
+| :--- | :--- | :--- |
+| `1000` | Normal Closure | Client gracefully disconnected. |
+| `1001` | `Solaris API Server Stopping` | Host user turned off Control API server in GUI. |
+| `1008` | `Slow Consumer OOM Guard` | Unconsumed client frame buffer exceeded 512 KB threshold. |
+| `4001` | `Key Revoked` | Host user revoked/deleted the key associated with this connection. |
+| `4001` | `Token Regenerated` | Host user regenerated the secret token for this key. |
+| `4001` | `Local Auth Required` | Host user enabled `requireLocalToken = true` while an anonymous socket was open. |
 
 ---
 
@@ -134,14 +179,15 @@ Sec-WebSocket-Protocol: bearer.your_secret_api_token_here
 
 All non-2xx responses from Solaris Control API return `application/problem+json` formatted strictly according to [RFC 7807 (Problem Details for HTTP APIs)](https://tools.ietf.org/html/rfc7807).
 
-### Error Schema
+### Error Schema Example
 ```json
 {
   "type": "https://solaris.local/errors/access-denied",
   "title": "Action Category Prohibited",
   "status": 403,
   "detail": "Action category \"gaming\" is disabled in API permissions settings.",
-  "instance": "/api/v1/control"
+  "instance": "/api/v1/control",
+  "timestamp": "2026-07-25T14:30:00.000Z"
 }
 ```
 
@@ -149,8 +195,8 @@ All non-2xx responses from Solaris Control API return `application/problem+json`
 
 | HTTP Status | Error Type Slug | Description |
 | :--- | :--- | :--- |
-| `400 Bad Request` | `/errors/bad-request` | Invalid JSON syntax or unparseable payload structure. |
-| `401 Unauthorized` | `/errors/unauthorized` | Missing, empty, or invalid API access token. |
+| `400 Bad Request` | `/errors/bad-request` | Invalid JSON syntax or missing required field (e.g. `'value'`). |
+| `401 Unauthorized` | `/errors/unauthorized` | Missing, empty, or invalid API access token (or `requireLocalToken` enforced). |
 | `403 Forbidden` | `/errors/access-denied` | Mutation disabled by Read-Only mode, category prohibited, or Privilege Escalation Guard. |
 | `403 Forbidden` | `/errors/drive-by-blocked` | Untrusted Origin/Referer header without valid API token (Drive-by protection). |
 | `404 Not Found` | `/errors/not-found` | Unknown endpoint or requested monitor slug/ID was not found. |
