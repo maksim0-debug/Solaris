@@ -30,7 +30,7 @@ void main() {
   }
 
   void configureLargeScreen(WidgetTester tester) {
-    tester.view.physicalSize = const Size(1280, 1600);
+    tester.view.physicalSize = const Size(1280, 2400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
       tester.view.resetPhysicalSize();
@@ -218,11 +218,15 @@ void main() {
       final gamingTile = find.widgetWithText(CheckboxListTile, 'Game Mode & App Whitelists');
       final systemTile = find.widgetWithText(CheckboxListTile, 'System Actions (Webhooks, Animations)');
 
+      await tester.ensureVisible(gamingTile);
       await tester.tap(gamingTile);
+      await tester.ensureVisible(systemTile);
       await tester.tap(systemTile);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Save'));
+      final saveBtn = find.text('Save');
+      await tester.ensureVisible(saveBtn);
+      await tester.tap(saveBtn);
       await tester.pumpAndSettle();
 
       expect(result, isNotNull);
