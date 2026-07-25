@@ -43,6 +43,7 @@ void main() {
       });
 
       client = HttpClient();
+      await container.read(settingsProvider.future);
     });
 
     tearDown(() async {
@@ -68,7 +69,7 @@ void main() {
       expect(json['action'], equals('set_brightness'));
       expect(json['queued']['value'], equals(75.0));
 
-      await Future.microtask(() {});
+      await Future<void>.delayed(const Duration(milliseconds: 50));
       final isAutoBr = container.read(autoBrightnessAdjustmentProvider);
       expect(isAutoBr, isFalse);
     });

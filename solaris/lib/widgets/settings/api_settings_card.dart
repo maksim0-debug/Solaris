@@ -7,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/widgets/glass_card.dart';
+import 'package:solaris/widgets/settings/api_permissions_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Interactive Flutter GUI Card for managing Solaris Control API, Key Authentication & LAN Firewall.
@@ -80,6 +81,7 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
         final isLanEnabled = settings.isApiLanAccessEnabled;
         final port = settings.apiServerPort;
         final token = settings.apiAccessToken;
+        final permissions = settings.apiPermissions;
 
         if (_portController.text != port.toString()) {
           _portController.text = port.toString();
@@ -441,6 +443,71 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                           );
                         }
                       },
+                    ),
+                  ],
+                ),
+
+                const Divider(height: 32, color: Colors.white10),
+
+                // Granular API Permissions Security Section
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.apiPermissionsDialogTitle,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white70,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            permissions.isReadOnly
+                                ? l10n.apiPermissionsSummaryReadOnly
+                                : l10n.apiPermissionsSummaryCustom(
+                                    permissions.allowedCategories.length,
+                                  ),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: permissions.isReadOnly
+                                  ? const Color(0xFFEF4444)
+                                  : const Color(0xFF4ADE80),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        showApiPermissionsDialog(
+                          context,
+                          initialConfig: permissions,
+                        );
+                      },
+                      icon: const Icon(LucideIcons.shieldCheck, size: 15, color: Color(0xFFFDBA74)),
+                      label: Text(
+                        l10n.apiPermissionsConfigureButton,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: Colors.white.withOpacity(0.05),
+                        side: BorderSide(color: const Color(0xFFFDBA74).withOpacity(0.3)),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 14,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
                     ),
                   ],
                 ),
