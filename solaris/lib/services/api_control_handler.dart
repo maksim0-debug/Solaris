@@ -11,6 +11,7 @@ import 'package:solaris/providers.dart';
 import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/providers/sleep_provider.dart';
 import 'package:solaris/services/api_permissions_checker.dart';
+import 'package:solaris/services/api_router.dart';
 import 'package:solaris/services/monitor_slug_resolver.dart';
 
 /// Safe Riverpod state mutation outside Flutter frame rendering phase.
@@ -27,16 +28,38 @@ Future<void> safeStateMutator(VoidCallback mutation) async {
   return completer.future;
 }
 
+/// Helper to detect privilege escalation reserved fields in payloads
+bool containsPrivilegeEscalationKeys(Map<String, dynamic> map) {
+  return map.containsKey('apiKeys') ||
+      map.containsKey('apiKey') ||
+      map.containsKey('apiPermissions') ||
+      map.containsKey('permissions');
+}
+
 /// Handler for POST /api/v1/control
 class ApiControlHandler {
   final ProviderContainer _container;
 
   ApiControlHandler(this._container);
 
+  ApiPermissionsConfig _getPermissions([HttpRequest? request]) {
+    if (request != null && request.attachedPermissions != null) {
+      return request.attachedPermissions!;
+    }
+    final settingsMap = _container.read(settingsProvider).value ??
+        _container.read(settingsProvider).asData?.value;
+    final globalSettings = settingsMap?['all'];
+    if (globalSettings != null && globalSettings.apiKeys.isNotEmpty) {
+      return globalSettings.apiKeys.first.permissions;
+    }
+    return globalSettings?.apiPermissions ?? const ApiPermissionsConfig();
+  }
+
   Future<void> handleControl(
     HttpRequest request,
     Map<String, String> pathParams,
   ) async {
+    final permissions = _getPermissions(request);
     try {
       final String content = await utf8.decoder.bind(request).join();
       if (content.trim().isEmpty) {
@@ -61,11 +84,11 @@ class ApiControlHandler {
       }
 
       if (jsonPayload.containsKey('actions') && jsonPayload['actions'] is List) {
-        await _handleBatchControl(request, jsonPayload);
+        await _handleBatchControl(request, jsonPayload, permissions);
         return;
       }
 
-      final actionResult = await _executeSingleAction(jsonPayload);
+      final actionResult = await _executeSingleAction(jsonPayload, permissions);
       if (actionResult.isError) {
         await _sendError(
           request,
@@ -95,17 +118,20 @@ class ApiControlHandler {
     }
   }
 
-  ApiPermissionsConfig _getPermissions() {
-    final settingsMap = _container.read(settingsProvider).value ??
-        _container.read(settingsProvider).asData?.value;
-    return settingsMap?['all']?.apiPermissions ?? const ApiPermissionsConfig();
-  }
-
   Future<void> _handleBatchControl(
     HttpRequest request,
     Map<String, dynamic> jsonPayload,
+    ApiPermissionsConfig permissions,
   ) async {
-    final permissions = _getPermissions();
+    if (containsPrivilegeEscalationKeys(jsonPayload)) {
+      await _sendError(
+        request,
+        HttpStatus.forbidden,
+        'Privilege Escalation Prohibited',
+        'Modifying API permissions or keys via mutation endpoints is strictly prohibited.',
+      );
+      return;
+    }
 
     final roCheck = ApiPermissionsChecker.checkReadOnly(permissions);
     if (!roCheck.isAllowed) {
@@ -126,12 +152,12 @@ class ApiControlHandler {
       for (int i = 0; i < rawActions.length; i++) {
         final actionItem = rawActions[i];
         if (actionItem is Map<String, dynamic>) {
-          if (actionItem.containsKey('apiPermissions') || actionItem.containsKey('permissions')) {
+          if (containsPrivilegeEscalationKeys(actionItem)) {
             await _sendError(
               request,
               HttpStatus.forbidden,
               'Privilege Escalation Prohibited',
-              'Modifying API permissions via mutation endpoints is strictly prohibited.',
+              'Modifying API permissions or keys via mutation endpoints is strictly prohibited.',
             );
             return;
           }
@@ -169,7 +195,7 @@ class ApiControlHandler {
         continue;
       }
 
-      final res = await _executeSingleAction(actionItem);
+      final res = await _executeSingleAction(actionItem, permissions);
       results.add({'index': i, ...res.toResponseBody()});
 
       if (!res.isError) {
@@ -196,21 +222,25 @@ class ApiControlHandler {
   }
 
   /// Public wrapper for executing a control action (used by WebSocket, etc.)
-  Future<Map<String, dynamic>> executeAction(Map<String, dynamic> payload) async {
-    final result = await _executeSingleAction(payload);
+  Future<Map<String, dynamic>> executeAction(
+    Map<String, dynamic> payload, {
+    required ApiPermissionsConfig permissions,
+  }) async {
+    final result = await _executeSingleAction(payload, permissions);
     return result.toResponseBody();
   }
 
-  Future<_ActionResult> _executeSingleAction(Map<String, dynamic> payload) async {
-    if (payload.containsKey('apiPermissions') || payload.containsKey('permissions')) {
+  Future<_ActionResult> _executeSingleAction(
+    Map<String, dynamic> payload,
+    ApiPermissionsConfig permissions,
+  ) async {
+    if (containsPrivilegeEscalationKeys(payload)) {
       return _ActionResult.error(
         HttpStatus.forbidden,
         'Privilege Escalation Prohibited',
-        'Modifying API permissions via mutation endpoints is strictly prohibited.',
+        'Modifying API permissions or keys via mutation endpoints is strictly prohibited.',
       );
     }
-
-    final permissions = _getPermissions();
 
     final roCheck = ApiPermissionsChecker.checkReadOnly(permissions);
     if (!roCheck.isAllowed) {

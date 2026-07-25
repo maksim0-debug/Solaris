@@ -25,6 +25,7 @@ void main() {
       serverUrl = 'http://localhost:${server.port}';
 
       router = ApiRouter();
+      router.use((req) => authMiddleware(req, router));
       final statusHandler = ApiStatusHandler(container);
       final monitorsHandler = ApiMonitorsHandler(container);
 
@@ -49,6 +50,10 @@ void main() {
 
       client = HttpClient();
       await container.read(settingsProvider.future);
+      final globalState = container.read(settingsProvider).value?['all'];
+      if (globalState != null) {
+        router.apiKeys = globalState.apiKeys;
+      }
     });
 
     tearDown(() async {
@@ -60,6 +65,10 @@ void main() {
 
     void updatePermissions(ApiPermissionsConfig permissions) {
       container.read(settingsProvider.notifier).updateApiPermissions(permissions);
+      final globalState = container.read(settingsProvider).value?['all'];
+      if (globalState != null) {
+        router.apiKeys = globalState.apiKeys;
+      }
     }
 
     group('A. BDD Behavioral Scenarios — Status & Query Read Protection', () {

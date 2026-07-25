@@ -21,6 +21,7 @@ import 'package:solaris/services/autorun_service.dart';
 import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/models/solar_state.dart';
 import 'package:solaris/models/current_day_phase.dart';
+import 'package:solaris/models/api_key_entry.dart';
 import 'package:solaris/models/api_permissions_config.dart';
 import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/models/webhook_config.dart';
@@ -1181,6 +1182,7 @@ final settingsErrorProvider =
 class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   static const _settingsFilename = 'monitor_settings.json';
   Timer? _saveTimer;
+  final Map<String, DateTime> _lastTouchCache = {};
 
   @override
   Future<Map<String, SettingsState>> build() async {
@@ -1270,7 +1272,9 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   Future<void> _saveSettings() async {
     _saveTimer?.cancel();
     _saveTimer = Timer(const Duration(milliseconds: 300), () {
+      if (!ref.mounted) return;
       state.whenData((currentMap) async {
+        if (!ref.mounted) return;
         final storage = ref.read(storageServiceProvider);
         final encoded = currentMap.map(
           (key, value) => MapEntry(key, value.toJson()),
@@ -1402,7 +1406,16 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   }
 
   void updateApiPermissions(ApiPermissionsConfig config) {
-    _updateSettings({'all'}, (s) => s.copyWith(apiPermissions: config));
+    _updateSettings({'all'}, (s) {
+      final currentKeys = List<ApiKeyEntry>.from(s.apiKeys);
+      if (currentKeys.isNotEmpty) {
+        currentKeys[0] = currentKeys.first.copyWith(permissions: config);
+      }
+      return s.copyWith(
+        apiPermissions: config,
+        apiKeys: currentKeys,
+      );
+    });
   }
 
   void updateWeatherProvider(WeatherProvider provider) {
@@ -1535,6 +1548,86 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
       {'all'},
       (s) => s.copyWith(apiAccessToken: token),
     );
+  }
+
+
+  void updateRequireLocalToken(bool enabled) {
+    _updateSettings(
+      {'all'},
+      (s) => s.copyWith(requireLocalToken: enabled),
+    );
+  }
+
+  void addApiKey(ApiKeyEntry entry) {
+    _updateSettings({'all'}, (s) {
+      final currentKeys = List<ApiKeyEntry>.from(s.apiKeys)..add(entry);
+      return s.copyWith(apiKeys: currentKeys);
+    });
+  }
+
+  void updateApiKey(ApiKeyEntry entry) {
+    _updateSettings({'all'}, (s) {
+      final currentKeys = List<ApiKeyEntry>.from(s.apiKeys);
+      final index = currentKeys.indexWhere((k) => k.id == entry.id);
+      if (index != -1) {
+        currentKeys[index] = entry;
+      }
+      return s.copyWith(apiKeys: currentKeys);
+    });
+  }
+
+  bool removeApiKey(String id) {
+    final globalState = state.value?['all'] ?? SettingsState();
+    if (globalState.apiKeys.length <= 1) {
+      debugPrint('SettingsNotifier: Cannot remove the sole remaining API key.');
+      return false; // Guard triggered: prohibit deleting the last remaining key
+    }
+    final currentKeys = globalState.apiKeys.where((k) => k.id != id).toList();
+    _lastTouchCache.remove(id);
+    _updateSettings({'all'}, (s) => s.copyWith(apiKeys: currentKeys));
+    return true;
+  }
+
+  String regenerateApiKeyToken(String id) {
+    final globalState = state.value?['all'] ?? SettingsState();
+    final currentKeys = List<ApiKeyEntry>.from(globalState.apiKeys);
+    final index = currentKeys.indexWhere((k) => k.id == id);
+    if (index != -1) {
+      final newToken = ApiKeyEntry.generateSecureToken();
+      currentKeys[index] = currentKeys[index].copyWith(token: newToken);
+      _lastTouchCache.remove(id);
+      _updateSettings({'all'}, (s) => s.copyWith(apiKeys: currentKeys));
+      return newToken;
+    }
+    return '';
+  }
+
+  void touchApiKeyLastUsed(String id) {
+    if (!ref.mounted) return;
+    final now = DateTime.now();
+    final lastTouch = _lastTouchCache[id];
+    if (lastTouch == null || now.difference(lastTouch).inMinutes >= 5) {
+      _lastTouchCache[id] = now;
+      final globalState = state.value?['all'] ?? SettingsState();
+      final currentKeys = List<ApiKeyEntry>.from(globalState.apiKeys);
+      final index = currentKeys.indexWhere((k) => k.id == id);
+      if (index != -1) {
+        currentKeys[index] = currentKeys[index].copyWith(lastUsedAt: now);
+        if (ref.mounted) {
+          _updateSettings({'all'}, (s) => s.copyWith(apiKeys: currentKeys));
+        }
+      }
+    }
+  }
+
+  void dismissDpapiFallbackWarning(String id) {
+    final globalState = state.value?['all'] ?? SettingsState();
+    final currentKeys = List<ApiKeyEntry>.from(globalState.apiKeys);
+    final index = currentKeys.indexWhere((k) => k.id == id);
+    if (index != -1 && currentKeys[index].isDpapiFallback) {
+      currentKeys[index] = currentKeys[index].copyWith(isDpapiFallback: false);
+      _updateSettings({'all'}, (s) => s.copyWith(apiKeys: currentKeys));
+    }
   }
 
   void updateApiRateLimitPerMinute(int rateLimit) {

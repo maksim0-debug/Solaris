@@ -23,16 +23,24 @@ class ApiStatusHandler {
 
   int get uptimeSeconds => DateTime.now().difference(_startTime).inSeconds;
 
-  ApiPermissionsConfig _getPermissions() {
+  ApiPermissionsConfig _getPermissions([HttpRequest? request]) {
+    if (request != null && request.attachedPermissions != null) {
+      return request.attachedPermissions!;
+    }
     final settingsMap = container.read(settingsProvider).value ??
         container.read(settingsProvider).asData?.value;
-    return settingsMap?['all']?.apiPermissions ?? const ApiPermissionsConfig();
+    final globalSettings = settingsMap?['all'];
+    if (globalSettings != null && globalSettings.apiKeys.isNotEmpty) {
+      return globalSettings.apiKeys.first.permissions;
+    }
+    return globalSettings?.apiPermissions ?? const ApiPermissionsConfig();
   }
 
   /// GET /api/v1/health
   Future<void> handleHealth(HttpRequest request, Map<String, String> pathParams) async {
     final appVersionAsync = container.read(appVersionProvider);
     final version = appVersionAsync.value ?? fallbackAppVersion;
+    final uptimeSeconds = this.uptimeSeconds;
 
     ApiRouter.sendJson(request, HttpStatus.ok, {
       'status': 'ok',
@@ -44,7 +52,7 @@ class ApiStatusHandler {
 
   /// GET /api/v1/status
   Future<void> handleStatus(HttpRequest request, Map<String, String> pathParams) async {
-    final permissions = _getPermissions();
+    final permissions = _getPermissions(request);
 
     final appVersionAsync = container.read(appVersionProvider);
     final version = appVersionAsync.value ?? fallbackAppVersion;
@@ -228,7 +236,7 @@ class ApiStatusHandler {
 
   /// GET /api/v1/solar
   Future<void> handleSolar(HttpRequest request, Map<String, String> pathParams) async {
-    final permissions = _getPermissions();
+    final permissions = request.permissions;
     final check = ApiPermissionsChecker.checkReadFlag(permissions.allowReadSolar, 'solar');
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
@@ -260,7 +268,7 @@ class ApiStatusHandler {
 
   /// GET /api/v1/presets
   Future<void> handlePresets(HttpRequest request, Map<String, String> pathParams) async {
-    final permissions = _getPermissions();
+    final permissions = request.permissions;
     final settings = container.read(settingsProvider).value?['all'];
     final tempSettings = container.read(temperatureSettingsProvider).value?['all'];
 
@@ -303,7 +311,7 @@ class ApiStatusHandler {
 
   /// GET /api/v1/monitors
   Future<void> handleMonitors(HttpRequest request, Map<String, String> pathParams) async {
-    final permissions = _getPermissions();
+    final permissions = request.permissions;
     final check = ApiPermissionsChecker.checkReadFlag(permissions.allowReadMonitors, 'monitors');
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
@@ -327,7 +335,7 @@ class ApiStatusHandler {
 
   /// GET /api/v1/monitors/:slug
   Future<void> handleMonitorBySlug(HttpRequest request, Map<String, String> pathParams) async {
-    final permissions = _getPermissions();
+    final permissions = request.permissions;
     final check = ApiPermissionsChecker.checkReadFlag(permissions.allowReadMonitors, 'monitors');
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
@@ -388,7 +396,7 @@ class ApiStatusHandler {
 
   /// GET /api/v1/sleep/sessions (Paginated)
   Future<void> handleSleepSessions(HttpRequest request, Map<String, String> pathParams) async {
-    final permissions = _getPermissions();
+    final permissions = request.permissions;
     final check = ApiPermissionsChecker.checkReadFlag(permissions.allowReadSleep, 'sleep');
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
     final query = request.uri.queryParameters;
@@ -472,7 +480,7 @@ class ApiStatusHandler {
 
   /// GET /api/v1/openapi.json
   Future<void> handleOpenApiJson(HttpRequest request, Map<String, String> pathParams) async {
-    final permissions = _getPermissions();
+    final permissions = request.permissions;
     final settingsMap = container.read(settingsProvider).value ??
         container.read(settingsProvider).asData?.value;
     final port = settingsMap?['all']?.apiServerPort ?? 45321;

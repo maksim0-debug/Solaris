@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:solaris/models/api_key_entry.dart';
 import 'package:solaris/models/api_permissions_config.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/providers/sleep_provider.dart';
@@ -25,6 +26,8 @@ class WebSocketService {
   final Set<WebSocket> _clients = {};
   final Map<WebSocket, int> _pendingBytesPerClient = {};
   final Map<WebSocket, Set<String>> _subscriptionsPerClient = {};
+  final Map<WebSocket, ApiPermissionsConfig> _clientPermissions = {};
+  final Map<WebSocket, ApiKeyEntry?> _clientKeyEntries = {};
   Timer? _heartbeatTimer;
   Timer? _moduleDebounceTimer;
 
@@ -34,11 +37,6 @@ class WebSocketService {
   }
 
   int get connectedClientsCount => _clients.length;
-
-  ApiPermissionsConfig _getPermissions() {
-    final settingsMap = ref.read(settingsProvider).value;
-    return settingsMap?['all']?.apiPermissions ?? const ApiPermissionsConfig();
-  }
 
   void _startHeartbeat() {
     _heartbeatTimer?.cancel();
@@ -68,13 +66,41 @@ class WebSocketService {
   }
 
   void _setupProviderListeners() {
-    // Listen to API Permissions toggles in runtime for instant synchronous subscription audit
+    // Listen to Settings changes for instant reactive revocation and subscription audits
     ref.listen(settingsProvider, (prev, next) {
-      final prevPerms = prev?.value?['all']?.apiPermissions;
-      final nextPerms = next.value?['all']?.apiPermissions;
+      final prevSettings = prev?.value?['all'];
+      final nextSettings = next.value?['all'];
+      if (nextSettings == null) return;
 
-      if (nextPerms != null && (prevPerms == null || prevPerms != nextPerms)) {
-        _auditSubscriptions(prevPerms, nextPerms);
+      final prevRequireLocal = prevSettings?.requireLocalToken ?? false;
+      final nextRequireLocal = nextSettings.requireLocalToken;
+
+      // 1. Reactive audit for requireLocalToken toggle
+      if (nextRequireLocal && !prevRequireLocal) {
+        for (final ws in _clients.toList()) {
+          if (_clientKeyEntries[ws] == null) {
+            _removeClient(ws, code: 4001, reason: 'Local Auth Required');
+          }
+        }
+      }
+
+      // 2. Reactive audit for client keys
+      final nextKeys = nextSettings.apiKeys;
+      for (final ws in _clients.toList()) {
+        final currentKey = _clientKeyEntries[ws];
+        if (currentKey == null) continue;
+
+        final updatedKey = nextKeys.where((k) => k.id == currentKey.id).firstOrNull;
+        if (updatedKey == null) {
+          _removeClient(ws, code: 4001, reason: 'Key Revoked');
+        } else if (updatedKey.token != currentKey.token) {
+          _removeClient(ws, code: 4001, reason: 'Token Regenerated');
+        } else if (updatedKey.permissions != _clientPermissions[ws]) {
+          final oldPerms = _clientPermissions[ws];
+          _clientPermissions[ws] = updatedKey.permissions;
+          _clientKeyEntries[ws] = updatedKey;
+          _auditSubscriptionsForClient(ws, oldPerms, updatedKey.permissions);
+        }
       }
     });
 
@@ -143,41 +169,40 @@ class WebSocketService {
     });
   }
 
-  void _auditSubscriptions(
+  void _auditSubscriptionsForClient(
+    WebSocket ws,
     ApiPermissionsConfig? prevPerms,
     ApiPermissionsConfig nextPerms,
   ) {
-    for (final ws in _clients.toList()) {
-      final subs = _subscriptionsPerClient[ws];
-      if (subs == null) continue;
+    final subs = _subscriptionsPerClient[ws];
+    if (subs == null) return;
 
-      void checkRevoked(String moduleName, bool wasAllowed, bool isAllowed) {
-        if (wasAllowed && !isAllowed) {
-          final isExplicitlySubscribed = subs.contains(moduleName);
-          final isImplicitlySubscribed = subs.isEmpty;
+    void checkRevoked(String moduleName, bool wasAllowed, bool isAllowed) {
+      if (wasAllowed && !isAllowed) {
+        final isExplicitlySubscribed = subs.contains(moduleName);
+        final isImplicitlySubscribed = subs.isEmpty;
 
-          if (isExplicitlySubscribed || isImplicitlySubscribed) {
-            if (isExplicitlySubscribed) {
-              subs.remove(moduleName);
-            }
-            try {
-              ws.add(jsonEncode({
-                'type': 'subscription_revoked',
-                'module': moduleName,
-              }));
-            } catch (_) {}
+        if (isExplicitlySubscribed || isImplicitlySubscribed) {
+          if (isExplicitlySubscribed) {
+            subs.remove(moduleName);
           }
+          try {
+            ws.add(jsonEncode({
+              'type': 'subscription_revoked',
+              'module': moduleName,
+            }));
+          } catch (_) {}
         }
       }
-
-      final prev = prevPerms ?? const ApiPermissionsConfig();
-      checkRevoked('monitors', prev.allowReadMonitors, nextPerms.allowReadMonitors);
-      checkRevoked('solar', prev.allowReadSolar, nextPerms.allowReadSolar);
-      checkRevoked('weather', prev.allowReadWeather, nextPerms.allowReadWeather);
-      checkRevoked('sleep', prev.allowReadSleep, nextPerms.allowReadSleep);
-      checkRevoked('circadian', prev.allowReadCircadian, nextPerms.allowReadCircadian);
-      checkRevoked('smart_circadian', prev.allowReadCircadian, nextPerms.allowReadCircadian);
     }
+
+    final prev = prevPerms ?? const ApiPermissionsConfig();
+    checkRevoked('monitors', prev.allowReadMonitors, nextPerms.allowReadMonitors);
+    checkRevoked('solar', prev.allowReadSolar, nextPerms.allowReadSolar);
+    checkRevoked('weather', prev.allowReadWeather, nextPerms.allowReadWeather);
+    checkRevoked('sleep', prev.allowReadSleep, nextPerms.allowReadSleep);
+    checkRevoked('circadian', prev.allowReadCircadian, nextPerms.allowReadCircadian);
+    checkRevoked('smart_circadian', prev.allowReadCircadian, nextPerms.allowReadCircadian);
   }
 
   Map<String, dynamic> _buildAutomationData() {
@@ -207,18 +232,20 @@ class WebSocketService {
   /// Upgrade HTTP connection to WebSocket after authenticating and validating CSWSH Guard.
   Future<void> handleUpgrade(
     HttpRequest request, {
-    required String expectedToken,
+    required ApiRouter router,
     required bool isLanEnabled,
   }) async {
     final origin = request.headers.value('origin');
     final referer = request.headers.value('referer');
+    final remoteIp = request.connectionInfo?.remoteAddress.address ?? '';
 
     // 1. CSWSH Guard & Drive-by Origin Check
     bool isLocalHostUri(String? uriStr) {
       if (uriStr == null) return false;
       final uri = Uri.tryParse(uriStr);
       if (uri == null) return false;
-      return uri.host == 'localhost' || uri.host == '127.0.0.1' || uri.host == '::1';
+      final host = uri.host.toLowerCase();
+      return host == 'localhost' || host == '127.0.0.1' || host == '::1';
     }
 
     final hasBrowserOrigin = (origin != null && !isLocalHostUri(origin)) ||
@@ -251,21 +278,33 @@ class WebSocketService {
     token ??= request.headers.value('x-api-key') ??
         request.headers.value('authorization')?.replaceAll('Bearer ', '').trim();
 
-    // Verification check
-    final requiresAuth = isLanEnabled || hasBrowserOrigin || expectedToken.isNotEmpty;
+    final isLoopback = remoteIp == '127.0.0.1' || remoteIp == '::1';
+    final isAnonymousLocalAllowed = isLoopback && !router.requireLocalToken && !hasBrowserOrigin;
 
-    if (requiresAuth) {
-      if (token == null || !constantTimeEquals(token, expectedToken)) {
-        request.response
-          ..statusCode = HttpStatus.unauthorized
-          ..headers.contentType = ContentType.json
-          ..write(jsonEncode({'error': 'Unauthorized: Invalid or missing API key'}));
-        await request.response.close();
-        return;
-      }
+    final matchedKey = (token != null && token.isNotEmpty)
+        ? router.findMatchingKey(token)
+        : null;
+
+    // 1. If token was provided but is invalid -> reject immediately with 401 Unauthorized (even on loopback)
+    if (token != null && token.isNotEmpty && matchedKey == null) {
+      request.response
+        ..statusCode = HttpStatus.unauthorized
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode({'error': 'Unauthorized: Invalid API key provided'}));
+      await request.response.close();
+      return;
     }
 
-    // 3. Client Limit Guard
+    // 2. If no token was provided, check if anonymous local connection is allowed
+    if (matchedKey == null && !isAnonymousLocalAllowed) {
+      request.response
+        ..statusCode = HttpStatus.unauthorized
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode({'error': 'Unauthorized: Missing API key'}));
+      await request.response.close();
+      return;
+    }
+
     if (_clients.length >= maxClients) {
       request.response
         ..statusCode = HttpStatus.serviceUnavailable
@@ -275,7 +314,6 @@ class WebSocketService {
       return;
     }
 
-    // 4. Upgrade Socket
     final ws = await WebSocketTransformer.upgrade(
       request,
       protocolSelector: matchedSubprotocol != null ? (_) => matchedSubprotocol! : null,
@@ -284,17 +322,21 @@ class WebSocketService {
 
     _clients.add(ws);
     _pendingBytesPerClient[ws] = 0;
-    _subscriptionsPerClient[ws] = <String>{}; // Empty set = receive all allowed modules
+    _subscriptionsPerClient[ws] = <String>{};
 
-    // 5. Send Initial Snapshot with Granular Permission Filtering
+    if (matchedKey != null) {
+      _clientPermissions[ws] = matchedKey.permissions;
+      _clientKeyEntries[ws] = matchedKey;
+      router.onKeyUsed?.call(matchedKey.id);
+    } else {
+      _clientPermissions[ws] = const ApiPermissionsConfig();
+      _clientKeyEntries[ws] = null;
+    }
+
     try {
-      final permissions = _getPermissions();
-      final snapshotMap = await _buildSnapshotMap(permissions);
-      final snapshotStr = jsonEncode({
-        'type': 'snapshot',
-        'data': snapshotMap,
-      });
-      ws.add(snapshotStr);
+      final perms = _clientPermissions[ws] ?? const ApiPermissionsConfig();
+      final snapshotMap = await _buildSnapshotMap(perms);
+      ws.add(jsonEncode({'type': 'snapshot', 'data': snapshotMap}));
     } catch (e) {
       debugPrint('WebSocketService: Snapshot generation error: $e');
       ws.add(jsonEncode({
@@ -303,13 +345,10 @@ class WebSocketService {
       }));
     }
 
-    // 6. Listen to incoming client messages
     ws.listen(
       (data) {
-        _pendingBytesPerClient[ws] = 0; // Reset lag count on any client activity
-        if (data is String) {
-          _handleClientMessage(ws, data);
-        }
+        _pendingBytesPerClient[ws] = 0;
+        if (data is String) _handleClientMessage(ws, data);
       },
       onDone: () => _removeClient(ws),
       onError: (_) => _removeClient(ws),
@@ -404,12 +443,13 @@ class WebSocketService {
         return;
       }
 
+      final permissions = _clientPermissions[ws] ?? const ApiPermissionsConfig();
+
       if (type == 'subscribe') {
         final requestedModules = (jsonMap['modules'] as List<dynamic>?)
             ?.map((e) => e.toString().toLowerCase())
             .toSet() ?? <String>{};
 
-        final permissions = _getPermissions();
         final allowedModules = <String>{};
 
         for (final mod in requestedModules) {
@@ -455,20 +495,22 @@ class WebSocketService {
         }
 
         // Privilege Escalation Guard
-        if (jsonMap.containsKey('apiPermissions') || jsonMap.containsKey('permissions')) {
+        if (jsonMap.containsKey('apiKeys') ||
+            jsonMap.containsKey('apiKey') ||
+            jsonMap.containsKey('apiPermissions') ||
+            jsonMap.containsKey('permissions')) {
           ws.add(jsonEncode({
             'type': 'response',
             'cmd_id': cmdId,
             'status': 'error',
             'action': action,
             'error': 'Forbidden',
-            'message': 'Modifying API permissions via WebSocket commands is strictly prohibited.',
+            'message': 'Modifying API permissions or keys via WebSocket commands is strictly prohibited.',
           }));
           return;
         }
 
         // ACL Evaluation
-        final permissions = _getPermissions();
         final category = ApiPermissionsConfig.getCategoryForAction(action);
         final checkResult = ApiPermissionsChecker.checkCategory(permissions, category);
 
@@ -485,7 +527,7 @@ class WebSocketService {
         }
 
         final controlHandler = ApiControlHandler(ref.container);
-        final result = await controlHandler.executeAction(jsonMap);
+        final result = await controlHandler.executeAction(jsonMap, permissions: permissions);
 
         ws.add(jsonEncode({
           'type': 'response',
@@ -503,44 +545,44 @@ class WebSocketService {
     }
   }
 
-  /// Broadcast module update to subscribers with granular permissions filtering
+  /// Broadcast module update to subscribers with granular per-client permissions filtering
   void broadcastModule(String moduleName, dynamic data) {
     if (_clients.isEmpty) return;
-
-    final permissions = _getPermissions();
     final moduleLower = moduleName.toLowerCase();
-
-    // Check read permissions for module
-    if (moduleLower == 'solar' && !permissions.allowReadSolar) return;
-    if (moduleLower == 'weather' && !permissions.allowReadWeather) return;
-    if (moduleLower == 'monitors' && !permissions.allowReadMonitors) return;
-    if (moduleLower == 'sleep' && !permissions.allowReadSleep) return;
-    if ((moduleLower == 'circadian' || moduleLower == 'smart_circadian') && !permissions.allowReadCircadian) return;
-
-    dynamic filteredData = data;
-    if (moduleLower == 'automation' && data is Map<String, dynamic>) {
-      filteredData = ApiPermissionsFilter.filterAutomation(data, permissions);
-    } else if ((moduleLower == 'circadian' || moduleLower == 'smart_circadian') && data is Map<String, dynamic>) {
-      filteredData = ApiPermissionsFilter.filterSmartCircadian(data, permissions);
-      if (filteredData == null) return;
-    }
-
-    final payloadStr = jsonEncode({
-      'type': 'update',
-      'module': moduleName,
-      'timestamp': DateTime.now().toUtc().toIso8601String(),
-      'data': filteredData,
-    });
-
-    final payloadBytesLen = utf8.encode(payloadStr).length;
 
     for (final client in _clients.toList()) {
       try {
+        final clientPermissions = _clientPermissions[client] ?? const ApiPermissionsConfig();
+
+        // Check read permissions for module for this specific client
+        if (moduleLower == 'solar' && !clientPermissions.allowReadSolar) continue;
+        if (moduleLower == 'weather' && !clientPermissions.allowReadWeather) continue;
+        if (moduleLower == 'monitors' && !clientPermissions.allowReadMonitors) continue;
+        if (moduleLower == 'sleep' && !clientPermissions.allowReadSleep) continue;
+        if ((moduleLower == 'circadian' || moduleLower == 'smart_circadian') && !clientPermissions.allowReadCircadian) continue;
+
+        dynamic filteredData = data;
+        if (moduleLower == 'automation' && data is Map<String, dynamic>) {
+          filteredData = ApiPermissionsFilter.filterAutomation(data, clientPermissions);
+        } else if ((moduleLower == 'circadian' || moduleLower == 'smart_circadian') && data is Map<String, dynamic>) {
+          filteredData = ApiPermissionsFilter.filterSmartCircadian(data, clientPermissions);
+          if (filteredData == null) continue;
+        }
+
         final subs = _subscriptionsPerClient[client];
         // If client specified explicit subscriptions and this module isn't included, skip
         if (subs != null && subs.isNotEmpty && !subs.contains(moduleLower)) {
           continue;
         }
+
+        final payloadStr = jsonEncode({
+          'type': 'update',
+          'module': moduleName,
+          'timestamp': DateTime.now().toUtc().toIso8601String(),
+          'data': filteredData,
+        });
+
+        final payloadBytesLen = utf8.encode(payloadStr).length;
 
         final pending = _pendingBytesPerClient[client] ?? 0;
         if (pending > maxPendingBytes) {
@@ -560,21 +602,22 @@ class WebSocketService {
   void broadcastEvent(String eventName, Map<String, dynamic> data) {
     if (_clients.isEmpty) return;
 
-    final permissions = _getPermissions();
     final category = ApiPermissionsConfig.getCategoryForAction(eventName) ?? ApiActionCategory.system;
-    if (!permissions.allowedCategories.contains(category)) {
-      return;
-    }
-
-    final payloadStr = jsonEncode({
-      'type': 'event',
-      'event': eventName,
-      'timestamp': DateTime.now().toUtc().toIso8601String(),
-      'data': data,
-    });
 
     for (final client in _clients.toList()) {
       try {
+        final clientPermissions = _clientPermissions[client] ?? const ApiPermissionsConfig();
+        if (!clientPermissions.allowedCategories.contains(category)) {
+          continue;
+        }
+
+        final payloadStr = jsonEncode({
+          'type': 'event',
+          'event': eventName,
+          'timestamp': DateTime.now().toUtc().toIso8601String(),
+          'data': data,
+        });
+
         client.add(payloadStr);
       } catch (_) {
         _removeClient(client);
@@ -586,6 +629,8 @@ class WebSocketService {
     _clients.remove(ws);
     _pendingBytesPerClient.remove(ws);
     _subscriptionsPerClient.remove(ws);
+    _clientPermissions.remove(ws);
+    _clientKeyEntries.remove(ws);
     try {
       if (code != null) {
         ws.close(code, reason);
@@ -607,6 +652,8 @@ class WebSocketService {
     _clients.clear();
     _pendingBytesPerClient.clear();
     _subscriptionsPerClient.clear();
+    _clientPermissions.clear();
+    _clientKeyEntries.clear();
     debugPrint('WebSocketService: Closed all connected clients.');
   }
 

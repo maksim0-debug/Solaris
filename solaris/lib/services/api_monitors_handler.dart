@@ -9,6 +9,7 @@ import 'package:solaris/providers.dart';
 import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/services/api_control_handler.dart';
 import 'package:solaris/services/api_permissions_checker.dart';
+import 'package:solaris/services/api_router.dart';
 import 'package:solaris/services/monitor_service.dart';
 import 'package:solaris/services/monitor_slug_resolver.dart';
 
@@ -18,12 +19,25 @@ class ApiMonitorsHandler {
 
   ApiMonitorsHandler(this._container);
 
+  ApiPermissionsConfig _getPermissions([HttpRequest? request]) {
+    if (request != null && request.attachedPermissions != null) {
+      return request.attachedPermissions!;
+    }
+    final settingsMap = _container.read(settingsProvider).value ??
+        _container.read(settingsProvider).asData?.value;
+    final globalSettings = settingsMap?['all'];
+    if (globalSettings != null && globalSettings.apiKeys.isNotEmpty) {
+      return globalSettings.apiKeys.first.permissions;
+    }
+    return globalSettings?.apiPermissions ?? const ApiPermissionsConfig();
+  }
+
   /// GET /api/v1/monitors
   Future<void> handleGetMonitors(
     HttpRequest request,
     Map<String, String> pathParams,
   ) async {
-    final permissions = _getPermissions();
+    final permissions = _getPermissions(request);
     final check = ApiPermissionsChecker.checkReadFlag(permissions.allowReadMonitors, 'monitors');
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
@@ -99,7 +113,7 @@ class ApiMonitorsHandler {
     HttpRequest request,
     Map<String, String> pathParams,
   ) async {
-    final permissions = _getPermissions();
+    final permissions = _getPermissions(request);
     final check = ApiPermissionsChecker.checkReadFlag(permissions.allowReadMonitors, 'monitors');
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
@@ -159,18 +173,12 @@ class ApiMonitorsHandler {
     await request.response.close();
   }
 
-  ApiPermissionsConfig _getPermissions() {
-    final settingsMap = _container.read(settingsProvider).value ??
-        _container.read(settingsProvider).asData?.value;
-    return settingsMap?['all']?.apiPermissions ?? const ApiPermissionsConfig();
-  }
-
   /// POST /api/v1/monitors/:slug/brightness
   Future<void> handleSetMonitorBrightness(
     HttpRequest request,
     Map<String, String> pathParams,
   ) async {
-    final permissions = _getPermissions();
+    final permissions = _getPermissions(request);
 
     final catCheck = ApiPermissionsChecker.checkCategory(permissions, ApiActionCategory.monitors);
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, catCheck)) return;
@@ -218,7 +226,7 @@ class ApiMonitorsHandler {
     HttpRequest request,
     Map<String, String> pathParams,
   ) async {
-    final permissions = _getPermissions();
+    final permissions = _getPermissions(request);
 
     final catCheck = ApiPermissionsChecker.checkCategory(permissions, ApiActionCategory.monitors);
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, catCheck)) return;

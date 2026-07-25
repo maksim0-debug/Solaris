@@ -25,6 +25,7 @@ void main() {
       serverUrl = 'http://localhost:${server.port}';
 
       router = ApiRouter();
+      router.use((req) => authMiddleware(req, router));
       final statusHandler = ApiStatusHandler(container);
       final monitorsHandler = ApiMonitorsHandler(container);
 
@@ -48,7 +49,8 @@ void main() {
       });
 
       client = HttpClient();
-      await container.read(settingsProvider.future);
+      final settings = await container.read(settingsProvider.future);
+      router.apiKeys = settings['all']?.apiKeys ?? [];
     });
 
     tearDown(() async {
@@ -60,6 +62,10 @@ void main() {
 
     void updatePermissions(ApiPermissionsConfig permissions) {
       container.read(settingsProvider.notifier).updateApiPermissions(permissions);
+      final stateMap = container.read(settingsProvider.notifier).state.value;
+      if (stateMap != null) {
+        router.apiKeys = stateMap['all']?.apiKeys ?? [];
+      }
     }
 
     test('1. GET /api/v1/health remains 100% public even with read-only and all flags disabled', () async {

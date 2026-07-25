@@ -2,7 +2,22 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
+import 'package:solaris/models/api_key_entry.dart';
+import 'package:solaris/models/api_permissions_config.dart';
 import 'package:solaris/models/rfc7807_error.dart';
+
+/// Scope permissions & key attachment extension for HttpRequest
+extension HttpRequestPermissions on HttpRequest {
+  static final Expando<ApiPermissionsConfig> _permissions = Expando<ApiPermissionsConfig>();
+  static final Expando<ApiKeyEntry> _apiKeyEntry = Expando<ApiKeyEntry>();
+
+  ApiPermissionsConfig? get attachedPermissions => _permissions[this];
+  ApiPermissionsConfig get permissions => _permissions[this] ?? const ApiPermissionsConfig();
+  set permissions(ApiPermissionsConfig val) => _permissions[this] = val;
+
+  ApiKeyEntry? get apiKeyEntry => _apiKeyEntry[this];
+  set apiKeyEntry(ApiKeyEntry? val) => _apiKeyEntry[this] = val;
+}
 
 /// Match result for router lookup.
 class RouteMatch {
@@ -25,9 +40,42 @@ class ApiRouter {
   final List<_RouteEntry> _routes = [];
   final List<ApiMiddleware> _middlewares = [];
 
-  String expectedToken = '';
+  List<ApiKeyEntry> apiKeys = [];
   bool requireLocalToken = false;
   bool isLanEnabled = false;
+
+  /// Callback emitted when an API key is used, for decoupled throttled persistence
+  void Function(String keyId)? onKeyUsed;
+
+  /// Legacy proxy getter and setter for 100% backward compatibility with existing tests
+  String get expectedToken => apiKeys.isNotEmpty ? apiKeys.first.token : '';
+  set expectedToken(String value) {
+    if (value.isEmpty) return;
+    if (apiKeys.isNotEmpty) {
+      apiKeys[0] = apiKeys.first.copyWith(token: value);
+    } else {
+      apiKeys = [
+        ApiKeyEntry(
+          id: 'default_legacy',
+          name: 'Default Key',
+          token: value,
+          permissions: const ApiPermissionsConfig(),
+          createdAt: DateTime.now(),
+        ),
+      ];
+    }
+  }
+
+  /// Constant-time lookup of token against active apiKeys via SHA-256
+  ApiKeyEntry? findMatchingKey(String? token) {
+    if (token == null || token.isEmpty) return null;
+    for (final keyEntry in apiKeys) {
+      if (constantTimeEquals(token, keyEntry.token)) {
+        return keyEntry;
+      }
+    }
+    return null;
+  }
 
   void get(String pattern, ApiHandler handler) => _addRoute('GET', pattern, handler);
   void post(String pattern, ApiHandler handler) => _addRoute('POST', pattern, handler);
@@ -300,7 +348,8 @@ Future<bool> corsMiddleware(HttpRequest request, ApiRouter router) async {
   if (isUntrustedOrigin) {
     final token = request.headers.value('X-API-Key') ??
         request.headers.value('Authorization')?.replaceAll('Bearer ', '').trim();
-    if (token == null || !constantTimeEquals(token, router.expectedToken)) {
+    final matchedKey = router.findMatchingKey(token);
+    if (matchedKey == null) {
       final error = Rfc7807Error(
         type: 'https://solaris.local/errors/drive-by-blocked',
         title: 'Forbidden',
@@ -311,6 +360,10 @@ Future<bool> corsMiddleware(HttpRequest request, ApiRouter router) async {
       ApiRouter.sendRfc7807(request, error);
       return false;
     }
+    // Single-pass optimization: attach resolved key & permissions to avoid re-hashing in authMiddleware
+    request.permissions = matchedKey.permissions;
+    request.apiKeyEntry = matchedKey;
+    router.onKeyUsed?.call(matchedKey.id);
   }
 
   if (hasTrustedOrigin) {
@@ -323,10 +376,43 @@ Future<bool> corsMiddleware(HttpRequest request, ApiRouter router) async {
 
 /// Constant-time SHA-256 Auth & Strict Localhost Drive-by Guard Middleware
 Future<bool> authMiddleware(HttpRequest request, ApiRouter router) async {
-  // Public read-only endpoints (docs & openapi spec)
+  if (request.method == 'OPTIONS') return true; // CORS preflight requests bypass auth check
+
+  final token = request.headers.value('X-API-Key') ??
+      request.headers.value('Authorization')?.replaceAll('Bearer ', '').trim();
+
+  // 1. Priority token validation if present (for all routes, including public and loopback)
+  if (request.apiKeyEntry != null) {
+    // Already verified & attached in corsMiddleware
+  } else if (token != null && token.isNotEmpty) {
+    final matchedKey = router.findMatchingKey(token);
+    if (matchedKey == null) {
+      final error = Rfc7807Error(
+        type: 'https://solaris.local/errors/unauthorized',
+        title: 'Unauthorized',
+        status: HttpStatus.unauthorized,
+        detail: 'Invalid API token provided.',
+        instance: request.uri.path,
+      );
+      ApiRouter.sendRfc7807(request, error);
+      return false;
+    }
+
+    // Attach permissions and key entry to request context
+    request.permissions = matchedKey.permissions;
+    request.apiKeyEntry = matchedKey;
+    router.onKeyUsed?.call(matchedKey.id);
+  }
+
+  // 2. Anonymous passthrough for public routes (openapi.json retains attached permissions if token was passed)
   if (request.uri.path.startsWith('/api/v1/docs') ||
       request.uri.path == '/api/v1/openapi.json' ||
       request.uri.path == '/api/v1/health') {
+    return true;
+  }
+
+  // If token was successfully validated above -> allow access
+  if (request.apiKeyEntry != null) {
     return true;
   }
 
@@ -347,28 +433,25 @@ Future<bool> authMiddleware(HttpRequest request, ApiRouter router) async {
   final remoteIp = request.connectionInfo?.remoteAddress.address ?? '';
   final isLoopback = remoteIp == '127.0.0.1' || remoteIp == '::1';
 
-  // Loopback without browser origin and without forced local token requirement
+  // 3. Anonymous loopback access allowed ONLY if token is completely absent
   if (isLoopback && !router.requireLocalToken && !hasBrowserOrigin) {
+    request.permissions = router.apiKeys.isNotEmpty
+        ? router.apiKeys.first.permissions
+        : const ApiPermissionsConfig();
+    request.apiKeyEntry = null; // Explicit null for anonymous loopback
     return true;
   }
 
-  // Token authentication required
-  final token = request.headers.value('X-API-Key') ??
-      request.headers.value('Authorization')?.replaceAll('Bearer ', '').trim();
-
-  if (token == null || !constantTimeEquals(token, router.expectedToken)) {
-    final error = Rfc7807Error(
-      type: 'https://solaris.local/errors/unauthorized',
-      title: 'Unauthorized',
-      status: HttpStatus.unauthorized,
-      detail: 'Invalid or missing API token.',
-      instance: request.uri.path,
-    );
-    ApiRouter.sendRfc7807(request, error);
-    return false;
-  }
-
-  return true;
+  // 4. Reject request if missing token
+  final error = Rfc7807Error(
+    type: 'https://solaris.local/errors/unauthorized',
+    title: 'Unauthorized',
+    status: HttpStatus.unauthorized,
+    detail: 'Missing API token.',
+    instance: request.uri.path,
+  );
+  ApiRouter.sendRfc7807(request, error);
+  return false;
 }
 
 /// Constant-time comparison of two strings using SHA-256 hashes against timing attacks.

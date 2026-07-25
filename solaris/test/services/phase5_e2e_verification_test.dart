@@ -8,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/models/webhook_config.dart';
 import 'package:solaris/providers.dart';
+import 'package:solaris/services/api_router.dart';
 import 'package:solaris/services/local_ipc_service.dart';
 import 'package:solaris/services/monitor_service.dart';
 import 'package:solaris/services/websocket_service.dart';
@@ -211,10 +212,11 @@ void main() {
 
       final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
       try {
+        final router = ApiRouter()..expectedToken = 'secret-token-123';
         server.listen((req) async {
           await wsService.handleUpgrade(
             req,
-            expectedToken: 'secret-token-123',
+            router: router,
             isLanEnabled: false,
           );
         });
