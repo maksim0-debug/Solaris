@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:solaris/models/preset_type.dart';
 import 'package:solaris/models/webhook_config.dart';
 import 'package:solaris/models/api_permissions_config.dart';
+import 'package:solaris/models/api_key_entry.dart';
 import 'package:solaris/env/env.dart';
 import 'package:solaris/utils/key_obfuscator.dart';
 
@@ -100,7 +102,8 @@ class SettingsState {
   final int localIpcServerPort;
   final int apiServerPort;
   final bool isApiLanAccessEnabled;
-  final String apiAccessToken;
+  final List<ApiKeyEntry> apiKeys;
+  final bool requireLocalToken;
   final int apiRateLimitPerMinute;
   final String customWeatherApiKey;
   final String customMapboxToken;
@@ -108,11 +111,16 @@ class SettingsState {
   final String customGoogleClientSecret;
   final bool isAutoUpdateEnabled;
   final List<WebhookConfig> webhooks;
-  final ApiPermissionsConfig apiPermissions;
+
+  String get apiAccessToken => apiKeys.isNotEmpty ? apiKeys.first.token : '';
+  ApiPermissionsConfig get apiPermissions => apiKeys.isNotEmpty ? apiKeys.first.permissions : const ApiPermissionsConfig();
 
   SettingsState({
+    List<ApiKeyEntry>? apiKeys,
+    String? apiAccessToken,
+    ApiPermissionsConfig? apiPermissions,
+    this.requireLocalToken = false,
     this.activePreset = PresetType.bright,
-    this.apiPermissions = const ApiPermissionsConfig(),
     Map<PresetType, List<FlSpot>>? curvesMap,
     this.curveSharpness = 1.0,
     this.isAutorunEnabled = true,
@@ -187,14 +195,14 @@ class SettingsState {
     this.localIpcServerPort = 45321,
     int? apiServerPort,
     this.isApiLanAccessEnabled = false,
-    this.apiAccessToken = "",
     this.apiRateLimitPerMinute = 120,
     this.customWeatherApiKey = "",
     this.customMapboxToken = "",
     this.customGoogleClientId = "",
     this.customGoogleClientSecret = "",
     this.webhooks = const [],
-  }) : apiServerPort = apiServerPort ?? localIpcServerPort,
+  }) : apiKeys = List.unmodifiable(_initApiKeys(apiKeys, apiAccessToken, apiPermissions)),
+       apiServerPort = apiServerPort ?? localIpcServerPort,
        isAutoUpdateEnabled = isAutoUpdateEnabled ?? Env.isOfficialRelease,
        curvesMap = curvesMap ?? PresetConstants.getAllDefaults(),
        presetOrder =
@@ -203,6 +211,30 @@ class SettingsState {
              ...PresetType.values.map((e) => 'system:${e.name}'),
              ...userPresets.map((e) => 'user:${e.id}'),
            ];
+
+  static List<ApiKeyEntry> _initApiKeys(
+    List<ApiKeyEntry>? apiKeys,
+    String? apiAccessToken,
+    ApiPermissionsConfig? apiPermissions,
+  ) {
+    List<ApiKeyEntry> keys = apiKeys != null ? List.from(apiKeys) : [];
+    if (keys.isEmpty) {
+      keys.add(ApiKeyEntry.create(
+        name: 'Default Key',
+        permissions: apiPermissions ?? const ApiPermissionsConfig(),
+      ));
+      if (apiAccessToken != null && apiAccessToken.isNotEmpty) {
+        keys[0] = keys.first.copyWith(token: apiAccessToken);
+      }
+    } else if (apiAccessToken != null || apiPermissions != null) {
+      final first = keys.first;
+      keys[0] = first.copyWith(
+        token: apiAccessToken ?? first.token,
+        permissions: apiPermissions ?? first.permissions,
+      );
+    }
+    return keys;
+  }
 
   String get effectiveWeatherApiKey =>
       customWeatherApiKey.isNotEmpty ? customWeatherApiKey : Env.weatherApiKey;
@@ -303,6 +335,8 @@ class SettingsState {
     'localIpcServerPort': localIpcServerPort,
     'apiServerPort': apiServerPort,
     'isApiLanAccessEnabled': isApiLanAccessEnabled,
+    'apiKeys': apiKeys.map((k) => k.toJson()).toList(),
+    'requireLocalToken': requireLocalToken,
     'apiAccessToken': KeyObfuscator.encrypt(apiAccessToken),
     'apiRateLimitPerMinute': apiRateLimitPerMinute,
     'customWeatherApiKey': KeyObfuscator.encrypt(customWeatherApiKey),
@@ -352,6 +386,43 @@ class SettingsState {
         curvesMap[PresetType.bright] = points;
       }
     }
+
+    List<ApiKeyEntry> parsedApiKeys = [];
+    if (json.containsKey('apiKeys') && json['apiKeys'] is List) {
+      for (final item in json['apiKeys'] as List) {
+        if (item is Map<String, dynamic>) {
+          try {
+            parsedApiKeys.add(ApiKeyEntry.fromJson(item));
+          } catch (e) {
+            debugPrint('SettingsState: Error parsing individual ApiKeyEntry element: $e');
+          }
+        }
+      }
+    } else if (json.containsKey('apiAccessToken') || json.containsKey('apiPermissions')) {
+      String oldToken = '';
+      if (json.containsKey('apiAccessToken') && json['apiAccessToken'] is String) {
+        try {
+          oldToken = KeyObfuscator.decrypt(json['apiAccessToken'] as String);
+        } catch (_) {
+          oldToken = ApiKeyEntry.generateSecureToken();
+        }
+      }
+      final oldPermissions = json['apiPermissions'] is Map<String, dynamic>
+          ? ApiPermissionsConfig.fromJson(json['apiPermissions'] as Map<String, dynamic>)
+          : const ApiPermissionsConfig();
+      parsedApiKeys.add(ApiKeyEntry(
+        id: 'default_migrated',
+        name: 'Default Key',
+        token: oldToken.isNotEmpty ? oldToken : ApiKeyEntry.generateSecureToken(),
+        permissions: oldPermissions,
+        createdAt: DateTime.now(),
+      ));
+    }
+    if (parsedApiKeys.isEmpty) {
+      parsedApiKeys.add(ApiKeyEntry.create(name: 'Default Key'));
+    }
+
+    final requireLocalToken = json['requireLocalToken'] as bool? ?? false;
 
     return SettingsState(
       activePreset: activePreset,
@@ -481,9 +552,8 @@ class SettingsState {
       localIpcServerPort: json['localIpcServerPort'] as int? ?? 45321,
       apiServerPort: json['apiServerPort'] as int? ?? json['localIpcServerPort'] as int? ?? 45321,
       isApiLanAccessEnabled: json['isApiLanAccessEnabled'] as bool? ?? false,
-      apiAccessToken: json.containsKey('apiAccessToken')
-          ? KeyObfuscator.decrypt(json['apiAccessToken'] as String)
-          : "",
+      apiKeys: parsedApiKeys,
+      requireLocalToken: requireLocalToken,
       apiRateLimitPerMinute: json['apiRateLimitPerMinute'] as int? ?? 120,
       customWeatherApiKey: json.containsKey('customWeatherApiKey')
           ? KeyObfuscator.decrypt(json['customWeatherApiKey'] as String)
@@ -501,16 +571,13 @@ class SettingsState {
               ?.map((w) => WebhookConfig.fromJson(w as Map<String, dynamic>))
               .toList() ??
           [],
-      apiPermissions: json.containsKey('apiPermissions') && json['apiPermissions'] != null
-          ? ApiPermissionsConfig.fromJson(
-              json['apiPermissions'] as Map<String, dynamic>,
-            )
-          : const ApiPermissionsConfig(),
     );
   }
 
 
   SettingsState copyWith({
+    List<ApiKeyEntry>? apiKeys,
+    bool? requireLocalToken,
     PresetType? activePreset,
     Map<PresetType, List<FlSpot>>? curvesMap,
     double? curveSharpness,
@@ -588,7 +655,24 @@ class SettingsState {
     bool clearAutoBrightnessHotKey = false,
     bool clearActiveUserPresetId = false,
   }) {
+    List<ApiKeyEntry> updatedKeys = apiKeys != null ? List.from(apiKeys) : List.from(this.apiKeys);
+    if (apiAccessToken != null || apiPermissions != null) {
+      if (updatedKeys.isNotEmpty) {
+        final first = updatedKeys.first;
+        updatedKeys[0] = first.copyWith(
+          token: apiAccessToken ?? first.token,
+          permissions: apiPermissions ?? first.permissions,
+        );
+      } else {
+        updatedKeys.add(ApiKeyEntry.create(
+          name: 'Default Key',
+          permissions: apiPermissions ?? const ApiPermissionsConfig(),
+        ));
+      }
+    }
     return SettingsState(
+      apiKeys: List.unmodifiable(updatedKeys),
+      requireLocalToken: requireLocalToken ?? this.requireLocalToken,
       activePreset: activePreset ?? this.activePreset,
       curvesMap: curvesMap ?? this.curvesMap,
       curveSharpness: curveSharpness ?? this.curveSharpness,
@@ -687,7 +771,6 @@ class SettingsState {
       apiServerPort: apiServerPort ?? this.apiServerPort,
       isApiLanAccessEnabled:
           isApiLanAccessEnabled ?? this.isApiLanAccessEnabled,
-      apiAccessToken: apiAccessToken ?? this.apiAccessToken,
       apiRateLimitPerMinute:
           apiRateLimitPerMinute ?? this.apiRateLimitPerMinute,
       customWeatherApiKey: customWeatherApiKey ?? this.customWeatherApiKey,
@@ -695,7 +778,6 @@ class SettingsState {
       customGoogleClientId: customGoogleClientId ?? this.customGoogleClientId,
       customGoogleClientSecret: customGoogleClientSecret ?? this.customGoogleClientSecret,
       webhooks: webhooks ?? this.webhooks,
-      apiPermissions: apiPermissions ?? this.apiPermissions,
     );
   }
 
