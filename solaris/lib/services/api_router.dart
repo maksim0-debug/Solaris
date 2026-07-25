@@ -435,9 +435,7 @@ Future<bool> authMiddleware(HttpRequest request, ApiRouter router) async {
 
   // 3. Anonymous loopback access allowed ONLY if token is completely absent
   if (isLoopback && !router.requireLocalToken && !hasBrowserOrigin) {
-    request.permissions = router.apiKeys.isNotEmpty
-        ? router.apiKeys.first.permissions
-        : const ApiPermissionsConfig();
+    request.permissions = const ApiPermissionsConfig();
     request.apiKeyEntry = null; // Explicit null for anonymous loopback
     return true;
   }

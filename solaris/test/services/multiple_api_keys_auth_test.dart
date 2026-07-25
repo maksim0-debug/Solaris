@@ -170,5 +170,31 @@ void main() {
 
       client.close();
     });
+
+    test('Anonymous loopback requests get default permissions regardless of first API key in list', () async {
+      router.requireLocalToken = false;
+      router.apiKeys = [readOnlyKey, fullKey]; // First key in list is Read-Only
+
+      router.post('/api/sleep/status', (req, params) async {
+        final perms = req.permissions;
+        if (perms.isReadOnly) {
+          ApiRouter.sendJson(req, 403, {'error': 'Read-Only Mode Enabled'});
+        } else {
+          ApiRouter.sendJson(req, 200, {'status': 'success'});
+        }
+      });
+
+      server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      server!.listen((req) => router.handle(req));
+
+      final client = HttpClient();
+      final reqAnon = await client.postUrl(Uri.parse('http://127.0.0.1:${server!.port}/api/sleep/status'));
+      final resAnon = await reqAnon.close();
+      expect(resAnon.statusCode, equals(HttpStatus.ok));
+      final jsonRes = jsonDecode(await utf8.decoder.bind(resAnon).join()) as Map<String, dynamic>;
+      expect(jsonRes['status'], equals('success'));
+      client.close();
+    });
   });
 }
+
