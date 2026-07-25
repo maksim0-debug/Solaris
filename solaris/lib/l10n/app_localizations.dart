@@ -3377,6 +3377,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'I Have Saved the Token'**
   String get savedTokenButton;
+
+  /// No description provided for @deleteSleepSessionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Sleep Session'**
+  String get deleteSleepSessionTitle;
+
+  /// No description provided for @deleteSleepSegmentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Sleep Segment'**
+  String get deleteSleepSegmentTitle;
+
+  /// No description provided for @deleteSleepSessionConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this sleep session ({dateRange})?'**
+  String deleteSleepSessionConfirm(String dateRange);
+
+  /// No description provided for @deleteSleepSegmentConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this sleep segment ({timeRange})?'**
+  String deleteSleepSegmentConfirm(String timeRange);
+
+  /// No description provided for @doNotSyncInFuture.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not sync in the future'**
+  String get doNotSyncInFuture;
+
+  /// No description provided for @deleteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get deleteAction;
+
+  /// No description provided for @cancelAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancelAction;
 }
 
 class _AppLocalizationsDelegate

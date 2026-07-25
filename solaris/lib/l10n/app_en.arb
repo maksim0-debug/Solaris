@@ -878,6 +878,27 @@
   "showNewTokenDialogTitle": "Your New API Key",
   "showNewTokenWarning": "Copy this token right now. For security reasons, it will never be displayed in plain text again.",
   "copyTokenButton": "Copy Token",
-  "savedTokenButton": "I Have Saved the Token"
+  "savedTokenButton": "I Have Saved the Token",
+  "deleteSleepSessionTitle": "Delete Sleep Session",
+  "deleteSleepSegmentTitle": "Delete Sleep Segment",
+  "deleteSleepSessionConfirm": "Are you sure you want to delete this sleep session ({dateRange})?",
+  "@deleteSleepSessionConfirm": {
+    "placeholders": {
+      "dateRange": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteSleepSegmentConfirm": "Are you sure you want to delete this sleep segment ({timeRange})?",
+  "@deleteSleepSegmentConfirm": {
+    "placeholders": {
+      "timeRange": {
+        "type": "String"
+      }
+    }
+  },
+  "doNotSyncInFuture": "Do not sync in the future",
+  "deleteAction": "Delete",
+  "cancelAction": "Cancel"
 }
 

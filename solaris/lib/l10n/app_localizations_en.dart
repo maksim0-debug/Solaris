@@ -1932,4 +1932,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get savedTokenButton => 'I Have Saved the Token';
+
+  @override
+  String get deleteSleepSessionTitle => 'Delete Sleep Session';
+
+  @override
+  String get deleteSleepSegmentTitle => 'Delete Sleep Segment';
+
+  @override
+  String deleteSleepSessionConfirm(String dateRange) {
+    return 'Are you sure you want to delete this sleep session ($dateRange)?';
+  }
+
+  @override
+  String deleteSleepSegmentConfirm(String timeRange) {
+    return 'Are you sure you want to delete this sleep segment ($timeRange)?';
+  }
+
+  @override
+  String get doNotSyncInFuture => 'Do not sync in the future';
+
+  @override
+  String get deleteAction => 'Delete';
+
+  @override
+  String get cancelAction => 'Cancel';
 }

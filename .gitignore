@@ -67,3 +67,5 @@ sleep_data_cache.json.bak
 Changelog.md
 monitor_settings.json
 monitor_settings.json.bak
+ignored_sleep_sessions.json
+ignored_sleep_sessions.json.bak

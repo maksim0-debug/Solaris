@@ -175,7 +175,10 @@ class SleepNotifier extends Notifier<SleepState> {
   Future<void> updateSessionsFromIpc(List<SleepSession> newSessions) async {
     state = state.copyWith(isSyncing: true, error: null);
     try {
-      final merged = _mergeAndDeduplicate(state.sessions, newSessions);
+      final ignored = await _sleepService.loadIgnoredSessionIds();
+      final filteredNew = newSessions.where((s) => !ignored.contains(s.id)).toList();
+      final filteredExisting = state.sessions.where((s) => !ignored.contains(s.id)).toList();
+      final merged = _mergeAndDeduplicate(filteredExisting, filteredNew);
       await _sleepService.cacheSleepData(merged);
       if (!ref.mounted) return;
 
@@ -193,6 +196,24 @@ class SleepNotifier extends Notifier<SleepState> {
         error: 'Failed to save IPC sleep data: ${e.toString()}',
       );
     }
+  }
+
+  /// Deletes a single sleep session by ID.
+  Future<void> deleteSession(String sessionId, {bool doNotSync = true}) async {
+    await deleteSessions([sessionId], doNotSync: doNotSync);
+  }
+
+  /// Deletes multiple sleep sessions by ID list.
+  Future<void> deleteSessions(List<String> sessionIds, {bool doNotSync = true}) async {
+    if (sessionIds.isEmpty) return;
+    if (doNotSync) {
+      await _sleepService.addIgnoredSessionIds(sessionIds);
+    }
+    final idsSet = sessionIds.toSet();
+    final updated = state.sessions.where((s) => !idsSet.contains(s.id)).toList();
+    await _sleepService.cacheSleepData(updated);
+    if (!ref.mounted) return;
+    state = state.copyWith(sessions: updated);
   }
 
   Future<void> syncWithGoogleFit({bool forceSync = true}) async {

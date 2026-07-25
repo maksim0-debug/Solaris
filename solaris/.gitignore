@@ -60,3 +60,5 @@ sleep_data_cache.json.bak
 Changelog.md
 *.jsonl
 Solaris/
+ignored_sleep_sessions.json
+ignored_sleep_sessions.json.bak

@@ -1951,4 +1951,29 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get savedTokenButton => 'Я сохранил токен';
+
+  @override
+  String get deleteSleepSessionTitle => 'Удалить сессию сна';
+
+  @override
+  String get deleteSleepSegmentTitle => 'Удалить сегмент сна';
+
+  @override
+  String deleteSleepSessionConfirm(String dateRange) {
+    return 'Вы уверены, что хотите удалить эту сессию сна ($dateRange)?';
+  }
+
+  @override
+  String deleteSleepSegmentConfirm(String timeRange) {
+    return 'Вы уверены, что хотите удалить этот сегмент сна ($timeRange)?';
+  }
+
+  @override
+  String get doNotSyncInFuture => 'Не синхронизировать в дальнейшем';
+
+  @override
+  String get deleteAction => 'Удалить';
+
+  @override
+  String get cancelAction => 'Отмена';
 }

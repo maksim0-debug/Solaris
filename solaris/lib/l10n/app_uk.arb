@@ -807,5 +807,12 @@
   "showNewTokenDialogTitle": "Ваш новий API-ключ",
   "showNewTokenWarning": "Скопіюйте цей токен просто зараз. З міркувань безпеки він більше ніколи не буде показаний у відкритому вигляді.",
   "copyTokenButton": "Скопіювати токен",
-  "savedTokenButton": "Я зберіг токен"
+  "savedTokenButton": "Я зберіг токен",
+  "deleteSleepSessionTitle": "Видалити сесію сну",
+  "deleteSleepSegmentTitle": "Видалити сегмент сну",
+  "deleteSleepSessionConfirm": "Ви впевнені, що хочете видалити цю сесію сну ({dateRange})?",
+  "deleteSleepSegmentConfirm": "Ви впевнені, що хочете видалити цей сегмент сну ({timeRange})?",
+  "doNotSyncInFuture": "Не синхронізувати в майбутньому",
+  "deleteAction": "Видалити",
+  "cancelAction": "Скасувати"
 }

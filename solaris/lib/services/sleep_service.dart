@@ -13,6 +13,37 @@ class SleepService {
   final _storage = StorageService();
   final _googleFit = GoogleFitService();
   final _cacheFilename = 'sleep_data_cache.json';
+  final _ignoredFilename = 'ignored_sleep_sessions.json';
+
+  /// Returns the set of session IDs that the user has marked as ignored/blacklisted.
+  Future<Set<String>> loadIgnoredSessionIds() async {
+    try {
+      final jsonStr = await _storage.load(_ignoredFilename);
+      if (jsonStr != null && jsonStr.trim().isNotEmpty) {
+        final decoded = jsonDecode(jsonStr);
+        if (decoded is List) {
+          return decoded
+              .where((e) => e != null)
+              .map((e) => e.toString())
+              .toSet();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading ignored sleep session IDs: $e');
+    }
+    return {};
+  }
+
+  /// Adds [ids] to the set of ignored session IDs.
+  Future<void> addIgnoredSessionIds(List<String> ids) async {
+    try {
+      final current = await loadIgnoredSessionIds();
+      current.addAll(ids);
+      await _storage.save(_ignoredFilename, jsonEncode(current.toList()));
+    } catch (e) {
+      debugPrint('Error saving ignored sleep session IDs: $e');
+    }
+  }
 
   /// Fetches sleep data from Google Fit for the specified number of [daysBack].
   /// Returns a record with the fetched sessions and a boolean indicating if it was a live sync.
@@ -22,6 +53,7 @@ class SleepService {
   }) async {
     final endTime = DateTime.now();
     final startTime = endTime.subtract(Duration(days: daysBack));
+    final ignored = await loadIgnoredSessionIds();
 
     try {
       final googleFitSessions = await _googleFit.fetchSleepSessions(
@@ -30,7 +62,9 @@ class SleepService {
       );
 
       if (googleFitSessions != null) {
-        final sleepSessions = _mapToSleepSessions(googleFitSessions);
+        final sleepSessions = _mapToSleepSessions(googleFitSessions)
+            .where((s) => !ignored.contains(s.id))
+            .toList();
         await cacheSleepData(sleepSessions);
         return (sessions: sleepSessions, isLive: true);
       } else if (forceNetwork) {
@@ -44,7 +78,10 @@ class SleepService {
 
     // Attempt to load from cache on any failure (if not forced)
     final cachedSessions = await _loadCachedSleepData();
-    return (sessions: cachedSessions, isLive: false);
+    final filteredCached = cachedSessions
+        .where((s) => !ignored.contains(s.id))
+        .toList();
+    return (sessions: filteredCached, isLive: false);
   }
 
   List<SleepSession> _mapToSleepSessions(List<Session> sessions) {
@@ -62,8 +99,6 @@ class SleepService {
         endTime: endTime,
         title: s.name,
         description: s.description,
-        // Detailed segments could be fetched separately if needed,
-        // using fitness/v1 response, but for base regime they are not vital.
         segments: [],
       );
     }).toList();
@@ -84,10 +119,12 @@ class SleepService {
       if (jsonStr != null) {
         final decoded = jsonDecode(jsonStr);
         if (decoded is List) {
+          final ignored = await loadIgnoredSessionIds();
           return decoded
               .map(
                 (item) => SleepSession.fromJson(item as Map<String, dynamic>),
               )
+              .where((s) => !ignored.contains(s.id))
               .toList();
         }
       }
@@ -97,3 +134,4 @@ class SleepService {
     return [];
   }
 }
+
