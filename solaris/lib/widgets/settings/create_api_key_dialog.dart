@@ -213,9 +213,14 @@ class _CreateApiKeyDialogState extends State<CreateApiKeyDialog> {
                                   Text(
                                     _permissions.isReadOnly
                                         ? l10n.apiPermissionsSummaryReadOnly
-                                        : l10n.apiPermissionsSummaryCustom(
-                                            _permissions.allowedCategories.length,
-                                          ),
+                                        : (_permissions.allowedActions != null
+                                            ? l10n.apiKeysGranularActionChip(
+                                                _permissions.allowedActions!.length,
+                                                25,
+                                              )
+                                            : l10n.apiPermissionsSummaryCustom(
+                                                _permissions.allowedCategories.length,
+                                              )),
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 13,

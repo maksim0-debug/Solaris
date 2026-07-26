@@ -236,7 +236,7 @@ class ApiStatusHandler {
 
   /// GET /api/v1/solar
   Future<void> handleSolar(HttpRequest request, Map<String, String> pathParams) async {
-    final permissions = request.permissions;
+    final permissions = _getPermissions(request);
     final check = ApiPermissionsChecker.checkReadFlag(permissions.allowReadSolar, 'solar');
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
@@ -268,7 +268,7 @@ class ApiStatusHandler {
 
   /// GET /api/v1/presets
   Future<void> handlePresets(HttpRequest request, Map<String, String> pathParams) async {
-    final permissions = request.permissions;
+    final permissions = _getPermissions(request);
     final settings = container.read(settingsProvider).value?['all'];
     final tempSettings = container.read(temperatureSettingsProvider).value?['all'];
 
@@ -311,7 +311,7 @@ class ApiStatusHandler {
 
   /// GET /api/v1/monitors
   Future<void> handleMonitors(HttpRequest request, Map<String, String> pathParams) async {
-    final permissions = request.permissions;
+    final permissions = _getPermissions(request);
     final check = ApiPermissionsChecker.checkReadFlag(permissions.allowReadMonitors, 'monitors');
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
@@ -335,7 +335,7 @@ class ApiStatusHandler {
 
   /// GET /api/v1/monitors/:slug
   Future<void> handleMonitorBySlug(HttpRequest request, Map<String, String> pathParams) async {
-    final permissions = request.permissions;
+    final permissions = _getPermissions(request);
     final check = ApiPermissionsChecker.checkReadFlag(permissions.allowReadMonitors, 'monitors');
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
@@ -396,7 +396,7 @@ class ApiStatusHandler {
 
   /// GET /api/v1/sleep/sessions (Paginated)
   Future<void> handleSleepSessions(HttpRequest request, Map<String, String> pathParams) async {
-    final permissions = request.permissions;
+    final permissions = _getPermissions(request);
     final check = ApiPermissionsChecker.checkReadFlag(permissions.allowReadSleep, 'sleep');
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
     final query = request.uri.queryParameters;
@@ -480,7 +480,7 @@ class ApiStatusHandler {
 
   /// GET /api/v1/openapi.json
   Future<void> handleOpenApiJson(HttpRequest request, Map<String, String> pathParams) async {
-    final permissions = request.permissions;
+    final permissions = _getPermissions(request);
     final settingsMap = container.read(settingsProvider).value ??
         container.read(settingsProvider).asData?.value;
     final port = settingsMap?['all']?.apiServerPort ?? 45321;

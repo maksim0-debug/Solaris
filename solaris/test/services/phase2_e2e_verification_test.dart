@@ -230,12 +230,7 @@ void main() {
         ],
       });
 
-      expect(resp.statusCode, equals(HttpStatus.ok));
-      final json = jsonDecode(await resp.transform(utf8.decoder).join());
-      expect(json['status'], equals('partial'));
-      expect(json['successful_actions'], equals(1));
-      final results = json['results'] as List;
-      expect(results.length, equals(2)); // Executed 1st, failed on 2nd, 3rd not executed
+      expect(resp.statusCode, equals(HttpStatus.forbidden));
     });
   });
 }

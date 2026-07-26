@@ -828,6 +828,39 @@
   "invalidTimeRangeError": "Время окончания должно быть позже времени начала",
   "saveAction": "Сохранить",
   "sessionTitleLabel": "Заголовок",
-  "sessionDescLabel": "Описание"
+  "sessionDescLabel": "Описание",
+  "apiPermissionsActionSetBrightness": "Изменение яркости",
+  "apiPermissionsActionSetTemperature": "Изменение цветовой температуры (К)",
+  "apiPermissionsActionSetMonitorOffset": "Индивидуальное смещение монитора",
+  "apiPermissionsActionSetBrightnessPreset": "Пресеты яркости",
+  "apiPermissionsActionSetTemperaturePreset": "Пресеты температуры",
+  "apiPermissionsActionSetUserPreset": "Пользовательские пресеты",
+  "apiPermissionsActionCyclePreset": "Циклическое переключение пресетов",
+  "apiPermissionsActionSetAutoBrightness": "Переключатель авто-яркости",
+  "apiPermissionsActionSetAutoTemperature": "Переключатель авто-температуры",
+  "apiPermissionsActionSetSmartCircadian": "Переключатель Smart Circadian",
+  "apiPermissionsActionSetSmartCircadianSubmodules": "Управление подмодулями ритма",
+  "apiPermissionsActionSetGameMode": "Игровой режим (вкл/выкл)",
+  "apiPermissionsActionSetGameModeBrightness": "Яркость игрового режима",
+  "apiPermissionsActionManageGameModeWhitelist": "Управление белым списком ПО",
+  "apiPermissionsActionSetWeatherAdjustment": "Погодная подстройка",
+  "apiPermissionsActionSetWeatherTemperatureAdjustment": "Погодная подстройка температуры",
+  "apiPermissionsActionSetWeatherIntensity": "Интенсивность погодных эффектов",
+  "apiPermissionsActionSetManualLocation": "Ручной ввод координат геопозиции",
+  "apiPermissionsActionSetWeatherProvider": "Выбор провайдера погоды",
+  "apiPermissionsActionTriggerSunSync": "Принудительная синхронизация солнца и погоды",
+  "apiPermissionsActionPushSleepStatus": "Передача статуса сна",
+  "apiPermissionsActionManageWebhooks": "Управление вебхуками (CRUD и DLQ)",
+  "apiPermissionsActionSetMapAnimations": "Анимации карты погоды",
+  "apiPermissionsActionOnSystemResume": "Обработка возобновления ОС",
+  "apiPermissionsActionOnHardwareError": "Обработка аппаратных ошибок",
+  "apiKeysGranularActionChip": "Разрешено действий: {count} из {total}",
+  "@apiKeysGranularActionChip": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  }
 }
+
 

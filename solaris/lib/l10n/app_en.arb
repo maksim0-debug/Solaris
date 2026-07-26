@@ -911,7 +911,40 @@
   "invalidTimeRangeError": "End time must be after start time",
   "saveAction": "Save",
   "sessionTitleLabel": "Title",
-  "sessionDescLabel": "Description"
+  "sessionDescLabel": "Description",
+  "apiPermissionsActionSetBrightness": "Set Brightness",
+  "apiPermissionsActionSetTemperature": "Set Color Temperature (K)",
+  "apiPermissionsActionSetMonitorOffset": "Monitor Offset Adjustment",
+  "apiPermissionsActionSetBrightnessPreset": "Brightness Presets",
+  "apiPermissionsActionSetTemperaturePreset": "Temperature Presets",
+  "apiPermissionsActionSetUserPreset": "Custom User Presets",
+  "apiPermissionsActionCyclePreset": "Cycle Presets Forward/Backward",
+  "apiPermissionsActionSetAutoBrightness": "Auto-Brightness Engine Toggle",
+  "apiPermissionsActionSetAutoTemperature": "Auto-Temperature Engine Toggle",
+  "apiPermissionsActionSetSmartCircadian": "Smart Circadian Master Toggle",
+  "apiPermissionsActionSetSmartCircadianSubmodules": "Circadian Submodules Control",
+  "apiPermissionsActionSetGameMode": "Game Mode Master Switch",
+  "apiPermissionsActionSetGameModeBrightness": "Game Mode Brightness Level",
+  "apiPermissionsActionManageGameModeWhitelist": "Game Mode App Whitelist Management",
+  "apiPermissionsActionSetWeatherAdjustment": "Weather Adjustments Toggle",
+  "apiPermissionsActionSetWeatherTemperatureAdjustment": "Weather Temperature Adjustments Toggle",
+  "apiPermissionsActionSetWeatherIntensity": "Weather Effect Intensity Level",
+  "apiPermissionsActionSetManualLocation": "Manual Location Coordinates Entry",
+  "apiPermissionsActionSetWeatherProvider": "Weather Provider Selection",
+  "apiPermissionsActionTriggerSunSync": "Force Solar & Weather Data Sync",
+  "apiPermissionsActionPushSleepStatus": "Push External Sleep Status",
+  "apiPermissionsActionManageWebhooks": "Webhook Management (CRUD & DLQ)",
+  "apiPermissionsActionSetMapAnimations": "Map Visual Weather Animations",
+  "apiPermissionsActionOnSystemResume": "System Resume Event Handling",
+  "apiPermissionsActionOnHardwareError": "Hardware Error Event Handling",
+  "apiKeysGranularActionChip": "{count} of {total} Actions Allowed",
+  "@apiKeysGranularActionChip": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  }
 }
+
 
 

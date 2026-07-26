@@ -56,16 +56,18 @@ void main() {
       container.dispose();
     });
 
-    void updatePermissions(ApiPermissionsConfig permissions) {
+    Future<void> updatePermissions(ApiPermissionsConfig permissions) async {
       container.read(settingsProvider.notifier).updateApiPermissions(permissions);
+      await Future<void>.delayed(Duration.zero);
       final stateMap = container.read(settingsProvider.notifier).state.value;
       if (stateMap != null) {
         router.apiKeys = stateMap['all']?.apiKeys ?? [];
       }
     }
 
+
     test('1. Privilege Escalation Guard rejects payload containing apiPermissions', () async {
-      updatePermissions(const ApiPermissionsConfig()); // full permissions by default
+      await updatePermissions(const ApiPermissionsConfig()); // full permissions by default
 
       final req = await client.postUrl(Uri.parse('$serverUrl/api/v1/control'));
       req.headers.contentType = ContentType.json;
@@ -82,7 +84,7 @@ void main() {
     });
 
     test('2. Read-Only mode blocks single control action', () async {
-      updatePermissions(const ApiPermissionsConfig(isReadOnly: true));
+      await updatePermissions(const ApiPermissionsConfig(isReadOnly: true));
 
       final req = await client.postUrl(Uri.parse('$serverUrl/api/v1/control'));
       req.headers.contentType = ContentType.json;
@@ -98,7 +100,7 @@ void main() {
     });
 
     test('3. Disabled category blocks single control action', () async {
-      updatePermissions(const ApiPermissionsConfig(
+      await updatePermissions(const ApiPermissionsConfig(
         allowedCategories: {
           ApiActionCategory.monitors,
           // gaming is omitted

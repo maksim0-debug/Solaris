@@ -2009,4 +2009,98 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get sessionDescLabel => 'Опис';
+
+  @override
+  String get apiPermissionsActionSetBrightness => 'Зміна яскравості';
+
+  @override
+  String get apiPermissionsActionSetTemperature =>
+      'Зміна колірної температури (К)';
+
+  @override
+  String get apiPermissionsActionSetMonitorOffset =>
+      'Індивідуальне зміщення монітора';
+
+  @override
+  String get apiPermissionsActionSetBrightnessPreset => 'Пресети яскравості';
+
+  @override
+  String get apiPermissionsActionSetTemperaturePreset => 'Пресети температури';
+
+  @override
+  String get apiPermissionsActionSetUserPreset => 'Користувацькі пресети';
+
+  @override
+  String get apiPermissionsActionCyclePreset => 'Циклічне перемикання пресетів';
+
+  @override
+  String get apiPermissionsActionSetAutoBrightness =>
+      'Перемикач авто-яскравості';
+
+  @override
+  String get apiPermissionsActionSetAutoTemperature =>
+      'Перемикач авто-температури';
+
+  @override
+  String get apiPermissionsActionSetSmartCircadian =>
+      'Перемикач Smart Circadian';
+
+  @override
+  String get apiPermissionsActionSetSmartCircadianSubmodules =>
+      'Управління підмодулями ритму';
+
+  @override
+  String get apiPermissionsActionSetGameMode => 'Ігровий режим (увімк/вимк)';
+
+  @override
+  String get apiPermissionsActionSetGameModeBrightness =>
+      'Яскравість ігрового режиму';
+
+  @override
+  String get apiPermissionsActionManageGameModeWhitelist =>
+      'Управління білим списком ПЗ';
+
+  @override
+  String get apiPermissionsActionSetWeatherAdjustment => 'Погодне коригування';
+
+  @override
+  String get apiPermissionsActionSetWeatherTemperatureAdjustment =>
+      'Погодне коригування температури';
+
+  @override
+  String get apiPermissionsActionSetWeatherIntensity =>
+      'Інтенсивність погодних ефектів';
+
+  @override
+  String get apiPermissionsActionSetManualLocation =>
+      'Ручне введення координат геопозиції';
+
+  @override
+  String get apiPermissionsActionSetWeatherProvider =>
+      'Вибір провайдера погоди';
+
+  @override
+  String get apiPermissionsActionTriggerSunSync =>
+      'Примусова синхронізація сонця та погоди';
+
+  @override
+  String get apiPermissionsActionPushSleepStatus => 'Передача статусу сну';
+
+  @override
+  String get apiPermissionsActionManageWebhooks =>
+      'Управління вебхуками (CRUD та DLQ)';
+
+  @override
+  String get apiPermissionsActionSetMapAnimations => 'Анімації карти погоди';
+
+  @override
+  String get apiPermissionsActionOnSystemResume => 'Обробка відновлення ОС';
+
+  @override
+  String get apiPermissionsActionOnHardwareError => 'Обробка апаратних помилок';
+
+  @override
+  String apiKeysGranularActionChip(int count, int total) {
+    return 'Дозволено дій: $count з $total';
+  }
 }

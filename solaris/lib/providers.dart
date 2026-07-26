@@ -1303,16 +1303,16 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     return currentMap[monitorId] ?? currentMap['all']!;
   }
 
-  Future<void> _updateSettings(
+  void _updateSettings(
     Set<String> monitorIds,
     SettingsState Function(SettingsState) transform,
-  ) async {
+  ) {
     final currentMap = state.value ?? {'all': SettingsState()};
     final newStateMap = Map<String, SettingsState>.from(currentMap);
 
     for (final id in monitorIds) {
       if (id == 'all') {
-        newStateMap['all'] = transform(newStateMap['all']!);
+        newStateMap['all'] = transform(newStateMap['all'] ?? SettingsState());
         // Replicate CHANGE to all other specific monitors without overwriting their unique fields
         for (final key in newStateMap.keys.toList()) {
           if (key != 'all') {
@@ -1320,14 +1320,14 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
           }
         }
       } else {
-        final current = newStateMap[id] ?? newStateMap['all']!;
+        final current = newStateMap[id] ?? newStateMap['all'] ?? SettingsState();
         newStateMap[id] = transform(current);
       }
     }
 
     debugPrint('[SettingsNotifier] Updated settings for monitors $monitorIds');
     state = AsyncData(newStateMap);
-    await _saveSettings();
+    _saveSettings();
   }
 
   void syncAllMonitorsToGlobal() {

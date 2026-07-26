@@ -826,6 +826,39 @@
   "invalidTimeRangeError": "Час закінчення має бути пізніше часу початку",
   "saveAction": "Зберегти",
   "sessionTitleLabel": "Заголовок",
-  "sessionDescLabel": "Опис"
+  "sessionDescLabel": "Опис",
+  "apiPermissionsActionSetBrightness": "Зміна яскравості",
+  "apiPermissionsActionSetTemperature": "Зміна колірної температури (К)",
+  "apiPermissionsActionSetMonitorOffset": "Індивідуальне зміщення монітора",
+  "apiPermissionsActionSetBrightnessPreset": "Пресети яскравості",
+  "apiPermissionsActionSetTemperaturePreset": "Пресети температури",
+  "apiPermissionsActionSetUserPreset": "Користувацькі пресети",
+  "apiPermissionsActionCyclePreset": "Циклічне перемикання пресетів",
+  "apiPermissionsActionSetAutoBrightness": "Перемикач авто-яскравості",
+  "apiPermissionsActionSetAutoTemperature": "Перемикач авто-температури",
+  "apiPermissionsActionSetSmartCircadian": "Перемикач Smart Circadian",
+  "apiPermissionsActionSetSmartCircadianSubmodules": "Управління підмодулями ритму",
+  "apiPermissionsActionSetGameMode": "Ігровий режим (увімк/вимк)",
+  "apiPermissionsActionSetGameModeBrightness": "Яскравість ігрового режиму",
+  "apiPermissionsActionManageGameModeWhitelist": "Управління білим списком ПЗ",
+  "apiPermissionsActionSetWeatherAdjustment": "Погодне коригування",
+  "apiPermissionsActionSetWeatherTemperatureAdjustment": "Погодне коригування температури",
+  "apiPermissionsActionSetWeatherIntensity": "Інтенсивність погодних ефектів",
+  "apiPermissionsActionSetManualLocation": "Ручне введення координат геопозиції",
+  "apiPermissionsActionSetWeatherProvider": "Вибір провайдера погоди",
+  "apiPermissionsActionTriggerSunSync": "Примусова синхронізація сонця та погоди",
+  "apiPermissionsActionPushSleepStatus": "Передача статусу сну",
+  "apiPermissionsActionManageWebhooks": "Управління вебхуками (CRUD та DLQ)",
+  "apiPermissionsActionSetMapAnimations": "Анімації карти погоди",
+  "apiPermissionsActionOnSystemResume": "Обробка відновлення ОС",
+  "apiPermissionsActionOnHardwareError": "Обробка апаратних помилок",
+  "apiKeysGranularActionChip": "Дозволено дій: {count} з {total}",
+  "@apiKeysGranularActionChip": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  }
 }
+
 

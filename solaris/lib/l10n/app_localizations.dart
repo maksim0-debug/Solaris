@@ -3491,6 +3491,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Description'**
   String get sessionDescLabel;
+
+  /// No description provided for @apiPermissionsActionSetBrightness.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Brightness'**
+  String get apiPermissionsActionSetBrightness;
+
+  /// No description provided for @apiPermissionsActionSetTemperature.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Color Temperature (K)'**
+  String get apiPermissionsActionSetTemperature;
+
+  /// No description provided for @apiPermissionsActionSetMonitorOffset.
+  ///
+  /// In en, this message translates to:
+  /// **'Monitor Offset Adjustment'**
+  String get apiPermissionsActionSetMonitorOffset;
+
+  /// No description provided for @apiPermissionsActionSetBrightnessPreset.
+  ///
+  /// In en, this message translates to:
+  /// **'Brightness Presets'**
+  String get apiPermissionsActionSetBrightnessPreset;
+
+  /// No description provided for @apiPermissionsActionSetTemperaturePreset.
+  ///
+  /// In en, this message translates to:
+  /// **'Temperature Presets'**
+  String get apiPermissionsActionSetTemperaturePreset;
+
+  /// No description provided for @apiPermissionsActionSetUserPreset.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom User Presets'**
+  String get apiPermissionsActionSetUserPreset;
+
+  /// No description provided for @apiPermissionsActionCyclePreset.
+  ///
+  /// In en, this message translates to:
+  /// **'Cycle Presets Forward/Backward'**
+  String get apiPermissionsActionCyclePreset;
+
+  /// No description provided for @apiPermissionsActionSetAutoBrightness.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-Brightness Engine Toggle'**
+  String get apiPermissionsActionSetAutoBrightness;
+
+  /// No description provided for @apiPermissionsActionSetAutoTemperature.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-Temperature Engine Toggle'**
+  String get apiPermissionsActionSetAutoTemperature;
+
+  /// No description provided for @apiPermissionsActionSetSmartCircadian.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart Circadian Master Toggle'**
+  String get apiPermissionsActionSetSmartCircadian;
+
+  /// No description provided for @apiPermissionsActionSetSmartCircadianSubmodules.
+  ///
+  /// In en, this message translates to:
+  /// **'Circadian Submodules Control'**
+  String get apiPermissionsActionSetSmartCircadianSubmodules;
+
+  /// No description provided for @apiPermissionsActionSetGameMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Game Mode Master Switch'**
+  String get apiPermissionsActionSetGameMode;
+
+  /// No description provided for @apiPermissionsActionSetGameModeBrightness.
+  ///
+  /// In en, this message translates to:
+  /// **'Game Mode Brightness Level'**
+  String get apiPermissionsActionSetGameModeBrightness;
+
+  /// No description provided for @apiPermissionsActionManageGameModeWhitelist.
+  ///
+  /// In en, this message translates to:
+  /// **'Game Mode App Whitelist Management'**
+  String get apiPermissionsActionManageGameModeWhitelist;
+
+  /// No description provided for @apiPermissionsActionSetWeatherAdjustment.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather Adjustments Toggle'**
+  String get apiPermissionsActionSetWeatherAdjustment;
+
+  /// No description provided for @apiPermissionsActionSetWeatherTemperatureAdjustment.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather Temperature Adjustments Toggle'**
+  String get apiPermissionsActionSetWeatherTemperatureAdjustment;
+
+  /// No description provided for @apiPermissionsActionSetWeatherIntensity.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather Effect Intensity Level'**
+  String get apiPermissionsActionSetWeatherIntensity;
+
+  /// No description provided for @apiPermissionsActionSetManualLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual Location Coordinates Entry'**
+  String get apiPermissionsActionSetManualLocation;
+
+  /// No description provided for @apiPermissionsActionSetWeatherProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather Provider Selection'**
+  String get apiPermissionsActionSetWeatherProvider;
+
+  /// No description provided for @apiPermissionsActionTriggerSunSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Force Solar & Weather Data Sync'**
+  String get apiPermissionsActionTriggerSunSync;
+
+  /// No description provided for @apiPermissionsActionPushSleepStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Push External Sleep Status'**
+  String get apiPermissionsActionPushSleepStatus;
+
+  /// No description provided for @apiPermissionsActionManageWebhooks.
+  ///
+  /// In en, this message translates to:
+  /// **'Webhook Management (CRUD & DLQ)'**
+  String get apiPermissionsActionManageWebhooks;
+
+  /// No description provided for @apiPermissionsActionSetMapAnimations.
+  ///
+  /// In en, this message translates to:
+  /// **'Map Visual Weather Animations'**
+  String get apiPermissionsActionSetMapAnimations;
+
+  /// No description provided for @apiPermissionsActionOnSystemResume.
+  ///
+  /// In en, this message translates to:
+  /// **'System Resume Event Handling'**
+  String get apiPermissionsActionOnSystemResume;
+
+  /// No description provided for @apiPermissionsActionOnHardwareError.
+  ///
+  /// In en, this message translates to:
+  /// **'Hardware Error Event Handling'**
+  String get apiPermissionsActionOnHardwareError;
+
+  /// No description provided for @apiKeysGranularActionChip.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of {total} Actions Allowed'**
+  String apiKeysGranularActionChip(int count, int total);
 }
 
 class _AppLocalizationsDelegate

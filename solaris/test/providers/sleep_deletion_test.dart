@@ -9,11 +9,22 @@ import 'package:solaris/services/sleep_service.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  late Directory tempDir;
+
   setUpAll(() {
+    tempDir = Directory.systemTemp.createTempSync('sleep_deletion_test_');
     const MethodChannel('plugins.flutter.io/path_provider')
         .setMockMethodCallHandler((MethodCall methodCall) async {
-      return '.';
+      return tempDir.path;
     });
+  });
+
+  tearDownAll(() {
+    try {
+      if (tempDir.existsSync()) {
+        tempDir.deleteSync(recursive: true);
+      }
+    } catch (_) {}
   });
 
   group('Sleep Deletion and Ignored List Tests', () {
@@ -21,11 +32,11 @@ void main() {
 
     setUp(() async {
       container = ProviderContainer();
-      final ignoredFile = File('./ignored_sleep_sessions.json');
+      final ignoredFile = File('${tempDir.path}/ignored_sleep_sessions.json');
       if (await ignoredFile.exists()) {
         await ignoredFile.delete();
       }
-      final cacheFile = File('./sleep_data_cache.json');
+      final cacheFile = File('${tempDir.path}/sleep_data_cache.json');
       if (await cacheFile.exists()) {
         await cacheFile.delete();
       }

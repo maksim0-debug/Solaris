@@ -1993,4 +1993,103 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sessionDescLabel => 'Description';
+
+  @override
+  String get apiPermissionsActionSetBrightness => 'Set Brightness';
+
+  @override
+  String get apiPermissionsActionSetTemperature => 'Set Color Temperature (K)';
+
+  @override
+  String get apiPermissionsActionSetMonitorOffset =>
+      'Monitor Offset Adjustment';
+
+  @override
+  String get apiPermissionsActionSetBrightnessPreset => 'Brightness Presets';
+
+  @override
+  String get apiPermissionsActionSetTemperaturePreset => 'Temperature Presets';
+
+  @override
+  String get apiPermissionsActionSetUserPreset => 'Custom User Presets';
+
+  @override
+  String get apiPermissionsActionCyclePreset =>
+      'Cycle Presets Forward/Backward';
+
+  @override
+  String get apiPermissionsActionSetAutoBrightness =>
+      'Auto-Brightness Engine Toggle';
+
+  @override
+  String get apiPermissionsActionSetAutoTemperature =>
+      'Auto-Temperature Engine Toggle';
+
+  @override
+  String get apiPermissionsActionSetSmartCircadian =>
+      'Smart Circadian Master Toggle';
+
+  @override
+  String get apiPermissionsActionSetSmartCircadianSubmodules =>
+      'Circadian Submodules Control';
+
+  @override
+  String get apiPermissionsActionSetGameMode => 'Game Mode Master Switch';
+
+  @override
+  String get apiPermissionsActionSetGameModeBrightness =>
+      'Game Mode Brightness Level';
+
+  @override
+  String get apiPermissionsActionManageGameModeWhitelist =>
+      'Game Mode App Whitelist Management';
+
+  @override
+  String get apiPermissionsActionSetWeatherAdjustment =>
+      'Weather Adjustments Toggle';
+
+  @override
+  String get apiPermissionsActionSetWeatherTemperatureAdjustment =>
+      'Weather Temperature Adjustments Toggle';
+
+  @override
+  String get apiPermissionsActionSetWeatherIntensity =>
+      'Weather Effect Intensity Level';
+
+  @override
+  String get apiPermissionsActionSetManualLocation =>
+      'Manual Location Coordinates Entry';
+
+  @override
+  String get apiPermissionsActionSetWeatherProvider =>
+      'Weather Provider Selection';
+
+  @override
+  String get apiPermissionsActionTriggerSunSync =>
+      'Force Solar & Weather Data Sync';
+
+  @override
+  String get apiPermissionsActionPushSleepStatus =>
+      'Push External Sleep Status';
+
+  @override
+  String get apiPermissionsActionManageWebhooks =>
+      'Webhook Management (CRUD & DLQ)';
+
+  @override
+  String get apiPermissionsActionSetMapAnimations =>
+      'Map Visual Weather Animations';
+
+  @override
+  String get apiPermissionsActionOnSystemResume =>
+      'System Resume Event Handling';
+
+  @override
+  String get apiPermissionsActionOnHardwareError =>
+      'Hardware Error Event Handling';
+
+  @override
+  String apiKeysGranularActionChip(int count, int total) {
+    return '$count of $total Actions Allowed';
+  }
 }

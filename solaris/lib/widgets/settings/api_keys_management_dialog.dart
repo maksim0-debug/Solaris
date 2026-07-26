@@ -374,7 +374,12 @@ class ApiKeysManagementDialog extends ConsumerWidget {
                                           Text(
                                             isReadOnly
                                                 ? l10n.apiKeysReadOnlyChip(catCount)
-                                                : l10n.apiKeysActiveScopesChip(catCount),
+                                                : (keyEntry.permissions.allowedActions != null
+                                                    ? l10n.apiKeysGranularActionChip(
+                                                        keyEntry.permissions.allowedActions!.length,
+                                                        25,
+                                                      )
+                                                    : l10n.apiKeysActiveScopesChip(catCount)),
                                             style: TextStyle(
                                               color: isReadOnly ? const Color(0xFFFCA5A5) : const Color(0xFF86EFAC),
                                               fontSize: 11,
