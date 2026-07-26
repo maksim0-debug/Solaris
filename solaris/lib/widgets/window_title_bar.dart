@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/theme/app_theme.dart';
+import 'package:solaris/providers/lifecycle_provider.dart';
 
 class WindowTitleBar extends StatelessWidget {
   const WindowTitleBar({super.key});
@@ -50,14 +52,14 @@ class WindowTitleBar extends StatelessWidget {
   }
 }
 
-class _WindowButtons extends StatefulWidget {
+class _WindowButtons extends ConsumerStatefulWidget {
   const _WindowButtons();
 
   @override
-  State<_WindowButtons> createState() => _WindowButtonsState();
+  ConsumerState<_WindowButtons> createState() => _WindowButtonsState();
 }
 
-class _WindowButtonsState extends State<_WindowButtons> with WindowListener {
+class _WindowButtonsState extends ConsumerState<_WindowButtons> with WindowListener {
   bool _isMaximized = false;
 
   @override
@@ -98,7 +100,10 @@ class _WindowButtonsState extends State<_WindowButtons> with WindowListener {
       children: [
         _WindowButton(
           icon: LucideIcons.minus,
-          onPressed: () => windowManager.minimize(),
+          onPressed: () async {
+            ref.read(appLifecycleProvider.notifier).setMinimized();
+            await windowManager.minimize();
+          },
         ),
         _WindowButton(
           icon: _isMaximized ? LucideIcons.copy : LucideIcons.square,

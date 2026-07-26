@@ -20,6 +20,7 @@ import 'dart:io';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:solaris/services/hotkey_service.dart';
 import 'package:solaris/models/settings_state.dart';
+import 'package:solaris/utils/memory_utils.dart';
 
 void main(List<String> args) {
   final format = DateFormat('yyyy-MM-dd HH:mm:ss.SSS');
@@ -41,6 +42,11 @@ void main(List<String> args) {
   runZoned(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+      
+      // Strict ImageCache limits to prevent map tiles from bloating RAM to 150+ MB
+      PaintingBinding.instance.imageCache.maximumSizeBytes = 12 * 1024 * 1024; // 12 MB max
+      PaintingBinding.instance.imageCache.maximumSize = 30; // 30 items max
+
       await windowManager.ensureInitialized();
       await TimeService.initialize();
 
@@ -125,6 +131,7 @@ void main(List<String> args) {
       // Prevent app from closing when clicking 'X'
       await windowManager.setPreventClose(true);
       windowManager.addListener(WindowEventHandler(container));
+      WidgetsBinding.instance.addObserver(_SystemLifecycleObserver(container));
 
       // Initialize Hotkey Service
       await container.read(hotkeyServiceProvider).init();
@@ -242,10 +249,22 @@ class WindowEventHandler extends WindowListener {
   }
 
   @override
-  void onWindowBlur() {
+  void onWindowBlur() async {
     if (kDebugMode) {
       debugPrint('🪟 [Window Debug] Event: Blur (Focus Lost)');
     }
+
+    // 1. Immediately drop unneeded tile and raster memory when focus is lost to another window
+    MemoryUtils.trimMemory();
+
+    // 2. If window was minimized (e.g. via Taskbar click, Win+D, or Alt+Tab toggle),
+    // set minimized lifecycle state to stop GPU rendering and drop CPU/GPU to 0.0%
+    try {
+      bool isMinimized = await windowManager.isMinimized();
+      if (isMinimized) {
+        container.read(appLifecycleProvider.notifier).setMinimized();
+      }
+    } catch (_) {}
   }
 
   @override
@@ -269,3 +288,30 @@ class WindowEventHandler extends WindowListener {
     }
   }
 }
+
+/// Listens to Flutter Engine system lifecycle state changes (inactive, hidden, paused, resumed)
+/// to automatically trim memory and update appLifecycleProvider state on OS events.
+class _SystemLifecycleObserver extends WidgetsBindingObserver {
+  final ProviderContainer container;
+  _SystemLifecycleObserver(this.container);
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (kDebugMode) {
+      debugPrint('🪟 [Engine Lifecycle Debug] State: $state');
+    }
+    if (state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused) {
+      MemoryUtils.trimMemory();
+      windowManager.isMinimized().then((isMinimized) {
+        if (isMinimized) {
+          container.read(appLifecycleProvider.notifier).setMinimized();
+        }
+      }).catchError((_) {});
+    } else if (state == AppLifecycleState.resumed) {
+      container.read(appLifecycleProvider.notifier).setVisible();
+    }
+  }
+}
+

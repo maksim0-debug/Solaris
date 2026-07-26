@@ -28,6 +28,7 @@ import 'package:flutter/services.dart';
 import 'package:solaris/widgets/settings_search_overlay.dart';
 import 'package:solaris/widgets/deep_link_target.dart';
 import 'package:solaris/widgets/update_status_widget.dart';
+import 'package:solaris/utils/memory_utils.dart';
 
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -131,26 +132,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       });
     }
 
-    // Two-stage visibility optimization to minimize RAM usage:
-    // 1. When HIDDEN to tray: completely destroy the UI subtree via
-    //    SizedBox.shrink() to free ~50-80 MB of RenderObjects,
-    //    BackdropFilter surfaces, fl_chart data, and CustomPaint canvases.
-    //    Flicker on restore is prevented by tray_service.dart which sets
-    //    the lifecycle to visible and waits for the first frame before
-    //    calling windowManager.show().
-    // 2. When MINIMIZED: use TickerMode(enabled: false) to freeze animations
-    //    while preserving widget state for instant restore.
-    //
-    // Background logic (circadian adjustment, temperature, API server) is
-    // unaffected because it is bound to ProviderContainer, not the widget tree.
+    ref.listen<AppVisibilityState>(appLifecycleProvider, (previous, next) {
+      if (next != AppVisibilityState.visible) {
+        MemoryUtils.trimMemory();
+      }
+    });
+
+    // Detach UI subtree whenever the window is not visible (hidden to tray OR minimized to taskbar).
+    // This drops CPU and GPU usage to 0.0% when minimized and releases ~50-80 MB of RenderObjects,
+    // BackdropFilter surfaces, fl_chart data, and decoded image/map tiles.
+    // Background logic (circadian adjustment, temperature, API server) continues running via ProviderContainer.
     final visibility = ref.watch(appLifecycleProvider);
-    final isHidden = visibility == AppVisibilityState.hidden;
     final isVisible = visibility == AppVisibilityState.visible;
 
-    if (isHidden) {
-      // Clear image cache to free decoded bitmap memory (~2-3 MB)
-      PaintingBinding.instance.imageCache.clear();
-      PaintingBinding.instance.imageCache.clearLiveImages();
+    if (!isVisible) {
       return const SizedBox.shrink();
     }
 

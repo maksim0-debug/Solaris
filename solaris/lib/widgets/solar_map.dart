@@ -12,6 +12,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/models/map_health_report.dart';
 import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/models/settings_state.dart';
+import 'package:solaris/utils/memory_utils.dart';
 
 
 class SolarMap extends ConsumerStatefulWidget {
@@ -64,6 +65,7 @@ class _SolarMapState extends ConsumerState<SolarMap> {
   void dispose() {
     _timer?.cancel();
     _mapController.dispose();
+    MemoryUtils.trimMemory();
     super.dispose();
   }
 
