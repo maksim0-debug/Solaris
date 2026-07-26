@@ -37,10 +37,11 @@ The Outbound Webhooks Engine enables Solaris to broadcast state changes, solar p
 
 ## 🛠️ Management REST Endpoints & Granular Security
 
-All webhook administration endpoints are guarded by **Solaris Granular Security (`ApiPermissionsConfig`)**:
+All webhook administration endpoints are guarded by **Solaris Granular Security & Per-Action Precision (`ApiPermissionsConfig`)**:
 * **Read Operations** (`GET /api/v1/webhooks`, `GET /api/v1/webhooks/dlq`): Require category `system` in `allowedCategories`.
-* **Mutating Operations** (`POST /api/v1/webhooks`, `DELETE /api/v1/webhooks/:id`, `POST /api/v1/webhooks/:id/test`, `POST /api/v1/webhooks/dlq/retry`): Require `isReadOnly = false` AND category `system` in `allowedCategories`.
-* **Violation Response**: Rejects with `HTTP 403 Forbidden` (`Action Category Prohibited` or `Read-Only Mode Enabled`).
+* **Mutating Operations** (`POST /api/v1/webhooks`, `DELETE /api/v1/webhooks/:id`, `POST /api/v1/webhooks/:id/test`, `POST /api/v1/webhooks/dlq/retry`): Require `isReadOnly = false`, category `system` in `allowedCategories`, AND canonical action `manage_webhooks` in `allowedActions` (or `allowedActions == null`).
+* **Alias Shortcut (`clear_failed_webhooks`)**: Executing `{"action": "clear_failed_webhooks"}` via `POST /api/v1/control` is evaluated against canonical permission `manage_webhooks` and clears dead-letter entries cleanly.
+* **Violation Response**: Rejects with `HTTP 403 Forbidden` (`Action Prohibited`, `Action Category Prohibited`, or `Read-Only Mode Enabled`).
 
 ### 1. `GET /api/v1/webhooks`
 Returns all configured outbound webhooks.

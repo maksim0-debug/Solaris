@@ -262,7 +262,30 @@ X-API-Key: sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368
 
 ## ⚙️ Action Control System (`POST /api/v1/control`)
 
-The Action Control System provides a single mutation gateway supporting **26 action types** for controlling all aspects of Solaris.
+The Action Control System provides a unified mutation gateway supporting **25 canonical action types** and **17 convenience aliases** for controlling all aspects of Solaris.
+
+### Per-Action Precision & Alias Normalization (`getCanonicalAction`)
+
+Before permission evaluation (`ApiPermissionsChecker.checkAction`), every incoming action string is normalized via `ApiPermissionsConfig.getCanonicalAction(action)`:
+
+| Incoming Action / Shortcut Alias | Canonical Action Key | Parent Category | Auto-Injected Payload Parameters |
+| :--- | :--- | :--- | :--- |
+| `set_monitor_brightness` | `set_brightness` | `monitors` | — |
+| `set_monitor_temperature` | `set_temperature` | `monitors` | — |
+| `brightest`, `bright`, `dim`, `dimmest` | `set_brightness_preset` | `presets` | `preset: "<alias>"` |
+| `coolest`, `cool`, `warm`, `warmest` | `set_temperature_preset` | `presets` | `preset: "<alias>"` |
+| `toggle_auto_brightness` | `set_auto_brightness` | `circadian` | — |
+| `toggle_auto_temperature`, `set_color_temperature_enabled` | `set_auto_temperature` | `circadian` | — |
+| `openmeteo`, `weatherapi`, `auto` | `set_weather_provider` | `environment` | `provider: "<alias>"` |
+| `clear_failed_webhooks` | `manage_webhooks` | `system` | — |
+
+> [!TIP]
+> **Convenience Shortcut Execution**: Sending `{"action": "brightest"}` or `{"action": "openmeteo"}` automatically injects the required `preset` or `provider` fields into `mutablePayload` and routes cleanly without requiring manual nested parameters.
+
+### Internal-Only Event Rejection Guard
+Non-mutating system broadcast events (`on_system_resume`, `on_hardware_error`) cannot be invoked externally via `POST /api/v1/control`. Attempts to execute them are rejected with `HTTP 422 Unprocessable Entity` (`"Unknown Action"`).
+
+---
 
 ### Single Action vs. Batch Execution
 
@@ -292,7 +315,7 @@ Batch payloads allow executing multiple commands in a single HTTP request.
 ```
 
 > [!IMPORTANT]
-> **Pre-flight ACL Batch Pass (`mode = "fail_fast"`)**: BEFORE executing any state mutation (`safeStateMutator`), the server performs a Pre-flight ACL pass over the entire `actions` array. If ANY command in the batch belongs to a prohibited category, the **ENTIRE request is rejected immediately with HTTP 403 Forbidden at line 0**, ensuring 100% atomic rollback without partial state application.
+> **Pre-flight ACL Batch Pass (`mode = "fail_fast"`)**: BEFORE executing any state mutation (`safeStateMutator`), the server performs a Pre-flight ACL pass over the entire `actions` array (including alias normalization). If ANY command or alias in the batch belongs to a prohibited action/category, the **ENTIRE request is rejected immediately with HTTP 403 Forbidden at line 0**, ensuring 100% atomic rollback without partial state application.
 > 
 > **Mode `"continue"`**: In `continue` mode, prohibited commands return individual `403` error objects in the results array while valid commands execute cleanly.
 
@@ -305,7 +328,7 @@ Any request payload containing keys `apiPermissions`, `permissions`, or nested a
 
 ---
 
-### Catalog of All 26 Action Commands
+### Catalog of All 25 Canonical Action Commands
 
 #### 1. `set_brightness`
 Sets manual monitor brightness level (0.0 to 100.0%). Automatically disables Auto Brightness.

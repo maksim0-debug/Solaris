@@ -75,11 +75,11 @@ When a WebSocket connection closes, Solaris transmits precise status codes and r
 
 ---
 
-## 🛡️ Granular Security & Initial Snapshot Protection
+## 🛡️ Granular Security, Per-Action ACL & Snapshot Protection
 
 Upon connection, Solaris sends an initial `snapshot` frame containing current subsystem states.
 
-### Masking Rules (`_buildSnapshotMap` & `ApiPermissionsFilter`):
+### Snapshot Masking Rules (`_buildSnapshotMap` & `ApiPermissionsFilter`):
 * `monitors`: Key omitted if `allowReadMonitors = false`.
 * `solar`: Key omitted if `allowReadSolar = false`.
 * `weather`: Key omitted if `allowReadWeather = false`.
@@ -99,6 +99,11 @@ Upon connection, Solaris sends an initial `snapshot` frame containing current su
   }
 }
 ```
+
+### Per-Action Broadcast Event Isolation (`broadcastEvent`)
+In addition to read-flag telemetry filtering, outbound WebSocket system events (`broadcastEvent`) are evaluated against per-client action permissions:
+* Mutating system broadcast events are filtered via `clientPermissions.isActionAllowed(eventName)`.
+* If a connected client's API key has prohibited the specific action (e.g. `manage_webhooks` or `on_hardware_error`), the broadcast frame is cleanly suppressed for that specific socket without leaking data or terminating the connection.
 
 ---
 

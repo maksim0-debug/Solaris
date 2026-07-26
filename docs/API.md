@@ -1,6 +1,6 @@
 # Solaris Control API v1 — Architecture & Core Guide
 
-Welcome to the official developer documentation for **Solaris Control API v1**. This document covers the high-level architecture, security layer, **Multiple Scoped API Keys Architecture**, authentication schemes, **Granular Security & Data Privacy Framework**, RFC 7807 error format, rate-limiting, and interactive OpenAPI documentation for Solaris.
+Welcome to the official developer documentation for **Solaris Control API v1**. This document covers the high-level architecture, security layer, **Multiple Scoped API Keys Architecture**, authentication schemes, **Per-Action Precision & Granular Security Framework**, RFC 7807 error format, rate-limiting, and interactive OpenAPI documentation for Solaris.
 
 ---
 
@@ -11,6 +11,8 @@ Welcome to the official developer documentation for **Solaris Control API v1**. 
 ### Key Architecture Features
 * **Zero External Dependencies**: Built directly on `dart:io` `HttpServer` with zero third-party HTTP framework dependencies.
 * **Multiple Scoped API Keys Architecture**: Granular per-client authentication keys (`ApiKeyEntry`) with individual names, access scope configurations (`ApiPermissionsConfig`), and DPAPI token security.
+* **Per-Action Precision Engine**: Fine-grained access control supporting **25 canonical actions** across 7 categories, 17 alias mappings (`getCanonicalAction`), and Clean Storage Protocol.
+* **Tri-State Accordion UI**: Interactive Flutter GUI (`ApiPermissionsDialog`) with `ExpansionTile` accordions, Tri-State master checkboxes (`true`/`false`/`null`), click isolation in `leading`, and dynamic scope chips.
 * **Asynchronous Trie-Router**: Fast path-segment matching with support for dynamic path variables (e.g. `:slug`).
 * **8-Layer Defense & Isolation Pipeline**: Built-in protection against Host Header Spoofing/DNS Rebinding, Payload Buffer Overflows, Unsupported Media Types, CSWSH (Cross-Site WebSocket Hijacking), Drive-by attacks, and **Granular Zero-Trust ACL Isolation**.
 * **Headless-Safe Execution (`safeStateMutator`)**: State mutations are deferred via `Future.microtask()` to avoid Flutter widget rendering cycle conflicts (`setState() or markNeedsBuild() called during build`).
@@ -64,7 +66,7 @@ Every HTTP and WebSocket request flows sequentially through 8 security layers:
  7. Constant-Time Auth & requireLocalToken Guard (Constant-time SHA-256 token lookup via constantTimeEquals)
          │
          ▼
- 8. Granular ACL & Data Privacy Guard (ApiPermissionsChecker & ApiPermissionsFilter per-key scoping)
+ 8. Granular ACL & Data Privacy Guard (ApiPermissionsChecker & ApiPermissionsFilter per-action scoping)
          │
          ▼
 [ Route Handler / Controller ]
@@ -72,7 +74,7 @@ Every HTTP and WebSocket request flows sequentially through 8 security layers:
 
 ---
 
-## 🛡️ Granular Security & Data Privacy Access Control Framework
+## 🛡️ Granular Security & Per-Action Precision Framework
 
 Solaris Control API v1 incorporates an enterprise-grade Zero-Trust access control system (`ApiPermissionsConfig`) configured locally per-key via the Flutter GUI (`ApiKeysManagementDialog` & `ApiPermissionsDialog`).
 
@@ -87,22 +89,55 @@ Controls visibility of telemetry and subsystem data in `GET /api/v1/status`, que
 > [!NOTE]
 > **Granular Masking (`ApiPermissionsFilter`)**: Disabling a read flag automatically redacts the corresponding root section and performs key-level masking on composite objects (`automation`, `smart_circadian`, `presets`). For example, when `allowReadSleep = false`, sleep metrics (`sleep_pressure`, `sleep_debt`) are automatically pruned from `smart_circadian` without stripping circadian day-phase info.
 
-### 2. Control Mutation Categories (`allowedCategories`)
-Mutating commands (`POST /api/v1/control`, point-mutations, webhooks, and WebSocket commands) require explicit permission for their respective category:
-1. `monitors`: Direct brightness/temperature adjustments (`set_brightness`, `set_temperature`, `set_monitor_offset`).
-2. `presets`: Brightness/temperature/user preset switching (`set_brightness_preset`, `cycle_preset`).
-3. `circadian`: Auto-brightness, auto-temperature, and Smart Circadian toggles (`set_auto_brightness`, `set_smart_circadian`).
-4. `gaming`: Gaming mode activation and process whitelist management (`set_game_mode`, `manage_game_mode_whitelist`).
-5. `environment`: Weather intensity and manual coordinates (`set_weather_adjustment`, `set_manual_location`, `trigger_sun_sync`).
-6. `sleep`: Sleep status overrides (`push_sleep_status`).
-7. `system`: System animations, failed webhook management (`clear_failed_webhooks`, `set_map_animations`).
+### 2. Per-Action Precision (25 Canonical Actions & 7 Categories)
+In addition to 7 high-level categories (`allowedCategories`), permissions can be constrained to **25 fine-grained canonical actions** (`allowedActions` set):
 
-### 3. Read-Only Mode (`isReadOnly`)
+| Category (`ApiActionCategory`) | Actions Count | Canonical Action Keys (`allowedActions`) |
+| :--- | :---: | :--- |
+| **`monitors`** | 3 | `set_brightness`, `set_temperature`, `set_monitor_offset` |
+| **`presets`** | 4 | `set_brightness_preset`, `set_temperature_preset`, `set_user_preset`, `cycle_preset` |
+| **`circadian`** | 4 | `set_auto_brightness`, `set_auto_temperature`, `set_smart_circadian`, `set_smart_circadian_submodules` |
+| **`gaming`** | 3 | `set_game_mode`, `set_game_mode_brightness`, `manage_game_mode_whitelist` |
+| **`environment`** | 6 | `set_weather_adjustment`, `set_weather_temperature_adjustment`, `set_weather_intensity`, `set_manual_location`, `set_weather_provider`, `trigger_sun_sync` |
+| **`sleep`** | 1 | `push_sleep_status` |
+| **`system`** | 4 | `manage_webhooks`, `set_map_animations`, `on_system_resume`, `on_hardware_error` |
+
+### 3. Alias Normalization Table (`getCanonicalAction`)
+Incoming requests (REST API, WebSocket commands, or internal triggers) undergo automatic alias canonicalization before permission evaluation:
+
+| Incoming Action / Alias | Canonical Action Key | Parent Category |
+| :--- | :--- | :--- |
+| `set_monitor_brightness` | `set_brightness` | `monitors` |
+| `set_monitor_temperature` | `set_temperature` | `monitors` |
+| `brightest`, `bright`, `dim`, `dimmest` | `set_brightness_preset` | `presets` |
+| `coolest`, `cool`, `warm`, `warmest` | `set_temperature_preset` | `presets` |
+| `toggle_auto_brightness` | `set_auto_brightness` | `circadian` |
+| `toggle_auto_temperature`, `set_color_temperature_enabled` | `set_auto_temperature` | `circadian` |
+| `openmeteo`, `weatherapi`, `auto` | `set_weather_provider` | `environment` |
+| `clear_failed_webhooks` | `manage_webhooks` | `system` |
+
+### 4. Clean Storage Protocol (Auto-Reset to Null)
+To maintain 100% backward compatibility and minimal storage footprint:
+* When `allowedActions` contains all 25 canonical actions, `toJson()` automatically omits `allowedActions` (`allowedActions = null`).
+* `fromJson()` automatically converts a full 25-action set back into `null`.
+* `allowedActions == null` represents full standard permission for all actions within enabled categories.
+
+### 5. Tri-State Accordion GUI Architecture
+The Flutter GUI (`ApiPermissionsDialog`) renders permissions using a 2-level Accordion UI:
+* **7 Category Accordions (`ExpansionTile`)**: Each category header features a Tri-State master checkbox:
+  * `true` (Checked 🟢): All canonical actions of this category are explicitly granted.
+  * `false` (Unchecked ⚪): Category is disabled (`allowedCategories` does not contain category).
+  * `null` (Indeterminate / Dash 🟠): Category enabled, `allowedActions == null` (inherit default full access).
+* **Click Isolation in `leading`**: Tapping the master checkbox in `leading` is wrapped in `GestureDetector`/`InkWell` to prevent unintended expansion/collapsing of the accordion body.
+* **Scope Summary Chips (`apiKeysGranularActionChip`)**: In `ApiKeysManagementDialog`, keys display green `"7 of 7 categories"` chips when `allowedActions == null`, or orange `"Allowed N of 25 actions"` chips when a granular subset ($N < 25$) is configured.
+* **Localization (EN / RU / UK)**: All 25 actions are fully localized in `app_en.arb`, `app_ru.arb`, and `app_uk.arb`.
+
+### 6. Read-Only Mode (`isReadOnly`)
 When `isReadOnly = true` is enabled for a specific key or globally:
 * ALL mutation attempts (`POST /api/v1/control`, `POST /api/v1/monitors/:slug/*`, `POST /api/v1/webhooks*`, `POST /api/sleep/*`) are immediately rejected with `HTTP 403 Forbidden` (`Read-Only Mode Enabled`).
 * Public liveness probe `GET /api/v1/health` remains 100% accessible.
 
-### 4. Universal Privilege Escalation Guard
+### 7. Universal Privilege Escalation Guard
 To prevent external API clients or WebSocket payloads from tampering with permission configurations, `ApiControlHandler` enforces an immediate rejection rule:
 * Any mutation payload containing `apiPermissions` or permission keys is rejected with `HTTP 403 Forbidden` (`Privilege Escalation Prohibited`).
 * API permissions can ONLY be modified locally by the host user via the Flutter GUI `ApiPermissionsDialog`.
