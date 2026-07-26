@@ -548,68 +548,7 @@ class _Header extends ConsumerWidget {
     final temperatureService = ref.read(temperatureServiceProvider);
     final monitorService = ref.read(monitorServiceProvider);
 
-    // Apply brightness to monitors whenever it changes significantly
-    ref.listen<double>(currentBrightnessProvider, (previous, next) {
-      if (ref.read(autoBrightnessAdjustmentProvider))
-        return; // Already handled by background loop
-
-      if (previous?.round() != next.round()) {
-        final selection = ref.read(selectedMonitorsProvider);
-        final monitors = ref.read(monitorListProvider).value ?? [];
-
-        final offsets = ref.read(brightnessOffsetsProvider);
-        for (final id in selection) {
-          brightnessService.applyBrightnessSmoothly(
-            selection: id,
-            targetValue: next,
-            monitors: monitors,
-            monitorService: monitorService,
-            offsets: offsets,
-            isManual: true,
-            updateBrightnessCallback: (id, val) =>
-                monitorListNotifier.updateBrightness(id, val),
-          );
-        }
-      }
-    });
-
-    // Apply temperature to monitors whenever it changes significantly
-    ref.listen<int>(currentTemperatureProvider, (previous, next) {
-      if (ref.read(autoTemperatureAdjustmentProvider) ||
-          temperatureService.isResetLocked)
-        return; // Already handled by background loop or reset lock active
-
-      if (previous != next) {
-        final selection = ref.read(selectedMonitorsProvider);
-        final monitors = ref.read(monitorListProvider).value ?? [];
-
-        final targetMonitors = selection.contains('all')
-            ? monitors.map((m) => m.deviceName).toList()
-            : selection.toList();
-
-        for (final id in targetMonitors) {
-          if (ref.read(autoTemperatureAdjustmentProvider)) {
-            temperatureService.applyTemperatureSmoothly(
-              selection: id,
-              targetValue: next.toDouble(),
-              monitors: monitors,
-              monitorService: monitorService,
-              updateTemperatureCallback: (id, val) =>
-                  monitorListNotifier.updateTemperature(id, val),
-            );
-          } else {
-            temperatureService.setTemperatureInstant(
-              selection: id,
-              targetValue: next.toDouble(),
-              monitors: monitors,
-              monitorService: monitorService,
-              updateTemperatureCallback: (id, val) =>
-                  monitorListNotifier.updateTemperature(id, val),
-            );
-          }
-        }
-      }
-    });
+    // Hardware brightness and temperature adjustments are handled in background by circadianAdjustmentProvider.
 
     // Initial sync when monitors are detected
     ref.listen(monitorListProvider, (previous, next) {

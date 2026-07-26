@@ -6,6 +6,7 @@ import 'package:solaris/services/monitor_service.dart';
 class BrightnessService {
   final Map<String, int> _currentHardwareBrightness = {};
   final Map<String, Timer?> _adjustmentTimers = {};
+  final Map<String, bool> _isManualTransition = {};
 
   final Map<String, int> _targetBrightness = {};
   final Map<String, double> _lastCalculatedFloat = {};
@@ -36,6 +37,7 @@ class BrightnessService {
         final target = rawTarget.round();
 
         _targetBrightness[deviceName] = target;
+        _isManualTransition[deviceName] = isManual;
 
         if (_adjustmentTimers[deviceName] == null) {
           _runTransitionLoop(
@@ -80,13 +82,14 @@ class BrightnessService {
 
       while (true) {
         final target = _targetBrightness[deviceName] ?? initialTarget;
+        final currentIsManual = _isManualTransition[deviceName] ?? isManual;
         final diff = (target - current).abs();
 
         if (diff == 0) break;
 
-        if (!isUIVisible && !isManual) {
+        if (!isUIVisible && !currentIsManual) {
           current = target;
-        } else if (isManual) {
+        } else if (currentIsManual) {
           // Ручное управление или видимый UI (быстрое изменение, 60-120% в сек - ускорено в 3 раза)
           final step = diff > 20 ? 12 : 6;
           if (current < target) {
@@ -119,12 +122,13 @@ class BrightnessService {
         if (current == _targetBrightness[deviceName]) break;
 
         // Если ручное изменение, ждем 100мс, если автоматика - 150мс для большей ленивости
-        await Future<void>.delayed(Duration(milliseconds: isManual ? 100 : 150));
+        await Future<void>.delayed(Duration(milliseconds: currentIsManual ? 100 : 150));
       }
     } finally {
       // Free the timer so it can be restarted if new requests come in
       _adjustmentTimers[deviceName]?.cancel();
       _adjustmentTimers.remove(deviceName);
+      _isManualTransition.remove(deviceName);
     }
   }
 }

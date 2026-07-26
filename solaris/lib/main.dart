@@ -136,6 +136,9 @@ void main(List<String> args) {
       // Initialize Hotkey Service
       await container.read(hotkeyServiceProvider).init();
 
+      // Keep background hardware adjustment provider active
+      container.read(circadianAdjustmentProvider);
+
       // Start Local IPC (HTTP) Server for sleep integration
       container.read(localIpcServiceProvider);
 

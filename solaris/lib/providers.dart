@@ -1952,7 +1952,11 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   void setActivePreset(PresetType type) {
     _updateSettings(
       ref.read(selectedMonitorsProvider),
-      (s) => s.copyWith(activePreset: type, clearActiveUserPresetId: true),
+      (s) => s.copyWith(
+        activePreset: type,
+        clearActiveUserPresetId: true,
+        isAutoBrightnessEnabled: true,
+      ),
     );
   }
 
@@ -1969,7 +1973,10 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   void setActiveUserPreset(String id) {
     _updateSettings(
       ref.read(selectedMonitorsProvider),
-      (s) => s.copyWith(activeUserPresetId: id),
+      (s) => s.copyWith(
+        activeUserPresetId: id,
+        isAutoBrightnessEnabled: true,
+      ),
     );
   }
 
@@ -2076,71 +2083,82 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   }
 
   void cyclePreset({required bool brighter}) {
-    // Cycling is complex because it depends on the current state of each monitor.
-    // We update each selected monitor based on its own cycle order.
-    _updateSettings(ref.read(selectedMonitorsProvider), (s) {
-      final cycleOrder = s.presetOrder
-          .where((orderId) => orderId != 'system:custom')
-          .map((orderId) {
-            if (orderId.startsWith('system:')) {
-              final typeName = orderId.substring(7);
-              try {
-                return PresetType.values.firstWhere((e) => e.name == typeName);
-              } catch (_) {
-                return PresetType.bright;
-              }
-            } else {
-              final userId = orderId.substring(5);
-              try {
-                return s.userPresets.firstWhere((p) => p.id == userId);
-              } catch (_) {
-                return null;
-              }
+    // Unify all monitors to the master ('all') preset order and active preset.
+    final currentMap = state.value ?? {'all': SettingsState()};
+    final master = currentMap['all'] ?? SettingsState();
+
+    final cycleOrder = master.presetOrder
+        .where((orderId) => orderId != 'system:custom')
+        .map((orderId) {
+          if (orderId.startsWith('system:')) {
+            final typeName = orderId.substring(7);
+            try {
+              return PresetType.values.firstWhere((e) => e.name == typeName);
+            } catch (_) {
+              return PresetType.bright;
             }
-          })
-          .where((item) => item != null)
-          .toList();
+          } else {
+            final userId = orderId.substring(5);
+            try {
+              return master.userPresets.firstWhere((p) => p.id == userId);
+            } catch (_) {
+              return null;
+            }
+          }
+        })
+        .where((item) => item != null)
+        .toList();
 
-      if (cycleOrder.isEmpty) return s;
+    if (cycleOrder.isEmpty) return;
 
-      int currentIndex = -1;
-      if (s.activeUserPresetId != null) {
-        currentIndex = cycleOrder.indexWhere(
-          (p) => p is UserPreset && p.id == s.activeUserPresetId,
-        );
-      } else {
-        currentIndex = cycleOrder.indexOf(s.activePreset);
-      }
+    int currentIndex = -1;
+    if (master.activeUserPresetId != null) {
+      currentIndex = cycleOrder.indexWhere(
+        (p) => p is UserPreset && p.id == master.activeUserPresetId,
+      );
+    } else {
+      currentIndex = cycleOrder.indexOf(master.activePreset);
+    }
 
-      if (currentIndex == -1) {
-        final next = cycleOrder.first;
-        if (next is PresetType) {
-          return s.copyWith(activePreset: next, clearActiveUserPresetId: true);
-        } else if (next is UserPreset) {
-          return s.copyWith(activeUserPresetId: next.id);
-        }
-        return s;
-      }
-
+    dynamic next;
+    if (currentIndex == -1) {
+      next = cycleOrder.first;
+    } else {
       int newIndex;
       if (brighter) {
         newIndex = (currentIndex + 1) % cycleOrder.length;
       } else {
         newIndex = (currentIndex - 1 + cycleOrder.length) % cycleOrder.length;
       }
+      next = cycleOrder[newIndex];
+    }
 
-      final next = cycleOrder[newIndex];
+    // Apply the newly cycled preset & isAutoBrightnessEnabled: true to ALL monitors
+    final allMonitorKeys = currentMap.keys.toSet();
+    _updateSettings(allMonitorKeys, (s) {
       if (next is PresetType) {
-        return s.copyWith(activePreset: next, clearActiveUserPresetId: true);
+        return s.copyWith(
+          activePreset: next,
+          clearActiveUserPresetId: true,
+          isAutoBrightnessEnabled: true,
+          presetOrder: master.presetOrder,
+          userPresets: master.userPresets,
+        );
       } else if (next is UserPreset) {
-        return s.copyWith(activeUserPresetId: next.id);
+        return s.copyWith(
+          activeUserPresetId: next.id,
+          isAutoBrightnessEnabled: true,
+          presetOrder: master.presetOrder,
+          userPresets: master.userPresets,
+        );
       }
-      return s;
+      return s.copyWith(isAutoBrightnessEnabled: true);
     });
   }
 
   void adjustManualBrightness(double delta) {
     updateAutoBrightness(false);
+
     final currentManual = ref.read(manualBrightnessProvider);
     final newVal = (currentManual + delta).clamp(0.0, 100.0);
     ref.read(manualBrightnessProvider.notifier).update(newVal);
@@ -2383,7 +2401,7 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
   final solarStateAsync = ref.watch(debouncedSolarStateProvider);
   final settingsAsync = ref.watch(settingsProvider);
   final tempSettingsAsync = ref.watch(temperatureSettingsProvider);
-  final monitorsAsync = ref.read(monitorListProvider);
+  final monitorsAsync = ref.watch(monitorListProvider);
   final visibility = ref.watch(appLifecycleProvider);
   final weatherAsync = ref.watch(currentWeatherProvider);
 
@@ -2396,6 +2414,56 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
   final monitorService = ref.read(monitorServiceProvider);
   final isTempEnabled = ref.read(isColorTemperatureEnabledProvider);
   final monitorListNotifier = ref.read(monitorListProvider.notifier);
+
+  // Listen to manual brightness changes to apply hardware updates even when window is minimized/hidden in tray
+  ref.listen<double>(currentBrightnessProvider, (previous, next) {
+    if (ref.read(autoBrightnessAdjustmentProvider)) return;
+
+    if (previous != next) {
+      final selection = ref.read(selectedMonitorsProvider);
+      final monitors = ref.read(monitorListProvider).value ?? [];
+      final offsets = ref.read(brightnessOffsetsProvider);
+
+      for (final id in selection) {
+        brightnessService.applyBrightnessSmoothly(
+          selection: id,
+          targetValue: next,
+          monitors: monitors,
+          monitorService: monitorService,
+          offsets: offsets,
+          isManual: true,
+          isUIVisible: visibility == AppVisibilityState.visible,
+          updateBrightnessCallback: (id, val) =>
+              monitorListNotifier.updateBrightness(id, val),
+        );
+      }
+    }
+  });
+
+  // Listen to manual temperature changes to apply hardware updates even when window is minimized/hidden in tray
+  ref.listen<int>(currentTemperatureProvider, (previous, next) {
+    if (ref.read(autoTemperatureAdjustmentProvider) ||
+        tempService.isResetLocked) return;
+
+    if (previous != next) {
+      final selection = ref.read(selectedMonitorsProvider);
+      final monitors = ref.read(monitorListProvider).value ?? [];
+      final targetMonitors = selection.contains('all')
+          ? monitors.map((m) => m.deviceName).toList()
+          : selection.toList();
+
+      for (final id in targetMonitors) {
+        tempService.setTemperatureInstant(
+          selection: id,
+          targetValue: next.toDouble(),
+          monitors: monitors,
+          monitorService: monitorService,
+          updateTemperatureCallback: (id, val) =>
+              monitorListNotifier.updateTemperature(id, val),
+        );
+      }
+    }
+  });
 
   solarStateAsync.whenData((state) {
     monitorsAsync.whenData((monitors) {
@@ -2478,6 +2546,20 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                 monitors: monitors,
                 monitorService: monitorService,
                 offsets: offsets,
+                isUIVisible: visibility == AppVisibilityState.visible,
+                updateBrightnessCallback: (id, val) {
+                  monitorListNotifier.updateBrightness(id, val);
+                },
+              );
+            } else {
+              final manualValue = ref.read(currentBrightnessProvider);
+              brightnessService.applyBrightnessSmoothly(
+                selection: monitor.deviceName,
+                targetValue: manualValue,
+                monitors: monitors,
+                monitorService: monitorService,
+                offsets: offsets,
+                isManual: true,
                 isUIVisible: visibility == AppVisibilityState.visible,
                 updateBrightnessCallback: (id, val) {
                   monitorListNotifier.updateBrightness(id, val);

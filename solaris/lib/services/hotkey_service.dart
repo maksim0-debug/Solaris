@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
@@ -34,15 +35,15 @@ class HotkeyService {
     final settings = settingsMap['all'] ?? SettingsState();
 
     // Create a unique footprint of the current hotkey configuration
-    final currentHotkeysJson = [
+    final currentHotkeysJson = jsonEncode([
       settings.nextPresetHotKey,
       settings.prevPresetHotKey,
       settings.brightnessUpHotKey,
-      settings.brightnessDownHotKey?.toString(),
-      settings.autoBrightnessHotKey?.toString(),
+      settings.brightnessDownHotKey,
+      settings.autoBrightnessHotKey,
       settings.brightnessStepUp,
       settings.brightnessStepDown,
-    ].toString();
+    ]);
 
     // Only proceed if the hotkey definitions themselves have changed
     if (_lastHotkeysJson == currentHotkeysJson) return;
