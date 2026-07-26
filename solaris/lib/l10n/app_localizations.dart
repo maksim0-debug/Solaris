@@ -3419,6 +3419,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cancel'**
   String get cancelAction;
+
+  /// No description provided for @addSleepSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Sleep Session'**
+  String get addSleepSession;
+
+  /// No description provided for @startTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Time'**
+  String get startTime;
+
+  /// No description provided for @endTime.
+  ///
+  /// In en, this message translates to:
+  /// **'End Time'**
+  String get endTime;
+
+  /// No description provided for @duration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get duration;
+
+  /// No description provided for @sleepSessionTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g.: Night Sleep'**
+  String get sleepSessionTitleHint;
+
+  /// No description provided for @sleepSessionDescHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g.: Manual Entry'**
+  String get sleepSessionDescHint;
+
+  /// No description provided for @manualSleepTitleDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Night Sleep'**
+  String get manualSleepTitleDefault;
+
+  /// No description provided for @manualSleepDescDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Added manually'**
+  String get manualSleepDescDefault;
+
+  /// No description provided for @invalidTimeRangeError.
+  ///
+  /// In en, this message translates to:
+  /// **'End time must be after start time'**
+  String get invalidTimeRangeError;
+
+  /// No description provided for @saveAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get saveAction;
+
+  /// No description provided for @sessionTitleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get sessionTitleLabel;
+
+  /// No description provided for @sessionDescLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get sessionDescLabel;
 }
 
 class _AppLocalizationsDelegate

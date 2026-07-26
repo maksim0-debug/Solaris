@@ -816,5 +816,18 @@
   "deleteSleepSegmentConfirm": "Вы уверены, что хотите удалить этот сегмент сна ({timeRange})?",
   "doNotSyncInFuture": "Не синхронизировать в дальнейшем",
   "deleteAction": "Удалить",
-  "cancelAction": "Отмена"
+  "cancelAction": "Отмена",
+  "addSleepSession": "Добавить сессию сна",
+  "startTime": "Начало сна",
+  "endTime": "Окончание сна",
+  "duration": "Длительность",
+  "sleepSessionTitleHint": "Например: Ночной сон",
+  "sleepSessionDescHint": "Например: Ручной ввод",
+  "manualSleepTitleDefault": "Ночной сон",
+  "manualSleepDescDefault": "Добавлено вручную",
+  "invalidTimeRangeError": "Время окончания должно быть позже времени начала",
+  "saveAction": "Сохранить",
+  "sessionTitleLabel": "Заголовок",
+  "sessionDescLabel": "Описание"
 }
+

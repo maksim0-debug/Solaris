@@ -814,5 +814,18 @@
   "deleteSleepSegmentConfirm": "Ви впевнені, що хочете видалити цей сегмент сну ({timeRange})?",
   "doNotSyncInFuture": "Не синхронізувати в майбутньому",
   "deleteAction": "Видалити",
-  "cancelAction": "Скасувати"
+  "cancelAction": "Скасувати",
+  "addSleepSession": "Додати сесію сну",
+  "startTime": "Початок сну",
+  "endTime": "Кінець сну",
+  "duration": "Тривалість",
+  "sleepSessionTitleHint": "Наприклад: Нічний сон",
+  "sleepSessionDescHint": "Наприклад: Ручне введення",
+  "manualSleepTitleDefault": "Нічний сон",
+  "manualSleepDescDefault": "Додано вручну",
+  "invalidTimeRangeError": "Час закінчення має бути пізніше часу початку",
+  "saveAction": "Зберегти",
+  "sessionTitleLabel": "Заголовок",
+  "sessionDescLabel": "Опис"
 }
+

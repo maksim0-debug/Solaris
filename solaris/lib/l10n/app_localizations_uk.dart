@@ -1972,4 +1972,41 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get cancelAction => 'Скасувати';
+
+  @override
+  String get addSleepSession => 'Додати сесію сну';
+
+  @override
+  String get startTime => 'Початок сну';
+
+  @override
+  String get endTime => 'Кінець сну';
+
+  @override
+  String get duration => 'Тривалість';
+
+  @override
+  String get sleepSessionTitleHint => 'Наприклад: Нічний сон';
+
+  @override
+  String get sleepSessionDescHint => 'Наприклад: Ручне введення';
+
+  @override
+  String get manualSleepTitleDefault => 'Нічний сон';
+
+  @override
+  String get manualSleepDescDefault => 'Додано вручну';
+
+  @override
+  String get invalidTimeRangeError =>
+      'Час закінчення має бути пізніше часу початку';
+
+  @override
+  String get saveAction => 'Зберегти';
+
+  @override
+  String get sessionTitleLabel => 'Заголовок';
+
+  @override
+  String get sessionDescLabel => 'Опис';
 }

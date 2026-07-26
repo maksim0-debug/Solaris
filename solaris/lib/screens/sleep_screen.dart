@@ -16,6 +16,8 @@ import 'package:solaris/models/local_ipc_server_state.dart';
 import 'package:intl/intl.dart';
 
 import 'package:solaris/widgets/deep_link_target.dart';
+import 'package:solaris/widgets/add_sleep_session_dialog.dart';
+
 
 class SleepScreen extends ConsumerStatefulWidget {
   const SleepScreen({super.key});
@@ -129,11 +131,52 @@ class _SleepScreenState extends ConsumerState<SleepScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      l10n.currentRegime,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () => AddSleepSessionDialog.show(context),
+                      icon: const Icon(LucideIcons.plus, size: 16),
+                      label: Text(l10n.addSleepSession),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            const Color(0xFF8B5CF6).withOpacity(0.2),
+                        foregroundColor: const Color(0xFFC4B5FD),
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        side: BorderSide(
+                          color: const Color(0xFF8B5CF6).withOpacity(0.4),
+                          width: 1,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 if (regimes.isEmpty)
                   Center(
-                    child: Text(
-                      sleepState.isLoading ? l10n.syncing : l10n.sleepDataSubtitle,
-                      style: const TextStyle(color: Colors.white24),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        sleepState.isLoading
+                            ? l10n.syncing
+                            : l10n.sleepDataSubtitle,
+                        style: const TextStyle(color: Colors.white24),
+                      ),
                     ),
                   )
                 else ...[
@@ -143,23 +186,9 @@ class _SleepScreenState extends ConsumerState<SleepScreen> {
                         (r) => r.isCurrent,
                         orElse: () => regimes.first,
                       );
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.currentRegime,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          SleepRegimeCard(
-                            regime: currentRegime,
-                            initiallyExpanded: false,
-                          ),
-                        ],
+                      return SleepRegimeCard(
+                        regime: currentRegime,
+                        initiallyExpanded: false,
                       );
                     },
                   ),
@@ -167,6 +196,7 @@ class _SleepScreenState extends ConsumerState<SleepScreen> {
               ],
             ),
           ),
+
           const SizedBox(height: 32),
           DeepLinkTarget(
             key: _anchorKeys['sleep_analysis'],

@@ -45,6 +45,67 @@ class SleepService {
     }
   }
 
+  /// Checks if a session source has high priority (e.g. user-created or API-pushed).
+  static bool isHighPrioritySource(String source) =>
+      source == 'local_api' || source == 'manual';
+
+  /// Checks if two sleep sessions overlap in time (with 1-hour buffer).
+  static bool _areSessionsOverlapping(SleepSession a, SleepSession b) {
+    final aStart = a.startTime.subtract(const Duration(hours: 1));
+    final aEnd = a.endTime.add(const Duration(hours: 1));
+    final bStart = b.startTime;
+    final bEnd = b.endTime;
+
+    return aStart.isBefore(bEnd) && aEnd.isAfter(bStart);
+  }
+
+  /// Merges existing and incoming sleep sessions, deduplicating overlapping ones.
+  /// Gives absolute priority to 'local_api' and 'manual' sources over 'google_fit'.
+  static List<SleepSession> mergeAndDeduplicate(
+    List<SleepSession> existing,
+    List<SleepSession> incoming,
+  ) {
+    final merged = <String, SleepSession>{};
+
+    for (final s in existing) {
+      merged[s.id] = s;
+    }
+
+    for (final s in incoming) {
+      final existingSession = merged[s.id];
+      if (existingSession == null ||
+          isHighPrioritySource(s.source) ||
+          !isHighPrioritySource(existingSession.source)) {
+        merged[s.id] = s;
+      }
+    }
+
+    final list = merged.values.toList();
+    final highPrioritySessions =
+        list.where((s) => isHighPrioritySource(s.source)).toList();
+    final deduplicated = <SleepSession>[];
+
+    for (final s in list) {
+      if (isHighPrioritySource(s.source)) {
+        deduplicated.add(s);
+      } else {
+        bool overlaps = false;
+        for (final hp in highPrioritySessions) {
+          if (_areSessionsOverlapping(s, hp)) {
+            overlaps = true;
+            break;
+          }
+        }
+        if (!overlaps) {
+          deduplicated.add(s);
+        }
+      }
+    }
+
+    deduplicated.sort((a, b) => b.startTime.compareTo(a.startTime));
+    return deduplicated;
+  }
+
   /// Fetches sleep data from Google Fit for the specified number of [daysBack].
   /// Returns a record with the fetched sessions and a boolean indicating if it was a live sync.
   Future<({List<SleepSession> sessions, bool isLive})> fetchSleepData({
@@ -65,8 +126,10 @@ class SleepService {
         final sleepSessions = _mapToSleepSessions(googleFitSessions)
             .where((s) => !ignored.contains(s.id))
             .toList();
-        await cacheSleepData(sleepSessions);
-        return (sessions: sleepSessions, isLive: true);
+        final existingCached = await loadCachedSleepData();
+        final merged = mergeAndDeduplicate(existingCached, sleepSessions);
+        await cacheSleepData(merged);
+        return (sessions: merged, isLive: true);
       } else if (forceNetwork) {
         // If forceNetwork is true, we should not fall back to cache quietly
         throw Exception('Failed to fetch data from Google Fit');
@@ -77,7 +140,7 @@ class SleepService {
     }
 
     // Attempt to load from cache on any failure (if not forced)
-    final cachedSessions = await _loadCachedSleepData();
+    final cachedSessions = await loadCachedSleepData();
     final filteredCached = cachedSessions
         .where((s) => !ignored.contains(s.id))
         .toList();
@@ -113,7 +176,7 @@ class SleepService {
     }
   }
 
-  Future<List<SleepSession>> _loadCachedSleepData() async {
+  Future<List<SleepSession>> loadCachedSleepData() async {
     try {
       final jsonStr = await _storage.load(_cacheFilename);
       if (jsonStr != null) {
@@ -133,5 +196,6 @@ class SleepService {
     }
     return [];
   }
+
 }
 

@@ -1976,4 +1976,41 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get cancelAction => 'Отмена';
+
+  @override
+  String get addSleepSession => 'Добавить сессию сна';
+
+  @override
+  String get startTime => 'Начало сна';
+
+  @override
+  String get endTime => 'Окончание сна';
+
+  @override
+  String get duration => 'Длительность';
+
+  @override
+  String get sleepSessionTitleHint => 'Например: Ночной сон';
+
+  @override
+  String get sleepSessionDescHint => 'Например: Ручной ввод';
+
+  @override
+  String get manualSleepTitleDefault => 'Ночной сон';
+
+  @override
+  String get manualSleepDescDefault => 'Добавлено вручную';
+
+  @override
+  String get invalidTimeRangeError =>
+      'Время окончания должно быть позже времени начала';
+
+  @override
+  String get saveAction => 'Сохранить';
+
+  @override
+  String get sessionTitleLabel => 'Заголовок';
+
+  @override
+  String get sessionDescLabel => 'Описание';
 }

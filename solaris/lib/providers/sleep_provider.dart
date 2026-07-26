@@ -110,61 +110,16 @@ class SleepNotifier extends Notifier<SleepState> {
     }
   }
 
-  /// Checks if two sleep sessions overlap in time (with 1-hour buffer).
-  bool _areSessionsOverlapping(SleepSession a, SleepSession b) {
-    final aStart = a.startTime.subtract(const Duration(hours: 1));
-    final aEnd = a.endTime.add(const Duration(hours: 1));
-    final bStart = b.startTime;
-    final bEnd = b.endTime;
-
-    return aStart.isBefore(bEnd) && aEnd.isAfter(bStart);
-  }
-
   /// Merges existing and incoming sleep sessions, deduplicating overlapping ones.
-  /// Gives absolute priority to 'local_api' source over 'google_fit'.
+  /// Gives absolute priority to 'local_api' and 'manual' sources over 'google_fit'.
   List<SleepSession> _mergeAndDeduplicate(
     List<SleepSession> existing,
     List<SleepSession> incoming,
   ) {
-    final merged = <String, SleepSession>{};
-
-    for (final s in existing) {
-      merged[s.id] = s;
-    }
-
-    for (final s in incoming) {
-      final existingSession = merged[s.id];
-      // Overwrite if it is a new ID or if new session is local_api (override google_fit)
-      if (existingSession == null || s.source == 'local_api' || existingSession.source != 'local_api') {
-        merged[s.id] = s;
-      }
-    }
-
-    final list = merged.values.toList();
-    final localSessions = list.where((s) => s.source == 'local_api').toList();
-    final deduplicated = <SleepSession>[];
-
-    for (final s in list) {
-      if (s.source == 'local_api') {
-        deduplicated.add(s);
-      } else {
-        // Discard google_fit session if it overlaps with any local_api session
-        bool overlaps = false;
-        for (final local in localSessions) {
-          if (_areSessionsOverlapping(s, local)) {
-            overlaps = true;
-            break;
-          }
-        }
-        if (!overlaps) {
-          deduplicated.add(s);
-        }
-      }
-    }
-
-    deduplicated.sort((a, b) => b.startTime.compareTo(a.startTime));
-    return deduplicated;
+    return SleepService.mergeAndDeduplicate(existing, incoming);
   }
+
+
 
   /// Updates the real-time pushed sleep status from external IPC/API clients.
   void updatePushedSleepStatus(bool isSleeping) {
@@ -197,6 +152,34 @@ class SleepNotifier extends Notifier<SleepState> {
       );
     }
   }
+
+  /// Adds a manually created sleep session.
+  Future<void> addManualSession(SleepSession session) async {
+    state = state.copyWith(isSyncing: true, error: null);
+    try {
+      final ignored = await _sleepService.loadIgnoredSessionIds();
+      final filteredExisting =
+          state.sessions.where((s) => !ignored.contains(s.id)).toList();
+      final merged = _mergeAndDeduplicate(filteredExisting, [session]);
+      await _sleepService.cacheSleepData(merged);
+      if (!ref.mounted) return;
+
+      state = state.copyWith(
+        sessions: merged,
+        isSyncing: false,
+        lastFetchTime: DateTime.now(),
+        error: null,
+      );
+    } catch (e) {
+      debugPrint('Error adding manual sleep session: $e');
+      if (!ref.mounted) return;
+      state = state.copyWith(
+        isSyncing: false,
+        error: 'Failed to add sleep session: ${e.toString()}',
+      );
+    }
+  }
+
 
   /// Deletes a single sleep session by ID.
   Future<void> deleteSession(String sessionId, {bool doNotSync = true}) async {

@@ -899,6 +899,19 @@
   },
   "doNotSyncInFuture": "Do not sync in the future",
   "deleteAction": "Delete",
-  "cancelAction": "Cancel"
+  "cancelAction": "Cancel",
+  "addSleepSession": "Add Sleep Session",
+  "startTime": "Start Time",
+  "endTime": "End Time",
+  "duration": "Duration",
+  "sleepSessionTitleHint": "e.g.: Night Sleep",
+  "sleepSessionDescHint": "e.g.: Manual Entry",
+  "manualSleepTitleDefault": "Night Sleep",
+  "manualSleepDescDefault": "Added manually",
+  "invalidTimeRangeError": "End time must be after start time",
+  "saveAction": "Save",
+  "sessionTitleLabel": "Title",
+  "sessionDescLabel": "Description"
 }
+
 

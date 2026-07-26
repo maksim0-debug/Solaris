@@ -1957,4 +1957,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cancelAction => 'Cancel';
+
+  @override
+  String get addSleepSession => 'Add Sleep Session';
+
+  @override
+  String get startTime => 'Start Time';
+
+  @override
+  String get endTime => 'End Time';
+
+  @override
+  String get duration => 'Duration';
+
+  @override
+  String get sleepSessionTitleHint => 'e.g.: Night Sleep';
+
+  @override
+  String get sleepSessionDescHint => 'e.g.: Manual Entry';
+
+  @override
+  String get manualSleepTitleDefault => 'Night Sleep';
+
+  @override
+  String get manualSleepDescDefault => 'Added manually';
+
+  @override
+  String get invalidTimeRangeError => 'End time must be after start time';
+
+  @override
+  String get saveAction => 'Save';
+
+  @override
+  String get sessionTitleLabel => 'Title';
+
+  @override
+  String get sessionDescLabel => 'Description';
 }
