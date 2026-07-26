@@ -1872,6 +1872,12 @@ abstract class AppLocalizations {
   /// **'Read about how we handle your data and Google Fit integration.'**
   String get privacyPolicySubtitle;
 
+  /// No description provided for @errorLoadingPrivacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading privacy policy'**
+  String get errorLoadingPrivacyPolicy;
+
   /// No description provided for @disclaimerTitle.
   ///
   /// In en, this message translates to:

@@ -1019,6 +1019,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Узнайте о том, как мы обрабатываем ваши данные и интеграции с Google Fit.';
 
   @override
+  String get errorLoadingPrivacyPolicy =>
+      'Ошибка загрузки политики конфиденциальности';
+
+  @override
   String get disclaimerTitle => 'Отказ от ответственности';
 
   @override

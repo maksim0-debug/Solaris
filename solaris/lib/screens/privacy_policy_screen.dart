@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/theme/app_theme.dart';
 import 'package:solaris/widgets/glass_card.dart';
 
@@ -10,16 +11,30 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
   static const String _fontFamily = 'Outfit';
 
+  Future<String> _loadLocalizedPrivacyPolicy(BuildContext context) async {
+    final localeCode = Localizations.localeOf(context).languageCode;
+    final localizedAssetPath = 'assets/privacy_policy_$localeCode.md';
+
+    try {
+      return await rootBundle.loadString(localizedAssetPath);
+    } catch (_) {
+      // Fallback to primary English policy if target language asset is missing
+      return await rootBundle.loadString('assets/privacy_policy.md');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(70),
         child: _GlassAppBar(
-          title: const Text(
-            'Privacy Policy',
-            style: TextStyle(
+          title: Text(
+            l10n.privacyPolicy,
+            style: const TextStyle(
               fontFamily: _fontFamily,
               fontWeight: FontWeight.bold,
               fontSize: 22,
@@ -44,18 +59,18 @@ class PrivacyPolicyScreen extends StatelessWidget {
             ],
           ),
         ),
-        child: FutureBuilder(
-          future: rootBundle.loadString('assets/privacy_policy.md'),
+        child: FutureBuilder<String>(
+          future: _loadLocalizedPrivacyPolicy(context),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (snapshot.hasError) {
-              return const Center(
+            if (snapshot.hasError || !snapshot.hasData) {
+              return Center(
                 child: Text(
-                  'Error loading privacy policy',
-                  style: TextStyle(fontFamily: _fontFamily, color: Colors.redAccent),
+                  l10n.errorLoadingPrivacyPolicy,
+                  style: const TextStyle(fontFamily: _fontFamily, color: Colors.redAccent),
                 ),
               );
             }

@@ -1019,6 +1019,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Read about how we handle your data and Google Fit integration.';
 
   @override
+  String get errorLoadingPrivacyPolicy => 'Error loading privacy policy';
+
+  @override
   String get disclaimerTitle => 'Disclaimer';
 
   @override

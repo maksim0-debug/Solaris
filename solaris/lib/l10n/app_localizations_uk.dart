@@ -1018,6 +1018,10 @@ class AppLocalizationsUk extends AppLocalizations {
       'Дізнайтеся про те, як ми обробляємо ваші дані та інтеграцію з Google Fit.';
 
   @override
+  String get errorLoadingPrivacyPolicy =>
+      'Помилка завантаження політики конфіденційності';
+
+  @override
   String get disclaimerTitle => 'Відмова від відповідальності';
 
   @override

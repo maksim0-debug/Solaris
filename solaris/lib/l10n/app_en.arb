@@ -525,6 +525,7 @@
   "legalSubtitle": "Legal & Privacy",
   "privacyPolicy": "Privacy Policy",
   "privacyPolicySubtitle": "Read about how we handle your data and Google Fit integration.",
+  "errorLoadingPrivacyPolicy": "Error loading privacy policy",
   "disclaimerTitle": "Disclaimer",
   "disclaimerText": "DISCLAIMER: This software is provided 'AS IS', WITHOUT WARRANTY OF ANY KIND, express or implied, including but not limited to the warranties of merchantability and fitness for a particular purpose. Under no circumstances shall the author or developer be liable for any hardware failures, firmware issues, physical discomfort, data loss, security breaches, unauthorized access, or leakage of custom API keys and credentials. By using Solaris, you acknowledge that you do so at your own sole risk and assume full responsibility for equipment compatibility, storage of keys, and any financial liabilities, costs, or expenses incurred as a result of key leakage, API quota overuses, or system compromise. In no event shall the author be liable for any special, incidental, direct, indirect, or consequential damages.",
   "viewLicenses": "View Licenses",
