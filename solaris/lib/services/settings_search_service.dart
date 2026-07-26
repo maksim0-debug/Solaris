@@ -234,6 +234,30 @@ class SettingsSearchService {
         screen: AppScreen.settings,
         anchorId: 'language',
       ),
+      SettingItem(
+        id: 'solaris_api',
+        title: l10n.apiTitle,
+        description: l10n.apiNetworkAccessMode,
+        tags: _splitTags(l10n.tags_solaris_api),
+        screen: AppScreen.settings,
+        anchorId: 'solaris_api',
+      ),
+      SettingItem(
+        id: 'api_keys',
+        title: l10n.apiKeysManagementDialogTitle,
+        description: l10n.apiKeysManagementSubtitle,
+        tags: _splitTags(l10n.tags_api_keys),
+        screen: AppScreen.settings,
+        anchorId: 'api_keys',
+      ),
+      SettingItem(
+        id: 'webhooks',
+        title: l10n.webhooksTitle,
+        description: l10n.webhooksSubtitle(0, 0),
+        tags: _splitTags(l10n.tags_webhooks),
+        screen: AppScreen.settings,
+        anchorId: 'webhooks',
+      ),
 
       // Location
       SettingItem(

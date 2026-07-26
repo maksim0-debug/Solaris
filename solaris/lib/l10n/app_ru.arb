@@ -860,7 +860,10 @@
       "count": {"type": "int"},
       "total": {"type": "int"}
     }
-  }
+  },
+  "tags_solaris_api": "апи, api, control api, solaris control api, http, rest, swagger, порт, локалхост, localhost, lan, сервер, разработчикам",
+  "tags_api_keys": "api key, токен, доступ, ключи api, права доступа, авторизация, безопасность, bearer, scopes, ключ доступа",
+  "tags_webhooks": "вебхук, вебхуки, webhook, webhooks, home assistant, node-red, n8n, hmac, события, уведомления, интеграция, автоматизация, dlq"
 }
 
 

@@ -2092,4 +2092,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String apiKeysGranularActionChip(int count, int total) {
     return '$count of $total Actions Allowed';
   }
+
+  @override
+  String get tags_solaris_api =>
+      'api, control api, solaris control api, http, rest, swagger, port, localhost, lan, server, endpoint, developer';
+
+  @override
+  String get tags_api_keys =>
+      'api key, access key, token, permissions, bearer, scopes, auth, authentication, security, fallback, dpapi';
+
+  @override
+  String get tags_webhooks =>
+      'webhook, webhooks, home assistant, node-red, n8n, hmac, events, notifications, integration, automation, wal, dlq';
 }

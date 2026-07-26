@@ -2103,4 +2103,16 @@ class AppLocalizationsUk extends AppLocalizations {
   String apiKeysGranularActionChip(int count, int total) {
     return 'Дозволено дій: $count з $total';
   }
+
+  @override
+  String get tags_solaris_api =>
+      'апі, api, control api, solaris control api, http, rest, swagger, порт, локалхост, localhost, lan, сервер, розробникам';
+
+  @override
+  String get tags_api_keys =>
+      'api key, токен, доступ, ключі api, права доступу, авторизація, безпека, bearer, scopes, ключ доступу';
+
+  @override
+  String get tags_webhooks =>
+      'вебхук, вебхуки, webhook, webhooks, home assistant, node-red, n8n, hmac, події, сповіщення, інтеграція, автоматизація, dlq';
 }

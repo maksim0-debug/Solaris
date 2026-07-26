@@ -3647,6 +3647,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} of {total} Actions Allowed'**
   String apiKeysGranularActionChip(int count, int total);
+
+  /// No description provided for @tags_solaris_api.
+  ///
+  /// In en, this message translates to:
+  /// **'api, control api, solaris control api, http, rest, swagger, port, localhost, lan, server, endpoint, developer'**
+  String get tags_solaris_api;
+
+  /// No description provided for @tags_api_keys.
+  ///
+  /// In en, this message translates to:
+  /// **'api key, access key, token, permissions, bearer, scopes, auth, authentication, security, fallback, dpapi'**
+  String get tags_api_keys;
+
+  /// No description provided for @tags_webhooks.
+  ///
+  /// In en, this message translates to:
+  /// **'webhook, webhooks, home assistant, node-red, n8n, hmac, events, notifications, integration, automation, wal, dlq'**
+  String get tags_webhooks;
 }
 
 class _AppLocalizationsDelegate

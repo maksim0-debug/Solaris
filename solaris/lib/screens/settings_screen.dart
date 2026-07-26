@@ -648,12 +648,14 @@ class _LegalSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
-              Text(
-                l10n.legalSubtitle,
-                style: GoogleFonts.outfit(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+              Expanded(
+                child: Text(
+                  l10n.legalSubtitle,
+                  style: GoogleFonts.outfit(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ],
