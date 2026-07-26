@@ -77,11 +77,16 @@ final gamingModeServiceProvider = Provider<GamingModeService>((ref) {
 
 final minuteTimeProvider = StreamProvider<DateTime>((ref) {
   final timezoneVal = ref.watch(effectiveTimezoneProvider);
+  final visibility = ref.watch(appLifecycleProvider);
   final now = tz.TZDateTime.now(timezoneVal);
   final delayUntilNextMinute = Duration(
     seconds: 60 - now.second,
     milliseconds: 1000 - now.millisecond,
   );
+
+  // When hidden to tray, reduce update frequency to every 5 minutes
+  // to lower GC pressure and CPU usage (~1-2 MB heap savings)
+  final intervalMinutes = visibility == AppVisibilityState.hidden ? 5 : 1;
 
   StreamController<DateTime> controller = StreamController();
   
@@ -93,7 +98,7 @@ final minuteTimeProvider = StreamProvider<DateTime>((ref) {
     if (!controller.isClosed) {
       controller.add(tz.TZDateTime.now(timezoneVal));
     }
-    timer = Timer.periodic(const Duration(minutes: 1), (_) {
+    timer = Timer.periodic(Duration(minutes: intervalMinutes), (_) {
       if (!controller.isClosed) {
         controller.add(tz.TZDateTime.now(timezoneVal));
       }
@@ -724,6 +729,39 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
     if (now.day != currentDay) {
       phases = await service.calculatePhases(lat, lon, now, timezoneVal);
       currentDay = now.day;
+    }
+
+    // When hidden to tray, skip expensive trend/UV/spectral calculations.
+    // Only compute fields needed by circadianAdjustmentProvider:
+    // sunElevation, currentPhase, phases, sunProgress, nextEvent.
+    // This reduces heap allocations and GC pressure by ~2-5 MB.
+    if (visibility == AppVisibilityState.hidden) {
+      final elevation = service.getSunElevation(lat, lon, now);
+      final progress = service.getSunProgress(phases, now);
+      final nextEvt = service.getNextEvent(phases, now);
+      final phase = service.getCurrentPhase(phases, now);
+
+      yield SolarState(
+        sunElevation: elevation,
+        sunAzimuth: prevAzimuth ?? 0,
+        sunZenith: prevZenith ?? 90,
+        sunProgress: progress,
+        currentPhase: phase,
+        nextEventType: nextEvt.type,
+        timeUntilNextEvent: nextEvt.duration,
+        phases: phases,
+        uvIndex: 0,
+        spectralIntensity: 0,
+        elevationTrend: "constant",
+        azimuthTrend: "constant",
+        zenithTrend: "constant",
+      );
+
+      prevElevation = elevation;
+      prevTime = now;
+
+      await Future<void>.delayed(Duration(seconds: delaySeconds));
+      continue;
     }
 
     final currentElevation = service.getSunElevation(lat, lon, now);

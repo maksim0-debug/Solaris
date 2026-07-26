@@ -19,7 +19,6 @@ import 'package:solaris/widgets/deep_link_target.dart';
 import 'package:solaris/widgets/custom_build_warning_dialog.dart';
 import 'package:solaris/screens/privacy_policy_screen.dart';
 import 'package:solaris/theme/app_theme.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:solaris/widgets/settings/api_settings_card.dart';
 import 'package:solaris/widgets/settings/webhooks_management_card.dart';
@@ -651,7 +650,8 @@ class _LegalSection extends StatelessWidget {
               Expanded(
                 child: Text(
                   l10n.legalSubtitle,
-                  style: GoogleFonts.outfit(
+                  style: const TextStyle(
+                    fontFamily: 'Outfit',
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -670,7 +670,8 @@ class _LegalSection extends StatelessWidget {
             ),
             title: Text(
               l10n.privacyPolicy,
-              style: GoogleFonts.outfit(
+              style: const TextStyle(
+                fontFamily: 'Outfit',
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
                 color: Colors.white,
@@ -678,7 +679,8 @@ class _LegalSection extends StatelessWidget {
             ),
             subtitle: Text(
               l10n.privacyPolicySubtitle,
-              style: GoogleFonts.outfit(
+              style: TextStyle(
+                fontFamily: 'Outfit',
                 fontSize: 12,
                 color: Colors.white.withOpacity(0.5),
               ),
@@ -2928,7 +2930,8 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
                     children: [
                       Text(
                         l10n.apiKeysTitle,
-                        style: GoogleFonts.outfit(
+                        style: const TextStyle(
+                          fontFamily: 'Outfit',
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -2936,7 +2939,8 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
                       ),
                       Text(
                         l10n.apiKeysSubtitle,
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(
+                          fontFamily: 'Outfit',
                           fontSize: 12,
                           color: Colors.white.withOpacity(0.5),
                         ),

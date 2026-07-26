@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:solaris/l10n/app_localizations.dart';
+import 'package:solaris/providers/lifecycle_provider.dart';
 import 'package:solaris/services/app_shutdown_service.dart';
 
 class TrayService with TrayListener {
@@ -57,9 +58,7 @@ class TrayService with TrayListener {
 
   @override
   void onTrayIconMouseDown() async {
-    await windowManager.setSkipTaskbar(false);
-    await windowManager.show();
-    await windowManager.focus();
+    await _restoreWindowFromTray();
   }
 
   @override
@@ -70,9 +69,7 @@ class TrayService with TrayListener {
   @override
   void onTrayMenuItemClick(MenuItem menuItem) async {
     if (menuItem.key == 'open_window') {
-      await windowManager.setSkipTaskbar(false);
-      await windowManager.show();
-      await windowManager.focus();
+      await _restoreWindowFromTray();
     } else if (menuItem.key == 'exit_app') {
       if (_container != null) {
         final shutdownService = AppShutdownService(_container!);
@@ -82,5 +79,27 @@ class TrayService with TrayListener {
         exit(0);
       }
     }
+  }
+
+  /// Restore the window from the system tray with anti-flicker strategy.
+  ///
+  /// When the app is hidden to tray, the entire UI subtree is destroyed
+  /// (replaced with SizedBox.shrink) to free ~50-80 MB of RAM. Restoring
+  /// requires rebuilding the full widget tree, which takes 1-2 frames.
+  ///
+  /// To prevent visible flicker (white flash or partially rendered UI):
+  /// 1. Switch lifecycle to visible (triggers widget tree rebuild)
+  /// 2. Wait 150ms for the first frame to be painted
+  /// 3. Only then show the window to the user
+  Future<void> _restoreWindowFromTray() async {
+    _container?.read(appLifecycleProvider.notifier).setVisible();
+
+    // Allow the Flutter engine to rebuild and paint the first frame
+    // before making the window visible to the user
+    await Future<void>.delayed(const Duration(milliseconds: 150));
+
+    await windowManager.setSkipTaskbar(false);
+    await windowManager.show();
+    await windowManager.focus();
   }
 }

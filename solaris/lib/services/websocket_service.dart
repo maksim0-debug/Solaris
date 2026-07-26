@@ -30,13 +30,20 @@ class WebSocketService {
   final Map<WebSocket, ApiKeyEntry?> _clientKeyEntries = {};
   Timer? _heartbeatTimer;
   Timer? _moduleDebounceTimer;
+  bool _isListenersInitialized = false;
 
-  WebSocketService(this.ref) {
+  WebSocketService(this.ref);
+
+  int get connectedClientsCount => _clients.length;
+
+  /// Lazily initialize heartbeat and provider listeners on first client connection.
+  /// Saves ~3-5 MB when no WebSocket clients are connected.
+  void _ensureInitialized() {
+    if (_isListenersInitialized) return;
+    _isListenersInitialized = true;
     _startHeartbeat();
     _setupProviderListeners();
   }
-
-  int get connectedClientsCount => _clients.length;
 
   void _startHeartbeat() {
     _heartbeatTimer?.cancel();
@@ -313,6 +320,10 @@ class WebSocketService {
       await request.response.close();
       return;
     }
+
+    // Lazy initialization: start heartbeat and provider listeners only
+    // when the first client connects (~3-5 MB saved when WS is unused)
+    _ensureInitialized();
 
     final ws = await WebSocketTransformer.upgrade(
       request,

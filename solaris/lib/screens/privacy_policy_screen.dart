@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/theme/app_theme.dart';
-import 'package:glassmorphism/glassmorphism.dart';
+import 'package:solaris/widgets/glass_card.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
+
+  static const String _fontFamily = 'Outfit';
 
   @override
   Widget build(BuildContext context) {
@@ -15,10 +16,11 @@ class PrivacyPolicyScreen extends StatelessWidget {
       extendBodyBehindAppBar: true,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(70),
-        child: GlassmorphicAppBar(
-          title: Text(
+        child: _GlassAppBar(
+          title: const Text(
             'Privacy Policy',
-            style: GoogleFonts.outfit(
+            style: TextStyle(
+              fontFamily: _fontFamily,
               fontWeight: FontWeight.bold,
               fontSize: 22,
               letterSpacing: 0.5,
@@ -50,10 +52,10 @@ class PrivacyPolicyScreen extends StatelessWidget {
             }
 
             if (snapshot.hasError) {
-              return Center(
+              return const Center(
                 child: Text(
                   'Error loading privacy policy',
-                  style: GoogleFonts.outfit(color: Colors.redAccent),
+                  style: TextStyle(fontFamily: _fontFamily, color: Colors.redAccent),
                 ),
               );
             }
@@ -64,37 +66,44 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 selectable: true,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 styleSheet: MarkdownStyleSheet(
-                  h1: GoogleFonts.outfit(
+                  h1: const TextStyle(
+                    fontFamily: _fontFamily,
                     color: AppTheme.accent,
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                     height: 1.5,
                   ),
-                  h2: GoogleFonts.outfit(
+                  h2: TextStyle(
+                    fontFamily: _fontFamily,
                     color: AppTheme.accent.withOpacity(0.9),
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     height: 1.5,
                   ),
-                  h3: GoogleFonts.outfit(
+                  h3: const TextStyle(
+                    fontFamily: _fontFamily,
                     color: AppTheme.textPrimary,
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
                     height: 1.5,
                   ),
-                  p: GoogleFonts.outfit(
+                  p: TextStyle(
+                    fontFamily: _fontFamily,
                     color: AppTheme.textPrimary.withOpacity(0.8),
                     fontSize: 16,
                     height: 1.6,
                   ),
-                  strong: GoogleFonts.outfit(
+                  strong: const TextStyle(
+                    fontFamily: _fontFamily,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.textPrimary,
                   ),
-                  listBullet: GoogleFonts.outfit(
+                  listBullet: const TextStyle(
+                    fontFamily: _fontFamily,
                     color: AppTheme.accent,
                   ),
-                  a: GoogleFonts.outfit(
+                  a: const TextStyle(
+                    fontFamily: _fontFamily,
                     color: AppTheme.accent,
                     decoration: TextDecoration.underline,
                   ),
@@ -109,41 +118,24 @@ class PrivacyPolicyScreen extends StatelessWidget {
   }
 }
 
-class GlassmorphicAppBar extends StatelessWidget {
+/// Replaces the external glassmorphism package's GlassmorphicContainer
+/// with the project's own GlassCard, eliminating an unnecessary dependency.
+class _GlassAppBar extends StatelessWidget {
   final Widget title;
   final Widget? leading;
 
-  const GlassmorphicAppBar({
-    super.key,
+  const _GlassAppBar({
     required this.title,
     this.leading,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GlassmorphicContainer(
-      width: double.infinity,
-      height: 70,
+    return GlassCard(
       borderRadius: 0,
       blur: 20,
-      alignment: Alignment.bottomCenter,
-      border: 1,
-      linearGradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          const Color(0xFFFFFF).withOpacity(0.05),
-          const Color(0xFFFFFF).withOpacity(0.02),
-        ],
-      ),
-      borderGradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          const Color(0xFFFFFF).withOpacity(0.1),
-          const Color(0xFFFFFF).withOpacity(0.05),
-        ],
-      ),
+      opacity: 0.03,
+      padding: EdgeInsets.zero,
       child: AppBar(
         title: title,
         leading: leading,
@@ -154,3 +146,4 @@ class GlassmorphicAppBar extends StatelessWidget {
     );
   }
 }
+

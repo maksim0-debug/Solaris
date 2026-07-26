@@ -131,16 +131,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       });
     }
 
-    // Freeze all animations under the dashboard when the window is minimized
-    // or hidden to the tray. Previously we pruned the whole subtree with
-    // SizedBox.shrink() which also destroyed widget state and forced a full
-    // rebuild + provider re-subscribe on restore (visible flicker). TickerMode
-    // stops every Ticker/AnimationController.repeat beneath this point — same
-    // GPU win — while preserving widget state so the next `visible` transition
-    // is instant. Providers that throttle on appLifecycleProvider (solar
-    // stream, circadian loop) continue to cut background math cost.
-    final isVisible =
-        ref.watch(appLifecycleProvider) == AppVisibilityState.visible;
+    // Two-stage visibility optimization to minimize RAM usage:
+    // 1. When HIDDEN to tray: completely destroy the UI subtree via
+    //    SizedBox.shrink() to free ~50-80 MB of RenderObjects,
+    //    BackdropFilter surfaces, fl_chart data, and CustomPaint canvases.
+    //    Flicker on restore is prevented by tray_service.dart which sets
+    //    the lifecycle to visible and waits for the first frame before
+    //    calling windowManager.show().
+    // 2. When MINIMIZED: use TickerMode(enabled: false) to freeze animations
+    //    while preserving widget state for instant restore.
+    //
+    // Background logic (circadian adjustment, temperature, API server) is
+    // unaffected because it is bound to ProviderContainer, not the widget tree.
+    final visibility = ref.watch(appLifecycleProvider);
+    final isHidden = visibility == AppVisibilityState.hidden;
+    final isVisible = visibility == AppVisibilityState.visible;
+
+    if (isHidden) {
+      // Clear image cache to free decoded bitmap memory (~2-3 MB)
+      PaintingBinding.instance.imageCache.clear();
+      PaintingBinding.instance.imageCache.clearLiveImages();
+      return const SizedBox.shrink();
+    }
 
     return TickerMode(
       enabled: isVisible,

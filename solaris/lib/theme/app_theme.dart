@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   static const Color background = Color(0xFF020617);
@@ -7,6 +6,8 @@ class AppTheme {
   static const Color accent = Color(0xFFFDBA74);
   static const Color textPrimary = Color(0xFFF8FAFC);
   static const Color textMuted = Color(0xFF94A3B8);
+
+  static const String _fontFamily = 'Outfit';
 
   static final ThemeData darkTheme = ThemeData(
     brightness: Brightness.dark,
@@ -25,8 +26,8 @@ class AppTheme {
       iconColor: accent,
       selectedTileColor: accent.withOpacity(0.1),
       selectedColor: accent,
-      titleTextStyle: GoogleFonts.outfit(color: textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
-      subtitleTextStyle: GoogleFonts.outfit(color: textMuted, fontSize: 14),
+      titleTextStyle: const TextStyle(fontFamily: _fontFamily, color: textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
+      subtitleTextStyle: const TextStyle(fontFamily: _fontFamily, color: textMuted, fontSize: 14),
     ),
     iconTheme: const IconThemeData(color: textPrimary),
     primaryIconTheme: const IconThemeData(color: textPrimary),
@@ -37,22 +38,23 @@ class AppTheme {
       onSurface: textPrimary,
       onPrimary: Colors.black,
     ),
-    textTheme: GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme).copyWith(
-      displayLarge: GoogleFonts.outfit(color: textPrimary, fontSize: 32, fontWeight: FontWeight.bold),
-      displayMedium: GoogleFonts.outfit(color: textPrimary, fontSize: 28, fontWeight: FontWeight.bold),
-      displaySmall: GoogleFonts.outfit(color: textPrimary, fontSize: 24, fontWeight: FontWeight.bold),
-      headlineLarge: GoogleFonts.outfit(color: textPrimary, fontSize: 22, fontWeight: FontWeight.bold),
-      headlineMedium: GoogleFonts.outfit(color: textPrimary, fontSize: 20, fontWeight: FontWeight.bold),
-      headlineSmall: GoogleFonts.outfit(color: textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
-      titleLarge: GoogleFonts.outfit(color: textPrimary, fontSize: 18, fontWeight: FontWeight.w600),
-      titleMedium: GoogleFonts.outfit(color: textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
-      titleSmall: GoogleFonts.outfit(color: textMuted, fontSize: 14, fontWeight: FontWeight.w500),
-      bodyLarge: GoogleFonts.outfit(color: textPrimary, fontSize: 16),
-      bodyMedium: GoogleFonts.outfit(color: textPrimary.withOpacity(0.9), fontSize: 14),
-      bodySmall: GoogleFonts.outfit(color: textPrimary.withOpacity(0.7), fontSize: 12),
-      labelLarge: GoogleFonts.outfit(color: textPrimary, fontSize: 14, fontWeight: FontWeight.w500),
-      labelMedium: GoogleFonts.outfit(color: textMuted, fontSize: 12),
-      labelSmall: GoogleFonts.outfit(color: textMuted, fontSize: 10),
+    textTheme: TextTheme(
+      displayLarge: const TextStyle(fontFamily: _fontFamily, color: textPrimary, fontSize: 32, fontWeight: FontWeight.bold),
+      displayMedium: const TextStyle(fontFamily: _fontFamily, color: textPrimary, fontSize: 28, fontWeight: FontWeight.bold),
+      displaySmall: const TextStyle(fontFamily: _fontFamily, color: textPrimary, fontSize: 24, fontWeight: FontWeight.bold),
+      headlineLarge: const TextStyle(fontFamily: _fontFamily, color: textPrimary, fontSize: 22, fontWeight: FontWeight.bold),
+      headlineMedium: const TextStyle(fontFamily: _fontFamily, color: textPrimary, fontSize: 20, fontWeight: FontWeight.bold),
+      headlineSmall: const TextStyle(fontFamily: _fontFamily, color: textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
+      titleLarge: const TextStyle(fontFamily: _fontFamily, color: textPrimary, fontSize: 18, fontWeight: FontWeight.w600),
+      titleMedium: const TextStyle(fontFamily: _fontFamily, color: textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
+      titleSmall: const TextStyle(fontFamily: _fontFamily, color: textMuted, fontSize: 14, fontWeight: FontWeight.w500),
+      bodyLarge: const TextStyle(fontFamily: _fontFamily, color: textPrimary, fontSize: 16),
+      bodyMedium: TextStyle(fontFamily: _fontFamily, color: textPrimary.withOpacity(0.9), fontSize: 14),
+      bodySmall: TextStyle(fontFamily: _fontFamily, color: textPrimary.withOpacity(0.7), fontSize: 12),
+      labelLarge: const TextStyle(fontFamily: _fontFamily, color: textPrimary, fontSize: 14, fontWeight: FontWeight.w500),
+      labelMedium: const TextStyle(fontFamily: _fontFamily, color: textMuted, fontSize: 12),
+      labelSmall: const TextStyle(fontFamily: _fontFamily, color: textMuted, fontSize: 10),
     ),
   );
 }
+
