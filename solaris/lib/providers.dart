@@ -2264,82 +2264,76 @@ class CurrentBrightnessNotifier extends Notifier<double> {
     final isGamingMode = ref.watch(gamingModeProvider);
     final firstId = currentSelection.firstOrNull ?? 'all';
     final smartData = ref.watch(smartCircadianDataProvider(firstId));
+    final settingsAsync = ref.watch(settingsProvider);
 
-    if (isAuto) {
-      final solarStateAsync = ref.watch(solarStateStreamProvider);
-      final circadianService = ref.watch(circadianServiceProvider);
-      final settingsAsync = ref.watch(settingsProvider);
-      final weatherAsync = ref.watch(currentWeatherProvider);
+    return settingsAsync.maybeWhen(
+      data: (settingsMap) {
+        final selectedSettings = settingsMap[firstId] ?? settingsMap['all']!;
 
-      return solarStateAsync.maybeWhen(
-        data: (state) {
-          return settingsAsync.maybeWhen(
-            data: (settingsMap) {
-              final selectedSettings =
-                  settingsMap[firstId] ?? settingsMap['all']!;
+        if (isGamingMode && selectedSettings.isGameModeEnabled) {
+          return selectedSettings.gameModeBrightness;
+        }
 
-              if (isGamingMode && selectedSettings.isGameModeEnabled) {
-                return selectedSettings.gameModeBrightness;
-              }
+        if (!isAuto || !selectedSettings.isAutoBrightnessEnabled) {
+          return manualBrightness;
+        }
 
-              if (!selectedSettings.isAutoBrightnessEnabled) {
-                return manualBrightness;
-              }
+        final solarStateAsync = ref.watch(solarStateStreamProvider);
+        final circadianService = ref.watch(circadianServiceProvider);
+        final weatherAsync = ref.watch(currentWeatherProvider);
 
-              final effectiveSmartData =
-                  selectedSettings.isSmartCircadianEnabled
-                  ? smartData
-                  : const SmartCircadianData.neutral();
+        return solarStateAsync.maybeWhen(
+          data: (state) {
+            final effectiveSmartData = selectedSettings.isSmartCircadianEnabled
+                ? smartData
+                : const SmartCircadianData.neutral();
 
-              // Calculate Bio-Morning Shift (Shifted Elevation)
-              double effectiveElevation = state.sunElevation;
-              if (selectedSettings.isSmartCircadianEnabled &&
-                  effectiveSmartData.timeOffset != Duration.zero) {
-                final locationAsync = ref.read(effectiveLocationProvider);
-                final pos = locationAsync.value;
-                if (pos != null) {
-                  final sunService = ref.read(sunCalculatorServiceProvider);
-                  final shiftedTime = DateTime.now().subtract(
-                    effectiveSmartData.timeOffset,
-                  );
-                  effectiveElevation = sunService.getSunElevation(
-                    pos.latitude,
-                    pos.longitude,
-                    shiftedTime,
-                  );
+            // Calculate Bio-Morning Shift (Shifted Elevation)
+            double effectiveElevation = state.sunElevation;
+            if (selectedSettings.isSmartCircadianEnabled &&
+                effectiveSmartData.timeOffset != Duration.zero) {
+              final locationAsync = ref.read(effectiveLocationProvider);
+              final pos = locationAsync.value;
+              if (pos != null) {
+                final sunService = ref.read(sunCalculatorServiceProvider);
+                final shiftedTime = DateTime.now().subtract(
+                  effectiveSmartData.timeOffset,
+                );
+                effectiveElevation = sunService.getSunElevation(
+                  pos.latitude,
+                  pos.longitude,
+                  shiftedTime,
+                );
 
-                  // Blinding Protection
-                  if (state.sunElevation < 0 && effectiveElevation > 10) {
-                    effectiveElevation = effectiveElevation.clamp(-20.0, 10.0);
-                  }
+                // Blinding Protection
+                if (state.sunElevation < 0 && effectiveElevation > 10) {
+                  effectiveElevation = effectiveElevation.clamp(-20.0, 10.0);
                 }
               }
+            }
 
-              final result = circadianService.calculateTargetBrightness(
-                state.phases,
-                effectiveElevation,
-                DateTime.now(),
-                curveSharpness: selectedSettings.curveSharpness,
-                curvePoints: selectedSettings.curvePoints,
-                weather: selectedSettings.isWeatherAdjustmentEnabled
-                    ? weatherAsync.value
-                    : null,
-                presetSensitivity:
-                    selectedSettings.activePreset.weatherSensitivity,
-                weatherIntensity: selectedSettings.weatherAdjustmentIntensity,
-                smartData: effectiveSmartData,
-              );
-              _saveBrightness(result.finalBrightness);
-              return result.finalBrightness;
-            },
-            orElse: () => lastBrightness,
-          );
-        },
-        orElse: () => lastBrightness,
-      );
-    } else {
-      return manualBrightness;
-    }
+            final result = circadianService.calculateTargetBrightness(
+              state.phases,
+              effectiveElevation,
+              DateTime.now(),
+              curveSharpness: selectedSettings.curveSharpness,
+              curvePoints: selectedSettings.curvePoints,
+              weather: selectedSettings.isWeatherAdjustmentEnabled
+                  ? weatherAsync.value
+                  : null,
+              presetSensitivity:
+                  selectedSettings.activePreset.weatherSensitivity,
+              weatherIntensity: selectedSettings.weatherAdjustmentIntensity,
+              smartData: effectiveSmartData,
+            );
+            _saveBrightness(result.finalBrightness);
+            return result.finalBrightness;
+          },
+          orElse: () => lastBrightness,
+        );
+      },
+      orElse: () => lastBrightness,
+    );
   }
 
   void _saveBrightness(double value) {
@@ -2486,7 +2480,20 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
             );
 
             // Calculate and Apply Brightness
-            if (settings.isAutoBrightnessEnabled) {
+            if (isGamingMode && settings.isGameModeEnabled) {
+              final targetBrightness = settings.gameModeBrightness;
+              brightnessService.applyBrightnessSmoothly(
+                selection: monitor.deviceName,
+                targetValue: targetBrightness,
+                monitors: monitors,
+                monitorService: monitorService,
+                offsets: offsets,
+                isUIVisible: visibility == AppVisibilityState.visible,
+                updateBrightnessCallback: (id, val) {
+                  monitorListNotifier.updateBrightness(id, val);
+                },
+              );
+            } else if (settings.isAutoBrightnessEnabled) {
               final effectiveSmartData = settings.isSmartCircadianEnabled
                   ? monitorSmartData
                   : const SmartCircadianData.neutral();
@@ -2513,28 +2520,22 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                 }
               }
 
-              double targetBrightness;
-
-              if (isGamingMode && settings.isGameModeEnabled) {
-                targetBrightness = settings.gameModeBrightness;
-              } else {
-                final calculationResult = circadianService
-                    .calculateTargetBrightness(
-                      state.phases,
-                      effectiveElevation,
-                      DateTime.now(),
-                      curveSharpness: settings.curveSharpness,
-                      curvePoints: settings.curvePoints,
-                      weather: settings.isWeatherAdjustmentEnabled
-                          ? weatherAsync.value
-                          : null,
-                      presetSensitivity:
-                          settings.activePreset.weatherSensitivity,
-                      weatherIntensity: settings.weatherAdjustmentIntensity,
-                      smartData: effectiveSmartData,
-                    );
-                targetBrightness = calculationResult.finalBrightness;
-              }
+              final calculationResult = circadianService
+                  .calculateTargetBrightness(
+                    state.phases,
+                    effectiveElevation,
+                    DateTime.now(),
+                    curveSharpness: settings.curveSharpness,
+                    curvePoints: settings.curvePoints,
+                    weather: settings.isWeatherAdjustmentEnabled
+                        ? weatherAsync.value
+                        : null,
+                    presetSensitivity:
+                        settings.activePreset.weatherSensitivity,
+                    weatherIntensity: settings.weatherAdjustmentIntensity,
+                    smartData: effectiveSmartData,
+                  );
+              final targetBrightness = calculationResult.finalBrightness;
 
               debugPrint(
                 '[CircadianLoop] Device: ${monitor.deviceName} | AutoBright: true | Preset: ${settings.activePreset.name} | TargetBrightness: ${targetBrightness.toStringAsFixed(1)}% | Sharpness: ${settings.curveSharpness}',

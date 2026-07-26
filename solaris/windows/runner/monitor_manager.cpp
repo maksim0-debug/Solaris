@@ -569,8 +569,19 @@ void MonitorManager::UpdateWhitelist(
                    [](unsigned char c) -> char {
                      return static_cast<char>(std::tolower(c));
                    });
-    whitelist_.insert(lower_app);
+    size_t lastSlash = lower_app.find_last_of("\\/");
+    if (lastSlash != std::string::npos) {
+      lower_app = lower_app.substr(lastSlash + 1);
+    }
+    if (!lower_app.empty()) {
+      whitelist_.insert(lower_app);
+    }
   }
+  active_game_hwnd_ = nullptr;
+  active_game_pid_ = 0;
+  last_active_game_pid_ = 0;
+  is_gaming_candidate_ = false;
+  process_cache_.clear();
 }
 
 void MonitorManager::UpdateBlacklist(
@@ -583,8 +594,44 @@ void MonitorManager::UpdateBlacklist(
                    [](unsigned char c) -> char {
                      return static_cast<char>(std::tolower(c));
                    });
-    blacklist_.insert(lower_app);
+    size_t lastSlash = lower_app.find_last_of("\\/");
+    if (lastSlash != std::string::npos) {
+      lower_app = lower_app.substr(lastSlash + 1);
+    }
+    if (!lower_app.empty()) {
+      blacklist_.insert(lower_app);
+    }
   }
+  active_game_hwnd_ = nullptr;
+  active_game_pid_ = 0;
+  last_active_game_pid_ = 0;
+  is_gaming_candidate_ = false;
+  process_cache_.clear();
+}
+
+static bool IsAppInSet(const std::string &process_name_lower,
+                       const std::set<std::string> &app_set) {
+  if (app_set.empty() || process_name_lower.empty())
+    return false;
+  if (app_set.count(process_name_lower))
+    return true;
+
+  if (process_name_lower.size() > 4 &&
+      process_name_lower.compare(process_name_lower.size() - 4, 4, ".exe") == 0) {
+    std::string name_no_ext =
+        process_name_lower.substr(0, process_name_lower.size() - 4);
+    if (app_set.count(name_no_ext))
+      return true;
+  }
+
+  if (process_name_lower.size() <= 4 ||
+      process_name_lower.compare(process_name_lower.size() - 4, 4, ".exe") != 0) {
+    std::string name_with_ext = process_name_lower + ".exe";
+    if (app_set.count(name_with_ext))
+      return true;
+  }
+
+  return false;
 }
 
 void MonitorManager::DetectorLoop() {
@@ -601,13 +648,31 @@ void MonitorManager::DetectorLoop() {
       // Bypass Check (State Lock):
       if (active_game_hwnd_ != nullptr) {
         if (hwnd == active_game_hwnd_ || processId == active_game_pid_) {
-          if (IsWindowFullscreen(hwnd)) {
+          bool is_whitelisted = false;
+          bool is_blacklisted = false;
+          {
+            std::lock_guard<std::mutex> lock(lists_mutex_);
+            auto cache_it = process_cache_.find(processId);
+            if (cache_it != process_cache_.end() &&
+                !cache_it->second.process_name_lower.empty()) {
+              if (IsAppInSet(cache_it->second.process_name_lower, blacklist_)) {
+                is_blacklisted = true;
+              } else if (IsAppInSet(cache_it->second.process_name_lower, whitelist_)) {
+                is_whitelisted = true;
+              }
+            }
+          }
+
+          if (!is_blacklisted && (is_whitelisted || IsWindowFullscreen(hwnd))) {
             is_match = true;
             check_completed = true;
           } else {
-            // Game window is no longer fullscreen or is minimized
+            // Game window is blacklisted, no longer fullscreen, or minimized
             active_game_hwnd_ = nullptr;
             active_game_pid_ = 0;
+            if (is_blacklisted) {
+              last_active_game_pid_ = 0;
+            }
             // Proceed to standard search
           }
         } else {
@@ -628,6 +693,9 @@ void MonitorManager::DetectorLoop() {
           last_active_game_pid_ = processId;
         } else {
           is_match = false;
+          if (score == -1000) {
+            last_active_game_pid_ = 0;
+          }
         }
       }
     } else {
@@ -739,36 +807,23 @@ int MonitorManager::EvaluateGamingScore(HWND hwnd, DWORD processId) {
     }
   }
 
-  // --- Size Check ---
-  if (!IsWindowFullscreen(hwnd))
-    return 0;
+  std::string process_name_lower;
+  int static_score = 0;
+  bool is_cached = false;
 
-  HMONITOR hMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
-  MONITORINFO mi = {sizeof(mi)};
-  if (!GetMonitorInfoW(hMonitor, &mi))
-    return 0;
-
-  RECT wr;
-  if (!GetWindowRect(hwnd, &wr))
-    return 0;
-
-  // --- Style Analysis ---
-  LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
-  // Real games don't have systemic frames or captions in fullscreen.
-  // If they have them, it's likely an app (Telegram viewer, etc)
-  if ((style & WS_CAPTION) || (style & WS_THICKFRAME)) {
-    return 0;
+  // 1. Thread-safe lookup in process_cache_
+  {
+    std::lock_guard<std::mutex> lock(lists_mutex_);
+    auto cache_it = process_cache_.find(processId);
+    if (cache_it != process_cache_.end() && cache_it->second.scanned) {
+      process_name_lower = cache_it->second.process_name_lower;
+      static_score = cache_it->second.static_score;
+      is_cached = true;
+    }
   }
 
-  // --- Per-PID cached scoring ---
-  // The path heuristic, parent-process check, and loaded-DLL scan are all
-  // stable for a process lifetime. Compute them once per PID and reuse.
-  CachedProcessInfo *cached = nullptr;
-  auto cache_it = process_cache_.find(processId);
-  if (cache_it != process_cache_.end() && cache_it->second.scanned) {
-    cached = &cache_it->second;
-  } else {
-    CachedProcessInfo info;
+  // 2. If not cached, inspect process outside lock (heavy Win32 API calls)
+  if (!is_cached) {
     std::wstring fullPathLower;
 
     HANDLE hProcess =
@@ -786,14 +841,12 @@ int MonitorManager::EvaluateGamingScore(HWND hwnd, DWORD processId) {
                                     ? fullPathLower
                                     : fullPathLower.substr(lastSlash + 1);
         for (wchar_t wc : fileName) {
-          info.process_name_lower +=
+          process_name_lower +=
               static_cast<char>(std::tolower(static_cast<unsigned char>(wc)));
         }
       }
       CloseHandle(hProcess);
     }
-
-    int static_score = 0;
 
     // --- Path Heuristics ---
     if (!fullPathLower.empty()) {
@@ -847,30 +900,53 @@ int MonitorManager::EvaluateGamingScore(HWND hwnd, DWORD processId) {
       CloseHandle(hProcDll);
     }
 
-    info.static_score = static_score;
-    info.scanned = true;
-
-    // Cap cache growth from short-lived PIDs. A full clear is cheap and simple;
-    // 64 entries is far more than a typical desktop's foreground-window churn.
-    if (process_cache_.size() >= 64) {
-      process_cache_.clear();
+    // Insert into cache under lock
+    {
+      std::lock_guard<std::mutex> lock(lists_mutex_);
+      if (process_cache_.size() >= 64) {
+        process_cache_.clear();
+      }
+      CachedProcessInfo info;
+      info.static_score = static_score;
+      info.process_name_lower = process_name_lower;
+      info.scanned = true;
+      process_cache_[processId] = std::move(info);
     }
-    auto inserted = process_cache_.emplace(processId, std::move(info));
-    cached = &inserted.first->second;
   }
 
-  // --- Whitelist / Blacklist (lists mutable, check each tick) ---
+  // 3. Thread-safe Whitelist / Blacklist (Checked FIRST to allow custom app overrides)
   {
     std::lock_guard<std::mutex> lock(lists_mutex_);
-    if (!cached->process_name_lower.empty()) {
-      if (whitelist_.count(cached->process_name_lower))
-        return 1000;
-      if (blacklist_.count(cached->process_name_lower))
+    if (!process_name_lower.empty()) {
+      if (IsAppInSet(process_name_lower, blacklist_))
         return -1000;
+      if (IsAppInSet(process_name_lower, whitelist_))
+        return 1000;
     }
   }
 
-  int score = cached->static_score;
+  // --- Size Check ---
+  if (!IsWindowFullscreen(hwnd))
+    return 0;
+
+  HMONITOR hMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
+  MONITORINFO mi = {sizeof(mi)};
+  if (!GetMonitorInfoW(hMonitor, &mi))
+    return 0;
+
+  RECT wr;
+  if (!GetWindowRect(hwnd, &wr))
+    return 0;
+
+  // --- Style Analysis ---
+  LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
+  // Real games don't have systemic frames or captions in fullscreen.
+  // If they have them, it's likely an app (Telegram viewer, etc)
+  if ((style & WS_CAPTION) || (style & WS_THICKFRAME)) {
+    return 0;
+  }
+
+  int score = static_score;
 
   // --- Cursor Behavior ---
   CURSORINFO ci = {sizeof(ci)};
