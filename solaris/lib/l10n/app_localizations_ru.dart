@@ -1552,7 +1552,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get customBuildWarningBody =>
-      'При обновлении с неофициальной версии на официальную вы можете потерять сохраненные API-ключи (Mapbox, WeatherAPI, Google Fit). При следующем запуске их придется ввести заново.';
+      'При обновлении с неофициальной версии на официальную вы можете потерять сохраненные API-ключи (Mapbox, WeatherAPI, Google Fit), а также созданные ключи Solaris Control API. Обязательно скопируйте и сохраните их перед обновлением.';
 
   @override
   String get continueButton => 'Продолжить';
@@ -1782,7 +1782,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get apiPermissionsReadOnlyHint =>
-      'Если включено, все мутирующие API-запросы (POST/PUT/DELETE) блокируются с кодом HTTP 403 Forbidden.';
+      'Если включено, все управляющие API-запросы (POST/PUT/DELETE) блокируются с кодом HTTP 403 Forbidden.';
 
   @override
   String get apiPermissionsDataSharingSection =>
@@ -1807,7 +1807,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get apiPermissionsControlCategoriesSection =>
-      'Разрешенные категории команд (Мутации)';
+      'Разрешенные категории команд (Управление)';
 
   @override
   String get apiPermissionsCategoryMonitors =>
@@ -1858,6 +1858,19 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get apiKeysManagementSubtitle =>
       'Принцип наименьших привилегий: индивидуальные ключи для внешних интеграций';
+
+  @override
+  String apiKeysActiveCountSubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Настроено $count активных ключей',
+      few: 'Настроено $count активных ключа',
+      one: 'Настроен $count активный ключ',
+      zero: 'Настроено 0 активных ключей',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get apiKeysManageButton => 'Управление API-ключами...';

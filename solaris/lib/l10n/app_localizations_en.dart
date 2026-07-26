@@ -1548,7 +1548,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get customBuildWarningBody =>
-      'When updating from a custom build to an official release, your saved API keys (Mapbox, WeatherAPI, Google Fit) may be reset. You will need to enter them again in Settings upon next launch.';
+      'When updating from a custom build to an official release, your saved API keys (Mapbox, WeatherAPI, Google Fit) and created Solaris Control API keys may be lost. Be sure to copy and save them before updating.';
 
   @override
   String get continueButton => 'Continue';
@@ -1773,7 +1773,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get apiPermissionsReadOnlyHint =>
-      'When enabled, all mutating API requests (POST/PUT/DELETE) will be blocked with HTTP 403 Forbidden.';
+      'When enabled, all state-changing API requests (POST/PUT/DELETE) will be blocked with HTTP 403 Forbidden.';
 
   @override
   String get apiPermissionsDataSharingSection =>
@@ -1797,7 +1797,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get apiPermissionsControlCategoriesSection =>
-      'Action Control Categories (Mutations)';
+      'Action Control Categories (Control)';
 
   @override
   String get apiPermissionsCategoryMonitors =>
@@ -1847,6 +1847,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get apiKeysManagementSubtitle =>
       'Least Privilege Architecture: Configure scoped keys for external integrations';
+
+  @override
+  String apiKeysActiveCountSubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count active keys configured',
+      one: '1 active key configured',
+      zero: '0 active keys configured',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get apiKeysManageButton => 'Manage API Keys...';

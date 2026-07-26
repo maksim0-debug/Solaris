@@ -376,7 +376,7 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${apiKeys.length} active key(s) configured',
+                            l10n.apiKeysActiveCountSubtitle(apiKeys.length),
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.white.withOpacity(0.6),

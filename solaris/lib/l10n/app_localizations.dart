@@ -2763,7 +2763,7 @@ abstract class AppLocalizations {
   /// No description provided for @customBuildWarningBody.
   ///
   /// In en, this message translates to:
-  /// **'When updating from a custom build to an official release, your saved API keys (Mapbox, WeatherAPI, Google Fit) may be reset. You will need to enter them again in Settings upon next launch.'**
+  /// **'When updating from a custom build to an official release, your saved API keys (Mapbox, WeatherAPI, Google Fit) and created Solaris Control API keys may be lost. Be sure to copy and save them before updating.'**
   String get customBuildWarningBody;
 
   /// No description provided for @continueButton.
@@ -3117,7 +3117,7 @@ abstract class AppLocalizations {
   /// No description provided for @apiPermissionsReadOnlyHint.
   ///
   /// In en, this message translates to:
-  /// **'When enabled, all mutating API requests (POST/PUT/DELETE) will be blocked with HTTP 403 Forbidden.'**
+  /// **'When enabled, all state-changing API requests (POST/PUT/DELETE) will be blocked with HTTP 403 Forbidden.'**
   String get apiPermissionsReadOnlyHint;
 
   /// No description provided for @apiPermissionsDataSharingSection.
@@ -3159,7 +3159,7 @@ abstract class AppLocalizations {
   /// No description provided for @apiPermissionsControlCategoriesSection.
   ///
   /// In en, this message translates to:
-  /// **'Action Control Categories (Mutations)'**
+  /// **'Action Control Categories (Control)'**
   String get apiPermissionsControlCategoriesSection;
 
   /// No description provided for @apiPermissionsCategoryMonitors.
@@ -3233,6 +3233,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Least Privilege Architecture: Configure scoped keys for external integrations'**
   String get apiKeysManagementSubtitle;
+
+  /// No description provided for @apiKeysActiveCountSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{0 active keys configured} =1{1 active key configured} other{{count} active keys configured}}'**
+  String apiKeysActiveCountSubtitle(int count);
 
   /// No description provided for @apiKeysManageButton.
   ///

@@ -707,7 +707,7 @@
   "tags_auto_updates": "updates,autoupdate,version,github",
   "customBuildNotice": "Custom build: automatic update check is disabled by default",
   "customBuildWarningTitle": "Update Warning",
-  "customBuildWarningBody": "When updating from a custom build to an official release, your saved API keys (Mapbox, WeatherAPI, Google Fit) may be reset. You will need to enter them again in Settings upon next launch.",
+  "customBuildWarningBody": "When updating from a custom build to an official release, your saved API keys (Mapbox, WeatherAPI, Google Fit) and created Solaris Control API keys may be lost. Be sure to copy and save them before updating.",
   "continueButton": "Continue",
   "dialogOk": "OK",
   "updateNoUpdatesTitle": "No updates found",
@@ -810,14 +810,14 @@
   "webhooksClearDlq": "Clear DLQ",
   "apiPermissionsDialogTitle": "API Permissions & Access Control",
   "apiPermissionsReadOnlyLabel": "Read-Only Mode",
-  "apiPermissionsReadOnlyHint": "When enabled, all mutating API requests (POST/PUT/DELETE) will be blocked with HTTP 403 Forbidden.",
+  "apiPermissionsReadOnlyHint": "When enabled, all state-changing API requests (POST/PUT/DELETE) will be blocked with HTTP 403 Forbidden.",
   "apiPermissionsDataSharingSection": "Data Sharing Permissions (Read Operations)",
   "apiPermissionsAllowMonitors": "Monitors & Brightness State",
   "apiPermissionsAllowSolar": "Solar & Astronomical Data",
   "apiPermissionsAllowWeather": "Weather Adjustments & Provider Info",
   "apiPermissionsAllowSleep": "Sleep & Circadian Rhythm Metrics",
   "apiPermissionsAllowCircadian": "Smart Circadian System State",
-  "apiPermissionsControlCategoriesSection": "Action Control Categories (Mutations)",
+  "apiPermissionsControlCategoriesSection": "Action Control Categories (Control)",
   "apiPermissionsCategoryMonitors": "Monitors (Brightness, Temp, Offsets)",
   "apiPermissionsCategoryPresets": "Presets & Brightness Profiles",
   "apiPermissionsCategoryCircadian": "Circadian Rhythm & Auto-Adjustments",
@@ -835,6 +835,12 @@
   },
   "apiKeysManagementDialogTitle": "API Access Keys Management",
   "apiKeysManagementSubtitle": "Least Privilege Architecture: Configure scoped keys for external integrations",
+  "apiKeysActiveCountSubtitle": "{count, plural, =0{0 active keys configured} =1{1 active key configured} other{{count} active keys configured}}",
+  "@apiKeysActiveCountSubtitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "apiKeysManageButton": "Manage API Keys...",
   "apiKeysCreateButton": "Create New Key",
   "apiKeysTableHeaderName": "Key Name",
