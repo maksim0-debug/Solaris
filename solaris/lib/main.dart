@@ -254,14 +254,12 @@ class WindowEventHandler extends WindowListener {
       debugPrint('🪟 [Window Debug] Event: Blur (Focus Lost)');
     }
 
-    // 1. Immediately drop unneeded tile and raster memory when focus is lost to another window
-    MemoryUtils.trimMemory();
-
-    // 2. If window was minimized (e.g. via Taskbar click, Win+D, or Alt+Tab toggle),
-    // set minimized lifecycle state to stop GPU rendering and drop CPU/GPU to 0.0%
+    // If window was minimized (e.g. via Taskbar click, Win+D, or Alt+Tab toggle),
+    // trim memory and set minimized lifecycle state to stop GPU rendering and drop CPU/GPU to 0.0%
     try {
       bool isMinimized = await windowManager.isMinimized();
       if (isMinimized) {
+        MemoryUtils.trimMemory();
         container.read(appLifecycleProvider.notifier).setMinimized();
       }
     } catch (e) {
