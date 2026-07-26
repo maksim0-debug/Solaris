@@ -13,6 +13,7 @@ import 'package:solaris/models/map_health_report.dart';
 import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/utils/memory_utils.dart';
+import 'package:solaris/widgets/cancelable_network_tile_provider.dart';
 
 
 class SolarMap extends ConsumerStatefulWidget {
@@ -36,6 +37,7 @@ class SolarMap extends ConsumerStatefulWidget {
 class _SolarMapState extends ConsumerState<SolarMap> {
   final TerminatorService _terminatorService = TerminatorService();
   final MapController _mapController = MapController();
+  late final CancelableNetworkTileProvider _tileProvider;
   List<LatLng> _terminatorPoints = [];
   Timer? _timer;
   bool _isMapReady = false;
@@ -43,6 +45,7 @@ class _SolarMapState extends ConsumerState<SolarMap> {
   @override
   void initState() {
     super.initState();
+    _tileProvider = CancelableNetworkTileProvider();
     _updateTerminator();
     _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
       _updateTerminator();
@@ -65,6 +68,7 @@ class _SolarMapState extends ConsumerState<SolarMap> {
   void dispose() {
     _timer?.cancel();
     _mapController.dispose();
+    _tileProvider.dispose();
     MemoryUtils.trimMemory();
     super.dispose();
   }
@@ -120,6 +124,7 @@ class _SolarMapState extends ConsumerState<SolarMap> {
         TileLayer(
           urlTemplate: urlTemplate,
           userAgentPackageName: 'com.example.solaris',
+          tileProvider: _tileProvider,
         ),
         if (_terminatorPoints.isNotEmpty)
           PolygonLayer(

@@ -1,8 +1,10 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:solaris/providers/lifecycle_provider.dart';
 
-class WeatherOverlay extends StatefulWidget {
+class WeatherOverlay extends ConsumerStatefulWidget {
   final int weatherCode;
   final double cloudCover; // Clouds coverage percentage (0-100)
   final bool showRain;
@@ -21,7 +23,7 @@ class WeatherOverlay extends StatefulWidget {
   });
 
   @override
-  State<WeatherOverlay> createState() => _WeatherOverlayState();
+  ConsumerState<WeatherOverlay> createState() => _WeatherOverlayState();
 }
 
 class _Particle {
@@ -88,7 +90,7 @@ class _Cloud {
   }
 }
 
-class _WeatherOverlayState extends State<WeatherOverlay>
+class _WeatherOverlayState extends ConsumerState<WeatherOverlay>
     with TickerProviderStateMixin {
   late Ticker _ticker;
   late AnimationController _thunderController;
@@ -400,6 +402,19 @@ class _WeatherOverlayState extends State<WeatherOverlay>
 
   @override
   Widget build(BuildContext context) {
+    final visibility = ref.watch(appLifecycleProvider);
+    if (visibility != AppVisibilityState.visible) {
+      if (_ticker.isTicking) {
+        _ticker.stop();
+      }
+      return const SizedBox.shrink();
+    } else {
+      if (!_ticker.isTicking) {
+        _lastElapsed = Duration.zero;
+        _ticker.start();
+      }
+    }
+
     if (!_isRain && !_isSnow && !_isLightningStricking && _clouds.isEmpty)
       return const SizedBox.shrink();
 

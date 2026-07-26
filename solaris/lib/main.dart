@@ -264,7 +264,11 @@ class WindowEventHandler extends WindowListener {
       if (isMinimized) {
         container.read(appLifecycleProvider.notifier).setMinimized();
       }
-    } catch (_) {}
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('🪟 [Window Debug] Blur: isMinimized check failed: $e');
+      }
+    }
   }
 
   @override
@@ -300,15 +304,20 @@ class _SystemLifecycleObserver extends WidgetsBindingObserver {
     if (kDebugMode) {
       debugPrint('🪟 [Engine Lifecycle Debug] State: $state');
     }
-    if (state == AppLifecycleState.hidden ||
-        state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.paused) {
+    if (state == AppLifecycleState.hidden || state == AppLifecycleState.paused) {
+      MemoryUtils.trimMemory();
+      container.read(appLifecycleProvider.notifier).setMinimized();
+    } else if (state == AppLifecycleState.inactive) {
       MemoryUtils.trimMemory();
       windowManager.isMinimized().then((isMinimized) {
         if (isMinimized) {
           container.read(appLifecycleProvider.notifier).setMinimized();
         }
-      }).catchError((_) {});
+      }).catchError((Object e) {
+        if (kDebugMode) {
+          debugPrint('🪟 [Engine Lifecycle Debug] isMinimized check failed: $e');
+        }
+      });
     } else if (state == AppLifecycleState.resumed) {
       container.read(appLifecycleProvider.notifier).setVisible();
     }

@@ -28,7 +28,7 @@ import 'package:flutter/services.dart';
 import 'package:solaris/widgets/settings_search_overlay.dart';
 import 'package:solaris/widgets/deep_link_target.dart';
 import 'package:solaris/widgets/update_status_widget.dart';
-import 'package:solaris/utils/memory_utils.dart';
+
 
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -132,11 +132,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       });
     }
 
-    ref.listen<AppVisibilityState>(appLifecycleProvider, (previous, next) {
-      if (next != AppVisibilityState.visible) {
-        MemoryUtils.trimMemory();
-      }
-    });
 
     // Detach UI subtree whenever the window is not visible (hidden to tray OR minimized to taskbar).
     // This drops CPU and GPU usage to 0.0% when minimized and releases ~50-80 MB of RenderObjects,
@@ -149,9 +144,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       return const SizedBox.shrink();
     }
 
-    return TickerMode(
-      enabled: isVisible,
-      child: CallbackShortcuts(
+    return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.keyF, control: true): () {
           ref.read(isSearchVisibleProvider.notifier).setVisible(true);
@@ -198,7 +191,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ],
           ),
         ),
-      ),
       ),
     );
   }
