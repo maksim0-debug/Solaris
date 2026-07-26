@@ -439,9 +439,6 @@ class ApiStatusHandler {
 
   /// GET /api/v1/docs (Interactive Swagger UI / RapiDoc HTML)
   Future<void> handleDocs(HttpRequest request, Map<String, String> pathParams) async {
-    final settings = container.read(settingsProvider).value?['all'];
-    final port = settings?.apiServerPort ?? 45321;
-
     final html = '''
 <!DOCTYPE html>
 <html lang="en">
@@ -453,7 +450,7 @@ class ApiStatusHandler {
 </head>
 <body>
   <rapi-doc
-    spec-url="http://localhost:$port/api/v1/openapi.json"
+    spec-url="/api/v1/openapi.json"
     theme="dark"
     bg-color="#0f172a"
     text-color="#f8fafc"

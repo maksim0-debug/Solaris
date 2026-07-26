@@ -317,35 +317,43 @@ Future<bool> hostHeaderValidationMiddleware(HttpRequest request) async {
 }
 
 /// CORS & Strict Drive-by Protection Middleware
+/// Helper to check if a URI string belongs to a trusted host (loopback or local interface)
+bool _isTrustedUri(String? uriStr) {
+  if (uriStr == null) return false;
+  final uri = Uri.tryParse(uriStr);
+  if (uri == null) return false;
+  final host = uri.host.toLowerCase();
+  final isLoopback = host == 'localhost' || host == '127.0.0.1' || host == '::1';
+  return isLoopback || _cachedAllowedHosts.contains(host);
+}
+
+/// CORS & Strict Drive-by Protection Middleware
 Future<bool> corsMiddleware(HttpRequest request, ApiRouter router) async {
   final origin = request.headers.value('Origin');
   final referer = request.headers.value('Referer');
 
-  bool isLocalHostUri(String? uriStr) {
-    if (uriStr == null) return false;
-    final uri = Uri.tryParse(uriStr);
-    if (uri == null) return false;
-    final host = uri.host.toLowerCase();
-    return host == 'localhost' || host == '127.0.0.1' || host == '::1';
-  }
-
-  final hasTrustedOrigin = isLocalHostUri(origin);
+  final hasTrustedOrigin = _isTrustedUri(origin);
   final isUntrustedOrigin = (origin != null && !hasTrustedOrigin) ||
-      (referer != null && !isLocalHostUri(referer));
+      (referer != null && !_isTrustedUri(referer));
+
+  final isPublicRoute = request.uri.path.startsWith('/api/v1/docs') ||
+      request.uri.path == '/api/v1/openapi.json' ||
+      request.uri.path == '/api/v1/health';
 
   // OPTIONS preflight handling
   if (request.method == 'OPTIONS') {
+    final allowPreflight = hasTrustedOrigin || isPublicRoute;
     request.response
-      ..statusCode = hasTrustedOrigin ? HttpStatus.noContent : HttpStatus.forbidden
-      ..headers.set('Access-Control-Allow-Origin', hasTrustedOrigin ? origin! : '')
+      ..statusCode = allowPreflight ? HttpStatus.noContent : HttpStatus.forbidden
+      ..headers.set('Access-Control-Allow-Origin', allowPreflight ? (origin ?? '*') : '')
       ..headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
       ..headers.set('Access-Control-Allow-Headers', 'Content-Type, X-API-Key, Authorization');
     await request.response.close();
     return false;
   }
 
-  // Drive-by Guard: Untrusted Origin/Referer requires API key
-  if (isUntrustedOrigin) {
+  // Drive-by Guard: Untrusted Origin/Referer requires API key (except public routes)
+  if (isUntrustedOrigin && !isPublicRoute) {
     final token = request.headers.value('X-API-Key') ??
         request.headers.value('Authorization')?.replaceAll('Bearer ', '').trim();
     final matchedKey = router.findMatchingKey(token);
@@ -366,8 +374,8 @@ Future<bool> corsMiddleware(HttpRequest request, ApiRouter router) async {
     router.onKeyUsed?.call(matchedKey.id);
   }
 
-  if (hasTrustedOrigin) {
-    request.response.headers.set('Access-Control-Allow-Origin', origin!);
+  if (hasTrustedOrigin && origin != null) {
+    request.response.headers.set('Access-Control-Allow-Origin', origin);
     request.response.headers.set('Access-Control-Allow-Headers', 'Content-Type, X-API-Key, Authorization');
   }
 
@@ -419,16 +427,8 @@ Future<bool> authMiddleware(HttpRequest request, ApiRouter router) async {
   final origin = request.headers.value('Origin');
   final referer = request.headers.value('Referer');
 
-  bool isLocalHostUri(String? uriStr) {
-    if (uriStr == null) return false;
-    final uri = Uri.tryParse(uriStr);
-    if (uri == null) return false;
-    final host = uri.host.toLowerCase();
-    return host == 'localhost' || host == '127.0.0.1' || host == '::1';
-  }
-
-  final hasBrowserOrigin = (origin != null && !isLocalHostUri(origin)) ||
-      (referer != null && !isLocalHostUri(referer));
+  final hasBrowserOrigin = (origin != null && !_isTrustedUri(origin)) ||
+      (referer != null && !_isTrustedUri(referer));
 
   final remoteIp = request.connectionInfo?.remoteAddress.address ?? '';
   final isLoopback = remoteIp == '127.0.0.1' || remoteIp == '::1';
