@@ -180,8 +180,8 @@ class ApiMonitorsHandler {
   ) async {
     final permissions = _getPermissions(request);
 
-    final catCheck = ApiPermissionsChecker.checkCategory(permissions, ApiActionCategory.monitors);
-    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, catCheck)) return;
+    final check = ApiPermissionsChecker.checkAction(permissions, 'set_brightness');
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
     final rawSlug = pathParams['slug'] ?? '';
     final resolvedId = MonitorSlugResolver.resolveToSystemId(rawSlug);
@@ -228,8 +228,8 @@ class ApiMonitorsHandler {
   ) async {
     final permissions = _getPermissions(request);
 
-    final catCheck = ApiPermissionsChecker.checkCategory(permissions, ApiActionCategory.monitors);
-    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, catCheck)) return;
+    final check = ApiPermissionsChecker.checkAction(permissions, 'set_temperature');
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
     final rawSlug = pathParams['slug'] ?? '';
     final resolvedId = MonitorSlugResolver.resolveToSystemId(rawSlug);

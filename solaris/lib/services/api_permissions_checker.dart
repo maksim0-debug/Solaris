@@ -56,6 +56,39 @@ class ApiPermissionsChecker {
     return const PermissionCheckResult.allow();
   }
 
+  /// Checks if specific control action is allowed under current config.
+  static PermissionCheckResult checkAction(
+    ApiPermissionsConfig config,
+    String action,
+  ) {
+    final roCheck = checkReadOnly(config);
+    if (!roCheck.isAllowed) return roCheck;
+
+    final category = ApiPermissionsConfig.getCategoryForAction(action);
+    if (category == null) {
+      return const PermissionCheckResult.deny(
+        title: 'Unknown Action',
+        detail: 'The requested action is not recognized by Solaris API.',
+      );
+    }
+
+    if (!config.allowedCategories.contains(category)) {
+      return PermissionCheckResult.deny(
+        title: 'Action Category Prohibited',
+        detail: 'Action category "${category.name}" is disabled in API permissions settings.',
+      );
+    }
+
+    if (!config.isActionAllowed(action)) {
+      return PermissionCheckResult.deny(
+        title: 'Action Prohibited',
+        detail: 'Specific action "$action" is disabled in API permissions settings.',
+      );
+    }
+
+    return const PermissionCheckResult.allow();
+  }
+
   /// Checks if specific read permission flag is enabled.
   static PermissionCheckResult checkReadFlag(
     bool isFlagAllowed,

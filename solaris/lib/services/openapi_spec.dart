@@ -147,12 +147,16 @@ class OpenApiSpec {
       },
     };
 
+    final allowedActionsStr = permissions?.allowedActions != null
+        ? ', AllowedActions=${permissions!.allowedActions!.toList()}'
+        : '';
+
     return {
       'openapi': '3.0.3',
       'info': {
         'title': title,
         'description': 'Zen control of monitors, solar positioning, circadian rhythms, and automation in Solaris.'
-            '${permissions != null ? "\n\n[Permissions Active]: ReadOnly=$isReadOnly, Categories=${permissions.allowedCategories.map((c) => c.name).toList()}" : ""}',
+            '${permissions != null ? "\n\n[Permissions Active]: ReadOnly=$isReadOnly, Categories=${permissions.allowedCategories.map((c) => c.name).toList()}$allowedActionsStr" : ""}',
         'version': version,
         'contact': {
           'name': 'maksim0-debug',

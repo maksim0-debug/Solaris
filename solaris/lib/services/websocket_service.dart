@@ -511,8 +511,7 @@ class WebSocketService {
         }
 
         // ACL Evaluation
-        final category = ApiPermissionsConfig.getCategoryForAction(action);
-        final checkResult = ApiPermissionsChecker.checkCategory(permissions, category);
+        final checkResult = ApiPermissionsChecker.checkAction(permissions, action);
 
         if (!checkResult.isAllowed) {
           ws.add(jsonEncode({
@@ -608,6 +607,9 @@ class WebSocketService {
       try {
         final clientPermissions = _clientPermissions[client] ?? const ApiPermissionsConfig();
         if (!clientPermissions.allowedCategories.contains(category)) {
+          continue;
+        }
+        if (!clientPermissions.isActionAllowed(eventName)) {
           continue;
         }
 

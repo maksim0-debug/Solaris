@@ -133,17 +133,6 @@ class ApiControlHandler {
       return;
     }
 
-    final roCheck = ApiPermissionsChecker.checkReadOnly(permissions);
-    if (!roCheck.isAllowed) {
-      await _sendError(
-        request,
-        HttpStatus.forbidden,
-        roCheck.title,
-        roCheck.detail,
-      );
-      return;
-    }
-
     final rawActions = jsonPayload['actions'] as List;
     final mode = (jsonPayload['mode'] as String?)?.toLowerCase() ?? 'fail_fast';
 
@@ -162,15 +151,14 @@ class ApiControlHandler {
             return;
           }
           final actionStr = actionItem['action'] as String?;
-          final category = ApiPermissionsConfig.getCategoryForAction(actionStr ?? '');
-          if (category != null) {
-            final catCheck = ApiPermissionsChecker.checkCategory(permissions, category);
-            if (!catCheck.isAllowed) {
+          if (actionStr != null) {
+            final checkResult = ApiPermissionsChecker.checkAction(permissions, actionStr);
+            if (!checkResult.isAllowed) {
               await _sendError(
                 request,
                 HttpStatus.forbidden,
-                catCheck.title,
-                catCheck.detail,
+                checkResult.title,
+                checkResult.detail,
               );
               return;
             }
@@ -234,7 +222,9 @@ class ApiControlHandler {
     Map<String, dynamic> payload,
     ApiPermissionsConfig permissions,
   ) async {
-    if (containsPrivilegeEscalationKeys(payload)) {
+    final mutablePayload = Map<String, dynamic>.from(payload);
+
+    if (containsPrivilegeEscalationKeys(mutablePayload)) {
       return _ActionResult.error(
         HttpStatus.forbidden,
         'Privilege Escalation Prohibited',
@@ -242,16 +232,7 @@ class ApiControlHandler {
       );
     }
 
-    final roCheck = ApiPermissionsChecker.checkReadOnly(permissions);
-    if (!roCheck.isAllowed) {
-      return _ActionResult.error(
-        HttpStatus.forbidden,
-        roCheck.title,
-        roCheck.detail,
-      );
-    }
-
-    final action = payload['action'] as String?;
+    var action = mutablePayload['action'] as String?;
     if (action == null || action.isEmpty) {
       return _ActionResult.error(
         HttpStatus.unprocessableEntity,
@@ -260,25 +241,34 @@ class ApiControlHandler {
       );
     }
 
-    final category = ApiPermissionsConfig.getCategoryForAction(action);
-    if (category == null) {
+    // Per-Action ACL check with canonical key
+    final canonicalAction = ApiPermissionsConfig.getCanonicalAction(action);
+    final checkResult = ApiPermissionsChecker.checkAction(permissions, canonicalAction);
+    if (!checkResult.isAllowed) {
+      final statusCode = checkResult.title == 'Unknown Action'
+          ? HttpStatus.unprocessableEntity
+          : HttpStatus.forbidden;
       return _ActionResult.error(
-        HttpStatus.unprocessableEntity,
-        'Unknown Action',
-        'Action "$action" is not supported.',
+        statusCode,
+        checkResult.title,
+        checkResult.detail,
       );
     }
 
-    final catCheck = ApiPermissionsChecker.checkCategory(permissions, category);
-    if (!catCheck.isAllowed) {
-      return _ActionResult.error(
-        HttpStatus.forbidden,
-        catCheck.title,
-        catCheck.detail,
-      );
+    // Parameter injection for preset & weather provider aliases before switch
+    final lowerAction = action.toLowerCase();
+    if (const ['brightest', 'bright', 'dim', 'dimmest'].contains(lowerAction)) {
+      mutablePayload['preset'] = action;
+      action = 'set_brightness_preset';
+    } else if (const ['coolest', 'cool', 'warm', 'warmest'].contains(lowerAction)) {
+      mutablePayload['preset'] = action;
+      action = 'set_temperature_preset';
+    } else if (const ['openmeteo', 'weatherapi', 'auto'].contains(lowerAction)) {
+      mutablePayload['provider'] = action;
+      action = 'set_weather_provider';
     }
 
-    final monitorIdInput = payload['monitor_id'] as String? ?? 'all';
+    final monitorIdInput = mutablePayload['monitor_id'] as String? ?? 'all';
     final resolvedMonitorId = MonitorSlugResolver.resolveToSystemId(monitorIdInput);
 
     if (resolvedMonitorId != 'all' && resolvedMonitorId != 'primary') {
@@ -295,7 +285,7 @@ class ApiControlHandler {
 
     switch (action) {
       case 'set_brightness':
-        final val = _toDouble(payload['value']);
+        final val = _toDouble(mutablePayload['value']);
         if (val == null || val < 0.0 || val > 100.0) {
           return _ActionResult.error(
             HttpStatus.badRequest,
@@ -310,7 +300,7 @@ class ApiControlHandler {
         return _ActionResult.accepted('set_brightness', {'value': val, 'monitor_id': monitorIdInput});
 
       case 'set_auto_brightness':
-        final enabled = payload['enabled'] as bool?;
+        final enabled = mutablePayload['enabled'] as bool?;
         if (enabled == null) {
           return _ActionResult.error(
             HttpStatus.badRequest,
@@ -331,7 +321,7 @@ class ApiControlHandler {
         return _ActionResult.ok('toggle_auto_brightness', {'enabled': current});
 
       case 'set_temperature':
-        final val = _toInt(payload['value']);
+        final val = _toInt(mutablePayload['value']);
         if (val == null || val < 3300 || val > 6500) {
           return _ActionResult.error(
             HttpStatus.badRequest,
@@ -346,7 +336,7 @@ class ApiControlHandler {
         return _ActionResult.accepted('set_temperature', {'value': val, 'monitor_id': monitorIdInput});
 
       case 'set_color_temperature_enabled':
-        final enabled = payload['enabled'] as bool?;
+        final enabled = mutablePayload['enabled'] as bool?;
         if (enabled == null) {
           return _ActionResult.error(
             HttpStatus.badRequest,
@@ -360,7 +350,7 @@ class ApiControlHandler {
         return _ActionResult.ok('set_color_temperature_enabled', {'enabled': enabled});
 
       case 'set_auto_temperature':
-        final enabled = payload['enabled'] as bool?;
+        final enabled = mutablePayload['enabled'] as bool?;
         if (enabled == null) {
           return _ActionResult.error(
             HttpStatus.badRequest,
@@ -381,7 +371,7 @@ class ApiControlHandler {
         return _ActionResult.ok('toggle_auto_temperature', {'enabled': current});
 
       case 'set_brightness_preset':
-        final presetStr = payload['preset'] as String?;
+        final presetStr = mutablePayload['preset'] as String?;
         final type = _parsePresetType(presetStr);
         if (type == null) {
           return _ActionResult.error(
@@ -396,7 +386,7 @@ class ApiControlHandler {
         return _ActionResult.ok('set_brightness_preset', {'preset': presetStr});
 
       case 'set_temperature_preset':
-        final presetStr = payload['preset'] as String?;
+        final presetStr = mutablePayload['preset'] as String?;
         final type = _parseTemperaturePresetType(presetStr);
         if (type == null) {
           return _ActionResult.error(
@@ -411,7 +401,7 @@ class ApiControlHandler {
         return _ActionResult.ok('set_temperature_preset', {'preset': presetStr});
 
       case 'set_user_preset':
-        final id = payload['id'] as String?;
+        final id = mutablePayload['id'] as String?;
         if (id == null || id.isEmpty) {
           return _ActionResult.error(
             HttpStatus.badRequest,
@@ -425,7 +415,7 @@ class ApiControlHandler {
         return _ActionResult.ok('set_user_preset', {'id': id});
 
       case 'cycle_preset':
-        final dir = payload['direction'] as String? ?? 'next';
+        final dir = mutablePayload['direction'] as String? ?? 'next';
         final isBrighter = dir == 'next';
         await safeStateMutator(() {
           final selection = _container.read(selectedMonitorsProvider);
@@ -443,7 +433,7 @@ class ApiControlHandler {
         return _ActionResult.ok('cycle_preset', {'direction': dir});
 
       case 'set_game_mode':
-        final enabled = payload['enabled'] as bool?;
+        final enabled = mutablePayload['enabled'] as bool?;
         if (enabled == null) {
           return _ActionResult.error(
             HttpStatus.badRequest,
@@ -457,7 +447,7 @@ class ApiControlHandler {
         return _ActionResult.ok('set_game_mode', {'enabled': enabled});
 
       case 'set_game_mode_brightness':
-        final val = _toDouble(payload['value']);
+        final val = _toDouble(mutablePayload['value']);
         if (val == null || val < 0.0 || val > 100.0) {
           return _ActionResult.error(
             HttpStatus.badRequest,
@@ -471,8 +461,8 @@ class ApiControlHandler {
         return _ActionResult.accepted('set_game_mode_brightness', {'value': val});
 
       case 'manage_game_mode_whitelist':
-        final op = payload['op'] as String?;
-        final app = payload['app'] as String?;
+        final op = mutablePayload['op'] as String?;
+        final app = mutablePayload['app'] as String?;
         if (op == null || app == null || app.isEmpty || (op != 'add' && op != 'remove')) {
           return _ActionResult.error(
             HttpStatus.badRequest,
@@ -490,7 +480,7 @@ class ApiControlHandler {
         return _ActionResult.ok('manage_game_mode_whitelist', {'op': op, 'app': app});
 
       case 'set_monitor_offset':
-        final offset = _toDouble(payload['offset']);
+        final offset = _toDouble(mutablePayload['offset']);
         if (offset == null || offset < -50.0 || offset > 50.0) {
           return _ActionResult.error(
             HttpStatus.badRequest,
@@ -505,8 +495,8 @@ class ApiControlHandler {
         return _ActionResult.accepted('set_monitor_offset', {'monitor_id': targetId, 'offset': offset});
 
       case 'set_weather_adjustment':
-        final br = payload['brightness'] as bool?;
-        final temp = payload['temperature'] as bool?;
+        final br = mutablePayload['brightness'] as bool?;
+        final temp = mutablePayload['temperature'] as bool?;
         await safeStateMutator(() {
           if (br != null) {
             _container.read(settingsProvider.notifier).updateWeatherAdjustment(br);
@@ -518,7 +508,7 @@ class ApiControlHandler {
         return _ActionResult.ok('set_weather_adjustment', {'brightness': br, 'temperature': temp});
 
       case 'set_weather_temperature_adjustment':
-        final enabled = payload['enabled'] as bool?;
+        final enabled = mutablePayload['enabled'] as bool?;
         if (enabled == null) {
           return _ActionResult.error(
             HttpStatus.badRequest,
@@ -532,7 +522,7 @@ class ApiControlHandler {
         return _ActionResult.ok('set_weather_temperature_adjustment', {'enabled': enabled});
 
       case 'set_weather_intensity':
-        final val = _toDouble(payload['value']);
+        final val = _toDouble(mutablePayload['value']);
         if (val == null || val < 0.0 || val > 1.0) {
           return _ActionResult.error(
             HttpStatus.badRequest,
@@ -546,7 +536,7 @@ class ApiControlHandler {
         return _ActionResult.accepted('set_weather_intensity', {'value': val});
 
       case 'set_smart_circadian':
-        final enabled = payload['enabled'] as bool?;
+        final enabled = mutablePayload['enabled'] as bool?;
         if (enabled == null) {
           return _ActionResult.error(
             HttpStatus.badRequest,
@@ -560,10 +550,10 @@ class ApiControlHandler {
         return _ActionResult.ok('set_smart_circadian', {'enabled': enabled});
 
       case 'set_smart_circadian_submodules':
-        final windDown = payload['wind_down'] as bool?;
-        final timeShift = payload['time_shift'] as bool?;
-        final sleepPressure = payload['sleep_pressure'] as bool?;
-        final sleepDebt = payload['sleep_debt'] as bool?;
+        final windDown = mutablePayload['wind_down'] as bool?;
+        final timeShift = mutablePayload['time_shift'] as bool?;
+        final sleepPressure = mutablePayload['sleep_pressure'] as bool?;
+        final sleepDebt = mutablePayload['sleep_debt'] as bool?;
         await safeStateMutator(() {
           if (windDown != null) _container.read(settingsProvider.notifier).updateWindDownMaster(windDown);
           if (timeShift != null) _container.read(settingsProvider.notifier).updateTimeShiftMaster(timeShift);
@@ -578,10 +568,10 @@ class ApiControlHandler {
         });
 
       case 'set_map_animations':
-        final rain = payload['rain'] as bool?;
-        final snow = payload['snow'] as bool?;
-        final thunder = payload['thunder'] as bool?;
-        final cloud = payload['cloud'] as bool?;
+        final rain = mutablePayload['rain'] as bool?;
+        final snow = mutablePayload['snow'] as bool?;
+        final thunder = mutablePayload['thunder'] as bool?;
+        final cloud = mutablePayload['cloud'] as bool?;
         await safeStateMutator(() {
           if (rain != null) _container.read(settingsProvider.notifier).updateShowRainAnimation(rain);
           if (snow != null) _container.read(settingsProvider.notifier).updateShowSnowAnimation(snow);
@@ -596,8 +586,8 @@ class ApiControlHandler {
         });
 
       case 'set_manual_location':
-        final lat = _toDouble(payload['latitude']);
-        final lon = _toDouble(payload['longitude']);
+        final lat = _toDouble(mutablePayload['latitude']);
+        final lon = _toDouble(mutablePayload['longitude']);
         if (lat == null || lon == null || lat < -90.0 || lat > 90.0 || lon < -180.0 || lon > 180.0) {
           return _ActionResult.error(
             HttpStatus.badRequest,
@@ -611,7 +601,7 @@ class ApiControlHandler {
         return _ActionResult.ok('set_manual_location', {'latitude': lat, 'longitude': lon});
 
       case 'set_weather_provider':
-        final providerStr = payload['provider'] as String?;
+        final providerStr = mutablePayload['provider'] as String?;
         final provider = _parseWeatherProvider(providerStr);
         if (provider == null) {
           return _ActionResult.error(
@@ -632,7 +622,7 @@ class ApiControlHandler {
         return _ActionResult.ok('trigger_sun_sync', {'synced': true});
 
       case 'push_sleep_status':
-        final isSleeping = payload['is_sleeping'] as bool?;
+        final isSleeping = mutablePayload['is_sleeping'] as bool?;
         if (isSleeping == null) {
           return _ActionResult.error(
             HttpStatus.badRequest,
@@ -645,8 +635,9 @@ class ApiControlHandler {
         });
         return _ActionResult.ok('push_sleep_status', {'is_sleeping': isSleeping});
 
+      case 'manage_webhooks':
       case 'clear_failed_webhooks':
-        final webhookId = payload['webhook_id'] as String?;
+        final webhookId = mutablePayload['webhook_id'] as String?;
         if (webhookId == null || webhookId.isEmpty) {
           return _ActionResult.error(
             HttpStatus.badRequest,

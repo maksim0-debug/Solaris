@@ -259,8 +259,8 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
 
   Future<void> _handleSleepSessions(HttpRequest request) async {
     final permissions = request.permissions;
-    final catCheck = ApiPermissionsChecker.checkCategory(permissions, ApiActionCategory.sleep);
-    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, catCheck)) return;
+    final check = ApiPermissionsChecker.checkAction(permissions, 'push_sleep_status');
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
     try {
       final String content = await utf8.decoder.bind(request).join();
@@ -286,8 +286,8 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
 
   Future<void> _handleSleepStatus(HttpRequest request) async {
     final permissions = request.permissions;
-    final catCheck = ApiPermissionsChecker.checkCategory(permissions, ApiActionCategory.sleep);
-    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, catCheck)) return;
+    final check = ApiPermissionsChecker.checkAction(permissions, 'push_sleep_status');
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
     try {
       final String content = await utf8.decoder.bind(request).join();
@@ -339,8 +339,8 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
 
   Future<void> _handleCreateWebhook(HttpRequest request, Map<String, String> params) async {
     final permissions = request.permissions;
-    final catCheck = ApiPermissionsChecker.checkCategory(permissions, ApiActionCategory.system);
-    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, catCheck)) return;
+    final check = ApiPermissionsChecker.checkAction(permissions, 'manage_webhooks');
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
     try {
       final content = await utf8.decoder.bind(request).join();
@@ -392,8 +392,8 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
 
   Future<void> _handleDeleteWebhook(HttpRequest request, Map<String, String> params) async {
     final permissions = request.permissions;
-    final catCheck = ApiPermissionsChecker.checkCategory(permissions, ApiActionCategory.system);
-    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, catCheck)) return;
+    final check = ApiPermissionsChecker.checkAction(permissions, 'manage_webhooks');
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
     final id = params['id'];
     if (id == null || id.isEmpty) {
@@ -406,8 +406,8 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
 
   Future<void> _handleTestWebhook(HttpRequest request, Map<String, String> params) async {
     final permissions = request.permissions;
-    final catCheck = ApiPermissionsChecker.checkCategory(permissions, ApiActionCategory.system);
-    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, catCheck)) return;
+    final check = ApiPermissionsChecker.checkAction(permissions, 'manage_webhooks');
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
     final id = params['id'];
     if (id == null || id.isEmpty) {
@@ -447,8 +447,8 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
 
   Future<void> _handleRetryDLQ(HttpRequest request, Map<String, String> params) async {
     final permissions = request.permissions;
-    final catCheck = ApiPermissionsChecker.checkCategory(permissions, ApiActionCategory.system);
-    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, catCheck)) return;
+    final check = ApiPermissionsChecker.checkAction(permissions, 'manage_webhooks');
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
     await ref.read(webhookServiceProvider.notifier).clearDLQ();
     _sendResponse(request, HttpStatus.ok, {
