@@ -6,6 +6,8 @@ import 'package:solaris/services/api_permissions_checker.dart';
 import 'package:solaris/services/openapi_spec.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('Stage 2: ApiPermissionsChecker.checkAction Tests', () {
     test('checkAction denies when isReadOnly is true', () {
       const config = ApiPermissionsConfig(isReadOnly: true);

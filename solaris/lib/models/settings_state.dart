@@ -112,8 +112,19 @@ class SettingsState {
   final bool isAutoUpdateEnabled;
   final List<WebhookConfig> webhooks;
 
-  String get apiAccessToken => apiKeys.isNotEmpty ? apiKeys.first.token : '';
-  ApiPermissionsConfig get apiPermissions => apiKeys.isNotEmpty ? apiKeys.first.permissions : const ApiPermissionsConfig();
+  String get apiAccessToken => apiKeys.isNotEmpty
+      ? apiKeys.firstWhere(
+          (k) => !k.permissions.isReadOnly,
+          orElse: () => apiKeys.first,
+        ).token
+      : '';
+
+  ApiPermissionsConfig get apiPermissions => apiKeys.isNotEmpty
+      ? apiKeys.firstWhere(
+          (k) => !k.permissions.isReadOnly,
+          orElse: () => apiKeys.first,
+        ).permissions
+      : const ApiPermissionsConfig();
 
   SettingsState({
     List<ApiKeyEntry>? apiKeys,
