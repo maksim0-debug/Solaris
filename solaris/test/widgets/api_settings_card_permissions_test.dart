@@ -61,7 +61,7 @@ void main() {
       await tester.pumpWidget(buildTestableWidget(initialSettings: settings));
       await tester.pumpAndSettle();
 
-      expect(find.text('1 active key(s) configured'), findsOneWidget);
+      expect(find.text('1 active key configured'), findsOneWidget);
       expect(find.text('Manage API Keys...'), findsOneWidget);
     });
 

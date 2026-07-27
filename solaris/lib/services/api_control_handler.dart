@@ -49,9 +49,6 @@ class ApiControlHandler {
     final settingsMap = _container.read(settingsProvider).value ??
         _container.read(settingsProvider).asData?.value;
     final globalSettings = settingsMap?['all'];
-    if (globalSettings != null && globalSettings.apiKeys.isNotEmpty) {
-      return globalSettings.apiKeys.first.permissions;
-    }
     return globalSettings?.apiPermissions ?? const ApiPermissionsConfig();
   }
 

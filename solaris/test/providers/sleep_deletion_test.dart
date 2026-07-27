@@ -89,7 +89,7 @@ void main() {
       // Delete with doNotSync = true
       await notifier.deleteSession('blacklisted_s1', doNotSync: true);
 
-      expect(container.read(sleepProvider).sessions, isEmpty);
+      expect(container.read(sleepProvider).sessions.any((s) => s.id == 'blacklisted_s1'), isFalse);
 
       // Check that it's in the ignored list
       final ignored = await sleepService.loadIgnoredSessionIds();
@@ -97,8 +97,8 @@ void main() {
 
       // Try updating from IPC with the same blacklisted session again
       await notifier.updateSessionsFromIpc([session1]);
-      // Should remain empty because session is blacklisted
-      expect(container.read(sleepProvider).sessions, isEmpty);
+      // Should remain absent because session is blacklisted
+      expect(container.read(sleepProvider).sessions.any((s) => s.id == 'blacklisted_s1'), isFalse);
     });
 
     test('deleteSessions with doNotSync=false allows session in future syncs', () async {

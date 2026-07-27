@@ -264,9 +264,6 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
     final settingsMap = ref.read(settingsProvider).value ??
         ref.read(settingsProvider).asData?.value;
     final globalSettings = settingsMap?['all'];
-    if (globalSettings != null && globalSettings.apiKeys.isNotEmpty) {
-      return globalSettings.apiKeys.first.permissions;
-    }
     return globalSettings?.apiPermissions ?? const ApiPermissionsConfig();
   }
 

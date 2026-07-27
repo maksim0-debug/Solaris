@@ -11,7 +11,7 @@ void main() {
       expect(l10n.apiPermissionsReadOnlyLabel, equals('Read-Only Mode'));
       expect(
         l10n.apiPermissionsReadOnlyHint,
-        equals('When enabled, all mutating API requests (POST/PUT/DELETE) will be blocked with HTTP 403 Forbidden.'),
+        equals('When enabled, all state-changing API requests (POST/PUT/DELETE) will be blocked with HTTP 403 Forbidden.'),
       );
       expect(l10n.apiPermissionsDataSharingSection, equals('Data Sharing Permissions (Read Operations)'));
       expect(l10n.apiPermissionsAllowMonitors, equals('Monitors & Brightness State'));
@@ -19,7 +19,7 @@ void main() {
       expect(l10n.apiPermissionsAllowWeather, equals('Weather Adjustments & Provider Info'));
       expect(l10n.apiPermissionsAllowSleep, equals('Sleep & Circadian Rhythm Metrics'));
       expect(l10n.apiPermissionsAllowCircadian, equals('Smart Circadian System State'));
-      expect(l10n.apiPermissionsControlCategoriesSection, equals('Action Control Categories (Mutations)'));
+      expect(l10n.apiPermissionsControlCategoriesSection, equals('Action Control Categories (Control)'));
       expect(l10n.apiPermissionsCategoryMonitors, equals('Monitors (Brightness, Temp, Offsets)'));
       expect(l10n.apiPermissionsCategoryPresets, equals('Presets & Brightness Profiles'));
       expect(l10n.apiPermissionsCategoryCircadian, equals('Circadian Rhythm & Auto-Adjustments'));
@@ -45,7 +45,7 @@ void main() {
       expect(l10n.apiPermissionsReadOnlyLabel, equals('Режим «Только чтение» (Read-Only)'));
       expect(
         l10n.apiPermissionsReadOnlyHint,
-        equals('Если включено, все мутирующие API-запросы (POST/PUT/DELETE) блокируются с кодом HTTP 403 Forbidden.'),
+        equals('Если включено, все управляющие API-запросы (POST/PUT/DELETE) блокируются с кодом HTTP 403 Forbidden.'),
       );
       expect(l10n.apiPermissionsDataSharingSection, equals('Разрешения на передачу данных (Чтение)'));
       expect(l10n.apiPermissionsAllowMonitors, equals('Мониторы и состояние яркости'));
@@ -53,7 +53,7 @@ void main() {
       expect(l10n.apiPermissionsAllowWeather, equals('Погодные корректировки и данные провайдера'));
       expect(l10n.apiPermissionsAllowSleep, equals('Метрики сна и циркадного ритма'));
       expect(l10n.apiPermissionsAllowCircadian, equals('Состояние системы Smart Circadian'));
-      expect(l10n.apiPermissionsControlCategoriesSection, equals('Разрешенные категории команд (Мутации)'));
+      expect(l10n.apiPermissionsControlCategoriesSection, equals('Разрешенные категории команд (Управление)'));
       expect(l10n.apiPermissionsCategoryMonitors, equals('Мониторы (яркость, температура, смещения)'));
       expect(l10n.apiPermissionsCategoryPresets, equals('Пресеты и профили яркости'));
       expect(l10n.apiPermissionsCategoryCircadian, equals('Циркадный ритм и авто-настройки'));
@@ -87,7 +87,7 @@ void main() {
       expect(l10n.apiPermissionsReadOnlyLabel, equals('Режим «Лише читання» (Read-Only)'));
       expect(
         l10n.apiPermissionsReadOnlyHint,
-        equals('Якщо увімкнено, усі мутуючі API-запити (POST/PUT/DELETE) блокуються з кодом HTTP 403 Forbidden.'),
+        equals('Якщо увімкнено, усі керуючі API-запити (POST/PUT/DELETE) блокуються з кодом HTTP 403 Forbidden.'),
       );
       expect(l10n.apiPermissionsDataSharingSection, equals('Дозволи на передачу даних (Читання)'));
       expect(l10n.apiPermissionsAllowMonitors, equals('Монітори та стан яскравості'));
@@ -95,7 +95,7 @@ void main() {
       expect(l10n.apiPermissionsAllowWeather, equals('Погодні коригування та дані провайдера'));
       expect(l10n.apiPermissionsAllowSleep, equals('Метрики сну та циркадного ритму'));
       expect(l10n.apiPermissionsAllowCircadian, equals('Стан системи Smart Circadian'));
-      expect(l10n.apiPermissionsControlCategoriesSection, equals('Дозволені категорії команд (Мутації)'));
+      expect(l10n.apiPermissionsControlCategoriesSection, equals('Дозволені категорії команд (Управління)'));
       expect(l10n.apiPermissionsCategoryMonitors, equals('Монітори (яскравість, температура, зсуви)'));
       expect(l10n.apiPermissionsCategoryPresets, equals('Пресети та профілі яскравості'));
       expect(l10n.apiPermissionsCategoryCircadian, equals('Циркадний ритм та авто-налаштування'));
