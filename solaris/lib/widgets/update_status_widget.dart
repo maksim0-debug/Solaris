@@ -82,7 +82,8 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
     _updateAnimationState(updateStatus.phase);
 
     final labelText = _getLabelText(context, updateStatus, currentVersion);
-    final dotColor = _getDotColor(updateStatus.phase);
+    final statusColor = _getDotColor(updateStatus.phase);
+    final isIdle = updateStatus.phase == UpdatePhase.idle;
 
     return GestureDetector(
       onTap: () => _handleTap(context, ref, updateStatus, currentVersion),
@@ -90,13 +91,15 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
         message: labelText,
         child: MouseRegion(
           cursor: SystemMouseCursors.click,
-          child: Container(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.04),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: dotColor.withOpacity(0.2),
+                color: isIdle ? Colors.white.withOpacity(0.12) : statusColor.withOpacity(0.45),
                 width: 1,
               ),
             ),
@@ -119,22 +122,24 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
                 AnimatedBuilder(
                   animation: _pulseAnimation,
                   builder: (context, child) {
-                    final isPulsingPhase = updateStatus.phase != UpdatePhase.idle &&
+                    final isPulsingPhase = !isIdle &&
                         updateStatus.phase != UpdatePhase.error &&
                         updateStatus.phase != UpdatePhase.installing;
                     return Opacity(
                       opacity: isPulsingPhase ? _pulseAnimation.value : 1.0,
-                      child: Container(
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
                         width: 7,
                         height: 7,
                         decoration: BoxDecoration(
-                          color: dotColor,
+                          color: statusColor,
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: dotColor.withOpacity(0.6),
-                              blurRadius: 4,
-                              spreadRadius: 1,
+                              color: statusColor.withOpacity(isIdle ? 0.15 : 0.6),
+                              blurRadius: isIdle ? 2 : 4,
+                              spreadRadius: isIdle ? 0 : 1,
                             ),
                           ],
                         ),
@@ -183,9 +188,9 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
   Color _getDotColor(UpdatePhase phase) {
     switch (phase) {
       case UpdatePhase.idle:
-        return Colors.orange;
+        return Colors.white38;
       case UpdatePhase.checking:
-        return Colors.amber;
+        return Colors.amberAccent;
       case UpdatePhase.available:
         return Colors.orangeAccent;
       case UpdatePhase.downloading:
@@ -195,7 +200,7 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
       case UpdatePhase.ready:
         return Colors.greenAccent;
       case UpdatePhase.installing:
-        return Colors.blue;
+        return Colors.blueAccent;
       case UpdatePhase.error:
         return Colors.redAccent;
     }
@@ -216,7 +221,7 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
       case UpdatePhase.ready:
         return Colors.greenAccent;
       case UpdatePhase.installing:
-        return Colors.lightBlue;
+        return Colors.blueAccent;
       case UpdatePhase.error:
         return Colors.redAccent;
     }
