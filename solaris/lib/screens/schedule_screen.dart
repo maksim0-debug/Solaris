@@ -83,8 +83,11 @@ class ScheduleScreen extends ConsumerWidget {
                                     loading: () => const Center(
                                       child: CircularProgressIndicator(),
                                     ),
-                                    error: (e, _) =>
-                                        Center(child: Text(l10n.errorWithMsg(e.toString()))),
+                                    error: (e, _) => Center(
+                                      child: Text(
+                                        l10n.errorWithMsg(e.toString()),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ],
@@ -99,7 +102,9 @@ class ScheduleScreen extends ConsumerWidget {
                               Expanded(
                                 child: _CoordinateCard(
                                   label: l10n.azimuth,
-                                  value: l10n.sunAzimuthFormat(state.sunAzimuth.toStringAsFixed(1)),
+                                  value: l10n.sunAzimuthFormat(
+                                    state.sunAzimuth.toStringAsFixed(1),
+                                  ),
                                   trend: state.azimuthTrend == "constant"
                                       ? l10n.constant
                                       : state.azimuthTrend,
@@ -114,7 +119,9 @@ class ScheduleScreen extends ConsumerWidget {
                               Expanded(
                                 child: _CoordinateCard(
                                   label: l10n.elevation,
-                                  value: l10n.sunElevationFormat(state.sunElevation.toStringAsFixed(1)),
+                                  value: l10n.sunElevationFormat(
+                                    state.sunElevation.toStringAsFixed(1),
+                                  ),
                                   trend: state.elevationTrend == "constant"
                                       ? l10n.constant
                                       : state.elevationTrend,
@@ -134,18 +141,18 @@ class ScheduleScreen extends ConsumerWidget {
                               Expanded(
                                 child: _CoordinateCard(
                                   label: l10n.zenith,
-                                  value: l10n.sunZenithFormat(state.sunZenith.toStringAsFixed(1)),
+                                  value: l10n.sunZenithFormat(
+                                    state.sunZenith.toStringAsFixed(1),
+                                  ),
                                   trend: state.zenithTrend == "constant"
                                       ? l10n.constant
                                       : state.zenithTrend,
-                                  trendIcon:
-                                      state.zenithTrend.startsWith('+')
+                                  trendIcon: state.zenithTrend.startsWith('+')
                                       ? LucideIcons.trendingUp
                                       : (state.zenithTrend.startsWith('-')
                                             ? LucideIcons.trendingDown
                                             : null),
-                                  trendColor:
-                                      state.zenithTrend.startsWith('+')
+                                  trendColor: state.zenithTrend.startsWith('+')
                                       ? Colors.redAccent
                                       : const Color(0xFFFDBA74),
                                 ),
@@ -185,21 +192,27 @@ class ScheduleScreen extends ConsumerWidget {
                                   _TelemetryRow(
                                     icon: LucideIcons.sun,
                                     label: l10n.civilTwilight,
-                                    value:
-                                        l10n.timeFormat(
-                                  state.phases.civilTwilightBegin.hour.toString().padLeft(2, '0'),
-                                  state.phases.civilTwilightBegin.minute.toString().padLeft(2, '0'),
-                                ),
+                                    value: l10n.timeFormat(
+                                      state.phases.civilTwilightBegin.hour
+                                          .toString()
+                                          .padLeft(2, '0'),
+                                      state.phases.civilTwilightBegin.minute
+                                          .toString()
+                                          .padLeft(2, '0'),
+                                    ),
                                   ),
                                   const SizedBox(height: 16),
                                   _TelemetryRow(
                                     icon: LucideIcons.moon,
                                     label: l10n.astronomicalNight,
-                                    value:
-                                        l10n.timeFormat(
-                                  state.phases.astronomicalDusk.hour.toString().padLeft(2, '0'),
-                                  state.phases.astronomicalDusk.minute.toString().padLeft(2, '0'),
-                                ),
+                                    value: l10n.timeFormat(
+                                      state.phases.astronomicalDusk.hour
+                                          .toString()
+                                          .padLeft(2, '0'),
+                                      state.phases.astronomicalDusk.minute
+                                          .toString()
+                                          .padLeft(2, '0'),
+                                    ),
                                   ),
                                   const SizedBox(height: 16),
                                   // Humidity row
@@ -220,7 +233,11 @@ class ScheduleScreen extends ConsumerWidget {
                                     icon: LucideIcons.thermometer,
                                     label: l10n.airTemp,
                                     value: weatherAsync.maybeWhen(
-                                      data: (w) => w != null ? l10n.temperatureFormat(w.temperature.toStringAsFixed(1)) : '--°C',
+                                      data: (w) => w != null
+                                          ? l10n.temperatureFormat(
+                                              w.temperature.toStringAsFixed(1),
+                                            )
+                                          : '--°C',
                                       orElse: () => '--°C',
                                     ),
                                     iconColor: Colors.white70,
@@ -232,8 +249,8 @@ class ScheduleScreen extends ConsumerWidget {
                                     value: weatherAsync.maybeWhen(
                                       data: (w) => w != null
                                           ? l10n.windSpeedFormat(
-                                            w.windSpeed.toStringAsFixed(1),
-                                          )
+                                              w.windSpeed.toStringAsFixed(1),
+                                            )
                                           : '--',
                                       orElse: () => '--',
                                     ),
@@ -242,14 +259,20 @@ class ScheduleScreen extends ConsumerWidget {
                                   const SizedBox(height: 32),
                                   _ProgressBar(
                                     label: l10n.spectralIntensity,
-                                    value: l10n.spectralIntensityValue(state.spectralIntensity.toStringAsFixed(1)),
+                                    value: l10n.spectralIntensityValue(
+                                      state.spectralIntensity.toStringAsFixed(
+                                        1,
+                                      ),
+                                    ),
                                     progress: (state.spectralIntensity / 1000.0)
                                         .clamp(0.0, 1.0),
                                   ),
                                   const SizedBox(height: 16),
                                   _ProgressBar(
                                     label: l10n.uvIndex,
-                                    value: l10n.uvIndexValue(state.uvIndex.toStringAsFixed(1)),
+                                    value: l10n.uvIndexValue(
+                                      state.uvIndex.toStringAsFixed(1),
+                                    ),
                                     progress: (state.uvIndex / 15.0).clamp(
                                       0.0,
                                       1.0,

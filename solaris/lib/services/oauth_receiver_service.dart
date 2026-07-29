@@ -62,7 +62,9 @@ class OAuthReceiverService {
         await request.response.close();
 
         if (!completer.isCompleted) {
-          completer.complete(OAuthReceipt(code: code, error: error, port: port));
+          completer.complete(
+            OAuthReceipt(code: code, error: error, port: port),
+          );
         }
       } else {
         request.response.statusCode = HttpStatus.notFound;

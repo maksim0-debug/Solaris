@@ -65,7 +65,9 @@ Future<bool?> showCustomBuildUpdateWarningDialog(
                             Container(
                               padding: const EdgeInsets.all(6),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF59E0B).withOpacity(0.12),
+                                color: const Color(
+                                  0xFFF59E0B,
+                                ).withOpacity(0.12),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Icon(
@@ -102,7 +104,8 @@ Future<bool?> showCustomBuildUpdateWarningDialog(
                           children: [
                             if (isConfirmation) ...[
                               TextButton(
-                                onPressed: () => Navigator.pop(dialogContext, false),
+                                onPressed: () =>
+                                    Navigator.pop(dialogContext, false),
                                 child: Text(
                                   l10n.cancel,
                                   style: const TextStyle(color: Colors.white60),
@@ -125,7 +128,8 @@ Future<bool?> showCustomBuildUpdateWarningDialog(
                               ),
                             ] else ...[
                               ElevatedButton(
-                                onPressed: () => Navigator.pop(dialogContext, true),
+                                onPressed: () =>
+                                    Navigator.pop(dialogContext, true),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFFFDBA74),
                                   foregroundColor: Colors.black87,

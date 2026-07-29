@@ -65,11 +65,11 @@ void main() {
       HttpOverrides.global = null;
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(
-        const MethodChannel('plugins.flutter.io/path_provider'),
-        (MethodCall methodCall) async {
-          return '.';
-        },
-      );
+            const MethodChannel('plugins.flutter.io/path_provider'),
+            (MethodCall methodCall) async {
+              return '.';
+            },
+          );
 
       final testSettings = SettingsState(
         isLocalIpcServerEnabled: true,
@@ -78,9 +78,13 @@ void main() {
 
       container = ProviderContainer(
         overrides: [
-          locationStreamProvider.overrideWith((ref) => Stream.value(dummyPosition)),
+          locationStreamProvider.overrideWith(
+            (ref) => Stream.value(dummyPosition),
+          ),
           monitorServiceProvider.overrideWithValue(MockMonitorService()),
-          settingsProvider.overrideWith(() => FakeSettingsNotifier(testSettings)),
+          settingsProvider.overrideWith(
+            () => FakeSettingsNotifier(testSettings),
+          ),
         ],
       );
 
@@ -94,181 +98,240 @@ void main() {
       container.dispose();
     });
 
-    test('1. WebSocket Subprotocol Auth (Sec-WebSocket-Protocol: bearer.<token>)', () async {
-      final wsUri = Uri.parse('ws://127.0.0.1:$port/api/v1/ws');
-      final socket = await WebSocket.connect(wsUri.toString(), protocols: ['bearer.$authToken']);
-      expect(socket.readyState, equals(WebSocket.open));
-      await socket.close();
-    });
-
-    test('2. WebSocket Subprotocol Auth with Invalid Token is Rejected (401 Unauthorized)', () async {
-      final client = HttpClient();
-      final request = await client.openUrl('GET', Uri.parse('http://127.0.0.1:$port/api/v1/ws'));
-      request.headers.set('Connection', 'Upgrade');
-      request.headers.set('Upgrade', 'websocket');
-      request.headers.set('Sec-WebSocket-Key', 'dGhlIHNhbXBsZSBub25jZQ==');
-      request.headers.set('Sec-WebSocket-Version', '13');
-      request.headers.set('Sec-WebSocket-Protocol', 'bearer.invalid-token-xyz');
-
-      final response = await request.close();
-      expect(response.statusCode, equals(HttpStatus.unauthorized));
-      client.close();
-    });
-
-    test('3. Selective Subscriptions Module Filter (client receives only subscribed modules)', () async {
-      final wsUri = Uri.parse('ws://127.0.0.1:$port/api/v1/ws?token=$authToken');
-      final clientSocket = await WebSocket.connect(wsUri.toString());
-      final stream = clientSocket.asBroadcastStream();
-
-      final subAckCompleter = Completer<void>();
-      final receivedModules = <String>[];
-
-      stream.listen((message) {
-        if (message is String) {
-          final jsonMap = jsonDecode(message) as Map<String, dynamic>;
-          if (jsonMap['type'] == 'subscribed') {
-            subAckCompleter.complete();
-          } else if (jsonMap['type'] == 'update') {
-            receivedModules.add(jsonMap['module'] as String);
-          }
-        }
-      });
-
-      // Subscribe ONLY to 'solar'
-      clientSocket.add(jsonEncode({
-        'type': 'subscribe',
-        'modules': ['solar'],
-      }));
-
-      await subAckCompleter.future.timeout(const Duration(seconds: 3));
-
-      // Trigger broadcasts for both 'solar' and 'monitors'
-      final wsService = container.read(webSocketServiceProvider);
-      wsService.broadcastModule('solar', {'elevation': 45.0});
-      wsService.broadcastModule('monitors', [{'id': 'mon-1'}]);
-
-      await Future<void>.delayed(const Duration(milliseconds: 100));
-
-      expect(receivedModules, contains('solar'));
-      expect(receivedModules, isNot(contains('monitors')));
-
-      await clientSocket.close();
-    });
-
-    test('4. WebSocket Max Clients Limit Enforcement (20 max connections -> 503 Service Unavailable)', () async {
-      final wsService = container.read(webSocketServiceProvider);
-      final activeSockets = <WebSocket>[];
-
-      for (int i = 0; i < WebSocketService.maxClients; i++) {
-        final ws = await WebSocket.connect('ws://127.0.0.1:$port/api/v1/ws?token=$authToken');
-        activeSockets.add(ws);
-      }
-
-      await Future<void>.delayed(const Duration(milliseconds: 100));
-      expect(wsService.connectedClientsCount, equals(WebSocketService.maxClients));
-
-      // Attempt 21st connection with Upgrade headers
-      final client = HttpClient();
-      final req = await client.openUrl('GET', Uri.parse('http://127.0.0.1:$port/api/v1/ws?token=$authToken'));
-      req.headers.set('Connection', 'Upgrade');
-      req.headers.set('Upgrade', 'websocket');
-      req.headers.set('Sec-WebSocket-Key', 'dGhlIHNhbXBsZSBub25jZQ==');
-      req.headers.set('Sec-WebSocket-Version', '13');
-      final resp = await req.close();
-
-      expect(resp.statusCode, equals(HttpStatus.serviceUnavailable));
-      client.close();
-
-      for (final socket in activeSockets) {
+    test(
+      '1. WebSocket Subprotocol Auth (Sec-WebSocket-Protocol: bearer.<token>)',
+      () async {
+        final wsUri = Uri.parse('ws://127.0.0.1:$port/api/v1/ws');
+        final socket = await WebSocket.connect(
+          wsUri.toString(),
+          protocols: ['bearer.$authToken'],
+        );
+        expect(socket.readyState, equals(WebSocket.open));
         await socket.close();
-      }
-    });
+      },
+    );
 
-    test('5. Slow Consumer OOM Protection drops lagging client when buffer exceeds 512 KB', () async {
-      final wsService = container.read(webSocketServiceProvider);
-      final clientSocket = await WebSocket.connect('ws://127.0.0.1:$port/api/v1/ws?token=$authToken');
-      await Future<void>.delayed(const Duration(milliseconds: 100));
-      expect(wsService.connectedClientsCount, equals(1));
+    test(
+      '2. WebSocket Subprotocol Auth with Invalid Token is Rejected (401 Unauthorized)',
+      () async {
+        final client = HttpClient();
+        final request = await client.openUrl(
+          'GET',
+          Uri.parse('http://127.0.0.1:$port/api/v1/ws'),
+        );
+        request.headers.set('Connection', 'Upgrade');
+        request.headers.set('Upgrade', 'websocket');
+        request.headers.set('Sec-WebSocket-Key', 'dGhlIHNhbXBsZSBub25jZQ==');
+        request.headers.set('Sec-WebSocket-Version', '13');
+        request.headers.set(
+          'Sec-WebSocket-Protocol',
+          'bearer.invalid-token-xyz',
+        );
 
-      // Create a payload larger than 512 KB
-      final hugePayload = List.generate(530 * 1024, (index) => 'A').join();
-      wsService.broadcastModule('solar', {'large_data': hugePayload});
+        final response = await request.close();
+        expect(response.statusCode, equals(HttpStatus.unauthorized));
+        client.close();
+      },
+    );
 
-      // Second broadcast triggers Slow Consumer disconnection (> 512 KB pending)
-      wsService.broadcastModule('solar', {'trigger': 'disconnect'});
+    test(
+      '3. Selective Subscriptions Module Filter (client receives only subscribed modules)',
+      () async {
+        final wsUri = Uri.parse(
+          'ws://127.0.0.1:$port/api/v1/ws?token=$authToken',
+        );
+        final clientSocket = await WebSocket.connect(wsUri.toString());
+        final stream = clientSocket.asBroadcastStream();
 
-      await Future<void>.delayed(const Duration(milliseconds: 100));
-      expect(wsService.connectedClientsCount, equals(0));
+        final subAckCompleter = Completer<void>();
+        final receivedModules = <String>[];
 
-      await clientSocket.close();
-    });
-
-    test('6. Full Cycle: Hardware Error Event Propagation to WebSocket listeners', () async {
-      final wsService = container.read(webSocketServiceProvider);
-
-      final wsUri = Uri.parse('ws://127.0.0.1:$port/api/v1/ws?token=$authToken');
-      final clientSocket = await WebSocket.connect(wsUri.toString());
-      await Future<void>.delayed(const Duration(milliseconds: 100));
-
-      final eventCompleter = Completer<Map<String, dynamic>>();
-
-      final subscription = clientSocket.listen((message) {
-        if (message is String) {
-          final jsonMap = jsonDecode(message) as Map<String, dynamic>;
-          if (jsonMap['type'] == 'event' && jsonMap['event'] == 'on_hardware_error') {
-            if (!eventCompleter.isCompleted) {
-              eventCompleter.complete(jsonMap);
+        stream.listen((message) {
+          if (message is String) {
+            final jsonMap = jsonDecode(message) as Map<String, dynamic>;
+            if (jsonMap['type'] == 'subscribed') {
+              subAckCompleter.complete();
+            } else if (jsonMap['type'] == 'update') {
+              receivedModules.add(jsonMap['module'] as String);
             }
           }
+        });
+
+        // Subscribe ONLY to 'solar'
+        clientSocket.add(
+          jsonEncode({
+            'type': 'subscribe',
+            'modules': ['solar'],
+          }),
+        );
+
+        await subAckCompleter.future.timeout(const Duration(seconds: 3));
+
+        // Trigger broadcasts for both 'solar' and 'monitors'
+        final wsService = container.read(webSocketServiceProvider);
+        wsService.broadcastModule('solar', {'elevation': 45.0});
+        wsService.broadcastModule('monitors', [
+          {'id': 'mon-1'},
+        ]);
+
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+
+        expect(receivedModules, contains('solar'));
+        expect(receivedModules, isNot(contains('monitors')));
+
+        await clientSocket.close();
+      },
+    );
+
+    test(
+      '4. WebSocket Max Clients Limit Enforcement (20 max connections -> 503 Service Unavailable)',
+      () async {
+        final wsService = container.read(webSocketServiceProvider);
+        final activeSockets = <WebSocket>[];
+
+        for (int i = 0; i < WebSocketService.maxClients; i++) {
+          final ws = await WebSocket.connect(
+            'ws://127.0.0.1:$port/api/v1/ws?token=$authToken',
+          );
+          activeSockets.add(ws);
         }
-      });
 
-      // Dispatch hardware error
-      wsService.broadcastEvent('on_hardware_error', {
-        'detail': 'DDC/CI I2C Bus Fault on Display 1',
-      });
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+        expect(
+          wsService.connectedClientsCount,
+          equals(WebSocketService.maxClients),
+        );
 
-      final receivedEvent = await eventCompleter.future.timeout(const Duration(seconds: 3));
-      expect(receivedEvent['type'], equals('event'));
-      expect(receivedEvent['event'], equals('on_hardware_error'));
-      expect(receivedEvent['data']['detail'], contains('DDC/CI I2C Bus Fault'));
+        // Attempt 21st connection with Upgrade headers
+        final client = HttpClient();
+        final req = await client.openUrl(
+          'GET',
+          Uri.parse('http://127.0.0.1:$port/api/v1/ws?token=$authToken'),
+        );
+        req.headers.set('Connection', 'Upgrade');
+        req.headers.set('Upgrade', 'websocket');
+        req.headers.set('Sec-WebSocket-Key', 'dGhlIHNhbXBsZSBub25jZQ==');
+        req.headers.set('Sec-WebSocket-Version', '13');
+        final resp = await req.close();
 
-      await subscription.cancel();
-      await clientSocket.close();
-    });
+        expect(resp.statusCode, equals(HttpStatus.serviceUnavailable));
+        client.close();
 
-    test('7. System Suspend & Resume Power Listener Workflow executes cleanly', () async {
-      final powerListener = container.read(windowsPowerListenerProvider);
+        for (final socket in activeSockets) {
+          await socket.close();
+        }
+      },
+    );
 
-      expect(powerListener.isSuspended, isFalse);
+    test(
+      '5. Slow Consumer OOM Protection drops lagging client when buffer exceeds 512 KB',
+      () async {
+        final wsService = container.read(webSocketServiceProvider);
+        final clientSocket = await WebSocket.connect(
+          'ws://127.0.0.1:$port/api/v1/ws?token=$authToken',
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+        expect(wsService.connectedClientsCount, equals(1));
 
-      // 1. Suspend
-      await powerListener.handleSystemSuspend();
-      expect(powerListener.isSuspended, isTrue);
+        // Create a payload larger than 512 KB
+        final hugePayload = List.generate(530 * 1024, (index) => 'A').join();
+        wsService.broadcastModule('solar', {'large_data': hugePayload});
 
-      // 2. Resume
-      await powerListener.handleSystemResume();
-      expect(powerListener.isSuspended, isFalse);
-    });
+        // Second broadcast triggers Slow Consumer disconnection (> 512 KB pending)
+        wsService.broadcastModule('solar', {'trigger': 'disconnect'});
 
-    test('8. Graceful Shutdown closes all WebSocket connections with status code 1001 (Going Away)', () async {
-      final wsUri = Uri.parse('ws://127.0.0.1:$port/api/v1/ws?token=$authToken');
-      final clientSocket = await WebSocket.connect(wsUri.toString());
-      await Future<void>.delayed(const Duration(milliseconds: 100));
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+        expect(wsService.connectedClientsCount, equals(0));
 
-      final closeCompleter = Completer<void>();
-      clientSocket.listen(
-        (_) {},
-        onDone: () {
-          if (!closeCompleter.isCompleted) closeCompleter.complete();
-        },
-      );
+        await clientSocket.close();
+      },
+    );
 
-      // Stop server (graceful shutdown)
-      await ipcService.stop();
+    test(
+      '6. Full Cycle: Hardware Error Event Propagation to WebSocket listeners',
+      () async {
+        final wsService = container.read(webSocketServiceProvider);
 
-      await closeCompleter.future.timeout(const Duration(seconds: 5));
-      expect(clientSocket.closeCode, equals(1001));
-    });
+        final wsUri = Uri.parse(
+          'ws://127.0.0.1:$port/api/v1/ws?token=$authToken',
+        );
+        final clientSocket = await WebSocket.connect(wsUri.toString());
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+
+        final eventCompleter = Completer<Map<String, dynamic>>();
+
+        final subscription = clientSocket.listen((message) {
+          if (message is String) {
+            final jsonMap = jsonDecode(message) as Map<String, dynamic>;
+            if (jsonMap['type'] == 'event' &&
+                jsonMap['event'] == 'on_hardware_error') {
+              if (!eventCompleter.isCompleted) {
+                eventCompleter.complete(jsonMap);
+              }
+            }
+          }
+        });
+
+        // Dispatch hardware error
+        wsService.broadcastEvent('on_hardware_error', {
+          'detail': 'DDC/CI I2C Bus Fault on Display 1',
+        });
+
+        final receivedEvent = await eventCompleter.future.timeout(
+          const Duration(seconds: 3),
+        );
+        expect(receivedEvent['type'], equals('event'));
+        expect(receivedEvent['event'], equals('on_hardware_error'));
+        expect(
+          receivedEvent['data']['detail'],
+          contains('DDC/CI I2C Bus Fault'),
+        );
+
+        await subscription.cancel();
+        await clientSocket.close();
+      },
+    );
+
+    test(
+      '7. System Suspend & Resume Power Listener Workflow executes cleanly',
+      () async {
+        final powerListener = container.read(windowsPowerListenerProvider);
+
+        expect(powerListener.isSuspended, isFalse);
+
+        // 1. Suspend
+        await powerListener.handleSystemSuspend();
+        expect(powerListener.isSuspended, isTrue);
+
+        // 2. Resume
+        await powerListener.handleSystemResume();
+        expect(powerListener.isSuspended, isFalse);
+      },
+    );
+
+    test(
+      '8. Graceful Shutdown closes all WebSocket connections with status code 1001 (Going Away)',
+      () async {
+        final wsUri = Uri.parse(
+          'ws://127.0.0.1:$port/api/v1/ws?token=$authToken',
+        );
+        final clientSocket = await WebSocket.connect(wsUri.toString());
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+
+        final closeCompleter = Completer<void>();
+        clientSocket.listen(
+          (_) {},
+          onDone: () {
+            if (!closeCompleter.isCompleted) closeCompleter.complete();
+          },
+        );
+
+        // Stop server (graceful shutdown)
+        await ipcService.stop();
+
+        await closeCompleter.future.timeout(const Duration(seconds: 5));
+        expect(clientSocket.closeCode, equals(1001));
+      },
+    );
   });
 }

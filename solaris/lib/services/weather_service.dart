@@ -34,7 +34,9 @@ class WeatherService {
     WeatherProvider provider = WeatherProvider.auto,
     String? customApiKey,
   }) async {
-    final apiKey = (customApiKey != null && customApiKey.isNotEmpty) ? customApiKey : Env.weatherApiKey;
+    final apiKey = (customApiKey != null && customApiKey.isNotEmpty)
+        ? customApiKey
+        : Env.weatherApiKey;
 
     // --- FORCED PROVIDER LOGIC ---
     if (provider == WeatherProvider.weatherApi) {
@@ -121,7 +123,11 @@ class WeatherService {
   }
 
   // --- WEATHER API ---
-  Future<WeatherData> _fetchWeatherApi(double lat, double lon, String apiKey) async {
+  Future<WeatherData> _fetchWeatherApi(
+    double lat,
+    double lon,
+    String apiKey,
+  ) async {
     final url = Uri.parse(
       'https://api.weatherapi.com/v1/current.json?key=$apiKey&q=$lat,$lon&aqi=no',
     );
@@ -140,16 +146,15 @@ class WeatherService {
       // short_rad is Global Horizontal Irradiance (GHI) - ground level total
       // diff_rad is Diffuse Horizontal Irradiance (DHI)
       // dni is Direct Normal Irradiance (Beam perpendicular to sun)
-      final double? shortRad =
-          current['short_rad'] != null
-              ? (current['short_rad'] as num).toDouble()
-              : null;
-      final double? diffRad =
-          current['diff_rad'] != null
-              ? (current['diff_rad'] as num).toDouble()
-              : null;
-      final double? dni =
-          current['dni'] != null ? (current['dni'] as num).toDouble() : null;
+      final double? shortRad = current['short_rad'] != null
+          ? (current['short_rad'] as num).toDouble()
+          : null;
+      final double? diffRad = current['diff_rad'] != null
+          ? (current['diff_rad'] as num).toDouble()
+          : null;
+      final double? dni = current['dni'] != null
+          ? (current['dni'] as num).toDouble()
+          : null;
 
       double directRad;
       double diffuseRad;
@@ -179,8 +184,8 @@ class WeatherService {
         diffuseRad = estimatedTotalRadiation * 0.2;
       }
 
-      final int lastUpdatedEpoch =
-          (current['last_updated_epoch'] as num).toInt();
+      final int lastUpdatedEpoch = (current['last_updated_epoch'] as num)
+          .toInt();
 
       return WeatherData(
         temperature: (current['temp_c'] as num).toDouble(),
@@ -191,7 +196,10 @@ class WeatherService {
         cloudCover: cloud,
         windSpeed: (current['wind_kph'] as num).toDouble(),
         weatherCode: _mapWeatherApiToWMO(weatherApiCode), // Convert code
-        lastUpdated: DateTime.fromMillisecondsSinceEpoch(lastUpdatedEpoch * 1000, isUtc: true),
+        lastUpdated: DateTime.fromMillisecondsSinceEpoch(
+          lastUpdatedEpoch * 1000,
+          isUtc: true,
+        ),
       );
     } else {
       throw Exception('WeatherAPI returned code ${response.statusCode}');

@@ -21,7 +21,9 @@ class _WebhooksManagementCardState
     final l10n = AppLocalizations.of(context)!;
     final urlController = TextEditingController(text: existing?.url ?? '');
     final nameController = TextEditingController(text: existing?.name ?? '');
-    final secretController = TextEditingController(text: existing?.secretKey ?? '');
+    final secretController = TextEditingController(
+      text: existing?.secretKey ?? '',
+    );
     final Set<WebhookEventType> selectedEvents = existing != null
         ? Set.from(existing.events)
         : Set.from(WebhookEventType.values);
@@ -32,10 +34,15 @@ class _WebhooksManagementCardState
         builder: (ctx, setDialogState) {
           return AlertDialog(
             backgroundColor: AppTheme.surface,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             title: Text(
               existing == null ? l10n.webhooksAddTitle : l10n.webhooksEditTitle,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             content: SingleChildScrollView(
               child: SizedBox(
@@ -50,8 +57,12 @@ class _WebhooksManagementCardState
                       decoration: InputDecoration(
                         labelText: l10n.webhooksUrlLabel,
                         labelStyle: const TextStyle(color: Colors.white70),
-                        hintText: 'https://homeassistant.local:8123/api/webhook/solaris',
-                        hintStyle: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 13),
+                        hintText:
+                            'https://homeassistant.local:8123/api/webhook/solaris',
+                        hintStyle: TextStyle(
+                          color: Colors.white.withOpacity(0.3),
+                          fontSize: 13,
+                        ),
                         border: const OutlineInputBorder(),
                       ),
                     ),
@@ -63,7 +74,10 @@ class _WebhooksManagementCardState
                         labelText: l10n.webhooksNameLabel,
                         labelStyle: const TextStyle(color: Colors.white70),
                         hintText: 'Home Assistant / Node-RED',
-                        hintStyle: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 13),
+                        hintStyle: TextStyle(
+                          color: Colors.white.withOpacity(0.3),
+                          fontSize: 13,
+                        ),
                         border: const OutlineInputBorder(),
                       ),
                     ),
@@ -76,7 +90,10 @@ class _WebhooksManagementCardState
                         labelText: l10n.webhooksSecretLabel,
                         labelStyle: const TextStyle(color: Colors.white70),
                         hintText: l10n.webhooksSecretHint,
-                        hintStyle: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 13),
+                        hintStyle: TextStyle(
+                          color: Colors.white.withOpacity(0.3),
+                          fontSize: 13,
+                        ),
                         border: const OutlineInputBorder(),
                       ),
                     ),
@@ -86,12 +103,16 @@ class _WebhooksManagementCardState
                       children: [
                         Text(
                           l10n.webhooksSubscribedEvents,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         TextButton(
                           onPressed: () {
                             setDialogState(() {
-                              if (selectedEvents.length == WebhookEventType.values.length) {
+                              if (selectedEvents.length ==
+                                  WebhookEventType.values.length) {
                                 selectedEvents.clear();
                               } else {
                                 selectedEvents.addAll(WebhookEventType.values);
@@ -99,7 +120,8 @@ class _WebhooksManagementCardState
                             });
                           },
                           child: Text(
-                            selectedEvents.length == WebhookEventType.values.length
+                            selectedEvents.length ==
+                                    WebhookEventType.values.length
                                 ? l10n.webhooksDeselectAll
                                 : l10n.webhooksSelectAll,
                             style: const TextStyle(color: Color(0xFFFDBA74)),
@@ -124,7 +146,10 @@ class _WebhooksManagementCardState
                             checkColor: Colors.black,
                             title: Text(
                               ev.wireName,
-                              style: TextStyle(color: Colors.white.withOpacity(0.87), fontSize: 13),
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.87),
+                                fontSize: 13,
+                              ),
                             ),
                             value: isChecked,
                             onChanged: (val) {
@@ -147,7 +172,10 @@ class _WebhooksManagementCardState
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(dialogCtx).pop(),
-                child: Text(l10n.cancel, style: const TextStyle(color: Colors.white54)),
+                child: Text(
+                  l10n.cancel,
+                  style: const TextStyle(color: Colors.white54),
+                ),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -156,7 +184,8 @@ class _WebhooksManagementCardState
                 ),
                 onPressed: () {
                   final url = urlController.text.trim();
-                  if (url.isEmpty || Uri.tryParse(url)?.hasAbsolutePath != true) {
+                  if (url.isEmpty ||
+                      Uri.tryParse(url)?.hasAbsolutePath != true) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(l10n.webhooksInvalidUrlError),
@@ -167,11 +196,17 @@ class _WebhooksManagementCardState
                   }
 
                   final config = WebhookConfig(
-                    id: existing?.id ?? 'wh_${DateTime.now().millisecondsSinceEpoch}',
+                    id:
+                        existing?.id ??
+                        'wh_${DateTime.now().millisecondsSinceEpoch}',
                     url: url,
-                    name: nameController.text.trim().isEmpty ? null : nameController.text.trim(),
+                    name: nameController.text.trim().isEmpty
+                        ? null
+                        : nameController.text.trim(),
                     events: selectedEvents,
-                    secretKey: secretController.text.trim().isEmpty ? null : secretController.text.trim(),
+                    secretKey: secretController.text.trim().isEmpty
+                        ? null
+                        : secretController.text.trim(),
                   );
 
                   if (existing == null) {
@@ -183,7 +218,9 @@ class _WebhooksManagementCardState
                   Navigator.of(dialogCtx).pop();
                 },
                 child: Text(
-                  existing == null ? l10n.webhooksAddButton : l10n.webhooksSaveChangesButton,
+                  existing == null
+                      ? l10n.webhooksAddButton
+                      : l10n.webhooksSaveChangesButton,
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
@@ -196,8 +233,9 @@ class _WebhooksManagementCardState
 
   Future<void> _showDlqDialog() async {
     final l10n = AppLocalizations.of(context)!;
-    final dlqEntries =
-        await ref.read(webhookServiceProvider.notifier).getDLQEntries();
+    final dlqEntries = await ref
+        .read(webhookServiceProvider.notifier)
+        .getDLQEntries();
 
     if (!mounted) return;
 
@@ -212,7 +250,10 @@ class _WebhooksManagementCardState
             const SizedBox(width: 10),
             Text(
               l10n.webhooksDlqTitle(dlqEntries.length),
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
@@ -228,18 +269,29 @@ class _WebhooksManagementCardState
                 )
               : ListView.separated(
                   itemCount: dlqEntries.length,
-                  separatorBuilder: (_, __) => const Divider(color: Colors.white10),
+                  separatorBuilder: (_, __) =>
+                      const Divider(color: Colors.white10),
                   itemBuilder: (_, idx) {
                     final item = dlqEntries[idx];
                     return ListTile(
                       dense: true,
                       title: Text(
                         l10n.webhooksDlqEvent(item.eventName, item.url),
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       subtitle: Text(
-                        l10n.webhooksDlqDetails(item.attemptCount, item.lastError ?? "Unknown", item.deliveryId),
-                        style: const TextStyle(color: Colors.white54, fontSize: 11),
+                        l10n.webhooksDlqDetails(
+                          item.attemptCount,
+                          item.lastError ?? "Unknown",
+                          item.deliveryId,
+                        ),
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 11,
+                        ),
                       ),
                     );
                   },
@@ -248,8 +300,15 @@ class _WebhooksManagementCardState
         actions: [
           if (dlqEntries.isNotEmpty)
             TextButton.icon(
-              icon: const Icon(LucideIcons.trash2, color: Colors.redAccent, size: 16),
-              label: Text(l10n.webhooksClearDlq, style: const TextStyle(color: Colors.redAccent)),
+              icon: const Icon(
+                LucideIcons.trash2,
+                color: Colors.redAccent,
+                size: 16,
+              ),
+              label: Text(
+                l10n.webhooksClearDlq,
+                style: const TextStyle(color: Colors.redAccent),
+              ),
               onPressed: () async {
                 await ref.read(webhookServiceProvider.notifier).clearDLQ();
                 if (ctx.mounted) Navigator.of(ctx).pop();
@@ -257,7 +316,10 @@ class _WebhooksManagementCardState
             ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(l10n.dialogOk, style: const TextStyle(color: Colors.white70)),
+            child: Text(
+              l10n.dialogOk,
+              style: const TextStyle(color: Colors.white70),
+            ),
           ),
         ],
       ),
@@ -315,7 +377,10 @@ class _WebhooksManagementCardState
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            l10n.webhooksSubtitle(webhooks.length, webhookState.pendingCount),
+                            l10n.webhooksSubtitle(
+                              webhooks.length,
+                              webhookState.pendingCount,
+                            ),
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.white.withOpacity(0.5),
@@ -332,7 +397,11 @@ class _WebhooksManagementCardState
                         icon: Badge(
                           label: Text('${webhookState.dlqCount}'),
                           isLabelVisible: webhookState.dlqCount > 0,
-                          child: const Icon(LucideIcons.inbox, color: Color(0xFFFDBA74), size: 20),
+                          child: const Icon(
+                            LucideIcons.inbox,
+                            color: Color(0xFFFDBA74),
+                            size: 20,
+                          ),
                         ),
                         onPressed: _showDlqDialog,
                       ),
@@ -369,7 +438,10 @@ class _WebhooksManagementCardState
                     child: Text(
                       l10n.webhooksEmptyMessage,
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white.withOpacity(0.5), height: 1.4),
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        height: 1.4,
+                      ),
                     ),
                   ),
                 ),
@@ -398,10 +470,14 @@ class _WebhooksManagementCardState
                         children: [
                           Icon(
                             wh.isEnabled
-                                ? (isFailed ? LucideIcons.alertTriangle : LucideIcons.checkCircle2)
+                                ? (isFailed
+                                      ? LucideIcons.alertTriangle
+                                      : LucideIcons.checkCircle2)
                                 : LucideIcons.pauseCircle,
                             color: wh.isEnabled
-                                ? (isFailed ? Colors.redAccent : Colors.greenAccent)
+                                ? (isFailed
+                                      ? Colors.redAccent
+                                      : Colors.greenAccent)
                                 : Colors.grey,
                             size: 20,
                           ),
@@ -422,14 +498,22 @@ class _WebhooksManagementCardState
                                     ),
                                     const SizedBox(width: 8),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: Colors.white10,
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: Text(
-                                        l10n.webhooksEventsCount(wh.events.length),
-                                        style: const TextStyle(color: Colors.white70, fontSize: 11),
+                                        l10n.webhooksEventsCount(
+                                          wh.events.length,
+                                        ),
+                                        style: const TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 11,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -454,11 +538,17 @@ class _WebhooksManagementCardState
                             children: [
                               IconButton(
                                 tooltip: l10n.webhooksSendTestPingTooltip,
-                                icon: const Icon(LucideIcons.send, color: Color(0xFFFDBA74), size: 18),
+                                icon: const Icon(
+                                  LucideIcons.send,
+                                  color: Color(0xFFFDBA74),
+                                  size: 18,
+                                ),
                                 onPressed: () async {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text(l10n.webhooksSendingTestPing),
+                                      content: Text(
+                                        l10n.webhooksSendingTestPing,
+                                      ),
                                     ),
                                   );
                                   final success = await ref
@@ -472,7 +562,9 @@ class _WebhooksManagementCardState
                                               ? '🟢 ${l10n.webhooksTestPingSuccess}'
                                               : '🔴 ${l10n.webhooksTestPingFailed}',
                                         ),
-                                        backgroundColor: success ? Colors.green : Colors.redAccent,
+                                        backgroundColor: success
+                                            ? Colors.green
+                                            : Colors.redAccent,
                                       ),
                                     );
                                   }
@@ -480,14 +572,24 @@ class _WebhooksManagementCardState
                               ),
                               IconButton(
                                 tooltip: l10n.webhooksEditTooltip,
-                                icon: const Icon(LucideIcons.edit2, color: Colors.white70, size: 18),
+                                icon: const Icon(
+                                  LucideIcons.edit2,
+                                  color: Colors.white70,
+                                  size: 18,
+                                ),
                                 onPressed: () => _showAddEditWebhookDialog(wh),
                               ),
                               IconButton(
                                 tooltip: l10n.webhooksDeleteTooltip,
-                                icon: const Icon(LucideIcons.trash2, color: Colors.redAccent, size: 18),
+                                icon: const Icon(
+                                  LucideIcons.trash2,
+                                  color: Colors.redAccent,
+                                  size: 18,
+                                ),
                                 onPressed: () {
-                                  ref.read(settingsProvider.notifier).deleteWebhook(wh.id);
+                                  ref
+                                      .read(settingsProvider.notifier)
+                                      .deleteWebhook(wh.id);
                                 },
                               ),
                               Switch(
@@ -496,7 +598,12 @@ class _WebhooksManagementCardState
                                 onChanged: (val) {
                                   ref
                                       .read(settingsProvider.notifier)
-                                      .updateWebhook(wh.copyWith(isEnabled: val, failureCount: 0));
+                                      .updateWebhook(
+                                        wh.copyWith(
+                                          isEnabled: val,
+                                          failureCount: 0,
+                                        ),
+                                      );
                                 },
                               ),
                             ],

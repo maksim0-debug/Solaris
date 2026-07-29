@@ -9,21 +9,25 @@ void main() {
     test('Successful online geocoding from Mapbox API', () async {
       final mockClient = MockClient((request) async {
         expect(request.url.host, 'api.mapbox.com');
-        expect(request.url.path, contains('/geocoding/v5/mapbox.places/30.5238,50.4547.json'));
-        
+        expect(
+          request.url.path,
+          contains('/geocoding/v5/mapbox.places/30.5238,50.4547.json'),
+        );
+
         final mockResponse = {
           'features': [
-            {
-              'text': 'Kyiv',
-              'place_name': 'Kyiv, Ukraine',
-            }
-          ]
+            {'text': 'Kyiv', 'place_name': 'Kyiv, Ukraine'},
+          ],
         };
         return http.Response(json.encode(mockResponse), 200);
       });
 
       final service = GeocodingService(client: mockClient);
-      final result = await service.getCityName(50.4547, 30.5238, customToken: 'pk.mock_token');
+      final result = await service.getCityName(
+        50.4547,
+        30.5238,
+        customToken: 'pk.mock_token',
+      );
       expect(result.name, 'Kyiv');
       expect(result.isOffline, false);
     });
@@ -32,20 +36,22 @@ void main() {
       final mockClient = MockClient((request) async {
         expect(request.url.host, 'api.mapbox.com');
         expect(request.url.queryParameters['language'], 'en');
-        
+
         final mockResponse = {
           'features': [
-            {
-              'text': 'Kyiv',
-              'place_name': 'Kyiv, Ukraine',
-            }
-          ]
+            {'text': 'Kyiv', 'place_name': 'Kyiv, Ukraine'},
+          ],
         };
         return http.Response(json.encode(mockResponse), 200);
       });
 
       final service = GeocodingService(client: mockClient);
-      final result = await service.getCityName(50.4547, 30.5238, language: 'en', customToken: 'pk.mock_token');
+      final result = await service.getCityName(
+        50.4547,
+        30.5238,
+        language: 'en',
+        customToken: 'pk.mock_token',
+      );
       expect(result.name, 'Kyiv');
       expect(result.isOffline, false);
     });
@@ -57,8 +63,12 @@ void main() {
 
       final service = GeocodingService(client: mockClient);
       // Coordinates of New York: 40.7128, -74.0060
-      final result = await service.getCityName(40.7128, -74.0060, customToken: 'pk.mock_token');
-      
+      final result = await service.getCityName(
+        40.7128,
+        -74.0060,
+        customToken: 'pk.mock_token',
+      );
+
       // Timezone identifier for NY is America/New_York
       expect(result.name, 'America/New_York');
       expect(result.isOffline, true);
@@ -73,7 +83,7 @@ void main() {
       final service = GeocodingService(client: mockClient);
       // Coordinates of Kyiv: 50.4547, 30.5238
       final result = await service.getCityName(50.4547, 30.5238);
-      
+
       // Timezone is Europe/Kyiv
       expect(result.name, 'Europe/Kyiv');
       expect(result.isOffline, true);

@@ -37,10 +37,7 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
       duration: const Duration(milliseconds: 1200),
     );
     _pulseAnimation = Tween<double>(begin: 0.35, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _pulseController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
     _pulseController.repeat(reverse: true);
   }
@@ -99,7 +96,9 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
               color: Colors.white.withOpacity(0.04),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isIdle ? Colors.white.withOpacity(0.12) : statusColor.withOpacity(0.45),
+                color: isIdle
+                    ? Colors.white.withOpacity(0.12)
+                    : statusColor.withOpacity(0.45),
                 width: 1,
               ),
             ),
@@ -112,17 +111,18 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: _getTextColor(updateStatus.phase),
-                        ),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: _getTextColor(updateStatus.phase),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 6),
                 AnimatedBuilder(
                   animation: _pulseAnimation,
                   builder: (context, child) {
-                    final isPulsingPhase = !isIdle &&
+                    final isPulsingPhase =
+                        !isIdle &&
                         updateStatus.phase != UpdatePhase.error &&
                         updateStatus.phase != UpdatePhase.installing;
                     return Opacity(
@@ -137,7 +137,9 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: statusColor.withOpacity(isIdle ? 0.15 : 0.6),
+                              color: statusColor.withOpacity(
+                                isIdle ? 0.15 : 0.6,
+                              ),
                               blurRadius: isIdle ? 2 : 4,
                               spreadRadius: isIdle ? 0 : 1,
                             ),
@@ -250,7 +252,8 @@ class _UpdateReactiveDialog extends ConsumerStatefulWidget {
   const _UpdateReactiveDialog();
 
   @override
-  ConsumerState<_UpdateReactiveDialog> createState() => _UpdateReactiveDialogState();
+  ConsumerState<_UpdateReactiveDialog> createState() =>
+      _UpdateReactiveDialogState();
 }
 
 class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
@@ -341,7 +344,8 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
     final versionAsync = ref.watch(appVersionProvider);
     final currentVersion = versionAsync.value ?? fallbackAppVersion;
     final l10n = AppLocalizations.of(context);
-    final currentVerText = l10n?.updateCurrentVersion(currentVersion) ??
+    final currentVerText =
+        l10n?.updateCurrentVersion(currentVersion) ??
         'Current version: v$currentVersion';
 
     switch (status.phase) {
@@ -397,11 +401,14 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
         if (updateInfo == null) {
           return const SizedBox.shrink();
         }
-        final sizeMb = (updateInfo.assetSize / (1024 * 1024)).toStringAsFixed(1);
+        final sizeMb = (updateInfo.assetSize / (1024 * 1024)).toStringAsFixed(
+          1,
+        );
         return _StyledDialog(
           icon: LucideIcons.arrowUpCircle,
           iconColor: Colors.orangeAccent,
-          title: l10n?.updateAvailableVersion(updateInfo.version) ??
+          title:
+              l10n?.updateAvailableVersion(updateInfo.version) ??
               'Update: v${updateInfo.version}',
           subtitle: currentVerText,
           content: Column(
@@ -422,16 +429,23 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
                   ),
                   const SizedBox(width: 8),
                   ActionChip(
-                    avatar: const Icon(LucideIcons.externalLink,
-                        size: 12, color: Colors.orangeAccent),
+                    avatar: const Icon(
+                      LucideIcons.externalLink,
+                      size: 12,
+                      color: Colors.orangeAccent,
+                    ),
                     label: Text(
                       l10n?.updateViewOnGithub ?? 'GitHub Release',
-                      style: const TextStyle(fontSize: 11, color: Colors.white70),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.white70,
+                      ),
                     ),
                     backgroundColor: Colors.white.withOpacity(0.08),
                     side: BorderSide.none,
                     padding: const EdgeInsets.symmetric(horizontal: 4),
-                    onPressed: () => _launchExternalUrl(updateInfo.releasePageUrl),
+                    onPressed: () =>
+                        _launchExternalUrl(updateInfo.releasePageUrl),
                   ),
                 ],
               ),
@@ -460,15 +474,20 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
                         : 'No release notes provided.',
                     styleSheet: MarkdownStyleSheet(
                       p: const TextStyle(
-                          color: Colors.white70, fontSize: 12, height: 1.4),
+                        color: Colors.white70,
+                        fontSize: 12,
+                        height: 1.4,
+                      ),
                       h1: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold),
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
                       h2: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold),
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
                       listBullet: const TextStyle(color: Colors.orangeAccent),
                     ),
                   ),
@@ -493,7 +512,10 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orangeAccent,
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -537,7 +559,10 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.greenAccent,
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -556,7 +581,10 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
             constraints: const BoxConstraints(maxWidth: 400),
             child: Text(
               status.errorMessage ?? 'An error occurred during update process.',
-              style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12),
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.8),
+                fontSize: 12,
+              ),
             ),
           ),
           actions: [
@@ -580,7 +608,10 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.redAccent,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -599,28 +630,31 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
         final dialogTitle = isVerifying
             ? (l10n?.updateVerifying ?? 'Verifying integrity...')
             : isInstalling
-                ? (l10n?.updateInstallingTitle ?? 'Updating...')
-                : (l10n?.updateDownloadingPercent(pctVal.toString()) ?? 'Downloading: $pctStr');
+            ? (l10n?.updateInstallingTitle ?? 'Updating...')
+            : (l10n?.updateDownloadingPercent(pctVal.toString()) ??
+                  'Downloading: $pctStr');
 
         final dialogIcon = isVerifying
             ? LucideIcons.shieldCheck
             : isInstalling
-                ? LucideIcons.refreshCw
-                : LucideIcons.download;
+            ? LucideIcons.refreshCw
+            : LucideIcons.download;
 
         final dialogIconColor = isVerifying
             ? Colors.cyanAccent
             : isInstalling
-                ? Colors.blueAccent
-                : Colors.lightBlueAccent;
+            ? Colors.blueAccent
+            : Colors.lightBlueAccent;
 
         final statusText = isVerifying
             ? (l10n?.updateVerifying ?? 'Verifying integrity...')
             : isInstalling
-                ? (l10n?.updateInstallingStatus ?? 'Installing update...')
-                : (l10n?.updateDownloadingPackage ?? 'Downloading update package...');
+            ? (l10n?.updateInstallingStatus ?? 'Installing update...')
+            : (l10n?.updateDownloadingPackage ??
+                  'Downloading update package...');
 
-        final backgroundNotice = l10n?.updateBackgroundNotice ??
+        final backgroundNotice =
+            l10n?.updateBackgroundNotice ??
             'You can close this window. Process will continue in the background.';
 
         return _StyledDialog(
@@ -721,7 +755,8 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
               ],
             ),
             leftAction: TextButton.icon(
-              onPressed: () => _launchExternalUrl(UpdateInfo.defaultReleasesUrl),
+              onPressed: () =>
+                  _launchExternalUrl(UpdateInfo.defaultReleasesUrl),
               icon: const Icon(LucideIcons.externalLink, size: 12),
               label: Text(l10n?.updateViewOnGithub ?? 'GitHub Releases'),
               style: TextButton.styleFrom(
@@ -738,7 +773,10 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orangeAccent,
                   foregroundColor: Colors.black87,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -764,7 +802,8 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
               ],
             ),
             leftAction: TextButton.icon(
-              onPressed: () => _launchExternalUrl(UpdateInfo.defaultReleasesUrl),
+              onPressed: () =>
+                  _launchExternalUrl(UpdateInfo.defaultReleasesUrl),
               icon: const Icon(LucideIcons.externalLink, size: 12),
               label: Text(l10n?.updateViewOnGithub ?? 'GitHub Releases'),
               style: TextButton.styleFrom(
@@ -789,7 +828,10 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orangeAccent,
                   foregroundColor: Colors.black87,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -830,10 +872,7 @@ class _StyledDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget iconWidget = Icon(icon, color: iconColor, size: 20);
     if (isSpinningIcon && spinAnimation != null) {
-      iconWidget = RotationTransition(
-        turns: spinAnimation!,
-        child: iconWidget,
-      );
+      iconWidget = RotationTransition(turns: spinAnimation!, child: iconWidget);
     }
 
     return Dialog(
@@ -845,10 +884,7 @@ class _StyledDialog extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color(0xFF1E1E28),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.1),
-              width: 1,
-            ),
+            border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.5),

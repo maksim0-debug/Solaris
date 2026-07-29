@@ -158,8 +158,10 @@ class CircadianService {
       );
     }
 
-    final int baseTemperature =
-        _calculateFromElevation(curvePoints, elevation).toInt();
+    final int baseTemperature = _calculateFromElevation(
+      curvePoints,
+      elevation,
+    ).toInt();
 
     // Weather impact via centralised formula (D4)
     double weatherDrop = 0.0;
@@ -178,14 +180,17 @@ class CircadianService {
     const int maxAllowed = 6500;
 
     // Unclamped theoretical temperature
-    final double theoreticalFinal = baseTemperature -
+    final double theoreticalFinal =
+        baseTemperature -
         weatherDrop +
         smartData.sleepPressureTemperatureOffset +
         smartData.windDownTemperatureOffset +
         smartData.sleepDebtTemperatureOffset;
 
-    final int finalTemperature =
-        theoreticalFinal.round().clamp(minAllowed, maxAllowed);
+    final int finalTemperature = theoreticalFinal.round().clamp(
+      minAllowed,
+      maxAllowed,
+    );
 
     // Proportional distribution logic matching brightness calculation
     if (finalTemperature < baseTemperature) {
@@ -207,14 +212,12 @@ class CircadianService {
       if (sumOfWeights > 0) {
         return TemperatureCalculationResult(
           baseTemperature: baseTemperature,
-          weatherImpact:
-              -(totalReduction * (wWeather / sumOfWeights)).round(),
-          sleepPressureImpact:
-              -(totalReduction * (wPressure / sumOfWeights)).round(),
-          windDownImpact:
-              -(totalReduction * (wWindDown / sumOfWeights)).round(),
-          sleepDebtImpact:
-              -(totalReduction * (wDebt / sumOfWeights)).round(),
+          weatherImpact: -(totalReduction * (wWeather / sumOfWeights)).round(),
+          sleepPressureImpact: -(totalReduction * (wPressure / sumOfWeights))
+              .round(),
+          windDownImpact: -(totalReduction * (wWindDown / sumOfWeights))
+              .round(),
+          sleepDebtImpact: -(totalReduction * (wDebt / sumOfWeights)).round(),
           finalTemperature: finalTemperature,
         );
       }

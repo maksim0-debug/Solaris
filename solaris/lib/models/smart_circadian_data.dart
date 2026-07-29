@@ -218,14 +218,16 @@ class SmartCircadianData extends Equatable {
           sleepPressureAbsoluteImpact ?? this.sleepPressureAbsoluteImpact,
       sleepDebtAbsoluteImpact:
           sleepDebtAbsoluteImpact ?? this.sleepDebtAbsoluteImpact,
-      weatherAbsoluteImpact: weatherAbsoluteImpact ?? this.weatherAbsoluteImpact,
+      weatherAbsoluteImpact:
+          weatherAbsoluteImpact ?? this.weatherAbsoluteImpact,
       weatherCode: weatherCode ?? this.weatherCode,
       activeSystemPreset: activeSystemPreset ?? this.activeSystemPreset,
       activeUserPresetName: activeUserPresetName ?? this.activeUserPresetName,
       activeSystemTemperaturePreset:
           activeSystemTemperaturePreset ?? this.activeSystemTemperaturePreset,
       activeUserTemperaturePresetName:
-          activeUserTemperaturePresetName ?? this.activeUserTemperaturePresetName,
+          activeUserTemperaturePresetName ??
+          this.activeUserTemperaturePresetName,
       sleepDebtTemperatureOffset:
           sleepDebtTemperatureOffset ?? this.sleepDebtTemperatureOffset,
       windDownTemperatureOffset:

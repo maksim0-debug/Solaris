@@ -15,7 +15,6 @@ import 'package:timezone/timezone.dart' as tz;
 
 import 'package:solaris/widgets/deep_link_target.dart';
 
-
 class StylishLocationCard extends ConsumerWidget {
   final GlobalKey<DeepLinkTargetState>? anchorKey;
   const StylishLocationCard({super.key, this.anchorKey});
@@ -34,7 +33,8 @@ class StylishLocationCard extends ConsumerWidget {
         // Determine style and colors based on settings or sun elevation
         final settings = settingsAsync.value?['all'] ?? SettingsState();
         final customToken = settings.customMapboxToken;
-        final isMapTokenValid = customToken.isNotEmpty || Env.isMapboxTokenValid;
+        final isMapTokenValid =
+            customToken.isNotEmpty || Env.isMapboxTokenValid;
         final bool isNight = switch (settings.mapStyleMode) {
           MapStyleMode.auto => solarState.sunElevation < -6,
           MapStyleMode.day => false,
@@ -78,41 +78,48 @@ class StylishLocationCard extends ConsumerWidget {
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(24),
                                 child: ImageFiltered(
-                                  imageFilter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                                  imageFilter: ui.ImageFilter.blur(
+                                    sigmaX: 8,
+                                    sigmaY: 8,
+                                  ),
                                   child: Container(
                                     color: Colors.black.withOpacity(0.2),
                                   ),
                                 ),
                               ),
-                               GestureDetector(
-                                 onTap: () {
-                                   ref.read(activeScreenProvider.notifier).setScreen(AppScreen.settings);
-                                   ref.read(searchAnchorProvider.notifier).setAnchor('api_keys');
-                                 },
-                                 child: MouseRegion(
-                                   cursor: SystemMouseCursors.click,
-                                   child: Tooltip(
-                                     message: l10n.mapboxTokenMissingTooltip,
-                                     preferBelow: false,
-                                     child: Container(
-                                       padding: const EdgeInsets.all(10),
-                                       decoration: BoxDecoration(
-                                         color: Colors.black54,
-                                         shape: BoxShape.circle,
-                                         border: Border.all(
-                                           color: accentColor.withOpacity(0.5),
-                                           width: 1.5,
-                                         ),
-                                       ),
-                                       child: Icon(
-                                         LucideIcons.lock,
-                                         color: accentColor,
-                                         size: 20,
-                                       ),
-                                     ),
-                                   ),
-                                 ),
-                               ),
+                              GestureDetector(
+                                onTap: () {
+                                  ref
+                                      .read(activeScreenProvider.notifier)
+                                      .setScreen(AppScreen.settings);
+                                  ref
+                                      .read(searchAnchorProvider.notifier)
+                                      .setAnchor('api_keys');
+                                },
+                                child: MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: Tooltip(
+                                    message: l10n.mapboxTokenMissingTooltip,
+                                    preferBelow: false,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: accentColor.withOpacity(0.5),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: Icon(
+                                        LucideIcons.lock,
+                                        color: accentColor,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ],
                           )
                         : locationAsync.maybeWhen(
@@ -143,7 +150,8 @@ class StylishLocationCard extends ConsumerWidget {
                                 ),
                               ),
                             ),
-                            orElse: () => Container(color: const Color(0xFF0F172A)),
+                            orElse: () =>
+                                Container(color: const Color(0xFF0F172A)),
                           ),
                   ),
                 ),
@@ -153,7 +161,8 @@ class StylishLocationCard extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(24),
                       child: settingsAsync.maybeWhen(
                         data: (settingsMap) {
-                          final settings = settingsMap['all'] ?? SettingsState();
+                          final settings =
+                              settingsMap['all'] ?? SettingsState();
                           final weather = weatherAsync.value;
                           if (weather == null) return const SizedBox.shrink();
                           return WeatherOverlay(
@@ -245,7 +254,10 @@ class StylishLocationCard extends ConsumerWidget {
                             return Text(
                               l10n.lastUpdatedFormat(
                                 DateFormat.Hm().format(
-                                  tz.TZDateTime.from(weather.lastUpdated, timezoneVal),
+                                  tz.TZDateTime.from(
+                                    weather.lastUpdated,
+                                    timezoneVal,
+                                  ),
                                 ),
                               ),
                               textAlign: TextAlign.left,
@@ -369,10 +381,12 @@ class _WeatherSettingsButton extends ConsumerStatefulWidget {
   const _WeatherSettingsButton({required this.accentColor, this.anchorKey});
 
   @override
-  ConsumerState<_WeatherSettingsButton> createState() => _WeatherSettingsButtonState();
+  ConsumerState<_WeatherSettingsButton> createState() =>
+      _WeatherSettingsButtonState();
 }
 
-class _WeatherSettingsButtonState extends ConsumerState<_WeatherSettingsButton> {
+class _WeatherSettingsButtonState
+    extends ConsumerState<_WeatherSettingsButton> {
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
   bool _isOpen = false;
@@ -405,7 +419,10 @@ class _WeatherSettingsButtonState extends ConsumerState<_WeatherSettingsButton> 
             child: CompositedTransformFollower(
               link: _layerLink,
               showWhenUnlinked: false,
-              offset: const Offset(-14, -315), // Adjusted offset to align better with the card
+              offset: const Offset(
+                -14,
+                -315,
+              ), // Adjusted offset to align better with the card
               child: Material(
                 color: Colors.transparent,
                 child: Consumer(
@@ -415,8 +432,7 @@ class _WeatherSettingsButtonState extends ConsumerState<_WeatherSettingsButton> 
 
                     return settingsAsync.maybeWhen(
                       data: (settingsMap) {
-                        final settings =
-                            settingsMap['all'] ?? SettingsState();
+                        final settings = settingsMap['all'] ?? SettingsState();
                         final solarState = solarAsync.value;
 
                         final bool isNight = switch (settings.mapStyleMode) {
@@ -438,8 +454,11 @@ class _WeatherSettingsButtonState extends ConsumerState<_WeatherSettingsButton> 
                             children: [
                               Row(
                                 children: [
-                                  Icon(LucideIcons.map,
-                                      color: dynamicAccentColor, size: 16),
+                                  Icon(
+                                    LucideIcons.map,
+                                    color: dynamicAccentColor,
+                                    size: 16,
+                                  ),
                                   const SizedBox(width: 8),
                                   Text(
                                     l10n.mapSettings,
@@ -451,8 +470,11 @@ class _WeatherSettingsButtonState extends ConsumerState<_WeatherSettingsButton> 
                                   ),
                                   const Spacer(),
                                   IconButton(
-                                    icon: const Icon(LucideIcons.x,
-                                        size: 14, color: Colors.white54),
+                                    icon: const Icon(
+                                      LucideIcons.x,
+                                      size: 14,
+                                      color: Colors.white54,
+                                    ),
                                     onPressed: _closePopover,
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(),
@@ -474,10 +496,11 @@ class _WeatherSettingsButtonState extends ConsumerState<_WeatherSettingsButton> 
                               // Weather Animations Section
                               Row(
                                 children: [
-                                  Icon(LucideIcons.cloudRain,
-                                      color:
-                                          dynamicAccentColor.withOpacity(0.7),
-                                      size: 14),
+                                  Icon(
+                                    LucideIcons.cloudRain,
+                                    color: dynamicAccentColor.withOpacity(0.7),
+                                    size: 14,
+                                  ),
                                   const SizedBox(width: 6),
                                   Text(
                                     l10n.weatherAnimations,
@@ -569,13 +592,17 @@ class _WeatherSettingsButtonState extends ConsumerState<_WeatherSettingsButton> 
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: _isOpen ? widget.accentColor.withOpacity(0.2) : Colors.transparent,
+              color: _isOpen
+                  ? widget.accentColor.withOpacity(0.2)
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               LucideIcons.settings,
               size: 16,
-              color: _isOpen ? widget.accentColor : widget.accentColor.withOpacity(0.8),
+              color: _isOpen
+                  ? widget.accentColor
+                  : widget.accentColor.withOpacity(0.8),
             ),
           ),
           padding: EdgeInsets.zero,
@@ -632,7 +659,9 @@ class _MapStyleDropdownState extends State<_MapStyleDropdown> {
               color: Colors.white.withOpacity(0.05),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: _isExpanded ? widget.accentColor.withOpacity(0.3) : Colors.transparent,
+                color: _isExpanded
+                    ? widget.accentColor.withOpacity(0.3)
+                    : Colors.transparent,
               ),
             ),
             child: Row(
@@ -776,8 +805,9 @@ class _MapStyleOption extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         margin: const EdgeInsets.symmetric(vertical: 1),
         decoration: BoxDecoration(
-          color:
-              isSelected ? accentColor.withOpacity(0.12) : Colors.transparent,
+          color: isSelected
+              ? accentColor.withOpacity(0.12)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
@@ -798,11 +828,7 @@ class _MapStyleOption extends StatelessWidget {
             ),
             const Spacer(),
             if (isSelected)
-              Icon(
-                LucideIcons.check,
-                size: 16,
-                color: accentColor,
-              ),
+              Icon(LucideIcons.check, size: 16, color: accentColor),
           ],
         ),
       ),

@@ -54,7 +54,12 @@ class _SleepRegimeCardState extends State<SleepRegimeCard> {
                         start: widget.regime.startDate,
                         end: widget.regime.nights.isEmpty
                             ? widget.regime.endDate
-                            : widget.regime.nights.first.aggregatedSession.endTime,
+                            : widget
+                                  .regime
+                                  .nights
+                                  .first
+                                  .aggregatedSession
+                                  .endTime,
                         locale: l10n.localeName,
                         includeYear: false,
                       ),
@@ -347,10 +352,7 @@ Future<void> _showDeleteSleepConfirmDialog({
             surfaceTintColor: Colors.transparent,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(
-                color: Colors.white.withOpacity(0.15),
-                width: 1,
-              ),
+              side: BorderSide(color: Colors.white.withOpacity(0.15), width: 1),
             ),
             title: Row(
               children: [
@@ -388,7 +390,10 @@ Future<void> _showDeleteSleepConfirmDialog({
                   onTap: () => setState(() => doNotSync = !doNotSync),
                   borderRadius: BorderRadius.circular(8),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 4,
+                      horizontal: 2,
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -432,9 +437,7 @@ Future<void> _showDeleteSleepConfirmDialog({
                 onPressed: () => Navigator.of(ctx).pop(),
                 child: Text(
                   l10n.cancelAction,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.6),
-                  ),
+                  style: TextStyle(color: Colors.white.withOpacity(0.6)),
                 ),
               ),
               ElevatedButton(
@@ -447,10 +450,9 @@ Future<void> _showDeleteSleepConfirmDialog({
                 ),
                 onPressed: () {
                   Navigator.of(ctx).pop();
-                  ref.read(sleepProvider.notifier).deleteSessions(
-                        sessionIdsToDelete,
-                        doNotSync: doNotSync,
-                      );
+                  ref
+                      .read(sleepProvider.notifier)
+                      .deleteSessions(sessionIdsToDelete, doNotSync: doNotSync);
                 },
                 child: Text(l10n.deleteAction),
               ),
@@ -461,6 +463,7 @@ Future<void> _showDeleteSleepConfirmDialog({
     },
   );
 }
+
 String _formatDateRange({
   required DateTime start,
   required DateTime end,
@@ -471,7 +474,10 @@ String _formatDateRange({
   final endDay = DateTime(end.year, end.month, end.day);
 
   if (startDay.isAtSameMomentAs(endDay)) {
-    return DateFormat(includeYear ? 'd MMM, yyyy' : 'd MMM', locale).format(start);
+    return DateFormat(
+      includeYear ? 'd MMM, yyyy' : 'd MMM',
+      locale,
+    ).format(start);
   }
 
   // Cross-day range

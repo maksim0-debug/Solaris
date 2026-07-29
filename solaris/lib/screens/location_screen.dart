@@ -333,29 +333,39 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                         ),
                                         const SizedBox(height: 4),
                                         Row(
-                                           children: [
-                                             Text(
-                                               cityAsync.value?.name ?? "Global Coordinates",
-                                               style: const TextStyle(
-                                                 fontSize: 16,
-                                                 fontWeight: FontWeight.bold,
-                                               ),
-                                             ),
-                                              if ((cityAsync.value?.isOffline ?? false) &&
-                                                  !(cityAsync.value?.isCachedCity ?? false)) ...[
-                                                const SizedBox(width: 6),
-                                                Tooltip(
-                                                  message: _getOfflineTooltipText(context, cityAsync.value?.offlineReason),
-                                                  child: const Icon(
-                                                    LucideIcons.helpCircle,
-                                                    size: 14,
-                                                    color: Colors.white54,
-                                                  ),
+                                          children: [
+                                            Text(
+                                              cityAsync.value?.name ??
+                                                  "Global Coordinates",
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            if ((cityAsync.value?.isOffline ??
+                                                    false) &&
+                                                !(cityAsync
+                                                        .value
+                                                        ?.isCachedCity ??
+                                                    false)) ...[
+                                              const SizedBox(width: 6),
+                                              Tooltip(
+                                                message: _getOfflineTooltipText(
+                                                  context,
+                                                  cityAsync
+                                                      .value
+                                                      ?.offlineReason,
                                                 ),
-                                              ],
-                                           ],
-                                         ),
-                                         const SizedBox(height: 4),
+                                                child: const Icon(
+                                                  LucideIcons.helpCircle,
+                                                  size: 14,
+                                                  color: Colors.white54,
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                        const SizedBox(height: 4),
                                         Text(
                                           l10n.latLonFormat(
                                             pos.latitude.toStringAsFixed(4),
@@ -437,10 +447,15 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                   _lonController.text,
                                 );
                                 if (lat != null && lon != null) {
-                                  if (lat < -90.0 || lat > 90.0 || lon < -180.0 || lon > 180.0) {
+                                  if (lat < -90.0 ||
+                                      lat > 90.0 ||
+                                      lon < -180.0 ||
+                                      lon > 180.0) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text(l10n.invalidCoordinatesError),
+                                        content: Text(
+                                          l10n.invalidCoordinatesError,
+                                        ),
                                         backgroundColor: Colors.redAccent,
                                       ),
                                     );

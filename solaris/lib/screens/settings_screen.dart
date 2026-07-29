@@ -23,7 +23,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:solaris/widgets/settings/api_settings_card.dart';
 import 'package:solaris/widgets/settings/webhooks_management_card.dart';
 
-
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
@@ -333,7 +332,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                       Switch(
                         value: settingsAsync.maybeWhen(
-                          data: (map) => map['all']?.isAutoUpdateEnabled ?? Env.isOfficialRelease,
+                          data: (map) =>
+                              map['all']?.isAutoUpdateEnabled ??
+                              Env.isOfficialRelease,
                           orElse: () => Env.isOfficialRelease,
                         ),
                         onChanged: (val) {
@@ -342,11 +343,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               context,
                               isConfirmation: true,
                               onConfirm: () {
-                                ref.read(settingsProvider.notifier).updateAutoUpdateEnabled(true);
+                                ref
+                                    .read(settingsProvider.notifier)
+                                    .updateAutoUpdateEnabled(true);
                               },
                             );
                           } else {
-                            ref.read(settingsProvider.notifier).updateAutoUpdateEnabled(val);
+                            ref
+                                .read(settingsProvider.notifier)
+                                .updateAutoUpdateEnabled(val);
                           }
                         },
                         activeColor: const Color(0xFFFDBA74),
@@ -367,7 +372,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           isConfirmation: false,
                         ),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFFF59E0B).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
@@ -419,7 +427,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             child: const WebhooksManagementCard(),
           ),
           const SizedBox(height: 24),
-
 
           // Weather Settings
           DeepLinkTarget(
@@ -546,8 +553,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                     crossFadeState: settingsAsync.maybeWhen(
                       data: (map) {
-                        final s = map[selectedIds.firstOrNull ?? 'all'] ??
-                            map['all'];
+                        final s =
+                            map[selectedIds.firstOrNull ?? 'all'] ?? map['all'];
                         final anyEnabled =
                             (s?.isWeatherAdjustmentEnabled ?? true) ||
                             (s?.isWeatherTemperatureAdjustmentEnabled ?? true);
@@ -2699,7 +2706,8 @@ class _WeatherProviderSelector extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final settingsAsync = ref.watch(settingsProvider);
     final isWeatherKeyValid = settingsAsync.maybeWhen(
-      data: (map) => map['all']?.isWeatherKeyAvailable ?? Env.isWeatherApiKeyValid,
+      data: (map) =>
+          map['all']?.isWeatherKeyAvailable ?? Env.isWeatherApiKeyValid,
       orElse: () => Env.isWeatherApiKeyValid,
     );
 
@@ -2786,7 +2794,11 @@ class _WeatherProviderSelector extends ConsumerWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              const Icon(LucideIcons.alertCircle, color: Color(0xFFFDBA74), size: 14),
+              const Icon(
+                LucideIcons.alertCircle,
+                color: Color(0xFFFDBA74),
+                size: 14,
+              ),
               const SizedBox(width: 6),
               Expanded(
                 child: Wrap(
@@ -2828,7 +2840,9 @@ class _WeatherProviderSelector extends ConsumerWidget {
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                       onPressed: () {
-                        ref.read(searchAnchorProvider.notifier).setAnchor('api_keys');
+                        ref
+                            .read(searchAnchorProvider.notifier)
+                            .setAnchor('api_keys');
                       },
                       child: Text(
                         l10n.goToSettings,
@@ -2876,9 +2890,10 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
     _mapboxController = TextEditingController();
     _googleController = TextEditingController();
     _googleSecretController = TextEditingController();
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final settings = ref.read(settingsProvider).value?['all'] ?? SettingsState();
+      final settings =
+          ref.read(settingsProvider).value?['all'] ?? SettingsState();
       _weatherController.text = settings.customWeatherApiKey;
       _mapboxController.text = settings.customMapboxToken;
       _googleController.text = settings.customGoogleClientId;
@@ -2951,13 +2966,12 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
               ),
               const SizedBox(height: 16),
               Text(
-                (Env.isWeatherApiKeyValid || Env.isMapboxTokenValid || Env.isGoogleFitKeysValid)
+                (Env.isWeatherApiKeyValid ||
+                        Env.isMapboxTokenValid ||
+                        Env.isGoogleFitKeysValid)
                     ? l10n.apiKeysHelpTextWithDefaults
                     : l10n.apiKeysHelpText,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.white70,
-                ),
+                style: const TextStyle(fontSize: 13, color: Colors.white70),
               ),
               const SizedBox(height: 24),
               const Divider(color: Colors.white10),
@@ -2969,17 +2983,26 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
                 savedValue: settings.customWeatherApiKey,
                 isEnvValid: Env.isWeatherApiKeyValid,
                 isObscured: _weatherObscured,
-                onObscureToggle: () => setState(() => _weatherObscured = !_weatherObscured),
+                onObscureToggle: () =>
+                    setState(() => _weatherObscured = !_weatherObscured),
                 getKeyUrl: 'https://www.weatherapi.com/',
                 onSave: (val) {
-                  ref.read(settingsProvider.notifier).updateCustomWeatherApiKey(val);
+                  ref
+                      .read(settingsProvider.notifier)
+                      .updateCustomWeatherApiKey(val);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${l10n.customWeatherApiKey}: ${l10n.saved}')),
+                    SnackBar(
+                      content: Text(
+                        '${l10n.customWeatherApiKey}: ${l10n.saved}',
+                      ),
+                    ),
                   );
                 },
                 onClear: () {
                   _weatherController.clear();
-                  ref.read(settingsProvider.notifier).updateCustomWeatherApiKey('');
+                  ref
+                      .read(settingsProvider.notifier)
+                      .updateCustomWeatherApiKey('');
                 },
               ),
               const SizedBox(height: 24),
@@ -2990,17 +3013,24 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
                 savedValue: settings.customMapboxToken,
                 isEnvValid: Env.isMapboxTokenValid,
                 isObscured: _mapboxObscured,
-                onObscureToggle: () => setState(() => _mapboxObscured = !_mapboxObscured),
+                onObscureToggle: () =>
+                    setState(() => _mapboxObscured = !_mapboxObscured),
                 getKeyUrl: 'https://www.mapbox.com/',
                 onSave: (val) {
-                  ref.read(settingsProvider.notifier).updateCustomMapboxToken(val);
+                  ref
+                      .read(settingsProvider.notifier)
+                      .updateCustomMapboxToken(val);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${l10n.customMapboxToken}: ${l10n.saved}')),
+                    SnackBar(
+                      content: Text('${l10n.customMapboxToken}: ${l10n.saved}'),
+                    ),
                   );
                 },
                 onClear: () {
                   _mapboxController.clear();
-                  ref.read(settingsProvider.notifier).updateCustomMapboxToken('');
+                  ref
+                      .read(settingsProvider.notifier)
+                      .updateCustomMapboxToken('');
                 },
               ),
               const SizedBox(height: 24),
@@ -3011,17 +3041,26 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
                 savedValue: settings.customGoogleClientId,
                 isEnvValid: Env.isGoogleFitKeysValid,
                 isObscured: _googleObscured,
-                onObscureToggle: () => setState(() => _googleObscured = !_googleObscured),
+                onObscureToggle: () =>
+                    setState(() => _googleObscured = !_googleObscured),
                 getKeyUrl: 'https://console.cloud.google.com/',
                 onSave: (val) {
-                  ref.read(settingsProvider.notifier).updateCustomGoogleClientId(val);
+                  ref
+                      .read(settingsProvider.notifier)
+                      .updateCustomGoogleClientId(val);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${l10n.customGoogleClientId}: ${l10n.saved}')),
+                    SnackBar(
+                      content: Text(
+                        '${l10n.customGoogleClientId}: ${l10n.saved}',
+                      ),
+                    ),
                   );
                 },
                 onClear: () {
                   _googleController.clear();
-                  ref.read(settingsProvider.notifier).updateCustomGoogleClientId('');
+                  ref
+                      .read(settingsProvider.notifier)
+                      .updateCustomGoogleClientId('');
                 },
               ),
               const SizedBox(height: 24),
@@ -3032,17 +3071,27 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
                 savedValue: settings.customGoogleClientSecret,
                 isEnvValid: Env.isGoogleFitKeysValid,
                 isObscured: _googleSecretObscured,
-                onObscureToggle: () => setState(() => _googleSecretObscured = !_googleSecretObscured),
+                onObscureToggle: () => setState(
+                  () => _googleSecretObscured = !_googleSecretObscured,
+                ),
                 getKeyUrl: 'https://console.cloud.google.com/',
                 onSave: (val) {
-                  ref.read(settingsProvider.notifier).updateCustomGoogleClientSecret(val);
+                  ref
+                      .read(settingsProvider.notifier)
+                      .updateCustomGoogleClientSecret(val);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${l10n.customGoogleClientSecret}: ${l10n.saved}')),
+                    SnackBar(
+                      content: Text(
+                        '${l10n.customGoogleClientSecret}: ${l10n.saved}',
+                      ),
+                    ),
                   );
                 },
                 onClear: () {
                   _googleSecretController.clear();
-                  ref.read(settingsProvider.notifier).updateCustomGoogleClientSecret('');
+                  ref
+                      .read(settingsProvider.notifier)
+                      .updateCustomGoogleClientSecret('');
                 },
               ),
             ],
@@ -3124,7 +3173,10 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
                   const SizedBox(width: 8),
                 ],
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(6),
@@ -3150,9 +3202,7 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.03),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.08),
-                  ),
+                  border: Border.all(color: Colors.white.withOpacity(0.08)),
                 ),
                 child: Row(
                   children: [
@@ -3160,7 +3210,10 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
                       child: TextField(
                         controller: controller,
                         obscureText: isObscured,
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                        ),
                         decoration: InputDecoration(
                           hintText: placeholder,
                           hintStyle: TextStyle(
@@ -3200,7 +3253,11 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                icon: const Icon(LucideIcons.undo, color: Colors.white70, size: 16),
+                icon: const Icon(
+                  LucideIcons.undo,
+                  color: Colors.white70,
+                  size: 16,
+                ),
                 onPressed: () {
                   setState(() {
                     controller.text = savedValue;
@@ -3215,7 +3272,11 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                icon: const Icon(LucideIcons.check, color: Color(0xFFC4B5FD), size: 16),
+                icon: const Icon(
+                  LucideIcons.check,
+                  color: Color(0xFFC4B5FD),
+                  size: 16,
+                ),
                 onPressed: () {
                   onSave(controller.text.trim());
                 },
@@ -3228,7 +3289,11 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                icon: const Icon(LucideIcons.trash2, color: Colors.redAccent, size: 16),
+                icon: const Icon(
+                  LucideIcons.trash2,
+                  color: Colors.redAccent,
+                  size: 16,
+                ),
                 onPressed: onClear,
               ),
             ],

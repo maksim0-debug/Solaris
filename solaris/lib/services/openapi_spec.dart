@@ -15,9 +15,7 @@ class OpenApiSpec {
     final forbiddenResponse = {
       'description': 'Forbidden (Access Prohibited or Read-Only Mode)',
       'content': {
-        'application/problem+json': {
-          'schema': rfc7807Ref,
-        },
+        'application/problem+json': {'schema': rfc7807Ref},
       },
     };
 
@@ -25,7 +23,8 @@ class OpenApiSpec {
       '/api/v1/health': {
         'get': {
           'summary': 'Health Check',
-          'description': 'Returns system health status and uptime. Always unrestricted.',
+          'description':
+              'Returns system health status and uptime. Always unrestricted.',
           'responses': {
             '200': {
               'description': 'OK',
@@ -41,7 +40,8 @@ class OpenApiSpec {
       '/api/v1/status': {
         'get': {
           'summary': 'Full Application State Snapshot',
-          'description': 'Returns complete JSON snapshot of all Solaris subsystems.',
+          'description':
+              'Returns complete JSON snapshot of all Solaris subsystems.',
           'responses': {
             '200': {
               'description': 'OK',
@@ -54,9 +54,7 @@ class OpenApiSpec {
             '401': {
               'description': 'Unauthorized',
               'content': {
-                'application/problem+json': {
-                  'schema': rfc7807Ref,
-                },
+                'application/problem+json': {'schema': rfc7807Ref},
               },
             },
             if (permissions != null) '403': forbiddenResponse,
@@ -68,7 +66,8 @@ class OpenApiSpec {
           'summary': 'Solar Elevation and Phase Information',
           'responses': {
             '200': {'description': 'OK'},
-            if (permissions != null && !permissions.allowReadSolar) '403': forbiddenResponse,
+            if (permissions != null && !permissions.allowReadSolar)
+              '403': forbiddenResponse,
           },
         },
       },
@@ -77,7 +76,10 @@ class OpenApiSpec {
           'summary': 'List Available Presets',
           'responses': {
             '200': {'description': 'OK'},
-            if (permissions != null && (!permissions.allowReadMonitors && !permissions.allowReadCircadian)) '403': forbiddenResponse,
+            if (permissions != null &&
+                (!permissions.allowReadMonitors &&
+                    !permissions.allowReadCircadian))
+              '403': forbiddenResponse,
           },
         },
       },
@@ -86,7 +88,8 @@ class OpenApiSpec {
           'summary': 'List Connected Monitors',
           'responses': {
             '200': {'description': 'OK'},
-            if (permissions != null && !permissions.allowReadMonitors) '403': forbiddenResponse,
+            if (permissions != null && !permissions.allowReadMonitors)
+              '403': forbiddenResponse,
           },
         },
       },
@@ -104,7 +107,8 @@ class OpenApiSpec {
           'responses': {
             '200': {'description': 'OK'},
             '404': {'description': 'Monitor Not Found'},
-            if (permissions != null && !permissions.allowReadMonitors) '403': forbiddenResponse,
+            if (permissions != null && !permissions.allowReadMonitors)
+              '403': forbiddenResponse,
           },
         },
       },
@@ -112,14 +116,31 @@ class OpenApiSpec {
         'get': {
           'summary': 'Get Paginated Sleep History',
           'parameters': [
-            {'name': 'limit', 'in': 'query', 'schema': {'type': 'integer', 'default': 50}},
-            {'name': 'offset', 'in': 'query', 'schema': {'type': 'integer', 'default': 0}},
-            {'name': 'from', 'in': 'query', 'schema': {'type': 'string', 'format': 'date-time'}},
-            {'name': 'to', 'in': 'query', 'schema': {'type': 'string', 'format': 'date-time'}},
+            {
+              'name': 'limit',
+              'in': 'query',
+              'schema': {'type': 'integer', 'default': 50},
+            },
+            {
+              'name': 'offset',
+              'in': 'query',
+              'schema': {'type': 'integer', 'default': 0},
+            },
+            {
+              'name': 'from',
+              'in': 'query',
+              'schema': {'type': 'string', 'format': 'date-time'},
+            },
+            {
+              'name': 'to',
+              'in': 'query',
+              'schema': {'type': 'string', 'format': 'date-time'},
+            },
           ],
           'responses': {
             '200': {'description': 'OK'},
-            if (permissions != null && !permissions.allowReadSleep) '403': forbiddenResponse,
+            if (permissions != null && !permissions.allowReadSleep)
+              '403': forbiddenResponse,
           },
         },
       },
@@ -155,7 +176,8 @@ class OpenApiSpec {
       'openapi': '3.0.3',
       'info': {
         'title': title,
-        'description': 'Zen control of monitors, solar positioning, circadian rhythms, and automation in Solaris.'
+        'description':
+            'Zen control of monitors, solar positioning, circadian rhythms, and automation in Solaris.'
             '${permissions != null ? "\n\n[Permissions Active]: ReadOnly=$isReadOnly, Categories=${permissions.allowedCategories.map((c) => c.name).toList()}$allowedActionsStr" : ""}',
         'version': version,
         'contact': {
@@ -164,18 +186,9 @@ class OpenApiSpec {
         },
       },
       'servers': [
-        {
-          'url': '/',
-          'description': 'Current Host / Server',
-        },
-        {
-          'url': 'http://127.0.0.1:$port',
-          'description': 'Localhost Server',
-        },
-        {
-          'url': 'http://localhost:$port',
-          'description': 'Localhost Alias',
-        },
+        {'url': '/', 'description': 'Current Host / Server'},
+        {'url': 'http://127.0.0.1:$port', 'description': 'Localhost Server'},
+        {'url': 'http://localhost:$port', 'description': 'Localhost Alias'},
       ],
       'components': {
         'securitySchemes': {
@@ -183,7 +196,8 @@ class OpenApiSpec {
             'type': 'apiKey',
             'in': 'header',
             'name': 'X-API-Key',
-            'description': 'API Key authentication for LAN access or browser drive-by protection.',
+            'description':
+                'API Key authentication for LAN access or browser drive-by protection.',
           },
           'BearerAuth': {
             'type': 'http',
@@ -267,7 +281,13 @@ class OpenApiSpec {
     int port = 45321,
     ApiPermissionsConfig? permissions,
   }) {
-    return jsonEncode(generateSpec(title: title, version: version, port: port, permissions: permissions));
+    return jsonEncode(
+      generateSpec(
+        title: title,
+        version: version,
+        port: port,
+        permissions: permissions,
+      ),
+    );
   }
 }
-

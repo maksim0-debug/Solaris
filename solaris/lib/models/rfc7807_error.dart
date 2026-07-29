@@ -21,14 +21,14 @@ class Rfc7807Error {
   }) : timestamp = timestamp ?? DateTime.now().toUtc().toIso8601String();
 
   Map<String, dynamic> toJson() => {
-        'type': type,
-        'title': title,
-        'status': status,
-        'detail': detail,
-        if (instance != null) 'instance': instance,
-        if (invalidParams != null) 'invalid_params': invalidParams,
-        'timestamp': timestamp,
-      };
+    'type': type,
+    'title': title,
+    'status': status,
+    'detail': detail,
+    if (instance != null) 'instance': instance,
+    if (invalidParams != null) 'invalid_params': invalidParams,
+    'timestamp': timestamp,
+  };
 
   String toJsonString() => jsonEncode(toJson());
 }

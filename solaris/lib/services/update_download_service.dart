@@ -23,7 +23,8 @@ class InsufficientDiskSpaceException implements Exception {
 class UpdateDownloadService {
   final http.Client _client;
 
-  UpdateDownloadService({http.Client? client}) : _client = client ?? http.Client();
+  UpdateDownloadService({http.Client? client})
+    : _client = client ?? http.Client();
 
   /// Directory used for storing downloaded update archives (%TEMP%/solaris_updates).
   Directory get updatesDirectory {
@@ -97,7 +98,9 @@ class UpdateDownloadService {
     GitHubReleaseService? releaseService,
     String? expectedDigest,
   }) async {
-    final targetFile = File('${updatesDirectory.path}\\Solaris-Windows-v$version.zip');
+    final targetFile = File(
+      '${updatesDirectory.path}\\Solaris-Windows-v$version.zip',
+    );
     if (!await targetFile.exists()) {
       return null;
     }
@@ -109,7 +112,10 @@ class UpdateDownloadService {
     }
 
     if (expectedDigest != null && expectedDigest.isNotEmpty) {
-      final cleanExpected = expectedDigest.replaceFirst('sha256:', '').trim().toLowerCase();
+      final cleanExpected = expectedDigest
+          .replaceFirst('sha256:', '')
+          .trim()
+          .toLowerCase();
       if (fileHash != cleanExpected) {
         developer.log(
           'Cached update file hash ($fileHash) does not match expected digest ($cleanExpected). Deleting invalid cache.',
@@ -121,7 +127,9 @@ class UpdateDownloadService {
     }
 
     if (releaseService != null) {
-      final isAttested = await releaseService.verifyArtifactAttestation(fileHash);
+      final isAttested = await releaseService.verifyArtifactAttestation(
+        fileHash,
+      );
       if (!isAttested) {
         developer.log(
           'Cached update file failed SLSA attestation verification ($fileHash). Deleting invalid cache.',
@@ -162,7 +170,8 @@ class UpdateDownloadService {
       await updatesDir.create(recursive: true);
     }
 
-    final tempFilePath = '${updatesDir.path}\\Solaris-Windows-v$version.zip.tmp';
+    final tempFilePath =
+        '${updatesDir.path}\\Solaris-Windows-v$version.zip.tmp';
     final tempFile = File(tempFilePath);
     if (await tempFile.exists()) {
       await tempFile.delete();
@@ -178,7 +187,8 @@ class UpdateDownloadService {
 
     var request = http.Request('GET', Uri.parse(url));
     request.headers['User-Agent'] = 'Solaris-App-Updater/1.0';
-    request.followRedirects = false; // Isolate GitHub API headers from S3 redirects
+    request.followRedirects =
+        false; // Isolate GitHub API headers from S3 redirects
 
     var response = await _client.send(request);
 
@@ -234,7 +244,9 @@ class UpdateDownloadService {
       await sink.close();
     }
 
-    if (expectedSize != null && expectedSize > 0 && downloadedBytes != expectedSize) {
+    if (expectedSize != null &&
+        expectedSize > 0 &&
+        downloadedBytes != expectedSize) {
       if (await tempFile.exists()) {
         await tempFile.delete();
       }
@@ -250,7 +262,10 @@ class UpdateDownloadService {
   ///
   /// [expectedDigest] may be prefixed with "sha256:".
   /// Returns `true` if the computed hash matches the expected hash.
-  Future<bool> verifyFileIntegrity(String filePath, String expectedDigest) async {
+  Future<bool> verifyFileIntegrity(
+    String filePath,
+    String expectedDigest,
+  ) async {
     final expectedHash = expectedDigest.replaceFirst('sha256:', '').trim();
     final file = File(filePath);
 
@@ -275,7 +290,8 @@ class UpdateDownloadService {
 
   /// Promotes a verified temporary file (`.zip.tmp`) to final archive (`.zip`).
   Future<String> finalizeDownload(String tempFilePath, String version) async {
-    final finalFilePath = '${updatesDirectory.path}\\Solaris-Windows-v$version.zip';
+    final finalFilePath =
+        '${updatesDirectory.path}\\Solaris-Windows-v$version.zip';
     final tempFile = File(tempFilePath);
     final finalFile = File(finalFilePath);
 
@@ -296,7 +312,9 @@ class UpdateDownloadService {
 
     try {
       final entities = await dir.list().toList();
-      final keepFileName = keepVersion != null ? 'Solaris-Windows-v$keepVersion.zip' : null;
+      final keepFileName = keepVersion != null
+          ? 'Solaris-Windows-v$keepVersion.zip'
+          : null;
 
       for (final entity in entities) {
         if (entity is File) {

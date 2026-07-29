@@ -23,7 +23,8 @@ class ApiMonitorsHandler {
     if (request != null && request.attachedPermissions != null) {
       return request.attachedPermissions!;
     }
-    final settingsMap = _container.read(settingsProvider).value ??
+    final settingsMap =
+        _container.read(settingsProvider).value ??
         _container.read(settingsProvider).asData?.value;
     final globalSettings = settingsMap?['all'];
     return globalSettings?.apiPermissions ?? const ApiPermissionsConfig();
@@ -35,19 +36,30 @@ class ApiMonitorsHandler {
     Map<String, String> pathParams,
   ) async {
     final permissions = _getPermissions(request);
-    final check = ApiPermissionsChecker.checkReadFlag(permissions.allowReadMonitors, 'monitors');
+    final check = ApiPermissionsChecker.checkReadFlag(
+      permissions.allowReadMonitors,
+      'monitors',
+    );
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
     try {
       final monitors = _container.read(monitorListProvider).value ?? [];
       MonitorSlugResolver.updateMonitors(monitors);
 
-      final settingsMap = _container.read(settingsProvider).value ?? {'all': SettingsState()};
-      final tempSettingsMap = _container.read(temperatureSettingsProvider).value ?? {};
+      final settingsMap =
+          _container.read(settingsProvider).value ?? {'all': SettingsState()};
+      final tempSettingsMap =
+          _container.read(temperatureSettingsProvider).value ?? {};
 
-      final isAutoBrightness = _container.read(autoBrightnessAdjustmentProvider);
-      final isAutoTemperature = _container.read(autoTemperatureAdjustmentProvider);
-      final isColorTempEnabled = _container.read(isColorTemperatureEnabledProvider);
+      final isAutoBrightness = _container.read(
+        autoBrightnessAdjustmentProvider,
+      );
+      final isAutoTemperature = _container.read(
+        autoTemperatureAdjustmentProvider,
+      );
+      final isColorTempEnabled = _container.read(
+        isColorTemperatureEnabledProvider,
+      );
       final targetBrightness = _container.read(currentBrightnessProvider);
       final targetTemperature = _container.read(currentTemperatureProvider);
 
@@ -57,18 +69,24 @@ class ApiMonitorsHandler {
         final m = monitors[i];
         final id = m.id;
 
-        final mSettings = settingsMap[id] ?? settingsMap['all'] ?? SettingsState();
+        final mSettings =
+            settingsMap[id] ?? settingsMap['all'] ?? SettingsState();
         final mTempSettings = tempSettingsMap[id] ?? tempSettingsMap['all'];
 
         final friendlySlug = 'display-${i + 1}';
-        final edidHash = m.deviceIdHash.length >= 4 ? m.deviceIdHash.substring(0, 4) : '0000';
+        final edidHash = m.deviceIdHash.length >= 4
+            ? m.deviceIdHash.substring(0, 4)
+            : '0000';
 
         monitorListJson.add({
           'id': id,
           'name': m.deviceName,
-          'friendly_name': m.friendlyName.isNotEmpty ? m.friendlyName : 'Display ${i + 1}',
+          'friendly_name': m.friendlyName.isNotEmpty
+              ? m.friendlyName
+              : 'Display ${i + 1}',
           'slug': friendlySlug,
-          'hardware_slug': '${m.friendlyName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-')}-$edidHash',
+          'hardware_slug':
+              '${m.friendlyName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-')}-$edidHash',
           'is_primary': m.isPrimary,
           'brightness': {
             'current': m.realBrightness ?? targetBrightness.round(),
@@ -101,7 +119,12 @@ class ApiMonitorsHandler {
       await request.response.close();
     } catch (e) {
       debugPrint('[ApiMonitorsHandler] Error getting monitors: $e');
-      await _sendError(request, HttpStatus.internalServerError, 'Internal Error', e.toString());
+      await _sendError(
+        request,
+        HttpStatus.internalServerError,
+        'Internal Error',
+        e.toString(),
+      );
     }
   }
 
@@ -111,12 +134,20 @@ class ApiMonitorsHandler {
     Map<String, String> pathParams,
   ) async {
     final permissions = _getPermissions(request);
-    final check = ApiPermissionsChecker.checkReadFlag(permissions.allowReadMonitors, 'monitors');
+    final check = ApiPermissionsChecker.checkReadFlag(
+      permissions.allowReadMonitors,
+      'monitors',
+    );
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
     final rawSlug = pathParams['slug'] ?? '';
     if (rawSlug.isEmpty) {
-      await _sendError(request, HttpStatus.badRequest, 'Missing Parameter', 'Slug parameter is required.');
+      await _sendError(
+        request,
+        HttpStatus.badRequest,
+        'Missing Parameter',
+        'Slug parameter is required.',
+      );
       return;
     }
 
@@ -134,7 +165,10 @@ class ApiMonitorsHandler {
     }
 
     if (targetMonitor == null && resolvedId == 'primary') {
-      targetMonitor = monitors.firstWhere((m) => m.isPrimary, orElse: () => monitors.first);
+      targetMonitor = monitors.firstWhere(
+        (m) => m.isPrimary,
+        orElse: () => monitors.first,
+      );
     }
 
     if (targetMonitor == null) {
@@ -147,8 +181,10 @@ class ApiMonitorsHandler {
       return;
     }
 
-    final settingsMap = _container.read(settingsProvider).value ?? {'all': SettingsState()};
-    final mSettings = settingsMap[targetMonitor.id] ?? settingsMap['all'] ?? SettingsState();
+    final settingsMap =
+        _container.read(settingsProvider).value ?? {'all': SettingsState()};
+    final mSettings =
+        settingsMap[targetMonitor.id] ?? settingsMap['all'] ?? SettingsState();
 
     final responseBody = {
       'id': targetMonitor.id,
@@ -177,7 +213,10 @@ class ApiMonitorsHandler {
   ) async {
     final permissions = _getPermissions(request);
 
-    final check = ApiPermissionsChecker.checkAction(permissions, 'set_brightness');
+    final check = ApiPermissionsChecker.checkAction(
+      permissions,
+      'set_brightness',
+    );
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
     final rawSlug = pathParams['slug'] ?? '';
@@ -187,18 +226,30 @@ class ApiMonitorsHandler {
     final dynamic body = jsonDecode(content);
 
     if (body is! Map<String, dynamic> || !body.containsKey('value')) {
-      await _sendError(request, HttpStatus.badRequest, 'Validation Error', "Field 'value' is required.");
+      await _sendError(
+        request,
+        HttpStatus.badRequest,
+        'Validation Error',
+        "Field 'value' is required.",
+      );
       return;
     }
 
     final val = (body['value'] as num).toDouble();
     if (val < 0.0 || val > 100.0) {
-      await _sendError(request, HttpStatus.badRequest, 'Validation Error', "Field 'value' must be between 0.0 and 100.0.");
+      await _sendError(
+        request,
+        HttpStatus.badRequest,
+        'Validation Error',
+        "Field 'value' must be between 0.0 and 100.0.",
+      );
       return;
     }
 
     await safeStateMutator(() {
-      _container.read(autoBrightnessAdjustmentProvider.notifier).setEnabled(false);
+      _container
+          .read(autoBrightnessAdjustmentProvider.notifier)
+          .setEnabled(false);
       _container.read(manualBrightnessProvider.notifier).update(val);
     });
 
@@ -225,7 +276,10 @@ class ApiMonitorsHandler {
   ) async {
     final permissions = _getPermissions(request);
 
-    final check = ApiPermissionsChecker.checkAction(permissions, 'set_temperature');
+    final check = ApiPermissionsChecker.checkAction(
+      permissions,
+      'set_temperature',
+    );
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
     final rawSlug = pathParams['slug'] ?? '';
@@ -235,18 +289,30 @@ class ApiMonitorsHandler {
     final dynamic body = jsonDecode(content);
 
     if (body is! Map<String, dynamic> || !body.containsKey('value')) {
-      await _sendError(request, HttpStatus.badRequest, 'Validation Error', "Field 'value' is required.");
+      await _sendError(
+        request,
+        HttpStatus.badRequest,
+        'Validation Error',
+        "Field 'value' is required.",
+      );
       return;
     }
 
     final val = (body['value'] as num).toInt();
     if (val < 3300 || val > 6500) {
-      await _sendError(request, HttpStatus.badRequest, 'Validation Error', "Field 'value' must be an integer Kelvin between 3300 and 6500.");
+      await _sendError(
+        request,
+        HttpStatus.badRequest,
+        'Validation Error',
+        "Field 'value' must be an integer Kelvin between 3300 and 6500.",
+      );
       return;
     }
 
     await safeStateMutator(() {
-      _container.read(temperatureSettingsProvider.notifier).toggleEnabled(false);
+      _container
+          .read(temperatureSettingsProvider.notifier)
+          .toggleEnabled(false);
       _container.read(manualTemperatureProvider.notifier).setTemperature(val);
     });
 

@@ -2,17 +2,19 @@ import 'dart:ffi';
 import 'dart:io';
 import 'package:flutter/widgets.dart';
 
-typedef _SetProcessWorkingSetSizeC = Int32 Function(
-  IntPtr hProcess,
-  IntPtr dwMinimumWorkingSetSize,
-  IntPtr dwMaximumWorkingSetSize,
-);
+typedef _SetProcessWorkingSetSizeC =
+    Int32 Function(
+      IntPtr hProcess,
+      IntPtr dwMinimumWorkingSetSize,
+      IntPtr dwMaximumWorkingSetSize,
+    );
 
-typedef _SetProcessWorkingSetSizeDart = int Function(
-  int hProcess,
-  int dwMinimumWorkingSetSize,
-  int dwMaximumWorkingSetSize,
-);
+typedef _SetProcessWorkingSetSizeDart =
+    int Function(
+      int hProcess,
+      int dwMinimumWorkingSetSize,
+      int dwMaximumWorkingSetSize,
+    );
 
 /// Utility for forced memory eviction and OS working set trimming.
 class MemoryUtils {
@@ -50,9 +52,11 @@ class MemoryUtils {
       if (!_win32LookupAttempted) {
         _win32LookupAttempted = true;
         final kernel32 = DynamicLibrary.open('kernel32.dll');
-        _win32TrimFunction = kernel32.lookupFunction<
-            _SetProcessWorkingSetSizeC,
-            _SetProcessWorkingSetSizeDart>('SetProcessWorkingSetSize');
+        _win32TrimFunction = kernel32
+            .lookupFunction<
+              _SetProcessWorkingSetSizeC,
+              _SetProcessWorkingSetSizeDart
+            >('SetProcessWorkingSetSize');
       }
 
       // Pseudo handle -1 refers to GetCurrentProcess()

@@ -57,7 +57,9 @@ class AppShutdownService {
 
   Future<void> _unregisterHotkeys() async {
     try {
-      debugPrint('AppShutdownService: Step 2 - Unregistering global hotkeys...');
+      debugPrint(
+        'AppShutdownService: Step 2 - Unregistering global hotkeys...',
+      );
       await hotKeyManager.unregisterAll();
     } catch (e) {
       debugPrint('AppShutdownService: Error unregistering hotkeys: $e');
@@ -85,7 +87,9 @@ class AppShutdownService {
 
   Future<void> _resetMonitorGamma() async {
     try {
-      debugPrint('AppShutdownService: Step 5 - Resetting monitor gamma to neutral...');
+      debugPrint(
+        'AppShutdownService: Step 5 - Resetting monitor gamma to neutral...',
+      );
       final monitorService = container.read(monitorServiceProvider);
       await monitorService.resetAllMonitorsTemperature();
       await container
@@ -102,5 +106,5 @@ class AppShutdownService {
 /// Provider definition for [AppShutdownService].
 final appShutdownServiceProvider =
     Provider.family<AppShutdownService, ProviderContainer>(
-  (ref, container) => AppShutdownService(container),
-);
+      (ref, container) => AppShutdownService(container),
+    );

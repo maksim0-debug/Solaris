@@ -27,14 +27,18 @@ class ApiStatusHandler {
     if (request != null && request.attachedPermissions != null) {
       return request.attachedPermissions!;
     }
-    final settingsMap = container.read(settingsProvider).value ??
+    final settingsMap =
+        container.read(settingsProvider).value ??
         container.read(settingsProvider).asData?.value;
     final globalSettings = settingsMap?['all'];
     return globalSettings?.apiPermissions ?? const ApiPermissionsConfig();
   }
 
   /// GET /api/v1/health
-  Future<void> handleHealth(HttpRequest request, Map<String, String> pathParams) async {
+  Future<void> handleHealth(
+    HttpRequest request,
+    Map<String, String> pathParams,
+  ) async {
     final appVersionAsync = container.read(appVersionProvider);
     final version = appVersionAsync.value ?? fallbackAppVersion;
     final uptimeSeconds = this.uptimeSeconds;
@@ -48,7 +52,10 @@ class ApiStatusHandler {
   }
 
   /// GET /api/v1/status
-  Future<void> handleStatus(HttpRequest request, Map<String, String> pathParams) async {
+  Future<void> handleStatus(
+    HttpRequest request,
+    Map<String, String> pathParams,
+  ) async {
     final permissions = _getPermissions(request);
 
     final appVersionAsync = container.read(appVersionProvider);
@@ -60,29 +67,38 @@ class ApiStatusHandler {
     final weatherAsync = container.read(currentWeatherProvider);
     final weather = weatherAsync.value;
 
-    final monitors = await container.read(monitorServiceProvider).getConnectedMonitors();
+    final monitors = await container
+        .read(monitorServiceProvider)
+        .getConnectedMonitors();
     MonitorSlugResolver.updateMonitors(monitors);
 
     final settingsMap = container.read(settingsProvider).value;
     final globalSettings = settingsMap?['all'];
 
     final tempSettingsMap = container.read(temperatureSettingsProvider).value;
-    final isColorTempEnabled = container.read(isColorTemperatureEnabledProvider);
+    final isColorTempEnabled = container.read(
+      isColorTemperatureEnabledProvider,
+    );
     final currentTemp = container.read(currentTemperatureProvider);
 
     final currentBrightness = container.read(currentBrightnessProvider);
-    final autoBrightnessEnabled = container.read(autoBrightnessAdjustmentProvider);
+    final autoBrightnessEnabled = container.read(
+      autoBrightnessAdjustmentProvider,
+    );
     final autoTempEnabled = container.read(autoTemperatureAdjustmentProvider);
 
     final sleepState = container.read(sleepProvider);
     final gamingModeActive = container.read(gamingModeProvider);
     final ipcState = container.read(localIpcServiceProvider);
 
-    final smartCircadianData = container.read(smartCircadianDataProvider('all'));
+    final smartCircadianData = container.read(
+      smartCircadianDataProvider('all'),
+    );
 
     final monitorsJson = monitors.map((mon) {
       final monSettings = settingsMap?[mon.id] ?? globalSettings;
-      final monTempSettings = tempSettingsMap?[mon.id] ?? tempSettingsMap?['all'];
+      final monTempSettings =
+          tempSettingsMap?[mon.id] ?? tempSettingsMap?['all'];
 
       return {
         'id': mon.id,
@@ -155,9 +171,12 @@ class ApiStatusHandler {
       'auto_brightness': autoBrightnessEnabled,
       'auto_temperature': autoTempEnabled,
       'color_temperature_hardware_enabled': isColorTempEnabled,
-      'weather_brightness_adjustment': globalSettings?.isWeatherAdjustmentEnabled ?? true,
-      'weather_temperature_adjustment': globalSettings?.isWeatherTemperatureAdjustmentEnabled ?? true,
-      'weather_adjustment_intensity': globalSettings?.weatherAdjustmentIntensity ?? 0.45,
+      'weather_brightness_adjustment':
+          globalSettings?.isWeatherAdjustmentEnabled ?? true,
+      'weather_temperature_adjustment':
+          globalSettings?.isWeatherTemperatureAdjustmentEnabled ?? true,
+      'weather_adjustment_intensity':
+          globalSettings?.weatherAdjustmentIntensity ?? 0.45,
       'smart_circadian': globalSettings?.isSmartCircadianEnabled ?? false,
       'game_mode': {
         'enabled': globalSettings?.isGameModeEnabled ?? true,
@@ -166,7 +185,8 @@ class ApiStatusHandler {
         'whitelist_count': globalSettings?.gameModeWhitelist.length ?? 0,
         'blacklist_count': globalSettings?.gameModeBlacklist.length ?? 0,
       },
-      'multi_monitor_offset': globalSettings?.isMultiMonitorOffsetEnabled ?? false,
+      'multi_monitor_offset':
+          globalSettings?.isMultiMonitorOffsetEnabled ?? false,
       'map_animations': {
         'rain': globalSettings?.showRainAnimation ?? true,
         'snow': globalSettings?.showSnowAnimation ?? true,
@@ -174,7 +194,10 @@ class ApiStatusHandler {
         'cloud': globalSettings?.showCloudAnimation ?? true,
       },
     };
-    responseJson['automation'] = ApiPermissionsFilter.filterAutomation(rawAutomation, permissions);
+    responseJson['automation'] = ApiPermissionsFilter.filterAutomation(
+      rawAutomation,
+      permissions,
+    );
 
     if (permissions.allowReadCircadian) {
       final rawSmartCircadian = {
@@ -182,7 +205,8 @@ class ApiStatusHandler {
         'submodules': {
           'wind_down_master': globalSettings?.isWindDownMasterEnabled ?? true,
           'time_shift_master': globalSettings?.isTimeShiftMasterEnabled ?? true,
-          'sleep_pressure_master': globalSettings?.isSleepPressureMasterEnabled ?? true,
+          'sleep_pressure_master':
+              globalSettings?.isSleepPressureMasterEnabled ?? true,
           'sleep_debt_master': globalSettings?.isSleepDebtMasterEnabled ?? true,
         },
         'wind_down': {
@@ -193,7 +217,8 @@ class ApiStatusHandler {
         'sleep_pressure': {
           'active': smartCircadianData.isSleepPressureActive,
           'impact_brightness': smartCircadianData.sleepPressureAbsoluteImpact,
-          'impact_temperature': smartCircadianData.sleepPressureTemperatureImpact,
+          'impact_temperature':
+              smartCircadianData.sleepPressureTemperatureImpact,
         },
         'sleep_debt': {
           'active': smartCircadianData.isSleepDebtActive,
@@ -205,7 +230,10 @@ class ApiStatusHandler {
           'offset_minutes': smartCircadianData.timeOffset.inMinutes,
         },
       };
-      final filteredCircadian = ApiPermissionsFilter.filterSmartCircadian(rawSmartCircadian, permissions);
+      final filteredCircadian = ApiPermissionsFilter.filterSmartCircadian(
+        rawSmartCircadian,
+        permissions,
+      );
       if (filteredCircadian != null) {
         responseJson['smart_circadian'] = filteredCircadian;
       }
@@ -222,7 +250,9 @@ class ApiStatusHandler {
     if (permissions.allowedCategories.contains(ApiActionCategory.system)) {
       responseJson['server'] = {
         'port': ipcState.port ?? globalSettings?.apiServerPort ?? 45321,
-        'bind_address': globalSettings?.isApiLanAccessEnabled == true ? '0.0.0.0' : '127.0.0.1',
+        'bind_address': globalSettings?.isApiLanAccessEnabled == true
+            ? '0.0.0.0'
+            : '127.0.0.1',
         'lan_access': globalSettings?.isApiLanAccessEnabled ?? false,
         'rate_limit_per_minute': globalSettings?.apiRateLimitPerMinute ?? 120,
       };
@@ -232,14 +262,23 @@ class ApiStatusHandler {
   }
 
   /// GET /api/v1/solar
-  Future<void> handleSolar(HttpRequest request, Map<String, String> pathParams) async {
+  Future<void> handleSolar(
+    HttpRequest request,
+    Map<String, String> pathParams,
+  ) async {
     final permissions = _getPermissions(request);
-    final check = ApiPermissionsChecker.checkReadFlag(permissions.allowReadSolar, 'solar');
+    final check = ApiPermissionsChecker.checkReadFlag(
+      permissions.allowReadSolar,
+      'solar',
+    );
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
     final solar = container.read(solarStateStreamProvider).value;
     if (solar == null) {
-      ApiRouter.sendJson(request, HttpStatus.ok, {'available': false, 'message': 'Solar calculations pending.'});
+      ApiRouter.sendJson(request, HttpStatus.ok, {
+        'available': false,
+        'message': 'Solar calculations pending.',
+      });
       return;
     }
 
@@ -264,39 +303,65 @@ class ApiStatusHandler {
   }
 
   /// GET /api/v1/presets
-  Future<void> handlePresets(HttpRequest request, Map<String, String> pathParams) async {
+  Future<void> handlePresets(
+    HttpRequest request,
+    Map<String, String> pathParams,
+  ) async {
     final permissions = _getPermissions(request);
     final settings = container.read(settingsProvider).value?['all'];
-    final tempSettings = container.read(temperatureSettingsProvider).value?['all'];
+    final tempSettings = container
+        .read(temperatureSettingsProvider)
+        .value?['all'];
 
     final rawPresets = {
       'brightness': {
         'system': PresetType.values.map((e) => e.name).toList(),
-        'user': settings?.userPresets.map((p) => {
-          'id': p.id,
-          'name': p.name,
-          'active': p.id == settings.activeUserPresetId,
-        }).toList() ?? [],
+        'user':
+            settings?.userPresets
+                .map(
+                  (p) => {
+                    'id': p.id,
+                    'name': p.name,
+                    'active': p.id == settings.activeUserPresetId,
+                  },
+                )
+                .toList() ??
+            [],
         'active': {
           'type': settings?.activeUserPresetId != null ? 'user' : 'system',
-          'name': settings?.activeUserPresetId ?? settings?.activePreset.name ?? 'bright',
+          'name':
+              settings?.activeUserPresetId ??
+              settings?.activePreset.name ??
+              'bright',
         },
       },
       'temperature': {
         'system': TemperaturePresetType.values.map((e) => e.name).toList(),
-        'user': tempSettings?.userPresets.map((p) => {
-          'id': p.id,
-          'name': p.name,
-          'active': p.id == tempSettings.activeUserPresetId,
-        }).toList() ?? [],
+        'user':
+            tempSettings?.userPresets
+                .map(
+                  (p) => {
+                    'id': p.id,
+                    'name': p.name,
+                    'active': p.id == tempSettings.activeUserPresetId,
+                  },
+                )
+                .toList() ??
+            [],
         'active': {
           'type': tempSettings?.activeUserPresetId != null ? 'user' : 'system',
-          'name': tempSettings?.activeUserPresetId ?? tempSettings?.activePreset.name ?? 'cool',
+          'name':
+              tempSettings?.activeUserPresetId ??
+              tempSettings?.activePreset.name ??
+              'cool',
         },
       },
     };
 
-    final filtered = ApiPermissionsFilter.filterPresets(rawPresets, permissions);
+    final filtered = ApiPermissionsFilter.filterPresets(
+      rawPresets,
+      permissions,
+    );
     if (filtered == null) {
       final check = ApiPermissionsChecker.checkReadFlag(false, 'presets');
       await ApiPermissionsChecker.sendRfc7807IfDenied(request, check);
@@ -307,33 +372,51 @@ class ApiStatusHandler {
   }
 
   /// GET /api/v1/monitors
-  Future<void> handleMonitors(HttpRequest request, Map<String, String> pathParams) async {
+  Future<void> handleMonitors(
+    HttpRequest request,
+    Map<String, String> pathParams,
+  ) async {
     final permissions = _getPermissions(request);
-    final check = ApiPermissionsChecker.checkReadFlag(permissions.allowReadMonitors, 'monitors');
+    final check = ApiPermissionsChecker.checkReadFlag(
+      permissions.allowReadMonitors,
+      'monitors',
+    );
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
-    final monitors = await container.read(monitorServiceProvider).getConnectedMonitors();
+    final monitors = await container
+        .read(monitorServiceProvider)
+        .getConnectedMonitors();
     MonitorSlugResolver.updateMonitors(monitors);
     final currentBrightness = container.read(currentBrightnessProvider);
     final currentTemp = container.read(currentTemperatureProvider);
 
-    final list = monitors.map((mon) => {
-      'id': mon.id,
-      'name': mon.name,
-      'friendly_name': mon.friendlyName,
-      'slug': MonitorSlugResolver.getSlugForSystemId(mon.id),
-      'is_primary': mon.isPrimary,
-      'brightness': mon.realBrightness ?? currentBrightness.round(),
-      'temperature': mon.realTemperature ?? currentTemp,
-    }).toList();
+    final list = monitors
+        .map(
+          (mon) => {
+            'id': mon.id,
+            'name': mon.name,
+            'friendly_name': mon.friendlyName,
+            'slug': MonitorSlugResolver.getSlugForSystemId(mon.id),
+            'is_primary': mon.isPrimary,
+            'brightness': mon.realBrightness ?? currentBrightness.round(),
+            'temperature': mon.realTemperature ?? currentTemp,
+          },
+        )
+        .toList();
 
     ApiRouter.sendJson(request, HttpStatus.ok, {'monitors': list});
   }
 
   /// GET /api/v1/monitors/:slug
-  Future<void> handleMonitorBySlug(HttpRequest request, Map<String, String> pathParams) async {
+  Future<void> handleMonitorBySlug(
+    HttpRequest request,
+    Map<String, String> pathParams,
+  ) async {
     final permissions = _getPermissions(request);
-    final check = ApiPermissionsChecker.checkReadFlag(permissions.allowReadMonitors, 'monitors');
+    final check = ApiPermissionsChecker.checkReadFlag(
+      permissions.allowReadMonitors,
+      'monitors',
+    );
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
     final slug = pathParams['slug'];
@@ -349,7 +432,9 @@ class ApiStatusHandler {
       return;
     }
 
-    final monitors = await container.read(monitorServiceProvider).getConnectedMonitors();
+    final monitors = await container
+        .read(monitorServiceProvider)
+        .getConnectedMonitors();
     MonitorSlugResolver.updateMonitors(monitors);
 
     final resolvedSystemId = MonitorSlugResolver.resolveToSystemId(slug);
@@ -392,9 +477,15 @@ class ApiStatusHandler {
   }
 
   /// GET /api/v1/sleep/sessions (Paginated)
-  Future<void> handleSleepSessions(HttpRequest request, Map<String, String> pathParams) async {
+  Future<void> handleSleepSessions(
+    HttpRequest request,
+    Map<String, String> pathParams,
+  ) async {
     final permissions = _getPermissions(request);
-    final check = ApiPermissionsChecker.checkReadFlag(permissions.allowReadSleep, 'sleep');
+    final check = ApiPermissionsChecker.checkReadFlag(
+      permissions.allowReadSleep,
+      'sleep',
+    );
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
     final query = request.uri.queryParameters;
     final limitParam = int.tryParse(query['limit'] ?? '50') ?? 50;
@@ -411,20 +502,38 @@ class ApiStatusHandler {
     var filtered = sleepState.sessions.toList();
 
     if (fromDate != null) {
-      filtered = filtered.where((s) => s.startTime.isAfter(fromDate) || s.startTime.isAtSameMomentAs(fromDate)).toList();
+      filtered = filtered
+          .where(
+            (s) =>
+                s.startTime.isAfter(fromDate) ||
+                s.startTime.isAtSameMomentAs(fromDate),
+          )
+          .toList();
     }
     if (toDate != null) {
-      filtered = filtered.where((s) => s.startTime.isBefore(toDate) || s.startTime.isAtSameMomentAs(toDate)).toList();
+      filtered = filtered
+          .where(
+            (s) =>
+                s.startTime.isBefore(toDate) ||
+                s.startTime.isAtSameMomentAs(toDate),
+          )
+          .toList();
     }
 
     final total = filtered.length;
-    final paginated = filtered.skip(offset).take(limit).map((s) => {
-      'id': s.id,
-      'start_time': s.startTime.toIso8601String(),
-      'end_time': s.endTime.toIso8601String(),
-      'duration_minutes': s.duration.inMinutes,
-      'source': s.source,
-    }).toList();
+    final paginated = filtered
+        .skip(offset)
+        .take(limit)
+        .map(
+          (s) => {
+            'id': s.id,
+            'start_time': s.startTime.toIso8601String(),
+            'end_time': s.endTime.toIso8601String(),
+            'duration_minutes': s.duration.inMinutes,
+            'source': s.source,
+          },
+        )
+        .toList();
 
     ApiRouter.sendJson(request, HttpStatus.ok, {
       'total': total,
@@ -435,7 +544,10 @@ class ApiStatusHandler {
   }
 
   /// GET /api/v1/docs (Interactive Swagger UI / RapiDoc HTML)
-  Future<void> handleDocs(HttpRequest request, Map<String, String> pathParams) async {
+  Future<void> handleDocs(
+    HttpRequest request,
+    Map<String, String> pathParams,
+  ) async {
     final html = '''
 <!DOCTYPE html>
 <html lang="en">
@@ -473,13 +585,19 @@ class ApiStatusHandler {
   }
 
   /// GET /api/v1/openapi.json
-  Future<void> handleOpenApiJson(HttpRequest request, Map<String, String> pathParams) async {
+  Future<void> handleOpenApiJson(
+    HttpRequest request,
+    Map<String, String> pathParams,
+  ) async {
     final permissions = _getPermissions(request);
-    final settingsMap = container.read(settingsProvider).value ??
+    final settingsMap =
+        container.read(settingsProvider).value ??
         container.read(settingsProvider).asData?.value;
     final port = settingsMap?['all']?.apiServerPort ?? 45321;
-    final jsonSpec = OpenApiSpec.generateSpec(port: port, permissions: permissions);
+    final jsonSpec = OpenApiSpec.generateSpec(
+      port: port,
+      permissions: permissions,
+    );
     ApiRouter.sendJson(request, HttpStatus.ok, jsonSpec);
   }
 }
-

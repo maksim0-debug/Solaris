@@ -68,7 +68,9 @@ class GamingModeService extends Notifier<bool> {
         }
       },
       onError: (Object error) {
-        debugPrint('[GamingModeService] Error in GamingMode EventChannel: $error');
+        debugPrint(
+          '[GamingModeService] Error in GamingMode EventChannel: $error',
+        );
       },
     );
   }

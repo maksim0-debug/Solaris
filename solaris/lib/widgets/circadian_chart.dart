@@ -6,8 +6,6 @@ import 'package:solaris/providers.dart';
 import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/models/settings_state.dart';
 
-
-
 class CircadianChartWidget extends ConsumerStatefulWidget {
   const CircadianChartWidget({super.key});
 
@@ -80,9 +78,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
 
   Widget _buildChart(BuildContext context, List<FlSpot> points, bool isTemp) {
     final l10n = AppLocalizations.of(context)!;
-    final solarAsync = ref.watch(
-      solarStateStreamProvider,
-    ); // Get solar data
+    final solarAsync = ref.watch(solarStateStreamProvider); // Get solar data
     final weatherAsync = ref.watch(currentWeatherProvider);
     final circadianService = ref.read(circadianServiceProvider);
     final currentTimeAsync = ref.watch(currentTimeProvider);
@@ -149,7 +145,8 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
             .calculateWeatherFactor(weatherAsync.value, currentElevation);
 
         if (baseFactor < 0.99) {
-          final penalty = (1.0 - baseFactor) *
+          final penalty =
+              (1.0 - baseFactor) *
               currentSettings.activePreset.weatherSensitivity *
               currentSettings.weatherAdjustmentIntensity;
           final finalFactor = 1.0 - penalty;
@@ -209,7 +206,9 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
           show: true,
           getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
             radius: 10 + (_pulseAnimation.value * 8), // Пульсация от 10 до 18
-            color: dayColor.withOpacity(0.15 * (1.0 - _pulseAnimation.value * 0.5)),
+            color: dayColor.withOpacity(
+              0.15 * (1.0 - _pulseAnimation.value * 0.5),
+            ),
             strokeWidth: 0,
           ),
         ),
@@ -222,7 +221,9 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
           show: true,
           getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
             radius: 7 + (_pulseAnimation.value * 4), // Пульсация от 7 до 11
-            color: dayColor.withOpacity(0.35 * (1.0 - _pulseAnimation.value * 0.3)),
+            color: dayColor.withOpacity(
+              0.35 * (1.0 - _pulseAnimation.value * 0.3),
+            ),
             strokeWidth: 0,
           ),
         ),
@@ -235,7 +236,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
         dotData: FlDotData(
           show: true,
           getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-            radius: adjustedBrightnessY != null 
+            radius: adjustedBrightnessY != null
                 ? 3.75 // 3 * 1.25
                 : 6.25, // 5 * 1.25
             color: adjustedBrightnessY != null ? Colors.white54 : Colors.white,
@@ -274,7 +275,9 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
             getDotPainter: (spot, percent, barData, index) =>
                 FlDotCirclePainter(
                   radius: 8 + (_pulseAnimation.value * 4),
-                  color: Colors.lightBlueAccent.withOpacity(0.2 * (1.0 - _pulseAnimation.value * 0.4)),
+                  color: Colors.lightBlueAccent.withOpacity(
+                    0.2 * (1.0 - _pulseAnimation.value * 0.4),
+                  ),
                   strokeWidth: 0,
                 ),
           ),
@@ -333,129 +336,134 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
                   },
                 ),
                 titlesData: FlTitlesData(
-              show: true,
-              rightTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-              topTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: _bottomTitleHeight,
-                  interval: 20,
-                  getTitlesWidget: (value, meta) {
-                    // Show degrees (-20°, 0°, 20°, 40°...)
-                    return SideTitleWidget(
-                      meta: meta,
-                      space: 4,
-                      child: Text(
-                        l10n.chartDegreesFormat(value.toInt()),
-                        style: TextStyle(
-                          color: value == 0
-                              ? const Color(0xFFFDBA74)
-                              : Colors.white30,
-                          fontWeight: value == 0
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                          fontSize: 10,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              leftTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  interval: isTemp ? 500 : 25,
-                  reservedSize: _leftTitleWidth + (isTemp ? 20 : 0),
-                  getTitlesWidget: (value, meta) {
-                    if (!isTemp && value > 100) return const SizedBox();
-                    if (isTemp && value > 7000) return const SizedBox();
-                    return SideTitleWidget(
-                      meta: meta,
-                      child: Text(
-                        isTemp ? l10n.chartTemperatureFormat(value.toInt()) : l10n.chartPercentFormat(value.toInt()),
-                        style: const TextStyle(
-                          color: Colors.white30,
-                          fontSize: 10,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-            borderData: FlBorderData(show: false),
-            minX: -20, // От -20 градусов (ночь)
-            maxX: 90, // До +90 градусов (зенит)
-            minY: isTemp
-                ? 3000
-                : 0, // From 3000K for temp (padding for 3300K floor)
-            maxY: isTemp ? 7000 : 105, // Up to 7000K or 105%
-            lineBarsData: lineBars,
-            lineTouchData: LineTouchData(
-              enabled: true,
-              handleBuiltInTouches: false,
-              touchCallback:
-                  (FlTouchEvent event, LineTouchResponse? touchResponse) {
-                    if (event is FlPanStartEvent || event is FlTapDownEvent) {
-                      if (touchResponse?.lineBarSpots != null &&
-                          touchResponse!.lineBarSpots!.isNotEmpty) {
-                        // Do not allow grabbing the current time marker (index 1)
-                        if (touchResponse.lineBarSpots!.first.barIndex == 0) {
-                          setState(() {
-                            _touchedIndex =
-                                touchResponse.lineBarSpots!.first.spotIndex;
-                          });
-                        }
-                      }
-                    } else if (event is FlPanUpdateEvent) {
-                      if (_touchedIndex != null) {
-                        _updatePoint(
-                          _touchedIndex!,
-                          event.localPosition,
-                          context,
+                  show: true,
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: _bottomTitleHeight,
+                      interval: 20,
+                      getTitlesWidget: (value, meta) {
+                        // Show degrees (-20°, 0°, 20°, 40°...)
+                        return SideTitleWidget(
+                          meta: meta,
+                          space: 4,
+                          child: Text(
+                            l10n.chartDegreesFormat(value.toInt()),
+                            style: TextStyle(
+                              color: value == 0
+                                  ? const Color(0xFFFDBA74)
+                                  : Colors.white30,
+                              fontWeight: value == 0
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              fontSize: 10,
+                            ),
+                          ),
                         );
-                      }
-                    } else if (event is FlPanEndEvent ||
-                        event is FlPanCancelEvent ||
-                        event is FlTapUpEvent) {
-                      if (_touchedIndex != null) {
-                        setState(() {
-                          _touchedIndex = null;
-                        });
-                      } else if (event is FlTapUpEvent) {
-                        if (touchResponse == null ||
-                            touchResponse.lineBarSpots == null ||
-                            touchResponse.lineBarSpots!.isEmpty) {
-                          _addPointAt(event.localPosition, context);
+                      },
+                    ),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      interval: isTemp ? 500 : 25,
+                      reservedSize: _leftTitleWidth + (isTemp ? 20 : 0),
+                      getTitlesWidget: (value, meta) {
+                        if (!isTemp && value > 100) return const SizedBox();
+                        if (isTemp && value > 7000) return const SizedBox();
+                        return SideTitleWidget(
+                          meta: meta,
+                          child: Text(
+                            isTemp
+                                ? l10n.chartTemperatureFormat(value.toInt())
+                                : l10n.chartPercentFormat(value.toInt()),
+                            style: const TextStyle(
+                              color: Colors.white30,
+                              fontSize: 10,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                minX: -20, // От -20 градусов (ночь)
+                maxX: 90, // До +90 градусов (зенит)
+                minY: isTemp
+                    ? 3000
+                    : 0, // From 3000K for temp (padding for 3300K floor)
+                maxY: isTemp ? 7000 : 105, // Up to 7000K or 105%
+                lineBarsData: lineBars,
+                lineTouchData: LineTouchData(
+                  enabled: true,
+                  handleBuiltInTouches: false,
+                  touchCallback:
+                      (FlTouchEvent event, LineTouchResponse? touchResponse) {
+                        if (event is FlPanStartEvent ||
+                            event is FlTapDownEvent) {
+                          if (touchResponse?.lineBarSpots != null &&
+                              touchResponse!.lineBarSpots!.isNotEmpty) {
+                            // Do not allow grabbing the current time marker (index 1)
+                            if (touchResponse.lineBarSpots!.first.barIndex ==
+                                0) {
+                              setState(() {
+                                _touchedIndex =
+                                    touchResponse.lineBarSpots!.first.spotIndex;
+                              });
+                            }
+                          }
+                        } else if (event is FlPanUpdateEvent) {
+                          if (_touchedIndex != null) {
+                            _updatePoint(
+                              _touchedIndex!,
+                              event.localPosition,
+                              context,
+                            );
+                          }
+                        } else if (event is FlPanEndEvent ||
+                            event is FlPanCancelEvent ||
+                            event is FlTapUpEvent) {
+                          if (_touchedIndex != null) {
+                            setState(() {
+                              _touchedIndex = null;
+                            });
+                          } else if (event is FlTapUpEvent) {
+                            if (touchResponse == null ||
+                                touchResponse.lineBarSpots == null ||
+                                touchResponse.lineBarSpots!.isEmpty) {
+                              _addPointAt(event.localPosition, context);
+                            }
+                          }
+                        } else if (event is FlLongPressStart) {
+                          if (touchResponse?.lineBarSpots != null &&
+                              touchResponse!.lineBarSpots!.isNotEmpty) {
+                            if (touchResponse.lineBarSpots!.first.barIndex ==
+                                0) {
+                              final indexToRemove =
+                                  touchResponse.lineBarSpots!.first.spotIndex;
+                              _removePoint(indexToRemove);
+                              setState(() {
+                                _touchedIndex = null;
+                              });
+                            }
+                          }
                         }
-                      }
-                    } else if (event is FlLongPressStart) {
-                      if (touchResponse?.lineBarSpots != null &&
-                          touchResponse!.lineBarSpots!.isNotEmpty) {
-                        if (touchResponse.lineBarSpots!.first.barIndex == 0) {
-                          final indexToRemove =
-                              touchResponse.lineBarSpots!.first.spotIndex;
-                          _removePoint(indexToRemove);
-                          setState(() {
-                            _touchedIndex = null;
-                          });
-                        }
-                      }
-                    }
-                  },
+                      },
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Offset _pixelToChart(Offset localPosition, Size widgetSize) {
     final gridWidth = widgetSize.width - _leftTitleWidth - _containerRight;

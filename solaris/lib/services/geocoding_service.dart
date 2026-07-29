@@ -4,10 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:lat_lng_to_timezone/lat_lng_to_timezone.dart' as tzmap;
 import 'package:solaris/env/env.dart';
 
-enum OfflineReason {
-  missingToken,
-  apiError,
-}
+enum OfflineReason { missingToken, apiError }
 
 class GeocodingResult {
   final String name;
@@ -50,15 +47,23 @@ class GeocodingService {
   GeocodingService({http.Client? client}) : _client = client ?? http.Client();
 
   /// Resolves the city name for the given coordinates.
-  /// 
+  ///
   /// First, it attempts to fetch the city using Mapbox Geocoding API.
   /// If it fails (offline, bad token, error), it falls back to extracting
   /// the city from the timezone identifier using the offline `lat_lng_to_timezone` library.
-  Future<GeocodingResult> getCityName(double latitude, double longitude, {String? language, String? customToken}) async {
+  Future<GeocodingResult> getCityName(
+    double latitude,
+    double longitude, {
+    String? language,
+    String? customToken,
+  }) async {
     // 1. Try Mapbox Geocoding API if token is valid
-    final token = (customToken != null && customToken.isNotEmpty) ? customToken : Env.mapboxToken;
-    final bool hasToken = token.isNotEmpty && !token.contains('your_mapbox_token_here');
-    
+    final token = (customToken != null && customToken.isNotEmpty)
+        ? customToken
+        : Env.mapboxToken;
+    final bool hasToken =
+        token.isNotEmpty && !token.contains('your_mapbox_token_here');
+
     if (hasToken) {
       try {
         final lang = language ?? Platform.localeName.split('_').first;
@@ -70,7 +75,9 @@ class GeocodingService {
           '&language=$lang',
         );
 
-        final response = await _client.get(url).timeout(const Duration(seconds: 5));
+        final response = await _client
+            .get(url)
+            .timeout(const Duration(seconds: 5));
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
           final features = data['features'] as List?;
@@ -78,10 +85,7 @@ class GeocodingService {
             final place = features.first;
             final text = place['text'] as String?;
             if (text != null && text.isNotEmpty) {
-              return GeocodingResult(
-                name: text,
-                isOffline: false,
-              );
+              return GeocodingResult(name: text, isOffline: false);
             }
           }
         }
@@ -96,7 +100,11 @@ class GeocodingService {
     return _getOfflineFallback(latitude, longitude, OfflineReason.missingToken);
   }
 
-  GeocodingResult _getOfflineFallback(double latitude, double longitude, OfflineReason reason) {
+  GeocodingResult _getOfflineFallback(
+    double latitude,
+    double longitude,
+    OfflineReason reason,
+  ) {
     try {
       var tzName = tzmap.latLngToTimezoneString(latitude, longitude);
       if (tzName == 'Europe/Kiev') {

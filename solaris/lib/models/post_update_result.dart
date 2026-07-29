@@ -1,9 +1,4 @@
-enum PostUpdateStatus {
-  none,
-  success,
-  rollback,
-  error,
-}
+enum PostUpdateStatus { none, success, rollback, error }
 
 /// Represents the result of an update attempt parsed from `update.log`.
 class PostUpdateResult {

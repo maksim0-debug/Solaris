@@ -20,5 +20,5 @@ class PostUpdateNotifier extends Notifier<PostUpdateResult?> {
 /// Provider for [PostUpdateNotifier].
 final postUpdateResultProvider =
     NotifierProvider<PostUpdateNotifier, PostUpdateResult?>(
-  PostUpdateNotifier.new,
-);
+      PostUpdateNotifier.new,
+    );

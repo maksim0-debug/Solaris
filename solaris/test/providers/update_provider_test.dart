@@ -52,7 +52,10 @@ class MockUpdateDownloadService extends UpdateDownloadService {
   }
 
   @override
-  Future<bool> verifyFileIntegrity(String filePath, String expectedDigest) async {
+  Future<bool> verifyFileIntegrity(
+    String filePath,
+    String expectedDigest,
+  ) async {
     return mockIntegrityResult;
   }
 
@@ -102,162 +105,195 @@ void main() {
       assetDigest: 'sha256:abc123def456',
     );
 
-    test('checkForUpdate transitions from idle -> checking -> available', () async {
-      final mockGithubService = MockGitHubReleaseService(sampleUpdateInfo);
-      final container = ProviderContainer(
-        overrides: [
-          githubReleaseServiceProvider.overrideWithValue(mockGithubService),
-        ],
-      );
-      addTearDown(container.dispose);
+    test(
+      'checkForUpdate transitions from idle -> checking -> available',
+      () async {
+        final mockGithubService = MockGitHubReleaseService(sampleUpdateInfo);
+        final container = ProviderContainer(
+          overrides: [
+            githubReleaseServiceProvider.overrideWithValue(mockGithubService),
+          ],
+        );
+        addTearDown(container.dispose);
 
-      expect(container.read(updateProvider).phase, equals(UpdatePhase.idle));
+        expect(container.read(updateProvider).phase, equals(UpdatePhase.idle));
 
-      final checkFuture = container.read(updateProvider.notifier).checkForUpdate(
-            isManual: true,
-            currentVersionOverride: '1.0.17',
-          );
+        final checkFuture = container
+            .read(updateProvider.notifier)
+            .checkForUpdate(isManual: true, currentVersionOverride: '1.0.17');
 
-      await checkFuture;
+        await checkFuture;
 
-      final finalState = container.read(updateProvider);
-      expect(finalState.phase, equals(UpdatePhase.available));
-      expect(finalState.updateInfo?.version, equals('1.0.18'));
-    });
+        final finalState = container.read(updateProvider);
+        expect(finalState.phase, equals(UpdatePhase.available));
+        expect(finalState.updateInfo?.version, equals('1.0.18'));
+      },
+    );
 
-    test('startDownload handles downloading, SHA-256 verification and transitions to ready', () async {
-      final mockZipFile = File('${tempDir.path}/Solaris-Windows-v1.0.18.zip.tmp');
-      await mockZipFile.writeAsString('Dummy Zip');
+    test(
+      'startDownload handles downloading, SHA-256 verification and transitions to ready',
+      () async {
+        final mockZipFile = File(
+          '${tempDir.path}/Solaris-Windows-v1.0.18.zip.tmp',
+        );
+        await mockZipFile.writeAsString('Dummy Zip');
 
-      final mockGithubService = MockGitHubReleaseService(sampleUpdateInfo);
-      final mockDownloadService = MockUpdateDownloadService(
-        mockDownloadedPath: mockZipFile.path,
-        mockIntegrityResult: true,
-      );
+        final mockGithubService = MockGitHubReleaseService(sampleUpdateInfo);
+        final mockDownloadService = MockUpdateDownloadService(
+          mockDownloadedPath: mockZipFile.path,
+          mockIntegrityResult: true,
+        );
 
-      final container = ProviderContainer(
-        overrides: [
-          githubReleaseServiceProvider.overrideWithValue(mockGithubService),
-          updateDownloadServiceProvider.overrideWithValue(mockDownloadService),
-        ],
-      );
-      addTearDown(container.dispose);
+        final container = ProviderContainer(
+          overrides: [
+            githubReleaseServiceProvider.overrideWithValue(mockGithubService),
+            updateDownloadServiceProvider.overrideWithValue(
+              mockDownloadService,
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
 
-      // Setup available update
-      await container.read(updateProvider.notifier).checkForUpdate(
-            isManual: true,
-            currentVersionOverride: '1.0.17',
-          );
+        // Setup available update
+        await container
+            .read(updateProvider.notifier)
+            .checkForUpdate(isManual: true, currentVersionOverride: '1.0.17');
 
-      // Start download
-      await container.read(updateProvider.notifier).startDownload();
+        // Start download
+        await container.read(updateProvider.notifier).startDownload();
 
-      final state = container.read(updateProvider);
-      expect(state.phase, equals(UpdatePhase.ready));
-      expect(state.downloadedFilePath, equals(mockZipFile.path.replaceAll('.tmp', '')));
-      expect(state.downloadProgress, equals(1.0));
-    });
+        final state = container.read(updateProvider);
+        expect(state.phase, equals(UpdatePhase.ready));
+        expect(
+          state.downloadedFilePath,
+          equals(mockZipFile.path.replaceAll('.tmp', '')),
+        );
+        expect(state.downloadProgress, equals(1.0));
+      },
+    );
 
-    test('startDownload sets error state when SHA-256 integrity verification fails', () async {
-      final mockZipFile = File('${tempDir.path}/Solaris-Windows-v1.0.18.zip.tmp');
-      await mockZipFile.writeAsString('Corrupted Content');
+    test(
+      'startDownload sets error state when SHA-256 integrity verification fails',
+      () async {
+        final mockZipFile = File(
+          '${tempDir.path}/Solaris-Windows-v1.0.18.zip.tmp',
+        );
+        await mockZipFile.writeAsString('Corrupted Content');
 
-      final mockGithubService = MockGitHubReleaseService(sampleUpdateInfo);
-      final mockDownloadService = MockUpdateDownloadService(
-        mockDownloadedPath: mockZipFile.path,
-        mockIntegrityResult: false, // Force SHA-256 mismatch
-      );
+        final mockGithubService = MockGitHubReleaseService(sampleUpdateInfo);
+        final mockDownloadService = MockUpdateDownloadService(
+          mockDownloadedPath: mockZipFile.path,
+          mockIntegrityResult: false, // Force SHA-256 mismatch
+        );
 
-      final container = ProviderContainer(
-        overrides: [
-          githubReleaseServiceProvider.overrideWithValue(mockGithubService),
-          updateDownloadServiceProvider.overrideWithValue(mockDownloadService),
-        ],
-      );
-      addTearDown(container.dispose);
+        final container = ProviderContainer(
+          overrides: [
+            githubReleaseServiceProvider.overrideWithValue(mockGithubService),
+            updateDownloadServiceProvider.overrideWithValue(
+              mockDownloadService,
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
 
-      await container.read(updateProvider.notifier).checkForUpdate(
-            isManual: true,
-            currentVersionOverride: '1.0.17',
-          );
+        await container
+            .read(updateProvider.notifier)
+            .checkForUpdate(isManual: true, currentVersionOverride: '1.0.17');
 
-      await container.read(updateProvider.notifier).startDownload();
+        await container.read(updateProvider.notifier).startDownload();
 
-      final state = container.read(updateProvider);
-      expect(state.phase, equals(UpdatePhase.error));
-      expect(state.errorMessage, contains('Integrity verification failed'));
-    });
+        final state = container.read(updateProvider);
+        expect(state.phase, equals(UpdatePhase.error));
+        expect(state.errorMessage, contains('Integrity verification failed'));
+      },
+    );
 
-    test('startDownload sets error state when SHA-256 digest is missing from UpdateInfo', () async {
-      final mockZipFile = File('${tempDir.path}/Solaris-Windows-v1.0.18.zip.tmp');
-      await mockZipFile.writeAsString('Dummy Content');
+    test(
+      'startDownload sets error state when SHA-256 digest is missing from UpdateInfo',
+      () async {
+        final mockZipFile = File(
+          '${tempDir.path}/Solaris-Windows-v1.0.18.zip.tmp',
+        );
+        await mockZipFile.writeAsString('Dummy Content');
 
-      final infoWithoutDigest = UpdateInfo(
-        version: '1.0.18',
-        downloadUrl: 'https://example.com/Solaris-Windows.zip',
-        releaseNotes: 'No digest in release notes',
-        publishedAt: DateTime.now(),
-        assetSize: 10240,
-        assetDigest: null, // Missing SHA-256 digest
-      );
+        final infoWithoutDigest = UpdateInfo(
+          version: '1.0.18',
+          downloadUrl: 'https://example.com/Solaris-Windows.zip',
+          releaseNotes: 'No digest in release notes',
+          publishedAt: DateTime.now(),
+          assetSize: 10240,
+          assetDigest: null, // Missing SHA-256 digest
+        );
 
-      final mockGithubService = MockGitHubReleaseService(infoWithoutDigest);
-      final mockDownloadService = MockUpdateDownloadService(
-        mockDownloadedPath: mockZipFile.path,
-      );
+        final mockGithubService = MockGitHubReleaseService(infoWithoutDigest);
+        final mockDownloadService = MockUpdateDownloadService(
+          mockDownloadedPath: mockZipFile.path,
+        );
 
-      final container = ProviderContainer(
-        overrides: [
-          githubReleaseServiceProvider.overrideWithValue(mockGithubService),
-          updateDownloadServiceProvider.overrideWithValue(mockDownloadService),
-        ],
-      );
-      addTearDown(container.dispose);
+        final container = ProviderContainer(
+          overrides: [
+            githubReleaseServiceProvider.overrideWithValue(mockGithubService),
+            updateDownloadServiceProvider.overrideWithValue(
+              mockDownloadService,
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
 
-      await container.read(updateProvider.notifier).checkForUpdate(
-            isManual: true,
-            currentVersionOverride: '1.0.17',
-          );
+        await container
+            .read(updateProvider.notifier)
+            .checkForUpdate(isManual: true, currentVersionOverride: '1.0.17');
 
-      await container.read(updateProvider.notifier).startDownload();
+        await container.read(updateProvider.notifier).startDownload();
 
-      final state = container.read(updateProvider);
-      expect(state.phase, equals(UpdatePhase.error));
-      expect(state.errorMessage, contains('SHA-256 digest is missing from release metadata'));
-    });
+        final state = container.read(updateProvider);
+        expect(state.phase, equals(UpdatePhase.error));
+        expect(
+          state.errorMessage,
+          contains('SHA-256 digest is missing from release metadata'),
+        );
+      },
+    );
 
-    test('startDownload sets error state when SLSA provenance attestation check fails', () async {
-      final mockZipFile = File('${tempDir.path}/Solaris-Windows-v1.0.18.zip.tmp');
-      await mockZipFile.writeAsString('Tampered Content');
+    test(
+      'startDownload sets error state when SLSA provenance attestation check fails',
+      () async {
+        final mockZipFile = File(
+          '${tempDir.path}/Solaris-Windows-v1.0.18.zip.tmp',
+        );
+        await mockZipFile.writeAsString('Tampered Content');
 
-      final mockGithubService = MockGitHubReleaseService(
-        sampleUpdateInfo,
-        mockAttestationResult: false, // Force SLSA attestation check failure (HTTP 404)
-      );
-      final mockDownloadService = MockUpdateDownloadService(
-        mockDownloadedPath: mockZipFile.path,
-        mockIntegrityResult: true,
-      );
+        final mockGithubService = MockGitHubReleaseService(
+          sampleUpdateInfo,
+          mockAttestationResult:
+              false, // Force SLSA attestation check failure (HTTP 404)
+        );
+        final mockDownloadService = MockUpdateDownloadService(
+          mockDownloadedPath: mockZipFile.path,
+          mockIntegrityResult: true,
+        );
 
-      final container = ProviderContainer(
-        overrides: [
-          githubReleaseServiceProvider.overrideWithValue(mockGithubService),
-          updateDownloadServiceProvider.overrideWithValue(mockDownloadService),
-        ],
-      );
-      addTearDown(container.dispose);
+        final container = ProviderContainer(
+          overrides: [
+            githubReleaseServiceProvider.overrideWithValue(mockGithubService),
+            updateDownloadServiceProvider.overrideWithValue(
+              mockDownloadService,
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
 
-      await container.read(updateProvider.notifier).checkForUpdate(
-            isManual: true,
-            currentVersionOverride: '1.0.17',
-          );
+        await container
+            .read(updateProvider.notifier)
+            .checkForUpdate(isManual: true, currentVersionOverride: '1.0.17');
 
-      await container.read(updateProvider.notifier).startDownload();
+        await container.read(updateProvider.notifier).startDownload();
 
-      final state = container.read(updateProvider);
-      expect(state.phase, equals(UpdatePhase.error));
-      expect(state.errorMessage, contains('SLSA attestation'));
-    });
+        final state = container.read(updateProvider);
+        expect(state.phase, equals(UpdatePhase.error));
+        expect(state.errorMessage, contains('SLSA attestation'));
+      },
+    );
 
     test('dismissUpdate and resetError reset state back to idle', () async {
       final container = ProviderContainer();
@@ -271,45 +307,49 @@ void main() {
       expect(container.read(updateProvider).errorMessage, isNull);
     });
 
-    test('checkForUpdate sets isUpToDateNotice true when manual check returns no update', () async {
-      final mockGithubService = MockGitHubReleaseService(null);
-      final container = ProviderContainer(
-        overrides: [
-          githubReleaseServiceProvider.overrideWithValue(mockGithubService),
-        ],
-      );
-      addTearDown(container.dispose);
+    test(
+      'checkForUpdate sets isUpToDateNotice true when manual check returns no update',
+      () async {
+        final mockGithubService = MockGitHubReleaseService(null);
+        final container = ProviderContainer(
+          overrides: [
+            githubReleaseServiceProvider.overrideWithValue(mockGithubService),
+          ],
+        );
+        addTearDown(container.dispose);
 
-      await container.read(updateProvider.notifier).checkForUpdate(
-            isManual: true,
-            currentVersionOverride: '1.0.17',
-          );
+        await container
+            .read(updateProvider.notifier)
+            .checkForUpdate(isManual: true, currentVersionOverride: '1.0.17');
 
-      final state = container.read(updateProvider);
-      expect(state.phase, equals(UpdatePhase.idle));
-      expect(state.isUpToDateNotice, isTrue);
+        final state = container.read(updateProvider);
+        expect(state.phase, equals(UpdatePhase.idle));
+        expect(state.isUpToDateNotice, isTrue);
 
-      container.read(updateProvider.notifier).resetUpToDateNotice();
-      expect(container.read(updateProvider).isUpToDateNotice, isFalse);
-    });
+        container.read(updateProvider.notifier).resetUpToDateNotice();
+        expect(container.read(updateProvider).isUpToDateNotice, isFalse);
+      },
+    );
 
-    test('checkForUpdate leaves isUpToDateNotice false when automatic check returns no update', () async {
-      final mockGithubService = MockGitHubReleaseService(null);
-      final container = ProviderContainer(
-        overrides: [
-          githubReleaseServiceProvider.overrideWithValue(mockGithubService),
-        ],
-      );
-      addTearDown(container.dispose);
+    test(
+      'checkForUpdate leaves isUpToDateNotice false when automatic check returns no update',
+      () async {
+        final mockGithubService = MockGitHubReleaseService(null);
+        final container = ProviderContainer(
+          overrides: [
+            githubReleaseServiceProvider.overrideWithValue(mockGithubService),
+          ],
+        );
+        addTearDown(container.dispose);
 
-      await container.read(updateProvider.notifier).checkForUpdate(
-            isManual: false,
-            currentVersionOverride: '1.0.17',
-          );
+        await container
+            .read(updateProvider.notifier)
+            .checkForUpdate(isManual: false, currentVersionOverride: '1.0.17');
 
-      final state = container.read(updateProvider);
-      expect(state.phase, equals(UpdatePhase.idle));
-      expect(state.isUpToDateNotice, isFalse);
-    });
+        final state = container.read(updateProvider);
+        expect(state.phase, equals(UpdatePhase.idle));
+        expect(state.isUpToDateNotice, isFalse);
+      },
+    );
   });
 }

@@ -44,9 +44,12 @@ void main() {
 
       final jsonStr = jsonEncode(settings.toJson());
       final encrypted = KeyObfuscator.encrypt(jsonStr);
-      
+
       // DPAPI prefix check
-      expect(encrypted.startsWith('dpapi:') || encrypted.startsWith('obf:'), true);
+      expect(
+        encrypted.startsWith('dpapi:') || encrypted.startsWith('obf:'),
+        true,
+      );
 
       final decrypted = KeyObfuscator.decrypt(encrypted);
       expect(decrypted, jsonStr);
@@ -58,8 +61,9 @@ void main() {
     });
 
     test('Seamless compatibility with unencrypted legacy settings', () {
-      const legacyJson = '{"useManual":false,"manualLatitude":40.88230371608771,"manualLongitude":-111.62138879049142,"lastCityName":null}';
-      
+      const legacyJson =
+          '{"useManual":false,"manualLatitude":40.88230371608771,"manualLongitude":-111.62138879049142,"lastCityName":null}';
+
       // Decrypting unencrypted string should return it as-is
       final result = KeyObfuscator.decrypt(legacyJson);
       expect(result, legacyJson);

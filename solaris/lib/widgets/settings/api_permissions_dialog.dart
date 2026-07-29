@@ -11,7 +11,8 @@ Future<ApiPermissionsConfig?> showApiPermissionsDialog(
 }) async {
   return showDialog<ApiPermissionsConfig>(
     context: context,
-    builder: (dialogContext) => ApiPermissionsDialog(initialConfig: initialConfig),
+    builder: (dialogContext) =>
+        ApiPermissionsDialog(initialConfig: initialConfig),
   );
 }
 
@@ -19,13 +20,11 @@ Future<ApiPermissionsConfig?> showApiPermissionsDialog(
 class ApiPermissionsDialog extends ConsumerStatefulWidget {
   final ApiPermissionsConfig initialConfig;
 
-  const ApiPermissionsDialog({
-    super.key,
-    required this.initialConfig,
-  });
+  const ApiPermissionsDialog({super.key, required this.initialConfig});
 
   @override
-  ConsumerState<ApiPermissionsDialog> createState() => _ApiPermissionsDialogState();
+  ConsumerState<ApiPermissionsDialog> createState() =>
+      _ApiPermissionsDialogState();
 }
 
 class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
@@ -47,7 +46,9 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
     _allowReadWeather = widget.initialConfig.allowReadWeather;
     _allowReadSleep = widget.initialConfig.allowReadSleep;
     _allowReadCircadian = widget.initialConfig.allowReadCircadian;
-    _allowedCategories = Set<ApiActionCategory>.from(widget.initialConfig.allowedCategories);
+    _allowedCategories = Set<ApiActionCategory>.from(
+      widget.initialConfig.allowedCategories,
+    );
     if (widget.initialConfig.allowedActions != null) {
       _allowedActions = Set<String>.from(widget.initialConfig.allowedActions!);
     } else {
@@ -63,10 +64,14 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
     if (_allowedActions == null) {
       return true;
     }
-    final categoryActions = ApiPermissionsConfig.getActionsForCategory(category);
+    final categoryActions = ApiPermissionsConfig.getActionsForCategory(
+      category,
+    );
     if (categoryActions.isEmpty) return true;
 
-    final allowedInCatCount = categoryActions.where((action) => _allowedActions!.contains(action)).length;
+    final allowedInCatCount = categoryActions
+        .where((action) => _allowedActions!.contains(action))
+        .length;
 
     if (allowedInCatCount == 0) {
       return false;
@@ -80,20 +85,25 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
   /// Toggles an entire category on or off.
   void _toggleCategory(ApiActionCategory category, bool? newValue) {
     setState(() {
-      final categoryActions = ApiPermissionsConfig.getActionsForCategory(category);
+      final categoryActions = ApiPermissionsConfig.getActionsForCategory(
+        category,
+      );
 
       if (newValue == true) {
         _allowedCategories.add(category);
         if (_allowedActions != null) {
           _allowedActions!.addAll(categoryActions);
-          if (_allowedActions!.length == ApiPermissionsConfig.getAllCanonicalActions().length) {
+          if (_allowedActions!.length ==
+              ApiPermissionsConfig.getAllCanonicalActions().length) {
             _allowedActions = null; // Clean Storage Protocol
           }
         }
       } else {
         _allowedCategories.remove(category);
         if (_allowedActions == null) {
-          _allowedActions = Set<String>.from(ApiPermissionsConfig.getAllCanonicalActions());
+          _allowedActions = Set<String>.from(
+            ApiPermissionsConfig.getAllCanonicalActions(),
+          );
         }
         _allowedActions!.removeAll(categoryActions);
       }
@@ -118,7 +128,9 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
       final category = ApiPermissionsConfig.getCategoryForAction(actionKey);
 
       if (_allowedActions == null) {
-        _allowedActions = Set<String>.from(ApiPermissionsConfig.getAllCanonicalActions());
+        _allowedActions = Set<String>.from(
+          ApiPermissionsConfig.getAllCanonicalActions(),
+        );
       }
 
       if (enabled) {
@@ -126,14 +138,19 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
         if (category != null) {
           _allowedCategories.add(category);
         }
-        if (_allowedActions!.length == ApiPermissionsConfig.getAllCanonicalActions().length) {
+        if (_allowedActions!.length ==
+            ApiPermissionsConfig.getAllCanonicalActions().length) {
           _allowedActions = null; // Clean Storage Protocol
         }
       } else {
         _allowedActions!.remove(actionKey);
         if (category != null) {
-          final categoryActions = ApiPermissionsConfig.getActionsForCategory(category);
-          final hasRemainingInCat = categoryActions.any((a) => _allowedActions!.contains(a));
+          final categoryActions = ApiPermissionsConfig.getActionsForCategory(
+            category,
+          );
+          final hasRemainingInCat = categoryActions.any(
+            (a) => _allowedActions!.contains(a),
+          );
           if (!hasRemainingInCat) {
             _allowedCategories.remove(category);
           }
@@ -251,7 +268,10 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
             children: [
               // Dialog Header
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.03),
                   border: const Border(
@@ -284,7 +304,11 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(LucideIcons.x, color: Colors.white54, size: 18),
+                      icon: const Icon(
+                        LucideIcons.x,
+                        color: Colors.white54,
+                        size: 18,
+                      ),
                       onPressed: () => Navigator.of(context).pop(null),
                       tooltip: l10n.cancel,
                     ),
@@ -316,8 +340,12 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
                         child: Row(
                           children: [
                             Icon(
-                              _isReadOnly ? LucideIcons.lock : LucideIcons.unlock,
-                              color: _isReadOnly ? const Color(0xFFEF4444) : const Color(0xFF4ADE80),
+                              _isReadOnly
+                                  ? LucideIcons.lock
+                                  : LucideIcons.unlock,
+                              color: _isReadOnly
+                                  ? const Color(0xFFEF4444)
+                                  : const Color(0xFF4ADE80),
                               size: 20,
                             ),
                             const SizedBox(width: 14),
@@ -328,7 +356,9 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
                                   Text(
                                     l10n.apiPermissionsReadOnlyLabel,
                                     style: TextStyle(
-                                      color: _isReadOnly ? const Color(0xFFFCA5A5) : Colors.white,
+                                      color: _isReadOnly
+                                          ? const Color(0xFFFCA5A5)
+                                          : Colors.white,
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -368,27 +398,32 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
                       _buildSwitchTile(
                         title: l10n.apiPermissionsAllowMonitors,
                         value: _allowReadMonitors,
-                        onChanged: (val) => setState(() => _allowReadMonitors = val),
+                        onChanged: (val) =>
+                            setState(() => _allowReadMonitors = val),
                       ),
                       _buildSwitchTile(
                         title: l10n.apiPermissionsAllowSolar,
                         value: _allowReadSolar,
-                        onChanged: (val) => setState(() => _allowReadSolar = val),
+                        onChanged: (val) =>
+                            setState(() => _allowReadSolar = val),
                       ),
                       _buildSwitchTile(
                         title: l10n.apiPermissionsAllowWeather,
                         value: _allowReadWeather,
-                        onChanged: (val) => setState(() => _allowReadWeather = val),
+                        onChanged: (val) =>
+                            setState(() => _allowReadWeather = val),
                       ),
                       _buildSwitchTile(
                         title: l10n.apiPermissionsAllowSleep,
                         value: _allowReadSleep,
-                        onChanged: (val) => setState(() => _allowReadSleep = val),
+                        onChanged: (val) =>
+                            setState(() => _allowReadSleep = val),
                       ),
                       _buildSwitchTile(
                         title: l10n.apiPermissionsAllowCircadian,
                         value: _allowReadCircadian,
-                        onChanged: (val) => setState(() => _allowReadCircadian = val),
+                        onChanged: (val) =>
+                            setState(() => _allowReadCircadian = val),
                       ),
 
                       const SizedBox(height: 24),
@@ -401,7 +436,8 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
                           children: [
                             _buildSectionHeader(
                               icon: LucideIcons.sliders,
-                              title: l10n.apiPermissionsControlCategoriesSection,
+                              title:
+                                  l10n.apiPermissionsControlCategoriesSection,
                             ),
                             const SizedBox(height: 10),
                             _buildCategoryExpansionAccordion(
@@ -452,9 +488,7 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.02),
-                  border: const Border(
-                    top: BorderSide(color: Colors.white10),
-                  ),
+                  border: const Border(top: BorderSide(color: Colors.white10)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -474,7 +508,10 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFDBA74),
                         foregroundColor: Colors.black87,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -540,9 +577,13 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
     required String label,
     required AppLocalizations l10n,
   }) {
-    final categoryActions = ApiPermissionsConfig.getActionsForCategory(category);
+    final categoryActions = ApiPermissionsConfig.getActionsForCategory(
+      category,
+    );
     final triStateVal = _getCategoryCheckboxValue(category);
-    final allowedCount = categoryActions.where((a) => _isActionAllowedInUi(a)).length;
+    final allowedCount = categoryActions
+        .where((a) => _isActionAllowedInUi(a))
+        .length;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -578,10 +619,7 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
         ),
         subtitle: Text(
           l10n.apiKeysGranularActionChip(allowedCount, categoryActions.length),
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.45),
-            fontSize: 11,
-          ),
+          style: TextStyle(color: Colors.white.withOpacity(0.45), fontSize: 11),
         ),
         children: categoryActions.map((actionKey) {
           final isAllowed = _isActionAllowedInUi(actionKey);
@@ -596,7 +634,9 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
               title: Text(
                 _getLocalizedActionName(l10n, actionKey),
                 style: TextStyle(
-                  color: _isReadOnly || !_allowedCategories.contains(category) ? Colors.white30 : Colors.white.withOpacity(0.8),
+                  color: _isReadOnly || !_allowedCategories.contains(category)
+                      ? Colors.white30
+                      : Colors.white.withOpacity(0.8),
                   fontSize: 12.5,
                 ),
               ),
@@ -612,7 +652,10 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
               activeColor: const Color(0xFFFDBA74),
               checkColor: Colors.black,
               dense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 0,
+              ),
               onChanged: (_isReadOnly || !_allowedCategories.contains(category))
                   ? null
                   : (bool? val) {

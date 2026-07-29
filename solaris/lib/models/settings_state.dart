@@ -7,7 +7,6 @@ import 'package:solaris/models/api_key_entry.dart';
 import 'package:solaris/env/env.dart';
 import 'package:solaris/utils/key_obfuscator.dart';
 
-
 enum MapStyleMode {
   auto,
   day,
@@ -113,17 +112,21 @@ class SettingsState {
   final List<WebhookConfig> webhooks;
 
   String get apiAccessToken => apiKeys.isNotEmpty
-      ? apiKeys.firstWhere(
-          (k) => !k.permissions.isReadOnly,
-          orElse: () => apiKeys.first,
-        ).token
+      ? apiKeys
+            .firstWhere(
+              (k) => !k.permissions.isReadOnly,
+              orElse: () => apiKeys.first,
+            )
+            .token
       : '';
 
   ApiPermissionsConfig get apiPermissions => apiKeys.isNotEmpty
-      ? apiKeys.firstWhere(
-          (k) => !k.permissions.isReadOnly,
-          orElse: () => apiKeys.first,
-        ).permissions
+      ? apiKeys
+            .firstWhere(
+              (k) => !k.permissions.isReadOnly,
+              orElse: () => apiKeys.first,
+            )
+            .permissions
       : const ApiPermissionsConfig();
 
   SettingsState({
@@ -212,7 +215,9 @@ class SettingsState {
     this.customGoogleClientId = "",
     this.customGoogleClientSecret = "",
     this.webhooks = const [],
-  }) : apiKeys = List.unmodifiable(_initApiKeys(apiKeys, apiAccessToken, apiPermissions)),
+  }) : apiKeys = List.unmodifiable(
+         _initApiKeys(apiKeys, apiAccessToken, apiPermissions),
+       ),
        apiServerPort = apiServerPort ?? localIpcServerPort,
        isAutoUpdateEnabled = isAutoUpdateEnabled ?? Env.isOfficialRelease,
        curvesMap = curvesMap ?? PresetConstants.getAllDefaults(),
@@ -230,10 +235,12 @@ class SettingsState {
   ) {
     List<ApiKeyEntry> keys = apiKeys != null ? List.from(apiKeys) : [];
     if (keys.isEmpty) {
-      keys.add(ApiKeyEntry.create(
-        name: 'Default Key',
-        permissions: apiPermissions ?? const ApiPermissionsConfig(),
-      ));
+      keys.add(
+        ApiKeyEntry.create(
+          name: 'Default Key',
+          permissions: apiPermissions ?? const ApiPermissionsConfig(),
+        ),
+      );
       if (apiAccessToken != null && apiAccessToken.isNotEmpty) {
         keys[0] = keys.first.copyWith(token: apiAccessToken);
       }
@@ -253,11 +260,13 @@ class SettingsState {
   String get effectiveMapboxToken =>
       customMapboxToken.isNotEmpty ? customMapboxToken : Env.mapboxToken;
 
-  String get effectiveGoogleClientId =>
-      customGoogleClientId.isNotEmpty ? customGoogleClientId : Env.googleClientId;
+  String get effectiveGoogleClientId => customGoogleClientId.isNotEmpty
+      ? customGoogleClientId
+      : Env.googleClientId;
 
-  String get effectiveGoogleClientSecret =>
-      customGoogleClientSecret.isNotEmpty ? customGoogleClientSecret : Env.googleClientSecret;
+  String get effectiveGoogleClientSecret => customGoogleClientSecret.isNotEmpty
+      ? customGoogleClientSecret
+      : Env.googleClientSecret;
 
   bool get isWeatherKeyAvailable =>
       customWeatherApiKey.isNotEmpty || Env.isWeatherApiKeyValid;
@@ -266,7 +275,8 @@ class SettingsState {
       customMapboxToken.isNotEmpty || Env.isMapboxTokenValid;
 
   bool get isGoogleFitKeysAvailable =>
-      (customGoogleClientId.isNotEmpty && customGoogleClientSecret.isNotEmpty) ||
+      (customGoogleClientId.isNotEmpty &&
+          customGoogleClientSecret.isNotEmpty) ||
       Env.isGoogleFitKeysValid;
 
   List<FlSpot> get curvePoints {
@@ -291,7 +301,8 @@ class SettingsState {
     'isAutorunEnabled': isAutorunEnabled,
     'isAutoUpdateEnabled': isAutoUpdateEnabled,
     'isWeatherAdjustmentEnabled': isWeatherAdjustmentEnabled,
-    'isWeatherTemperatureAdjustmentEnabled': isWeatherTemperatureAdjustmentEnabled,
+    'isWeatherTemperatureAdjustmentEnabled':
+        isWeatherTemperatureAdjustmentEnabled,
     'isAutoBrightnessEnabled': isAutoBrightnessEnabled,
     'isSmartCircadianEnabled': isSmartCircadianEnabled,
     'isSleepDebtEnabled': isSleepDebtEnabled,
@@ -405,13 +416,17 @@ class SettingsState {
           try {
             parsedApiKeys.add(ApiKeyEntry.fromJson(item));
           } catch (e) {
-            debugPrint('SettingsState: Error parsing individual ApiKeyEntry element: $e');
+            debugPrint(
+              'SettingsState: Error parsing individual ApiKeyEntry element: $e',
+            );
           }
         }
       }
-    } else if (json.containsKey('apiAccessToken') || json.containsKey('apiPermissions')) {
+    } else if (json.containsKey('apiAccessToken') ||
+        json.containsKey('apiPermissions')) {
       String oldToken = '';
-      if (json.containsKey('apiAccessToken') && json['apiAccessToken'] is String) {
+      if (json.containsKey('apiAccessToken') &&
+          json['apiAccessToken'] is String) {
         try {
           oldToken = KeyObfuscator.decrypt(json['apiAccessToken'] as String);
         } catch (_) {
@@ -419,15 +434,21 @@ class SettingsState {
         }
       }
       final oldPermissions = json['apiPermissions'] is Map<String, dynamic>
-          ? ApiPermissionsConfig.fromJson(json['apiPermissions'] as Map<String, dynamic>)
+          ? ApiPermissionsConfig.fromJson(
+              json['apiPermissions'] as Map<String, dynamic>,
+            )
           : const ApiPermissionsConfig();
-      parsedApiKeys.add(ApiKeyEntry(
-        id: 'default_migrated',
-        name: 'Default Key',
-        token: oldToken.isNotEmpty ? oldToken : ApiKeyEntry.generateSecureToken(),
-        permissions: oldPermissions,
-        createdAt: DateTime.now(),
-      ));
+      parsedApiKeys.add(
+        ApiKeyEntry(
+          id: 'default_migrated',
+          name: 'Default Key',
+          token: oldToken.isNotEmpty
+              ? oldToken
+              : ApiKeyEntry.generateSecureToken(),
+          permissions: oldPermissions,
+          createdAt: DateTime.now(),
+        ),
+      );
     }
     if (parsedApiKeys.isEmpty) {
       parsedApiKeys.add(ApiKeyEntry.create(name: 'Default Key'));
@@ -440,7 +461,8 @@ class SettingsState {
       curvesMap: curvesMap,
       curveSharpness: (json['curveSharpness'] as num?)?.toDouble() ?? 1.0,
       isAutorunEnabled: json['isAutorunEnabled'] as bool? ?? true,
-      isAutoUpdateEnabled: json['isAutoUpdateEnabled'] as bool? ?? Env.isOfficialRelease,
+      isAutoUpdateEnabled:
+          json['isAutoUpdateEnabled'] as bool? ?? Env.isOfficialRelease,
       isWeatherAdjustmentEnabled:
           json['isWeatherAdjustmentEnabled'] as bool? ?? true,
       isWeatherTemperatureAdjustmentEnabled:
@@ -470,7 +492,8 @@ class SettingsState {
       sleepPressureBrightnessIntensity:
           (json['sleepPressureBrightnessIntensity'] as num?)?.toDouble() ?? 1.0,
       sleepPressureTemperatureIntensity:
-          (json['sleepPressureTemperatureIntensity'] as num?)?.toDouble() ?? 1.0,
+          (json['sleepPressureTemperatureIntensity'] as num?)?.toDouble() ??
+          1.0,
       sleepDebtBrightnessIntensity:
           (json['sleepDebtBrightnessIntensity'] as num?)?.toDouble() ?? 1.0,
       sleepDebtTemperatureIntensity:
@@ -559,9 +582,13 @@ class SettingsState {
       startupMode: StartupMode.fromJson(
         json['startupMode'] as String? ?? 'minimized',
       ),
-      isLocalIpcServerEnabled: json['isLocalIpcServerEnabled'] as bool? ?? false,
+      isLocalIpcServerEnabled:
+          json['isLocalIpcServerEnabled'] as bool? ?? false,
       localIpcServerPort: json['localIpcServerPort'] as int? ?? 45321,
-      apiServerPort: json['apiServerPort'] as int? ?? json['localIpcServerPort'] as int? ?? 45321,
+      apiServerPort:
+          json['apiServerPort'] as int? ??
+          json['localIpcServerPort'] as int? ??
+          45321,
       isApiLanAccessEnabled: json['isApiLanAccessEnabled'] as bool? ?? false,
       apiKeys: parsedApiKeys,
       requireLocalToken: requireLocalToken,
@@ -578,13 +605,13 @@ class SettingsState {
       customGoogleClientSecret: json.containsKey('customGoogleClientSecret')
           ? KeyObfuscator.decrypt(json['customGoogleClientSecret'] as String)
           : "",
-      webhooks: (json['webhooks'] as List<dynamic>?)
+      webhooks:
+          (json['webhooks'] as List<dynamic>?)
               ?.map((w) => WebhookConfig.fromJson(w as Map<String, dynamic>))
               .toList() ??
           [],
     );
   }
-
 
   SettingsState copyWith({
     List<ApiKeyEntry>? apiKeys,
@@ -666,7 +693,9 @@ class SettingsState {
     bool clearAutoBrightnessHotKey = false,
     bool clearActiveUserPresetId = false,
   }) {
-    List<ApiKeyEntry> updatedKeys = apiKeys != null ? List.from(apiKeys) : List.from(this.apiKeys);
+    List<ApiKeyEntry> updatedKeys = apiKeys != null
+        ? List.from(apiKeys)
+        : List.from(this.apiKeys);
     if (apiAccessToken != null || apiPermissions != null) {
       if (updatedKeys.isNotEmpty) {
         final first = updatedKeys.first;
@@ -675,10 +704,12 @@ class SettingsState {
           permissions: apiPermissions ?? first.permissions,
         );
       } else {
-        updatedKeys.add(ApiKeyEntry.create(
-          name: 'Default Key',
-          permissions: apiPermissions ?? const ApiPermissionsConfig(),
-        ));
+        updatedKeys.add(
+          ApiKeyEntry.create(
+            name: 'Default Key',
+            permissions: apiPermissions ?? const ApiPermissionsConfig(),
+          ),
+        );
       }
     }
     return SettingsState(
@@ -692,7 +723,8 @@ class SettingsState {
       isWeatherAdjustmentEnabled:
           isWeatherAdjustmentEnabled ?? this.isWeatherAdjustmentEnabled,
       isWeatherTemperatureAdjustmentEnabled:
-          isWeatherTemperatureAdjustmentEnabled ?? this.isWeatherTemperatureAdjustmentEnabled,
+          isWeatherTemperatureAdjustmentEnabled ??
+          this.isWeatherTemperatureAdjustmentEnabled,
       isAutoBrightnessEnabled:
           isAutoBrightnessEnabled ?? this.isAutoBrightnessEnabled,
       isSmartCircadianEnabled:
@@ -787,12 +819,9 @@ class SettingsState {
       customWeatherApiKey: customWeatherApiKey ?? this.customWeatherApiKey,
       customMapboxToken: customMapboxToken ?? this.customMapboxToken,
       customGoogleClientId: customGoogleClientId ?? this.customGoogleClientId,
-      customGoogleClientSecret: customGoogleClientSecret ?? this.customGoogleClientSecret,
+      customGoogleClientSecret:
+          customGoogleClientSecret ?? this.customGoogleClientSecret,
       webhooks: webhooks ?? this.webhooks,
     );
   }
-
 }
-
-
-

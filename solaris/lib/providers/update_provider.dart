@@ -67,7 +67,10 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
           return;
         }
       } catch (e) {
-        developer.log('Failed to read auto-update setting: $e', name: 'UpdateNotifier');
+        developer.log(
+          'Failed to read auto-update setting: $e',
+          name: 'UpdateNotifier',
+        );
         return;
       }
 
@@ -75,7 +78,8 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
         final prefs = await SharedPreferences.getInstance();
         final lastCheckEpoch = prefs.getInt(_lastCheckPrefKey) ?? 0;
         final nowEpoch = DateTime.now().millisecondsSinceEpoch;
-        if (nowEpoch - lastCheckEpoch < const Duration(hours: 1).inMilliseconds) {
+        if (nowEpoch - lastCheckEpoch <
+            const Duration(hours: 1).inMilliseconds) {
           developer.log(
             'Skipping automatic update check due to 1-hour throttling.',
             name: 'UpdateNotifier',
@@ -83,7 +87,10 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
           return;
         }
       } catch (e) {
-        developer.log('Failed to read SharedPreferences: $e', name: 'UpdateNotifier');
+        developer.log(
+          'Failed to read SharedPreferences: $e',
+          name: 'UpdateNotifier',
+        );
       }
     }
 
@@ -117,7 +124,10 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
       // Store check timestamp
       try {
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setInt(_lastCheckPrefKey, DateTime.now().millisecondsSinceEpoch);
+        await prefs.setInt(
+          _lastCheckPrefKey,
+          DateTime.now().millisecondsSinceEpoch,
+        );
       } catch (_) {}
 
       if (updateInfo != null) {
@@ -263,7 +273,9 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
       }
 
       // Verify SLSA provenance attestation against GitHub Attestations API
-      final isAttested = await githubService.verifyArtifactAttestation(fileHash);
+      final isAttested = await githubService.verifyArtifactAttestation(
+        fileHash,
+      );
       if (!isAttested) {
         final tmpFile = File(tmpFilePath);
         if (await tmpFile.exists()) {
@@ -348,7 +360,9 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
       // Check write permissions in appDir (Program Files check)
       bool hasWriteAccess = true;
       try {
-        final testFile = File('$appDir\\.write_test_${DateTime.now().millisecondsSinceEpoch}');
+        final testFile = File(
+          '$appDir\\.write_test_${DateTime.now().millisecondsSinceEpoch}',
+        );
         await testFile.writeAsString('test');
         await testFile.delete();
       } catch (_) {
@@ -474,10 +488,7 @@ class UpdateNotifier extends Notifier<UpdateStatus> {
   /// Resets error state back to idle phase.
   void resetError() {
     unawaited(_restoreTemperatureAfterFailure());
-    state = state.copyWith(
-      phase: UpdatePhase.idle,
-      nullifyErrorMessage: true,
-    );
+    state = state.copyWith(phase: UpdatePhase.idle, nullifyErrorMessage: true);
   }
 }
 

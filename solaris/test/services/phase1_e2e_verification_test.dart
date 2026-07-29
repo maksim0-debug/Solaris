@@ -29,49 +29,82 @@ void main() {
     );
 
     setUp(() {
-      MonitorSlugResolver.updateMonitors([testMonitorPrimary, testMonitorSecondary]);
+      MonitorSlugResolver.updateMonitors([
+        testMonitorPrimary,
+        testMonitorSecondary,
+      ]);
     });
 
     test('MonitorSlugResolver deterministically resolves all 5 slug types', () {
       // 1. Index slugs
-      expect(MonitorSlugResolver.resolveToSystemId('display-1'), equals(r'\\.\DISPLAY1\Monitor0'));
-      expect(MonitorSlugResolver.resolveToSystemId('display-2'), equals(r'\\.\DISPLAY2\Monitor0'));
+      expect(
+        MonitorSlugResolver.resolveToSystemId('display-1'),
+        equals(r'\\.\DISPLAY1\Monitor0'),
+      );
+      expect(
+        MonitorSlugResolver.resolveToSystemId('display-2'),
+        equals(r'\\.\DISPLAY2\Monitor0'),
+      );
 
       // 2. Primary / Main aliases
-      expect(MonitorSlugResolver.resolveToSystemId('primary'), equals(r'\\.\DISPLAY1\Monitor0'));
-      expect(MonitorSlugResolver.resolveToSystemId('main'), equals(r'\\.\DISPLAY1\Monitor0'));
+      expect(
+        MonitorSlugResolver.resolveToSystemId('primary'),
+        equals(r'\\.\DISPLAY1\Monitor0'),
+      );
+      expect(
+        MonitorSlugResolver.resolveToSystemId('main'),
+        equals(r'\\.\DISPLAY1\Monitor0'),
+      );
 
       // 3. EDID Friendly name + Hash slugs
-      expect(MonitorSlugResolver.resolveToSystemId('lg-ultragear-a1f9'), equals(r'\\.\DISPLAY1\Monitor0'));
-      expect(MonitorSlugResolver.resolveToSystemId('dell-4k-e4f5'), equals(r'\\.\DISPLAY2\Monitor0'));
+      expect(
+        MonitorSlugResolver.resolveToSystemId('lg-ultragear-a1f9'),
+        equals(r'\\.\DISPLAY1\Monitor0'),
+      );
+      expect(
+        MonitorSlugResolver.resolveToSystemId('dell-4k-e4f5'),
+        equals(r'\\.\DISPLAY2\Monitor0'),
+      );
 
       // 4. Raw Win32 System ID fallback
-      expect(MonitorSlugResolver.resolveToSystemId(r'\\.\DISPLAY1\Monitor0'), equals(r'\\.\DISPLAY1\Monitor0'));
+      expect(
+        MonitorSlugResolver.resolveToSystemId(r'\\.\DISPLAY1\Monitor0'),
+        equals(r'\\.\DISPLAY1\Monitor0'),
+      );
 
       // 5. Reverse slug resolution (EDID slug)
-      expect(MonitorSlugResolver.getSlugForSystemId(r'\\.\DISPLAY1\Monitor0'), equals('lg-ultragear-a1f9'));
-      expect(MonitorSlugResolver.getSlugForSystemId(r'\\.\DISPLAY2\Monitor0'), equals('dell-4k-e4f5'));
+      expect(
+        MonitorSlugResolver.getSlugForSystemId(r'\\.\DISPLAY1\Monitor0'),
+        equals('lg-ultragear-a1f9'),
+      );
+      expect(
+        MonitorSlugResolver.getSlugForSystemId(r'\\.\DISPLAY2\Monitor0'),
+        equals('dell-4k-e4f5'),
+      );
     });
 
-    test('OpenAPI 3.0.3 specification contains required endpoints and definitions', () {
-      final spec = OpenApiSpec.generateSpec(port: 45321);
-      final paths = spec['paths'] as Map<String, dynamic>;
+    test(
+      'OpenAPI 3.0.3 specification contains required endpoints and definitions',
+      () {
+        final spec = OpenApiSpec.generateSpec(port: 45321);
+        final paths = spec['paths'] as Map<String, dynamic>;
 
-      expect(paths.containsKey('/api/v1/status'), isTrue);
-      expect(paths.containsKey('/api/v1/health'), isTrue);
-      expect(paths.containsKey('/api/v1/control'), isTrue);
-      expect(paths.containsKey('/api/v1/monitors'), isTrue);
-      expect(paths.containsKey('/api/v1/monitors/{slug}'), isTrue);
-      expect(paths.containsKey('/api/v1/presets'), isTrue);
-      expect(paths.containsKey('/api/v1/solar'), isTrue);
-      expect(paths.containsKey('/api/v1/sleep/sessions'), isTrue);
+        expect(paths.containsKey('/api/v1/status'), isTrue);
+        expect(paths.containsKey('/api/v1/health'), isTrue);
+        expect(paths.containsKey('/api/v1/control'), isTrue);
+        expect(paths.containsKey('/api/v1/monitors'), isTrue);
+        expect(paths.containsKey('/api/v1/monitors/{slug}'), isTrue);
+        expect(paths.containsKey('/api/v1/presets'), isTrue);
+        expect(paths.containsKey('/api/v1/solar'), isTrue);
+        expect(paths.containsKey('/api/v1/sleep/sessions'), isTrue);
 
-      final components = spec['components'] as Map<String, dynamic>;
-      final schemas = components['schemas'] as Map<String, dynamic>;
-      expect(schemas.containsKey('StatusResponse'), isTrue);
-      expect(schemas.containsKey('Rfc7807Error'), isTrue);
-      expect(schemas.containsKey('ControlRequest'), isTrue);
-    });
+        final components = spec['components'] as Map<String, dynamic>;
+        final schemas = components['schemas'] as Map<String, dynamic>;
+        expect(schemas.containsKey('StatusResponse'), isTrue);
+        expect(schemas.containsKey('Rfc7807Error'), isTrue);
+        expect(schemas.containsKey('ControlRequest'), isTrue);
+      },
+    );
 
     test('RFC 7807 Error model respects RFC spec structure', () {
       final err = Rfc7807Error(
@@ -80,9 +113,7 @@ void main() {
         status: 422,
         detail: 'Value must be between 0 and 100.',
         instance: '/api/v1/control',
-        invalidParams: {
-          'value': 'out_of_range',
-        },
+        invalidParams: {'value': 'out_of_range'},
       );
 
       final json = err.toJson();

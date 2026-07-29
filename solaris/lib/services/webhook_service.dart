@@ -9,13 +9,7 @@ import 'package:solaris/providers.dart';
 import 'package:solaris/services/gaming_mode_service.dart';
 import 'package:solaris/services/ssrf_safe_http_client.dart';
 
-
-enum TransactionStatus {
-  pending,
-  retrying,
-  completed,
-  failed,
-}
+enum TransactionStatus { pending, retrying, completed, failed }
 
 class PendingWebhookTransaction {
   final String deliveryId;
@@ -59,16 +53,16 @@ class PendingWebhookTransaction {
   }
 
   Map<String, dynamic> toJson() => {
-        'deliveryId': deliveryId,
-        'webhookId': webhookId,
-        'url': url,
-        'eventName': eventName,
-        'payloadJson': payloadJson,
-        'attemptCount': attemptCount,
-        'createdAt': createdAt.toIso8601String(),
-        'status': status.name,
-        'lastError': lastError,
-      };
+    'deliveryId': deliveryId,
+    'webhookId': webhookId,
+    'url': url,
+    'eventName': eventName,
+    'payloadJson': payloadJson,
+    'attemptCount': attemptCount,
+    'createdAt': createdAt.toIso8601String(),
+    'status': status.name,
+    'lastError': lastError,
+  };
 
   factory PendingWebhookTransaction.fromJson(Map<String, dynamic> json) {
     return PendingWebhookTransaction(
@@ -78,7 +72,8 @@ class PendingWebhookTransaction {
       eventName: json['eventName'] as String,
       payloadJson: json['payloadJson'] as String,
       attemptCount: json['attemptCount'] as int? ?? 0,
-      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
           DateTime.now().toUtc(),
       status: TransactionStatus.values.firstWhere(
         (e) => e.name == json['status'],
@@ -211,9 +206,7 @@ class WebhookService extends Notifier<WebhookServiceState> {
     // 3. Auto-Brightness Listener
     ref.listen(autoBrightnessAdjustmentProvider, (prev, next) {
       if (prev != next) {
-        dispatch(WebhookEventType.onAutoBrightnessToggled, {
-          'enabled': next,
-        });
+        dispatch(WebhookEventType.onAutoBrightnessToggled, {'enabled': next});
       }
     });
   }
@@ -276,9 +269,9 @@ class WebhookService extends Notifier<WebhookServiceState> {
     final settings = settingsMap['all'];
     if (settings == null) return;
 
-    final activeWebhooks = settings.webhooks.where(
-      (w) => w.isEnabled && w.events.contains(event),
-    ).toList();
+    final activeWebhooks = settings.webhooks
+        .where((w) => w.isEnabled && w.events.contains(event))
+        .toList();
 
     if (activeWebhooks.isEmpty) return;
 
@@ -341,14 +334,20 @@ class WebhookService extends Notifier<WebhookServiceState> {
   }
 
   Future<void> _processQueue() async {
-    if (_isQueuePaused || _inMemoryQueue.isEmpty || _activeWorkerCount >= maxConcurrentDeliveries) {
+    if (_isQueuePaused ||
+        _inMemoryQueue.isEmpty ||
+        _activeWorkerCount >= maxConcurrentDeliveries) {
       return;
     }
 
     state = state.copyWith(isProcessing: true);
 
-    while (_inMemoryQueue.isNotEmpty && _activeWorkerCount < maxConcurrentDeliveries && !_isQueuePaused) {
-      final txIndex = _inMemoryQueue.indexWhere((t) => t.status == TransactionStatus.pending);
+    while (_inMemoryQueue.isNotEmpty &&
+        _activeWorkerCount < maxConcurrentDeliveries &&
+        !_isQueuePaused) {
+      final txIndex = _inMemoryQueue.indexWhere(
+        (t) => t.status == TransactionStatus.pending,
+      );
       if (txIndex == -1) break;
 
       final tx = _inMemoryQueue[txIndex];
@@ -373,7 +372,9 @@ class WebhookService extends Notifier<WebhookServiceState> {
 
     if (settings != null) {
       try {
-        webhookConfig = settings.webhooks.firstWhere((w) => w.id == tx.webhookId);
+        webhookConfig = settings.webhooks.firstWhere(
+          (w) => w.id == tx.webhookId,
+        );
       } catch (_) {}
     }
 
@@ -412,7 +413,9 @@ class WebhookService extends Notifier<WebhookServiceState> {
         compactWAL();
       }
     } else {
-      debugPrint('Webhook Delivery failed (Attempt $attempt/3) for ${tx.url}: $errorMessage');
+      debugPrint(
+        'Webhook Delivery failed (Attempt $attempt/3) for ${tx.url}: $errorMessage',
+      );
       _incrementWebhookFailureCount(webhookConfig.id);
 
       if (attempt < 3) {
@@ -420,20 +423,23 @@ class WebhookService extends Notifier<WebhookServiceState> {
         final delaySeconds = 1 << (attempt - 1);
         await Future<void>.delayed(Duration(seconds: delaySeconds));
 
-
         final updatedTx = tx.copyWith(
           attemptCount: attempt,
           status: TransactionStatus.pending,
           lastError: errorMessage,
         );
 
-        final idx = _inMemoryQueue.indexWhere((t) => t.deliveryId == tx.deliveryId);
+        final idx = _inMemoryQueue.indexWhere(
+          (t) => t.deliveryId == tx.deliveryId,
+        );
         if (idx != -1) {
           _inMemoryQueue[idx] = updatedTx;
         }
       } else {
         // Retries exhausted -> Record to DLQ and remove from WAL queue
-        await _recordToDLQ(tx.copyWith(attemptCount: attempt, lastError: errorMessage));
+        await _recordToDLQ(
+          tx.copyWith(attemptCount: attempt, lastError: errorMessage),
+        );
         _removeTransactionFromMemory(tx.deliveryId);
       }
     }
@@ -475,7 +481,10 @@ class WebhookService extends Notifier<WebhookServiceState> {
 
     final updatedWebhooks = settings.webhooks.map((w) {
       if (w.id == webhookId && w.failureCount > 0) {
-        return w.copyWith(failureCount: 0, lastTriggeredAt: DateTime.now().toUtc());
+        return w.copyWith(
+          failureCount: 0,
+          lastTriggeredAt: DateTime.now().toUtc(),
+        );
       }
       return w;
     }).toList();
@@ -497,7 +506,9 @@ class WebhookService extends Notifier<WebhookServiceState> {
         final trimmedLines = lines.sublist(lines.length - maxDlqEntries);
         await _dlqFile!.writeAsString(trimmedLines.join('\n') + '\n');
       }
-      state = state.copyWith(dlqCount: lines.length > maxDlqEntries ? maxDlqEntries : lines.length);
+      state = state.copyWith(
+        dlqCount: lines.length > maxDlqEntries ? maxDlqEntries : lines.length,
+      );
     } catch (e) {
       debugPrint('Failed to record DLQ: $e');
     }
@@ -511,7 +522,11 @@ class WebhookService extends Notifier<WebhookServiceState> {
       for (final line in lines) {
         if (line.trim().isEmpty) continue;
         try {
-          list.add(PendingWebhookTransaction.fromJson(jsonDecode(line) as Map<String, dynamic>));
+          list.add(
+            PendingWebhookTransaction.fromJson(
+              jsonDecode(line) as Map<String, dynamic>,
+            ),
+          );
         } catch (_) {}
       }
       return list;

@@ -25,7 +25,9 @@ class ApiKeyEntry {
   static String generateSecureToken() {
     final random = Random.secure();
     final values = List<int>.generate(32, (i) => random.nextInt(256));
-    final baseStr = values.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    final baseStr = values
+        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        .join();
     return 'sol_sec_$baseStr';
   }
 
@@ -58,7 +60,9 @@ class ApiKeyEntry {
 
   factory ApiKeyEntry.fromJson(Map<String, dynamic> json) {
     String decryptedToken;
-    bool isDpapiFallback = json['isDpapiFallback'] is bool ? json['isDpapiFallback'] as bool : false;
+    bool isDpapiFallback = json['isDpapiFallback'] is bool
+        ? json['isDpapiFallback'] as bool
+        : false;
     final idStr = json['id'] is String ? json['id'] as String : '';
     final nameStr = json['name'] is String ? json['name'] as String : 'API Key';
     final tokenStr = json['token'] is String ? json['token'] as String : '';
@@ -66,19 +70,29 @@ class ApiKeyEntry {
       decryptedToken = KeyObfuscator.decrypt(tokenStr);
     } catch (e) {
       // ZERO SECRET LEAKAGE: Log only key ID and name, NEVER output the raw token string
-      debugPrint('ApiKeyEntry: DPAPI decryption error for key "$nameStr" (id: $idStr): $e. Generated fallback secure token.');
+      debugPrint(
+        'ApiKeyEntry: DPAPI decryption error for key "$nameStr" (id: $idStr): $e. Generated fallback secure token.',
+      );
       decryptedToken = generateSecureToken();
       isDpapiFallback = true;
     }
-    final createdAtStr = json['createdAt'] is String ? json['createdAt'] as String : null;
-    final lastUsedAtStr = json['lastUsedAt'] is String ? json['lastUsedAt'] as String : null;
+    final createdAtStr = json['createdAt'] is String
+        ? json['createdAt'] as String
+        : null;
+    final lastUsedAtStr = json['lastUsedAt'] is String
+        ? json['lastUsedAt'] as String
+        : null;
 
     return ApiKeyEntry(
-      id: idStr.isNotEmpty ? idStr : '${DateTime.now().microsecondsSinceEpoch}_${Random.secure().nextInt(0xFFFF).toRadixString(16)}',
+      id: idStr.isNotEmpty
+          ? idStr
+          : '${DateTime.now().microsecondsSinceEpoch}_${Random.secure().nextInt(0xFFFF).toRadixString(16)}',
       name: nameStr,
       token: decryptedToken.isNotEmpty ? decryptedToken : generateSecureToken(),
       permissions: json['permissions'] is Map<String, dynamic>
-          ? ApiPermissionsConfig.fromJson(json['permissions'] as Map<String, dynamic>)
+          ? ApiPermissionsConfig.fromJson(
+              json['permissions'] as Map<String, dynamic>,
+            )
           : const ApiPermissionsConfig(),
       createdAt: createdAtStr != null
           ? DateTime.tryParse(createdAtStr) ?? DateTime.now()
@@ -122,5 +136,13 @@ class ApiKeyEntry {
   }
 
   @override
-  int get hashCode => Object.hash(id, name, token, permissions, createdAt, lastUsedAt, isDpapiFallback);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    token,
+    permissions,
+    createdAt,
+    lastUsedAt,
+    isDpapiFallback,
+  );
 }

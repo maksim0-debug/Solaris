@@ -227,7 +227,10 @@ class SunCalculatorService {
   ) {
     // Collect all significant transition points with their types
     final events = [
-      (time: phases.civilTwilightBegin, type: SolarEventType.civilTwilightBegin),
+      (
+        time: phases.civilTwilightBegin,
+        type: SolarEventType.civilTwilightBegin,
+      ),
       (time: phases.sunrise, type: SolarEventType.sunrise),
       (time: phases.goldenHourMorning, type: SolarEventType.goldenHourMorning),
       (

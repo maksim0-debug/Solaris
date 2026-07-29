@@ -17,7 +17,10 @@ class MapHealthReport extends Equatable {
   });
 
   bool get hasIssues =>
-      !isTokenValid || !isInternetAvailable || !isVCRedistInstalled || !isMapboxReachable;
+      !isTokenValid ||
+      !isInternetAvailable ||
+      !isVCRedistInstalled ||
+      !isMapboxReachable;
 
   @override
   List<Object?> get props => [

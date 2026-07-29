@@ -28,8 +28,12 @@ class LocationSettings extends Equatable {
       manualLatitude: lat != null ? lat.clamp(-90.0, 90.0) : null,
       manualLongitude: lon != null ? lon.clamp(-180.0, 180.0) : null,
       lastCityName: json['lastCityName'] as String?,
-      lastResolvedLatitude: resolvedLat != null ? resolvedLat.clamp(-90.0, 90.0) : null,
-      lastResolvedLongitude: resolvedLon != null ? resolvedLon.clamp(-180.0, 180.0) : null,
+      lastResolvedLatitude: resolvedLat != null
+          ? resolvedLat.clamp(-90.0, 90.0)
+          : null,
+      lastResolvedLongitude: resolvedLon != null
+          ? resolvedLon.clamp(-180.0, 180.0)
+          : null,
     );
   }
 

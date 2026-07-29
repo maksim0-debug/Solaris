@@ -95,8 +95,8 @@ class SmartCircadianService {
               timeSinceWake.inMinutes /
               (timeShiftDur > 0 ? timeShiftDur.toDouble() : 1.0);
 
-          // SMOOTH TRANSITION: 
-          // Instead of a sharp power-based decay, use a cosine wave for 
+          // SMOOTH TRANSITION:
+          // Instead of a sharp power-based decay, use a cosine wave for
           // a perfectly smooth start and a rounded landing at zero.
           fadeFactor = math.cos(progress * math.pi / 2).clamp(0.0, 1.0);
 
@@ -155,7 +155,8 @@ class SmartCircadianService {
         final double adjTempIntensity = math
             .pow(sleepPressureTemperatureIntensity, 1.5)
             .toDouble();
-        sleepPressureTempOffset = -(baseTempDrop * 300 * adjTempIntensity).toInt();
+        sleepPressureTempOffset = -(baseTempDrop * 300 * adjTempIntensity)
+            .toInt();
       }
     }
 
@@ -205,9 +206,10 @@ class SmartCircadianService {
         final actualWakeTime = lastAggSession.endTime;
         final timeSinceWake = now.difference(actualWakeTime);
         final isRealSleep = lastAggSession.duration.inMinutes >= 120;
-        final wokeUpInCurrentCycle = isRealSleep
-            && timeSinceWake.inMinutes >= 0
-            && timeSinceWake.inHours < 12;
+        final wokeUpInCurrentCycle =
+            isRealSleep &&
+            timeSinceWake.inMinutes >= 0 &&
+            timeSinceWake.inHours < 12;
 
         if (!wokeUpInCurrentCycle) {
           final avgWakeMinutes = currentRegime.averageWakeTimeNormalized;
@@ -279,7 +281,8 @@ class SmartCircadianService {
             0.1,
             1.0,
           ),
-      temperatureOffset: sleepDebtTempOffset + windDownTempOffset + sleepPressureTempOffset,
+      temperatureOffset:
+          sleepDebtTempOffset + windDownTempOffset + sleepPressureTempOffset,
       sleepDebtTemperatureOffset: sleepDebtTempOffset,
       windDownTemperatureOffset: windDownTempOffset,
       sleepPressureTemperatureOffset: sleepPressureTempOffset,

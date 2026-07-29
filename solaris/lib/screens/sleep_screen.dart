@@ -18,7 +18,6 @@ import 'package:intl/intl.dart';
 import 'package:solaris/widgets/deep_link_target.dart';
 import 'package:solaris/widgets/add_sleep_session_dialog.dart';
 
-
 class SleepScreen extends ConsumerStatefulWidget {
   const SleepScreen({super.key});
 
@@ -56,7 +55,7 @@ class _SleepScreenState extends ConsumerState<SleepScreen> {
         alignment: 0.5,
       );
       key.currentState?.highlight();
-      
+
       Future.delayed(const Duration(milliseconds: 600), () {
         if (mounted) {
           ref.read(searchAnchorProvider.notifier).clear();
@@ -147,8 +146,9 @@ class _SleepScreenState extends ConsumerState<SleepScreen> {
                       icon: const Icon(LucideIcons.plus, size: 16),
                       label: Text(l10n.addSleepSession),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            const Color(0xFF8B5CF6).withOpacity(0.2),
+                        backgroundColor: const Color(
+                          0xFF8B5CF6,
+                        ).withOpacity(0.2),
                         foregroundColor: const Color(0xFFC4B5FD),
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(
@@ -272,12 +272,14 @@ class _GoogleFitSyncCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final isSyncing = sleepState.isSyncing ||
+    final isSyncing =
+        sleepState.isSyncing ||
         googleFitState.status == GoogleFitStatus.connecting;
-    
+
     final settingsAsync = ref.watch(settingsProvider);
     final isGoogleKeysValid = settingsAsync.maybeWhen(
-      data: (map) => map['all']?.isGoogleFitKeysAvailable ?? Env.isGoogleFitKeysValid,
+      data: (map) =>
+          map['all']?.isGoogleFitKeysAvailable ?? Env.isGoogleFitKeysValid,
       orElse: () => Env.isGoogleFitKeysValid,
     );
 
@@ -372,8 +374,10 @@ class _GoogleFitSyncCard extends ConsumerWidget {
               children: [
                 Text(
                   googleFitState.errorMessage ?? l10n.connectionError,
-                  style:
-                      const TextStyle(color: Color(0xFFF87171), fontSize: 14),
+                  style: const TextStyle(
+                    color: Color(0xFFF87171),
+                    fontSize: 14,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 ElevatedButton(
@@ -422,7 +426,7 @@ class _GoogleFitSyncCard extends ConsumerWidget {
                       onPressed: isSyncing
                           ? null
                           : () =>
-                              ref.read(googleFitProvider.notifier).signOut(),
+                                ref.read(googleFitProvider.notifier).signOut(),
                       icon: const Icon(LucideIcons.logOut, size: 14),
                       label: Text(
                         l10n.signOut,
@@ -441,8 +445,8 @@ class _GoogleFitSyncCard extends ConsumerWidget {
                   onPressed: isSyncing
                       ? null
                       : () => ref
-                          .read(sleepProvider.notifier)
-                          .syncWithGoogleFit(forceSync: true),
+                            .read(sleepProvider.notifier)
+                            .syncWithGoogleFit(forceSync: true),
                   icon: isSyncing
                       ? const SizedBox(
                           width: 14,
@@ -497,15 +501,16 @@ class _GoogleFitSyncCard extends ConsumerWidget {
             children: [
               const Icon(LucideIcons.alertTriangle, color: Color(0xFFFDBA74)),
               const SizedBox(width: 12),
-              Text(
-                title,
-                style: const TextStyle(color: Colors.white),
-              ),
+              Text(title, style: const TextStyle(color: Colors.white)),
             ],
           ),
           content: Text(
             body,
-            style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.4),
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 14,
+              height: 1.4,
+            ),
           ),
           actions: [
             TextButton(
@@ -522,7 +527,9 @@ class _GoogleFitSyncCard extends ConsumerWidget {
               ),
               onPressed: () {
                 Navigator.of(context).pop();
-                ref.read(activeScreenProvider.notifier).setScreen(AppScreen.settings);
+                ref
+                    .read(activeScreenProvider.notifier)
+                    .setScreen(AppScreen.settings);
                 ref.read(searchAnchorProvider.notifier).setAnchor('api_keys');
               },
               child: Text(l10n.goToSettings),
@@ -612,12 +619,14 @@ class _CircadianRegulationSection extends ConsumerWidget {
           padding: const EdgeInsets.all(24),
           child: AnimatedOpacity(
             duration: const Duration(milliseconds: 300),
-            opacity: (settings.isSmartCircadianEnabled ||
+            opacity:
+                (settings.isSmartCircadianEnabled ||
                     tempSettings.isSmartCircadianEnabled)
                 ? 1.0
                 : 0.4,
             child: AbsorbPointer(
-              absorbing: !settings.isSmartCircadianEnabled &&
+              absorbing:
+                  !settings.isSmartCircadianEnabled &&
                   !tempSettings.isSmartCircadianEnabled,
               child: Column(
                 children: [
@@ -645,13 +654,13 @@ class _CircadianRegulationSection extends ConsumerWidget {
                       isActive: smartData.isWindDownActive,
                       timingText: smartData.isWindDownActive
                           ? (smartData.minutesUntilSleep != null &&
-                                  smartData.minutesUntilSleep! > 0)
-                              ? l10n.remainingUntilSleep(
-                                  formatMins(smartData.minutesUntilSleep!),
-                                )
-                              : (smartData.minutesUntilWakeUp != null)
-                                  ? l10n.remainingUntilWakeUp
-                                  : l10n.active
+                                    smartData.minutesUntilSleep! > 0)
+                                ? l10n.remainingUntilSleep(
+                                    formatMins(smartData.minutesUntilSleep!),
+                                  )
+                                : (smartData.minutesUntilWakeUp != null)
+                                ? l10n.remainingUntilWakeUp
+                                : l10n.active
                           : null,
                       brightnessIntensity: settings.windDownBrightnessIntensity,
                       temperatureIntensity:
@@ -668,8 +677,8 @@ class _CircadianRegulationSection extends ConsumerWidget {
                             settings.windDownBrightnessIntensity,
                             val,
                           ),
-                      durationValue:
-                          settings.windDownDurationMinutes.toDouble(),
+                      durationValue: settings.windDownDurationMinutes
+                          .toDouble(),
                       durationMin: 30,
                       durationMax: 360,
                       durationLabel: l10n.windDownDuration,
@@ -707,8 +716,8 @@ class _CircadianRegulationSection extends ConsumerWidget {
                           .updateTimeShiftIntensity(val),
                       showTemperatureIntensity:
                           false, // Time shift is a single factor
-                      durationValue:
-                          settings.timeShiftDurationMinutes.toDouble(),
+                      durationValue: settings.timeShiftDurationMinutes
+                          .toDouble(),
                       durationMin: 60,
                       durationMax: 720,
                       durationLabel: l10n.timeShiftDuration,
@@ -805,8 +814,8 @@ class _CircadianRegulationSection extends ConsumerWidget {
                             settings.sleepDebtBrightnessIntensity,
                             val,
                           ),
-                      durationValue:
-                          settings.sleepDebtThresholdMinutes.toDouble(),
+                      durationValue: settings.sleepDebtThresholdMinutes
+                          .toDouble(),
                       durationMin: 240,
                       durationMax: 540,
                       durationLabel: l10n.sleepDebtThreshold,
@@ -1330,7 +1339,8 @@ class _SleepAnalysisSettingsSectionState
                       value: settings.sleepMaxAnomalies.toDouble(),
                       min: 1,
                       max: 7,
-                      unit: l10n.daysCount(1)
+                      unit: l10n
+                          .daysCount(1)
                           .replaceAll(RegExp(r'[0-9]'), '')
                           .trim(),
                       onChanged: (val) =>
@@ -1343,7 +1353,8 @@ class _SleepAnalysisSettingsSectionState
                       value: settings.sleepMinRegimeLength.toDouble(),
                       min: 1,
                       max: 7,
-                      unit: l10n.daysCount(1)
+                      unit: l10n
+                          .daysCount(1)
                           .replaceAll(RegExp(r'[0-9]'), '')
                           .trim(),
                       onChanged: (val) =>
@@ -1356,7 +1367,8 @@ class _SleepAnalysisSettingsSectionState
                       value: settings.sleepAnchorSize.toDouble(),
                       min: 1,
                       max: 7,
-                      unit: l10n.daysCount(1)
+                      unit: l10n
+                          .daysCount(1)
                           .replaceAll(RegExp(r'[0-9]'), '')
                           .trim(),
                       onChanged: (val) =>
@@ -1378,8 +1390,9 @@ class _SleepAnalysisSettingsSectionState
               ),
             ],
           ),
-          crossFadeState:
-              _isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+          crossFadeState: _isExpanded
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
           duration: const Duration(milliseconds: 300),
           sizeCurve: Curves.easeInOut,
         ),
@@ -1419,7 +1432,7 @@ class _AnalysisSlider extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   Text(
+                  Text(
                     title,
                     style: const TextStyle(
                       fontSize: 15,
@@ -1484,7 +1497,8 @@ class _LocalIpcServerCard extends ConsumerStatefulWidget {
   const _LocalIpcServerCard();
 
   @override
-  ConsumerState<_LocalIpcServerCard> createState() => _LocalIpcServerCardState();
+  ConsumerState<_LocalIpcServerCard> createState() =>
+      _LocalIpcServerCardState();
 }
 
 class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
@@ -1578,7 +1592,9 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                   ),
                   const SizedBox(width: 16),
                   Icon(
-                    _isExpanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
+                    _isExpanded
+                        ? LucideIcons.chevronUp
+                        : LucideIcons.chevronDown,
                     color: Colors.white60,
                     size: 20,
                   ),
@@ -1599,8 +1615,9 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                     data: (map) => map['all']?.isLocalIpcServerEnabled ?? false,
                     orElse: () => false,
                   ),
-                  onChanged: (val) =>
-                      ref.read(settingsProvider.notifier).updateLocalIpcServerEnabled(val),
+                  onChanged: (val) => ref
+                      .read(settingsProvider.notifier)
+                      .updateLocalIpcServerEnabled(val),
                 ),
                 if (settingsAsync.maybeWhen(
                   data: (map) => map['all']?.isLocalIpcServerEnabled ?? false,
@@ -1637,36 +1654,56 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                         width: 100,
                         child: TextField(
                           keyboardType: TextInputType.number,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
                           textAlign: TextAlign.center,
                           style: const TextStyle(color: Colors.white),
                           decoration: InputDecoration(
                             isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
                             enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                              borderSide: BorderSide(
+                                color: Colors.white.withOpacity(0.1),
+                              ),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Color(0xFFA78BFA)),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFA78BFA),
+                              ),
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          controller: TextEditingController(
-                            text: settingsAsync.maybeWhen(
-                              data: (map) => (map['all']?.localIpcServerPort ?? 45321).toString(),
-                              orElse: () => '45321',
-                            ),
-                          )..selection = TextSelection.collapsed(
-                              offset: settingsAsync.maybeWhen(
-                                data: (map) => (map['all']?.localIpcServerPort ?? 45321).toString().length,
-                                orElse: () => 5,
-                              ),
-                            ),
+                          controller:
+                              TextEditingController(
+                                  text: settingsAsync.maybeWhen(
+                                    data: (map) =>
+                                        (map['all']?.localIpcServerPort ??
+                                                45321)
+                                            .toString(),
+                                    orElse: () => '45321',
+                                  ),
+                                )
+                                ..selection = TextSelection.collapsed(
+                                  offset: settingsAsync.maybeWhen(
+                                    data: (map) =>
+                                        (map['all']?.localIpcServerPort ??
+                                                45321)
+                                            .toString()
+                                            .length,
+                                    orElse: () => 5,
+                                  ),
+                                ),
                           onSubmitted: (val) {
                             final port = int.tryParse(val);
                             if (port != null && port > 0 && port < 65535) {
-                              ref.read(settingsProvider.notifier).updateLocalIpcServerPort(port);
+                              ref
+                                  .read(settingsProvider.notifier)
+                                  .updateLocalIpcServerPort(port);
                             }
                           },
                         ),
@@ -1688,18 +1725,26 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                           Row(
                             children: [
                               Icon(
-                                isRunning ? LucideIcons.checkCircle : LucideIcons.alertCircle,
-                                color: isRunning ? Colors.greenAccent : Colors.redAccent,
+                                isRunning
+                                    ? LucideIcons.checkCircle
+                                    : LucideIcons.alertCircle,
+                                color: isRunning
+                                    ? Colors.greenAccent
+                                    : Colors.redAccent,
                                 size: 16,
                               ),
                               const SizedBox(width: 8),
                               Text(
                                 isRunning
-                                    ? l10n.serverRunningStatus(activePort ?? 45321)
+                                    ? l10n.serverRunningStatus(
+                                        activePort ?? 45321,
+                                      )
                                     : l10n.serverStoppedStatus,
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: isRunning ? Colors.greenAccent : Colors.redAccent,
+                                  color: isRunning
+                                      ? Colors.greenAccent
+                                      : Colors.redAccent,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -1729,7 +1774,9 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
-                                          l10n.serverPortBusyAlertTitle(failedPort),
+                                          l10n.serverPortBusyAlertTitle(
+                                            failedPort,
+                                          ),
                                           style: const TextStyle(
                                             color: Colors.redAccent,
                                             fontWeight: FontWeight.bold,
@@ -1741,7 +1788,9 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    l10n.serverPortBusyAlertExplanation(failedPort),
+                                    l10n.serverPortBusyAlertExplanation(
+                                      failedPort,
+                                    ),
                                     style: TextStyle(
                                       color: Colors.white.withOpacity(0.7),
                                       fontSize: 12,
@@ -1750,7 +1799,9 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    l10n.serverPortBusyAlertSolution(failedPort),
+                                    l10n.serverPortBusyAlertSolution(
+                                      failedPort,
+                                    ),
                                     style: TextStyle(
                                       color: Colors.white.withOpacity(0.7),
                                       fontSize: 12,
@@ -1768,8 +1819,9 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                 ],
               ],
             ),
-            crossFadeState:
-                _isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+            crossFadeState: _isExpanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
             duration: const Duration(milliseconds: 300),
             sizeCurve: Curves.easeInOut,
           ),
@@ -1807,7 +1859,11 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(LucideIcons.x, color: Colors.white60, size: 20),
+                        icon: const Icon(
+                          LucideIcons.x,
+                          color: Colors.white60,
+                          size: 20,
+                        ),
                         onPressed: () => Navigator.pop(context),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
@@ -1846,8 +1902,10 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                           ),
                           const SizedBox(height: 16),
                           _buildHelpSection(
-                            title: l10n.sleepIntegrationHelpSectionDeduplication,
-                            text: l10n.sleepIntegrationHelpSectionDeduplicationText,
+                            title:
+                                l10n.sleepIntegrationHelpSectionDeduplication,
+                            text: l10n
+                                .sleepIntegrationHelpSectionDeduplicationText,
                           ),
                           const SizedBox(height: 16),
                           _buildHelpSection(
@@ -1884,7 +1942,11 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
     );
   }
 
-  Widget _buildHelpSection({required String title, required String text, bool isCode = false}) {
+  Widget _buildHelpSection({
+    required String title,
+    required String text,
+    bool isCode = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1966,7 +2028,8 @@ class _GoogleFitKeysWarning extends ConsumerStatefulWidget {
   const _GoogleFitKeysWarning({Key? key}) : super(key: key);
 
   @override
-  ConsumerState<_GoogleFitKeysWarning> createState() => _GoogleFitKeysWarningState();
+  ConsumerState<_GoogleFitKeysWarning> createState() =>
+      _GoogleFitKeysWarningState();
 }
 
 class _GoogleFitKeysWarningState extends ConsumerState<_GoogleFitKeysWarning> {
@@ -2002,7 +2065,9 @@ class _GoogleFitKeysWarningState extends ConsumerState<_GoogleFitKeysWarning> {
                 style: TextStyle(
                   color: const Color(0xFFF87171),
                   fontSize: 13,
-                  decoration: _isHovering ? TextDecoration.underline : TextDecoration.none,
+                  decoration: _isHovering
+                      ? TextDecoration.underline
+                      : TextDecoration.none,
                   decorationColor: const Color(0xFFF87171),
                 ),
               ),
@@ -2013,4 +2078,3 @@ class _GoogleFitKeysWarningState extends ConsumerState<_GoogleFitKeysWarning> {
     );
   }
 }
-

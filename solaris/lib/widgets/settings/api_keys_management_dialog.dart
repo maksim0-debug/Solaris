@@ -20,7 +20,11 @@ Future<void> showApiKeysManagementDialog(BuildContext context) async {
 class ApiKeysManagementDialog extends ConsumerWidget {
   const ApiKeysManagementDialog({super.key});
 
-  Future<void> _handleCreateKey(BuildContext context, WidgetRef ref, int existingCount) async {
+  Future<void> _handleCreateKey(
+    BuildContext context,
+    WidgetRef ref,
+    int existingCount,
+  ) async {
     final newEntry = await showCreateApiKeyDialog(
       context,
       existingKeysCount: existingCount,
@@ -73,7 +77,10 @@ class ApiKeysManagementDialog extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.cancel, style: const TextStyle(color: Colors.white60)),
+            child: Text(
+              l10n.cancel,
+              style: const TextStyle(color: Colors.white60),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(true),
@@ -88,13 +95,11 @@ class ApiKeysManagementDialog extends ConsumerWidget {
     );
 
     if (confirm == true && context.mounted) {
-      final newToken = ref.read(settingsProvider.notifier).regenerateApiKeyToken(entry.id);
+      final newToken = ref
+          .read(settingsProvider.notifier)
+          .regenerateApiKeyToken(entry.id);
       if (newToken.isNotEmpty && context.mounted) {
-        await showNewTokenDialog(
-          context,
-          token: newToken,
-          keyName: entry.name,
-        );
+        await showNewTokenDialog(context, token: newToken, keyName: entry.name);
       }
     }
   }
@@ -120,7 +125,10 @@ class ApiKeysManagementDialog extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.cancel, style: const TextStyle(color: Colors.white60)),
+            child: Text(
+              l10n.cancel,
+              style: const TextStyle(color: Colors.white60),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(true),
@@ -187,7 +195,12 @@ class ApiKeysManagementDialog extends ConsumerWidget {
           clipBehavior: Clip.antiAlias,
           child: settingsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, _) => Center(child: Text('Error: $err', style: const TextStyle(color: Colors.red))),
+            error: (err, _) => Center(
+              child: Text(
+                'Error: $err',
+                style: const TextStyle(color: Colors.red),
+              ),
+            ),
             data: (settingsMap) {
               final settings = settingsMap['all'];
               final apiKeys = settings?.apiKeys ?? [];
@@ -197,7 +210,10 @@ class ApiKeysManagementDialog extends ConsumerWidget {
                 children: [
                   // Dialog Header
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.03),
                       border: const Border(
@@ -243,13 +259,17 @@ class ApiKeysManagementDialog extends ConsumerWidget {
                           ),
                         ),
                         ElevatedButton.icon(
-                          onPressed: () => _handleCreateKey(context, ref, apiKeys.length),
+                          onPressed: () =>
+                              _handleCreateKey(context, ref, apiKeys.length),
                           icon: const Icon(LucideIcons.plus, size: 16),
                           label: Text(l10n.apiKeysCreateButton),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFFDBA74),
                             foregroundColor: Colors.black87,
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -257,7 +277,11 @@ class ApiKeysManagementDialog extends ConsumerWidget {
                         ),
                         const SizedBox(width: 8),
                         IconButton(
-                          icon: const Icon(LucideIcons.x, color: Colors.white54, size: 18),
+                          icon: const Icon(
+                            LucideIcons.x,
+                            color: Colors.white54,
+                            size: 18,
+                          ),
                           onPressed: () => Navigator.of(context).pop(),
                         ),
                       ],
@@ -282,31 +306,45 @@ class ApiKeysManagementDialog extends ConsumerWidget {
                               DataColumn(
                                 label: Text(
                                   l10n.apiKeysTableHeaderName,
-                                  style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                               DataColumn(
                                 label: Text(
                                   l10n.apiKeysTableHeaderScopes,
-                                  style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                               DataColumn(
                                 label: Text(
                                   l10n.apiKeysTableHeaderCreated,
-                                  style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                               DataColumn(
                                 label: Text(
                                   l10n.apiKeysTableHeaderActions,
-                                  style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ],
                             rows: apiKeys.map((keyEntry) {
-                              final isReadOnly = keyEntry.permissions.isReadOnly;
-                              final catCount = keyEntry.permissions.allowedCategories.length;
+                              final isReadOnly =
+                                  keyEntry.permissions.isReadOnly;
+                              final catCount =
+                                  keyEntry.permissions.allowedCategories.length;
 
                               return DataRow(
                                 cells: [
@@ -315,11 +353,17 @@ class ApiKeysManagementDialog extends ConsumerWidget {
                                     Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Icon(LucideIcons.key, color: Color(0xFFFDBA74), size: 16),
+                                        const Icon(
+                                          LucideIcons.key,
+                                          color: Color(0xFFFDBA74),
+                                          size: 16,
+                                        ),
                                         const SizedBox(width: 8),
                                         Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
                                             Text(
                                               keyEntry.name,
@@ -331,7 +375,9 @@ class ApiKeysManagementDialog extends ConsumerWidget {
                                             ),
                                             if (keyEntry.isDpapiFallback)
                                               Padding(
-                                                padding: const EdgeInsets.only(top: 2),
+                                                padding: const EdgeInsets.only(
+                                                  top: 2,
+                                                ),
                                                 child: Text(
                                                   '⚠️ ${l10n.apiKeysDpapiBadge}',
                                                   style: const TextStyle(
@@ -350,38 +396,65 @@ class ApiKeysManagementDialog extends ConsumerWidget {
                                   // Scopes Cell
                                   DataCell(
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: isReadOnly
-                                            ? const Color(0xFFEF4444).withOpacity(0.15)
-                                            : const Color(0xFF4ADE80).withOpacity(0.15),
+                                            ? const Color(
+                                                0xFFEF4444,
+                                              ).withOpacity(0.15)
+                                            : const Color(
+                                                0xFF4ADE80,
+                                              ).withOpacity(0.15),
                                         borderRadius: BorderRadius.circular(20),
                                         border: Border.all(
                                           color: isReadOnly
-                                              ? const Color(0xFFEF4444).withOpacity(0.4)
-                                              : const Color(0xFF4ADE80).withOpacity(0.4),
+                                              ? const Color(
+                                                  0xFFEF4444,
+                                                ).withOpacity(0.4)
+                                              : const Color(
+                                                  0xFF4ADE80,
+                                                ).withOpacity(0.4),
                                         ),
                                       ),
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Icon(
-                                            isReadOnly ? LucideIcons.lock : LucideIcons.shieldCheck,
+                                            isReadOnly
+                                                ? LucideIcons.lock
+                                                : LucideIcons.shieldCheck,
                                             size: 12,
-                                            color: isReadOnly ? const Color(0xFFFCA5A5) : const Color(0xFF86EFAC),
+                                            color: isReadOnly
+                                                ? const Color(0xFFFCA5A5)
+                                                : const Color(0xFF86EFAC),
                                           ),
                                           const SizedBox(width: 6),
                                           Text(
                                             isReadOnly
-                                                ? l10n.apiKeysReadOnlyChip(catCount)
-                                                : (keyEntry.permissions.allowedActions != null
-                                                    ? l10n.apiKeysGranularActionChip(
-                                                        keyEntry.permissions.allowedActions!.length,
-                                                        25,
-                                                      )
-                                                    : l10n.apiKeysActiveScopesChip(catCount)),
+                                                ? l10n.apiKeysReadOnlyChip(
+                                                    catCount,
+                                                  )
+                                                : (keyEntry
+                                                              .permissions
+                                                              .allowedActions !=
+                                                          null
+                                                      ? l10n.apiKeysGranularActionChip(
+                                                          keyEntry
+                                                              .permissions
+                                                              .allowedActions!
+                                                              .length,
+                                                          25,
+                                                        )
+                                                      : l10n.apiKeysActiveScopesChip(
+                                                          catCount,
+                                                        )),
                                             style: TextStyle(
-                                              color: isReadOnly ? const Color(0xFFFCA5A5) : const Color(0xFF86EFAC),
+                                              color: isReadOnly
+                                                  ? const Color(0xFFFCA5A5)
+                                                  : const Color(0xFF86EFAC),
                                               fontSize: 11,
                                               fontWeight: FontWeight.w600,
                                             ),
@@ -409,43 +482,81 @@ class ApiKeysManagementDialog extends ConsumerWidget {
                                       children: [
                                         // Copy Token Button
                                         IconButton(
-                                          icon: const Icon(LucideIcons.copy, size: 16),
+                                          icon: const Icon(
+                                            LucideIcons.copy,
+                                            size: 16,
+                                          ),
                                           color: Colors.white70,
                                           tooltip: l10n.apiCopyKeyTooltip,
-                                          onPressed: () => _copyTokenToClipboard(context, keyEntry),
+                                          onPressed: () =>
+                                              _copyTokenToClipboard(
+                                                context,
+                                                keyEntry,
+                                              ),
                                         ),
 
                                         // Edit Permissions Button
                                         IconButton(
-                                          icon: const Icon(LucideIcons.shieldCheck, size: 16),
+                                          icon: const Icon(
+                                            LucideIcons.shieldCheck,
+                                            size: 16,
+                                          ),
                                           color: const Color(0xFFFDBA74),
-                                          tooltip: l10n.apiPermissionsConfigureButton,
-                                          onPressed: () => _handleEditPermissions(context, ref, keyEntry),
+                                          tooltip: l10n
+                                              .apiPermissionsConfigureButton,
+                                          onPressed: () =>
+                                              _handleEditPermissions(
+                                                context,
+                                                ref,
+                                                keyEntry,
+                                              ),
                                         ),
 
                                         // Regenerate Token Button
                                         IconButton(
-                                          icon: const Icon(LucideIcons.refreshCw, size: 16),
+                                          icon: const Icon(
+                                            LucideIcons.refreshCw,
+                                            size: 16,
+                                          ),
                                           color: const Color(0xFF60A5FA),
                                           tooltip: l10n.apiGenerateKeyTooltip,
-                                          onPressed: () => _handleRegenerateToken(context, ref, keyEntry),
+                                          onPressed: () =>
+                                              _handleRegenerateToken(
+                                                context,
+                                                ref,
+                                                keyEntry,
+                                              ),
                                         ),
 
                                         // Delete Key Button with Single Key Guard
                                         isSingleKey
                                             ? Tooltip(
-                                                message: l10n.apiKeysSoleKeyDeleteWarning,
+                                                message: l10n
+                                                    .apiKeysSoleKeyDeleteWarning,
                                                 child: const IconButton(
-                                                  icon: Icon(LucideIcons.trash2, size: 16),
+                                                  icon: Icon(
+                                                    LucideIcons.trash2,
+                                                    size: 16,
+                                                  ),
                                                   color: Colors.white24,
-                                                  onPressed: null, // Disabled guard
+                                                  onPressed:
+                                                      null, // Disabled guard
                                                 ),
                                               )
                                             : IconButton(
-                                                icon: const Icon(LucideIcons.trash2, size: 16),
+                                                icon: const Icon(
+                                                  LucideIcons.trash2,
+                                                  size: 16,
+                                                ),
                                                 color: const Color(0xFFEF4444),
-                                                tooltip: l10n.webhooksDeleteTooltip,
-                                                onPressed: () => _handleDeleteKey(context, ref, keyEntry),
+                                                tooltip:
+                                                    l10n.webhooksDeleteTooltip,
+                                                onPressed: () =>
+                                                    _handleDeleteKey(
+                                                      context,
+                                                      ref,
+                                                      keyEntry,
+                                                    ),
                                               ),
                                       ],
                                     ),

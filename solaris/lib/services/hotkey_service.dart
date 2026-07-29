@@ -15,17 +15,16 @@ class HotkeyService {
 
   Future<void> init() async {
     // Listen to settings changes to update hotkey registrations
-    ref.listen<AsyncValue<Map<String, SettingsState>>>(
-      settingsProvider,
-      (previous, next) {
-        next.whenData((settingsMap) {
-          // Use microtask to avoid blocking the state update process
-          // and prevent potential deadlocks in hotkey event loop
-          Future.microtask(() => _updateRegistrations());
-        });
-      },
-      fireImmediately: true,
-    );
+    ref.listen<AsyncValue<Map<String, SettingsState>>>(settingsProvider, (
+      previous,
+      next,
+    ) {
+      next.whenData((settingsMap) {
+        // Use microtask to avoid blocking the state update process
+        // and prevent potential deadlocks in hotkey event loop
+        Future.microtask(() => _updateRegistrations());
+      });
+    }, fireImmediately: true);
   }
 
   Future<void> _updateRegistrations() async {
@@ -112,7 +111,9 @@ class HotkeyService {
           await hotKeyManager.register(
             hotKey,
             keyDownHandler: (hotKey) {
-              debugPrint('Hotkey pressed: Brightness Down (${hotKey.toJson()})');
+              debugPrint(
+                'Hotkey pressed: Brightness Down (${hotKey.toJson()})',
+              );
               ref
                   .read(settingsProvider.notifier)
                   .adjustManualBrightness(-settings.brightnessStepDown);
@@ -130,7 +131,9 @@ class HotkeyService {
           await hotKeyManager.register(
             hotKey,
             keyDownHandler: (hotKey) {
-              debugPrint('Hotkey pressed: Auto-brightness Toggle (${hotKey.toJson()})');
+              debugPrint(
+                'Hotkey pressed: Auto-brightness Toggle (${hotKey.toJson()})',
+              );
               ref.read(autoBrightnessAdjustmentProvider.notifier).toggle();
             },
           );

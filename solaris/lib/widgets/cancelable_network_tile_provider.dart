@@ -24,8 +24,8 @@ class CancelableNetworkTileProvider extends TileProvider {
     super.headers,
     BaseClient? httpClient,
     bool? ownsHttpClient,
-  })  : _httpClient = httpClient ?? RetryClient(Client()),
-        _ownsHttpClient = ownsHttpClient ?? (httpClient == null);
+  }) : _httpClient = httpClient ?? RetryClient(Client()),
+       _ownsHttpClient = ownsHttpClient ?? (httpClient == null);
 
   final BaseClient _httpClient;
   final bool _ownsHttpClient;
@@ -111,7 +111,9 @@ class _CancelableNetworkImageProvider
       return decode(buffer);
     } catch (e) {
       if (e is ClientException) {
-        debugPrint('CancelableNetworkImageProvider: request canceled for ${key.url}: $e');
+        debugPrint(
+          'CancelableNetworkImageProvider: request canceled for ${key.url}: $e',
+        );
       }
       rethrow;
     }
@@ -125,5 +127,3 @@ class _CancelableNetworkImageProvider
   @override
   int get hashCode => url.hashCode;
 }
-
-

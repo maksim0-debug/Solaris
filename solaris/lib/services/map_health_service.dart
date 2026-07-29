@@ -13,7 +13,9 @@ class MapHealthService {
     final isTokenValid = await _checkToken(customToken);
     final isInternetAvailable = await _checkInternet();
     final isVCRedistInstalled = await _checkVCRedistInstalled();
-    final (isMapboxReachable, errorDetails) = await _checkMapboxReachable(customToken);
+    final (isMapboxReachable, errorDetails) = await _checkMapboxReachable(
+      customToken,
+    );
 
     return MapHealthReport(
       isTokenValid: isTokenValid,
@@ -25,7 +27,9 @@ class MapHealthService {
   }
 
   Future<bool> _checkToken(String? customToken) async {
-    final token = (customToken != null && customToken.isNotEmpty) ? customToken : Env.mapboxToken;
+    final token = (customToken != null && customToken.isNotEmpty)
+        ? customToken
+        : Env.mapboxToken;
     // Mapbox tokens always start with pk. or sk.
     return token.isNotEmpty &&
         (token.startsWith('pk.') || token.startsWith('sk.')) &&
@@ -34,9 +38,9 @@ class MapHealthService {
 
   Future<bool> _checkInternet() async {
     try {
-      final result = await InternetAddress.lookup('google.com').timeout(
-        const Duration(seconds: 3),
-      );
+      final result = await InternetAddress.lookup(
+        'google.com',
+      ).timeout(const Duration(seconds: 3));
       return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
     } catch (_) {
       return false;
@@ -45,11 +49,17 @@ class MapHealthService {
 
   Future<(bool, String?)> _checkMapboxReachable(String? customToken) async {
     try {
-      final token = (customToken != null && customToken.isNotEmpty) ? customToken : Env.mapboxToken;
+      final token = (customToken != null && customToken.isNotEmpty)
+          ? customToken
+          : Env.mapboxToken;
       // Use a standard style endpoint for reachability check
-      final url = Uri.parse('$mapboxApiUrl/styles/v1/mapbox/streets-v11?access_token=$token');
-      final response = await _client.get(url).timeout(const Duration(seconds: 5));
-      
+      final url = Uri.parse(
+        '$mapboxApiUrl/styles/v1/mapbox/streets-v11?access_token=$token',
+      );
+      final response = await _client
+          .get(url)
+          .timeout(const Duration(seconds: 5));
+
       if (response.statusCode == 200 || response.statusCode == 401) {
         return (true, null);
       }
@@ -77,10 +87,11 @@ class MapHealthService {
       // msvcp140.dll is the core, vcruntime140_1.dll handles x64 specifics in newer redist versions
       final paths = [
         '$sysRoot\\System32\\msvcp140.dll',
-        if (Platform.executableArguments.contains('--x64') || !Platform.executable.contains('32'))
+        if (Platform.executableArguments.contains('--x64') ||
+            !Platform.executable.contains('32'))
           '$sysRoot\\System32\\vcruntime140_1.dll',
       ];
-      
+
       for (final path in paths) {
         if (!(await File(path).exists())) return false;
       }

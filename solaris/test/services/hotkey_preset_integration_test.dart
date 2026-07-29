@@ -16,9 +16,7 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
       container = ProviderContainer(
-        overrides: [
-          sharedPreferencesProvider.overrideWithValue(prefs),
-        ],
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
       );
     });
 
@@ -65,78 +63,98 @@ void main() {
       expect(map['all']!.isAutoBrightnessEnabled, true);
     });
 
-    test('cyclePreset forward and backward enables auto-brightness and cycles order', () async {
-      final settingsNotifier = container.read(settingsProvider.notifier);
-      await container.read(settingsProvider.future);
+    test(
+      'cyclePreset forward and backward enables auto-brightness and cycles order',
+      () async {
+        final settingsNotifier = container.read(settingsProvider.notifier);
+        await container.read(settingsProvider.future);
 
-      // 1. Disable auto-brightness
-      settingsNotifier.updateAutoBrightness(false);
-      var map = container.read(settingsProvider).value!;
-      expect(map['all']!.isAutoBrightnessEnabled, false);
+        // 1. Disable auto-brightness
+        settingsNotifier.updateAutoBrightness(false);
+        var map = container.read(settingsProvider).value!;
+        expect(map['all']!.isAutoBrightnessEnabled, false);
 
-      // 2. Cycle preset forward
-      settingsNotifier.cyclePreset(brighter: true);
-      map = container.read(settingsProvider).value!;
+        // 2. Cycle preset forward
+        settingsNotifier.cyclePreset(brighter: true);
+        map = container.read(settingsProvider).value!;
 
-      expect(map['all']!.isAutoBrightnessEnabled, true);
+        expect(map['all']!.isAutoBrightnessEnabled, true);
 
-      // 3. Disable auto-brightness again
-      settingsNotifier.updateAutoBrightness(false);
+        // 3. Disable auto-brightness again
+        settingsNotifier.updateAutoBrightness(false);
 
-      // 4. Cycle preset backward
-      settingsNotifier.cyclePreset(brighter: false);
-      map = container.read(settingsProvider).value!;
+        // 4. Cycle preset backward
+        settingsNotifier.cyclePreset(brighter: false);
+        map = container.read(settingsProvider).value!;
 
-      expect(map['all']!.isAutoBrightnessEnabled, true);
-    });
+        expect(map['all']!.isAutoBrightnessEnabled, true);
+      },
+    );
 
-    test('cyclePreset synchronizes all monitors to master preset and order', () async {
-      final settingsNotifier = container.read(settingsProvider.notifier);
-      final selectionNotifier = container.read(selectedMonitorsProvider.notifier);
-      await container.read(settingsProvider.future);
+    test(
+      'cyclePreset synchronizes all monitors to master preset and order',
+      () async {
+        final settingsNotifier = container.read(settingsProvider.notifier);
+        final selectionNotifier = container.read(
+          selectedMonitorsProvider.notifier,
+        );
+        await container.read(settingsProvider.future);
 
-      // Set individual preset for DISPLAY1
-      selectionNotifier.selectOnly(r'\\.\DISPLAY1');
-      settingsNotifier.setActivePreset(PresetType.dimmest);
+        // Set individual preset for DISPLAY1
+        selectionNotifier.selectOnly(r'\\.\DISPLAY1');
+        settingsNotifier.setActivePreset(PresetType.dimmest);
 
-      // Set individual preset for DISPLAY2
-      selectionNotifier.selectOnly(r'\\.\DISPLAY2');
-      settingsNotifier.setActivePreset(PresetType.brightest);
+        // Set individual preset for DISPLAY2
+        selectionNotifier.selectOnly(r'\\.\DISPLAY2');
+        settingsNotifier.setActivePreset(PresetType.brightest);
 
-      // Now cycle preset
-      settingsNotifier.cyclePreset(brighter: true);
+        // Now cycle preset
+        settingsNotifier.cyclePreset(brighter: true);
 
-      final map = container.read(settingsProvider).value!;
-      final masterPreset = map['all']!.activePreset;
-      final masterUserPresetId = map['all']!.activeUserPresetId;
+        final map = container.read(settingsProvider).value!;
+        final masterPreset = map['all']!.activePreset;
+        final masterUserPresetId = map['all']!.activeUserPresetId;
 
-      // Every monitor entry must match the master active preset
-      for (final entry in map.entries) {
-        expect(entry.value.activePreset, masterPreset);
-        expect(entry.value.activeUserPresetId, masterUserPresetId);
-        expect(entry.value.isAutoBrightnessEnabled, true);
-      }
-    });
+        // Every monitor entry must match the master active preset
+        for (final entry in map.entries) {
+          expect(entry.value.activePreset, masterPreset);
+          expect(entry.value.activeUserPresetId, masterUserPresetId);
+          expect(entry.value.isAutoBrightnessEnabled, true);
+        }
+      },
+    );
 
-    test('adjustManualBrightness disables auto-brightness and updates manual value', () async {
-      final settingsNotifier = container.read(settingsProvider.notifier);
-      await container.read(settingsProvider.future);
+    test(
+      'adjustManualBrightness disables auto-brightness and updates manual value',
+      () async {
+        final settingsNotifier = container.read(settingsProvider.notifier);
+        await container.read(settingsProvider.future);
 
-      settingsNotifier.updateAutoBrightness(true);
-      expect(container.read(autoBrightnessAdjustmentProvider), true);
+        settingsNotifier.updateAutoBrightness(true);
+        expect(container.read(autoBrightnessAdjustmentProvider), true);
 
-      settingsNotifier.adjustManualBrightness(10.0);
+        settingsNotifier.adjustManualBrightness(10.0);
 
-      final map = container.read(settingsProvider).value!;
-      expect(map['all']!.isAutoBrightnessEnabled, false);
-      expect(container.read(autoBrightnessAdjustmentProvider), false);
-    });
+        final map = container.read(settingsProvider).value!;
+        expect(map['all']!.isAutoBrightnessEnabled, false);
+        expect(container.read(autoBrightnessAdjustmentProvider), false);
+      },
+    );
 
     test('Hotkey JSON footprint is deterministic with jsonEncode', () {
       final settings = SettingsState(
-        nextPresetHotKey: const {'key': 'Key N', 'modifiers': ['control']},
-        prevPresetHotKey: const {'key': 'Key P', 'modifiers': ['control']},
-        brightnessUpHotKey: const {'key': 'Arrow Up', 'modifiers': ['control', 'alt']},
+        nextPresetHotKey: const {
+          'key': 'Key N',
+          'modifiers': ['control'],
+        },
+        prevPresetHotKey: const {
+          'key': 'Key P',
+          'modifiers': ['control'],
+        },
+        brightnessUpHotKey: const {
+          'key': 'Arrow Up',
+          'modifiers': ['control', 'alt'],
+        },
         brightnessStepUp: 5.0,
         brightnessStepDown: 5.0,
       );

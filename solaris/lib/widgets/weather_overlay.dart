@@ -70,13 +70,13 @@ class _Cloud {
   }) {
     // Generate a horizontal, elongated puffy cloud shape
     offsets = [
-      const Offset(-25, 5),    // Left bottom
-      const Offset(25, 5),     // Right bottom
-      const Offset(0, 10),     // Middle bottom (slightly lower)
-      const Offset(-12, -10),  // Top left puff
-      const Offset(15, -8),    // Top right puff
-      const Offset(-40, 2),    // Far left small puff
-      const Offset(40, 2),     // Far right small puff
+      const Offset(-25, 5), // Left bottom
+      const Offset(25, 5), // Right bottom
+      const Offset(0, 10), // Middle bottom (slightly lower)
+      const Offset(-12, -10), // Top left puff
+      const Offset(15, -8), // Top right puff
+      const Offset(-40, 2), // Far left small puff
+      const Offset(40, 2), // Far right small puff
     ];
     radii = [
       20.0, // Left bottom
@@ -159,8 +159,9 @@ class _WeatherOverlayState extends ConsumerState<WeatherOverlay>
         code == 71 ||
         code == 85;
 
-     if (_isRain || _isSnow) {
-      bool allowed = (_isRain && widget.showRain) || (_isSnow && widget.showSnow);
+    if (_isRain || _isSnow) {
+      bool allowed =
+          (_isRain && widget.showRain) || (_isSnow && widget.showSnow);
       if (allowed) {
         if (_isHeavy) {
           _targetParticleCount = _isSnow ? 300 : 250;
@@ -179,12 +180,12 @@ class _WeatherOverlayState extends ConsumerState<WeatherOverlay>
 
   void _updateCloudCount(double width, double height) {
     // User requested: "if cloudiness is strong, then there will be fewer clouds and smaller"
-    // We'll interpret this as: 
+    // We'll interpret this as:
     // cloudCover 0 -> 0 clouds
     // cloudCover 1-30 -> 10 clouds (large)
     // cloudCover 30-70 -> 6 clouds (medium)
     // cloudCover 70-100 -> 3 clouds (small)
-    
+
     int targetCloudCount;
     if (widget.cloudCover <= 0 || !widget.showClouds) {
       targetCloudCount = 0;
@@ -208,7 +209,10 @@ class _WeatherOverlayState extends ConsumerState<WeatherOverlay>
 
   _Cloud _spawnCloud(double width, double height, {bool randomizeX = false}) {
     // Base scale modified by cloud cover for intuitive representation
-    double baseScale = 0.5 + _random.nextDouble() * 0.7; // Slightly smaller base to handle more clouds
+    double baseScale =
+        0.5 +
+        _random.nextDouble() *
+            0.7; // Slightly smaller base to handle more clouds
     if (widget.cloudCover > 70) {
       baseScale *= 1.4; // Larger puffs for overcast skies
     } else if (widget.cloudCover > 30) {
@@ -220,7 +224,9 @@ class _WeatherOverlayState extends ConsumerState<WeatherOverlay>
       y: _random.nextDouble() * (height * 0.6), // Upper half mostly
       speed: 10.0 + _random.nextDouble() * 20.0,
       scale: baseScale,
-      opacity: 0.5 + _random.nextDouble() * 0.3, // Slightly more opaque to see the outline
+      opacity:
+          0.5 +
+          _random.nextDouble() * 0.3, // Slightly more opaque to see the outline
       floatPhase: _random.nextDouble() * pi * 2,
       floatSpeed: 0.5 + _random.nextDouble() * 1.0,
     );
@@ -371,7 +377,7 @@ class _WeatherOverlayState extends ConsumerState<WeatherOverlay>
     p.thickness = fresh.thickness;
   }
 
-   void _scheduleNextLightning() {
+  void _scheduleNextLightning() {
     if (!mounted) return;
     if (widget.showThunder &&
         widget.weatherCode >= 95 &&
@@ -514,25 +520,26 @@ class CloudPainter extends CustomPainter {
           cloud.y + (cloud.offsets[i].dy + floatOffset) * cloud.scale,
         );
         final Path circlePath = Path();
-        circlePath.addOval(Rect.fromCircle(
-          center: center,
-          radius: cloud.radii[i] * cloud.scale,
-        ));
-        
+        circlePath.addOval(
+          Rect.fromCircle(center: center, radius: cloud.radii[i] * cloud.scale),
+        );
+
         // Combine paths to create a single silhouette
         cloudPath = Path.combine(PathOperation.union, cloudPath, circlePath);
       }
 
       // 1. Draw the Body (Greyish, blurred for soft appearance)
       final bodyPaint = Paint()
-        ..color = const Color(0xFF94A3B8).withOpacity(cloud.opacity) // Elegant slate grey
+        ..color = const Color(0xFF94A3B8)
+            .withOpacity(cloud.opacity) // Elegant slate grey
         ..style = PaintingStyle.fill
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
       canvas.drawPath(cloudPath, bodyPaint);
 
       // 2. Draw the Outline (Single continuous line)
       final outlinePaint = Paint()
-        ..color = const Color(0xFF1E293B).withOpacity(0.5) // Darker slate for outline
+        ..color = const Color(0xFF1E293B)
+            .withOpacity(0.5) // Darker slate for outline
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.0
         ..strokeCap = StrokeCap.round;

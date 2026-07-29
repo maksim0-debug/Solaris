@@ -23,12 +23,20 @@ class TemperatureBreakdownTooltip extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    final int baseTemp = smartData.baseTemperature > 0 ? smartData.baseTemperature : 6500;
+    final int baseTemp = smartData.baseTemperature > 0
+        ? smartData.baseTemperature
+        : 6500;
     final int weatherImpact = smartData.weatherTemperatureImpact;
-    
-    final int sleepPressureImpact = isSmartCircadianEnabled ? smartData.sleepPressureTemperatureImpact : 0;
-    final int windDownImpact = isSmartCircadianEnabled ? smartData.windDownTemperatureImpact : 0;
-    final int sleepDebtImpact = isSmartCircadianEnabled ? smartData.sleepDebtTemperatureImpact : 0;
+
+    final int sleepPressureImpact = isSmartCircadianEnabled
+        ? smartData.sleepPressureTemperatureImpact
+        : 0;
+    final int windDownImpact = isSmartCircadianEnabled
+        ? smartData.windDownTemperatureImpact
+        : 0;
+    final int sleepDebtImpact = isSmartCircadianEnabled
+        ? smartData.sleepDebtTemperatureImpact
+        : 0;
 
     return Tooltip(
       richMessage: TextSpan(
@@ -41,7 +49,9 @@ class TemperatureBreakdownTooltip extends StatelessWidget {
         children: [
           _buildRow(
             icon: LucideIcons.sun,
-            label: '${l10n.temperatureBreakdownBase} [${_getPresetName(l10n, smartData)}]'.toUpperCase(),
+            label:
+                '${l10n.temperatureBreakdownBase} [${_getPresetName(l10n, smartData)}]'
+                    .toUpperCase(),
             value: '${baseTemp} K',
             iconColor: const Color(0xFF818CF8), // Blue-Indigo for temp base
           ),

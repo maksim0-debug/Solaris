@@ -59,7 +59,8 @@ class _WindowButtons extends ConsumerStatefulWidget {
   ConsumerState<_WindowButtons> createState() => _WindowButtonsState();
 }
 
-class _WindowButtonsState extends ConsumerState<_WindowButtons> with WindowListener {
+class _WindowButtonsState extends ConsumerState<_WindowButtons>
+    with WindowListener {
   bool _isMaximized = false;
 
   @override

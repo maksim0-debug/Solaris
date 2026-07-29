@@ -70,7 +70,10 @@ class PrivacyPolicyScreen extends StatelessWidget {
               return Center(
                 child: Text(
                   l10n.errorLoadingPrivacyPolicy,
-                  style: const TextStyle(fontFamily: _fontFamily, color: Colors.redAccent),
+                  style: const TextStyle(
+                    fontFamily: _fontFamily,
+                    color: Colors.redAccent,
+                  ),
                 ),
               );
             }
@@ -79,7 +82,10 @@ class PrivacyPolicyScreen extends StatelessWidget {
               child: Markdown(
                 data: snapshot.data ?? 'No content available',
                 selectable: true,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
                 styleSheet: MarkdownStyleSheet(
                   h1: const TextStyle(
                     fontFamily: _fontFamily,
@@ -139,10 +145,7 @@ class _GlassAppBar extends StatelessWidget {
   final Widget title;
   final Widget? leading;
 
-  const _GlassAppBar({
-    required this.title,
-    this.leading,
-  });
+  const _GlassAppBar({required this.title, this.leading});
 
   @override
   Widget build(BuildContext context) {
@@ -161,4 +164,3 @@ class _GlassAppBar extends StatelessWidget {
     );
   }
 }
-

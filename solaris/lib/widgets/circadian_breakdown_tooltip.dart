@@ -34,7 +34,8 @@ class CircadianBreakdownTooltip extends StatelessWidget {
         children: [
           _buildRow(
             icon: LucideIcons.sun,
-            label: '${l10n.sunBase} [${_getPresetName(l10n, smartData)}]'.toUpperCase(),
+            label: '${l10n.sunBase} [${_getPresetName(l10n, smartData)}]'
+                .toUpperCase(),
             value: '${smartData.baseBrightness.round()}%',
             iconColor: const Color(0xFFFDBA74),
           ),
@@ -69,7 +70,8 @@ class CircadianBreakdownTooltip extends StatelessWidget {
               value: '-${smartData.sleepPressureAbsoluteImpact.round()}%',
               iconColor: const Color(0xFFA78BFA),
             ),
-          if (isSmartCircadianEnabled && smartData.sleepDebtAbsoluteImpact > 0.5)
+          if (isSmartCircadianEnabled &&
+              smartData.sleepDebtAbsoluteImpact > 0.5)
             _buildRow(
               icon: LucideIcons.battery,
               label: l10n.featureSleepDebtShort,

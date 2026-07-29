@@ -58,11 +58,11 @@ void main() {
     HttpOverrides.global = null;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('plugins.flutter.io/path_provider'),
-      (MethodCall methodCall) async {
-        return '.';
-      },
-    );
+          const MethodChannel('plugins.flutter.io/path_provider'),
+          (MethodCall methodCall) async {
+            return '.';
+          },
+        );
 
     final testSettings = SettingsState(
       isLocalIpcServerEnabled: true,
@@ -71,7 +71,9 @@ void main() {
 
     container = ProviderContainer(
       overrides: [
-        locationStreamProvider.overrideWith((ref) => Stream.value(dummyPosition)),
+        locationStreamProvider.overrideWith(
+          (ref) => Stream.value(dummyPosition),
+        ),
         monitorServiceProvider.overrideWithValue(MockMonitorService()),
         settingsProvider.overrideWith(() => FakeSettingsNotifier(testSettings)),
       ],
@@ -82,23 +84,38 @@ void main() {
     container.dispose();
   });
 
-  test('WindowsPowerListener handles system suspend and resume sequences without errors', () async {
-    final WindowsPowerListener powerListener = container.read(windowsPowerListenerProvider);
-    expect(powerListener.isSuspended, isFalse);
+  test(
+    'WindowsPowerListener handles system suspend and resume sequences without errors',
+    () async {
+      final WindowsPowerListener powerListener = container.read(
+        windowsPowerListenerProvider,
+      );
+      expect(powerListener.isSuspended, isFalse);
 
-    // Simulate system suspend
-    await powerListener.handleSystemSuspend();
-    expect(powerListener.isSuspended, isTrue);
+      // Simulate system suspend
+      await powerListener.handleSystemSuspend();
+      expect(powerListener.isSuspended, isTrue);
 
-    // Simulate system resume
-    await powerListener.handleSystemResume();
-    expect(powerListener.isSuspended, isFalse);
-  });
+      // Simulate system resume
+      await powerListener.handleSystemResume();
+      expect(powerListener.isSuspended, isFalse);
+    },
+  );
 
-  test('WindowsPowerListener handles display change and hardware error events', () async {
-    final WindowsPowerListener powerListener = container.read(windowsPowerListenerProvider);
+  test(
+    'WindowsPowerListener handles display change and hardware error events',
+    () async {
+      final WindowsPowerListener powerListener = container.read(
+        windowsPowerListenerProvider,
+      );
 
-    expect(() => powerListener.handleDisplayChange(), returnsNormally);
-    expect(() => powerListener.handleHardwareError('DDC/CI I2C Bus NACK Error 0xC0262584'), returnsNormally);
-  });
+      expect(() => powerListener.handleDisplayChange(), returnsNormally);
+      expect(
+        () => powerListener.handleHardwareError(
+          'DDC/CI I2C Bus NACK Error 0xC0262584',
+        ),
+        returnsNormally,
+      );
+    },
+  );
 }

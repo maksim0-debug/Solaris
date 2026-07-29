@@ -71,43 +71,61 @@ void main() {
       container.dispose();
     });
 
-    test('Unauthenticated loopback request (OmniSleep) succeeds using default permissions even when FIRST key (index 0) is Read-Only', () async {
-      final request = await client.postUrl(Uri.parse('$serverUrl/api/sleep/sessions'));
-      request.headers.contentType = ContentType.json;
-      request.write(jsonEncode([
-        {
-          'id': 'omnisleep_session_1',
-          'startTime': DateTime.now().subtract(const Duration(hours: 8)).toIso8601String(),
-          'endTime': DateTime.now().toIso8601String(),
-          'source': 'omnisleep',
-        }
-      ]));
+    test(
+      'Unauthenticated loopback request (OmniSleep) succeeds using default permissions even when FIRST key (index 0) is Read-Only',
+      () async {
+        final request = await client.postUrl(
+          Uri.parse('$serverUrl/api/sleep/sessions'),
+        );
+        request.headers.contentType = ContentType.json;
+        request.write(
+          jsonEncode([
+            {
+              'id': 'omnisleep_session_1',
+              'startTime': DateTime.now()
+                  .subtract(const Duration(hours: 8))
+                  .toIso8601String(),
+              'endTime': DateTime.now().toIso8601String(),
+              'source': 'omnisleep',
+            },
+          ]),
+        );
 
-      final response = await request.close();
-      expect(response.statusCode, equals(HttpStatus.ok));
+        final response = await request.close();
+        expect(response.statusCode, equals(HttpStatus.ok));
 
-      final sleepSessions = container.read(sleepProvider).sessions;
-      expect(sleepSessions.any((s) => s.id == 'omnisleep_session_1'), isTrue);
-    });
+        final sleepSessions = container.read(sleepProvider).sessions;
+        expect(sleepSessions.any((s) => s.id == 'omnisleep_session_1'), isTrue);
+      },
+    );
 
-    test('Authenticated request with Scoped Read-Only key token IS blocked with 403 Forbidden', () async {
-      final settingsMap = container.read(settingsProvider).value;
-      final readOnlyToken = settingsMap!['all']!.apiKeys[0].token;
+    test(
+      'Authenticated request with Scoped Read-Only key token IS blocked with 403 Forbidden',
+      () async {
+        final settingsMap = container.read(settingsProvider).value;
+        final readOnlyToken = settingsMap!['all']!.apiKeys[0].token;
 
-      final request = await client.postUrl(Uri.parse('$serverUrl/api/sleep/sessions'));
-      request.headers.contentType = ContentType.json;
-      request.headers.set('X-API-Key', readOnlyToken);
-      request.write(jsonEncode([
-        {
-          'id': 'omnisleep_session_2',
-          'startTime': DateTime.now().subtract(const Duration(hours: 8)).toIso8601String(),
-          'endTime': DateTime.now().toIso8601String(),
-          'source': 'omnisleep',
-        }
-      ]));
+        final request = await client.postUrl(
+          Uri.parse('$serverUrl/api/sleep/sessions'),
+        );
+        request.headers.contentType = ContentType.json;
+        request.headers.set('X-API-Key', readOnlyToken);
+        request.write(
+          jsonEncode([
+            {
+              'id': 'omnisleep_session_2',
+              'startTime': DateTime.now()
+                  .subtract(const Duration(hours: 8))
+                  .toIso8601String(),
+              'endTime': DateTime.now().toIso8601String(),
+              'source': 'omnisleep',
+            },
+          ]),
+        );
 
-      final response = await request.close();
-      expect(response.statusCode, equals(HttpStatus.forbidden));
-    });
+        final response = await request.close();
+        expect(response.statusCode, equals(HttpStatus.forbidden));
+      },
+    );
   });
 }

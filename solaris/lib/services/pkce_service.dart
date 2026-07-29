@@ -5,7 +5,7 @@ import 'package:crypto/crypto.dart';
 /// Service to handle PKCE (Proof Key for Code Exchange) generation.
 class PkceService {
   /// Generates a high-entropy code verifier.
-  /// 
+  ///
   /// A cryptographically random string between 43 and 128 characters.
   static String generateCodeVerifier() {
     final random = Random.secure();

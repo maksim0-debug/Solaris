@@ -13,7 +13,8 @@ class GitHubReleaseService {
 
   final http.Client _client;
 
-  GitHubReleaseService({http.Client? client}) : _client = client ?? http.Client();
+  GitHubReleaseService({http.Client? client})
+    : _client = client ?? http.Client();
 
   /// Checks for software updates by querying GitHub Releases API `/releases/latest`.
   ///
@@ -120,7 +121,10 @@ class GitHubReleaseService {
   /// Returns `true` if GitHub API returns HTTP 200 and a non-empty list of attestations.
   /// Returns `false` if GitHub API returns HTTP 404 or any error (indicating tampering or manual upload).
   Future<bool> verifyArtifactAttestation(String sha256Hash) async {
-    final cleanHash = sha256Hash.replaceFirst('sha256:', '').trim().toLowerCase();
+    final cleanHash = sha256Hash
+        .replaceFirst('sha256:', '')
+        .trim()
+        .toLowerCase();
     if (cleanHash.length != 64) return false;
 
     final uri = Uri.https(

@@ -104,7 +104,10 @@ void main() {
       const config = ApiPermissionsConfig(
         allowReadWeather: false,
         isReadOnly: true,
-        allowedCategories: {ApiActionCategory.monitors, ApiActionCategory.system},
+        allowedCategories: {
+          ApiActionCategory.monitors,
+          ApiActionCategory.system,
+        },
       );
 
       final json = config.toJson();
@@ -115,21 +118,25 @@ void main() {
       expect(restored.isReadOnly, isTrue);
       expect(restored.allowedCategories, contains(ApiActionCategory.monitors));
       expect(restored.allowedCategories, contains(ApiActionCategory.system));
-      expect(restored.allowedCategories, equals({ApiActionCategory.monitors, ApiActionCategory.system}));
+      expect(
+        restored.allowedCategories,
+        equals({ApiActionCategory.monitors, ApiActionCategory.system}),
+      );
     });
   });
 
   group('SettingsState Integration Tests', () {
-    test('SettingsState.fromJson initializes default ApiPermissionsConfig when key is missing', () {
-      final json = <String, dynamic>{
-        'localIpcServerPort': 45321,
-      };
+    test(
+      'SettingsState.fromJson initializes default ApiPermissionsConfig when key is missing',
+      () {
+        final json = <String, dynamic>{'localIpcServerPort': 45321};
 
-      final state = SettingsState.fromJson(json);
-      expect(state.apiPermissions, equals(const ApiPermissionsConfig()));
-      expect(state.apiPermissions.isReadOnly, isFalse);
-      expect(state.apiPermissions.allowReadWeather, isTrue);
-    });
+        final state = SettingsState.fromJson(json);
+        expect(state.apiPermissions, equals(const ApiPermissionsConfig()));
+        expect(state.apiPermissions.isReadOnly, isFalse);
+        expect(state.apiPermissions.allowReadWeather, isTrue);
+      },
+    );
 
     test('SettingsState.fromJson restores apiPermissions from json', () {
       final json = <String, dynamic>{
@@ -143,7 +150,10 @@ void main() {
       final state = SettingsState.fromJson(json);
       expect(state.apiPermissions.allowReadWeather, isFalse);
       expect(state.apiPermissions.isReadOnly, isTrue);
-      expect(state.apiPermissions.allowedCategories, equals({ApiActionCategory.monitors}));
+      expect(
+        state.apiPermissions.allowedCategories,
+        equals({ApiActionCategory.monitors}),
+      );
     });
 
     test('SettingsState.copyWith updates apiPermissions properly', () {

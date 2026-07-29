@@ -12,12 +12,12 @@ class SettingsSearchService {
 
   List<SettingItem> _getDatabase() {
     final l10n = AppLocalizations.of(context)!;
-    
+
     // In a real app, these tags would be in ARB files as well.
     // I'll add them to ARB later, but for now I'll use placeholders that call l10n.
     // Wait, the user specifically asked for them to be in ARB.
     // So I should define keys in ARB like "tags_brightness" and access them here.
-    
+
     return [
       // Dashboard
       SettingItem(
@@ -60,7 +60,7 @@ class SettingsSearchService {
         screen: AppScreen.dashboard,
         anchorId: 'multi_monitor_offsets',
       ),
-      
+
       // Schedule
       SettingItem(
         id: 'schedule_view',
@@ -346,19 +346,20 @@ class SettingsSearchService {
         if (maxScore < 40) maxScore = 40.0;
       }
 
-      if (maxScore > 35.0) { // Threshold for relevance
-        scoredResults.add({
-          'item': item,
-          'score': maxScore,
-        });
+      if (maxScore > 35.0) {
+        // Threshold for relevance
+        scoredResults.add({'item': item, 'score': maxScore});
       }
     }
 
-    scoredResults.sort((a, b) => (b['score'] as double).compareTo(a['score'] as double));
+    scoredResults.sort(
+      (a, b) => (b['score'] as double).compareTo(a['score'] as double),
+    );
     return scoredResults.map((e) => e['item'] as SettingItem).toList();
   }
 }
 
-final settingsSearchServiceProvider = Provider.family<SettingsSearchService, BuildContext>((ref, context) {
-  return SettingsSearchService(context);
-});
+final settingsSearchServiceProvider =
+    Provider.family<SettingsSearchService, BuildContext>((ref, context) {
+      return SettingsSearchService(context);
+    });

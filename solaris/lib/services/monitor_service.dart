@@ -87,14 +87,20 @@ class MonitorService {
 
         if (kDebugMode) {
           _immediateDebugTimers[deviceName]?.cancel();
-          _immediateDebugTimers[deviceName] = Timer(const Duration(milliseconds: 200), () {
-            _logRealBrightness(deviceName, brightness, 'Immediately');
-          });
+          _immediateDebugTimers[deviceName] = Timer(
+            const Duration(milliseconds: 200),
+            () {
+              _logRealBrightness(deviceName, brightness, 'Immediately');
+            },
+          );
 
           _delayedDebugTimers[deviceName]?.cancel();
-          _delayedDebugTimers[deviceName] = Timer(const Duration(seconds: 3), () {
-            _logRealBrightness(deviceName, brightness, 'After 3s');
-          });
+          _delayedDebugTimers[deviceName] = Timer(
+            const Duration(seconds: 3),
+            () {
+              _logRealBrightness(deviceName, brightness, 'After 3s');
+            },
+          );
         }
       }
       return success ?? false;
@@ -117,13 +123,21 @@ class MonitorService {
     }
   }
 
-  void _logRealBrightness(String deviceName, int targetBrightness, String timing) {
+  void _logRealBrightness(
+    String deviceName,
+    int targetBrightness,
+    String timing,
+  ) {
     Future(() async {
       final real = await getBrightness(deviceName);
       if (real == null) {
-        debugPrint('❌ [DDC/CI Debug] [$timing] Device: $deviceName | Target: $targetBrightness% | Real: Failed to read');
+        debugPrint(
+          '❌ [DDC/CI Debug] [$timing] Device: $deviceName | Target: $targetBrightness% | Real: Failed to read',
+        );
       } else if (real != targetBrightness) {
-        debugPrint('⚠️ [DDC/CI Debug] [$timing] Device: $deviceName | MISMATCH! Target: $targetBrightness% | Real (DDC/CI): $real%');
+        debugPrint(
+          '⚠️ [DDC/CI Debug] [$timing] Device: $deviceName | MISMATCH! Target: $targetBrightness% | Real (DDC/CI): $real%',
+        );
       }
     });
   }
@@ -164,7 +178,9 @@ class MonitorService {
         if (EnumDisplayDevices(deviceNamePtr, 0, monitorDevice, 0) != 0) {
           final monitorName = monitorDevice.ref.DeviceString;
           final deviceID = monitorDevice.ref.DeviceID.toLowerCase();
-          final deviceIdHash = deviceID.hashCode.toRadixString(16).toLowerCase();
+          final deviceIdHash = deviceID.hashCode
+              .toRadixString(16)
+              .toLowerCase();
 
           // Fetch real brightness for this monitor
           final realBrightness = await getBrightness(deviceName);
@@ -175,7 +191,8 @@ class MonitorService {
           if (friendly == monitorName) {
             for (final entry in friendlyNames.entries) {
               final parts = entry.key.split('#');
-              if (parts.length > 1 && deviceID.contains(parts[1].toLowerCase())) {
+              if (parts.length > 1 &&
+                  deviceID.contains(parts[1].toLowerCase())) {
                 friendly = entry.value;
                 break;
               }

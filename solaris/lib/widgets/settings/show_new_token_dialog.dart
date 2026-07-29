@@ -12,7 +12,8 @@ Future<void> showNewTokenDialog(
   return showDialog<void>(
     context: context,
     barrierDismissible: false,
-    builder: (dialogContext) => ShowNewTokenDialog(token: token, keyName: keyName),
+    builder: (dialogContext) =>
+        ShowNewTokenDialog(token: token, keyName: keyName),
   );
 }
 
@@ -69,7 +70,10 @@ class ShowNewTokenDialog extends StatelessWidget {
             children: [
               // Dialog Header
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.03),
                   border: const Border(
@@ -147,7 +151,10 @@ class ShowNewTokenDialog extends StatelessWidget {
 
                     // Token Monospace Read-Only Field
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withOpacity(0.4),
                         borderRadius: BorderRadius.circular(10),
@@ -155,7 +162,11 @@ class ShowNewTokenDialog extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          const Icon(LucideIcons.key, color: Color(0xFFFDBA74), size: 16),
+                          const Icon(
+                            LucideIcons.key,
+                            color: Color(0xFFFDBA74),
+                            size: 16,
+                          ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: SelectableText(
@@ -169,7 +180,11 @@ class ShowNewTokenDialog extends StatelessWidget {
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(LucideIcons.copy, color: Colors.white70, size: 18),
+                            icon: const Icon(
+                              LucideIcons.copy,
+                              color: Colors.white70,
+                              size: 18,
+                            ),
                             onPressed: () => _copyToClipboard(context),
                             tooltip: l10n.copyTokenButton,
                           ),
@@ -185,9 +200,7 @@ class ShowNewTokenDialog extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.02),
-                  border: const Border(
-                    top: BorderSide(color: Colors.white10),
-                  ),
+                  border: const Border(top: BorderSide(color: Colors.white10)),
                 ),
                 child: Wrap(
                   alignment: WrapAlignment.spaceBetween,
@@ -201,7 +214,10 @@ class ShowNewTokenDialog extends StatelessWidget {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFFFDBA74),
                         side: const BorderSide(color: Color(0xFFFDBA74)),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -214,7 +230,10 @@ class ShowNewTokenDialog extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF4ADE80),
                         foregroundColor: Colors.black87,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),

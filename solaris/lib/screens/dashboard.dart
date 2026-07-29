@@ -29,8 +29,6 @@ import 'package:solaris/widgets/settings_search_overlay.dart';
 import 'package:solaris/widgets/deep_link_target.dart';
 import 'package:solaris/widgets/update_status_widget.dart';
 
-
-
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
@@ -86,7 +84,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     // Keep the background brightness adjustment logic alive
     ref.watch(circadianAdjustmentProvider);
 
-    ref.listen<SettingsEncryptionError?>(settingsErrorProvider, (previous, next) {
+    ref.listen<SettingsEncryptionError?>(settingsErrorProvider, (
+      previous,
+      next,
+    ) {
       if (next != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _showDpapiErrorDialog(context, next, ref);
@@ -103,8 +104,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     });
 
     // Check initial post update result on startup
-    final initialPostUpdateResult = ref.read<PostUpdateResult?>(postUpdateResultProvider);
-    if (initialPostUpdateResult != null && initialPostUpdateResult.status != PostUpdateStatus.none) {
+    final initialPostUpdateResult = ref.read<PostUpdateResult?>(
+      postUpdateResultProvider,
+    );
+    if (initialPostUpdateResult != null &&
+        initialPostUpdateResult.status != PostUpdateStatus.none) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _showPostUpdateNotification(context, initialPostUpdateResult, ref);
       });
@@ -131,7 +135,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         _handleGlobalDeepLink(initialAnchor);
       });
     }
-
 
     // Detach UI subtree whenever the window is not visible (hidden to tray OR minimized to taskbar).
     // This drops CPU and GPU usage to 0.0% when minimized and releases ~50-80 MB of RenderObjects,
@@ -164,7 +167,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       children: [
                         // Sidebar
                         _Sidebar(anchorKeys: _anchorKeys),
-        
+
                         // Main Content
                         Expanded(
                           child: Padding(
@@ -240,7 +243,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               onPressed: () {
                 ref.read(settingsErrorProvider.notifier).state = null;
                 Navigator.of(dialogContext).pop();
-                ref.read(activeScreenProvider.notifier).setScreen(AppScreen.settings);
+                ref
+                    .read(activeScreenProvider.notifier)
+                    .setScreen(AppScreen.settings);
               },
             ),
           ],
@@ -274,7 +279,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
           content: Row(
             children: [
-              const Icon(Icons.check_circle_rounded, color: Colors.greenAccent, size: 20),
+              const Icon(
+                Icons.check_circle_rounded,
+                color: Colors.greenAccent,
+                size: 20,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -313,7 +322,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             title: Row(
               children: [
                 Icon(
-                  isRollback ? Icons.warning_amber_rounded : Icons.error_outline_rounded,
+                  isRollback
+                      ? Icons.warning_amber_rounded
+                      : Icons.error_outline_rounded,
                   color: isRollback ? Colors.orangeAccent : Colors.redAccent,
                   size: 24,
                 ),
@@ -339,9 +350,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.white,
-                ),
+                style: TextButton.styleFrom(foregroundColor: Colors.white),
                 child: const Text('OK'),
               ),
             ],
@@ -454,7 +463,8 @@ class _Sidebar extends ConsumerWidget {
           _SidebarItem(
             icon: LucideIcons.search,
             label: l10n.searchPlaceholder.split(' (').first,
-            onTap: () => ref.read(isSearchVisibleProvider.notifier).setVisible(true),
+            onTap: () =>
+                ref.read(isSearchVisibleProvider.notifier).setVisible(true),
           ),
           const Spacer(),
           DeepLinkTarget(
@@ -552,7 +562,8 @@ class _Header extends ConsumerWidget {
 
     // Initial sync when monitors are detected
     ref.listen(monitorListProvider, (previous, next) {
-      final wasLoading = previous == null || previous.isLoading || !previous.hasValue;
+      final wasLoading =
+          previous == null || previous.isLoading || !previous.hasValue;
       final isReady = next.hasValue && !next.isLoading;
 
       // Sync if it is the first load, or if the list of monitors actually changed (e.g. plugged/unplugged device)
@@ -566,9 +577,11 @@ class _Header extends ConsumerWidget {
       }
 
       if ((wasLoading && isReady) || monitorsChanged) {
-        debugPrint('[Dashboard ref.listen] monitorListProvider updated (Initial Sync). '
-            'HasValue: ${next.hasValue}, IsLoading: ${next.isLoading}. '
-            'Previous identity matches next: ${identical(previous?.value, next.value)}');
+        debugPrint(
+          '[Dashboard ref.listen] monitorListProvider updated (Initial Sync). '
+          'HasValue: ${next.hasValue}, IsLoading: ${next.isLoading}. '
+          'Previous identity matches next: ${identical(previous?.value, next.value)}',
+        );
         final selection = ref.read(selectedMonitorsProvider);
         final monitors = next.value ?? [];
 
@@ -894,7 +907,9 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
         if (primaryMonitor != null && primaryMonitor.realBrightness != null) {
           brightness = primaryMonitor.realBrightness!.toDouble();
         } else {
-          final firstWithBrightness = monitors.where((m) => m.realBrightness != null).firstOrNull;
+          final firstWithBrightness = monitors
+              .where((m) => m.realBrightness != null)
+              .firstOrNull;
           if (firstWithBrightness != null) {
             brightness = firstWithBrightness.realBrightness!.toDouble();
           }
@@ -915,7 +930,9 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
         if (primaryMonitor != null && primaryMonitor.realTemperature != null) {
           tempVal = primaryMonitor.realTemperature!.toDouble();
         } else {
-          final firstWithTemp = monitors.where((m) => m.realTemperature != null).firstOrNull;
+          final firstWithTemp = monitors
+              .where((m) => m.realTemperature != null)
+              .firstOrNull;
           if (firstWithTemp != null) {
             tempVal = firstWithTemp.realTemperature!.toDouble();
           }
@@ -1015,31 +1032,31 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
               const SizedBox(height: 48),
               SizedBox(
                 width: 320,
-                  child: Column(
-                    children: [
-                      DeepLinkTarget(
-                        key: _anchorKeys['brightness_control'],
-                        id: 'brightness_control',
-                        child: BrightnessSlider(
-                          value: brightness,
-                          onChanged: (val) => ref
-                              .read(currentBrightnessProvider.notifier)
-                              .setManualBrightness(val),
-                        ),
+                child: Column(
+                  children: [
+                    DeepLinkTarget(
+                      key: _anchorKeys['brightness_control'],
+                      id: 'brightness_control',
+                      child: BrightnessSlider(
+                        value: brightness,
+                        onChanged: (val) => ref
+                            .read(currentBrightnessProvider.notifier)
+                            .setManualBrightness(val),
                       ),
-                      const SizedBox(height: 24),
-                      DeepLinkTarget(
-                        key: _anchorKeys['color_temperature'],
-                        id: 'color_temperature',
-                        child: TemperatureSlider(
-                          value: tempVal,
-                          onChanged: (val) => ref
-                              .read(currentTemperatureProvider.notifier)
-                              .setManualTemperature(val.round()),
-                        ),
+                    ),
+                    const SizedBox(height: 24),
+                    DeepLinkTarget(
+                      key: _anchorKeys['color_temperature'],
+                      id: 'color_temperature',
+                      child: TemperatureSlider(
+                        value: tempVal,
+                        onChanged: (val) => ref
+                            .read(currentTemperatureProvider.notifier)
+                            .setManualTemperature(val.round()),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -1152,16 +1169,21 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                 smartCircadianDataProvider(monitorId),
                               );
                               final smartDataTemp = ref.watch(
-                                smartCircadianTemperatureDataProvider(monitorId),
+                                smartCircadianTemperatureDataProvider(
+                                  monitorId,
+                                ),
                               );
 
                               final settingsAsync = ref.watch(settingsProvider);
                               final settings = settingsAsync.maybeWhen(
                                 data: (map) =>
-                                    map[monitorId] ?? map['all'] ?? SettingsState(),
+                                    map[monitorId] ??
+                                    map['all'] ??
+                                    SettingsState(),
                                 orElse: () => SettingsState(),
                               );
-                              final isSmartEnabled = settings.isSmartCircadianEnabled;
+                              final isSmartEnabled =
+                                  settings.isSmartCircadianEnabled;
 
                               // 1. Brightness adjustments
                               final activeAdjustments = <Widget>[];
@@ -1180,7 +1202,8 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                 );
                               }
 
-                              if (isSmartEnabled && smartData.isWindDownActive) {
+                              if (isSmartEnabled &&
+                                  smartData.isWindDownActive) {
                                 final impactPercent = smartData
                                     .windDownAbsoluteImpact
                                     .round();
@@ -1213,7 +1236,8 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                 );
                               }
 
-                              if (isSmartEnabled && smartData.isTimeShiftActive) {
+                              if (isSmartEnabled &&
+                                  smartData.isTimeShiftActive) {
                                 final impactPercent = smartData
                                     .timeShiftBrightnessImpact
                                     .round();
@@ -1237,7 +1261,8 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                 );
                               }
 
-                              if (isSmartEnabled && smartData.isSleepPressureActive) {
+                              if (isSmartEnabled &&
+                                  smartData.isSleepPressureActive) {
                                 final impactPercent = smartData
                                     .sleepPressureAbsoluteImpact
                                     .round();
@@ -1252,7 +1277,8 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                 );
                               }
 
-                              if (isSmartEnabled && smartData.isSleepDebtActive) {
+                              if (isSmartEnabled &&
+                                  smartData.isSleepDebtActive) {
                                 final impactPercent = smartData
                                     .sleepDebtAbsoluteImpact
                                     .round();
@@ -1270,52 +1296,77 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                               // 2. Temperature adjustments
                               final activeTempAdjustments = <Widget>[];
 
-                              if (smartDataTemp.weatherTemperatureImpact.abs() > 0.5) {
-                                final impactK = smartDataTemp.weatherTemperatureImpact.round();
+                              if (smartDataTemp.weatherTemperatureImpact.abs() >
+                                  0.5) {
+                                final impactK = smartDataTemp
+                                    .weatherTemperatureImpact
+                                    .round();
                                 activeTempAdjustments.add(
                                   _SmartAdjustmentIndicator(
-                                    icon: getWeatherIcon(smartDataTemp.weatherCode),
-                                    label: '${l10n.weatherTemperatureAdjustmentTitle}: ${impactK} K',
+                                    icon: getWeatherIcon(
+                                      smartDataTemp.weatherCode,
+                                    ),
+                                    label:
+                                        '${l10n.weatherTemperatureAdjustmentTitle}: ${impactK} K',
                                     iconColor: const Color(0xFF818CF8),
                                   ),
                                 );
                               }
 
-                              if (isSmartEnabled && smartDataTemp.sleepPressureTemperatureImpact.abs() > 0.5) {
-                                final impactK = smartDataTemp.sleepPressureTemperatureImpact.round();
+                              if (isSmartEnabled &&
+                                  smartDataTemp.sleepPressureTemperatureImpact
+                                          .abs() >
+                                      0.5) {
+                                final impactK = smartDataTemp
+                                    .sleepPressureTemperatureImpact
+                                    .round();
                                 activeTempAdjustments.add(
                                   _SmartAdjustmentIndicator(
                                     icon: LucideIcons.hourglass,
-                                    label: '${l10n.featureSleepPressureShort}: ${impactK} K',
+                                    label:
+                                        '${l10n.featureSleepPressureShort}: ${impactK} K',
                                     iconColor: const Color(0xFFA78BFA),
                                   ),
                                 );
                               }
 
-                              if (isSmartEnabled && smartDataTemp.windDownTemperatureImpact.abs() > 0.5) {
-                                final impactK = smartDataTemp.windDownTemperatureImpact.round();
+                              if (isSmartEnabled &&
+                                  smartDataTemp.windDownTemperatureImpact
+                                          .abs() >
+                                      0.5) {
+                                final impactK = smartDataTemp
+                                    .windDownTemperatureImpact
+                                    .round();
                                 activeTempAdjustments.add(
                                   _SmartAdjustmentIndicator(
                                     icon: LucideIcons.moon,
-                                    label: '${l10n.featureWindDownShort}: ${impactK} K',
+                                    label:
+                                        '${l10n.featureWindDownShort}: ${impactK} K',
                                     iconColor: const Color(0xFF818CF8),
                                   ),
                                 );
                               }
 
-                              if (isSmartEnabled && smartDataTemp.sleepDebtTemperatureImpact.abs() > 0.5) {
-                                final impactK = smartDataTemp.sleepDebtTemperatureImpact.round();
+                              if (isSmartEnabled &&
+                                  smartDataTemp.sleepDebtTemperatureImpact
+                                          .abs() >
+                                      0.5) {
+                                final impactK = smartDataTemp
+                                    .sleepDebtTemperatureImpact
+                                    .round();
                                 activeTempAdjustments.add(
                                   _SmartAdjustmentIndicator(
                                     icon: LucideIcons.battery,
-                                    label: '${l10n.featureSleepDebtShort}: ${impactK} K',
+                                    label:
+                                        '${l10n.featureSleepDebtShort}: ${impactK} K',
                                     iconColor: const Color(0xFFF43F5E),
                                   ),
                                 );
                               }
 
                               final bool showBright = isAutoBright;
-                              final bool showTemp = isAutoTemp && isColorTempEnabled;
+                              final bool showTemp =
+                                  isAutoTemp && isColorTempEnabled;
 
                               if (!showBright && !showTemp) {
                                 return const SizedBox.shrink();
@@ -1344,7 +1395,8 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                           CircadianBreakdownTooltip(
                                             smartData: smartData,
                                             currentBrightness: targetBrightness,
-                                            isSmartCircadianEnabled: isSmartEnabled,
+                                            isSmartCircadianEnabled:
+                                                isSmartEnabled,
                                             child: const Icon(
                                               LucideIcons.info,
                                               size: 14,
@@ -1385,7 +1437,8 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                           TemperatureBreakdownTooltip(
                                             smartData: smartDataTemp,
                                             currentTemperature: tempVal.round(),
-                                            isSmartCircadianEnabled: isSmartEnabled,
+                                            isSmartCircadianEnabled:
+                                                isSmartEnabled,
                                             child: const Icon(
                                               LucideIcons.info,
                                               size: 14,
@@ -1479,7 +1532,9 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                       ),
                                     ),
                                     Text(
-                                      isAutoBright ? l10n.active : l10n.disabled,
+                                      isAutoBright
+                                          ? l10n.active
+                                          : l10n.disabled,
                                       style: TextStyle(
                                         fontSize: 10,
                                         color: isAutoBright
@@ -1501,7 +1556,9 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                           id: 'auto_temperature',
                           child: InkWell(
                             onTap: () => ref
-                                .read(autoTemperatureAdjustmentProvider.notifier)
+                                .read(
+                                  autoTemperatureAdjustmentProvider.notifier,
+                                )
                                 .toggle(),
                             borderRadius: BorderRadius.circular(16),
                             child: GlassCard(
@@ -1536,7 +1593,9 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                     ),
                                     if (isColorTempEnabled) ...[
                                       Text(
-                                        isAutoTemp ? l10n.active : l10n.disabled,
+                                        isAutoTemp
+                                            ? l10n.active
+                                            : l10n.disabled,
                                         style: TextStyle(
                                           fontSize: 10,
                                           color: isAutoTemp
@@ -1732,8 +1791,9 @@ class _Footer extends ConsumerWidget {
                             '${monitor.friendlyName.toUpperCase()}: $brightnessStr',
                         isSelected: isSelected,
                         onTap: () {
-                          final notifier =
-                              ref.read(selectedMonitorsProvider.notifier);
+                          final notifier = ref.read(
+                            selectedMonitorsProvider.notifier,
+                          );
                           if (isSelected) {
                             notifier.selectOnly('all');
                           } else {
@@ -1748,8 +1808,7 @@ class _Footer extends ConsumerWidget {
                     key: anchorKeys['multi_monitor_offsets'],
                     id: 'multi_monitor_offsets',
                     onDeepLink: () {
-                      anchorKeys['multi_monitor_offsets']
-                          ?.currentContext
+                      anchorKeys['multi_monitor_offsets']?.currentContext
                           ?.findAncestorWidgetOfExactType<IconButton>()
                           ?.onPressed
                           ?.call();
@@ -1769,7 +1828,6 @@ class _Footer extends ConsumerWidget {
             ),
           ),
           const UpdateStatusWidget(),
-
         ],
       ),
     );
@@ -1825,7 +1883,9 @@ class _OffsetSettingsButton extends ConsumerWidget {
       icon: Icon(
         LucideIcons.settings,
         size: 14,
-        color: ref.watch(settingsProvider).maybeWhen(
+        color: ref
+            .watch(settingsProvider)
+            .maybeWhen(
               data: (map) => map['all']?.isMultiMonitorOffsetEnabled ?? false
                   ? const Color(0xFF818CF8)
                   : Colors.white24,
@@ -1880,8 +1940,11 @@ class _MultiMonitorOffsetPopover extends ConsumerWidget {
           child: Container(color: Colors.transparent),
         ),
         Positioned(
-          left: (position.left + (size.width - position.left - position.right) / 2 - 160)
-              .clamp(16.0, size.width - 320 - 16.0),
+          left:
+              (position.left +
+                      (size.width - position.left - position.right) / 2 -
+                      160)
+                  .clamp(16.0, size.width - 320 - 16.0),
           bottom: (size.height - position.top) + 16,
           child: Material(
             color: Colors.transparent,
@@ -1944,16 +2007,21 @@ class _MultiMonitorOffsetPopover extends ConsumerWidget {
                             child: monitorsAsync.when(
                               data: (monitors) => Column(
                                 children: monitors.map((monitor) {
-                                  final offset = settingsMap[monitor.deviceName]
+                                  final offset =
+                                      settingsMap[monitor.deviceName]
                                           ?.brightnessOffset ??
                                       0.0;
-                                  final finalVal =
-                                      (globalBrightness + offset).clamp(0, 100).round();
+                                  final finalVal = (globalBrightness + offset)
+                                      .clamp(0, 100)
+                                      .round();
 
                                   return Padding(
-                                    padding: const EdgeInsets.only(bottom: 16.0),
+                                    padding: const EdgeInsets.only(
+                                      bottom: 16.0,
+                                    ),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Row(
                                           mainAxisAlignment:
@@ -1987,19 +2055,20 @@ class _MultiMonitorOffsetPopover extends ConsumerWidget {
                                             trackHeight: 2,
                                             thumbShape:
                                                 const RoundSliderThumbShape(
-                                              enabledThumbRadius: 6,
-                                            ),
+                                                  enabledThumbRadius: 6,
+                                                ),
                                             overlayShape:
                                                 const RoundSliderOverlayShape(
-                                              overlayRadius: 14,
-                                            ),
-                                            activeTrackColor:
-                                                const Color(0xFFFDBA74)
-                                                    .withOpacity(0.5),
+                                                  overlayRadius: 14,
+                                                ),
+                                            activeTrackColor: const Color(
+                                              0xFFFDBA74,
+                                            ).withOpacity(0.5),
                                             inactiveTrackColor: Colors.white10,
                                             thumbColor: const Color(0xFFFDBA74),
-                                            overlayColor: const Color(0xFFFDBA74)
-                                                .withOpacity(0.2),
+                                            overlayColor: const Color(
+                                              0xFFFDBA74,
+                                            ).withOpacity(0.2),
                                           ),
                                           child: Slider(
                                             value: offset,
@@ -2021,8 +2090,9 @@ class _MultiMonitorOffsetPopover extends ConsumerWidget {
                               ),
                               loading: () => const SizedBox(
                                 height: 100,
-                                child:
-                                    Center(child: CircularProgressIndicator()),
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
                               ),
                               error: (e, _) => Text('Error: $e'),
                             ),

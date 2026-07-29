@@ -15,7 +15,6 @@ import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/utils/memory_utils.dart';
 import 'package:solaris/widgets/cancelable_network_tile_provider.dart';
 
-
 class SolarMap extends ConsumerStatefulWidget {
   final double latitude;
   final double longitude;
@@ -55,8 +54,9 @@ class _SolarMapState extends ConsumerState<SolarMap> {
   @override
   void didUpdateWidget(SolarMap oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (_isMapReady && (oldWidget.latitude != widget.latitude ||
-        oldWidget.longitude != widget.longitude)) {
+    if (_isMapReady &&
+        (oldWidget.latitude != widget.latitude ||
+            oldWidget.longitude != widget.longitude)) {
       _mapController.move(
         LatLng(widget.latitude, widget.longitude),
         widget.zoom,
@@ -84,7 +84,8 @@ class _SolarMapState extends ConsumerState<SolarMap> {
 
   @override
   Widget build(BuildContext context) {
-    final settings = ref.watch(settingsProvider).value?['all'] ?? SettingsState();
+    final settings =
+        ref.watch(settingsProvider).value?['all'] ?? SettingsState();
     final customToken = settings.customMapboxToken;
     final token = customToken.isNotEmpty ? customToken : Env.mapboxToken;
     final isMapTokenValid = customToken.isNotEmpty || Env.isMapboxTokenValid;
@@ -94,7 +95,7 @@ class _SolarMapState extends ConsumerState<SolarMap> {
     if (!isMapTokenValid) {
       _isMapReady = false;
     }
-    
+
     // Using the same style as in LocationScreen for consistency
     const style = kMapboxLargeMapStyle;
     final urlTemplate =
@@ -174,16 +175,18 @@ class _SolarMapState extends ConsumerState<SolarMap> {
               ClipRRect(
                 child: ImageFiltered(
                   imageFilter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(
-                    color: Colors.black.withOpacity(0.2),
-                  ),
+                  child: Container(color: Colors.black.withOpacity(0.2)),
                 ),
               ),
               Center(
                 child: GestureDetector(
                   onTap: () {
-                    ref.read(activeScreenProvider.notifier).setScreen(AppScreen.settings);
-                    ref.read(searchAnchorProvider.notifier).setAnchor('api_keys');
+                    ref
+                        .read(activeScreenProvider.notifier)
+                        .setScreen(AppScreen.settings);
+                    ref
+                        .read(searchAnchorProvider.notifier)
+                        .setAnchor('api_keys');
                   },
                   child: MouseRegion(
                     cursor: SystemMouseCursors.click,
@@ -231,13 +234,18 @@ class _SolarMapState extends ConsumerState<SolarMap> {
                       decoration: BoxDecoration(
                         color: Colors.black54,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFFDBA74).withOpacity(0.5)),
+                        border: Border.all(
+                          color: const Color(0xFFFDBA74).withOpacity(0.5),
+                        ),
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(LucideIcons.alertTriangle,
-                              color: Color(0xFFFDBA74), size: 16),
+                          Icon(
+                            LucideIcons.alertTriangle,
+                            color: Color(0xFFFDBA74),
+                            size: 16,
+                          ),
                           SizedBox(width: 8),
                           Text(
                             "MAP ISSUES",
@@ -259,5 +267,4 @@ class _SolarMapState extends ConsumerState<SolarMap> {
       ],
     );
   }
-
 }

@@ -17,7 +17,8 @@ class ApiPermissionsFilter {
     if (!permissions.allowReadCircadian) {
       copy.remove('smart_circadian');
       copy.removeWhere(
-        (k, _) => k.startsWith('circadian_') || k.startsWith('smart_circadian_'),
+        (k, _) =>
+            k.startsWith('circadian_') || k.startsWith('smart_circadian_'),
       );
     } else {
       // If allowReadCircadian is true, check sub-node smart_circadian for sleep metrics
@@ -67,7 +68,8 @@ class ApiPermissionsFilter {
     if (!permissions.allowReadSleep) {
       copy.remove('sleep_pressure');
       copy.remove('sleep_debt');
-      if (copy.containsKey('submodules') && copy['submodules'] is Map<String, dynamic>) {
+      if (copy.containsKey('submodules') &&
+          copy['submodules'] is Map<String, dynamic>) {
         final submodules = copy['submodules'] as Map<String, dynamic>;
         final subCopy = Map<String, dynamic>.from(submodules);
         subCopy.remove('sleep_pressure_master');

@@ -9,18 +9,12 @@ void main() {
   group('Phase 4: Webhook Engine & SSRF Protection Tests', () {
     group('SsrfValidator Unit Tests', () {
       test('Loopback IPv4 & IPv6 are strictly blocked', () {
-        expect(
-          SsrfValidator.isBlockedIp(InternetAddress('127.0.0.1')),
-          isTrue,
-        );
+        expect(SsrfValidator.isBlockedIp(InternetAddress('127.0.0.1')), isTrue);
         expect(
           SsrfValidator.isBlockedIp(InternetAddress('127.0.0.255')),
           isTrue,
         );
-        expect(
-          SsrfValidator.isBlockedIp(InternetAddress('::1')),
-          isTrue,
-        );
+        expect(SsrfValidator.isBlockedIp(InternetAddress('::1')), isTrue);
       });
 
       test('Cloud metadata 169.254.169.254 is strictly blocked', () {
@@ -37,60 +31,60 @@ void main() {
         );
       });
 
-      test('LAN IPs are allowed for webhooks when allowLanWebhooks is true', () {
-        expect(
-          SsrfValidator.isBlockedIp(
-            InternetAddress('192.168.1.100'),
-            targetType: SsrfValidationTarget.webhook,
-            allowLanWebhooks: true,
-          ),
-          isFalse,
-        );
-        expect(
-          SsrfValidator.isBlockedIp(
-            InternetAddress('10.0.0.5'),
-            targetType: SsrfValidationTarget.webhook,
-            allowLanWebhooks: true,
-          ),
-          isFalse,
-        );
-        expect(
-          SsrfValidator.isBlockedIp(
-            InternetAddress('172.16.0.10'),
-            targetType: SsrfValidationTarget.webhook,
-            allowLanWebhooks: true,
-          ),
-          isFalse,
-        );
-      });
+      test(
+        'LAN IPs are allowed for webhooks when allowLanWebhooks is true',
+        () {
+          expect(
+            SsrfValidator.isBlockedIp(
+              InternetAddress('192.168.1.100'),
+              targetType: SsrfValidationTarget.webhook,
+              allowLanWebhooks: true,
+            ),
+            isFalse,
+          );
+          expect(
+            SsrfValidator.isBlockedIp(
+              InternetAddress('10.0.0.5'),
+              targetType: SsrfValidationTarget.webhook,
+              allowLanWebhooks: true,
+            ),
+            isFalse,
+          );
+          expect(
+            SsrfValidator.isBlockedIp(
+              InternetAddress('172.16.0.10'),
+              targetType: SsrfValidationTarget.webhook,
+              allowLanWebhooks: true,
+            ),
+            isFalse,
+          );
+        },
+      );
 
-      test('LAN IPs are blocked when strict targetType or allowLanWebhooks is false', () {
-        expect(
-          SsrfValidator.isBlockedIp(
-            InternetAddress('192.168.1.100'),
-            targetType: SsrfValidationTarget.strict,
-          ),
-          isTrue,
-        );
-        expect(
-          SsrfValidator.isBlockedIp(
-            InternetAddress('192.168.1.100'),
-            targetType: SsrfValidationTarget.webhook,
-            allowLanWebhooks: false,
-          ),
-          isTrue,
-        );
-      });
+      test(
+        'LAN IPs are blocked when strict targetType or allowLanWebhooks is false',
+        () {
+          expect(
+            SsrfValidator.isBlockedIp(
+              InternetAddress('192.168.1.100'),
+              targetType: SsrfValidationTarget.strict,
+            ),
+            isTrue,
+          );
+          expect(
+            SsrfValidator.isBlockedIp(
+              InternetAddress('192.168.1.100'),
+              targetType: SsrfValidationTarget.webhook,
+              allowLanWebhooks: false,
+            ),
+            isTrue,
+          );
+        },
+      );
 
       test('Public IP addresses are allowed', () {
-        expect(
-          SsrfValidator.isBlockedIp(InternetAddress('8.8.8.8')),
-          isFalse,
-        );
-        expect(
-          SsrfValidator.isBlockedIp(InternetAddress('1.1.1.1')),
-          isFalse,
-        );
+        expect(SsrfValidator.isBlockedIp(InternetAddress('8.8.8.8')), isFalse);
+        expect(SsrfValidator.isBlockedIp(InternetAddress('1.1.1.1')), isFalse);
       });
     });
 
@@ -98,7 +92,10 @@ void main() {
       test('WebhookEventType correctly maps wire names', () {
         expect(WebhookEventType.onSunrise.wireName, equals('on_sunrise'));
         expect(WebhookEventType.onSunset.wireName, equals('on_sunset'));
-        expect(WebhookEventType.onGameModeActivated.wireName, equals('on_game_mode_activated'));
+        expect(
+          WebhookEventType.onGameModeActivated.wireName,
+          equals('on_game_mode_activated'),
+        );
 
         expect(
           WebhookEventType.fromString('on_sunrise'),

@@ -135,7 +135,8 @@ class LuminosityGraph extends StatelessWidget {
                 final totalMinutes = (spot.x * 60).round();
                 final hours = totalMinutes ~/ 60;
                 final minutes = totalMinutes % 60;
-                final timeString = '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}';
+                final timeString =
+                    '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}';
                 return LineTooltipItem(
                   '$timeString\n${spot.y.toStringAsFixed(1)}°',
                   const TextStyle(color: Colors.white),

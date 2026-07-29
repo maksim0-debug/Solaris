@@ -28,11 +28,12 @@ class BrightnessService {
         final rawTarget = (targetValue + offset).clamp(0.0, 100.0);
 
         // HYSTERESIS: Filter out noise to prevent flicker
-        final double lastCalculated = _lastCalculatedFloat[deviceName] ?? -100.0;
+        final double lastCalculated =
+            _lastCalculatedFloat[deviceName] ?? -100.0;
         if (!isManual && (rawTarget - lastCalculated).abs() < 1.5) {
           continue; // Ignore micro-fluctuations
         }
-        
+
         _lastCalculatedFloat[deviceName] = rawTarget;
         final target = rawTarget.round();
 
@@ -117,12 +118,14 @@ class BrightnessService {
 
         await monitorService.setBrightness(deviceName, current);
 
-        // ALWAYS check against the most recent target, to avoid race conditions 
+        // ALWAYS check against the most recent target, to avoid race conditions
         // where target updates while we were waiting for setBrightness.
         if (current == _targetBrightness[deviceName]) break;
 
         // Если ручное изменение, ждем 100мс, если автоматика - 150мс для большей ленивости
-        await Future<void>.delayed(Duration(milliseconds: currentIsManual ? 100 : 150));
+        await Future<void>.delayed(
+          Duration(milliseconds: currentIsManual ? 100 : 150),
+        );
       }
     } finally {
       // Free the timer so it can be restarted if new requests come in

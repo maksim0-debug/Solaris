@@ -52,14 +52,19 @@ class SsrfSafeHttpClient {
       // 1. DNS Lookup and validation of ALL returned IP addresses
       List<InternetAddress> addresses;
       try {
-        addresses = await InternetAddress.lookup(currentUri.host)
-            .timeout(const Duration(seconds: 5));
+        addresses = await InternetAddress.lookup(
+          currentUri.host,
+        ).timeout(const Duration(seconds: 5));
       } catch (e) {
-        throw SocketException('DNS Lookup Failed for host ${currentUri.host}: $e');
+        throw SocketException(
+          'DNS Lookup Failed for host ${currentUri.host}: $e',
+        );
       }
 
       if (addresses.isEmpty) {
-        throw SocketException('DNS Lookup Failed: No IP addresses resolved for ${currentUri.host}');
+        throw SocketException(
+          'DNS Lookup Failed: No IP addresses resolved for ${currentUri.host}',
+        );
       }
 
       // Check ALL resolved IPs against SSRF Guard
@@ -85,10 +90,7 @@ class SsrfSafeHttpClient {
           final task = await Socket.startConnect(validatedIp, uri.port);
           final socketFuture = task.socket.then((rawSocket) async {
             if (uri.scheme == 'https') {
-              return await SecureSocket.secure(
-                rawSocket,
-                host: uri.host,
-              );
+              return await SecureSocket.secure(rawSocket, host: uri.host);
             }
             return rawSocket;
           });
@@ -97,10 +99,10 @@ class SsrfSafeHttpClient {
           });
         };
 
-
       try {
         final request = await client.postUrl(currentUri).timeout(timeout);
-        request.followRedirects = false; // Disable automatic redirects (Strict Anti-TOCTOU)
+        request.followRedirects =
+            false; // Disable automatic redirects (Strict Anti-TOCTOU)
         request.headers.contentType = ContentType.json;
         request.headers.set('User-Agent', 'Solaris/1.1.0');
         request.headers.set('X-Solaris-Timestamp', timestamp);
@@ -173,7 +175,9 @@ class SsrfSafeHttpClient {
       }
     }
 
-    throw SocketException('Too many redirects (exceeded maximum of $maxRedirects)');
+    throw SocketException(
+      'Too many redirects (exceeded maximum of $maxRedirects)',
+    );
   }
 
   static String _generateUuid() {

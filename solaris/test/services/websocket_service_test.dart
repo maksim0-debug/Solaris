@@ -61,11 +61,11 @@ void main() {
     HttpOverrides.global = null;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('plugins.flutter.io/path_provider'),
-      (MethodCall methodCall) async {
-        return '.';
-      },
-    );
+          const MethodChannel('plugins.flutter.io/path_provider'),
+          (MethodCall methodCall) async {
+            return '.';
+          },
+        );
 
     final testSettings = SettingsState(
       isLocalIpcServerEnabled: true,
@@ -74,7 +74,9 @@ void main() {
 
     container = ProviderContainer(
       overrides: [
-        locationStreamProvider.overrideWith((ref) => Stream.value(dummyPosition)),
+        locationStreamProvider.overrideWith(
+          (ref) => Stream.value(dummyPosition),
+        ),
         monitorServiceProvider.overrideWithValue(MockMonitorService()),
         settingsProvider.overrideWith(() => FakeSettingsNotifier(testSettings)),
       ],
@@ -85,64 +87,95 @@ void main() {
     container.dispose();
   });
 
-  test('WebSocketService initializes correctly with connectedClientsCount 0', () {
-    final WebSocketService wsService = container.read(webSocketServiceProvider);
-    expect(wsService.connectedClientsCount, equals(0));
-  });
+  test(
+    'WebSocketService initializes correctly with connectedClientsCount 0',
+    () {
+      final WebSocketService wsService = container.read(
+        webSocketServiceProvider,
+      );
+      expect(wsService.connectedClientsCount, equals(0));
+    },
+  );
 
-  test('WebSocketService broadcastModule and closeAll complete without errors when no clients', () {
-    final WebSocketService wsService = container.read(webSocketServiceProvider);
-    expect(() => wsService.broadcastModule('solar', {'elevation': 12.5}), returnsNormally);
-    expect(() => wsService.broadcastEvent('on_sunset', {'test': true}), returnsNormally);
-    expect(() => wsService.closeAll(), returnsNormally);
-  });
+  test(
+    'WebSocketService broadcastModule and closeAll complete without errors when no clients',
+    () {
+      final WebSocketService wsService = container.read(
+        webSocketServiceProvider,
+      );
+      expect(
+        () => wsService.broadcastModule('solar', {'elevation': 12.5}),
+        returnsNormally,
+      );
+      expect(
+        () => wsService.broadcastEvent('on_sunset', {'test': true}),
+        returnsNormally,
+      );
+      expect(() => wsService.closeAll(), returnsNormally);
+    },
+  );
 
-  test('WebSocket Upgrade, Snapshot hand-shake and Echo Ping/Pong over LocalIpcService HTTP Server', () async {
-    final LocalIpcService ipcService = container.read(localIpcServiceProvider.notifier);
-    await ipcService.start();
+  test(
+    'WebSocket Upgrade, Snapshot hand-shake and Echo Ping/Pong over LocalIpcService HTTP Server',
+    () async {
+      final LocalIpcService ipcService = container.read(
+        localIpcServiceProvider.notifier,
+      );
+      await ipcService.start();
 
-    final state = container.read(localIpcServiceProvider);
-    expect(state.isRunning, isTrue);
-    final port = state.port!;
+      final state = container.read(localIpcServiceProvider);
+      expect(state.isRunning, isTrue);
+      final port = state.port!;
 
-    final wsUri = Uri.parse('ws://127.0.0.1:$port/api/v1/ws?token=test-token-123');
-    final clientSocket = await WebSocket.connect(wsUri.toString());
+      final wsUri = Uri.parse(
+        'ws://127.0.0.1:$port/api/v1/ws?token=test-token-123',
+      );
+      final clientSocket = await WebSocket.connect(wsUri.toString());
 
-    final snapshotCompleter = Completer<Map<String, dynamic>>();
-    final pongCompleter = Completer<Map<String, dynamic>>();
+      final snapshotCompleter = Completer<Map<String, dynamic>>();
+      final pongCompleter = Completer<Map<String, dynamic>>();
 
-    final stream = clientSocket.asBroadcastStream();
+      final stream = clientSocket.asBroadcastStream();
 
-    stream.listen((message) {
-      if (message is String) {
-        final jsonMap = jsonDecode(message) as Map<String, dynamic>;
-        if (jsonMap['type'] == 'snapshot' && !snapshotCompleter.isCompleted) {
-          snapshotCompleter.complete(jsonMap);
-        } else if (jsonMap['type'] == 'pong' && !pongCompleter.isCompleted) {
-          pongCompleter.complete(jsonMap);
+      stream.listen((message) {
+        if (message is String) {
+          final jsonMap = jsonDecode(message) as Map<String, dynamic>;
+          if (jsonMap['type'] == 'snapshot' && !snapshotCompleter.isCompleted) {
+            snapshotCompleter.complete(jsonMap);
+          } else if (jsonMap['type'] == 'pong' && !pongCompleter.isCompleted) {
+            pongCompleter.complete(jsonMap);
+          }
         }
-      }
-    });
+      });
 
-    final snapshot = await snapshotCompleter.future.timeout(const Duration(seconds: 5));
-    expect(snapshot['type'], equals('snapshot'));
-    expect(snapshot.containsKey('data'), isTrue);
+      final snapshot = await snapshotCompleter.future.timeout(
+        const Duration(seconds: 5),
+      );
+      expect(snapshot['type'], equals('snapshot'));
+      expect(snapshot.containsKey('data'), isTrue);
 
-    // Send Ping frame
-    clientSocket.add(jsonEncode({'type': 'ping'}));
-    final pongResp = await pongCompleter.future.timeout(const Duration(seconds: 5));
-    expect(pongResp['type'], equals('pong'));
+      // Send Ping frame
+      clientSocket.add(jsonEncode({'type': 'ping'}));
+      final pongResp = await pongCompleter.future.timeout(
+        const Duration(seconds: 5),
+      );
+      expect(pongResp['type'], equals('pong'));
 
-    await clientSocket.close();
-    await ipcService.stop();
-  });
+      await clientSocket.close();
+      await ipcService.stop();
+    },
+  );
 
   test('WebSocket Command Execution with Correlation ID (cmd_id)', () async {
-    final LocalIpcService ipcService = container.read(localIpcServiceProvider.notifier);
+    final LocalIpcService ipcService = container.read(
+      localIpcServiceProvider.notifier,
+    );
     await ipcService.start();
 
     final port = container.read(localIpcServiceProvider).port!;
-    final clientSocket = await WebSocket.connect('ws://127.0.0.1:$port/api/v1/ws?token=test-token-123');
+    final clientSocket = await WebSocket.connect(
+      'ws://127.0.0.1:$port/api/v1/ws?token=test-token-123',
+    );
 
     final cmdCompleter = Completer<Map<String, dynamic>>();
     final stream = clientSocket.asBroadcastStream();
@@ -150,20 +183,25 @@ void main() {
     stream.listen((message) {
       if (message is String) {
         final jsonMap = jsonDecode(message) as Map<String, dynamic>;
-        if (jsonMap['type'] == 'response' && jsonMap['cmd_id'] == 'req-test-101') {
+        if (jsonMap['type'] == 'response' &&
+            jsonMap['cmd_id'] == 'req-test-101') {
           cmdCompleter.complete(jsonMap);
         }
       }
     });
 
-    clientSocket.add(jsonEncode({
-      'type': 'command',
-      'cmd_id': 'req-test-101',
-      'action': 'set_auto_brightness',
-      'enabled': false,
-    }));
+    clientSocket.add(
+      jsonEncode({
+        'type': 'command',
+        'cmd_id': 'req-test-101',
+        'action': 'set_auto_brightness',
+        'enabled': false,
+      }),
+    );
 
-    final response = await cmdCompleter.future.timeout(const Duration(seconds: 5));
+    final response = await cmdCompleter.future.timeout(
+      const Duration(seconds: 5),
+    );
     expect(response['type'], equals('response'));
     expect(response['cmd_id'], equals('req-test-101'));
     expect(response['status'], equals('ok'));

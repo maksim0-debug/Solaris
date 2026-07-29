@@ -77,7 +77,10 @@ class TemperatureService {
         if (target == 6500) {
           await monitorService.resetMonitorTemperature(monitor.deviceName);
         } else {
-          await monitorService.setMonitorTemperature(monitor.deviceName, target);
+          await monitorService.setMonitorTemperature(
+            monitor.deviceName,
+            target,
+          );
         }
       }
     }

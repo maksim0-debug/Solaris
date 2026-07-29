@@ -25,24 +25,27 @@ class SessionGrouper {
     // To ensure we don't have redundant data.
     final List<SleepSession> deduplicated = [];
     uniqueSessions.sort((a, b) => a.startTime.compareTo(b.startTime));
-    
+
     for (int i = 0; i < uniqueSessions.length; i++) {
-       bool isNested = false;
-       for (int j = 0; j < uniqueSessions.length; j++) {
-         if (i == j) continue;
-         final s1 = uniqueSessions[i];
-         final s2 = uniqueSessions[j];
-         // Case: s1 is inside s2
-         if (s1.startTime.isAtSameMomentAs(s2.startTime) || s1.startTime.isAfter(s2.startTime)) {
-            if (s1.endTime.isAtSameMomentAs(s2.endTime) || s1.endTime.isBefore(s2.endTime)) {
-              if (s1.id != s2.id || i > j) { // Prefer larger or earlier-index
-                isNested = true;
-                break;
-              }
+      bool isNested = false;
+      for (int j = 0; j < uniqueSessions.length; j++) {
+        if (i == j) continue;
+        final s1 = uniqueSessions[i];
+        final s2 = uniqueSessions[j];
+        // Case: s1 is inside s2
+        if (s1.startTime.isAtSameMomentAs(s2.startTime) ||
+            s1.startTime.isAfter(s2.startTime)) {
+          if (s1.endTime.isAtSameMomentAs(s2.endTime) ||
+              s1.endTime.isBefore(s2.endTime)) {
+            if (s1.id != s2.id || i > j) {
+              // Prefer larger or earlier-index
+              isNested = true;
+              break;
             }
-         }
-       }
-       if (!isNested) deduplicated.add(uniqueSessions[i]);
+          }
+        }
+      }
+      if (!isNested) deduplicated.add(uniqueSessions[i]);
     }
 
     // 3. Sort all sessions by start time

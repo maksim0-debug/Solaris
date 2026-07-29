@@ -171,10 +171,7 @@ class UserPreset {
   factory UserPreset.fromJson(Map<String, dynamic> json) {
     final points = (json['points'] as List<dynamic>).map((p) {
       final map = p as Map<String, dynamic>;
-      return FlSpot(
-        (map['x'] as num).toDouble(),
-        (map['y'] as num).toDouble(),
-      );
+      return FlSpot((map['x'] as num).toDouble(), (map['y'] as num).toDouble());
     }).toList();
 
     List<FlSpot>? initialPoints;
@@ -196,4 +193,3 @@ class UserPreset {
     );
   }
 }
-

@@ -15,7 +15,6 @@ import 'package:solaris/services/api_permissions_checker.dart';
 import 'package:solaris/services/api_router.dart';
 import 'package:solaris/services/api_status_handler.dart';
 
-
 class LocalIpcService extends Notifier<LocalIpcServerState> {
   HttpServer? _server;
   bool _isStarting = false;
@@ -35,42 +34,42 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
 
     _setupRouter();
 
-    ref.listen<AsyncValue<Map<String, SettingsState>>>(
-      settingsProvider,
-      (previous, next) {
-        next.whenData((settingsMap) {
-          Future.microtask(() async {
-            final settings = settingsMap['all'];
-            final prevSettings = previous?.value?['all'];
-            if (settings != null) {
-              final isEnabled = settings.isLocalIpcServerEnabled;
-              final port = settings.apiServerPort;
-              final prevPort = prevSettings?.apiServerPort ?? prevSettings?.localIpcServerPort;
-              final lanEnabled = settings.isApiLanAccessEnabled;
-              final prevLanEnabled = prevSettings?.isApiLanAccessEnabled;
+    ref.listen<AsyncValue<Map<String, SettingsState>>>(settingsProvider, (
+      previous,
+      next,
+    ) {
+      next.whenData((settingsMap) {
+        Future.microtask(() async {
+          final settings = settingsMap['all'];
+          final prevSettings = previous?.value?['all'];
+          if (settings != null) {
+            final isEnabled = settings.isLocalIpcServerEnabled;
+            final port = settings.apiServerPort;
+            final prevPort =
+                prevSettings?.apiServerPort ?? prevSettings?.localIpcServerPort;
+            final lanEnabled = settings.isApiLanAccessEnabled;
+            final prevLanEnabled = prevSettings?.isApiLanAccessEnabled;
 
-              _router.apiKeys = settings.apiKeys;
-              _router.requireLocalToken = settings.requireLocalToken;
-              _router.isLanEnabled = lanEnabled;
+            _router.apiKeys = settings.apiKeys;
+            _router.requireLocalToken = settings.requireLocalToken;
+            _router.isLanEnabled = lanEnabled;
 
-              if (isEnabled) {
-                if (!state.isRunning) {
-                  await start();
-                } else if (port != prevPort || lanEnabled != prevLanEnabled) {
-                  await stop();
-                  await start();
-                }
-              } else {
-                if (state.isRunning) {
-                  await stop();
-                }
+            if (isEnabled) {
+              if (!state.isRunning) {
+                await start();
+              } else if (port != prevPort || lanEnabled != prevLanEnabled) {
+                await stop();
+                await start();
+              }
+            } else {
+              if (state.isRunning) {
+                await stop();
               }
             }
-          });
+          }
         });
-      },
-      fireImmediately: true,
-    );
+      });
+    }, fireImmediately: true);
 
     ref.onDispose(() {
       _server?.close(force: true);
@@ -81,7 +80,8 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
   }
 
   void _setupRouter() {
-    _router.onKeyUsed = (keyId) => ref.read(settingsProvider.notifier).touchApiKeyLastUsed(keyId);
+    _router.onKeyUsed = (keyId) =>
+        ref.read(settingsProvider.notifier).touchApiKeyLastUsed(keyId);
 
     // 1. Register Middlewares
     _router.use((HttpRequest req) => securityHeadersMiddleware(req));
@@ -93,36 +93,121 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
     _router.use((HttpRequest req) => rateLimiterMiddleware(req));
 
     // 2. Register Phase 1 Status & Read-Only Routes
-    _router.get('/api/v1/health', (HttpRequest req, Map<String, String> params) => _statusHandler.handleHealth(req, params));
-    _router.get('/api/v1/status', (HttpRequest req, Map<String, String> params) => _statusHandler.handleStatus(req, params));
-    _router.get('/api/v1/solar', (HttpRequest req, Map<String, String> params) => _statusHandler.handleSolar(req, params));
-    _router.get('/api/v1/presets', (HttpRequest req, Map<String, String> params) => _statusHandler.handlePresets(req, params));
-    _router.get('/api/v1/monitors', (HttpRequest req, Map<String, String> params) => _monitorsHandler.handleGetMonitors(req, params));
-    _router.get('/api/v1/monitors/:slug', (HttpRequest req, Map<String, String> params) => _monitorsHandler.handleGetMonitorBySlug(req, params));
-    _router.get('/api/v1/sleep/sessions', (HttpRequest req, Map<String, String> params) => _statusHandler.handleSleepSessions(req, params));
-    _router.get('/api/v1/docs', (HttpRequest req, Map<String, String> params) => _statusHandler.handleDocs(req, params));
-    _router.get('/api/v1/openapi.json', (HttpRequest req, Map<String, String> params) => _statusHandler.handleOpenApiJson(req, params));
+    _router.get(
+      '/api/v1/health',
+      (HttpRequest req, Map<String, String> params) =>
+          _statusHandler.handleHealth(req, params),
+    );
+    _router.get(
+      '/api/v1/status',
+      (HttpRequest req, Map<String, String> params) =>
+          _statusHandler.handleStatus(req, params),
+    );
+    _router.get(
+      '/api/v1/solar',
+      (HttpRequest req, Map<String, String> params) =>
+          _statusHandler.handleSolar(req, params),
+    );
+    _router.get(
+      '/api/v1/presets',
+      (HttpRequest req, Map<String, String> params) =>
+          _statusHandler.handlePresets(req, params),
+    );
+    _router.get(
+      '/api/v1/monitors',
+      (HttpRequest req, Map<String, String> params) =>
+          _monitorsHandler.handleGetMonitors(req, params),
+    );
+    _router.get(
+      '/api/v1/monitors/:slug',
+      (HttpRequest req, Map<String, String> params) =>
+          _monitorsHandler.handleGetMonitorBySlug(req, params),
+    );
+    _router.get(
+      '/api/v1/sleep/sessions',
+      (HttpRequest req, Map<String, String> params) =>
+          _statusHandler.handleSleepSessions(req, params),
+    );
+    _router.get(
+      '/api/v1/docs',
+      (HttpRequest req, Map<String, String> params) =>
+          _statusHandler.handleDocs(req, params),
+    );
+    _router.get(
+      '/api/v1/openapi.json',
+      (HttpRequest req, Map<String, String> params) =>
+          _statusHandler.handleOpenApiJson(req, params),
+    );
 
     // 3. Register Phase 2 Control & Per-Monitor Endpoints
-    _router.post('/api/v1/control', (HttpRequest req, Map<String, String> params) => _controlHandler.handleControl(req, params));
-    _router.post('/api/v1/monitors/:slug/brightness', (HttpRequest req, Map<String, String> params) => _monitorsHandler.handleSetMonitorBrightness(req, params));
-    _router.post('/api/v1/monitors/:slug/temperature', (HttpRequest req, Map<String, String> params) => _monitorsHandler.handleSetMonitorTemperature(req, params));
+    _router.post(
+      '/api/v1/control',
+      (HttpRequest req, Map<String, String> params) =>
+          _controlHandler.handleControl(req, params),
+    );
+    _router.post(
+      '/api/v1/monitors/:slug/brightness',
+      (HttpRequest req, Map<String, String> params) =>
+          _monitorsHandler.handleSetMonitorBrightness(req, params),
+    );
+    _router.post(
+      '/api/v1/monitors/:slug/temperature',
+      (HttpRequest req, Map<String, String> params) =>
+          _monitorsHandler.handleSetMonitorTemperature(req, params),
+    );
 
     // 4. Register Phase 4 Webhook Management Endpoints
-    _router.get('/api/v1/webhooks', (HttpRequest req, Map<String, String> params) => _handleGetWebhooks(req, params));
-    _router.post('/api/v1/webhooks', (HttpRequest req, Map<String, String> params) => _handleCreateWebhook(req, params));
-    _router.delete('/api/v1/webhooks/:id', (HttpRequest req, Map<String, String> params) => _handleDeleteWebhook(req, params));
-    _router.post('/api/v1/webhooks/:id/test', (HttpRequest req, Map<String, String> params) => _handleTestWebhook(req, params));
-    _router.get('/api/v1/webhooks/events', (HttpRequest req, Map<String, String> params) => _handleGetWebhookEvents(req, params));
-    _router.get('/api/v1/webhooks/dlq', (HttpRequest req, Map<String, String> params) => _handleGetDLQ(req, params));
-    _router.post('/api/v1/webhooks/dlq/retry', (HttpRequest req, Map<String, String> params) => _handleRetryDLQ(req, params));
+    _router.get(
+      '/api/v1/webhooks',
+      (HttpRequest req, Map<String, String> params) =>
+          _handleGetWebhooks(req, params),
+    );
+    _router.post(
+      '/api/v1/webhooks',
+      (HttpRequest req, Map<String, String> params) =>
+          _handleCreateWebhook(req, params),
+    );
+    _router.delete(
+      '/api/v1/webhooks/:id',
+      (HttpRequest req, Map<String, String> params) =>
+          _handleDeleteWebhook(req, params),
+    );
+    _router.post(
+      '/api/v1/webhooks/:id/test',
+      (HttpRequest req, Map<String, String> params) =>
+          _handleTestWebhook(req, params),
+    );
+    _router.get(
+      '/api/v1/webhooks/events',
+      (HttpRequest req, Map<String, String> params) =>
+          _handleGetWebhookEvents(req, params),
+    );
+    _router.get(
+      '/api/v1/webhooks/dlq',
+      (HttpRequest req, Map<String, String> params) =>
+          _handleGetDLQ(req, params),
+    );
+    _router.post(
+      '/api/v1/webhooks/dlq/retry',
+      (HttpRequest req, Map<String, String> params) =>
+          _handleRetryDLQ(req, params),
+    );
 
     // 5. Register Legacy Endpoints Aliases (100% Backward Compatibility)
-    _router.post('/api/sleep/sessions', (HttpRequest req, Map<String, String> params) => _handleSleepSessions(req));
-    _router.post('/api/sleep/status', (HttpRequest req, Map<String, String> params) => _handleSleepStatus(req));
-    _router.get('/api/sleep/status', (HttpRequest req, Map<String, String> params) => _handleGetStatus(req));
+    _router.post(
+      '/api/sleep/sessions',
+      (HttpRequest req, Map<String, String> params) =>
+          _handleSleepSessions(req),
+    );
+    _router.post(
+      '/api/sleep/status',
+      (HttpRequest req, Map<String, String> params) => _handleSleepStatus(req),
+    );
+    _router.get(
+      '/api/sleep/status',
+      (HttpRequest req, Map<String, String> params) => _handleGetStatus(req),
+    );
   }
-
 
   /// Starts the HTTP server on configured port with auto-fallback to ports 45322..45330
   Future<void> start() async {
@@ -134,7 +219,9 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
     final configuredPort = settingsMap?['all']?.apiServerPort ?? 45321;
     final isLanEnabled = settingsMap?['all']?.isApiLanAccessEnabled ?? false;
 
-    final bindAddress = isLanEnabled ? InternetAddress.anyIPv4 : InternetAddress.loopbackIPv4;
+    final bindAddress = isLanEnabled
+        ? InternetAddress.anyIPv4
+        : InternetAddress.loopbackIPv4;
 
     int targetPort = configuredPort;
     HttpServer? boundServer;
@@ -147,7 +234,9 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
         break;
       } on SocketException catch (e) {
         if (offset == 9) {
-          debugPrint('LocalIpcService: Failed to bind to any port in range $configuredPort..${configuredPort + 9}: $e');
+          debugPrint(
+            'LocalIpcService: Failed to bind to any port in range $configuredPort..${configuredPort + 9}: $e',
+          );
           _isStarting = false;
           state = state.copyWith(
             isRunning: false,
@@ -171,7 +260,9 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
       error: null,
       failedPort: null,
     );
-    debugPrint('LocalIpcService: Server bound and listening at http://${bindAddress.address}:$targetPort');
+    debugPrint(
+      'LocalIpcService: Server bound and listening at http://${bindAddress.address}:$targetPort',
+    );
   }
 
   void _listen() {
@@ -185,9 +276,12 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
             request.uri.path == '/api/v1/ws') {
           final settingsMap = ref.read(settingsProvider).value;
           final globalSettings = settingsMap?['all'];
-          final isLanEnabled = globalSettings?.isApiLanAccessEnabled ?? _router.isLanEnabled;
+          final isLanEnabled =
+              globalSettings?.isApiLanAccessEnabled ?? _router.isLanEnabled;
 
-          await ref.read(webSocketServiceProvider).handleUpgrade(
+          await ref
+              .read(webSocketServiceProvider)
+              .handleUpgrade(
                 request,
                 router: _router,
                 isLanEnabled: isLanEnabled,
@@ -231,7 +325,9 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
 
       // 1. Close all active WebSocket clients gracefully with code 1001 (Going Away)
       try {
-        ref.read(webSocketServiceProvider).closeAll(code: 1001, reason: 'Solaris API Server Stopping');
+        ref
+            .read(webSocketServiceProvider)
+            .closeAll(code: 1001, reason: 'Solaris API Server Stopping');
       } catch (_) {}
 
       // 2. Pause Webhook delivery queue
@@ -241,10 +337,12 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
 
       // 3. Close HTTP Server
       try {
-        await s.close(force: false).timeout(
-          const Duration(seconds: 2),
-          onTimeout: () => s.close(force: true),
-        );
+        await s
+            .close(force: false)
+            .timeout(
+              const Duration(seconds: 2),
+              onTimeout: () => s.close(force: true),
+            );
       } catch (_) {}
 
       debugPrint('LocalIpcService: Gracefully stopped API server.');
@@ -261,7 +359,8 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
     if (request != null && request.attachedPermissions != null) {
       return request.attachedPermissions!;
     }
-    final settingsMap = ref.read(settingsProvider).value ??
+    final settingsMap =
+        ref.read(settingsProvider).value ??
         ref.read(settingsProvider).asData?.value;
     final globalSettings = settingsMap?['all'];
     return globalSettings?.apiPermissions ?? const ApiPermissionsConfig();
@@ -269,7 +368,10 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
 
   Future<void> _handleSleepSessions(HttpRequest request) async {
     final permissions = _getPermissions(request);
-    final check = ApiPermissionsChecker.checkAction(permissions, 'push_sleep_status');
+    final check = ApiPermissionsChecker.checkAction(
+      permissions,
+      'push_sleep_status',
+    );
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
     try {
@@ -296,7 +398,10 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
 
   Future<void> _handleSleepStatus(HttpRequest request) async {
     final permissions = _getPermissions(request);
-    final check = ApiPermissionsChecker.checkAction(permissions, 'push_sleep_status');
+    final check = ApiPermissionsChecker.checkAction(
+      permissions,
+      'push_sleep_status',
+    );
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
     try {
@@ -321,8 +426,12 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
 
   Future<void> _handleGetStatus(HttpRequest request) async {
     final permissions = _getPermissions(request);
-    final readCheck = ApiPermissionsChecker.checkReadFlag(permissions.allowReadSleep, 'sleep');
-    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, readCheck)) return;
+    final readCheck = ApiPermissionsChecker.checkReadFlag(
+      permissions.allowReadSleep,
+      'sleep',
+    );
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, readCheck))
+      return;
 
     final sleepState = ref.read(sleepProvider);
 
@@ -334,10 +443,17 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
     });
   }
 
-  Future<void> _handleGetWebhooks(HttpRequest request, Map<String, String> params) async {
+  Future<void> _handleGetWebhooks(
+    HttpRequest request,
+    Map<String, String> params,
+  ) async {
     final permissions = _getPermissions(request);
-    final catCheck = ApiPermissionsChecker.checkCategory(permissions, ApiActionCategory.system);
-    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, catCheck)) return;
+    final catCheck = ApiPermissionsChecker.checkCategory(
+      permissions,
+      ApiActionCategory.system,
+    );
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, catCheck))
+      return;
 
     final settingsMap = ref.read(settingsProvider).value;
     final webhooks = settingsMap?['all']?.webhooks ?? [];
@@ -347,17 +463,26 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
     });
   }
 
-  Future<void> _handleCreateWebhook(HttpRequest request, Map<String, String> params) async {
+  Future<void> _handleCreateWebhook(
+    HttpRequest request,
+    Map<String, String> params,
+  ) async {
     final permissions = _getPermissions(request);
-    final check = ApiPermissionsChecker.checkAction(permissions, 'manage_webhooks');
+    final check = ApiPermissionsChecker.checkAction(
+      permissions,
+      'manage_webhooks',
+    );
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
     try {
       final content = await utf8.decoder.bind(request).join();
-      final Map<String, dynamic> json = jsonDecode(content) as Map<String, dynamic>;
+      final Map<String, dynamic> json =
+          jsonDecode(content) as Map<String, dynamic>;
 
       final url = json['url'] as String?;
-      if (url == null || url.isEmpty || Uri.tryParse(url)?.hasAbsolutePath != true) {
+      if (url == null ||
+          url.isEmpty ||
+          Uri.tryParse(url)?.hasAbsolutePath != true) {
         _sendResponse(request, HttpStatus.badRequest, {
           'error': 'validation_error',
           'message': 'Valid absolute URL is required',
@@ -365,8 +490,11 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
         return;
       }
 
-      final String id = json['id'] as String? ?? 'wh_${DateTime.now().millisecondsSinceEpoch}';
-      final eventsList = (json['events'] as List<dynamic>?)
+      final String id =
+          json['id'] as String? ??
+          'wh_${DateTime.now().millisecondsSinceEpoch}';
+      final eventsList =
+          (json['events'] as List<dynamic>?)
               ?.map((e) => WebhookEventType.fromString(e.toString()))
               .whereType<WebhookEventType>()
               .toSet() ??
@@ -374,14 +502,18 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
 
       Map<String, String>? customHeaders;
       if (json['headers'] != null && json['headers'] is Map) {
-        customHeaders = (json['headers'] as Map<String, dynamic>).map((k, v) => MapEntry(k, v.toString()));
+        customHeaders = (json['headers'] as Map<String, dynamic>).map(
+          (k, v) => MapEntry(k, v.toString()),
+        );
       }
 
       final webhook = WebhookConfig(
         id: id,
         url: url,
         name: json['name'] as String?,
-        events: eventsList.isEmpty ? WebhookEventType.values.toSet() : eventsList,
+        events: eventsList.isEmpty
+            ? WebhookEventType.values.toSet()
+            : eventsList,
         isEnabled: json['isEnabled'] as bool? ?? true,
         secretKey: json['secretKey'] as String?,
         customHeaders: customHeaders,
@@ -400,53 +532,84 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
     }
   }
 
-  Future<void> _handleDeleteWebhook(HttpRequest request, Map<String, String> params) async {
+  Future<void> _handleDeleteWebhook(
+    HttpRequest request,
+    Map<String, String> params,
+  ) async {
     final permissions = _getPermissions(request);
-    final check = ApiPermissionsChecker.checkAction(permissions, 'manage_webhooks');
+    final check = ApiPermissionsChecker.checkAction(
+      permissions,
+      'manage_webhooks',
+    );
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
     final id = params['id'];
     if (id == null || id.isEmpty) {
-      _sendResponse(request, HttpStatus.badRequest, {'error': 'Missing webhook id'});
+      _sendResponse(request, HttpStatus.badRequest, {
+        'error': 'Missing webhook id',
+      });
       return;
     }
     ref.read(settingsProvider.notifier).deleteWebhook(id);
     _sendResponse(request, HttpStatus.ok, {'status': 'ok', 'deleted_id': id});
   }
 
-  Future<void> _handleTestWebhook(HttpRequest request, Map<String, String> params) async {
+  Future<void> _handleTestWebhook(
+    HttpRequest request,
+    Map<String, String> params,
+  ) async {
     final permissions = _getPermissions(request);
-    final check = ApiPermissionsChecker.checkAction(permissions, 'manage_webhooks');
+    final check = ApiPermissionsChecker.checkAction(
+      permissions,
+      'manage_webhooks',
+    );
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
     final id = params['id'];
     if (id == null || id.isEmpty) {
-      _sendResponse(request, HttpStatus.badRequest, {'error': 'Missing webhook id'});
+      _sendResponse(request, HttpStatus.badRequest, {
+        'error': 'Missing webhook id',
+      });
       return;
     }
-    final success = await ref.read(webhookServiceProvider.notifier).sendTestPing(id);
+    final success = await ref
+        .read(webhookServiceProvider.notifier)
+        .sendTestPing(id);
     _sendResponse(request, success ? HttpStatus.ok : HttpStatus.badGateway, {
       'status': success ? 'ok' : 'failed',
       'ping_delivered': success,
     });
   }
 
-  Future<void> _handleGetWebhookEvents(HttpRequest request, Map<String, String> params) async {
+  Future<void> _handleGetWebhookEvents(
+    HttpRequest request,
+    Map<String, String> params,
+  ) async {
     final permissions = _getPermissions(request);
-    final catCheck = ApiPermissionsChecker.checkCategory(permissions, ApiActionCategory.system);
-    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, catCheck)) return;
+    final catCheck = ApiPermissionsChecker.checkCategory(
+      permissions,
+      ApiActionCategory.system,
+    );
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, catCheck))
+      return;
 
-    final events = WebhookEventType.values.map((e) => {
-      'type': e.name,
-      'wire_name': e.wireName,
-    }).toList();
+    final events = WebhookEventType.values
+        .map((e) => {'type': e.name, 'wire_name': e.wireName})
+        .toList();
     _sendResponse(request, HttpStatus.ok, {'events': events});
   }
 
-  Future<void> _handleGetDLQ(HttpRequest request, Map<String, String> params) async {
+  Future<void> _handleGetDLQ(
+    HttpRequest request,
+    Map<String, String> params,
+  ) async {
     final permissions = _getPermissions(request);
-    final catCheck = ApiPermissionsChecker.checkCategory(permissions, ApiActionCategory.system);
-    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, catCheck)) return;
+    final catCheck = ApiPermissionsChecker.checkCategory(
+      permissions,
+      ApiActionCategory.system,
+    );
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, catCheck))
+      return;
 
     final dlq = await ref.read(webhookServiceProvider.notifier).getDLQEntries();
     _sendResponse(request, HttpStatus.ok, {
@@ -455,9 +618,15 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
     });
   }
 
-  Future<void> _handleRetryDLQ(HttpRequest request, Map<String, String> params) async {
+  Future<void> _handleRetryDLQ(
+    HttpRequest request,
+    Map<String, String> params,
+  ) async {
     final permissions = _getPermissions(request);
-    final check = ApiPermissionsChecker.checkAction(permissions, 'manage_webhooks');
+    final check = ApiPermissionsChecker.checkAction(
+      permissions,
+      'manage_webhooks',
+    );
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
     await ref.read(webhookServiceProvider.notifier).clearDLQ();
@@ -479,4 +648,3 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
     request.response.close();
   }
 }
-

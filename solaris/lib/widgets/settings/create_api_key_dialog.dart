@@ -12,17 +12,15 @@ Future<ApiKeyEntry?> showCreateApiKeyDialog(
 }) async {
   return showDialog<ApiKeyEntry>(
     context: context,
-    builder: (dialogContext) => CreateApiKeyDialog(existingKeysCount: existingKeysCount),
+    builder: (dialogContext) =>
+        CreateApiKeyDialog(existingKeysCount: existingKeysCount),
   );
 }
 
 class CreateApiKeyDialog extends StatefulWidget {
   final int existingKeysCount;
 
-  const CreateApiKeyDialog({
-    super.key,
-    required this.existingKeysCount,
-  });
+  const CreateApiKeyDialog({super.key, required this.existingKeysCount});
 
   @override
   State<CreateApiKeyDialog> createState() => _CreateApiKeyDialogState();
@@ -102,7 +100,10 @@ class _CreateApiKeyDialogState extends State<CreateApiKeyDialog> {
             children: [
               // Header
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.03),
                   border: const Border(
@@ -135,7 +136,11 @@ class _CreateApiKeyDialogState extends State<CreateApiKeyDialog> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(LucideIcons.x, color: Colors.white54, size: 18),
+                      icon: const Icon(
+                        LucideIcons.x,
+                        color: Colors.white54,
+                        size: 18,
+                      ),
                       onPressed: () => Navigator.of(context).pop(null),
                     ),
                   ],
@@ -147,133 +152,164 @@ class _CreateApiKeyDialogState extends State<CreateApiKeyDialog> {
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
                   child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Key Name Field
-                      Text(
-                        l10n.createApiKeyNameFieldLabel,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Key Name Field
+                        Text(
+                          l10n.createApiKeyNameFieldLabel,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _nameController,
-                        autofocus: true,
-                        maxLength: 50,
-                        style: const TextStyle(color: Colors.white, fontSize: 14),
-                        decoration: InputDecoration(
-                          hintText: 'API Key $defaultIndex',
-                          hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
-                          filled: true,
-                          fillColor: Colors.white.withOpacity(0.04),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Colors.white10),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: _nameController,
+                          autofocus: true,
+                          maxLength: 50,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
                           ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Colors.white10),
+                          decoration: InputDecoration(
+                            hintText: 'API Key $defaultIndex',
+                            hintStyle: TextStyle(
+                              color: Colors.white.withOpacity(0.3),
+                            ),
+                            filled: true,
+                            fillColor: Colors.white.withOpacity(0.04),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                color: Colors.white10,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                color: Colors.white10,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFFDBA74),
+                              ),
+                            ),
+                            counterStyle: const TextStyle(
+                              color: Colors.white38,
+                              fontSize: 11,
+                            ),
                           ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Color(0xFFFDBA74)),
-                          ),
-                          counterStyle: const TextStyle(color: Colors.white38, fontSize: 11),
                         ),
-                      ),
-                      const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                      // Permissions summary card
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.03),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white10),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              _permissions.isReadOnly ? LucideIcons.lock : LucideIcons.shieldCheck,
-                              color: _permissions.isReadOnly ? const Color(0xFFEF4444) : const Color(0xFF4ADE80),
-                              size: 20,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _permissions.isReadOnly
-                                        ? l10n.apiPermissionsSummaryReadOnly
-                                        : (_permissions.allowedActions != null
-                                            ? l10n.apiKeysGranularActionChip(
-                                                _permissions.allowedActions!.length,
-                                                25,
-                                              )
-                                            : l10n.apiPermissionsSummaryCustom(
-                                                _permissions.allowedCategories.length,
-                                              )),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    l10n.apiPermissionsDialogTitle,
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.5),
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ],
+                        // Permissions summary card
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.03),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.white10),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                _permissions.isReadOnly
+                                    ? LucideIcons.lock
+                                    : LucideIcons.shieldCheck,
+                                color: _permissions.isReadOnly
+                                    ? const Color(0xFFEF4444)
+                                    : const Color(0xFF4ADE80),
+                                size: 20,
                               ),
-                            ),
-                            OutlinedButton.icon(
-                              onPressed: _configurePermissions,
-                              icon: const Icon(LucideIcons.settings2, size: 14),
-                              label: Text(
-                                l10n.apiPermissionsConfigureButton,
-                                style: const TextStyle(fontSize: 11),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFFFDBA74),
-                                side: const BorderSide(color: Color(0xFFFDBA74)),
-                                visualDensity: VisualDensity.compact,
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _permissions.isReadOnly
+                                          ? l10n.apiPermissionsSummaryReadOnly
+                                          : (_permissions.allowedActions != null
+                                                ? l10n.apiKeysGranularActionChip(
+                                                    _permissions
+                                                        .allowedActions!
+                                                        .length,
+                                                    25,
+                                                  )
+                                                : l10n.apiPermissionsSummaryCustom(
+                                                    _permissions
+                                                        .allowedCategories
+                                                        .length,
+                                                  )),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      l10n.apiPermissionsDialogTitle,
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(0.5),
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
-                          ],
+                              OutlinedButton.icon(
+                                onPressed: _configurePermissions,
+                                icon: const Icon(
+                                  LucideIcons.settings2,
+                                  size: 14,
+                                ),
+                                label: Text(
+                                  l10n.apiPermissionsConfigureButton,
+                                  style: const TextStyle(fontSize: 11),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFFFDBA74),
+                                  side: const BorderSide(
+                                    color: Color(0xFFFDBA74),
+                                  ),
+                                  visualDensity: VisualDensity.compact,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 6,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
 
               // Actions Footer
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.02),
-                  border: const Border(
-                    top: BorderSide(color: Colors.white10),
-                  ),
+                  border: const Border(top: BorderSide(color: Colors.white10)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -293,7 +329,10 @@ class _CreateApiKeyDialogState extends State<CreateApiKeyDialog> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFDBA74),
                         foregroundColor: Colors.black87,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),

@@ -49,24 +49,31 @@ class WebSocketService {
     _heartbeatTimer?.cancel();
     _heartbeatTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       final nowIso = DateTime.now().toUtc().toIso8601String();
-      final pingPayload = jsonEncode({
-        'type': 'ping',
-        'timestamp': nowIso,
-      });
+      final pingPayload = jsonEncode({'type': 'ping', 'timestamp': nowIso});
 
       for (final client in _clients.toList()) {
         try {
           final pending = _pendingBytesPerClient[client] ?? 0;
           if (pending > maxPendingBytes) {
-            debugPrint('WS Slow Consumer Detected. Disconnecting client (> 512 KB pending).');
-            _removeClient(client, code: 1008, reason: 'Slow Consumer: Pending buffer limit exceeded 512 KB');
+            debugPrint(
+              'WS Slow Consumer Detected. Disconnecting client (> 512 KB pending).',
+            );
+            _removeClient(
+              client,
+              code: 1008,
+              reason: 'Slow Consumer: Pending buffer limit exceeded 512 KB',
+            );
             continue;
           }
           // Reset byte tracking on heartbeat tick and send ping frame
           _pendingBytesPerClient[client] = 0;
           client.add(pingPayload);
         } catch (_) {
-          _removeClient(client, code: WebSocketStatus.goingAway, reason: 'Heartbeat failed');
+          _removeClient(
+            client,
+            code: WebSocketStatus.goingAway,
+            reason: 'Heartbeat failed',
+          );
         }
       }
     });
@@ -97,7 +104,9 @@ class WebSocketService {
         final currentKey = _clientKeyEntries[ws];
         if (currentKey == null) continue;
 
-        final updatedKey = nextKeys.where((k) => k.id == currentKey.id).firstOrNull;
+        final updatedKey = nextKeys
+            .where((k) => k.id == currentKey.id)
+            .firstOrNull;
         if (updatedKey == null) {
           _removeClient(ws, code: 4001, reason: 'Key Revoked');
         } else if (updatedKey.token != currentKey.token) {
@@ -137,16 +146,20 @@ class WebSocketService {
         final currentBrightness = ref.read(currentBrightnessProvider);
         final currentTemp = ref.read(currentTemperatureProvider);
 
-        final list = monitors.map((mon) => {
-          'id': mon.id,
-          'name': mon.name,
-          'friendly_name': mon.friendlyName,
-          'slug': MonitorSlugResolver.getSlugForSystemId(mon.id),
-          'device_id_hash': mon.deviceIdHash,
-          'is_primary': mon.isPrimary,
-          'brightness': mon.realBrightness ?? currentBrightness.round(),
-          'temperature': mon.realTemperature ?? currentTemp,
-        }).toList();
+        final list = monitors
+            .map(
+              (mon) => {
+                'id': mon.id,
+                'name': mon.name,
+                'friendly_name': mon.friendlyName,
+                'slug': MonitorSlugResolver.getSlugForSystemId(mon.id),
+                'device_id_hash': mon.deviceIdHash,
+                'is_primary': mon.isPrimary,
+                'brightness': mon.realBrightness ?? currentBrightness.round(),
+                'temperature': mon.realTemperature ?? currentTemp,
+              },
+            )
+            .toList();
 
         broadcastModule('monitors', list);
       });
@@ -194,22 +207,36 @@ class WebSocketService {
             subs.remove(moduleName);
           }
           try {
-            ws.add(jsonEncode({
-              'type': 'subscription_revoked',
-              'module': moduleName,
-            }));
+            ws.add(
+              jsonEncode({
+                'type': 'subscription_revoked',
+                'module': moduleName,
+              }),
+            );
           } catch (_) {}
         }
       }
     }
 
     final prev = prevPerms ?? const ApiPermissionsConfig();
-    checkRevoked('monitors', prev.allowReadMonitors, nextPerms.allowReadMonitors);
+    checkRevoked(
+      'monitors',
+      prev.allowReadMonitors,
+      nextPerms.allowReadMonitors,
+    );
     checkRevoked('solar', prev.allowReadSolar, nextPerms.allowReadSolar);
     checkRevoked('weather', prev.allowReadWeather, nextPerms.allowReadWeather);
     checkRevoked('sleep', prev.allowReadSleep, nextPerms.allowReadSleep);
-    checkRevoked('circadian', prev.allowReadCircadian, nextPerms.allowReadCircadian);
-    checkRevoked('smart_circadian', prev.allowReadCircadian, nextPerms.allowReadCircadian);
+    checkRevoked(
+      'circadian',
+      prev.allowReadCircadian,
+      nextPerms.allowReadCircadian,
+    );
+    checkRevoked(
+      'smart_circadian',
+      prev.allowReadCircadian,
+      nextPerms.allowReadCircadian,
+    );
   }
 
   Map<String, dynamic> _buildAutomationData() {
@@ -224,9 +251,12 @@ class WebSocketService {
       'auto_brightness': autoBrightnessEnabled,
       'auto_temperature': autoTempEnabled,
       'color_temperature_hardware_enabled': isColorTempEnabled,
-      'weather_brightness_adjustment': globalSettings?.isWeatherAdjustmentEnabled ?? true,
-      'weather_temperature_adjustment': globalSettings?.isWeatherTemperatureAdjustmentEnabled ?? true,
-      'weather_adjustment_intensity': globalSettings?.weatherAdjustmentIntensity ?? 0.45,
+      'weather_brightness_adjustment':
+          globalSettings?.isWeatherAdjustmentEnabled ?? true,
+      'weather_temperature_adjustment':
+          globalSettings?.isWeatherTemperatureAdjustmentEnabled ?? true,
+      'weather_adjustment_intensity':
+          globalSettings?.weatherAdjustmentIntensity ?? 0.45,
       'smart_circadian': globalSettings?.isSmartCircadianEnabled ?? false,
       'game_mode': {
         'enabled': globalSettings?.isGameModeEnabled ?? true,
@@ -255,8 +285,9 @@ class WebSocketService {
       return host == 'localhost' || host == '127.0.0.1' || host == '::1';
     }
 
-    final hasBrowserOrigin = (origin != null && !isLocalHostUri(origin)) ||
-                             (referer != null && !isLocalHostUri(referer));
+    final hasBrowserOrigin =
+        (origin != null && !isLocalHostUri(origin)) ||
+        (referer != null && !isLocalHostUri(referer));
 
     // 2. Extract Auth Token from Query, Subprotocol, or Headers
     String? token;
@@ -282,11 +313,16 @@ class WebSocketService {
     }
 
     // C. X-API-Key or Authorization Header
-    token ??= request.headers.value('x-api-key') ??
-        request.headers.value('authorization')?.replaceAll('Bearer ', '').trim();
+    token ??=
+        request.headers.value('x-api-key') ??
+        request.headers
+            .value('authorization')
+            ?.replaceAll('Bearer ', '')
+            .trim();
 
     final isLoopback = remoteIp == '127.0.0.1' || remoteIp == '::1';
-    final isAnonymousLocalAllowed = isLoopback && !router.requireLocalToken && !hasBrowserOrigin;
+    final isAnonymousLocalAllowed =
+        isLoopback && !router.requireLocalToken && !hasBrowserOrigin;
 
     final matchedKey = (token != null && token.isNotEmpty)
         ? router.findMatchingKey(token)
@@ -297,7 +333,9 @@ class WebSocketService {
       request.response
         ..statusCode = HttpStatus.unauthorized
         ..headers.contentType = ContentType.json
-        ..write(jsonEncode({'error': 'Unauthorized: Invalid API key provided'}));
+        ..write(
+          jsonEncode({'error': 'Unauthorized: Invalid API key provided'}),
+        );
       await request.response.close();
       return;
     }
@@ -316,7 +354,12 @@ class WebSocketService {
       request.response
         ..statusCode = HttpStatus.serviceUnavailable
         ..headers.contentType = ContentType.json
-        ..write(jsonEncode({'error': 'Service Unavailable: Max WebSocket connections ($maxClients) reached'}));
+        ..write(
+          jsonEncode({
+            'error':
+                'Service Unavailable: Max WebSocket connections ($maxClients) reached',
+          }),
+        );
       await request.response.close();
       return;
     }
@@ -327,7 +370,9 @@ class WebSocketService {
 
     final ws = await WebSocketTransformer.upgrade(
       request,
-      protocolSelector: matchedSubprotocol != null ? (_) => matchedSubprotocol! : null,
+      protocolSelector: matchedSubprotocol != null
+          ? (_) => matchedSubprotocol!
+          : null,
     );
     ws.pingInterval = const Duration(seconds: 25);
 
@@ -350,10 +395,12 @@ class WebSocketService {
       ws.add(jsonEncode({'type': 'snapshot', 'data': snapshotMap}));
     } catch (e) {
       debugPrint('WebSocketService: Snapshot generation error: $e');
-      ws.add(jsonEncode({
-        'type': 'snapshot',
-        'data': {'version': '1.1.0', 'monitors': <dynamic>[]},
-      }));
+      ws.add(
+        jsonEncode({
+          'type': 'snapshot',
+          'data': {'version': '1.1.0', 'monitors': <dynamic>[]},
+        }),
+      );
     }
 
     ws.listen(
@@ -406,22 +453,25 @@ class WebSocketService {
     }
 
     if (permissions.allowReadMonitors) {
-      final monitors =
-          await ref.read(monitorServiceProvider).getConnectedMonitors();
+      final monitors = await ref
+          .read(monitorServiceProvider)
+          .getConnectedMonitors();
       MonitorSlugResolver.updateMonitors(monitors);
       final currentBrightness = ref.read(currentBrightnessProvider);
       final currentTemp = ref.read(currentTemperatureProvider);
 
       map['monitors'] = monitors
-          .map((mon) => {
-                'id': mon.id,
-                'name': mon.name,
-                'friendly_name': mon.friendlyName,
-                'slug': MonitorSlugResolver.getSlugForSystemId(mon.id),
-                'is_primary': mon.isPrimary,
-                'brightness': mon.realBrightness ?? currentBrightness.round(),
-                'temperature': mon.realTemperature ?? currentTemp,
-              })
+          .map(
+            (mon) => {
+              'id': mon.id,
+              'name': mon.name,
+              'friendly_name': mon.friendlyName,
+              'slug': MonitorSlugResolver.getSlugForSystemId(mon.id),
+              'is_primary': mon.isPrimary,
+              'brightness': mon.realBrightness ?? currentBrightness.round(),
+              'temperature': mon.realTemperature ?? currentTemp,
+            },
+          )
           .toList();
     }
 
@@ -435,8 +485,10 @@ class WebSocketService {
     }
 
     final rawAutomation = _buildAutomationData();
-    map['automation'] =
-        ApiPermissionsFilter.filterAutomation(rawAutomation, permissions);
+    map['automation'] = ApiPermissionsFilter.filterAutomation(
+      rawAutomation,
+      permissions,
+    );
 
     return map;
   }
@@ -447,47 +499,60 @@ class WebSocketService {
       final type = jsonMap['type'] as String?;
 
       if (type == 'ping') {
-        ws.add(jsonEncode({
-          'type': 'pong',
-          'timestamp': DateTime.now().toUtc().toIso8601String(),
-        }));
+        ws.add(
+          jsonEncode({
+            'type': 'pong',
+            'timestamp': DateTime.now().toUtc().toIso8601String(),
+          }),
+        );
         return;
       }
 
-      final permissions = _clientPermissions[ws] ?? const ApiPermissionsConfig();
+      final permissions =
+          _clientPermissions[ws] ?? const ApiPermissionsConfig();
 
       if (type == 'subscribe') {
-        final requestedModules = (jsonMap['modules'] as List<dynamic>?)
-            ?.map((e) => e.toString().toLowerCase())
-            .toSet() ?? <String>{};
+        final requestedModules =
+            (jsonMap['modules'] as List<dynamic>?)
+                ?.map((e) => e.toString().toLowerCase())
+                .toSet() ??
+            <String>{};
 
         final allowedModules = <String>{};
 
         for (final mod in requestedModules) {
           bool isAllowed = true;
           if (mod == 'solar' && !permissions.allowReadSolar) isAllowed = false;
-          if (mod == 'weather' && !permissions.allowReadWeather) isAllowed = false;
-          if (mod == 'monitors' && !permissions.allowReadMonitors) isAllowed = false;
+          if (mod == 'weather' && !permissions.allowReadWeather)
+            isAllowed = false;
+          if (mod == 'monitors' && !permissions.allowReadMonitors)
+            isAllowed = false;
           if (mod == 'sleep' && !permissions.allowReadSleep) isAllowed = false;
-          if ((mod == 'circadian' || mod == 'smart_circadian') && !permissions.allowReadCircadian) isAllowed = false;
+          if ((mod == 'circadian' || mod == 'smart_circadian') &&
+              !permissions.allowReadCircadian)
+            isAllowed = false;
 
           if (isAllowed) {
             allowedModules.add(mod);
           } else {
-            ws.add(jsonEncode({
-              'type': 'subscription_denied',
-              'module': mod,
-              'reason': 'Read access disabled in API permissions',
-            }));
+            ws.add(
+              jsonEncode({
+                'type': 'subscription_denied',
+                'module': mod,
+                'reason': 'Read access disabled in API permissions',
+              }),
+            );
           }
         }
 
         _subscriptionsPerClient[ws] = allowedModules;
 
-        ws.add(jsonEncode({
-          'type': 'subscribed',
-          'active_modules': allowedModules.toList(),
-        }));
+        ws.add(
+          jsonEncode({
+            'type': 'subscribed',
+            'active_modules': allowedModules.toList(),
+          }),
+        );
         return;
       }
 
@@ -496,12 +561,14 @@ class WebSocketService {
         final action = jsonMap['action'] as String?;
 
         if (action == null) {
-          ws.add(jsonEncode({
-            'type': 'response',
-            'cmd_id': cmdId,
-            'status': 'error',
-            'message': 'Missing "action" field',
-          }));
+          ws.add(
+            jsonEncode({
+              'type': 'response',
+              'cmd_id': cmdId,
+              'status': 'error',
+              'message': 'Missing "action" field',
+            }),
+          );
           return;
         }
 
@@ -510,44 +577,57 @@ class WebSocketService {
             jsonMap.containsKey('apiKey') ||
             jsonMap.containsKey('apiPermissions') ||
             jsonMap.containsKey('permissions')) {
-          ws.add(jsonEncode({
-            'type': 'response',
-            'cmd_id': cmdId,
-            'status': 'error',
-            'action': action,
-            'error': 'Forbidden',
-            'message': 'Modifying API permissions or keys via WebSocket commands is strictly prohibited.',
-          }));
+          ws.add(
+            jsonEncode({
+              'type': 'response',
+              'cmd_id': cmdId,
+              'status': 'error',
+              'action': action,
+              'error': 'Forbidden',
+              'message':
+                  'Modifying API permissions or keys via WebSocket commands is strictly prohibited.',
+            }),
+          );
           return;
         }
 
         // ACL Evaluation
-        final checkResult = ApiPermissionsChecker.checkAction(permissions, action);
+        final checkResult = ApiPermissionsChecker.checkAction(
+          permissions,
+          action,
+        );
 
         if (!checkResult.isAllowed) {
-          ws.add(jsonEncode({
-            'type': 'response',
-            'cmd_id': cmdId,
-            'status': 'error',
-            'action': action,
-            'error': 'Forbidden',
-            'message': checkResult.detail,
-          }));
+          ws.add(
+            jsonEncode({
+              'type': 'response',
+              'cmd_id': cmdId,
+              'status': 'error',
+              'action': action,
+              'error': 'Forbidden',
+              'message': checkResult.detail,
+            }),
+          );
           return;
         }
 
         final controlHandler = ApiControlHandler(ref.container);
-        final result = await controlHandler.executeAction(jsonMap, permissions: permissions);
+        final result = await controlHandler.executeAction(
+          jsonMap,
+          permissions: permissions,
+        );
 
-        ws.add(jsonEncode({
-          'type': 'response',
-          'cmd_id': cmdId,
-          'status': result['status'] ?? 'ok',
-          'action': action,
-          'applied': result['applied'],
-          'error': result['error'],
-          'message': result['message'],
-        }));
+        ws.add(
+          jsonEncode({
+            'type': 'response',
+            'cmd_id': cmdId,
+            'status': result['status'] ?? 'ok',
+            'action': action,
+            'applied': result['applied'],
+            'error': result['error'],
+            'message': result['message'],
+          }),
+        );
         return;
       }
     } catch (e) {
@@ -562,20 +642,35 @@ class WebSocketService {
 
     for (final client in _clients.toList()) {
       try {
-        final clientPermissions = _clientPermissions[client] ?? const ApiPermissionsConfig();
+        final clientPermissions =
+            _clientPermissions[client] ?? const ApiPermissionsConfig();
 
         // Check read permissions for module for this specific client
-        if (moduleLower == 'solar' && !clientPermissions.allowReadSolar) continue;
-        if (moduleLower == 'weather' && !clientPermissions.allowReadWeather) continue;
-        if (moduleLower == 'monitors' && !clientPermissions.allowReadMonitors) continue;
-        if (moduleLower == 'sleep' && !clientPermissions.allowReadSleep) continue;
-        if ((moduleLower == 'circadian' || moduleLower == 'smart_circadian') && !clientPermissions.allowReadCircadian) continue;
+        if (moduleLower == 'solar' && !clientPermissions.allowReadSolar)
+          continue;
+        if (moduleLower == 'weather' && !clientPermissions.allowReadWeather)
+          continue;
+        if (moduleLower == 'monitors' && !clientPermissions.allowReadMonitors)
+          continue;
+        if (moduleLower == 'sleep' && !clientPermissions.allowReadSleep)
+          continue;
+        if ((moduleLower == 'circadian' || moduleLower == 'smart_circadian') &&
+            !clientPermissions.allowReadCircadian)
+          continue;
 
         dynamic filteredData = data;
         if (moduleLower == 'automation' && data is Map<String, dynamic>) {
-          filteredData = ApiPermissionsFilter.filterAutomation(data, clientPermissions);
-        } else if ((moduleLower == 'circadian' || moduleLower == 'smart_circadian') && data is Map<String, dynamic>) {
-          filteredData = ApiPermissionsFilter.filterSmartCircadian(data, clientPermissions);
+          filteredData = ApiPermissionsFilter.filterAutomation(
+            data,
+            clientPermissions,
+          );
+        } else if ((moduleLower == 'circadian' ||
+                moduleLower == 'smart_circadian') &&
+            data is Map<String, dynamic>) {
+          filteredData = ApiPermissionsFilter.filterSmartCircadian(
+            data,
+            clientPermissions,
+          );
           if (filteredData == null) continue;
         }
 
@@ -596,7 +691,11 @@ class WebSocketService {
 
         final pending = _pendingBytesPerClient[client] ?? 0;
         if (pending > maxPendingBytes) {
-          _removeClient(client, code: 1008, reason: 'Slow Consumer: Pending buffer limit exceeded 512 KB');
+          _removeClient(
+            client,
+            code: 1008,
+            reason: 'Slow Consumer: Pending buffer limit exceeded 512 KB',
+          );
           continue;
         }
 
@@ -612,11 +711,14 @@ class WebSocketService {
   void broadcastEvent(String eventName, Map<String, dynamic> data) {
     if (_clients.isEmpty) return;
 
-    final category = ApiPermissionsConfig.getCategoryForAction(eventName) ?? ApiActionCategory.system;
+    final category =
+        ApiPermissionsConfig.getCategoryForAction(eventName) ??
+        ApiActionCategory.system;
 
     for (final client in _clients.toList()) {
       try {
-        final clientPermissions = _clientPermissions[client] ?? const ApiPermissionsConfig();
+        final clientPermissions =
+            _clientPermissions[client] ?? const ApiPermissionsConfig();
         if (!clientPermissions.allowedCategories.contains(category)) {
           continue;
         }

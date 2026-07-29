@@ -42,9 +42,10 @@ void main(List<String> args) {
   runZoned(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
-      
+
       // Strict ImageCache limits to prevent map tiles from bloating RAM to 150+ MB
-      PaintingBinding.instance.imageCache.maximumSizeBytes = 12 * 1024 * 1024; // 12 MB max
+      PaintingBinding.instance.imageCache.maximumSizeBytes =
+          12 * 1024 * 1024; // 12 MB max
       PaintingBinding.instance.imageCache.maximumSize = 30; // 30 items max
 
       await windowManager.ensureInitialized();
@@ -83,10 +84,14 @@ void main(List<String> args) {
       } catch (e) {
         debugPrint('Error initializing SharedPreferences: $e');
         if (e is FormatException) {
-          debugPrint('Attempting to recover from corrupted SharedPreferences...');
+          debugPrint(
+            'Attempting to recover from corrupted SharedPreferences...',
+          );
           try {
             final supportDir = await getApplicationSupportDirectory();
-            final prefsFile = File('${supportDir.path}/shared_preferences.json');
+            final prefsFile = File(
+              '${supportDir.path}/shared_preferences.json',
+            );
             if (await prefsFile.exists()) {
               await prefsFile.delete();
               debugPrint('Corrupted SharedPreferences deleted. Retrying...');
@@ -166,7 +171,10 @@ void main(List<String> args) {
       });
 
       runApp(
-        UncontrolledProviderScope(container: container, child: const SolarisApp()),
+        UncontrolledProviderScope(
+          container: container,
+          child: const SolarisApp(),
+        ),
       );
     },
     zoneSpecification: ZoneSpecification(
@@ -305,23 +313,28 @@ class _SystemLifecycleObserver extends WidgetsBindingObserver {
     if (kDebugMode) {
       debugPrint('🪟 [Engine Lifecycle Debug] State: $state');
     }
-    if (state == AppLifecycleState.hidden || state == AppLifecycleState.paused) {
+    if (state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.paused) {
       MemoryUtils.trimMemory();
       container.read(appLifecycleProvider.notifier).setMinimized();
     } else if (state == AppLifecycleState.inactive) {
       MemoryUtils.trimMemory();
-      windowManager.isMinimized().then((isMinimized) {
-        if (isMinimized) {
-          container.read(appLifecycleProvider.notifier).setMinimized();
-        }
-      }).catchError((Object e) {
-        if (kDebugMode) {
-          debugPrint('🪟 [Engine Lifecycle Debug] isMinimized check failed: $e');
-        }
-      });
+      windowManager
+          .isMinimized()
+          .then((isMinimized) {
+            if (isMinimized) {
+              container.read(appLifecycleProvider.notifier).setMinimized();
+            }
+          })
+          .catchError((Object e) {
+            if (kDebugMode) {
+              debugPrint(
+                '🪟 [Engine Lifecycle Debug] isMinimized check failed: $e',
+              );
+            }
+          });
     } else if (state == AppLifecycleState.resumed) {
       container.read(appLifecycleProvider.notifier).setVisible();
     }
   }
 }
-

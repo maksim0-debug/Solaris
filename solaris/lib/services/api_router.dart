@@ -8,11 +8,13 @@ import 'package:solaris/models/rfc7807_error.dart';
 
 /// Scope permissions & key attachment extension for HttpRequest
 extension HttpRequestPermissions on HttpRequest {
-  static final Expando<ApiPermissionsConfig> _permissions = Expando<ApiPermissionsConfig>();
+  static final Expando<ApiPermissionsConfig> _permissions =
+      Expando<ApiPermissionsConfig>();
   static final Expando<ApiKeyEntry> _apiKeyEntry = Expando<ApiKeyEntry>();
 
   ApiPermissionsConfig? get attachedPermissions => _permissions[this];
-  ApiPermissionsConfig get permissions => _permissions[this] ?? const ApiPermissionsConfig();
+  ApiPermissionsConfig get permissions =>
+      _permissions[this] ?? const ApiPermissionsConfig();
   set permissions(ApiPermissionsConfig val) => _permissions[this] = val;
 
   ApiKeyEntry? get apiKeyEntry => _apiKeyEntry[this];
@@ -28,10 +30,8 @@ class RouteMatch {
 }
 
 /// Handler signature for API endpoints.
-typedef ApiHandler = Future<void> Function(
-  HttpRequest request,
-  Map<String, String> pathParams,
-);
+typedef ApiHandler =
+    Future<void> Function(HttpRequest request, Map<String, String> pathParams);
 
 /// Middleware signature returning true to continue down the chain, or false to halt.
 typedef ApiMiddleware = Future<bool> Function(HttpRequest request);
@@ -77,13 +77,23 @@ class ApiRouter {
     return null;
   }
 
-  void get(String pattern, ApiHandler handler) => _addRoute('GET', pattern, handler);
-  void post(String pattern, ApiHandler handler) => _addRoute('POST', pattern, handler);
-  void put(String pattern, ApiHandler handler) => _addRoute('PUT', pattern, handler);
-  void delete(String pattern, ApiHandler handler) => _addRoute('DELETE', pattern, handler);
+  void get(String pattern, ApiHandler handler) =>
+      _addRoute('GET', pattern, handler);
+  void post(String pattern, ApiHandler handler) =>
+      _addRoute('POST', pattern, handler);
+  void put(String pattern, ApiHandler handler) =>
+      _addRoute('PUT', pattern, handler);
+  void delete(String pattern, ApiHandler handler) =>
+      _addRoute('DELETE', pattern, handler);
 
   void _addRoute(String method, String pattern, ApiHandler handler) {
-    _routes.add(_RouteEntry(method: method.toUpperCase(), pattern: pattern, handler: handler));
+    _routes.add(
+      _RouteEntry(
+        method: method.toUpperCase(),
+        pattern: pattern,
+        handler: handler,
+      ),
+    );
   }
 
   void use(ApiMiddleware middleware) {
@@ -110,7 +120,9 @@ class ApiRouter {
         try {
           await match.handler(request, match.pathParams);
         } catch (e, st) {
-          debugPrint('ApiRouter: Error handling route ${request.uri.path}: $e\n$st');
+          debugPrint(
+            'ApiRouter: Error handling route ${request.uri.path}: $e\n$st',
+          );
           _sendError(
             request,
             HttpStatus.internalServerError,
@@ -125,7 +137,11 @@ class ApiRouter {
     return false; // Route not matched
   }
 
-  static void sendJson(HttpRequest request, int statusCode, Map<String, dynamic> data) {
+  static void sendJson(
+    HttpRequest request,
+    int statusCode,
+    Map<String, dynamic> data,
+  ) {
     try {
       request.response
         ..statusCode = statusCode
@@ -249,7 +265,8 @@ Future<bool> contentTypeGuardMiddleware(HttpRequest request) async {
         type: 'https://solaris.local/errors/unsupported-media-type',
         title: 'Unsupported Media Type',
         status: HttpStatus.unsupportedMediaType,
-        detail: 'Content-Type header must be application/json for mutating requests.',
+        detail:
+            'Content-Type header must be application/json for mutating requests.',
         instance: request.uri.path,
       );
       ApiRouter.sendRfc7807(request, error);
@@ -279,13 +296,17 @@ Future<bool> hostHeaderValidationMiddleware(HttpRequest request) async {
   }
 
   // Safe extraction supporting IPv6 e.g. [::1]:45321
-  final match = RegExp(r'^(?:\[(?<ipv6>[^\]]+)\]|(?<host>[^:]+))').firstMatch(hostHeader);
+  final match = RegExp(
+    r'^(?:\[(?<ipv6>[^\]]+)\]|(?<host>[^:]+))',
+  ).firstMatch(hostHeader);
   final hostOnly = match != null
-      ? (match.namedGroup('ipv6') ?? match.namedGroup('host') ?? '').toLowerCase()
+      ? (match.namedGroup('ipv6') ?? match.namedGroup('host') ?? '')
+            .toLowerCase()
       : hostHeader.split(':').first.toLowerCase();
 
   final now = DateTime.now();
-  if (_lastInterfaceRefresh == null || now.difference(_lastInterfaceRefresh!).inSeconds > 30) {
+  if (_lastInterfaceRefresh == null ||
+      now.difference(_lastInterfaceRefresh!).inSeconds > 30) {
     final allowedHosts = {'localhost', '127.0.0.1', '::1'};
     try {
       final interfaces = await NetworkInterface.list();
@@ -295,7 +316,9 @@ Future<bool> hostHeaderValidationMiddleware(HttpRequest request) async {
         }
       }
     } catch (e) {
-      debugPrint('hostHeaderValidationMiddleware: NetworkInterface.list error: $e');
+      debugPrint(
+        'hostHeaderValidationMiddleware: NetworkInterface.list error: $e',
+      );
     }
     _cachedAllowedHosts = allowedHosts;
     _lastInterfaceRefresh = now;
@@ -323,7 +346,8 @@ bool _isTrustedUri(String? uriStr) {
   final uri = Uri.tryParse(uriStr);
   if (uri == null) return false;
   final host = uri.host.toLowerCase();
-  final isLoopback = host == 'localhost' || host == '127.0.0.1' || host == '::1';
+  final isLoopback =
+      host == 'localhost' || host == '127.0.0.1' || host == '::1';
   return isLoopback || _cachedAllowedHosts.contains(host);
 }
 
@@ -333,10 +357,12 @@ Future<bool> corsMiddleware(HttpRequest request, ApiRouter router) async {
   final referer = request.headers.value('Referer');
 
   final hasTrustedOrigin = _isTrustedUri(origin);
-  final isUntrustedOrigin = (origin != null && !hasTrustedOrigin) ||
+  final isUntrustedOrigin =
+      (origin != null && !hasTrustedOrigin) ||
       (referer != null && !_isTrustedUri(referer));
 
-  final isPublicRoute = request.uri.path.startsWith('/api/v1/docs') ||
+  final isPublicRoute =
+      request.uri.path.startsWith('/api/v1/docs') ||
       request.uri.path == '/api/v1/openapi.json' ||
       request.uri.path == '/api/v1/health';
 
@@ -344,25 +370,41 @@ Future<bool> corsMiddleware(HttpRequest request, ApiRouter router) async {
   if (request.method == 'OPTIONS') {
     final allowPreflight = hasTrustedOrigin || isPublicRoute;
     request.response
-      ..statusCode = allowPreflight ? HttpStatus.noContent : HttpStatus.forbidden
-      ..headers.set('Access-Control-Allow-Origin', allowPreflight ? (origin ?? '*') : '')
-      ..headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-      ..headers.set('Access-Control-Allow-Headers', 'Content-Type, X-API-Key, Authorization');
+      ..statusCode = allowPreflight
+          ? HttpStatus.noContent
+          : HttpStatus.forbidden
+      ..headers.set(
+        'Access-Control-Allow-Origin',
+        allowPreflight ? (origin ?? '*') : '',
+      )
+      ..headers.set(
+        'Access-Control-Allow-Methods',
+        'GET, POST, PUT, DELETE, OPTIONS',
+      )
+      ..headers.set(
+        'Access-Control-Allow-Headers',
+        'Content-Type, X-API-Key, Authorization',
+      );
     await request.response.close();
     return false;
   }
 
   // Drive-by Guard: Untrusted Origin/Referer requires API key (except public routes)
   if (isUntrustedOrigin && !isPublicRoute) {
-    final token = request.headers.value('X-API-Key') ??
-        request.headers.value('Authorization')?.replaceAll('Bearer ', '').trim();
+    final token =
+        request.headers.value('X-API-Key') ??
+        request.headers
+            .value('Authorization')
+            ?.replaceAll('Bearer ', '')
+            .trim();
     final matchedKey = router.findMatchingKey(token);
     if (matchedKey == null) {
       final error = Rfc7807Error(
         type: 'https://solaris.local/errors/drive-by-blocked',
         title: 'Forbidden',
         status: HttpStatus.forbidden,
-        detail: 'Untrusted origin or referer header detected. Provide valid X-API-Key.',
+        detail:
+            'Untrusted origin or referer header detected. Provide valid X-API-Key.',
         instance: request.uri.path,
       );
       ApiRouter.sendRfc7807(request, error);
@@ -376,7 +418,10 @@ Future<bool> corsMiddleware(HttpRequest request, ApiRouter router) async {
 
   if (hasTrustedOrigin && origin != null) {
     request.response.headers.set('Access-Control-Allow-Origin', origin);
-    request.response.headers.set('Access-Control-Allow-Headers', 'Content-Type, X-API-Key, Authorization');
+    request.response.headers.set(
+      'Access-Control-Allow-Headers',
+      'Content-Type, X-API-Key, Authorization',
+    );
   }
 
   return true;
@@ -384,9 +429,11 @@ Future<bool> corsMiddleware(HttpRequest request, ApiRouter router) async {
 
 /// Constant-time SHA-256 Auth & Strict Localhost Drive-by Guard Middleware
 Future<bool> authMiddleware(HttpRequest request, ApiRouter router) async {
-  if (request.method == 'OPTIONS') return true; // CORS preflight requests bypass auth check
+  if (request.method == 'OPTIONS')
+    return true; // CORS preflight requests bypass auth check
 
-  final token = request.headers.value('X-API-Key') ??
+  final token =
+      request.headers.value('X-API-Key') ??
       request.headers.value('Authorization')?.replaceAll('Bearer ', '').trim();
 
   // 1. Priority token validation if present (for all routes, including public and loopback)
@@ -427,7 +474,8 @@ Future<bool> authMiddleware(HttpRequest request, ApiRouter router) async {
   final origin = request.headers.value('Origin');
   final referer = request.headers.value('Referer');
 
-  final hasBrowserOrigin = (origin != null && !_isTrustedUri(origin)) ||
+  final hasBrowserOrigin =
+      (origin != null && !_isTrustedUri(origin)) ||
       (referer != null && !_isTrustedUri(referer));
 
   final remoteIp = request.connectionInfo?.remoteAddress.address ?? '';
@@ -474,8 +522,8 @@ class TokenBucket {
   DateTime lastRefill;
 
   TokenBucket({required this.capacity, required this.refillRate})
-      : tokens = capacity,
-        lastRefill = DateTime.now();
+    : tokens = capacity,
+      lastRefill = DateTime.now();
 
   bool consume() {
     final now = DateTime.now();

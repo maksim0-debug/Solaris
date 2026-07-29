@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 /// Service for managing Windows Defender Firewall rules for Solaris Control API.
 class WindowsFirewallService {
   static const String rulePrefix = 'Solaris_Control_API_';
-  
+
   /// Gets the rule name for a specific port.
   static String getRuleName(int port) => '${rulePrefix}Port_$port';
 
@@ -24,7 +24,8 @@ class WindowsFirewallService {
 
       if (result.exitCode == 0) {
         final stdoutStr = result.stdout.toString();
-        if (!stdoutStr.contains('No rules match') && stdoutStr.contains(ruleName)) {
+        if (!stdoutStr.contains('No rules match') &&
+            stdoutStr.contains(ruleName)) {
           return true;
         }
       }
@@ -59,7 +60,9 @@ class WindowsFirewallService {
       ]);
 
       if (directResult.exitCode == 0) {
-        debugPrint('WindowsFirewallService: Direct netsh rule added successfully for port $port');
+        debugPrint(
+          'WindowsFirewallService: Direct netsh rule added successfully for port $port',
+        );
         return true;
       }
     } catch (e) {
@@ -78,16 +81,22 @@ class WindowsFirewallService {
           await Future<void>.delayed(const Duration(milliseconds: 500));
           final verified = await isRuleConfigured(port: port);
           if (verified) {
-            debugPrint('WindowsFirewallService: Elevated PowerShell rule verified for port $port');
+            debugPrint(
+              'WindowsFirewallService: Elevated PowerShell rule verified for port $port',
+            );
             return true;
           }
         }
       }
     } catch (e) {
-      debugPrint('WindowsFirewallService: Elevated PowerShell RunAs failed: $e');
+      debugPrint(
+        'WindowsFirewallService: Elevated PowerShell RunAs failed: $e',
+      );
     }
 
-    debugPrint('WindowsFirewallService: Failed to add firewall rule (UAC denied or command failed)');
+    debugPrint(
+      'WindowsFirewallService: Failed to add firewall rule (UAC denied or command failed)',
+    );
     return false;
   }
 
@@ -105,7 +114,9 @@ class WindowsFirewallService {
         'name=$ruleName',
       ]);
       if (netshResult.exitCode == 0) {
-        debugPrint('WindowsFirewallService: Fast netsh rule removed for port $port');
+        debugPrint(
+          'WindowsFirewallService: Fast netsh rule removed for port $port',
+        );
         return;
       }
     } catch (e) {
@@ -113,9 +124,12 @@ class WindowsFirewallService {
     }
 
     try {
-      final psCommand = "Start-Process powershell -Verb RunAs -Wait -ArgumentList '-NoProfile -ExecutionPolicy Bypass -Command \"Remove-NetFirewallRule -DisplayName ''$rulePrefix*'' -ErrorAction SilentlyContinue\"'";
+      final psCommand =
+          "Start-Process powershell -Verb RunAs -Wait -ArgumentList '-NoProfile -ExecutionPolicy Bypass -Command \"Remove-NetFirewallRule -DisplayName ''$rulePrefix*'' -ErrorAction SilentlyContinue\"'";
       await Process.run('powershell', ['-Command', psCommand]);
-      debugPrint('WindowsFirewallService: Removed all Solaris firewall rules via PowerShell');
+      debugPrint(
+        'WindowsFirewallService: Removed all Solaris firewall rules via PowerShell',
+      );
     } catch (e) {
       debugPrint('WindowsFirewallService: Error removing firewall rules: $e');
     }

@@ -62,7 +62,9 @@ class UpdateStatus {
       phase: phase ?? this.phase,
       updateInfo: nullifyUpdateInfo ? null : (updateInfo ?? this.updateInfo),
       downloadProgress: downloadProgress ?? this.downloadProgress,
-      errorMessage: nullifyErrorMessage ? null : (errorMessage ?? this.errorMessage),
+      errorMessage: nullifyErrorMessage
+          ? null
+          : (errorMessage ?? this.errorMessage),
       downloadedFilePath: nullifyDownloadedFilePath
           ? null
           : (downloadedFilePath ?? this.downloadedFilePath),

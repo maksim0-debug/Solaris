@@ -33,7 +33,8 @@ class SleepState extends Equatable {
     if (sessions.isEmpty) return false;
     final latest = sessions.first;
     final now = DateTime.now();
-    return (now.isAfter(latest.startTime) || now.isAtSameMomentAs(latest.startTime)) &&
+    return (now.isAfter(latest.startTime) ||
+            now.isAtSameMomentAs(latest.startTime)) &&
         now.isBefore(latest.endTime);
   }
 
@@ -92,10 +93,7 @@ class SleepNotifier extends Notifier<SleepState> {
       final sessions = result.sessions;
 
       if (sessions.isNotEmpty) {
-        state = state.copyWith(
-          sessions: sessions,
-          isLoading: false,
-        );
+        state = state.copyWith(sessions: sessions, isLoading: false);
       }
     } catch (e) {
       debugPrint('Error loading initial sleep data: $e');
@@ -119,8 +117,6 @@ class SleepNotifier extends Notifier<SleepState> {
     return SleepService.mergeAndDeduplicate(existing, incoming);
   }
 
-
-
   /// Updates the real-time pushed sleep status from external IPC/API clients.
   void updatePushedSleepStatus(bool isSleeping) {
     state = state.copyWith(pushedIsSleeping: isSleeping);
@@ -131,8 +127,12 @@ class SleepNotifier extends Notifier<SleepState> {
     state = state.copyWith(isSyncing: true, error: null);
     try {
       final ignored = await _sleepService.loadIgnoredSessionIds();
-      final filteredNew = newSessions.where((s) => !ignored.contains(s.id)).toList();
-      final filteredExisting = state.sessions.where((s) => !ignored.contains(s.id)).toList();
+      final filteredNew = newSessions
+          .where((s) => !ignored.contains(s.id))
+          .toList();
+      final filteredExisting = state.sessions
+          .where((s) => !ignored.contains(s.id))
+          .toList();
       final merged = _mergeAndDeduplicate(filteredExisting, filteredNew);
       await _sleepService.cacheSleepData(merged);
       if (!ref.mounted) return;
@@ -158,8 +158,9 @@ class SleepNotifier extends Notifier<SleepState> {
     state = state.copyWith(isSyncing: true, error: null);
     try {
       final ignored = await _sleepService.loadIgnoredSessionIds();
-      final filteredExisting =
-          state.sessions.where((s) => !ignored.contains(s.id)).toList();
+      final filteredExisting = state.sessions
+          .where((s) => !ignored.contains(s.id))
+          .toList();
       final merged = _mergeAndDeduplicate(filteredExisting, [session]);
       await _sleepService.cacheSleepData(merged);
       if (!ref.mounted) return;
@@ -180,20 +181,24 @@ class SleepNotifier extends Notifier<SleepState> {
     }
   }
 
-
   /// Deletes a single sleep session by ID.
   Future<void> deleteSession(String sessionId, {bool doNotSync = true}) async {
     await deleteSessions([sessionId], doNotSync: doNotSync);
   }
 
   /// Deletes multiple sleep sessions by ID list.
-  Future<void> deleteSessions(List<String> sessionIds, {bool doNotSync = true}) async {
+  Future<void> deleteSessions(
+    List<String> sessionIds, {
+    bool doNotSync = true,
+  }) async {
     if (sessionIds.isEmpty) return;
     if (doNotSync) {
       await _sleepService.addIgnoredSessionIds(sessionIds);
     }
     final idsSet = sessionIds.toSet();
-    final updated = state.sessions.where((s) => !idsSet.contains(s.id)).toList();
+    final updated = state.sessions
+        .where((s) => !idsSet.contains(s.id))
+        .toList();
     await _sleepService.cacheSleepData(updated);
     if (!ref.mounted) return;
     state = state.copyWith(sessions: updated);
@@ -211,10 +216,7 @@ class SleepNotifier extends Notifier<SleepState> {
       final sessions = result.sessions;
 
       if (sessions.isEmpty && state.sessions.isEmpty) {
-        state = state.copyWith(
-          isSyncing: false,
-          error: "No sleep data found.",
-        );
+        state = state.copyWith(isSyncing: false, error: "No sleep data found.");
         return;
       }
 
@@ -252,7 +254,7 @@ final sleepProvider = NotifierProvider<SleepNotifier, SleepState>(
 final sleepServiceProvider = Provider((ref) => SleepService());
 
 /// Synchronous provider for analyzed sleep regimes.
-/// This prevents "Phantom Target" dips by ensuring regimes are recalculated 
+/// This prevents "Phantom Target" dips by ensuring regimes are recalculated
 /// instantly in memory when settings change, without clearing the raw data.
 final sleepRegimesProvider = Provider<List<SleepRegime>>((ref) {
   final sleepState = ref.watch(sleepProvider);

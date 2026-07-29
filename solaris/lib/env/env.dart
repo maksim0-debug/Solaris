@@ -7,7 +7,11 @@ abstract class Env {
   @EnviedField(varName: 'GOOGLE_CLIENT_ID', optional: true, defaultValue: '')
   static final String googleClientId = _Env.googleClientId;
 
-  @EnviedField(varName: 'GOOGLE_CLIENT_SECRET', optional: true, defaultValue: '')
+  @EnviedField(
+    varName: 'GOOGLE_CLIENT_SECRET',
+    optional: true,
+    defaultValue: '',
+  )
   static final String googleClientSecret = _Env.googleClientSecret;
 
   @EnviedField(varName: 'MAPBOX_TOKEN', optional: true, defaultValue: '')
@@ -16,13 +20,22 @@ abstract class Env {
   @EnviedField(varName: 'WEATHER_API_KEY', optional: true, defaultValue: '')
   static final String weatherApiKey = _Env.weatherApiKey;
 
-  @EnviedField(varName: 'IS_OFFICIAL_RELEASE', optional: true, defaultValue: 'false')
+  @EnviedField(
+    varName: 'IS_OFFICIAL_RELEASE',
+    optional: true,
+    defaultValue: 'false',
+  )
   static final String isOfficialReleaseStr = _Env.isOfficialReleaseStr;
 
-  @EnviedField(varName: 'DPAPI_ENTROPY', optional: true, defaultValue: 'SolarisDefaultEntropySaltKey321!')
+  @EnviedField(
+    varName: 'DPAPI_ENTROPY',
+    optional: true,
+    defaultValue: 'SolarisDefaultEntropySaltKey321!',
+  )
   static final String dpapiEntropy = _Env.dpapiEntropy;
 
-  static bool get isOfficialRelease => isOfficialReleaseStr.toLowerCase() == 'true';
+  static bool get isOfficialRelease =>
+      isOfficialReleaseStr.toLowerCase() == 'true';
 
   static bool get isWeatherApiKeyValid {
     return weatherApiKey.isNotEmpty &&
@@ -43,4 +56,3 @@ abstract class Env {
         googleClientSecret != 'your_client_secret_here';
   }
 }
-

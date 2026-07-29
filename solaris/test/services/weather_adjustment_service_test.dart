@@ -71,7 +71,7 @@ void main() {
         weather(cloudCover: 10, weatherCode: 55),
         5.0,
       );
-  
+
       // At 5deg elevation, the impact is fully applied.
       // 1.0 - (1.0-0.55) = 0.55
       expect(factor, closeTo(0.55, 0.001));
@@ -93,16 +93,19 @@ void main() {
         astronomicalDusk: DateTime(2026, 3, 19, 19, 30),
       );
 
-      test('returns 500K reduction for 100% cloud cover in active window at intensity 1.0', () {
-        final now = DateTime(2026, 3, 19, 12, 0); // Day
-        final drop = service.calculateWeatherTemperatureDrop(
-          weather: weather(cloudCover: 100, weatherCode: 51),
-          now: now,
-          phases: phases,
-          intensity: 1.0,
-        );
-        expect(drop, 500.0);
-      });
+      test(
+        'returns 500K reduction for 100% cloud cover in active window at intensity 1.0',
+        () {
+          final now = DateTime(2026, 3, 19, 12, 0); // Day
+          final drop = service.calculateWeatherTemperatureDrop(
+            weather: weather(cloudCover: 100, weatherCode: 51),
+            now: now,
+            phases: phases,
+            intensity: 1.0,
+          );
+          expect(drop, 500.0);
+        },
+      );
 
       test('returns 0 reduction outside active window (night)', () {
         final now = DateTime(2026, 3, 19, 21, 0); // Night (after dusk)

@@ -27,10 +27,12 @@ class TemperatureState {
     this.activeUserPresetId,
     List<String>? presetOrder,
   }) : curvesMap = curvesMap ?? PresetConstants.getAllTemperatureDefaults(),
-       presetOrder = presetOrder ?? [
-         ...TemperaturePresetType.values.map((e) => 'system:${e.name}'),
-         ...userPresets.map((e) => 'user:${e.id}'),
-       ];
+       presetOrder =
+           presetOrder ??
+           [
+             ...TemperaturePresetType.values.map((e) => 'system:${e.name}'),
+             ...userPresets.map((e) => 'user:${e.id}'),
+           ];
 
   List<FlSpot> get curvePoints {
     if (activeUserPresetId != null) {
@@ -70,8 +72,9 @@ class TemperatureState {
       isTimeShiftEnabled: isTimeShiftEnabled ?? this.isTimeShiftEnabled,
       isWindDownEnabled: isWindDownEnabled ?? this.isWindDownEnabled,
       userPresets: userPresets ?? this.userPresets,
-      activeUserPresetId:
-          clearActiveUserPresetId ? null : (activeUserPresetId ?? this.activeUserPresetId),
+      activeUserPresetId: clearActiveUserPresetId
+          ? null
+          : (activeUserPresetId ?? this.activeUserPresetId),
       presetOrder: presetOrder ?? this.presetOrder,
     );
   }
@@ -129,9 +132,10 @@ class TemperatureState {
       isSleepPressureEnabled: json['isSleepPressureEnabled'] as bool? ?? true,
       isTimeShiftEnabled: json['isTimeShiftEnabled'] as bool? ?? true,
       isWindDownEnabled: json['isWindDownEnabled'] as bool? ?? true,
-      userPresets: (json['userPresets'] as List<dynamic>?)?.map(
-            (p) => UserPreset.fromJson(p as Map<String, dynamic>),
-          ).toList() ??
+      userPresets:
+          (json['userPresets'] as List<dynamic>?)
+              ?.map((p) => UserPreset.fromJson(p as Map<String, dynamic>))
+              .toList() ??
           [],
       activeUserPresetId: json['activeUserPresetId'] as String?,
       presetOrder: (json['presetOrder'] as List<dynamic>?)?.cast<String>(),

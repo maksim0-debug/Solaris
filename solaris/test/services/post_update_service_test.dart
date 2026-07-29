@@ -27,32 +27,37 @@ void main() {
   });
 
   group('PostUpdateService tests', () {
-    test('readAndUpdateLog parses SUCCESS log and rotates file to update.last.log', () async {
-      final logFile = File(testLogPath);
-      final jsonLog = {
-        'status': 'SUCCESS',
-        'oldVersion': '1.0.17',
-        'newVersion': '1.0.18',
-        'timestamp': DateTime.now().toIso8601String(),
-      };
-      await logFile.writeAsString(jsonEncode(jsonLog));
+    test(
+      'readAndUpdateLog parses SUCCESS log and rotates file to update.last.log',
+      () async {
+        final logFile = File(testLogPath);
+        final jsonLog = {
+          'status': 'SUCCESS',
+          'oldVersion': '1.0.17',
+          'newVersion': '1.0.18',
+          'timestamp': DateTime.now().toIso8601String(),
+        };
+        await logFile.writeAsString(jsonEncode(jsonLog));
 
-      final service = PostUpdateService(
-        overrideLogPath: testLogPath,
-        overrideAppDir: testAppDir,
-      );
+        final service = PostUpdateService(
+          overrideLogPath: testLogPath,
+          overrideAppDir: testAppDir,
+        );
 
-      final result = await service.readAndUpdateLog();
+        final result = await service.readAndUpdateLog();
 
-      expect(result.status, equals(PostUpdateStatus.success));
-      expect(result.oldVersion, equals('1.0.17'));
-      expect(result.newVersion, equals('1.0.18'));
+        expect(result.status, equals(PostUpdateStatus.success));
+        expect(result.oldVersion, equals('1.0.17'));
+        expect(result.newVersion, equals('1.0.18'));
 
-      // Verify update.log is renamed to update.last.log
-      expect(await logFile.exists(), isFalse);
-      final rotatedFile = File(p.join(p.dirname(testLogPath), 'update.last.log'));
-      expect(await rotatedFile.exists(), isTrue);
-    });
+        // Verify update.log is renamed to update.last.log
+        expect(await logFile.exists(), isFalse);
+        final rotatedFile = File(
+          p.join(p.dirname(testLogPath), 'update.last.log'),
+        );
+        expect(await rotatedFile.exists(), isTrue);
+      },
+    );
 
     test('readAndUpdateLog parses ROLLBACK log with reason', () async {
       final logFile = File(testLogPath);
@@ -73,70 +78,91 @@ void main() {
       final result = await service.readAndUpdateLog();
 
       expect(result.status, equals(PostUpdateStatus.rollback));
-      expect(result.reason, equals('solaris.exe verification failed after extraction'));
+      expect(
+        result.reason,
+        equals('solaris.exe verification failed after extraction'),
+      );
     });
 
-    test('readAndUpdateLog handles corrupted/invalid log file gracefully', () async {
-      final logFile = File(testLogPath);
-      await logFile.writeAsString('INVALID_JSON_CONTENT{{{');
+    test(
+      'readAndUpdateLog handles corrupted/invalid log file gracefully',
+      () async {
+        final logFile = File(testLogPath);
+        await logFile.writeAsString('INVALID_JSON_CONTENT{{{');
 
-      final service = PostUpdateService(
-        overrideLogPath: testLogPath,
-        overrideAppDir: testAppDir,
-      );
+        final service = PostUpdateService(
+          overrideLogPath: testLogPath,
+          overrideAppDir: testAppDir,
+        );
 
-      final result = await service.readAndUpdateLog();
+        final result = await service.readAndUpdateLog();
 
-      expect(result.status, equals(PostUpdateStatus.none));
-      expect(await logFile.exists(), isFalse);
-    });
+        expect(result.status, equals(PostUpdateStatus.none));
+        expect(await logFile.exists(), isFalse);
+      },
+    );
 
-    test('cleanupBackupFolderIfNeeded deletes backup folder on SUCCESS', () async {
-      final backupDir = Directory(p.join(testAppDir, 'backup'));
-      await backupDir.create(recursive: true);
-      await File(p.join(backupDir.path, 'old_app.dll')).writeAsString('dummy');
+    test(
+      'cleanupBackupFolderIfNeeded deletes backup folder on SUCCESS',
+      () async {
+        final backupDir = Directory(p.join(testAppDir, 'backup'));
+        await backupDir.create(recursive: true);
+        await File(
+          p.join(backupDir.path, 'old_app.dll'),
+        ).writeAsString('dummy');
 
-      final service = PostUpdateService(
-        overrideLogPath: testLogPath,
-        overrideAppDir: testAppDir,
-      );
+        final service = PostUpdateService(
+          overrideLogPath: testLogPath,
+          overrideAppDir: testAppDir,
+        );
 
-      const successResult = PostUpdateResult(status: PostUpdateStatus.success);
-      await service.cleanupBackupFolderIfNeeded(successResult);
+        const successResult = PostUpdateResult(
+          status: PostUpdateStatus.success,
+        );
+        await service.cleanupBackupFolderIfNeeded(successResult);
 
-      expect(await backupDir.exists(), isFalse);
-    });
+        expect(await backupDir.exists(), isFalse);
+      },
+    );
 
-    test('cleanupBackupFolderIfNeeded retains backup folder on ROLLBACK', () async {
-      final backupDir = Directory(p.join(testAppDir, 'backup'));
-      await backupDir.create(recursive: true);
-      await File(p.join(backupDir.path, 'old_app.dll')).writeAsString('dummy');
+    test(
+      'cleanupBackupFolderIfNeeded retains backup folder on ROLLBACK',
+      () async {
+        final backupDir = Directory(p.join(testAppDir, 'backup'));
+        await backupDir.create(recursive: true);
+        await File(
+          p.join(backupDir.path, 'old_app.dll'),
+        ).writeAsString('dummy');
 
-      final service = PostUpdateService(
-        overrideLogPath: testLogPath,
-        overrideAppDir: testAppDir,
-      );
+        final service = PostUpdateService(
+          overrideLogPath: testLogPath,
+          overrideAppDir: testAppDir,
+        );
 
-      const rollbackResult = PostUpdateResult(
-        status: PostUpdateStatus.rollback,
-        reason: 'Error unpacking ZIP',
-      );
-      await service.cleanupBackupFolderIfNeeded(rollbackResult);
+        const rollbackResult = PostUpdateResult(
+          status: PostUpdateStatus.rollback,
+          reason: 'Error unpacking ZIP',
+        );
+        await service.cleanupBackupFolderIfNeeded(rollbackResult);
 
-      expect(await backupDir.exists(), isTrue);
-    });
+        expect(await backupDir.exists(), isTrue);
+      },
+    );
 
-    test('processPostUpdate completes without errors when no log exists', () async {
-      final service = PostUpdateService(
-        overrideLogPath: testLogPath,
-        overrideAppDir: testAppDir,
-      );
+    test(
+      'processPostUpdate completes without errors when no log exists',
+      () async {
+        final service = PostUpdateService(
+          overrideLogPath: testLogPath,
+          overrideAppDir: testAppDir,
+        );
 
-      final result = await service.processPostUpdate(
-        startupMode: StartupMode.minimized,
-      );
+        final result = await service.processPostUpdate(
+          startupMode: StartupMode.minimized,
+        );
 
-      expect(result.status, equals(PostUpdateStatus.none));
-    });
+        expect(result.status, equals(PostUpdateStatus.none));
+      },
+    );
   });
 }

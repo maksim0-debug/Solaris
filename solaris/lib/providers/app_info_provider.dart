@@ -13,4 +13,3 @@ final appVersionProvider = FutureProvider<String>((ref) async {
     return fallbackAppVersion;
   }
 });
-

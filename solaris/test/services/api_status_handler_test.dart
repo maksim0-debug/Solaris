@@ -37,13 +37,34 @@ void main() {
       router = ApiRouter();
       final statusHandler = ApiStatusHandler(container);
 
-      router.get('/api/v1/health', (req, params) => statusHandler.handleHealth(req, params));
-      router.get('/api/v1/status', (req, params) => statusHandler.handleStatus(req, params));
-      router.get('/api/v1/solar', (req, params) => statusHandler.handleSolar(req, params));
-      router.get('/api/v1/presets', (req, params) => statusHandler.handlePresets(req, params));
-      router.get('/api/v1/sleep/sessions', (req, params) => statusHandler.handleSleepSessions(req, params));
-      router.get('/api/v1/docs', (req, params) => statusHandler.handleDocs(req, params));
-      router.get('/api/v1/openapi.json', (req, params) => statusHandler.handleOpenApiJson(req, params));
+      router.get(
+        '/api/v1/health',
+        (req, params) => statusHandler.handleHealth(req, params),
+      );
+      router.get(
+        '/api/v1/status',
+        (req, params) => statusHandler.handleStatus(req, params),
+      );
+      router.get(
+        '/api/v1/solar',
+        (req, params) => statusHandler.handleSolar(req, params),
+      );
+      router.get(
+        '/api/v1/presets',
+        (req, params) => statusHandler.handlePresets(req, params),
+      );
+      router.get(
+        '/api/v1/sleep/sessions',
+        (req, params) => statusHandler.handleSleepSessions(req, params),
+      );
+      router.get(
+        '/api/v1/docs',
+        (req, params) => statusHandler.handleDocs(req, params),
+      );
+      router.get(
+        '/api/v1/openapi.json',
+        (req, params) => statusHandler.handleOpenApiJson(req, params),
+      );
 
       server.listen((HttpRequest request) async {
         final handled = await router.handle(request);
@@ -65,28 +86,31 @@ void main() {
       container.dispose();
     });
 
-    test('GET /api/v1/status returns 200 OK and valid JSON status without Riverpod self-dependency error', () async {
-      final req = await client.getUrl(Uri.parse('$serverUrl/api/v1/status'));
-      final resp = await req.close();
+    test(
+      'GET /api/v1/status returns 200 OK and valid JSON status without Riverpod self-dependency error',
+      () async {
+        final req = await client.getUrl(Uri.parse('$serverUrl/api/v1/status'));
+        final resp = await req.close();
 
-      expect(resp.statusCode, equals(HttpStatus.ok));
-      final bodyStr = await resp.transform(utf8.decoder).join();
-      final json = jsonDecode(bodyStr) as Map<String, dynamic>;
+        expect(resp.statusCode, equals(HttpStatus.ok));
+        final bodyStr = await resp.transform(utf8.decoder).join();
+        final json = jsonDecode(bodyStr) as Map<String, dynamic>;
 
-      expect(json['version'], isNotNull);
-      expect(json['uptime_seconds'], isA<int>());
-      expect(json['timestamp'], isNotNull);
-      expect(json['monitors'], isA<List<dynamic>>());
-      expect(json['automation'], isA<Map<String, dynamic>>());
-      expect(json['smart_circadian'], isA<Map<String, dynamic>>());
-      expect(json['sleep'], isA<Map<String, dynamic>>());
-      expect(json['server'], isA<Map<String, dynamic>>());
-      if (json['solar'] != null) {
-        final solarJson = json['solar'] as Map<String, dynamic>;
-        final nextEvent = solarJson['next_event'] as Map<String, dynamic>;
-        expect(nextEvent['type'], isA<String>());
-      }
-    });
+        expect(json['version'], isNotNull);
+        expect(json['uptime_seconds'], isA<int>());
+        expect(json['timestamp'], isNotNull);
+        expect(json['monitors'], isA<List<dynamic>>());
+        expect(json['automation'], isA<Map<String, dynamic>>());
+        expect(json['smart_circadian'], isA<Map<String, dynamic>>());
+        expect(json['sleep'], isA<Map<String, dynamic>>());
+        expect(json['server'], isA<Map<String, dynamic>>());
+        if (json['solar'] != null) {
+          final solarJson = json['solar'] as Map<String, dynamic>;
+          final nextEvent = solarJson['next_event'] as Map<String, dynamic>;
+          expect(nextEvent['type'], isA<String>());
+        }
+      },
+    );
 
     test('GET /api/v1/health returns 200 OK with status ok', () async {
       final req = await client.getUrl(Uri.parse('$serverUrl/api/v1/health'));
@@ -101,20 +125,25 @@ void main() {
       expect(json['uptime_seconds'], isA<int>());
     });
 
-    test('GET /api/v1/presets returns system and user presets for brightness and temperature', () async {
-      final req = await client.getUrl(Uri.parse('$serverUrl/api/v1/presets'));
-      final resp = await req.close();
+    test(
+      'GET /api/v1/presets returns system and user presets for brightness and temperature',
+      () async {
+        final req = await client.getUrl(Uri.parse('$serverUrl/api/v1/presets'));
+        final resp = await req.close();
 
-      expect(resp.statusCode, equals(HttpStatus.ok));
-      final bodyStr = await resp.transform(utf8.decoder).join();
-      final json = jsonDecode(bodyStr) as Map<String, dynamic>;
+        expect(resp.statusCode, equals(HttpStatus.ok));
+        final bodyStr = await resp.transform(utf8.decoder).join();
+        final json = jsonDecode(bodyStr) as Map<String, dynamic>;
 
-      expect(json['brightness'], isNotNull);
-      expect(json['temperature'], isNotNull);
-    });
+        expect(json['brightness'], isNotNull);
+        expect(json['temperature'], isNotNull);
+      },
+    );
 
     test('GET /api/v1/sleep/sessions returns paginated list', () async {
-      final req = await client.getUrl(Uri.parse('$serverUrl/api/v1/sleep/sessions?limit=10&offset=0'));
+      final req = await client.getUrl(
+        Uri.parse('$serverUrl/api/v1/sleep/sessions?limit=10&offset=0'),
+      );
       final resp = await req.close();
 
       expect(resp.statusCode, equals(HttpStatus.ok));
@@ -137,41 +166,55 @@ void main() {
       expect(bodyStr, contains('Solaris Control API Documentation'));
     });
 
-    test('GET /api/v1/openapi.json returns 200 OK with valid openapi spec', () async {
-      final req = await client.getUrl(Uri.parse('$serverUrl/api/v1/openapi.json'));
-      final resp = await req.close();
+    test(
+      'GET /api/v1/openapi.json returns 200 OK with valid openapi spec',
+      () async {
+        final req = await client.getUrl(
+          Uri.parse('$serverUrl/api/v1/openapi.json'),
+        );
+        final resp = await req.close();
 
-      expect(resp.statusCode, equals(HttpStatus.ok));
-      final bodyStr = await resp.transform(utf8.decoder).join();
-      final json = jsonDecode(bodyStr) as Map<String, dynamic>;
+        expect(resp.statusCode, equals(HttpStatus.ok));
+        final bodyStr = await resp.transform(utf8.decoder).join();
+        final json = jsonDecode(bodyStr) as Map<String, dynamic>;
 
-      expect(json['openapi'], equals('3.0.3'));
-      expect(json['paths'], isNotNull);
-    });
+        expect(json['openapi'], equals('3.0.3'));
+        expect(json['paths'], isNotNull);
+      },
+    );
 
-    test('GET /api/v1/status correctly handles pushes to pushedIsSleeping without altering sessions', () async {
-      final sleepNotifier = container.read(sleepProvider.notifier);
-      
-      // Default: pushedIsSleeping is null, sessions empty -> is_sleeping: false
-      var req = await client.getUrl(Uri.parse('$serverUrl/api/v1/status'));
-      var resp = await req.close();
-      var json = jsonDecode(await resp.transform(utf8.decoder).join()) as Map<String, dynamic>;
-      expect(json['sleep']['is_sleeping'], isFalse);
+    test(
+      'GET /api/v1/status correctly handles pushes to pushedIsSleeping without altering sessions',
+      () async {
+        final sleepNotifier = container.read(sleepProvider.notifier);
 
-      // Push is_sleeping = true
-      sleepNotifier.updatePushedSleepStatus(true);
-      req = await client.getUrl(Uri.parse('$serverUrl/api/v1/status'));
-      resp = await req.close();
-      json = jsonDecode(await resp.transform(utf8.decoder).join()) as Map<String, dynamic>;
-      expect(json['sleep']['is_sleeping'], isTrue);
+        // Default: pushedIsSleeping is null, sessions empty -> is_sleeping: false
+        var req = await client.getUrl(Uri.parse('$serverUrl/api/v1/status'));
+        var resp = await req.close();
+        var json =
+            jsonDecode(await resp.transform(utf8.decoder).join())
+                as Map<String, dynamic>;
+        expect(json['sleep']['is_sleeping'], isFalse);
 
-      // Push is_sleeping = false
-      sleepNotifier.updatePushedSleepStatus(false);
-      req = await client.getUrl(Uri.parse('$serverUrl/api/v1/status'));
-      resp = await req.close();
-      json = jsonDecode(await resp.transform(utf8.decoder).join()) as Map<String, dynamic>;
-      expect(json['sleep']['is_sleeping'], isFalse);
-    });
+        // Push is_sleeping = true
+        sleepNotifier.updatePushedSleepStatus(true);
+        req = await client.getUrl(Uri.parse('$serverUrl/api/v1/status'));
+        resp = await req.close();
+        json =
+            jsonDecode(await resp.transform(utf8.decoder).join())
+                as Map<String, dynamic>;
+        expect(json['sleep']['is_sleeping'], isTrue);
+
+        // Push is_sleeping = false
+        sleepNotifier.updatePushedSleepStatus(false);
+        req = await client.getUrl(Uri.parse('$serverUrl/api/v1/status'));
+        resp = await req.close();
+        json =
+            jsonDecode(await resp.transform(utf8.decoder).join())
+                as Map<String, dynamic>;
+        expect(json['sleep']['is_sleeping'], isFalse);
+      },
+    );
   });
 
   group('LocalIpcService End-To-End /api/v1/status Test', () {
@@ -180,12 +223,12 @@ void main() {
 
     setUp(() {
       HttpOverrides.global = null;
-      final testSettings = SettingsState(
-        isLocalIpcServerEnabled: true,
-      );
+      final testSettings = SettingsState(isLocalIpcServerEnabled: true);
       container = ProviderContainer(
         overrides: [
-          settingsProvider.overrideWith(() => FakeSettingsNotifier(testSettings)),
+          settingsProvider.overrideWith(
+            () => FakeSettingsNotifier(testSettings),
+          ),
         ],
       );
       client = HttpClient();
@@ -200,22 +243,27 @@ void main() {
       container.dispose();
     });
 
-    test('LocalIpcService handles GET /api/v1/status without throwing Riverpod assertion error', () async {
-      final ipcNotifier = container.read(localIpcServiceProvider.notifier);
-      await ipcNotifier.start();
+    test(
+      'LocalIpcService handles GET /api/v1/status without throwing Riverpod assertion error',
+      () async {
+        final ipcNotifier = container.read(localIpcServiceProvider.notifier);
+        await ipcNotifier.start();
 
-      final port = container.read(localIpcServiceProvider).port;
-      expect(port, isNotNull);
+        final port = container.read(localIpcServiceProvider).port;
+        expect(port, isNotNull);
 
-      final req = await client.getUrl(Uri.parse('http://localhost:$port/api/v1/status'));
-      final resp = await req.close();
+        final req = await client.getUrl(
+          Uri.parse('http://localhost:$port/api/v1/status'),
+        );
+        final resp = await req.close();
 
-      expect(resp.statusCode, equals(HttpStatus.ok));
-      final bodyStr = await resp.transform(utf8.decoder).join();
-      final json = jsonDecode(bodyStr) as Map<String, dynamic>;
+        expect(resp.statusCode, equals(HttpStatus.ok));
+        final bodyStr = await resp.transform(utf8.decoder).join();
+        final json = jsonDecode(bodyStr) as Map<String, dynamic>;
 
-      expect(json['version'], isNotNull);
-      expect(json['monitors'], isA<List<dynamic>>());
-    });
+        expect(json['version'], isNotNull);
+        expect(json['monitors'], isA<List<dynamic>>());
+      },
+    );
   });
 }

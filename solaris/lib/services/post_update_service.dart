@@ -13,10 +13,7 @@ class PostUpdateService {
   final String? overrideLogPath;
   final String? overrideAppDir;
 
-  PostUpdateService({
-    this.overrideLogPath,
-    this.overrideAppDir,
-  });
+  PostUpdateService({this.overrideLogPath, this.overrideAppDir});
 
   /// Resolves the default updater log file path (%LOCALAPPDATA%/Solaris/update.log).
   String get updateLogPath {
@@ -38,7 +35,10 @@ class PostUpdateService {
   Future<PostUpdateResult> processPostUpdate({
     required StartupMode startupMode,
   }) async {
-    developer.log('Executing post-update processing...', name: 'PostUpdateService');
+    developer.log(
+      'Executing post-update processing...',
+      name: 'PostUpdateService',
+    );
 
     // Step 1: Read and parse update.log
     final result = await readAndUpdateLog();
@@ -121,7 +121,10 @@ class PostUpdateService {
     }
 
     final backupPathCandidate1 = p.join(appDirectory, 'backup');
-    final backupPathCandidate2 = p.join(p.dirname(appDirectory), 'solaris_backup');
+    final backupPathCandidate2 = p.join(
+      p.dirname(appDirectory),
+      'solaris_backup',
+    );
 
     for (final backupPath in [backupPathCandidate1, backupPathCandidate2]) {
       try {
@@ -181,7 +184,8 @@ class PostUpdateService {
       for (final entity in entities) {
         final name = p.basename(entity.path);
         final isUpdaterFolder = name.startsWith('solaris_updater_');
-        final isUpdatesFolder = name == 'solaris_updates' || name.startsWith('solaris_updates_');
+        final isUpdatesFolder =
+            name == 'solaris_updates' || name.startsWith('solaris_updates_');
 
         if (!isUpdaterFolder && !isUpdatesFolder) continue;
 

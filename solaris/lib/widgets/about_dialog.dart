@@ -14,7 +14,7 @@ class SolarisAboutDialog extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final versionAsync = ref.watch(appVersionProvider);
     final version = versionAsync.value ?? '--';
-    
+
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -49,11 +49,12 @@ class SolarisAboutDialog extends ConsumerWidget {
                     children: [
                       Text(
                         l10n.appTitle,
-                        style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                        ),
+                        style: Theme.of(context).textTheme.displayLarge
+                            ?.copyWith(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                            ),
                       ),
                       Text(
                         l10n.appVersion(version),
@@ -68,7 +69,7 @@ class SolarisAboutDialog extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 32),
-              
+
               // Disclaimer Section
               Container(
                 width: double.infinity,
@@ -76,9 +77,7 @@ class SolarisAboutDialog extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.03),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.05),
-                  ),
+                  border: Border.all(color: Colors.white.withOpacity(0.05)),
                 ),
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
@@ -118,7 +117,7 @@ class SolarisAboutDialog extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 32),
-              
+
               // Actions
               Wrap(
                 alignment: WrapAlignment.end,
@@ -134,7 +133,10 @@ class SolarisAboutDialog extends ConsumerWidget {
                     ),
                     child: Text(
                       l10n.privacyPolicy,
-                      style: const TextStyle(color: Colors.white54, fontSize: 13),
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                   TextButton(
@@ -160,7 +162,10 @@ class SolarisAboutDialog extends ConsumerWidget {
                     ),
                     child: Text(
                       l10n.viewLicenses,
-                      style: const TextStyle(color: Colors.white54, fontSize: 13),
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                   ElevatedButton(
@@ -171,13 +176,21 @@ class SolarisAboutDialog extends ConsumerWidget {
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: const Color(0xFFFDBA74).withOpacity(0.3)),
+                        side: BorderSide(
+                          color: const Color(0xFFFDBA74).withOpacity(0.3),
+                        ),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 10,
+                      ),
                     ),
                     child: Text(
                       l10n.close,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 ],

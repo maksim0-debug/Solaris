@@ -63,13 +63,16 @@ final smartCircadianServiceProvider = Provider<SmartCircadianService>(
   (ref) => SmartCircadianService(),
 );
 final mapHealthServiceProvider = Provider((ref) => MapHealthService());
-final windowsFirewallServiceProvider = Provider((ref) => WindowsFirewallService());
-final webSocketServiceProvider = Provider((ref) => WebSocketService(ref));
-final windowsPowerListenerProvider = Provider((ref) => WindowsPowerListener(ref));
-
-final localIpcServiceProvider = NotifierProvider<LocalIpcService, LocalIpcServerState>(
-  LocalIpcService.new,
+final windowsFirewallServiceProvider = Provider(
+  (ref) => WindowsFirewallService(),
 );
+final webSocketServiceProvider = Provider((ref) => WebSocketService(ref));
+final windowsPowerListenerProvider = Provider(
+  (ref) => WindowsPowerListener(ref),
+);
+
+final localIpcServiceProvider =
+    NotifierProvider<LocalIpcService, LocalIpcServerState>(LocalIpcService.new);
 
 final gamingModeServiceProvider = Provider<GamingModeService>((ref) {
   return ref.watch<GamingModeService>(gamingModeProvider.notifier);
@@ -89,7 +92,7 @@ final minuteTimeProvider = StreamProvider<DateTime>((ref) {
   final intervalMinutes = visibility == AppVisibilityState.hidden ? 5 : 1;
 
   StreamController<DateTime> controller = StreamController();
-  
+
   // Emit initial values
   controller.add(now);
 
@@ -109,7 +112,7 @@ final minuteTimeProvider = StreamProvider<DateTime>((ref) {
     timer?.cancel();
     controller.close();
   });
-  
+
   return controller.stream;
 });
 
@@ -362,7 +365,7 @@ class WeatherNotifier extends AsyncNotifier<WeatherData?> {
     _setupTimer(pos, provider, weatherService);
 
     if (pos == null) {
-      return _lastKnownWeather; 
+      return _lastKnownWeather;
     }
 
     try {
@@ -377,13 +380,19 @@ class WeatherNotifier extends AsyncNotifier<WeatherData?> {
         _lastKnownWeather = newData;
       }
     } catch (e) {
-      print('CurrentWeather provider caught error: $e. Retaining previous weather state.');
+      print(
+        'CurrentWeather provider caught error: $e. Retaining previous weather state.',
+      );
     }
 
     return _lastKnownWeather;
   }
 
-  void _setupTimer(Position? pos, WeatherProvider provider, WeatherService weatherService) {
+  void _setupTimer(
+    Position? pos,
+    WeatherProvider provider,
+    WeatherService weatherService,
+  ) {
     _timer?.cancel();
     if (pos == null) return;
 
@@ -401,15 +410,18 @@ class WeatherNotifier extends AsyncNotifier<WeatherData?> {
         }
       } catch (e) {
         // Ошибка или таймаут - просто ничего не делаем, оставив старый стейт
-        print('Timer update caught error: $e. Retaining previous weather state.');
+        print(
+          'Timer update caught error: $e. Retaining previous weather state.',
+        );
       }
     });
   }
 }
 
-final currentWeatherProvider = AsyncNotifierProvider<WeatherNotifier, WeatherData?>(() {
-  return WeatherNotifier();
-});
+final currentWeatherProvider =
+    AsyncNotifierProvider<WeatherNotifier, WeatherData?>(() {
+      return WeatherNotifier();
+    });
 
 final mapHealthProvider = FutureProvider<MapHealthReport>((ref) async {
   final service = ref.watch(mapHealthServiceProvider);
@@ -514,9 +526,7 @@ final effectiveLocationProvider = Provider<AsyncValue<Position>>((ref) {
 
   if (settingsVal != null) {
     final (useManual, manualLatitude, manualLongitude) = settingsVal;
-    if (useManual &&
-        manualLatitude != null &&
-        manualLongitude != null) {
+    if (useManual && manualLatitude != null && manualLongitude != null) {
       return AsyncData(
         Position(
           latitude: manualLatitude,
@@ -532,7 +542,7 @@ final effectiveLocationProvider = Provider<AsyncValue<Position>>((ref) {
         ),
       );
     }
-    // Если авто-обновление включено, пытаемся сохранить предыдущие координаты при миганиях stream 
+    // Если авто-обновление включено, пытаемся сохранить предыдущие координаты при миганиях stream
     final lastPos = streamAsync.value;
     if (lastPos != null) {
       return AsyncData(lastPos);
@@ -565,30 +575,33 @@ final locationCityProvider = FutureProvider<GeocodingResult>((ref) async {
 
   return locationAsync.maybeWhen(
     data: (pos) async {
-      final result = await ref.read(geocodingServiceProvider).getCityName(
-        pos.latitude,
-        pos.longitude,
-        language: locale.languageCode,
-        customToken: customToken,
-      );
+      final result = await ref
+          .read(geocodingServiceProvider)
+          .getCityName(
+            pos.latitude,
+            pos.longitude,
+            language: locale.languageCode,
+            customToken: customToken,
+          );
 
       if (!result.isOffline) {
         Future.microtask(() {
-          ref.read(locationSettingsProvider.notifier).saveResolvedCity(
-            result.name,
-            pos.latitude,
-            pos.longitude,
-          );
+          ref
+              .read(locationSettingsProvider.notifier)
+              .saveResolvedCity(result.name, pos.latitude, pos.longitude);
         });
         return result;
       } else {
         if (locationSettings.lastCityName != null &&
             locationSettings.lastResolvedLatitude != null &&
             locationSettings.lastResolvedLongitude != null) {
-          final latDiff = (pos.latitude - locationSettings.lastResolvedLatitude!).abs();
-          final lonDiff = (pos.longitude - locationSettings.lastResolvedLongitude!).abs();
-          
-          if (latDiff < _maxCityCacheDistanceDegrees && lonDiff < _maxCityCacheDistanceDegrees) {
+          final latDiff =
+              (pos.latitude - locationSettings.lastResolvedLatitude!).abs();
+          final lonDiff =
+              (pos.longitude - locationSettings.lastResolvedLongitude!).abs();
+
+          if (latDiff < _maxCityCacheDistanceDegrees &&
+              lonDiff < _maxCityCacheDistanceDegrees) {
             return GeocodingResult(
               name: locationSettings.lastCityName!,
               isOffline: true,
@@ -600,11 +613,13 @@ final locationCityProvider = FutureProvider<GeocodingResult>((ref) async {
         return result;
       }
     },
-    orElse: () => Future.value(const GeocodingResult(
-      name: "Global Coordinates",
-      isOffline: true,
-      offlineReason: OfflineReason.missingToken,
-    )),
+    orElse: () => Future.value(
+      const GeocodingResult(
+        name: "Global Coordinates",
+        isOffline: true,
+        offlineReason: OfflineReason.missingToken,
+      ),
+    ),
   );
 });
 
@@ -643,7 +658,9 @@ final effectiveTimezoneProvider = Provider<tz.Location>((ref) {
     }
     return tz.getLocation(tzName);
   } catch (e) {
-    debugPrint('Error looking up timezone for ${pos.latitude}, ${pos.longitude}: $e');
+    debugPrint(
+      'Error looking up timezone for ${pos.latitude}, ${pos.longitude}: $e',
+    );
     return tz.local;
   }
 });
@@ -685,7 +702,12 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
   int currentDay = initialNow.day;
 
   // Initial calculation
-  SolarPhaseModel phases = await service.calculatePhases(lat, lon, initialNow, timezoneVal);
+  SolarPhaseModel phases = await service.calculatePhases(
+    lat,
+    lon,
+    initialNow,
+    timezoneVal,
+  );
 
   // Previous values for trend calculation
   double? prevAzimuth;
@@ -788,7 +810,9 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
     }
 
     String elTrend = "constant";
-    if (prevElevation != null && timeDiffSeconds != null && timeDiffSeconds > 0) {
+    if (prevElevation != null &&
+        timeDiffSeconds != null &&
+        timeDiffSeconds > 0) {
       final diff = currentElevation - prevElevation;
       final degPerHour = (diff / timeDiffSeconds) * 3600;
       if (degPerHour.abs() > 0.1) {
@@ -904,8 +928,11 @@ class MonitorListNotifier extends AsyncNotifier<List<MonitorInfo>> {
   @override
   Future<List<MonitorInfo>> build() async {
     ref.listen<AppVisibilityState>(appLifecycleProvider, (prev, next) async {
-      if (prev != AppVisibilityState.visible && next == AppVisibilityState.visible) {
-        final newMonitors = await ref.read(monitorServiceProvider).getConnectedMonitors();
+      if (prev != AppVisibilityState.visible &&
+          next == AppVisibilityState.visible) {
+        final newMonitors = await ref
+            .read(monitorServiceProvider)
+            .getConnectedMonitors();
         if (state.hasValue) {
           state = AsyncData(newMonitors);
         }
@@ -932,9 +959,11 @@ class MonitorListNotifier extends AsyncNotifier<List<MonitorInfo>> {
           final newTemperature = temperature ?? m.realTemperature;
           if (newBrightness != m.realBrightness ||
               newTemperature != m.realTemperature) {
-            debugPrint('[MonitorListNotifier] State will change for $deviceName. '
-                'Old brightness: ${m.realBrightness}, new: $newBrightness. '
-                'Old temp: ${m.realTemperature}, new: $newTemperature.');
+            debugPrint(
+              '[MonitorListNotifier] State will change for $deviceName. '
+              'Old brightness: ${m.realBrightness}, new: $newBrightness. '
+              'Old temp: ${m.realTemperature}, new: $newTemperature.',
+            );
             changed = true;
             return MonitorInfo(
               id: m.id,
@@ -1197,11 +1226,7 @@ final manualBrightnessProvider =
       ManualBrightnessNotifier.new,
     );
 
-enum SettingsEncryptionError {
-  passwordChanged,
-  invalidData,
-  generic
-}
+enum SettingsEncryptionError { passwordChanged, invalidData, generic }
 
 class SettingsErrorNotifier extends Notifier<SettingsEncryptionError?> {
   @override
@@ -1265,7 +1290,8 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
           } on DpapiPasswordChangedException catch (e) {
             debugPrint('DPAPI Password Changed: $e');
             Future.microtask(() {
-              ref.read(settingsErrorProvider.notifier).state = SettingsEncryptionError.passwordChanged;
+              ref.read(settingsErrorProvider.notifier).state =
+                  SettingsEncryptionError.passwordChanged;
             });
             // Clean credentials and parse the rest of settings to preserve user presets
             final cleanedValue = Map<String, dynamic>.from(value as Map);
@@ -1277,7 +1303,8 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
           } on DpapiInvalidDataException catch (e) {
             debugPrint('DPAPI Invalid Data: $e');
             Future.microtask(() {
-              ref.read(settingsErrorProvider.notifier).state = SettingsEncryptionError.invalidData;
+              ref.read(settingsErrorProvider.notifier).state =
+                  SettingsEncryptionError.invalidData;
             });
             final cleanedValue = Map<String, dynamic>.from(value as Map);
             cleanedValue['customWeatherApiKey'] = "";
@@ -1288,7 +1315,8 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
           } on DpapiGenericException catch (e) {
             debugPrint('DPAPI Generic Error: $e');
             Future.microtask(() {
-              ref.read(settingsErrorProvider.notifier).state = SettingsEncryptionError.generic;
+              ref.read(settingsErrorProvider.notifier).state =
+                  SettingsEncryptionError.generic;
             });
             final cleanedValue = Map<String, dynamic>.from(value as Map);
             cleanedValue['customWeatherApiKey'] = "";
@@ -1358,7 +1386,8 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
           }
         }
       } else {
-        final current = newStateMap[id] ?? newStateMap['all'] ?? SettingsState();
+        final current =
+            newStateMap[id] ?? newStateMap['all'] ?? SettingsState();
         newStateMap[id] = transform(current);
       }
     }
@@ -1449,10 +1478,7 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
       if (currentKeys.isNotEmpty) {
         currentKeys[0] = currentKeys.first.copyWith(permissions: config);
       }
-      return s.copyWith(
-        apiPermissions: config,
-        apiKeys: currentKeys,
-      );
+      return s.copyWith(apiPermissions: config, apiKeys: currentKeys);
     });
   }
 
@@ -1476,7 +1502,9 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   }
 
   void updateCustomGoogleClientSecret(String value) {
-    _updateSettings({'all'}, (s) => s.copyWith(customGoogleClientSecret: value));
+    _updateSettings({
+      'all',
+    }, (s) => s.copyWith(customGoogleClientSecret: value));
   }
 
   void updateGameModeEnabled(bool enabled) {
@@ -1554,46 +1582,33 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   }
 
   void updateLocalIpcServerEnabled(bool enabled) {
-    _updateSettings(
-      {'all'},
-      (s) => s.copyWith(isLocalIpcServerEnabled: enabled),
-    );
+    _updateSettings({
+      'all',
+    }, (s) => s.copyWith(isLocalIpcServerEnabled: enabled));
   }
 
   void updateLocalIpcServerPort(int port) {
-    _updateSettings(
-      {'all'},
-      (s) => s.copyWith(localIpcServerPort: port, apiServerPort: port),
-    );
+    _updateSettings({
+      'all',
+    }, (s) => s.copyWith(localIpcServerPort: port, apiServerPort: port));
   }
 
   void updateApiServerPort(int port) {
-    _updateSettings(
-      {'all'},
-      (s) => s.copyWith(apiServerPort: port, localIpcServerPort: port),
-    );
+    _updateSettings({
+      'all',
+    }, (s) => s.copyWith(apiServerPort: port, localIpcServerPort: port));
   }
 
   void updateApiLanAccessEnabled(bool enabled) {
-    _updateSettings(
-      {'all'},
-      (s) => s.copyWith(isApiLanAccessEnabled: enabled),
-    );
+    _updateSettings({'all'}, (s) => s.copyWith(isApiLanAccessEnabled: enabled));
   }
 
   void updateApiAccessToken(String token) {
-    _updateSettings(
-      {'all'},
-      (s) => s.copyWith(apiAccessToken: token),
-    );
+    _updateSettings({'all'}, (s) => s.copyWith(apiAccessToken: token));
   }
 
-
   void updateRequireLocalToken(bool enabled) {
-    _updateSettings(
-      {'all'},
-      (s) => s.copyWith(requireLocalToken: enabled),
-    );
+    _updateSettings({'all'}, (s) => s.copyWith(requireLocalToken: enabled));
   }
 
   void addApiKey(ApiKeyEntry entry) {
@@ -1669,17 +1684,13 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   }
 
   void updateApiRateLimitPerMinute(int rateLimit) {
-    _updateSettings(
-      {'all'},
-      (s) => s.copyWith(apiRateLimitPerMinute: rateLimit),
-    );
+    _updateSettings({
+      'all',
+    }, (s) => s.copyWith(apiRateLimitPerMinute: rateLimit));
   }
 
   void setWebhooks(List<WebhookConfig> webhooks) {
-    _updateSettings(
-      {'all'},
-      (s) => s.copyWith(webhooks: webhooks),
-    );
+    _updateSettings({'all'}, (s) => s.copyWith(webhooks: webhooks));
   }
 
   void addWebhook(WebhookConfig config) {
@@ -1691,7 +1702,9 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
 
   void updateWebhook(WebhookConfig config) {
     _updateSettings({'all'}, (s) {
-      final updated = s.webhooks.map((w) => w.id == config.id ? config : w).toList();
+      final updated = s.webhooks
+          .map((w) => w.id == config.id ? config : w)
+          .toList();
       return s.copyWith(webhooks: updated);
     });
   }
@@ -1973,10 +1986,7 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   void setActiveUserPreset(String id) {
     _updateSettings(
       ref.read(selectedMonitorsProvider),
-      (s) => s.copyWith(
-        activeUserPresetId: id,
-        isAutoBrightnessEnabled: true,
-      ),
+      (s) => s.copyWith(activeUserPresetId: id, isAutoBrightnessEnabled: true),
     );
   }
 
@@ -2245,10 +2255,7 @@ final settingsProvider =
     );
 
 final webhookServiceProvider =
-    NotifierProvider<WebhookService, WebhookServiceState>(
-      WebhookService.new,
-    );
-
+    NotifierProvider<WebhookService, WebhookServiceState>(WebhookService.new);
 
 class CurrentBrightnessNotifier extends Notifier<double> {
   static const _lastBrightnessKey = 'last_known_brightness';
@@ -2437,7 +2444,8 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
   // Listen to manual temperature changes to apply hardware updates even when window is minimized/hidden in tray
   ref.listen<int>(currentTemperatureProvider, (previous, next) {
     if (ref.read(autoTemperatureAdjustmentProvider) ||
-        tempService.isResetLocked) return;
+        tempService.isResetLocked)
+      return;
 
     if (previous != next) {
       final selection = ref.read(selectedMonitorsProvider);
@@ -2465,10 +2473,10 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
         tempSettingsAsync.whenData((tempSettingsMap) {
           for (final monitor in monitors) {
             final globalSettings = settingsMap['all'] ?? SettingsState();
-            final globalTempSettings = tempSettingsMap['all'] ?? TemperatureState();
+            final globalTempSettings =
+                tempSettingsMap['all'] ?? TemperatureState();
 
-            final settings =
-                settingsMap[monitor.deviceName] ?? globalSettings;
+            final settings = settingsMap[monitor.deviceName] ?? globalSettings;
             final tempSettings =
                 tempSettingsMap[monitor.deviceName] ?? globalTempSettings;
 
@@ -2530,8 +2538,7 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                     weather: settings.isWeatherAdjustmentEnabled
                         ? weatherAsync.value
                         : null,
-                    presetSensitivity:
-                        settings.activePreset.weatherSensitivity,
+                    presetSensitivity: settings.activePreset.weatherSensitivity,
                     weatherIntensity: settings.weatherAdjustmentIntensity,
                     smartData: effectiveSmartData,
                   );
@@ -2694,7 +2701,9 @@ String getStaticMapUrl(
   double zoom = 15.1,
   String? customToken,
 }) {
-  final token = (customToken != null && customToken.isNotEmpty) ? customToken : Env.mapboxToken;
+  final token = (customToken != null && customToken.isNotEmpty)
+      ? customToken
+      : Env.mapboxToken;
   const width = 600;
   const height = 600;
 

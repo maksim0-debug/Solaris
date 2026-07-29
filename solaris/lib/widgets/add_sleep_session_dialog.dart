@@ -23,8 +23,7 @@ class AddSleepSessionDialog extends ConsumerStatefulWidget {
       _AddSleepSessionDialogState();
 }
 
-class _AddSleepSessionDialogState
-    extends ConsumerState<AddSleepSessionDialog> {
+class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
   late DateTime _startTime;
   late DateTime _endTime;
   final TextEditingController _titleController = TextEditingController();
@@ -126,7 +125,8 @@ class _AddSleepSessionDialogState
   }
 
   void _saveSession(AppLocalizations l10n) {
-    if (_endTime.isBefore(_startTime) || _endTime.isAtSameMomentAs(_startTime)) {
+    if (_endTime.isBefore(_startTime) ||
+        _endTime.isAtSameMomentAs(_startTime)) {
       return;
     }
 
@@ -134,8 +134,9 @@ class _AddSleepSessionDialogState
     final rawDesc = _descController.text.trim();
 
     final title = rawTitle.isNotEmpty ? rawTitle : l10n.manualSleepTitleDefault;
-    final description =
-        rawDesc.isNotEmpty ? rawDesc : l10n.manualSleepDescDefault;
+    final description = rawDesc.isNotEmpty
+        ? rawDesc
+        : l10n.manualSleepDescDefault;
 
     final session = SleepSession(
       id: 'manual_${DateTime.now().millisecondsSinceEpoch}',
@@ -161,7 +162,8 @@ class _AddSleepSessionDialogState
     if (isValidRange) {
       final hours = duration.inHours;
       final minutes = duration.inMinutes % 60;
-      durationString = '${hours}${l10n.hoursAbbreviation} ${minutes}${l10n.minutesAbbreviation}';
+      durationString =
+          '${hours}${l10n.hoursAbbreviation} ${minutes}${l10n.minutesAbbreviation}';
     } else {
       durationString = l10n.invalidTimeRangeError;
     }
@@ -171,10 +173,7 @@ class _AddSleepSessionDialogState
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(
-          color: Colors.white.withOpacity(0.12),
-          width: 1,
-        ),
+        side: BorderSide(color: Colors.white.withOpacity(0.12), width: 1),
       ),
       title: Row(
         children: [
@@ -379,9 +378,7 @@ class _AddSleepSessionDialogState
           onPressed: () => Navigator.of(context).pop(),
           child: Text(
             l10n.cancelAction,
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.6),
-            ),
+            style: TextStyle(color: Colors.white.withOpacity(0.6)),
           ),
         ),
         ElevatedButton(

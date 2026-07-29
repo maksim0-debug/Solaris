@@ -43,9 +43,7 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.apiOpenDocsError(e.toString())),
-          ),
+          SnackBar(content: Text(l10n.apiOpenDocsError(e.toString()))),
         );
       }
     }
@@ -89,11 +87,17 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                   decoration: BoxDecoration(
                     color: const Color(0xFFF59E0B).withOpacity(0.12),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.4)),
+                    border: Border.all(
+                      color: const Color(0xFFF59E0B).withOpacity(0.4),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(LucideIcons.alertTriangle, color: Color(0xFFF59E0B), size: 20),
+                      const Icon(
+                        LucideIcons.alertTriangle,
+                        color: Color(0xFFF59E0B),
+                        size: 20,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
@@ -106,9 +110,15 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(LucideIcons.x, color: Colors.white54, size: 16),
+                        icon: const Icon(
+                          LucideIcons.x,
+                          color: Colors.white54,
+                          size: 16,
+                        ),
                         onPressed: () {
-                          ref.read(settingsProvider.notifier).dismissDpapiFallbackWarning(fallbackKey.id);
+                          ref
+                              .read(settingsProvider.notifier)
+                              .dismissDpapiFallbackWarning(fallbackKey.id);
                         },
                       ),
                     ],
@@ -147,8 +157,8 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                         Text(
                           serverState.isRunning
                               ? (isLanEnabled
-                                  ? '🟢 ${l10n.apiStatusActiveLan(port)}'
-                                  : '🟢 ${l10n.apiStatusActiveLocalhost(port)}')
+                                    ? '🟢 ${l10n.apiStatusActiveLan(port)}'
+                                    : '🟢 ${l10n.apiStatusActiveLocalhost(port)}')
                               : '🔴 ${l10n.apiStatusDisabled}',
                           style: TextStyle(
                             fontSize: 12,
@@ -168,7 +178,9 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                           .read(settingsProvider.notifier)
                           .updateLocalIpcServerEnabled(val);
                       if (val) {
-                        await ref.read(localIpcServiceProvider.notifier).start();
+                        await ref
+                            .read(localIpcServiceProvider.notifier)
+                            .start();
                       } else {
                         await ref.read(localIpcServiceProvider.notifier).stop();
                       }
@@ -240,8 +252,12 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                         .updateApiLanAccessEnabled(enableLan);
 
                     if (enableLan) {
-                      final firewallService = ref.read(windowsFirewallServiceProvider);
-                      final success = await firewallService.ensureRuleAdded(port: port);
+                      final firewallService = ref.read(
+                        windowsFirewallServiceProvider,
+                      );
+                      final success = await firewallService.ensureRuleAdded(
+                        port: port,
+                      );
 
                       if (!success) {
                         ref
@@ -258,7 +274,9 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                         return;
                       }
                     } else {
-                      final firewallService = ref.read(windowsFirewallServiceProvider);
+                      final firewallService = ref.read(
+                        windowsFirewallServiceProvider,
+                      );
                       await firewallService.removeAllSolarisRules(port: port);
                     }
                   },
@@ -286,7 +304,10 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                           TextField(
                             controller: _portController,
                             keyboardType: TextInputType.number,
-                            style: const TextStyle(color: Colors.white, fontSize: 13),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                            ),
                             decoration: InputDecoration(
                               isDense: true,
                               filled: true,
@@ -295,11 +316,17 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
                               ),
-                              prefixIcon: const Icon(LucideIcons.terminal, size: 16, color: Colors.white54),
+                              prefixIcon: const Icon(
+                                LucideIcons.terminal,
+                                size: 16,
+                                color: Colors.white54,
+                              ),
                             ),
                             onSubmitted: (val) async {
                               final newPort = int.tryParse(val) ?? 45321;
-                              if (newPort != port && newPort > 1024 && newPort < 65535) {
+                              if (newPort != port &&
+                                  newPort > 1024 &&
+                                  newPort < 65535) {
                                 ref
                                     .read(settingsProvider.notifier)
                                     .updateApiServerPort(newPort);
@@ -329,7 +356,11 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                           const SizedBox(height: 6),
                           OutlinedButton.icon(
                             onPressed: () => _openDocumentation(port),
-                            icon: const Icon(LucideIcons.bookOpen, size: 15, color: Colors.white70),
+                            icon: const Icon(
+                              LucideIcons.bookOpen,
+                              size: 15,
+                              color: Colors.white70,
+                            ),
                             label: Text(
                               l10n.apiOpenSwagger,
                               style: const TextStyle(
@@ -341,7 +372,9 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                             style: OutlinedButton.styleFrom(
                               backgroundColor: Colors.white.withOpacity(0.05),
                               foregroundColor: Colors.white,
-                              side: BorderSide(color: Colors.white.withOpacity(0.1)),
+                              side: BorderSide(
+                                color: Colors.white.withOpacity(0.1),
+                              ),
                               padding: const EdgeInsets.symmetric(
                                 vertical: 12,
                                 horizontal: 14,
@@ -416,7 +449,11 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(LucideIcons.shieldAlert, color: Color(0xFFFDBA74), size: 18),
+                      const Icon(
+                        LucideIcons.shieldAlert,
+                        color: Color(0xFFFDBA74),
+                        size: 18,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -445,7 +482,9 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                         value: requireLocalToken,
                         activeColor: const Color(0xFFFDBA74),
                         onChanged: (val) {
-                          ref.read(settingsProvider.notifier).updateRequireLocalToken(val);
+                          ref
+                              .read(settingsProvider.notifier)
+                              .updateRequireLocalToken(val);
                         },
                       ),
                     ],

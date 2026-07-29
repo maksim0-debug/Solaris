@@ -66,7 +66,9 @@ class StatusHelper {
 
       case CurrentDayPhase.zenith:
         title = l10n.phaseZenith;
-        description = isAutoBright ? l10n.descZenithAuto : l10n.descZenithManual;
+        description = isAutoBright
+            ? l10n.descZenithAuto
+            : l10n.descZenithManual;
         icon = LucideIcons.sun;
         color = const Color(0xFFFDE047); // Yellow-300
         break;
@@ -77,19 +79,19 @@ class StatusHelper {
         if (isMorning) {
           description = isAutoTemp
               ? (isAutoBright
-                  ? l10n.descGoldenHourMorningBothAuto
-                  : l10n.descGoldenHourMorningTempOnly)
+                    ? l10n.descGoldenHourMorningBothAuto
+                    : l10n.descGoldenHourMorningTempOnly)
               : (isAutoBright
-                  ? l10n.descGoldenHourMorningBrightOnly
-                  : l10n.descGoldenHourMorningManual);
+                    ? l10n.descGoldenHourMorningBrightOnly
+                    : l10n.descGoldenHourMorningManual);
         } else {
           description = isAutoTemp
               ? (isAutoBright
-                  ? l10n.descGoldenHourEveningBothAuto
-                  : l10n.descGoldenHourEveningTempOnly)
+                    ? l10n.descGoldenHourEveningBothAuto
+                    : l10n.descGoldenHourEveningTempOnly)
               : (isAutoBright
-                  ? l10n.descGoldenHourEveningBrightOnly
-                  : l10n.descGoldenHourEveningManual);
+                    ? l10n.descGoldenHourEveningBrightOnly
+                    : l10n.descGoldenHourEveningManual);
         }
         icon = LucideIcons.sparkles;
         color = const Color(0xFFFDBA74); // Amber-300
@@ -97,7 +99,9 @@ class StatusHelper {
 
       case CurrentDayPhase.twilight:
         title = l10n.phaseTwilight;
-        description = isAutoBright ? l10n.descTwilightAuto : l10n.descTwilightManual;
+        description = isAutoBright
+            ? l10n.descTwilightAuto
+            : l10n.descTwilightManual;
         icon = LucideIcons.sunset;
         color = const Color(0xFF94A3B8); // Slate-400
         break;

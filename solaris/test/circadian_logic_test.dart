@@ -148,18 +148,21 @@ void main() {
         const FlSpot(90, 6500),
       ];
 
-      test('should return base temperature without weather or smart offset', () {
-        final result = service.calculateTargetTemperature(
-          phases,
-          10.0,
-          now,
-          curvePoints: tempPoints,
-        );
-        expect(result.baseTemperature, 6500);
-        expect(result.finalTemperature, 6500);
-        expect(result.weatherImpact, 0);
-        expect(result.sleepPressureImpact, 0);
-      });
+      test(
+        'should return base temperature without weather or smart offset',
+        () {
+          final result = service.calculateTargetTemperature(
+            phases,
+            10.0,
+            now,
+            curvePoints: tempPoints,
+          );
+          expect(result.baseTemperature, 6500);
+          expect(result.finalTemperature, 6500);
+          expect(result.weatherImpact, 0);
+          expect(result.sleepPressureImpact, 0);
+        },
+      );
 
       test('should apply weather temperature drop and respect intensity', () {
         final weather = WeatherData(
@@ -190,33 +193,41 @@ void main() {
         expect(result.finalTemperature, 6100);
       });
 
-      test('should apply smart offsets and respect clamp logic with proportional impact', () {
-        final smartData = const SmartCircadianData.neutral().copyWith(
-          sleepPressureTemperatureOffset: -1000,
-          windDownTemperatureOffset: -3000,
-        );
+      test(
+        'should apply smart offsets and respect clamp logic with proportional impact',
+        () {
+          final smartData = const SmartCircadianData.neutral().copyWith(
+            sleepPressureTemperatureOffset: -1000,
+            windDownTemperatureOffset: -3000,
+          );
 
-        // Elevation 0.0 -> base = 5000 K
-        // Total raw offset = -4000 K -> theoretical 1000 K.
-        // Clamped final = 3300 K.
-        // Total reduction = 5000 - 3300 = 1700 K.
-        // windDown weight = 3000, pressure weight = 1000 (total = 4000).
-        // windDownImpact = -1700 * 3000 / 4000 = -1275 K.
-        // sleepPressureImpact = -1700 * 1000 / 4000 = -425 K.
-        final result = service.calculateTargetTemperature(
-          phases,
-          0.0,
-          now,
-          curvePoints: tempPoints,
-          smartData: smartData,
-        );
+          // Elevation 0.0 -> base = 5000 K
+          // Total raw offset = -4000 K -> theoretical 1000 K.
+          // Clamped final = 3300 K.
+          // Total reduction = 5000 - 3300 = 1700 K.
+          // windDown weight = 3000, pressure weight = 1000 (total = 4000).
+          // windDownImpact = -1700 * 3000 / 4000 = -1275 K.
+          // sleepPressureImpact = -1700 * 1000 / 4000 = -425 K.
+          final result = service.calculateTargetTemperature(
+            phases,
+            0.0,
+            now,
+            curvePoints: tempPoints,
+            smartData: smartData,
+          );
 
-        expect(result.baseTemperature, 5000);
-        expect(result.sleepPressureImpact, -425);
-        expect(result.windDownImpact, -1275);
-        expect(result.finalTemperature, 3300);
-        expect(result.baseTemperature + result.sleepPressureImpact + result.windDownImpact, 3300);
-      });
+          expect(result.baseTemperature, 5000);
+          expect(result.sleepPressureImpact, -425);
+          expect(result.windDownImpact, -1275);
+          expect(result.finalTemperature, 3300);
+          expect(
+            result.baseTemperature +
+                result.sleepPressureImpact +
+                result.windDownImpact,
+            3300,
+          );
+        },
+      );
     });
   });
 }

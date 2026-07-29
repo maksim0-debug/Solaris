@@ -1,16 +1,17 @@
 import 'package:flutter/foundation.dart';
 
 enum ApiActionCategory {
-  monitors,    // set_brightness, set_temperature, set_monitor_offset
-  presets,     // set_brightness_preset, set_temperature_preset, set_user_preset, cycle_preset
-  circadian,   // set_auto_brightness, set_auto_temperature, set_smart_circadian, set_smart_circadian_submodules
-  gaming,      // set_game_mode, set_game_mode_brightness, manage_game_mode_whitelist
+  monitors, // set_brightness, set_temperature, set_monitor_offset
+  presets, // set_brightness_preset, set_temperature_preset, set_user_preset, cycle_preset
+  circadian, // set_auto_brightness, set_auto_temperature, set_smart_circadian, set_smart_circadian_submodules
+  gaming, // set_game_mode, set_game_mode_brightness, manage_game_mode_whitelist
   environment, // set_weather_adjustment, set_weather_temperature_adjustment, set_weather_intensity, set_manual_location, set_weather_provider, trigger_sun_sync
-  sleep,       // push_sleep_status
-  system;      // manage_webhooks, set_map_animations, on_system_resume, on_hardware_error
+  sleep, // push_sleep_status
+  system; // manage_webhooks, set_map_animations, on_system_resume, on_hardware_error
 
   String toJson() => name;
-  factory ApiActionCategory.fromJson(String json) => ApiActionCategory.values.firstWhere(
+  factory ApiActionCategory.fromJson(String json) =>
+      ApiActionCategory.values.firstWhere(
         (e) => e.name == json,
         orElse: () => ApiActionCategory.system,
       );
@@ -29,7 +30,8 @@ class ApiPermissionsConfig {
 
   final bool isReadOnly;
   final Set<ApiActionCategory> allowedCategories;
-  final Set<String>? allowedActions; // null = all actions in category allowed (100% backward compatible)
+  final Set<String>?
+  allowedActions; // null = all actions in category allowed (100% backward compatible)
 
   const ApiPermissionsConfig({
     this.allowReadMonitors = true,
@@ -95,19 +97,49 @@ class ApiPermissionsConfig {
   static List<String> getActionsForCategory(ApiActionCategory category) {
     switch (category) {
       case ApiActionCategory.monitors:
-        return const ['set_brightness', 'set_temperature', 'set_monitor_offset'];
+        return const [
+          'set_brightness',
+          'set_temperature',
+          'set_monitor_offset',
+        ];
       case ApiActionCategory.presets:
-        return const ['set_brightness_preset', 'set_temperature_preset', 'set_user_preset', 'cycle_preset'];
+        return const [
+          'set_brightness_preset',
+          'set_temperature_preset',
+          'set_user_preset',
+          'cycle_preset',
+        ];
       case ApiActionCategory.circadian:
-        return const ['set_auto_brightness', 'set_auto_temperature', 'set_smart_circadian', 'set_smart_circadian_submodules'];
+        return const [
+          'set_auto_brightness',
+          'set_auto_temperature',
+          'set_smart_circadian',
+          'set_smart_circadian_submodules',
+        ];
       case ApiActionCategory.gaming:
-        return const ['set_game_mode', 'set_game_mode_brightness', 'manage_game_mode_whitelist'];
+        return const [
+          'set_game_mode',
+          'set_game_mode_brightness',
+          'manage_game_mode_whitelist',
+        ];
       case ApiActionCategory.environment:
-        return const ['set_weather_adjustment', 'set_weather_temperature_adjustment', 'set_weather_intensity', 'set_manual_location', 'set_weather_provider', 'trigger_sun_sync'];
+        return const [
+          'set_weather_adjustment',
+          'set_weather_temperature_adjustment',
+          'set_weather_intensity',
+          'set_manual_location',
+          'set_weather_provider',
+          'trigger_sun_sync',
+        ];
       case ApiActionCategory.sleep:
         return const ['push_sleep_status'];
       case ApiActionCategory.system:
-        return const ['manage_webhooks', 'set_map_animations', 'on_system_resume', 'on_hardware_error'];
+        return const [
+          'manage_webhooks',
+          'set_map_animations',
+          'on_system_resume',
+          'on_hardware_error',
+        ];
     }
   }
 
@@ -183,8 +215,12 @@ class ApiPermissionsConfig {
         .expand((cat) => getActionsForCategory(cat))
         .toSet();
     // Sanitize: filter out any non-canonical or orphaned actions from disabled categories and auto-reset to null if all actions present
-    final Set<String>? filteredActions = allowedActions?.intersection(validCanonical);
-    final Set<String>? sanitizedActions = (filteredActions != null && filteredActions.length < getAllCanonicalActions().length)
+    final Set<String>? filteredActions = allowedActions?.intersection(
+      validCanonical,
+    );
+    final Set<String>? sanitizedActions =
+        (filteredActions != null &&
+            filteredActions.length < getAllCanonicalActions().length)
         ? filteredActions
         : null;
 
@@ -283,13 +319,15 @@ class ApiPermissionsConfig {
 
   @override
   int get hashCode => Object.hash(
-        allowReadMonitors,
-        allowReadSolar,
-        allowReadWeather,
-        allowReadSleep,
-        allowReadCircadian,
-        isReadOnly,
-        Object.hashAll(allowedCategories.map((c) => c.index).toList()..sort()),
-        allowedActions != null ? Object.hashAll(allowedActions!.toList()..sort()) : null,
-      );
+    allowReadMonitors,
+    allowReadSolar,
+    allowReadWeather,
+    allowReadSleep,
+    allowReadCircadian,
+    isReadOnly,
+    Object.hashAll(allowedCategories.map((c) => c.index).toList()..sort()),
+    allowedActions != null
+        ? Object.hashAll(allowedActions!.toList()..sort())
+        : null,
+  );
 }

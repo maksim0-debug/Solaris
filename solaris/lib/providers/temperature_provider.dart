@@ -274,15 +274,18 @@ class TemperatureSettingsNotifier
   void deleteUserPreset(String id) {
     final ids = ref.read(selectedMonitorsProvider);
     final current = currentSettings();
-    final newUserPresets = current.userPresets.where((p) => p.id != id).toList();
-    final newPresetOrder =
-        current.presetOrder.where((orderId) => orderId != 'user:$id').toList();
- 
+    final newUserPresets = current.userPresets
+        .where((p) => p.id != id)
+        .toList();
+    final newPresetOrder = current.presetOrder
+        .where((orderId) => orderId != 'user:$id')
+        .toList();
+
     String? newActiveId = current.activeUserPresetId;
     if (newActiveId == id) {
       newActiveId = newUserPresets.isNotEmpty ? newUserPresets.first.id : null;
     }
- 
+
     _updateSettings(
       ids,
       current.copyWith(
@@ -297,13 +300,13 @@ class TemperatureSettingsNotifier
     final ids = ref.read(selectedMonitorsProvider);
     final current = currentSettings();
     final newOrder = List<String>.from(current.presetOrder);
- 
+
     if (oldIndex < newIndex) {
       newIndex -= 1;
     }
     final item = newOrder.removeAt(oldIndex);
     newOrder.insert(newIndex, item);
- 
+
     _updateSettings(ids, current.copyWith(presetOrder: newOrder));
   }
 
@@ -381,7 +384,10 @@ class TemperatureSettingsNotifier
         }
         return p;
       }).toList();
-      _updateSettings(ref.read(selectedMonitorsProvider), current.copyWith(userPresets: newUserPresets));
+      _updateSettings(
+        ref.read(selectedMonitorsProvider),
+        current.copyWith(userPresets: newUserPresets),
+      );
       return;
     }
 
@@ -473,9 +479,7 @@ class CurrentTemperatureNotifier extends Notifier<int> {
                 final pos = locationAsync.value;
                 if (pos != null) {
                   final sunService = ref.read(sunCalculatorServiceProvider);
-                  final shiftedTime = now.subtract(
-                    smartData.timeOffset,
-                  );
+                  final shiftedTime = now.subtract(smartData.timeOffset);
                   effectiveElevation = sunService.getSunElevation(
                     pos.latitude,
                     pos.longitude,

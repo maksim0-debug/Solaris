@@ -8,8 +8,9 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() {
-    const MethodChannel('plugins.flutter.io/path_provider')
-        .setMockMethodCallHandler((MethodCall methodCall) async {
+    const MethodChannel(
+      'plugins.flutter.io/path_provider',
+    ).setMockMethodCallHandler((MethodCall methodCall) async {
       return '.';
     });
   });
@@ -79,32 +80,37 @@ void main() {
       expect(state.sessions.first.source, 'manual');
     });
 
-    test('Manual session persists on disk even after SleepService.fetchSleepData', () async {
-      final notifier = container.read(sleepProvider.notifier);
-      final service = container.read(sleepServiceProvider);
+    test(
+      'Manual session persists on disk even after SleepService.fetchSleepData',
+      () async {
+        final notifier = container.read(sleepProvider.notifier);
+        final service = container.read(sleepServiceProvider);
 
-      final manualSession = SleepSession(
-        id: 'manual_persisted_1',
-        startTime: DateTime(2026, 7, 25, 23, 0),
-        endTime: DateTime(2026, 7, 26, 7, 0),
-        title: 'Kyiv Persisted Sleep',
-        source: 'manual',
-      );
+        final manualSession = SleepSession(
+          id: 'manual_persisted_1',
+          startTime: DateTime(2026, 7, 25, 23, 0),
+          endTime: DateTime(2026, 7, 26, 7, 0),
+          title: 'Kyiv Persisted Sleep',
+          source: 'manual',
+        );
 
-      await notifier.addManualSession(manualSession);
+        await notifier.addManualSession(manualSession);
 
-      // Verify it's cached on disk initially
-      final cachedInitial = await service.loadCachedSleepData();
-      expect(cachedInitial.map((s) => s.id), contains('manual_persisted_1'));
+        // Verify it's cached on disk initially
+        final cachedInitial = await service.loadCachedSleepData();
+        expect(cachedInitial.map((s) => s.id), contains('manual_persisted_1'));
 
-      // Perform fetchSleepData (which falls back to cache or merges network data)
-      final result = await service.fetchSleepData(forceNetwork: false);
-      expect(result.sessions.map((s) => s.id), contains('manual_persisted_1'));
+        // Perform fetchSleepData (which falls back to cache or merges network data)
+        final result = await service.fetchSleepData(forceNetwork: false);
+        expect(
+          result.sessions.map((s) => s.id),
+          contains('manual_persisted_1'),
+        );
 
-      // Verify manual session is STILL present in disk cache after fetchSleepData
-      final cachedAfter = await service.loadCachedSleepData();
-      expect(cachedAfter.map((s) => s.id), contains('manual_persisted_1'));
-    });
+        // Verify manual session is STILL present in disk cache after fetchSleepData
+        final cachedAfter = await service.loadCachedSleepData();
+        expect(cachedAfter.map((s) => s.id), contains('manual_persisted_1'));
+      },
+    );
   });
 }
-

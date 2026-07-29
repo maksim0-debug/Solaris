@@ -13,8 +13,9 @@ void main() {
 
   setUpAll(() {
     tempDir = Directory.systemTemp.createTempSync('sleep_deletion_test_');
-    const MethodChannel('plugins.flutter.io/path_provider')
-        .setMockMethodCallHandler((MethodCall methodCall) async {
+    const MethodChannel(
+      'plugins.flutter.io/path_provider',
+    ).setMockMethodCallHandler((MethodCall methodCall) async {
       return tempDir.path;
     });
   });
@@ -72,54 +73,72 @@ void main() {
       expect(state.sessions.first.id, 's2');
     });
 
-    test('deleteSessions with doNotSync=true blacklists session from future syncs', () async {
-      final notifier = container.read(sleepProvider.notifier);
-      final sleepService = SleepService();
+    test(
+      'deleteSessions with doNotSync=true blacklists session from future syncs',
+      () async {
+        final notifier = container.read(sleepProvider.notifier);
+        final sleepService = SleepService();
 
-      final session1 = SleepSession(
-        id: 'blacklisted_s1',
-        startTime: DateTime(2026, 7, 25, 18, 4),
-        endTime: DateTime(2026, 7, 26, 0, 18),
-        source: 'google_fit',
-      );
+        final session1 = SleepSession(
+          id: 'blacklisted_s1',
+          startTime: DateTime(2026, 7, 25, 18, 4),
+          endTime: DateTime(2026, 7, 26, 0, 18),
+          source: 'google_fit',
+        );
 
-      await notifier.updateSessionsFromIpc([session1]);
-      expect(container.read(sleepProvider).sessions.length, 1);
+        await notifier.updateSessionsFromIpc([session1]);
+        expect(container.read(sleepProvider).sessions.length, 1);
 
-      // Delete with doNotSync = true
-      await notifier.deleteSession('blacklisted_s1', doNotSync: true);
+        // Delete with doNotSync = true
+        await notifier.deleteSession('blacklisted_s1', doNotSync: true);
 
-      expect(container.read(sleepProvider).sessions.any((s) => s.id == 'blacklisted_s1'), isFalse);
+        expect(
+          container
+              .read(sleepProvider)
+              .sessions
+              .any((s) => s.id == 'blacklisted_s1'),
+          isFalse,
+        );
 
-      // Check that it's in the ignored list
-      final ignored = await sleepService.loadIgnoredSessionIds();
-      expect(ignored.contains('blacklisted_s1'), isTrue);
+        // Check that it's in the ignored list
+        final ignored = await sleepService.loadIgnoredSessionIds();
+        expect(ignored.contains('blacklisted_s1'), isTrue);
 
-      // Try updating from IPC with the same blacklisted session again
-      await notifier.updateSessionsFromIpc([session1]);
-      // Should remain absent because session is blacklisted
-      expect(container.read(sleepProvider).sessions.any((s) => s.id == 'blacklisted_s1'), isFalse);
-    });
+        // Try updating from IPC with the same blacklisted session again
+        await notifier.updateSessionsFromIpc([session1]);
+        // Should remain absent because session is blacklisted
+        expect(
+          container
+              .read(sleepProvider)
+              .sessions
+              .any((s) => s.id == 'blacklisted_s1'),
+          isFalse,
+        );
+      },
+    );
 
-    test('deleteSessions with doNotSync=false allows session in future syncs', () async {
-      final notifier = container.read(sleepProvider.notifier);
+    test(
+      'deleteSessions with doNotSync=false allows session in future syncs',
+      () async {
+        final notifier = container.read(sleepProvider.notifier);
 
-      final session1 = SleepSession(
-        id: 'resyncable_s1',
-        startTime: DateTime(2026, 7, 25, 18, 4),
-        endTime: DateTime(2026, 7, 26, 0, 18),
-        source: 'google_fit',
-      );
+        final session1 = SleepSession(
+          id: 'resyncable_s1',
+          startTime: DateTime(2026, 7, 25, 18, 4),
+          endTime: DateTime(2026, 7, 26, 0, 18),
+          source: 'google_fit',
+        );
 
-      await notifier.updateSessionsFromIpc([session1]);
-      await notifier.deleteSession('resyncable_s1', doNotSync: false);
+        await notifier.updateSessionsFromIpc([session1]);
+        await notifier.deleteSession('resyncable_s1', doNotSync: false);
 
-      expect(container.read(sleepProvider).sessions, isEmpty);
+        expect(container.read(sleepProvider).sessions, isEmpty);
 
-      // Try updating from IPC with the session again
-      await notifier.updateSessionsFromIpc([session1]);
-      // Should be re-added
-      expect(container.read(sleepProvider).sessions.length, 1);
-    });
+        // Try updating from IPC with the session again
+        await notifier.updateSessionsFromIpc([session1]);
+        // Should be re-added
+        expect(container.read(sleepProvider).sessions.length, 1);
+      },
+    );
   });
 }

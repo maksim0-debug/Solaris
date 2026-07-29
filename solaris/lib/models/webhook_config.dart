@@ -106,7 +106,9 @@ class WebhookConfig {
       events: events ?? this.events,
       isEnabled: isEnabled ?? this.isEnabled,
       secretKey: clearSecretKey ? null : (secretKey ?? this.secretKey),
-      customHeaders: clearCustomHeaders ? null : (customHeaders ?? this.customHeaders),
+      customHeaders: clearCustomHeaders
+          ? null
+          : (customHeaders ?? this.customHeaders),
       failureCount: failureCount ?? this.failureCount,
       lastTriggeredAt: lastTriggeredAt ?? this.lastTriggeredAt,
       createdAt: createdAt ?? this.createdAt,
@@ -168,7 +170,8 @@ class WebhookConfig {
       });
     }
 
-    final eventsList = (json['events'] as List<dynamic>?)
+    final eventsList =
+        (json['events'] as List<dynamic>?)
             ?.map((e) => WebhookEventType.fromString(e.toString()))
             .whereType<WebhookEventType>()
             .toSet() ??
@@ -187,13 +190,18 @@ class WebhookConfig {
           ? DateTime.tryParse(json['lastTriggeredAt'] as String)
           : null,
       createdAt: json['createdAt'] != null
-          ? (DateTime.tryParse(json['createdAt'] as String) ?? DateTime.now().toUtc())
+          ? (DateTime.tryParse(json['createdAt'] as String) ??
+                DateTime.now().toUtc())
           : DateTime.now().toUtc(),
     );
   }
 
   /// Calculates HMAC-SHA256 signature for payload using secret key.
-  String? calculateSignature(String deliveryId, String timestamp, String rawBody) {
+  String? calculateSignature(
+    String deliveryId,
+    String timestamp,
+    String rawBody,
+  ) {
     if (secretKey == null || secretKey!.isEmpty) return null;
     final payloadToSign = '$deliveryId.$timestamp.$rawBody';
     final hmac = Hmac(sha256, utf8.encode(secretKey!));

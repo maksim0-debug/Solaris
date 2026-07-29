@@ -81,8 +81,9 @@ class SleepService {
     }
 
     final list = merged.values.toList();
-    final highPrioritySessions =
-        list.where((s) => isHighPrioritySource(s.source)).toList();
+    final highPrioritySessions = list
+        .where((s) => isHighPrioritySource(s.source))
+        .toList();
     final deduplicated = <SleepSession>[];
 
     for (final s in list) {
@@ -123,9 +124,9 @@ class SleepService {
       );
 
       if (googleFitSessions != null) {
-        final sleepSessions = _mapToSleepSessions(googleFitSessions)
-            .where((s) => !ignored.contains(s.id))
-            .toList();
+        final sleepSessions = _mapToSleepSessions(
+          googleFitSessions,
+        ).where((s) => !ignored.contains(s.id)).toList();
         final existingCached = await loadCachedSleepData();
         final merged = mergeAndDeduplicate(existingCached, sleepSessions);
         await cacheSleepData(merged);
@@ -196,6 +197,4 @@ class SleepService {
     }
     return [];
   }
-
 }
-

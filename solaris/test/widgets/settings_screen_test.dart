@@ -6,7 +6,9 @@ import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/screens/settings_screen.dart';
 
 void main() {
-  testWidgets('SettingsScreen builds cleanly without duplicate key errors', (WidgetTester tester) async {
+  testWidgets('SettingsScreen builds cleanly without duplicate key errors', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       const ProviderScope(
         child: MaterialApp(
@@ -16,14 +18,8 @@ void main() {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          supportedLocales: [
-            Locale('en'),
-            Locale('ru'),
-            Locale('uk'),
-          ],
-          home: Scaffold(
-            body: SettingsScreen(),
-          ),
+          supportedLocales: [Locale('en'), Locale('ru'), Locale('uk')],
+          home: Scaffold(body: SettingsScreen()),
         ),
       ),
     );

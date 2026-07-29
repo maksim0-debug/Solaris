@@ -9,14 +9,12 @@ class PermissionCheckResult {
   final String detail;
 
   const PermissionCheckResult.allow()
-      : isAllowed = true,
-        title = '',
-        detail = '';
+    : isAllowed = true,
+      title = '',
+      detail = '';
 
-  const PermissionCheckResult.deny({
-    required this.title,
-    required this.detail,
-  }) : isAllowed = false;
+  const PermissionCheckResult.deny({required this.title, required this.detail})
+    : isAllowed = false;
 }
 
 class ApiPermissionsChecker {
@@ -25,7 +23,8 @@ class ApiPermissionsChecker {
     if (config.isReadOnly) {
       return const PermissionCheckResult.deny(
         title: 'Read-Only Mode Enabled',
-        detail: 'API is currently running in Read-Only mode. Mutations are prohibited.',
+        detail:
+            'API is currently running in Read-Only mode. Mutations are prohibited.',
       );
     }
     return const PermissionCheckResult.allow();
@@ -42,14 +41,16 @@ class ApiPermissionsChecker {
     if (category == null) {
       return const PermissionCheckResult.deny(
         title: 'Unknown Action Category',
-        detail: 'The requested action does not belong to any recognized permission category.',
+        detail:
+            'The requested action does not belong to any recognized permission category.',
       );
     }
 
     if (!config.allowedCategories.contains(category)) {
       return PermissionCheckResult.deny(
         title: 'Action Category Prohibited',
-        detail: 'Action category "${category.name}" is disabled in API permissions settings.',
+        detail:
+            'Action category "${category.name}" is disabled in API permissions settings.',
       );
     }
 
@@ -75,14 +76,16 @@ class ApiPermissionsChecker {
     if (!config.allowedCategories.contains(category)) {
       return PermissionCheckResult.deny(
         title: 'Action Category Prohibited',
-        detail: 'Action category "${category.name}" is disabled in API permissions settings.',
+        detail:
+            'Action category "${category.name}" is disabled in API permissions settings.',
       );
     }
 
     if (!config.isActionAllowed(action)) {
       return PermissionCheckResult.deny(
         title: 'Action Prohibited',
-        detail: 'Specific action "$action" is disabled in API permissions settings.',
+        detail:
+            'Specific action "$action" is disabled in API permissions settings.',
       );
     }
 
@@ -97,7 +100,8 @@ class ApiPermissionsChecker {
     if (!isFlagAllowed) {
       return PermissionCheckResult.deny(
         title: 'Read Access Prohibited',
-        detail: 'Access to resource "$resourceName" is disabled in API permissions settings.',
+        detail:
+            'Access to resource "$resourceName" is disabled in API permissions settings.',
       );
     }
     return const PermissionCheckResult.allow();

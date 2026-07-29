@@ -91,7 +91,8 @@ class UpdateInfo {
       for (final asset in assets) {
         if (asset is Map<String, dynamic>) {
           final name = asset['name'] as String?;
-          if (name != null && name.toLowerCase() == targetAssetName.toLowerCase()) {
+          if (name != null &&
+              name.toLowerCase() == targetAssetName.toLowerCase()) {
             targetAsset = asset;
             break;
           }

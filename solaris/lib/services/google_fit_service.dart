@@ -58,7 +58,8 @@ class GoogleFitService {
         final decoded = jsonDecode(decrypted);
         if (decoded is Map<String, dynamic>) {
           // Выполняем миграцию на диск, если токен хранился в открытом виде
-          if (!tokenJson.startsWith('dpapi:') && !tokenJson.startsWith('obf:')) {
+          if (!tokenJson.startsWith('dpapi:') &&
+              !tokenJson.startsWith('obf:')) {
             try {
               await _storage.save(
                 _tokenFilename,
@@ -70,14 +71,13 @@ class GoogleFitService {
             }
           }
           var credentials = AccessCredentials.fromJson(decoded);
-          final clientId = ClientId(
-            googleClientId,
-            googleClientSecret,
-          );
+          final clientId = ClientId(googleClientId, googleClientSecret);
 
           // Check if token is expired and refresh it proactively
           if (credentials.accessToken.expiry.isBefore(DateTime.now())) {
-            debugPrint('Google Fit token expired on init, attempting refresh...');
+            debugPrint(
+              'Google Fit token expired on init, attempting refresh...',
+            );
             try {
               // For public clients, refresh without secret should work if the client_id is the same
               credentials = await refreshCredentials(
@@ -91,7 +91,7 @@ class GoogleFitService {
               );
             } catch (e) {
               debugPrint('Error refreshing token during initialization: $e');
-              // If refresh fails (e.g. because we removed the secret), 
+              // If refresh fails (e.g. because we removed the secret),
               // we must clear the saved token and force a fresh sign in.
               await _storage.clear(_tokenFilename);
               return false;
@@ -152,7 +152,7 @@ class GoogleFitService {
       // 3. Wait for the code
       String? code;
       String? error;
-      
+
       try {
         final request = await server.first.timeout(const Duration(minutes: 5));
         code = request.uri.queryParameters['code'];
@@ -177,7 +177,9 @@ class GoogleFitService {
       }
 
       if (code == null) {
-        debugPrint('Google Fit Sign In failed capturing code: ${error ?? "unknown error"}');
+        debugPrint(
+          'Google Fit Sign In failed capturing code: ${error ?? "unknown error"}',
+        );
         return false;
       }
 
@@ -197,12 +199,14 @@ class GoogleFitService {
       );
 
       if (tokenResponse.statusCode != 200) {
-        debugPrint('Failed to exchange code: ${tokenResponse.statusCode} - ${tokenResponse.body}');
+        debugPrint(
+          'Failed to exchange code: ${tokenResponse.statusCode} - ${tokenResponse.body}',
+        );
         return false;
       }
 
       final tokenData = jsonDecode(tokenResponse.body);
-      
+
       // Use safer casting for numeric values in JSON
       final expiresIn = (tokenData['expires_in'] as num?)?.toInt() ?? 3600;
       final accessToken = tokenData['access_token'] as String?;
@@ -260,10 +264,7 @@ class GoogleFitService {
       final credentials = _client!.credentials;
       if (credentials.accessToken.expiry.isBefore(DateTime.now())) {
         debugPrint('Google Fit token expired, attempting to refresh...');
-        final clientId = ClientId(
-          googleClientId,
-          googleClientSecret,
-        );
+        final clientId = ClientId(googleClientId, googleClientSecret);
 
         // Use refreshCredentials instead of refreshAuthenticatedClient
         // as the later isn't a top-level function in this context
