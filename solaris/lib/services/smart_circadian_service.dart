@@ -193,43 +193,58 @@ class SmartCircadianService {
         windDownTempOffset = -(progress * 4000 * adjTemperatureIntensity)
             .toInt();
       }
-      // After bedtime: NO MORE SHARP CUTOFF
-      // Stay in deep night mode until 4 AM (or 2 hours before avg wake)
+      // After bedtime: stay in deep night mode until expected wake-up,
+      // BUT only if the user hasn't already woken up from this sleep cycle.
       else if (minsLeft <= 0) {
-        final avgWakeMinutes = currentRegime.averageWakeTimeNormalized;
-        int minsUntilMorning = avgWakeMinutes - nowMinutes;
-        while (minsUntilMorning > 720) minsUntilMorning -= 1440;
-        while (minsUntilMorning < -720) minsUntilMorning += 1440;
+        // FIX: Check if the user has already completed a real sleep session
+        // (≥120 min) and woken up within the last 12 hours. If so, they are
+        // in their "day" period and wind-down should not apply.
+        // The 12-hour threshold ensures that if the user stays up past bedtime
+        // without sleeping, the deep night mode still activates correctly
+        // (timeSinceWake would be 17+ hours → wokeUpInCurrentCycle = false).
+        final actualWakeTime = lastAggSession.endTime;
+        final timeSinceWake = now.difference(actualWakeTime);
+        final isRealSleep = lastAggSession.duration.inMinutes >= 120;
+        final wokeUpInCurrentCycle = isRealSleep
+            && timeSinceWake.inMinutes >= 0
+            && timeSinceWake.inHours < 12;
 
-        // Morning transition (fade out deep night over 60 mins before expected wake)
-        if (minsUntilMorning > 0 && minsUntilMorning <= 60) {
-          isWindDownActive = true;
-          final morningProgress = 1.0 - (60 - minsUntilMorning) / 60.0;
+        if (!wokeUpInCurrentCycle) {
+          final avgWakeMinutes = currentRegime.averageWakeTimeNormalized;
+          int minsUntilMorning = avgWakeMinutes - nowMinutes;
+          while (minsUntilMorning > 720) minsUntilMorning -= 1440;
+          while (minsUntilMorning < -720) minsUntilMorning += 1440;
 
-          final double adjBrightnessIntensity = math
-              .pow(windDownBrightnessIntensity, 1.5)
-              .toDouble();
-          final double adjTemperatureIntensity = math
-              .pow(windDownTemperatureIntensity, 1.5)
-              .toDouble();
+          // Morning transition (fade out deep night over 60 mins before expected wake)
+          if (minsUntilMorning > 0 && minsUntilMorning <= 60) {
+            isWindDownActive = true;
+            final morningProgress = 1.0 - (60 - minsUntilMorning) / 60.0;
 
-          windDownFactor =
-              1.0 - (morningProgress * 0.75 * adjBrightnessIntensity);
-          windDownTempOffset =
-              -(morningProgress * 4000 * adjTemperatureIntensity).toInt();
-        }
-        // If we're between bedtime and the morning transition, stay at max factor
-        else if (minsUntilMorning > 60) {
-          isWindDownActive = true;
-          final double adjBrightnessIntensity = math
-              .pow(windDownBrightnessIntensity, 1.5)
-              .toDouble();
-          final double adjTemperatureIntensity = math
-              .pow(windDownTemperatureIntensity, 1.5)
-              .toDouble();
+            final double adjBrightnessIntensity = math
+                .pow(windDownBrightnessIntensity, 1.5)
+                .toDouble();
+            final double adjTemperatureIntensity = math
+                .pow(windDownTemperatureIntensity, 1.5)
+                .toDouble();
 
-          windDownFactor = 1.0 - (0.75 * adjBrightnessIntensity);
-          windDownTempOffset = -(4000 * adjTemperatureIntensity).toInt();
+            windDownFactor =
+                1.0 - (morningProgress * 0.75 * adjBrightnessIntensity);
+            windDownTempOffset =
+                -(morningProgress * 4000 * adjTemperatureIntensity).toInt();
+          }
+          // If we're between bedtime and the morning transition, stay at max factor
+          else if (minsUntilMorning > 60) {
+            isWindDownActive = true;
+            final double adjBrightnessIntensity = math
+                .pow(windDownBrightnessIntensity, 1.5)
+                .toDouble();
+            final double adjTemperatureIntensity = math
+                .pow(windDownTemperatureIntensity, 1.5)
+                .toDouble();
+
+            windDownFactor = 1.0 - (0.75 * adjBrightnessIntensity);
+            windDownTempOffset = -(4000 * adjTemperatureIntensity).toInt();
+          }
         }
       }
     }
