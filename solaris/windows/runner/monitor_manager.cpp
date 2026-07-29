@@ -579,7 +579,17 @@ void MonitorManager::UpdateWhitelist(
   }
   active_game_hwnd_ = nullptr;
   active_game_pid_ = 0;
-  last_active_game_pid_ = 0;
+  if (last_active_game_pid_ != 0) {
+    HANDLE hProcess = OpenProcess(SYNCHRONIZE, FALSE, last_active_game_pid_);
+    if (hProcess != NULL) {
+      if (WaitForSingleObject(hProcess, 0) != WAIT_TIMEOUT) {
+        last_active_game_pid_ = 0; // Process actually exited
+      }
+      CloseHandle(hProcess);
+    } else {
+      last_active_game_pid_ = 0;
+    }
+  }
   is_gaming_candidate_ = false;
   process_cache_.clear();
 }
@@ -604,7 +614,17 @@ void MonitorManager::UpdateBlacklist(
   }
   active_game_hwnd_ = nullptr;
   active_game_pid_ = 0;
-  last_active_game_pid_ = 0;
+  if (last_active_game_pid_ != 0) {
+    HANDLE hProcess = OpenProcess(SYNCHRONIZE, FALSE, last_active_game_pid_);
+    if (hProcess != NULL) {
+      if (WaitForSingleObject(hProcess, 0) != WAIT_TIMEOUT) {
+        last_active_game_pid_ = 0; // Process actually exited
+      }
+      CloseHandle(hProcess);
+    } else {
+      last_active_game_pid_ = 0;
+    }
+  }
   is_gaming_candidate_ = false;
   process_cache_.clear();
 }
@@ -693,9 +713,9 @@ void MonitorManager::DetectorLoop() {
           last_active_game_pid_ = processId;
         } else {
           is_match = false;
-          if (score == -1000) {
-            last_active_game_pid_ = 0;
-          }
+          // Note: We intentionally do NOT reset last_active_game_pid_ here.
+          // The previous game PID must be preserved so the 30-second exit hysteresis
+          // (EXIT_DELAY_MS) can verify if the game process is still alive.
         }
       }
     } else {
@@ -718,7 +738,9 @@ void MonitorManager::DetectorLoop() {
       auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
                           now - candidate_start_time_)
                           .count();
-      if (duration >= ENTRY_DELAY_MS) {
+      // If we are already in gaming mode (or returning to the game during hysteresis),
+      // keep gaming mode active immediately to prevent a 500ms brightness dip.
+      if (duration >= ENTRY_DELAY_MS || is_gaming_mode_) {
         last_gaming_match_time_ = now;
         target_gaming_mode = true;
       }
