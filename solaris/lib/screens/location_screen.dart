@@ -9,6 +9,9 @@ import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/stylish_location_card.dart';
 import 'package:solaris/widgets/solar_map.dart';
 import 'package:solaris/widgets/deep_link_target.dart';
+import 'package:solaris/widgets/city_autocomplete_input.dart';
+import 'package:solaris/env/env.dart';
+import 'package:solaris/models/settings_state.dart';
 
 class LocationScreen extends ConsumerStatefulWidget {
   const LocationScreen({super.key});
@@ -20,6 +23,7 @@ class LocationScreen extends ConsumerStatefulWidget {
 class _LocationScreenState extends ConsumerState<LocationScreen> {
   final TextEditingController _latController = TextEditingController();
   final TextEditingController _lonController = TextEditingController();
+  final TextEditingController _citySearchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final Map<String, GlobalKey<DeepLinkTargetState>> _anchorKeys = {
     'location_region': GlobalKey<DeepLinkTargetState>(),
@@ -33,6 +37,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
   void dispose() {
     _latController.dispose();
     _lonController.dispose();
+    _citySearchController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -51,11 +56,17 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
   }
 
   void _updateControllers(double? lat, double? lon) {
-    if (lat != null && _latController.text != lat.toString()) {
-      _latController.text = lat.toStringAsFixed(4);
+    if (lat != null) {
+      final formatted = lat.toStringAsFixed(4);
+      if (_latController.text != formatted) {
+        _latController.text = formatted;
+      }
     }
-    if (lon != null && _lonController.text != lon.toString()) {
-      _lonController.text = lon.toStringAsFixed(4);
+    if (lon != null) {
+      final formatted = lon.toStringAsFixed(4);
+      if (_lonController.text != formatted) {
+        _lonController.text = formatted;
+      }
     }
   }
 
@@ -83,6 +94,12 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
     final settingsAsync = ref.watch(locationSettingsProvider);
     final cityAsync = ref.watch(locationCityProvider);
     final resolutionStatus = ref.watch(locationResolutionStatusProvider);
+
+    final appSettingsAsync = ref.watch(settingsProvider);
+    final appSettings = appSettingsAsync.value?['all'] ?? SettingsState();
+    final customMapboxToken = appSettings.customMapboxToken;
+    final bool hasMapboxToken =
+        customMapboxToken.isNotEmpty || Env.isMapboxTokenValid;
 
     // Update controllers when manual location is first loaded or changed outside
     ref.listen(locationSettingsProvider, (prev, next) {
@@ -295,7 +312,8 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                     latitude: pos.latitude,
                                     longitude: pos.longitude,
                                     zoom: 1.5,
-                                    showMarker: resolutionStatus !=
+                                    showMarker:
+                                        resolutionStatus !=
                                         LocationResolutionStatus
                                             .autoFailedTimezone,
                                     onLongPress: (latLng) {
@@ -322,23 +340,28 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                 ),
                               ),
                               // Overlay location info
-              Positioned(
+                              Positioned(
                                 bottom: 12,
                                 left: 12,
                                 child: locationAsync.maybeWhen(
                                   data: (pos) {
-                                    final isTzFallback = resolutionStatus ==
+                                    final isTzFallback =
+                                        resolutionStatus ==
                                         LocationResolutionStatus
                                             .autoFailedTimezone;
-                                    final tzLocation = ref
-                                        .watch(effectiveTimezoneProvider);
-                                    final tzName = TimeService
-                                        .formatTimezoneDisplayName(tzLocation);
+                                    final tzLocation = ref.watch(
+                                      effectiveTimezoneProvider,
+                                    );
+                                    final tzName =
+                                        TimeService.formatTimezoneDisplayName(
+                                          tzLocation,
+                                        );
                                     final titleText = isTzFallback
                                         ? '${l10n.systemTimezoneFallbackTitle} ($tzName)'
                                         : (cityAsync.value?.name ??
-                                            "Global Coordinates");
-                                    final showHelpIcon = isTzFallback ||
+                                              "Global Coordinates");
+                                    final showHelpIcon =
+                                        isTzFallback ||
                                         ((cityAsync.value?.isOffline ??
                                                 false) &&
                                             !(cityAsync.value?.isCachedCity ??
@@ -447,7 +470,30 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 20),
+                          CityAutocompleteInput(
+                            geocodingService: ref.watch(
+                              geocodingServiceProvider,
+                            ),
+                            hasMapboxToken: hasMapboxToken,
+                            customToken: customMapboxToken.isNotEmpty
+                                ? customMapboxToken
+                                : null,
+                            controller: _citySearchController,
+                            onCitySelected: (cityResult) {
+                              _updateControllers(
+                                cityResult.latitude,
+                                cityResult.longitude,
+                              );
+                              ref
+                                  .read(locationSettingsProvider.notifier)
+                                  .setManualLocation(
+                                    cityResult.latitude,
+                                    cityResult.longitude,
+                                  );
+                            },
+                          ),
+                          const SizedBox(height: 20),
                           DeepLinkTarget(
                             key: _anchorKeys['location_lat'],
                             id: 'location_lat',

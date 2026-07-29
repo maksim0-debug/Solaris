@@ -41,10 +41,113 @@ class GeocodingResult {
       'GeocodingResult(name: $name, isOffline: $isOffline, offlineReason: $offlineReason, isCachedCity: $isCachedCity)';
 }
 
+class CitySearchResult {
+  final String name;
+  final String fullAddress;
+  final double latitude;
+  final double longitude;
+
+  const CitySearchResult({
+    required this.name,
+    required this.fullAddress,
+    required this.latitude,
+    required this.longitude,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CitySearchResult &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          fullAddress == other.fullAddress &&
+          latitude == other.latitude &&
+          longitude == other.longitude;
+
+  @override
+  int get hashCode =>
+      name.hashCode ^
+      fullAddress.hashCode ^
+      latitude.hashCode ^
+      longitude.hashCode;
+
+  @override
+  String toString() =>
+      'CitySearchResult(name: $name, fullAddress: $fullAddress, latitude: $latitude, longitude: $longitude)';
+}
+
 class GeocodingService {
   final http.Client _client;
 
   GeocodingService({http.Client? client}) : _client = client ?? http.Client();
+
+  /// Searches for cities/places matching [query] using Mapbox Forward Geocoding API.
+  Future<List<CitySearchResult>> searchPlaces(
+    String query, {
+    String? language,
+    String? customToken,
+  }) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return [];
+
+    final token = (customToken != null && customToken.isNotEmpty)
+        ? customToken
+        : Env.mapboxToken;
+    final bool hasToken =
+        token.isNotEmpty && !token.contains('your_mapbox_token_here');
+
+    if (!hasToken) return [];
+
+    try {
+      final lang = language ?? Platform.localeName.split('_').first;
+      final encodedQuery = Uri.encodeComponent(trimmed);
+      final url = Uri.parse(
+        'https://api.mapbox.com/geocoding/v5/mapbox.places/$encodedQuery.json'
+        '?access_token=$token'
+        '&types=place,locality'
+        '&limit=5'
+        '&language=$lang',
+      );
+
+      final response = await _client
+          .get(url)
+          .timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final features = data['features'] as List?;
+        if (features != null) {
+          final results = <CitySearchResult>[];
+          for (final feature in features) {
+            final text = feature['text'] as String?;
+            final placeName = feature['place_name'] as String?;
+            final center = feature['center'] as List?;
+            if (text != null &&
+                center != null &&
+                center.length >= 2 &&
+                center[0] is num &&
+                center[1] is num) {
+              final lon = (center[0] as num).toDouble();
+              final lat = (center[1] as num).toDouble();
+              results.add(
+                CitySearchResult(
+                  name: text,
+                  fullAddress: placeName ?? text,
+                  latitude: lat,
+                  longitude: lon,
+                ),
+              );
+            }
+          }
+          return results;
+        }
+      }
+    } catch (e) {
+      print('GeocodingService: Mapbox Forward Geocoding search failed: $e');
+    }
+
+    return [];
+  }
 
   /// Resolves the city name for the given coordinates.
   ///

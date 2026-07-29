@@ -2142,4 +2142,23 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get tags_webhooks =>
       'вебхук, вебхуки, webhook, webhooks, home assistant, node-red, n8n, hmac, події, сповіщення, інтеграція, автоматизація, dlq';
+
+  @override
+  String get searchCity => 'ПОШУК МІСТА';
+
+  @override
+  String get searchCityHint => 'Введіть назву міста...';
+
+  @override
+  String get citySearchDisabledNoToken =>
+      'Для пошуку міст потрібен Mapbox API Key в Налаштуваннях';
+
+  @override
+  String get manualCoordinatesAdjusted => 'Ручне коригування';
+
+  @override
+  String get searchingCities => 'Пошук міст...';
+
+  @override
+  String get noCitiesFound => 'Міста не знайдені';
 }

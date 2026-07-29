@@ -956,7 +956,13 @@
   },
   "tags_solaris_api": "api, control api, solaris control api, http, rest, swagger, port, localhost, lan, server, endpoint, developer",
   "tags_api_keys": "api key, access key, token, permissions, bearer, scopes, auth, authentication, security, fallback, dpapi",
-  "tags_webhooks": "webhook, webhooks, home assistant, node-red, n8n, hmac, events, notifications, integration, automation, wal, dlq"
+  "tags_webhooks": "webhook, webhooks, home assistant, node-red, n8n, hmac, events, notifications, integration, automation, wal, dlq",
+  "searchCity": "SEARCH CITY",
+  "searchCityHint": "Enter city name...",
+  "citySearchDisabledNoToken": "Mapbox API Key in Settings is required for city search",
+  "manualCoordinatesAdjusted": "Manual Adjustment",
+  "searchingCities": "Searching cities...",
+  "noCitiesFound": "No cities found"
 }
 
 

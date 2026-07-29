@@ -2148,4 +2148,23 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get tags_webhooks =>
       'вебхук, вебхуки, webhook, webhooks, home assistant, node-red, n8n, hmac, события, уведомления, интеграция, автоматизация, dlq';
+
+  @override
+  String get searchCity => 'ПОИСК ГОРОДА';
+
+  @override
+  String get searchCityHint => 'Введите название города...';
+
+  @override
+  String get citySearchDisabledNoToken =>
+      'Для поиска городов требуется Mapbox API Key в Настройках';
+
+  @override
+  String get manualCoordinatesAdjusted => 'Ручная корректировка';
+
+  @override
+  String get searchingCities => 'Поиск городов...';
+
+  @override
+  String get noCitiesFound => 'Города не найдены';
 }

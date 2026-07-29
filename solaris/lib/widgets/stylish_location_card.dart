@@ -59,7 +59,8 @@ class StylishLocationCard extends ConsumerWidget {
                 Positioned.fill(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(24),
-                    child: resolutionStatus ==
+                    child:
+                        resolutionStatus ==
                             LocationResolutionStatus.autoFailedTimezone
                         ? Container(
                             color: const Color(0xFF0F172A),
@@ -75,103 +76,100 @@ class StylishLocationCard extends ConsumerWidget {
                             ),
                           )
                         : !isMapTokenValid
-                            ? Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  Container(
-                                    color: const Color(0xFF0F172A),
-                                    child: const Center(
-                                      child: Opacity(
-                                        opacity: 0.05,
-                                        child: Icon(
-                                          LucideIcons.map,
-                                          size: 100,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(24),
-                                    child: ImageFiltered(
-                                      imageFilter: ui.ImageFilter.blur(
-                                        sigmaX: 8,
-                                        sigmaY: 8,
-                                      ),
-                                      child: Container(
-                                        color: Colors.black.withOpacity(0.2),
-                                      ),
-                                    ),
-                                  ),
-                                  GestureDetector(
-                                    onTap: () {
-                                      ref
-                                          .read(activeScreenProvider.notifier)
-                                          .setScreen(AppScreen.settings);
-                                      ref
-                                          .read(searchAnchorProvider.notifier)
-                                          .setAnchor('api_keys');
-                                    },
-                                    child: MouseRegion(
-                                      cursor: SystemMouseCursors.click,
-                                      child: Tooltip(
-                                        message: l10n.mapboxTokenMissingTooltip,
-                                        preferBelow: false,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(10),
-                                          decoration: BoxDecoration(
-                                            color: Colors.black54,
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color:
-                                                  accentColor.withOpacity(0.5),
-                                              width: 1.5,
-                                            ),
-                                          ),
-                                          child: Icon(
-                                            LucideIcons.lock,
-                                            color: accentColor,
-                                            size: 20,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : locationAsync.maybeWhen(
-                                data: (pos) => CachedNetworkImage(
-                                  imageUrl: getStaticMapUrl(
-                                    pos.latitude,
-                                    pos.longitude,
-                                    style: mapStyle,
-                                    customToken: customToken,
-                                  ),
-                                  fit: BoxFit.cover,
-                                  fadeInDuration:
-                                      const Duration(milliseconds: 500),
-                                  placeholder: (context, url) => Container(
-                                    color: const Color(0xFF0F172A),
-                                    child: Center(
-                                      child: CircularProgressIndicator(
-                                        color: accentColor,
-                                        strokeWidth: 2,
-                                      ),
-                                    ),
-                                  ),
-                                  errorWidget: (context, url, error) =>
-                                      Container(
-                                    color: const Color(0xFF0F172A),
-                                    child: const Icon(
+                        ? Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Container(
+                                color: const Color(0xFF0F172A),
+                                child: const Center(
+                                  child: Opacity(
+                                    opacity: 0.05,
+                                    child: Icon(
                                       LucideIcons.map,
-                                      color: Colors.white10,
-                                      size: 48,
+                                      size: 100,
+                                      color: Colors.white,
                                     ),
                                   ),
                                 ),
-                                orElse: () =>
-                                    Container(color: const Color(0xFF0F172A)),
                               ),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(24),
+                                child: ImageFiltered(
+                                  imageFilter: ui.ImageFilter.blur(
+                                    sigmaX: 8,
+                                    sigmaY: 8,
+                                  ),
+                                  child: Container(
+                                    color: Colors.black.withOpacity(0.2),
+                                  ),
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  ref
+                                      .read(activeScreenProvider.notifier)
+                                      .setScreen(AppScreen.settings);
+                                  ref
+                                      .read(searchAnchorProvider.notifier)
+                                      .setAnchor('api_keys');
+                                },
+                                child: MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: Tooltip(
+                                    message: l10n.mapboxTokenMissingTooltip,
+                                    preferBelow: false,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: accentColor.withOpacity(0.5),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: Icon(
+                                        LucideIcons.lock,
+                                        color: accentColor,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : locationAsync.maybeWhen(
+                            data: (pos) => CachedNetworkImage(
+                              imageUrl: getStaticMapUrl(
+                                pos.latitude,
+                                pos.longitude,
+                                style: mapStyle,
+                                customToken: customToken,
+                              ),
+                              fit: BoxFit.cover,
+                              fadeInDuration: const Duration(milliseconds: 500),
+                              placeholder: (context, url) => Container(
+                                color: const Color(0xFF0F172A),
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    color: accentColor,
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              ),
+                              errorWidget: (context, url, error) => Container(
+                                color: const Color(0xFF0F172A),
+                                child: const Icon(
+                                  LucideIcons.map,
+                                  color: Colors.white10,
+                                  size: 48,
+                                ),
+                              ),
+                            ),
+                            orElse: () =>
+                                Container(color: const Color(0xFF0F172A)),
+                          ),
                   ),
                 ),
                 Positioned.fill(

@@ -3695,6 +3695,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'webhook, webhooks, home assistant, node-red, n8n, hmac, events, notifications, integration, automation, wal, dlq'**
   String get tags_webhooks;
+
+  /// No description provided for @searchCity.
+  ///
+  /// In en, this message translates to:
+  /// **'SEARCH CITY'**
+  String get searchCity;
+
+  /// No description provided for @searchCityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter city name...'**
+  String get searchCityHint;
+
+  /// No description provided for @citySearchDisabledNoToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Mapbox API Key in Settings is required for city search'**
+  String get citySearchDisabledNoToken;
+
+  /// No description provided for @manualCoordinatesAdjusted.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual Adjustment'**
+  String get manualCoordinatesAdjusted;
+
+  /// No description provided for @searchingCities.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching cities...'**
+  String get searchingCities;
+
+  /// No description provided for @noCitiesFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No cities found'**
+  String get noCitiesFound;
 }
 
 class _AppLocalizationsDelegate

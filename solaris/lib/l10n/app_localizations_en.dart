@@ -2129,4 +2129,23 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get tags_webhooks =>
       'webhook, webhooks, home assistant, node-red, n8n, hmac, events, notifications, integration, automation, wal, dlq';
+
+  @override
+  String get searchCity => 'SEARCH CITY';
+
+  @override
+  String get searchCityHint => 'Enter city name...';
+
+  @override
+  String get citySearchDisabledNoToken =>
+      'Mapbox API Key in Settings is required for city search';
+
+  @override
+  String get manualCoordinatesAdjusted => 'Manual Adjustment';
+
+  @override
+  String get searchingCities => 'Searching cities...';
+
+  @override
+  String get noCitiesFound => 'No cities found';
 }

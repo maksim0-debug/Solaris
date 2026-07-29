@@ -566,7 +566,8 @@ Position getTimezoneFallbackCoordinates(tz.Location tzLocation) {
   final now = tz.TZDateTime.now(tzLocation);
   final offsetHours = now.timeZoneOffset.inMinutes / 60.0;
   final approxLon = (offsetHours * 15.0).clamp(-180.0, 180.0);
-  final approxLat = name.startsWith('Australia') ||
+  final approxLat =
+      name.startsWith('Australia') ||
           name.startsWith('America/Argentina') ||
           name.startsWith('America/Sao_Paulo')
       ? -30.0
@@ -628,21 +629,19 @@ final effectiveLocationProvider = Provider<AsyncValue<Position>>((ref) {
     // Если предыдущих данных нет (например первый запуск), то ждем данных или используем дефолт по часовому поясу
     return streamAsync.maybeWhen(
       data: (pos) => AsyncData<Position>(pos),
-      orElse: () => AsyncData<Position>(getTimezoneFallbackCoordinates(tz.local)),
+      orElse: () =>
+          AsyncData<Position>(getTimezoneFallbackCoordinates(tz.local)),
     );
   }
 
   return AsyncData<Position>(getTimezoneFallbackCoordinates(tz.local));
 });
 
-enum LocationResolutionStatus {
-  manual,
-  autoSuccess,
-  autoFailedTimezone,
-}
+enum LocationResolutionStatus { manual, autoSuccess, autoFailedTimezone }
 
-final locationResolutionStatusProvider =
-    Provider<LocationResolutionStatus>((ref) {
+final locationResolutionStatusProvider = Provider<LocationResolutionStatus>((
+  ref,
+) {
   final settingsAsync = ref.watch(locationSettingsProvider);
   final streamAsync = ref.watch(locationStreamProvider);
 

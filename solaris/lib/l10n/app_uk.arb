@@ -866,7 +866,13 @@
   },
   "tags_solaris_api": "апі, api, control api, solaris control api, http, rest, swagger, порт, локалхост, localhost, lan, сервер, розробникам",
   "tags_api_keys": "api key, токен, доступ, ключі api, права доступу, авторизація, безпека, bearer, scopes, ключ доступу",
-  "tags_webhooks": "вебхук, вебхуки, webhook, webhooks, home assistant, node-red, n8n, hmac, події, сповіщення, інтеграція, автоматизація, dlq"
+  "tags_webhooks": "вебхук, вебхуки, webhook, webhooks, home assistant, node-red, n8n, hmac, події, сповіщення, інтеграція, автоматизація, dlq",
+  "searchCity": "ПОШУК МІСТА",
+  "searchCityHint": "Введіть назву міста...",
+  "citySearchDisabledNoToken": "Для пошуку міст потрібен Mapbox API Key в Налаштуваннях",
+  "manualCoordinatesAdjusted": "Ручне коригування",
+  "searchingCities": "Пошук міст...",
+  "noCitiesFound": "Міста не знайдені"
 }
 
 
