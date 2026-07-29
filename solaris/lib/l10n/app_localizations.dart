@@ -3731,6 +3731,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No cities found'**
   String get noCitiesFound;
+
+  /// No description provided for @ddcNotSupportedTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'This monitor does not support DDC/CI or it is disabled in settings.\nBrightness adjustment is unavailable, but temperature regulation works.'**
+  String get ddcNotSupportedTooltip;
+
+  /// No description provided for @checkDdcAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Check DDC/CI again'**
+  String get checkDdcAgain;
 }
 
 class _AppLocalizationsDelegate

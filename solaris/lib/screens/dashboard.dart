@@ -1763,7 +1763,7 @@ class _Footer extends ConsumerWidget {
 
               return Row(
                 children: [
-                  _DisplayInfo(
+                  DisplayInfo(
                     label: l10n.allMonitors.toUpperCase(),
                     icon: Icons.devices,
                     isSelected: isAllEffectivelySelected,
@@ -1775,9 +1775,6 @@ class _Footer extends ConsumerWidget {
                   ...monitors.asMap().entries.map((entry) {
                     final idx = entry.key;
                     final monitor = entry.value;
-                    final brightnessStr = monitor.realBrightness != null
-                        ? '${monitor.realBrightness}%'
-                        : '--';
                     final isSelected =
                         !selectedIds.contains('all') &&
                         selectedIds.contains(monitor.deviceName);
@@ -1786,9 +1783,10 @@ class _Footer extends ConsumerWidget {
                       padding: EdgeInsets.only(
                         right: idx < monitors.length - 1 ? 24 : 0,
                       ),
-                      child: _DisplayInfo(
-                        label:
-                            '${monitor.friendlyName.toUpperCase()}: $brightnessStr',
+                      child: DisplayInfo(
+                        label: monitor.friendlyName.toUpperCase(),
+                        brightness: monitor.realBrightness,
+                        isDdcSupported: monitor.isDdcSupported,
                         isSelected: isSelected,
                         onTap: () {
                           final notifier = ref.read(
@@ -1799,6 +1797,9 @@ class _Footer extends ConsumerWidget {
                           } else {
                             notifier.selectOnly(monitor.deviceName);
                           }
+                        },
+                        onRefreshDdc: () {
+                          ref.invalidate(monitorListProvider);
                         },
                       ),
                     );
@@ -1834,43 +1835,110 @@ class _Footer extends ConsumerWidget {
   }
 }
 
-class _DisplayInfo extends StatelessWidget {
-  const _DisplayInfo({
+class DisplayInfo extends ConsumerWidget {
+  const DisplayInfo({
     required this.label,
     required this.isSelected,
+    this.brightness,
+    this.isDdcSupported = true,
     this.icon = Icons.monitor,
     this.onTap,
+    this.onRefreshDdc,
   });
 
   final String label;
   final bool isSelected;
+  final int? brightness;
+  final bool isDdcSupported;
   final IconData icon;
   final VoidCallback? onTap;
+  final VoidCallback? onRefreshDdc;
 
   @override
-  Widget build(BuildContext context) {
-    final color = isSelected ? const Color(0xFFFDBA74) : Colors.white24;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
 
-    return InkWell(
+    final Color contentColor;
+    if (!isDdcSupported) {
+      contentColor = isSelected
+          ? const Color(0xFFF87171)
+          : const Color(0xFFEF4444).withOpacity(0.85);
+    } else if (isSelected) {
+      contentColor = const Color(0xFFFDBA74);
+    } else {
+      contentColor = Colors.white24;
+    }
+
+    final Widget content = InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(4),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: color),
+          Icon(icon, size: 14, color: contentColor),
           const SizedBox(width: 8),
           Text(
-            label,
+            isDdcSupported && brightness != null
+                ? '$label: $brightness%'
+                : label,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: color,
+              color: contentColor,
               letterSpacing: 0.5,
             ),
           ),
+          if (!isDdcSupported && onRefreshDdc != null) ...[
+            const SizedBox(width: 6),
+            Tooltip(
+              message: l10n.checkDdcAgain,
+              preferBelow: false,
+              child: InkWell(
+                onTap: onRefreshDdc,
+                borderRadius: BorderRadius.circular(4),
+                child: Padding(
+                  padding: const EdgeInsets.all(2.0),
+                  child: Icon(
+                    LucideIcons.refreshCw,
+                    size: 12,
+                    color: contentColor.withOpacity(0.9),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
+
+    if (!isDdcSupported) {
+      return Tooltip(
+        message: l10n.ddcNotSupportedTooltip,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFF181825),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.redAccent.withOpacity(0.5)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.5),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        textStyle: const TextStyle(
+          fontSize: 12,
+          color: Colors.white,
+          height: 1.35,
+        ),
+        preferBelow: false,
+        verticalOffset: 20,
+        child: content,
+      );
+    }
+
+    return content;
   }
 }
 

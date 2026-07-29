@@ -25,6 +25,8 @@ class MonitorInfo {
     this.realBrightness,
     this.realTemperature,
   });
+
+  bool get isDdcSupported => realBrightness != null;
 }
 
 class MonitorService {

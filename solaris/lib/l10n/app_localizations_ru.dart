@@ -2167,4 +2167,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get noCitiesFound => 'Города не найдены';
+
+  @override
+  String get ddcNotSupportedTooltip =>
+      'Этот монитор не поддерживает DDC/CI или он отключен в настройках.\nИзменение яркости недоступно, но регулировка температуры работает.';
+
+  @override
+  String get checkDdcAgain => 'Проверить DDC/CI снова';
 }

@@ -2148,4 +2148,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noCitiesFound => 'No cities found';
+
+  @override
+  String get ddcNotSupportedTooltip =>
+      'This monitor does not support DDC/CI or it is disabled in settings.\nBrightness adjustment is unavailable, but temperature regulation works.';
+
+  @override
+  String get checkDdcAgain => 'Check DDC/CI again';
 }

@@ -874,7 +874,9 @@
   "citySearchDisabledNoToken": "Для поиска городов требуется Mapbox API Key в Настройках",
   "manualCoordinatesAdjusted": "Ручная корректировка",
   "searchingCities": "Поиск городов...",
-  "noCitiesFound": "Города не найдены"
+  "noCitiesFound": "Города не найдены",
+  "ddcNotSupportedTooltip": "Этот монитор не поддерживает DDC/CI или он отключен в настройках.\nИзменение яркости недоступно, но регулировка температуры работает.",
+  "checkDdcAgain": "Проверить DDC/CI снова"
 }
 
 

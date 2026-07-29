@@ -2161,4 +2161,11 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get noCitiesFound => 'Міста не знайдені';
+
+  @override
+  String get ddcNotSupportedTooltip =>
+      'Цей монітор не підтримує DDC/CI або його вимкнено в налаштуваннях.\nЗміна яскравості недоступна, але регулювання температури працює.';
+
+  @override
+  String get checkDdcAgain => 'Перевірити DDC/CI знову';
 }
