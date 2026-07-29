@@ -2115,8 +2115,38 @@ abstract class AppLocalizations {
   /// No description provided for @tags_game_mode.
   ///
   /// In en, this message translates to:
-  /// **'gaming, fullscreen, priority, lock, performance, exclude, game, app'**
+  /// **'gaming, fullscreen, priority, lock, performance, exclude, game, app, delay, minimize, locked temperature, locked brightness, whitelist, blacklist'**
   String get tags_game_mode;
+
+  /// No description provided for @tags_game_mode_temp.
+  ///
+  /// In en, this message translates to:
+  /// **'gaming, lock temperature, game temperature, color, kelvin, freeze'**
+  String get tags_game_mode_temp;
+
+  /// No description provided for @tags_game_mode_exit_delay.
+  ///
+  /// In en, this message translates to:
+  /// **'gaming, minimize exit delay, delay, minimize, timer, seconds, exit'**
+  String get tags_game_mode_exit_delay;
+
+  /// No description provided for @tags_game_mode_brightness.
+  ///
+  /// In en, this message translates to:
+  /// **'gaming, locked brightness, fixed brightness, level, screen'**
+  String get tags_game_mode_brightness;
+
+  /// No description provided for @tags_game_mode_whitelist.
+  ///
+  /// In en, this message translates to:
+  /// **'gaming, whitelist, allowed apps, games exe, add'**
+  String get tags_game_mode_whitelist;
+
+  /// No description provided for @tags_game_mode_blacklist.
+  ///
+  /// In en, this message translates to:
+  /// **'gaming, blacklist, blocked apps, exclude, block'**
+  String get tags_game_mode_blacklist;
 
   /// No description provided for @tags_circadian_limits.
   ///

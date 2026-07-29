@@ -52,6 +52,38 @@ void main() {
       );
       expect(webhookItem.screen, equals(AppScreen.settings));
 
+      // 4. Search for "фиксировать температуру"
+      final tempToggleResults = service.search('фиксировать температуру');
+      expect(
+        tempToggleResults.any((item) => item.anchorId == 'game_mode_temp_toggle'),
+        isTrue,
+      );
+
+      // 5. Search for "задержка при сворачивании"
+      final exitDelayResults = service.search('задержка при сворачивании');
+      expect(
+        exitDelayResults.any((item) => item.anchorId == 'game_mode_exit_delay'),
+        isTrue,
+      );
+
+      // 6. Search for "белый список" & "черный список"
+      final whitelistResults = service.search('белый список');
+      expect(
+        whitelistResults.any((item) => item.anchorId == 'game_mode_whitelist'),
+        isTrue,
+      );
+      final blacklistResults = service.search('черный список');
+      expect(
+        blacklistResults.any((item) => item.anchorId == 'game_mode_blacklist'),
+        isTrue,
+      );
+
+      // 7. Search for API port & token auth
+      final portResults = service.search('порт');
+      expect(portResults.any((item) => item.anchorId == 'api_port'), isTrue);
+      final tokenResults = service.search('токен');
+      expect(tokenResults.any((item) => item.anchorId == 'api_require_token'), isTrue);
+
       // 4. English search test
       await tester.pumpWidget(
         ProviderScope(

@@ -1158,7 +1158,27 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get tags_game_mode =>
-      'игры, полный экран, приоритет, блок, производительность, исключения, игра, приложение';
+      'игры, полный экран, приоритет, блок, производительность, исключения, игра, приложение, задержка, сворачивание, фиксировать, зафиксировать, температура, яркость, белый список, черный список';
+
+  @override
+  String get tags_game_mode_temp =>
+      'игры, фиксировать температуру, температура в игре, зафиксировать, фиксация, цвет, кельвины';
+
+  @override
+  String get tags_game_mode_exit_delay =>
+      'игры, задержка при сворачивании, задержка, сворачивание, таймер, секунды, выход';
+
+  @override
+  String get tags_game_mode_brightness =>
+      'игры, фиксированная яркость, зафиксировать яркость, уровень яркости, экран';
+
+  @override
+  String get tags_game_mode_whitelist =>
+      'игры, белый список, разрешенные приложения, игры exe, добавление';
+
+  @override
+  String get tags_game_mode_blacklist =>
+      'игры, черный список, запрещенные приложения, блокировка, исключения';
 
   @override
   String get tags_circadian_limits =>

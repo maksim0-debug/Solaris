@@ -7,10 +7,12 @@ import 'package:solaris/providers.dart';
 import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/settings/api_keys_management_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:solaris/widgets/deep_link_target.dart';
 
 /// Interactive Flutter GUI Card for managing Solaris Control API, Key Authentication & LAN Firewall.
 class ApiSettingsCard extends ConsumerStatefulWidget {
-  const ApiSettingsCard({super.key});
+  final Map<String, GlobalKey<DeepLinkTargetState>>? anchorKeys;
+  const ApiSettingsCard({super.key, this.anchorKeys});
 
   @override
   ConsumerState<ApiSettingsCard> createState() => _ApiSettingsCardState();
@@ -193,16 +195,22 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                 const Divider(height: 32, color: Colors.white10),
 
                 // Network Mode Selector (Localhost / LAN)
-                Text(
-                  l10n.apiNetworkAccessMode,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white70,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                SegmentedButton<bool>(
+                DeepLinkTarget(
+                  key: widget.anchorKeys?['api_lan_access'],
+                  id: 'api_lan_access',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.apiNetworkAccessMode,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white70,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SegmentedButton<bool>(
                   segments: [
                     ButtonSegment<bool>(
                       value: false,
@@ -281,6 +289,9 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                     }
                   },
                 ),
+              ],
+            ),
+          ),
 
                 const SizedBox(height: 20),
 
@@ -289,54 +300,58 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                   children: [
                     Expanded(
                       flex: 2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.apiServerPort,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white70,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          TextField(
-                            controller: _portController,
-                            keyboardType: TextInputType.number,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                            ),
-                            decoration: InputDecoration(
-                              isDense: true,
-                              filled: true,
-                              fillColor: Colors.white.withOpacity(0.05),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide.none,
-                              ),
-                              prefixIcon: const Icon(
-                                LucideIcons.terminal,
-                                size: 16,
-                                color: Colors.white54,
+                      child: DeepLinkTarget(
+                        key: widget.anchorKeys?['api_port'],
+                        id: 'api_port',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.apiServerPort,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white70,
                               ),
                             ),
-                            onSubmitted: (val) async {
-                              final newPort = int.tryParse(val) ?? 45321;
-                              if (newPort != port &&
-                                  newPort > 1024 &&
-                                  newPort < 65535) {
-                                ref
-                                    .read(settingsProvider.notifier)
-                                    .updateApiServerPort(newPort);
-                                await ref
-                                    .read(localIpcServiceProvider.notifier)
-                                    .restartServer();
-                              }
-                            },
-                          ),
-                        ],
+                            const SizedBox(height: 6),
+                            TextField(
+                              controller: _portController,
+                              keyboardType: TextInputType.number,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                              ),
+                              decoration: InputDecoration(
+                                isDense: true,
+                                filled: true,
+                                fillColor: Colors.white.withOpacity(0.05),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: BorderSide.none,
+                                ),
+                                prefixIcon: const Icon(
+                                  LucideIcons.terminal,
+                                  size: 16,
+                                  color: Colors.white54,
+                                ),
+                              ),
+                              onSubmitted: (val) async {
+                                final newPort = int.tryParse(val) ?? 45321;
+                                if (newPort != port &&
+                                    newPort > 1024 &&
+                                    newPort < 65535) {
+                                  ref
+                                      .read(settingsProvider.notifier)
+                                      .updateApiServerPort(newPort);
+                                  await ref
+                                      .read(localIpcServiceProvider.notifier)
+                                      .restartServer();
+                                }
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -440,54 +455,58 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                 const SizedBox(height: 16),
 
                 // Require Local Token Toggle Tile
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.03),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.white10),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        LucideIcons.shieldAlert,
-                        color: Color(0xFFFDBA74),
-                        size: 18,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              l10n.requireLocalTokenLabel,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              l10n.requireLocalTokenSubtitle,
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.5),
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
+                DeepLinkTarget(
+                  key: widget.anchorKeys?['api_require_token'],
+                  id: 'api_require_token',
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.03),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white10),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          LucideIcons.shieldAlert,
+                          color: Color(0xFFFDBA74),
+                          size: 18,
                         ),
-                      ),
-                      Switch(
-                        value: requireLocalToken,
-                        activeColor: const Color(0xFFFDBA74),
-                        onChanged: (val) {
-                          ref
-                              .read(settingsProvider.notifier)
-                              .updateRequireLocalToken(val);
-                        },
-                      ),
-                    ],
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                l10n.requireLocalTokenLabel,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                l10n.requireLocalTokenSubtitle,
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.5),
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch(
+                          value: requireLocalToken,
+                          activeColor: const Color(0xFFFDBA74),
+                          onChanged: (val) {
+                            ref
+                                .read(settingsProvider.notifier)
+                                .updateRequireLocalToken(val);
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

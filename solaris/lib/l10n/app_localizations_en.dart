@@ -1157,7 +1157,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tags_game_mode =>
-      'gaming, fullscreen, priority, lock, performance, exclude, game, app';
+      'gaming, fullscreen, priority, lock, performance, exclude, game, app, delay, minimize, locked temperature, locked brightness, whitelist, blacklist';
+
+  @override
+  String get tags_game_mode_temp =>
+      'gaming, lock temperature, game temperature, color, kelvin, freeze';
+
+  @override
+  String get tags_game_mode_exit_delay =>
+      'gaming, minimize exit delay, delay, minimize, timer, seconds, exit';
+
+  @override
+  String get tags_game_mode_brightness =>
+      'gaming, locked brightness, fixed brightness, level, screen';
+
+  @override
+  String get tags_game_mode_whitelist =>
+      'gaming, whitelist, allowed apps, games exe, add';
+
+  @override
+  String get tags_game_mode_blacklist =>
+      'gaming, blacklist, blocked apps, exclude, block';
 
   @override
   String get tags_circadian_limits =>

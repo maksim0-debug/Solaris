@@ -35,13 +35,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final Map<String, GlobalKey<DeepLinkTargetState>> _anchorKeys = {
     'autorun': GlobalKey<DeepLinkTargetState>(),
     'weather_adjustment': GlobalKey<DeepLinkTargetState>(),
+    'weather_brightness': GlobalKey<DeepLinkTargetState>(),
+    'weather_temperature': GlobalKey<DeepLinkTargetState>(),
+    'weather_intensity': GlobalKey<DeepLinkTargetState>(),
+    'weather_provider': GlobalKey<DeepLinkTargetState>(),
     'hotkeys': GlobalKey<DeepLinkTargetState>(),
+    'hotkeys_next_preset': GlobalKey<DeepLinkTargetState>(),
+    'hotkeys_prev_preset': GlobalKey<DeepLinkTargetState>(),
+    'hotkeys_brightness_up': GlobalKey<DeepLinkTargetState>(),
+    'hotkeys_brightness_down': GlobalKey<DeepLinkTargetState>(),
+    'hotkeys_auto_brightness_toggle': GlobalKey<DeepLinkTargetState>(),
     'circadian_regulation': GlobalKey<DeepLinkTargetState>(),
     'circadian_limits': GlobalKey<DeepLinkTargetState>(),
     'language': GlobalKey<DeepLinkTargetState>(),
     'schedule_view': GlobalKey<DeepLinkTargetState>(),
     'game_mode': GlobalKey<DeepLinkTargetState>(),
+    'game_mode_brightness': GlobalKey<DeepLinkTargetState>(),
+    'game_mode_temp_toggle': GlobalKey<DeepLinkTargetState>(),
+    'game_mode_temp': GlobalKey<DeepLinkTargetState>(),
+    'game_mode_exit_delay': GlobalKey<DeepLinkTargetState>(),
+    'game_mode_whitelist': GlobalKey<DeepLinkTargetState>(),
+    'game_mode_blacklist': GlobalKey<DeepLinkTargetState>(),
     'solaris_api': GlobalKey<DeepLinkTargetState>(),
+    'api_lan_access': GlobalKey<DeepLinkTargetState>(),
+    'api_port': GlobalKey<DeepLinkTargetState>(),
+    'api_require_token': GlobalKey<DeepLinkTargetState>(),
     'webhooks': GlobalKey<DeepLinkTargetState>(),
     'api_keys': GlobalKey<DeepLinkTargetState>(),
     'updates': GlobalKey<DeepLinkTargetState>(),
@@ -416,7 +434,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           DeepLinkTarget(
             key: _anchorKeys['solaris_api'],
             id: 'solaris_api',
-            child: const ApiSettingsCard(),
+            child: ApiSettingsCard(anchorKeys: _anchorKeys),
           ),
           const SizedBox(height: 24),
 
@@ -477,36 +495,44 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  _SettingsRow(
-                    title: l10n.weatherBrightnessAdjustmentTitle,
-                    subtitle: l10n.weatherBrightnessAdjustmentSubtitle,
-                    value: settingsAsync.maybeWhen(
-                      data: (map) =>
-                          map[selectedIds.firstOrNull ?? 'all']
-                              ?.isWeatherAdjustmentEnabled ??
-                          true,
-                      orElse: () => true,
+                  DeepLinkTarget(
+                    key: _anchorKeys['weather_brightness'],
+                    id: 'weather_brightness',
+                    child: _SettingsRow(
+                      title: l10n.weatherBrightnessAdjustmentTitle,
+                      subtitle: l10n.weatherBrightnessAdjustmentSubtitle,
+                      value: settingsAsync.maybeWhen(
+                        data: (map) =>
+                            map[selectedIds.firstOrNull ?? 'all']
+                                ?.isWeatherAdjustmentEnabled ??
+                            true,
+                        orElse: () => true,
+                      ),
+                      onChanged: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateWeatherAdjustment(val),
                     ),
-                    onChanged: (val) => ref
-                        .read(settingsProvider.notifier)
-                        .updateWeatherAdjustment(val),
                   ),
                   const SizedBox(height: 16),
                   const Divider(color: Colors.white10),
                   const SizedBox(height: 16),
-                  _SettingsRow(
-                    title: l10n.weatherTemperatureAdjustmentTitle,
-                    subtitle: l10n.weatherTemperatureAdjustmentSubtitle,
-                    value: settingsAsync.maybeWhen(
-                      data: (map) =>
-                          map[selectedIds.firstOrNull ?? 'all']
-                              ?.isWeatherTemperatureAdjustmentEnabled ??
-                          true,
-                      orElse: () => true,
+                  DeepLinkTarget(
+                    key: _anchorKeys['weather_temperature'],
+                    id: 'weather_temperature',
+                    child: _SettingsRow(
+                      title: l10n.weatherTemperatureAdjustmentTitle,
+                      subtitle: l10n.weatherTemperatureAdjustmentSubtitle,
+                      value: settingsAsync.maybeWhen(
+                        data: (map) =>
+                            map[selectedIds.firstOrNull ?? 'all']
+                                ?.isWeatherTemperatureAdjustmentEnabled ??
+                            true,
+                        orElse: () => true,
+                      ),
+                      onChanged: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateWeatherTemperatureAdjustment(val),
                     ),
-                    onChanged: (val) => ref
-                        .read(settingsProvider.notifier)
-                        .updateWeatherTemperatureAdjustment(val),
                   ),
 
                   // Animated appearance of intensity slider
@@ -530,20 +556,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                             return Column(
                               children: [
-                                _IntensitySlider(
-                                  label: l10n.weatherIntensity,
-                                  value: settings.weatherAdjustmentIntensity,
-                                  color: const Color(0xFFFDBA74),
-                                  onChanged: (val) => ref
-                                      .read(settingsProvider.notifier)
-                                      .updateWeatherAdjustmentIntensity(val),
+                                DeepLinkTarget(
+                                  key: _anchorKeys['weather_intensity'],
+                                  id: 'weather_intensity',
+                                  child: _IntensitySlider(
+                                    label: l10n.weatherIntensity,
+                                    value: settings.weatherAdjustmentIntensity,
+                                    color: const Color(0xFFFDBA74),
+                                    onChanged: (val) => ref
+                                        .read(settingsProvider.notifier)
+                                        .updateWeatherAdjustmentIntensity(val),
+                                  ),
                                 ),
                                 const SizedBox(height: 24),
-                                _WeatherProviderSelector(
-                                  selectedProvider: settings.weatherProvider,
-                                  onChanged: (WeatherProvider provider) => ref
-                                      .read(settingsProvider.notifier)
-                                      .updateWeatherProvider(provider),
+                                DeepLinkTarget(
+                                  key: _anchorKeys['weather_provider'],
+                                  id: 'weather_provider',
+                                  child: _WeatherProviderSelector(
+                                    selectedProvider: settings.weatherProvider,
+                                    onChanged: (WeatherProvider provider) => ref
+                                        .read(settingsProvider.notifier)
+                                        .updateWeatherProvider(provider),
+                                  ),
                                 ),
                               ],
                             );
@@ -1637,93 +1671,117 @@ class _SmartExclusionsCard extends ConsumerWidget {
                 const SizedBox(height: 24),
                 const Divider(color: Colors.white10),
                 const SizedBox(height: 24),
-                _SmoothSettingSlider(
-                  title: l10n.lockedBrightness,
-                  value: settings.gameModeBrightness,
-                  min: 0,
-                  max: 100,
-                  useBrightnessPalette: true,
-                  activeColor: const Color(0xFFFDBA74),
-                  valueFormat: (val) => l10n.chartPercentFormat(val.round()),
-                  onChangeEnd: (val) {
-                    ref
-                        .read(settingsProvider.notifier)
-                        .updateGameModeBrightness(val);
-                  },
+                DeepLinkTarget(
+                  key: anchorKeys['game_mode_brightness'],
+                  id: 'game_mode_brightness',
+                  child: _SmoothSettingSlider(
+                    title: l10n.lockedBrightness,
+                    value: settings.gameModeBrightness,
+                    min: 0,
+                    max: 100,
+                    useBrightnessPalette: true,
+                    activeColor: const Color(0xFFFDBA74),
+                    valueFormat: (val) => l10n.chartPercentFormat(val.round()),
+                    onChangeEnd: (val) {
+                      ref
+                          .read(settingsProvider.notifier)
+                          .updateGameModeBrightness(val);
+                    },
+                  ),
                 ),
                 const SizedBox(height: 24),
                 const Divider(color: Colors.white10),
                 const SizedBox(height: 24),
-                _SettingsRow(
-                  title: l10n.enableGameModeTemperature,
-                  subtitle: l10n.enableGameModeTemperatureSubtitle,
-                  value: settings.isGameModeTemperatureEnabled,
-                  onChanged: (val) => ref
-                      .read(settingsProvider.notifier)
-                      .updateGameModeTemperatureEnabled(val),
+                DeepLinkTarget(
+                  key: anchorKeys['game_mode_temp_toggle'],
+                  id: 'game_mode_temp_toggle',
+                  child: _SettingsRow(
+                    title: l10n.enableGameModeTemperature,
+                    subtitle: l10n.enableGameModeTemperatureSubtitle,
+                    value: settings.isGameModeTemperatureEnabled,
+                    onChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateGameModeTemperatureEnabled(val),
+                  ),
                 ),
                 if (settings.isGameModeTemperatureEnabled) ...[
                   const SizedBox(height: 24),
-                  _SmoothSettingSlider(
-                    title: l10n.lockedTemperature,
-                    value: settings.gameModeTemperature,
-                    min: 3300,
-                    max: 6500,
-                    isReversed: true,
-                    useTemperaturePalette: true,
-                    activeColor: const Color(0xFF60A5FA),
-                    valueFormat: (val) => '${val.round()} K',
-                    onChangeEnd: (val) {
-                      ref
-                          .read(settingsProvider.notifier)
-                          .updateGameModeTemperature(val);
-                    },
+                  DeepLinkTarget(
+                    key: anchorKeys['game_mode_temp'],
+                    id: 'game_mode_temp',
+                    child: _SmoothSettingSlider(
+                      title: l10n.lockedTemperature,
+                      value: settings.gameModeTemperature,
+                      min: 3300,
+                      max: 6500,
+                      isReversed: true,
+                      useTemperaturePalette: true,
+                      activeColor: const Color(0xFF60A5FA),
+                      valueFormat: (val) => '${val.round()} K',
+                      onChangeEnd: (val) {
+                        ref
+                            .read(settingsProvider.notifier)
+                            .updateGameModeTemperature(val);
+                      },
+                    ),
                   ),
                 ],
                 const SizedBox(height: 24),
                 const Divider(color: Colors.white10),
                 const SizedBox(height: 24),
-                _SmoothSettingSlider(
-                  title: l10n.gameModeExitDelay,
-                  subtitle: l10n.gameModeExitDelaySubtitle,
-                  value: settings.gameModeExitDelaySeconds.toDouble(),
-                  min: 0,
-                  max: 300,
-                  activeColor: const Color(0xFFA855F7),
-                  valueFormat: (val) => '${val.round()} s',
-                  onChangeEnd: (val) {
-                    ref
-                        .read(settingsProvider.notifier)
-                        .updateGameModeExitDelaySeconds(val.round());
-                  },
+                DeepLinkTarget(
+                  key: anchorKeys['game_mode_exit_delay'],
+                  id: 'game_mode_exit_delay',
+                  child: _SmoothSettingSlider(
+                    title: l10n.gameModeExitDelay,
+                    subtitle: l10n.gameModeExitDelaySubtitle,
+                    value: settings.gameModeExitDelaySeconds.toDouble(),
+                    min: 0,
+                    max: 300,
+                    activeColor: const Color(0xFFA855F7),
+                    valueFormat: (val) => '${val.round()} s',
+                    onChangeEnd: (val) {
+                      ref
+                          .read(settingsProvider.notifier)
+                          .updateGameModeExitDelaySeconds(val.round());
+                    },
+                  ),
                 ),
                 const SizedBox(height: 24),
                 const Divider(color: Colors.white10),
                 const SizedBox(height: 24),
-                _AppListManager(
-                  title: l10n.whitelist,
-                  subtitle: l10n.whitelistSubtitle,
-                  items: settings.gameModeWhitelist,
-                  onAdd: (item) => ref
-                      .read(settingsProvider.notifier)
-                      .addWhitelistItem(item),
-                  onRemove: (item) => ref
-                      .read(settingsProvider.notifier)
-                      .removeWhitelistItem(item),
-                  accentColor: const Color(0xFFA855F7),
+                DeepLinkTarget(
+                  key: anchorKeys['game_mode_whitelist'],
+                  id: 'game_mode_whitelist',
+                  child: _AppListManager(
+                    title: l10n.whitelist,
+                    subtitle: l10n.whitelistSubtitle,
+                    items: settings.gameModeWhitelist,
+                    onAdd: (item) => ref
+                        .read(settingsProvider.notifier)
+                        .addWhitelistItem(item),
+                    onRemove: (item) => ref
+                        .read(settingsProvider.notifier)
+                        .removeWhitelistItem(item),
+                    accentColor: const Color(0xFFA855F7),
+                  ),
                 ),
                 const SizedBox(height: 24),
-                _AppListManager(
-                  title: l10n.blacklist,
-                  subtitle: l10n.blacklistSubtitle,
-                  items: settings.gameModeBlacklist,
-                  onAdd: (item) => ref
-                      .read(settingsProvider.notifier)
-                      .addBlacklistItem(item),
-                  onRemove: (item) => ref
-                      .read(settingsProvider.notifier)
-                      .removeBlacklistItem(item),
-                  accentColor: Colors.redAccent,
+                DeepLinkTarget(
+                  key: anchorKeys['game_mode_blacklist'],
+                  id: 'game_mode_blacklist',
+                  child: _AppListManager(
+                    title: l10n.blacklist,
+                    subtitle: l10n.blacklistSubtitle,
+                    items: settings.gameModeBlacklist,
+                    onAdd: (item) => ref
+                        .read(settingsProvider.notifier)
+                        .addBlacklistItem(item),
+                    onRemove: (item) => ref
+                        .read(settingsProvider.notifier)
+                        .removeBlacklistItem(item),
+                    accentColor: Colors.redAccent,
+                  ),
                 ),
               ],
             ],
@@ -1793,77 +1851,97 @@ class _GlobalHotkeysCard extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 24),
-              _HotkeyRow(
-                label: l10n.nextPreset,
-                hotKeyJson: settings.nextPresetHotKey,
-                onChanged: (newHotKey) {
-                  ref
-                      .read(settingsProvider.notifier)
-                      .updateHotkey('next_preset', newHotKey?.toJson());
-                },
-              ),
-              const SizedBox(height: 16),
-              const Divider(color: Colors.white10),
-              const SizedBox(height: 16),
-              _HotkeyRow(
-                label: l10n.prevPreset,
-                hotKeyJson: settings.prevPresetHotKey,
-                onChanged: (newHotKey) {
-                  ref
-                      .read(settingsProvider.notifier)
-                      .updateHotkey('prev_preset', newHotKey?.toJson());
-                },
-              ),
-              const SizedBox(height: 16),
-              const Divider(color: Colors.white10),
-              const SizedBox(height: 16),
-              _HotkeyRow(
-                label: l10n.increaseBrightness,
-                hotKeyJson: settings.brightnessUpHotKey,
-                trailing: _StepAdjustmentControl(
-                  value: settings.brightnessStepUp,
-                  onChanged: (val) => ref
-                      .read(settingsProvider.notifier)
-                      .updateBrightnessStep(true, val),
+              DeepLinkTarget(
+                key: anchorKeys['hotkeys_next_preset'],
+                id: 'hotkeys_next_preset',
+                child: _HotkeyRow(
+                  label: l10n.nextPreset,
+                  hotKeyJson: settings.nextPresetHotKey,
+                  onChanged: (newHotKey) {
+                    ref
+                        .read(settingsProvider.notifier)
+                        .updateHotkey('next_preset', newHotKey?.toJson());
+                  },
                 ),
-                onChanged: (newHotKey) {
-                  ref
-                      .read(settingsProvider.notifier)
-                      .updateHotkey('brightness_up', newHotKey?.toJson());
-                },
               ),
               const SizedBox(height: 16),
               const Divider(color: Colors.white10),
               const SizedBox(height: 16),
-              _HotkeyRow(
-                label: l10n.decreaseBrightness,
-                hotKeyJson: settings.brightnessDownHotKey,
-                trailing: _StepAdjustmentControl(
-                  value: settings.brightnessStepDown,
-                  onChanged: (val) => ref
-                      .read(settingsProvider.notifier)
-                      .updateBrightnessStep(false, val),
+              DeepLinkTarget(
+                key: anchorKeys['hotkeys_prev_preset'],
+                id: 'hotkeys_prev_preset',
+                child: _HotkeyRow(
+                  label: l10n.prevPreset,
+                  hotKeyJson: settings.prevPresetHotKey,
+                  onChanged: (newHotKey) {
+                    ref
+                        .read(settingsProvider.notifier)
+                        .updateHotkey('prev_preset', newHotKey?.toJson());
+                  },
                 ),
-                onChanged: (newHotKey) {
-                  ref
-                      .read(settingsProvider.notifier)
-                      .updateHotkey('brightness_down', newHotKey?.toJson());
-                },
               ),
               const SizedBox(height: 16),
               const Divider(color: Colors.white10),
               const SizedBox(height: 16),
-              _HotkeyRow(
-                label: l10n.toggleAutoBrightness,
-                hotKeyJson: settings.autoBrightnessHotKey,
-                onChanged: (newHotKey) {
-                  ref
-                      .read(settingsProvider.notifier)
-                      .updateHotkey(
-                        'auto_brightness_toggle',
-                        newHotKey?.toJson(),
-                      );
-                },
+              DeepLinkTarget(
+                key: anchorKeys['hotkeys_brightness_up'],
+                id: 'hotkeys_brightness_up',
+                child: _HotkeyRow(
+                  label: l10n.increaseBrightness,
+                  hotKeyJson: settings.brightnessUpHotKey,
+                  trailing: _StepAdjustmentControl(
+                    value: settings.brightnessStepUp,
+                    onChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateBrightnessStep(true, val),
+                  ),
+                  onChanged: (newHotKey) {
+                    ref
+                        .read(settingsProvider.notifier)
+                        .updateHotkey('brightness_up', newHotKey?.toJson());
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Divider(color: Colors.white10),
+              const SizedBox(height: 16),
+              DeepLinkTarget(
+                key: anchorKeys['hotkeys_brightness_down'],
+                id: 'hotkeys_brightness_down',
+                child: _HotkeyRow(
+                  label: l10n.decreaseBrightness,
+                  hotKeyJson: settings.brightnessDownHotKey,
+                  trailing: _StepAdjustmentControl(
+                    value: settings.brightnessStepDown,
+                    onChanged: (val) => ref
+                        .read(settingsProvider.notifier)
+                        .updateBrightnessStep(false, val),
+                  ),
+                  onChanged: (newHotKey) {
+                    ref
+                        .read(settingsProvider.notifier)
+                        .updateHotkey('brightness_down', newHotKey?.toJson());
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Divider(color: Colors.white10),
+              const SizedBox(height: 16),
+              DeepLinkTarget(
+                key: anchorKeys['hotkeys_auto_brightness_toggle'],
+                id: 'hotkeys_auto_brightness_toggle',
+                child: _HotkeyRow(
+                  label: l10n.toggleAutoBrightness,
+                  hotKeyJson: settings.autoBrightnessHotKey,
+                  onChanged: (newHotKey) {
+                    ref
+                        .read(settingsProvider.notifier)
+                        .updateHotkey(
+                          'auto_brightness_toggle',
+                          newHotKey?.toJson(),
+                        );
+                  },
+                ),
               ),
             ],
           ),
