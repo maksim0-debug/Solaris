@@ -1642,7 +1642,8 @@ class _SmartExclusionsCard extends ConsumerWidget {
                   value: settings.gameModeBrightness,
                   min: 0,
                   max: 100,
-                  activeColor: const Color(0xFFA855F7),
+                  useBrightnessPalette: true,
+                  activeColor: const Color(0xFFFDBA74),
                   valueFormat: (val) => l10n.chartPercentFormat(val.round()),
                   onChangeEnd: (val) {
                     ref
@@ -2731,6 +2732,7 @@ class _SmoothSettingSlider extends StatefulWidget {
     required this.onChangeEnd,
     this.isReversed = false,
     this.useTemperaturePalette = false,
+    this.useBrightnessPalette = false,
   });
 
   final String title;
@@ -2743,6 +2745,7 @@ class _SmoothSettingSlider extends StatefulWidget {
   final ValueChanged<double> onChangeEnd;
   final bool isReversed;
   final bool useTemperaturePalette;
+  final bool useBrightnessPalette;
 
   @override
   State<_SmoothSettingSlider> createState() => _SmoothSettingSliderState();
@@ -2784,7 +2787,14 @@ class _SmoothSettingSliderState extends State<_SmoothSettingSlider> {
     }
 
     final Color currentActiveColor;
-    if (widget.useTemperaturePalette) {
+    if (widget.useBrightnessPalette) {
+      final double progress = (clamped - widget.min) / (widget.max - widget.min);
+      currentActiveColor = Color.lerp(
+        const Color(0xFFFDBA74),
+        const Color(0xFFF97316),
+        progress.clamp(0.0, 1.0),
+      )!;
+    } else if (widget.useTemperaturePalette) {
       final double progress = widget.isReversed
           ? sliderValue
           : (clamped - widget.min) / (widget.max - widget.min);
@@ -2837,12 +2847,22 @@ class _SmoothSettingSliderState extends State<_SmoothSettingSlider> {
           ],
         ),
         SliderTheme(
-          data: widget.useTemperaturePalette
+          data: widget.useBrightnessPalette
               ? SliderTheme.of(context).copyWith(
+                  trackShape: const _SmoothGradientTrackShape(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFFFDBA74), Color(0xFFF97316)],
+                    ),
+                  ),
                   activeTrackColor: currentActiveColor,
                   thumbColor: currentActiveColor,
                 )
-              : SliderTheme.of(context),
+              : widget.useTemperaturePalette
+                  ? SliderTheme.of(context).copyWith(
+                      activeTrackColor: currentActiveColor,
+                      thumbColor: currentActiveColor,
+                    )
+                  : SliderTheme.of(context),
           child: Slider(
             value: sliderValue.clamp(sliderMin, sliderMax),
             min: sliderMin,
@@ -2876,6 +2896,70 @@ class _SmoothSettingSliderState extends State<_SmoothSettingSlider> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SmoothGradientTrackShape extends RoundedRectSliderTrackShape {
+  final LinearGradient gradient;
+
+  const _SmoothGradientTrackShape({required this.gradient});
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset offset, {
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required Animation<double> enableAnimation,
+    required TextDirection textDirection,
+    required Offset thumbCenter,
+    Offset? secondaryOffset,
+    bool isDiscrete = false,
+    bool isEnabled = false,
+    double additionalActiveTrackHeight = 0,
+  }) {
+    final canvas = context.canvas;
+    final trackRect = getPreferredRect(
+      parentBox: parentBox,
+      offset: offset,
+      sliderTheme: sliderTheme,
+      isEnabled: isEnabled,
+      isDiscrete: isDiscrete,
+    );
+
+    // Inactive track
+    final inactivePaint = Paint()
+      ..color = sliderTheme.inactiveTrackColor ?? Colors.white10;
+    canvas.drawRRect(
+      RRect.fromLTRBAndCorners(
+        trackRect.left,
+        trackRect.top,
+        trackRect.right,
+        trackRect.bottom,
+        topLeft: const Radius.circular(10),
+        bottomLeft: const Radius.circular(10),
+        topRight: const Radius.circular(10),
+        bottomRight: const Radius.circular(10),
+      ),
+      inactivePaint,
+    );
+
+    // Active track with gradient
+    final activePaint = Paint()..shader = gradient.createShader(trackRect);
+
+    canvas.drawRRect(
+      RRect.fromLTRBAndCorners(
+        trackRect.left,
+        trackRect.top,
+        thumbCenter.dx,
+        trackRect.bottom,
+        topLeft: const Radius.circular(10),
+        bottomLeft: const Radius.circular(10),
+        topRight: Radius.zero,
+        bottomRight: Radius.zero,
+      ),
+      activePaint,
     );
   }
 }
