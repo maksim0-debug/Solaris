@@ -172,31 +172,60 @@ class CircadianService {
       );
     }
 
-    // Промежуточный clamp (предотвращает уход ниже минимума до применения smart-факторов)
-    final int afterWeatherClamped =
-        (baseTemperature - weatherDrop).clamp(3300.0, 6500.0).toInt();
+    final int minAllowed = curvePoints.isNotEmpty
+        ? curvePoints.first.y.toInt().clamp(1900, 6500)
+        : 3300;
+    const int maxAllowed = 6500;
 
-    // Эффективный погодный сдвиг (учитывает промежуточный clamp)
-    final int effectiveWeatherImpact = afterWeatherClamped - baseTemperature;
+    // Unclamped theoretical temperature
+    final double theoreticalFinal = baseTemperature -
+        weatherDrop +
+        smartData.sleepPressureTemperatureOffset +
+        smartData.windDownTemperatureOffset +
+        smartData.sleepDebtTemperatureOffset;
 
-    // Раскладка smart-факторов по компонентам
-    final int sleepPressureImpact = smartData.sleepPressureTemperatureOffset;
-    final int windDownImpact = smartData.windDownTemperatureOffset;
-    final int sleepDebtImpact = smartData.sleepDebtTemperatureOffset;
+    final int finalTemperature =
+        theoreticalFinal.round().clamp(minAllowed, maxAllowed);
 
-    // Apply Smart Offsets (Sleep Pressure + Wind-down + Sleep Debt)
-    final int afterSmart =
-        afterWeatherClamped + sleepPressureImpact + windDownImpact + sleepDebtImpact;
+    // Proportional distribution logic matching brightness calculation
+    if (finalTemperature < baseTemperature) {
+      final int totalReduction = baseTemperature - finalTemperature;
 
-    // Финальный clamp
-    final int finalTemperature = afterSmart.clamp(3300, 6500);
+      final double wWeather = weatherDrop > 0 ? weatherDrop : 0.0;
+      final double wPressure = smartData.sleepPressureTemperatureOffset < 0
+          ? smartData.sleepPressureTemperatureOffset.abs().toDouble()
+          : 0.0;
+      final double wWindDown = smartData.windDownTemperatureOffset < 0
+          ? smartData.windDownTemperatureOffset.abs().toDouble()
+          : 0.0;
+      final double wDebt = smartData.sleepDebtTemperatureOffset < 0
+          ? smartData.sleepDebtTemperatureOffset.abs().toDouble()
+          : 0.0;
+
+      final double sumOfWeights = wWeather + wPressure + wWindDown + wDebt;
+
+      if (sumOfWeights > 0) {
+        return TemperatureCalculationResult(
+          baseTemperature: baseTemperature,
+          weatherImpact:
+              -(totalReduction * (wWeather / sumOfWeights)).round(),
+          sleepPressureImpact:
+              -(totalReduction * (wPressure / sumOfWeights)).round(),
+          windDownImpact:
+              -(totalReduction * (wWindDown / sumOfWeights)).round(),
+          sleepDebtImpact:
+              -(totalReduction * (wDebt / sumOfWeights)).round(),
+          finalTemperature: finalTemperature,
+        );
+      }
+    }
 
     return TemperatureCalculationResult(
       baseTemperature: baseTemperature,
-      weatherImpact: effectiveWeatherImpact,
-      sleepPressureImpact: sleepPressureImpact,
-      windDownImpact: windDownImpact,
-      sleepDebtImpact: sleepDebtImpact,
+      weatherImpact: 0,
+      sleepPressureImpact: 0,
+      windDownImpact: 0,
+      sleepDebtImpact: 0,
       finalTemperature: finalTemperature,
     );
   }

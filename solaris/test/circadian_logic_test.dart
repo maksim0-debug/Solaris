@@ -190,27 +190,32 @@ void main() {
         expect(result.finalTemperature, 6100);
       });
 
-      test('should apply smart offsets and respect double clamp logic', () {
+      test('should apply smart offsets and respect clamp logic with proportional impact', () {
         final smartData = const SmartCircadianData.neutral().copyWith(
-          sleepPressureTemperatureOffset: -200,
-          windDownTemperatureOffset: -3000, // very low to trigger clamp
+          sleepPressureTemperatureOffset: -1000,
+          windDownTemperatureOffset: -3000,
         );
 
-        // base=6500. Weather=null. afterWeather=6500.
-        // smart total offset = -3200 -> 3300.
-        // final clamp should restrict it to 3300 K.
+        // Elevation 0.0 -> base = 5000 K
+        // Total raw offset = -4000 K -> theoretical 1000 K.
+        // Clamped final = 3300 K.
+        // Total reduction = 5000 - 3300 = 1700 K.
+        // windDown weight = 3000, pressure weight = 1000 (total = 4000).
+        // windDownImpact = -1700 * 3000 / 4000 = -1275 K.
+        // sleepPressureImpact = -1700 * 1000 / 4000 = -425 K.
         final result = service.calculateTargetTemperature(
           phases,
-          10.0,
+          0.0,
           now,
           curvePoints: tempPoints,
           smartData: smartData,
         );
 
-        expect(result.baseTemperature, 6500);
-        expect(result.sleepPressureImpact, -200);
-        expect(result.windDownImpact, -3000);
-        expect(result.finalTemperature, 3300); // clamped to 3300 (not 3100)
+        expect(result.baseTemperature, 5000);
+        expect(result.sleepPressureImpact, -425);
+        expect(result.windDownImpact, -1275);
+        expect(result.finalTemperature, 3300);
+        expect(result.baseTemperature + result.sleepPressureImpact + result.windDownImpact, 3300);
       });
     });
   });
