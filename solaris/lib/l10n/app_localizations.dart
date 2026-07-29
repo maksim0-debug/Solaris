@@ -1767,6 +1767,24 @@ abstract class AppLocalizations {
   /// **'Coordinates unavailable'**
   String get coordinatesUnavailable;
 
+  /// No description provided for @autoLocationFailedTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-location failed. Using system timezone (weather effects disabled). Try picking a location on the map or entering coordinates manually.'**
+  String get autoLocationFailedTooltip;
+
+  /// No description provided for @systemTimezoneFallbackTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'System Timezone'**
+  String get systemTimezoneFallbackTitle;
+
+  /// No description provided for @coordinatesNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Coordinates not specified'**
+  String get coordinatesNotSet;
+
   /// No description provided for @north.
   ///
   /// In en, this message translates to:

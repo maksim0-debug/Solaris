@@ -950,6 +950,16 @@ class AppLocalizationsUk extends AppLocalizations {
   String get coordinatesUnavailable => 'Координати недоступні';
 
   @override
+  String get autoLocationFailedTooltip =>
+      'Автовизначення геопозиції не спрацювало. Використовується системний часовий пояс (погодні ефекти вимкнено). Спробуйте обрати розташування на карті або ввести координати вручну.';
+
+  @override
+  String get systemTimezoneFallbackTitle => 'Системний часовий пояс';
+
+  @override
+  String get coordinatesNotSet => 'Координати не визначені';
+
+  @override
   String get north => 'Пн';
 
   @override

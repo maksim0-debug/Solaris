@@ -951,6 +951,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get coordinatesUnavailable => 'Coordinates unavailable';
 
   @override
+  String get autoLocationFailedTooltip =>
+      'Auto-location failed. Using system timezone (weather effects disabled). Try picking a location on the map or entering coordinates manually.';
+
+  @override
+  String get systemTimezoneFallbackTitle => 'System Timezone';
+
+  @override
+  String get coordinatesNotSet => 'Coordinates not specified';
+
+  @override
   String get north => 'N';
 
   @override

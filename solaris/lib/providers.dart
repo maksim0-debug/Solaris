@@ -340,9 +340,22 @@ class WeatherNotifier extends AsyncNotifier<WeatherData?> {
 
   @override
   Future<WeatherData?> build() async {
-    final locationAsync = ref.watch(effectiveLocationProvider);
+    final coordsAvailable = ref.watch(coordinatesAvailableProvider);
     final weatherService = ref.watch(weatherServiceProvider);
     final settingsAsync = ref.watch(settingsProvider);
+
+    // При уничтожении - очищаем старый таймер
+    ref.onDispose(() {
+      _timer?.cancel();
+    });
+
+    if (!coordsAvailable) {
+      _timer?.cancel();
+      _lastKnownWeather = null;
+      return null;
+    }
+
+    final locationAsync = ref.watch(effectiveLocationProvider);
 
     final provider = settingsAsync.maybeWhen(
       data: (map) => map['all']?.weatherProvider ?? WeatherProvider.auto,
@@ -353,11 +366,6 @@ class WeatherNotifier extends AsyncNotifier<WeatherData?> {
       data: (map) => map['all']?.customWeatherApiKey,
       orElse: () => null,
     );
-
-    // При уничтожении - очищаем старый таймер
-    ref.onDispose(() {
-      _timer?.cancel();
-    });
 
     // Получаем текущую локацию (уже с сохранением старого state при загрузке)
     final pos = locationAsync.value;
@@ -501,20 +509,89 @@ final locationSettingsProvider =
       LocationSettingsNotifier.new,
     );
 
-final _defaultPosition = Position(
-  latitude: 50.4547, // Default Kyiv
-  longitude: 30.5238,
-  timestamp: DateTime.now(),
-  accuracy: 0,
-  altitude: 0,
-  heading: 0,
-  speed: 0,
-  speedAccuracy: 0,
-  altitudeAccuracy: 0,
-  headingAccuracy: 0,
-);
+Position getTimezoneFallbackCoordinates(tz.Location tzLocation) {
+  final name = tzLocation.name;
+
+  final knownMap = <String, (double, double)>{
+    'Europe/Kyiv': (50.4547, 30.5238),
+    'Europe/Kiev': (50.4547, 30.5238),
+    'America/New_York': (40.7128, -74.0060),
+    'America/Detroit': (42.3314, -83.0458),
+    'America/Chicago': (41.8781, -87.6298),
+    'America/Denver': (39.7392, -104.9903),
+    'America/Los_Angeles': (34.0522, -118.2437),
+    'America/Phoenix': (33.4484, -112.0740),
+    'America/Anchorage': (61.2181, -149.9003),
+    'Pacific/Honolulu': (21.3069, -157.8583),
+    'Europe/London': (51.5074, -0.1278),
+    'Europe/Paris': (48.8566, 2.3522),
+    'Europe/Berlin': (52.5200, 13.4050),
+    'Europe/Rome': (41.9028, 12.4964),
+    'Europe/Madrid': (40.4168, -3.7038),
+    'Europe/Warsaw': (52.2297, 21.0122),
+    'Europe/Prague': (50.0755, 14.4378),
+    'Europe/Bucharest': (44.4323, 26.1063),
+    'Asia/Tokyo': (35.6762, 139.6503),
+    'Asia/Shanghai': (31.2304, 121.4737),
+    'Asia/Hong_Kong': (22.3193, 114.1694),
+    'Asia/Singapore': (1.3521, 103.8198),
+    'Asia/Bangkok': (13.7563, 100.5018),
+    'Asia/Dubai': (25.2048, 55.2708),
+    'Asia/Tashkent': (41.2995, 69.2401),
+    'Asia/Almaty': (43.2220, 76.8512),
+    'Australia/Sydney': (-33.8688, 151.2093),
+    'Australia/Melbourne': (-37.8136, 144.9631),
+    'America/Sao_Paulo': (-23.5505, -46.6333),
+    'America/Buenos_Aires': (-34.6037, -58.3816),
+    'Africa/Cairo': (30.0444, 31.2357),
+    'Africa/Johannesburg': (-26.2041, 28.0473),
+  };
+
+  if (knownMap.containsKey(name)) {
+    final (lat, lon) = knownMap[name]!;
+    return Position(
+      latitude: lat,
+      longitude: lon,
+      timestamp: DateTime.now(),
+      accuracy: 0,
+      altitude: 0,
+      heading: 0,
+      speed: 0,
+      speedAccuracy: 0,
+      altitudeAccuracy: 0,
+      headingAccuracy: 0,
+    );
+  }
+
+  final now = tz.TZDateTime.now(tzLocation);
+  final offsetHours = now.timeZoneOffset.inMinutes / 60.0;
+  final approxLon = (offsetHours * 15.0).clamp(-180.0, 180.0);
+  final approxLat = name.startsWith('Australia') ||
+          name.startsWith('America/Argentina') ||
+          name.startsWith('America/Sao_Paulo')
+      ? -30.0
+      : 45.0;
+
+  return Position(
+    latitude: approxLat,
+    longitude: approxLon,
+    timestamp: DateTime.now(),
+    accuracy: 0,
+    altitude: 0,
+    heading: 0,
+    speed: 0,
+    speedAccuracy: 0,
+    altitudeAccuracy: 0,
+    headingAccuracy: 0,
+  );
+}
 
 final effectiveLocationProvider = Provider<AsyncValue<Position>>((ref) {
+  final resolutionStatus = ref.watch(locationResolutionStatusProvider);
+  if (resolutionStatus == LocationResolutionStatus.autoFailedTimezone) {
+    return AsyncData<Position>(getTimezoneFallbackCoordinates(tz.local));
+  }
+
   final settingsVal = ref.watch(
     locationSettingsProvider.select((asyncVal) {
       final s = asyncVal.value;
@@ -527,7 +604,7 @@ final effectiveLocationProvider = Provider<AsyncValue<Position>>((ref) {
   if (settingsVal != null) {
     final (useManual, manualLatitude, manualLongitude) = settingsVal;
     if (useManual && manualLatitude != null && manualLongitude != null) {
-      return AsyncData(
+      return AsyncData<Position>(
         Position(
           latitude: manualLatitude,
           longitude: manualLongitude,
@@ -545,17 +622,45 @@ final effectiveLocationProvider = Provider<AsyncValue<Position>>((ref) {
     // Если авто-обновление включено, пытаемся сохранить предыдущие координаты при миганиях stream
     final lastPos = streamAsync.value;
     if (lastPos != null) {
-      return AsyncData(lastPos);
+      return AsyncData<Position>(lastPos);
     }
 
-    // Если предыдущих данных нет (например первый запуск), то ждем данных или используем дефолт
+    // Если предыдущих данных нет (например первый запуск), то ждем данных или используем дефолт по часовому поясу
     return streamAsync.maybeWhen(
-      data: (pos) => AsyncData(pos),
-      orElse: () => AsyncData(_defaultPosition),
+      data: (pos) => AsyncData<Position>(pos),
+      orElse: () => AsyncData<Position>(getTimezoneFallbackCoordinates(tz.local)),
     );
   }
 
-  return AsyncData(_defaultPosition);
+  return AsyncData<Position>(getTimezoneFallbackCoordinates(tz.local));
+});
+
+enum LocationResolutionStatus {
+  manual,
+  autoSuccess,
+  autoFailedTimezone,
+}
+
+final locationResolutionStatusProvider =
+    Provider<LocationResolutionStatus>((ref) {
+  final settingsAsync = ref.watch(locationSettingsProvider);
+  final streamAsync = ref.watch(locationStreamProvider);
+
+  final settings = settingsAsync.value;
+  if (settings == null) return LocationResolutionStatus.autoFailedTimezone;
+
+  if (settings.useManual) {
+    if (settings.manualLatitude != null && settings.manualLongitude != null) {
+      return LocationResolutionStatus.manual;
+    }
+    return LocationResolutionStatus.autoFailedTimezone;
+  }
+
+  if (streamAsync.hasValue && streamAsync.value != null) {
+    return LocationResolutionStatus.autoSuccess;
+  }
+
+  return LocationResolutionStatus.autoFailedTimezone;
 });
 
 final geocodingServiceProvider = Provider((ref) => GeocodingService());
@@ -563,10 +668,20 @@ final geocodingServiceProvider = Provider((ref) => GeocodingService());
 const _maxCityCacheDistanceDegrees = 0.01;
 
 final locationCityProvider = FutureProvider<GeocodingResult>((ref) async {
+  final resolutionStatus = ref.watch(locationResolutionStatusProvider);
   final locationAsync = ref.watch(effectiveLocationProvider);
   final locale = ref.watch(localeProvider);
   final settingsAsync = ref.watch(settingsProvider);
   final locationSettings = await ref.read(locationSettingsProvider.future);
+
+  if (resolutionStatus == LocationResolutionStatus.autoFailedTimezone) {
+    final timezoneVal = ref.watch(effectiveTimezoneProvider);
+    return GeocodingResult(
+      name: timezoneVal.name,
+      isOffline: true,
+      offlineReason: OfflineReason.apiError,
+    );
+  }
 
   final customToken = settingsAsync.maybeWhen(
     data: (map) => map['all']?.customMapboxToken,
@@ -624,19 +739,8 @@ final locationCityProvider = FutureProvider<GeocodingResult>((ref) async {
 });
 
 final coordinatesAvailableProvider = Provider<bool>((ref) {
-  final settingsAsync = ref.watch(locationSettingsProvider);
-  final streamAsync = ref.watch(locationStreamProvider);
-
-  final settings = settingsAsync.value;
-  if (settings == null) return false;
-
-  if (settings.useManual &&
-      settings.manualLatitude != null &&
-      settings.manualLongitude != null) {
-    return true;
-  }
-
-  return streamAsync.hasValue && streamAsync.value != null;
+  final resolutionStatus = ref.watch(locationResolutionStatusProvider);
+  return resolutionStatus != LocationResolutionStatus.autoFailedTimezone;
 });
 
 final effectiveTimezoneProvider = Provider<tz.Location>((ref) {

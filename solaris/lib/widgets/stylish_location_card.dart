@@ -27,6 +27,7 @@ class StylishLocationCard extends ConsumerWidget {
     final weatherAsync = ref.watch(currentWeatherProvider);
     final settingsAsync = ref.watch(settingsProvider);
     final timezoneVal = ref.watch(effectiveTimezoneProvider);
+    final resolutionStatus = ref.watch(locationResolutionStatusProvider);
 
     return solarAsync.maybeWhen(
       data: (solarState) {
@@ -58,101 +59,119 @@ class StylishLocationCard extends ConsumerWidget {
                 Positioned.fill(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(24),
-                    child: !isMapTokenValid
-                        ? Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Container(
-                                color: const Color(0xFF0F172A),
-                                child: const Center(
-                                  child: Opacity(
-                                    opacity: 0.05,
-                                    child: Icon(
-                                      LucideIcons.map,
-                                      size: 100,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(24),
-                                child: ImageFiltered(
-                                  imageFilter: ui.ImageFilter.blur(
-                                    sigmaX: 8,
-                                    sigmaY: 8,
-                                  ),
-                                  child: Container(
-                                    color: Colors.black.withOpacity(0.2),
-                                  ),
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: () {
-                                  ref
-                                      .read(activeScreenProvider.notifier)
-                                      .setScreen(AppScreen.settings);
-                                  ref
-                                      .read(searchAnchorProvider.notifier)
-                                      .setAnchor('api_keys');
-                                },
-                                child: MouseRegion(
-                                  cursor: SystemMouseCursors.click,
-                                  child: Tooltip(
-                                    message: l10n.mapboxTokenMissingTooltip,
-                                    preferBelow: false,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(10),
-                                      decoration: BoxDecoration(
-                                        color: Colors.black54,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: accentColor.withOpacity(0.5),
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                      child: Icon(
-                                        LucideIcons.lock,
-                                        color: accentColor,
-                                        size: 20,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          )
-                        : locationAsync.maybeWhen(
-                            data: (pos) => CachedNetworkImage(
-                              imageUrl: getStaticMapUrl(
-                                pos.latitude,
-                                pos.longitude,
-                                style: mapStyle,
-                                customToken: customToken,
-                              ),
-                              fit: BoxFit.cover,
-                              fadeInDuration: const Duration(milliseconds: 500),
-                              placeholder: (context, url) => Container(
-                                color: const Color(0xFF0F172A),
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    color: accentColor,
-                                    strokeWidth: 2,
-                                  ),
-                                ),
-                              ),
-                              errorWidget: (context, url, error) => Container(
-                                color: const Color(0xFF0F172A),
-                                child: const Icon(
+                    child: resolutionStatus ==
+                            LocationResolutionStatus.autoFailedTimezone
+                        ? Container(
+                            color: const Color(0xFF0F172A),
+                            child: const Center(
+                              child: Opacity(
+                                opacity: 0.05,
+                                child: Icon(
                                   LucideIcons.map,
-                                  color: Colors.white10,
-                                  size: 48,
+                                  size: 100,
+                                  color: Colors.white,
                                 ),
                               ),
                             ),
-                            orElse: () =>
-                                Container(color: const Color(0xFF0F172A)),
-                          ),
+                          )
+                        : !isMapTokenValid
+                            ? Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Container(
+                                    color: const Color(0xFF0F172A),
+                                    child: const Center(
+                                      child: Opacity(
+                                        opacity: 0.05,
+                                        child: Icon(
+                                          LucideIcons.map,
+                                          size: 100,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(24),
+                                    child: ImageFiltered(
+                                      imageFilter: ui.ImageFilter.blur(
+                                        sigmaX: 8,
+                                        sigmaY: 8,
+                                      ),
+                                      child: Container(
+                                        color: Colors.black.withOpacity(0.2),
+                                      ),
+                                    ),
+                                  ),
+                                  GestureDetector(
+                                    onTap: () {
+                                      ref
+                                          .read(activeScreenProvider.notifier)
+                                          .setScreen(AppScreen.settings);
+                                      ref
+                                          .read(searchAnchorProvider.notifier)
+                                          .setAnchor('api_keys');
+                                    },
+                                    child: MouseRegion(
+                                      cursor: SystemMouseCursors.click,
+                                      child: Tooltip(
+                                        message: l10n.mapboxTokenMissingTooltip,
+                                        preferBelow: false,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black54,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color:
+                                                  accentColor.withOpacity(0.5),
+                                              width: 1.5,
+                                            ),
+                                          ),
+                                          child: Icon(
+                                            LucideIcons.lock,
+                                            color: accentColor,
+                                            size: 20,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : locationAsync.maybeWhen(
+                                data: (pos) => CachedNetworkImage(
+                                  imageUrl: getStaticMapUrl(
+                                    pos.latitude,
+                                    pos.longitude,
+                                    style: mapStyle,
+                                    customToken: customToken,
+                                  ),
+                                  fit: BoxFit.cover,
+                                  fadeInDuration:
+                                      const Duration(milliseconds: 500),
+                                  placeholder: (context, url) => Container(
+                                    color: const Color(0xFF0F172A),
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        color: accentColor,
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  ),
+                                  errorWidget: (context, url, error) =>
+                                      Container(
+                                    color: const Color(0xFF0F172A),
+                                    child: const Icon(
+                                      LucideIcons.map,
+                                      color: Colors.white10,
+                                      size: 48,
+                                    ),
+                                  ),
+                                ),
+                                orElse: () =>
+                                    Container(color: const Color(0xFF0F172A)),
+                              ),
                   ),
                 ),
                 Positioned.fill(
@@ -200,7 +219,9 @@ class StylishLocationCard extends ConsumerWidget {
                 ),
 
                 // Pulsing Radar Marker
-                if (isMapTokenValid)
+                if (isMapTokenValid &&
+                    resolutionStatus !=
+                        LocationResolutionStatus.autoFailedTimezone)
                   Positioned.fill(
                     child: Center(
                       child: PulsingLocationMarker(color: accentColor),
@@ -230,13 +251,16 @@ class StylishLocationCard extends ConsumerWidget {
                       SizedBox(
                         width: double.infinity,
                         child: Text(
-                          locationAsync.maybeWhen(
-                            data: (pos) => l10n.latLonFormat(
-                              pos.latitude.toStringAsFixed(4),
-                              pos.longitude.toStringAsFixed(4),
-                            ),
-                            orElse: () => l10n.detectingLocation,
-                          ),
+                          resolutionStatus ==
+                                  LocationResolutionStatus.autoFailedTimezone
+                              ? l10n.coordinatesNotSet
+                              : locationAsync.maybeWhen(
+                                  data: (pos) => l10n.latLonFormat(
+                                    pos.latitude.toStringAsFixed(4),
+                                    pos.longitude.toStringAsFixed(4),
+                                  ),
+                                  orElse: () => l10n.detectingLocation,
+                                ),
                           textAlign: TextAlign.left,
                           style: TextStyle(
                             fontSize: 11,

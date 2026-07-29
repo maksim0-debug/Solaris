@@ -951,6 +951,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get coordinatesUnavailable => 'Координаты недоступны';
 
   @override
+  String get autoLocationFailedTooltip =>
+      'Автоопределение геопозиции не сработало. Используется системный часовой пояс (погодные эффекты отключены). Попробуйте выбрать местоположение на карте или ввести координаты вручную.';
+
+  @override
+  String get systemTimezoneFallbackTitle => 'Системный часовой пояс';
+
+  @override
+  String get coordinatesNotSet => 'Координаты не определены';
+
+  @override
   String get north => 'С';
 
   @override

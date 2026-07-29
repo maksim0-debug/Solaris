@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/services/geocoding_service.dart';
+import 'package:solaris/services/time_service.dart';
 import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/stylish_location_card.dart';
 import 'package:solaris/widgets/solar_map.dart';
@@ -81,6 +82,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
     final locationAsync = ref.watch(effectiveLocationProvider);
     final settingsAsync = ref.watch(locationSettingsProvider);
     final cityAsync = ref.watch(locationCityProvider);
+    final resolutionStatus = ref.watch(locationResolutionStatusProvider);
 
     // Update controllers when manual location is first loaded or changed outside
     ref.listen(locationSettingsProvider, (prev, next) {
@@ -230,6 +232,16 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                       const SizedBox(height: 8),
                                       locationAsync.when(
                                         data: (pos) {
+                                          if (resolutionStatus ==
+                                              LocationResolutionStatus
+                                                  .autoFailedTimezone) {
+                                            return _InfoTile(
+                                              label: l10n.location,
+                                              value: l10n.coordinatesNotSet,
+                                              icon: LucideIcons.mapPin,
+                                            );
+                                          }
+
                                           final lat = pos.latitude;
                                           final lon = pos.longitude;
                                           final latDir = lat >= 0
@@ -283,6 +295,9 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                     latitude: pos.latitude,
                                     longitude: pos.longitude,
                                     zoom: 1.5,
+                                    showMarker: resolutionStatus !=
+                                        LocationResolutionStatus
+                                            .autoFailedTimezone,
                                     onLongPress: (latLng) {
                                       ref
                                           .read(
@@ -307,78 +322,96 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                 ),
                               ),
                               // Overlay location info
-                              Positioned(
+              Positioned(
                                 bottom: 12,
                                 left: 12,
                                 child: locationAsync.maybeWhen(
-                                  data: (pos) => GlassCard(
-                                    blur: 10,
-                                    opacity: 0.1,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 12,
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          l10n.currentAnchor,
-                                          style: const TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                            color: Color(0xFFFDBA74),
-                                            letterSpacing: 1.2,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              cityAsync.value?.name ??
-                                                  "Global Coordinates",
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                              ),
+                                  data: (pos) {
+                                    final isTzFallback = resolutionStatus ==
+                                        LocationResolutionStatus
+                                            .autoFailedTimezone;
+                                    final tzLocation = ref
+                                        .watch(effectiveTimezoneProvider);
+                                    final tzName = TimeService
+                                        .formatTimezoneDisplayName(tzLocation);
+                                    final titleText = isTzFallback
+                                        ? '${l10n.systemTimezoneFallbackTitle} ($tzName)'
+                                        : (cityAsync.value?.name ??
+                                            "Global Coordinates");
+                                    final showHelpIcon = isTzFallback ||
+                                        ((cityAsync.value?.isOffline ??
+                                                false) &&
+                                            !(cityAsync.value?.isCachedCity ??
+                                                false));
+                                    final tooltipMsg = isTzFallback
+                                        ? l10n.autoLocationFailedTooltip
+                                        : _getOfflineTooltipText(
+                                            context,
+                                            cityAsync.value?.offlineReason,
+                                          );
+
+                                    return GlassCard(
+                                      blur: 10,
+                                      opacity: 0.1,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 12,
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            l10n.currentAnchor,
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFFFDBA74),
+                                              letterSpacing: 1.2,
                                             ),
-                                            if ((cityAsync.value?.isOffline ??
-                                                    false) &&
-                                                !(cityAsync
-                                                        .value
-                                                        ?.isCachedCity ??
-                                                    false)) ...[
-                                              const SizedBox(width: 6),
-                                              Tooltip(
-                                                message: _getOfflineTooltipText(
-                                                  context,
-                                                  cityAsync
-                                                      .value
-                                                      ?.offlineReason,
-                                                ),
-                                                child: const Icon(
-                                                  LucideIcons.helpCircle,
-                                                  size: 14,
-                                                  color: Colors.white54,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Row(
+                                            children: [
+                                              Text(
+                                                titleText,
+                                                style: const TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
                                                 ),
                                               ),
+                                              if (showHelpIcon) ...[
+                                                const SizedBox(width: 6),
+                                                Tooltip(
+                                                  message: tooltipMsg,
+                                                  child: const Icon(
+                                                    LucideIcons.helpCircle,
+                                                    size: 14,
+                                                    color: Colors.white54,
+                                                  ),
+                                                ),
+                                              ],
                                             ],
-                                          ],
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          l10n.latLonFormat(
-                                            pos.latitude.toStringAsFixed(4),
-                                            pos.longitude.toStringAsFixed(4),
                                           ),
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.white54,
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            isTzFallback
+                                                ? l10n.coordinatesNotSet
+                                                : l10n.latLonFormat(
+                                                    pos.latitude
+                                                        .toStringAsFixed(4),
+                                                    pos.longitude
+                                                        .toStringAsFixed(4),
+                                                  ),
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.white54,
+                                            ),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                                        ],
+                                      ),
+                                    );
+                                  },
                                   orElse: () => const SizedBox(),
                                 ),
                               ),

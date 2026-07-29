@@ -19,6 +19,7 @@ class SolarMap extends ConsumerStatefulWidget {
   final double latitude;
   final double longitude;
   final double zoom;
+  final bool showMarker;
   final void Function(LatLng latLng)? onLongPress;
 
   const SolarMap({
@@ -26,6 +27,7 @@ class SolarMap extends ConsumerStatefulWidget {
     required this.latitude,
     required this.longitude,
     this.zoom = 1.0,
+    this.showMarker = true,
     this.onLongPress,
   });
 
@@ -138,20 +140,21 @@ class _SolarMapState extends ConsumerState<SolarMap> {
               ),
             ],
           ),
-        MarkerLayer(
-          markers: [
-            Marker(
-              point: LatLng(widget.latitude, widget.longitude),
-              width: 80,
-              height: 80,
-              child: const Icon(
-                Icons.location_on,
-                color: Color(0xFFFDBA74),
-                size: 30,
+        if (widget.showMarker)
+          MarkerLayer(
+            markers: [
+              Marker(
+                point: LatLng(widget.latitude, widget.longitude),
+                width: 80,
+                height: 80,
+                child: const Icon(
+                  Icons.location_on,
+                  color: Color(0xFFFDBA74),
+                  size: 30,
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
       ],
     );
 
