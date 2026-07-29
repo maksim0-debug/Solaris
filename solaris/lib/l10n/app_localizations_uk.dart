@@ -2168,4 +2168,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get checkDdcAgain => 'Перевірити DDC/CI знову';
+
+  @override
+  String get tryAgain => 'Повторити';
 }

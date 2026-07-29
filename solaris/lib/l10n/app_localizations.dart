@@ -3743,6 +3743,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Check DDC/CI again'**
   String get checkDdcAgain;
+
+  /// No description provided for @tryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try Again'**
+  String get tryAgain;
 }
 
 class _AppLocalizationsDelegate

@@ -6,21 +6,47 @@ import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/theme/app_theme.dart';
 import 'package:solaris/widgets/glass_card.dart';
 
-class PrivacyPolicyScreen extends StatelessWidget {
+class PrivacyPolicyScreen extends StatefulWidget {
   const PrivacyPolicyScreen({super.key});
 
+  @override
+  State<PrivacyPolicyScreen> createState() => _PrivacyPolicyScreenState();
+}
+
+class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
   static const String _fontFamily = 'Outfit';
 
-  Future<String> _loadLocalizedPrivacyPolicy(BuildContext context) async {
-    final localeCode = Localizations.localeOf(context).languageCode;
-    final localizedAssetPath = 'assets/privacy_policy_$localeCode.md';
+  late Future<String> _policyFuture;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final locale = Localizations.maybeLocaleOf(context)?.languageCode;
+    _policyFuture = _loadPrivacyPolicy(locale);
+  }
+
+  Future<String> _loadPrivacyPolicy(String? languageCode) async {
+    final String assetPath;
+    if (languageCode == 'uk') {
+      assetPath = 'assets/privacy_policy_uk.md';
+    } else if (languageCode == 'ru') {
+      assetPath = 'assets/privacy_policy_ru.md';
+    } else {
+      assetPath = 'assets/privacy_policy.md';
+    }
 
     try {
-      return await rootBundle.loadString(localizedAssetPath);
+      return await rootBundle.loadString(assetPath);
     } catch (_) {
-      // Fallback to primary English policy if target language asset is missing
       return await rootBundle.loadString('assets/privacy_policy.md');
     }
+  }
+
+  void _retryLoading() {
+    setState(() {
+      final locale = Localizations.maybeLocaleOf(context)?.languageCode;
+      _policyFuture = _loadPrivacyPolicy(locale);
+    });
   }
 
   @override
@@ -60,19 +86,52 @@ class PrivacyPolicyScreen extends StatelessWidget {
           ),
         ),
         child: FutureBuilder<String>(
-          future: _loadLocalizedPrivacyPolicy(context),
+          future: _policyFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(
+                child: CircularProgressIndicator(
+                  color: AppTheme.accent,
+                ),
+              );
             }
 
-            if (snapshot.hasError || !snapshot.hasData) {
+            if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
               return Center(
-                child: Text(
-                  l10n.errorLoadingPrivacyPolicy,
-                  style: const TextStyle(
-                    fontFamily: _fontFamily,
-                    color: Colors.redAccent,
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        LucideIcons.alertTriangle,
+                        color: Colors.redAccent,
+                        size: 48,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        l10n.errorLoadingPrivacyPolicy,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontFamily: _fontFamily,
+                          color: Colors.redAccent,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      OutlinedButton.icon(
+                        onPressed: _retryLoading,
+                        icon: const Icon(LucideIcons.refreshCw, size: 18),
+                        label: Text(l10n.tryAgain),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.accent,
+                          side: const BorderSide(color: AppTheme.accent),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -80,7 +139,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
             return SafeArea(
               child: Markdown(
-                data: snapshot.data ?? 'No content available',
+                data: snapshot.data!,
                 selectable: true,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
@@ -164,3 +223,4 @@ class _GlassAppBar extends StatelessWidget {
     );
   }
 }
+

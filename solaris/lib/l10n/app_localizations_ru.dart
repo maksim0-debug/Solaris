@@ -2174,4 +2174,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get checkDdcAgain => 'Проверить DDC/CI снова';
+
+  @override
+  String get tryAgain => 'Повторить';
 }

@@ -964,7 +964,8 @@
   "searchingCities": "Searching cities...",
   "noCitiesFound": "No cities found",
   "ddcNotSupportedTooltip": "This monitor does not support DDC/CI or it is disabled in settings.\nBrightness adjustment is unavailable, but temperature regulation works.",
-  "checkDdcAgain": "Check DDC/CI again"
+  "checkDdcAgain": "Check DDC/CI again",
+  "tryAgain": "Try Again"
 }
 
 

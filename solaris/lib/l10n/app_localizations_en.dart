@@ -2155,4 +2155,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get checkDdcAgain => 'Check DDC/CI again';
+
+  @override
+  String get tryAgain => 'Try Again';
 }
