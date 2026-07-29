@@ -1624,6 +1624,20 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     );
   }
 
+  void updateGameModeTemperatureEnabled(bool enabled) {
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(isGameModeTemperatureEnabled: enabled),
+    );
+  }
+
+  void updateGameModeTemperature(double temperature) {
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(gameModeTemperature: temperature),
+    );
+  }
+
   void updateGameModeExitDelaySeconds(int seconds) {
     _updateSettings(
       ref.read(selectedMonitorsProvider),
@@ -2686,7 +2700,22 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
             }
 
             // Calculate and Apply Temperature
-            if (tempSettings.isEnabled && isTempEnabled) {
+            if (isGamingMode &&
+                settings.isGameModeEnabled &&
+                settings.isGameModeTemperatureEnabled &&
+                isTempEnabled) {
+              final targetTemp = settings.gameModeTemperature;
+              tempService.applyTemperatureSmoothly(
+                selection: monitor.deviceName,
+                targetValue: targetTemp,
+                monitors: monitors,
+                monitorService: monitorService,
+                isUIVisible: visibility == AppVisibilityState.visible,
+                updateTemperatureCallback: (id, val) {
+                  monitorListNotifier.updateTemperature(id, val);
+                },
+              );
+            } else if (tempSettings.isEnabled && isTempEnabled) {
               final effectiveSmartTempData =
                   tempSettings.isSmartCircadianEnabled
                   ? monitorSmartTempData

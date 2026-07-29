@@ -74,7 +74,9 @@ class SettingsState {
   final int sleepAnchorSize;
   final int sleepMaxSpread;
   final bool isGameModeEnabled;
+  final bool isGameModeTemperatureEnabled;
   final double gameModeBrightness;
+  final double gameModeTemperature;
   final int gameModeExitDelaySeconds;
   final List<String> gameModeWhitelist;
   final List<String> gameModeBlacklist;
@@ -169,7 +171,9 @@ class SettingsState {
     this.sleepAnchorSize = 2,
     this.sleepMaxSpread = 105,
     this.isGameModeEnabled = true,
+    this.isGameModeTemperatureEnabled = true,
     this.gameModeBrightness = 80.0,
+    this.gameModeTemperature = 6500.0,
     this.gameModeExitDelaySeconds = 30,
     this.gameModeWhitelist = const [],
     this.gameModeBlacklist = const [
@@ -332,7 +336,9 @@ class SettingsState {
     'sleepAnchorSize': sleepAnchorSize,
     'sleepMaxSpread': sleepMaxSpread,
     'isGameModeEnabled': isGameModeEnabled,
+    'isGameModeTemperatureEnabled': isGameModeTemperatureEnabled,
     'gameModeBrightness': gameModeBrightness,
+    'gameModeTemperature': gameModeTemperature,
     'gameModeExitDelaySeconds': gameModeExitDelaySeconds,
     'gameModeWhitelist': gameModeWhitelist,
     'gameModeBlacklist': gameModeBlacklist,
@@ -513,8 +519,12 @@ class SettingsState {
       sleepAnchorSize: json['sleepAnchorSize'] as int? ?? 2,
       sleepMaxSpread: json['sleepMaxSpread'] as int? ?? 105,
       isGameModeEnabled: json['isGameModeEnabled'] as bool? ?? true,
+      isGameModeTemperatureEnabled:
+          json['isGameModeTemperatureEnabled'] as bool? ?? true,
       gameModeBrightness:
           (json['gameModeBrightness'] as num?)?.toDouble() ?? 80.0,
+      gameModeTemperature:
+          (json['gameModeTemperature'] as num?)?.toDouble().clamp(3300.0, 6500.0) ?? 6500.0,
       gameModeExitDelaySeconds:
           json['gameModeExitDelaySeconds'] as int? ?? 30,
       gameModeWhitelist:
@@ -655,7 +665,9 @@ class SettingsState {
     int? sleepAnchorSize,
     int? sleepMaxSpread,
     bool? isGameModeEnabled,
+    bool? isGameModeTemperatureEnabled,
     double? gameModeBrightness,
+    double? gameModeTemperature,
     int? gameModeExitDelaySeconds,
     List<String>? gameModeWhitelist,
     List<String>? gameModeBlacklist,
@@ -777,7 +789,10 @@ class SettingsState {
       sleepAnchorSize: sleepAnchorSize ?? this.sleepAnchorSize,
       sleepMaxSpread: sleepMaxSpread ?? this.sleepMaxSpread,
       isGameModeEnabled: isGameModeEnabled ?? this.isGameModeEnabled,
+      isGameModeTemperatureEnabled:
+          isGameModeTemperatureEnabled ?? this.isGameModeTemperatureEnabled,
       gameModeBrightness: gameModeBrightness ?? this.gameModeBrightness,
+      gameModeTemperature: gameModeTemperature ?? this.gameModeTemperature,
       gameModeExitDelaySeconds:
           gameModeExitDelaySeconds ?? this.gameModeExitDelaySeconds,
       gameModeWhitelist: gameModeWhitelist ?? this.gameModeWhitelist,

@@ -8,6 +8,7 @@ import 'package:solaris/models/preset_type.dart';
 import 'package:solaris/services/temperature_service.dart';
 import 'package:solaris/models/smart_circadian_data.dart';
 import 'package:solaris/models/settings_state.dart';
+import 'package:solaris/services/gaming_mode_service.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 final temperatureServiceProvider = Provider((ref) => TemperatureService());
@@ -438,6 +439,22 @@ class CurrentTemperatureNotifier extends Notifier<int> {
     final prefs = ref.watch(sharedPreferencesProvider);
     final lastTemp = prefs?.getInt(_lastTempKey) ?? 6500;
 
+    final isGamingMode = ref.watch(gamingModeProvider);
+    final monitorIds = ref.watch(selectedMonitorsProvider);
+    final settingsAsync = ref.watch(settingsProvider);
+    final id = monitorIds.firstOrNull ?? 'all';
+
+    final globalSettings = settingsAsync.maybeWhen(
+      data: (map) => map[id] ?? map['all'] ?? SettingsState(),
+      orElse: () => SettingsState(),
+    );
+
+    if (isGamingMode &&
+        globalSettings.isGameModeEnabled &&
+        globalSettings.isGameModeTemperatureEnabled) {
+      return globalSettings.gameModeTemperature.round();
+    }
+
     final isAuto = ref.watch(autoTemperatureAdjustmentProvider);
 
     if (isAuto) {
@@ -445,17 +462,8 @@ class CurrentTemperatureNotifier extends Notifier<int> {
       final circadianService = ref.watch(circadianServiceProvider);
       final tempSettingsAsync = ref.watch(temperatureSettingsProvider);
       final weatherAsync = ref.watch(currentWeatherProvider);
-      final monitorIds = ref.watch(selectedMonitorsProvider);
-      final settingsAsync = ref.watch(settingsProvider);
 
       final now = ref.watch(minuteTimeProvider).value ?? DateTime.now();
-
-      final id = monitorIds.firstOrNull ?? 'all';
-
-      final globalSettings = settingsAsync.maybeWhen(
-        data: (map) => map[id] ?? map['all'] ?? SettingsState(),
-        orElse: () => SettingsState(),
-      );
 
       return solarStateAsync.maybeWhen(
         data: (state) {

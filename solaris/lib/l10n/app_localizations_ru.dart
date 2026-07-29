@@ -745,6 +745,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get lockedBrightness => 'Яркость в игре';
 
   @override
+  String get enableGameModeTemperature => 'Фиксировать температуру в игре';
+
+  @override
+  String get enableGameModeTemperatureSubtitle =>
+      'Отключать авто-регулировку температуры при обнаружении игры';
+
+  @override
+  String get lockedTemperature => 'Температура в игре';
+
+  @override
   String get gameModeExitDelay => 'Задержка при сворачивании';
 
   @override

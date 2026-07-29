@@ -1653,6 +1653,35 @@ class _SmartExclusionsCard extends ConsumerWidget {
                 const SizedBox(height: 24),
                 const Divider(color: Colors.white10),
                 const SizedBox(height: 24),
+                _SettingsRow(
+                  title: l10n.enableGameModeTemperature,
+                  subtitle: l10n.enableGameModeTemperatureSubtitle,
+                  value: settings.isGameModeTemperatureEnabled,
+                  onChanged: (val) => ref
+                      .read(settingsProvider.notifier)
+                      .updateGameModeTemperatureEnabled(val),
+                ),
+                if (settings.isGameModeTemperatureEnabled) ...[
+                  const SizedBox(height: 24),
+                  _SmoothSettingSlider(
+                    title: l10n.lockedTemperature,
+                    value: settings.gameModeTemperature,
+                    min: 3300,
+                    max: 6500,
+                    isReversed: true,
+                    useTemperaturePalette: true,
+                    activeColor: const Color(0xFF60A5FA),
+                    valueFormat: (val) => '${val.round()} K',
+                    onChangeEnd: (val) {
+                      ref
+                          .read(settingsProvider.notifier)
+                          .updateGameModeTemperature(val);
+                    },
+                  ),
+                ],
+                const SizedBox(height: 24),
+                const Divider(color: Colors.white10),
+                const SizedBox(height: 24),
                 _SmoothSettingSlider(
                   title: l10n.gameModeExitDelay,
                   subtitle: l10n.gameModeExitDelaySubtitle,
@@ -2700,6 +2729,8 @@ class _SmoothSettingSlider extends StatefulWidget {
     required this.activeColor,
     required this.valueFormat,
     required this.onChangeEnd,
+    this.isReversed = false,
+    this.useTemperaturePalette = false,
   });
 
   final String title;
@@ -2710,6 +2741,8 @@ class _SmoothSettingSlider extends StatefulWidget {
   final Color activeColor;
   final String Function(double val) valueFormat;
   final ValueChanged<double> onChangeEnd;
+  final bool isReversed;
+  final bool useTemperaturePalette;
 
   @override
   State<_SmoothSettingSlider> createState() => _SmoothSettingSliderState();
@@ -2735,6 +2768,35 @@ class _SmoothSettingSliderState extends State<_SmoothSettingSlider> {
 
   @override
   Widget build(BuildContext context) {
+    final clamped = _localValue.clamp(widget.min, widget.max);
+    final double sliderValue;
+    final double sliderMin;
+    final double sliderMax;
+
+    if (widget.isReversed) {
+      sliderMin = 0.0;
+      sliderMax = 1.0;
+      sliderValue = (widget.max - clamped) / (widget.max - widget.min);
+    } else {
+      sliderMin = widget.min;
+      sliderMax = widget.max;
+      sliderValue = clamped;
+    }
+
+    final Color currentActiveColor;
+    if (widget.useTemperaturePalette) {
+      final double progress = widget.isReversed
+          ? sliderValue
+          : (clamped - widget.min) / (widget.max - widget.min);
+      currentActiveColor = Color.lerp(
+        const Color(0xFF60A5FA),
+        const Color(0xFFF97316),
+        progress.clamp(0.0, 1.0),
+      )!;
+    } else {
+      currentActiveColor = widget.activeColor;
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2768,30 +2830,50 @@ class _SmoothSettingSliderState extends State<_SmoothSettingSlider> {
             Text(
               widget.valueFormat(_localValue),
               style: TextStyle(
-                color: widget.activeColor,
+                color: currentActiveColor,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ],
         ),
-        Slider(
-          value: _localValue.clamp(widget.min, widget.max),
-          min: widget.min,
-          max: widget.max,
-          activeColor: widget.activeColor,
-          onChanged: (val) {
-            setState(() {
-              _isDragging = true;
-              _localValue = val;
-            });
-          },
-          onChangeEnd: (val) {
-            setState(() {
-              _isDragging = false;
-              _localValue = val;
-            });
-            widget.onChangeEnd(val);
-          },
+        SliderTheme(
+          data: widget.useTemperaturePalette
+              ? SliderTheme.of(context).copyWith(
+                  activeTrackColor: currentActiveColor,
+                  thumbColor: currentActiveColor,
+                )
+              : SliderTheme.of(context),
+          child: Slider(
+            value: sliderValue.clamp(sliderMin, sliderMax),
+            min: sliderMin,
+            max: sliderMax,
+            activeColor: currentActiveColor,
+            onChanged: (val) {
+              final double realValue;
+              if (widget.isReversed) {
+                realValue = widget.max - val * (widget.max - widget.min);
+              } else {
+                realValue = val;
+              }
+              setState(() {
+                _isDragging = true;
+                _localValue = realValue;
+              });
+            },
+            onChangeEnd: (val) {
+              final double realValue;
+              if (widget.isReversed) {
+                realValue = widget.max - val * (widget.max - widget.min);
+              } else {
+                realValue = val;
+              }
+              setState(() {
+                _isDragging = false;
+                _localValue = realValue;
+              });
+              widget.onChangeEnd(realValue);
+            },
+          ),
         ),
       ],
     );

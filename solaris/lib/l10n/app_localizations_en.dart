@@ -746,6 +746,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lockedBrightness => 'Locked Brightness';
 
   @override
+  String get enableGameModeTemperature => 'Lock temperature in game';
+
+  @override
+  String get enableGameModeTemperatureSubtitle =>
+      'Disable auto temperature adjustment when a game is detected';
+
+  @override
+  String get lockedTemperature => 'Temperature in game';
+
+  @override
   String get gameModeExitDelay => 'Minimize Exit Delay';
 
   @override

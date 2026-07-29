@@ -1419,6 +1419,24 @@ abstract class AppLocalizations {
   /// **'Locked Brightness'**
   String get lockedBrightness;
 
+  /// No description provided for @enableGameModeTemperature.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock temperature in game'**
+  String get enableGameModeTemperature;
+
+  /// No description provided for @enableGameModeTemperatureSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable auto temperature adjustment when a game is detected'**
+  String get enableGameModeTemperatureSubtitle;
+
+  /// No description provided for @lockedTemperature.
+  ///
+  /// In en, this message translates to:
+  /// **'Temperature in game'**
+  String get lockedTemperature;
+
   /// No description provided for @gameModeExitDelay.
   ///
   /// In en, this message translates to:

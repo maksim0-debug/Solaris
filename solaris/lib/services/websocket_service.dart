@@ -262,6 +262,8 @@ class WebSocketService {
         'enabled': globalSettings?.isGameModeEnabled ?? true,
         'active': gamingModeActive,
         'brightness_override': globalSettings?.gameModeBrightness ?? 80.0,
+        'temperature_enabled': globalSettings?.isGameModeTemperatureEnabled ?? true,
+        'temperature_override': globalSettings?.gameModeTemperature ?? 6500.0,
       },
     };
   }
