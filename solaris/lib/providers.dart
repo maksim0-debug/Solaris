@@ -1624,6 +1624,13 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     );
   }
 
+  void updateGameModeExitDelaySeconds(int seconds) {
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(gameModeExitDelaySeconds: seconds),
+    );
+  }
+
   void addWhitelistItem(String item) {
     _updateSettings(ref.read(selectedMonitorsProvider), (s) {
       if (!s.gameModeWhitelist.contains(item)) {

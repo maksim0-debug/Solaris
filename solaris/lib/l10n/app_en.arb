@@ -333,6 +333,8 @@
   "enableGameMode": "Enable Game Mode",
   "enableGameModeSubtitle": "Lock brightness when a game is detected",
   "lockedBrightness": "Locked Brightness",
+  "gameModeExitDelay": "Minimize Exit Delay",
+  "gameModeExitDelaySubtitle": "Time in seconds before game mode turns off after minimizing",
   "whitelist": "Whitelist",
   "whitelistSubtitle": "Apps that always trigger game mode",
   "blacklist": "Blacklist",

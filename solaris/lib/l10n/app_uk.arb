@@ -333,6 +333,8 @@
   "enableGameMode": "Увімкнути ігровий режим",
   "enableGameModeSubtitle": "Блокувати яскравість при виявленні гри",
   "lockedBrightness": "Заблокована яскравість",
+  "gameModeExitDelay": "Затримка при згортанні",
+  "gameModeExitDelaySubtitle": "Час у секундах до вимкнення ігрового режиму після згортання гри",
   "whitelist": "Білий список",
   "whitelistSubtitle": "Програми, які завжди вмикають ігровий режим",
   "blacklist": "Чорний список",

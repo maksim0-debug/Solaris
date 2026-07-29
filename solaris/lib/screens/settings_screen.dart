@@ -1637,36 +1637,34 @@ class _SmartExclusionsCard extends ConsumerWidget {
                 const SizedBox(height: 24),
                 const Divider(color: Colors.white10),
                 const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      l10n.lockedBrightness,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
-                    ),
-                    Text(
-                      l10n.chartPercentFormat(
-                        settings.gameModeBrightness.round(),
-                      ),
-                      style: const TextStyle(
-                        color: Color(0xFFA855F7),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                Slider(
+                _SmoothSettingSlider(
+                  title: l10n.lockedBrightness,
                   value: settings.gameModeBrightness,
                   min: 0,
                   max: 100,
                   activeColor: const Color(0xFFA855F7),
-                  onChanged: (val) {
+                  valueFormat: (val) => l10n.chartPercentFormat(val.round()),
+                  onChangeEnd: (val) {
                     ref
                         .read(settingsProvider.notifier)
                         .updateGameModeBrightness(val);
+                  },
+                ),
+                const SizedBox(height: 24),
+                const Divider(color: Colors.white10),
+                const SizedBox(height: 24),
+                _SmoothSettingSlider(
+                  title: l10n.gameModeExitDelay,
+                  subtitle: l10n.gameModeExitDelaySubtitle,
+                  value: settings.gameModeExitDelaySeconds.toDouble(),
+                  min: 0,
+                  max: 300,
+                  activeColor: const Color(0xFFA855F7),
+                  valueFormat: (val) => '${val.round()} s',
+                  onChangeEnd: (val) {
+                    ref
+                        .read(settingsProvider.notifier)
+                        .updateGameModeExitDelaySeconds(val.round());
                   },
                 ),
                 const SizedBox(height: 24),
@@ -2686,6 +2684,114 @@ class _IntensitySlider extends StatelessWidget {
             overlayColor: color.withOpacity(0.2),
           ),
           child: Slider(value: value, min: 0.0, max: 1.0, onChanged: onChanged),
+        ),
+      ],
+    );
+  }
+}
+
+class _SmoothSettingSlider extends StatefulWidget {
+  const _SmoothSettingSlider({
+    required this.title,
+    this.subtitle,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.activeColor,
+    required this.valueFormat,
+    required this.onChangeEnd,
+  });
+
+  final String title;
+  final String? subtitle;
+  final double value;
+  final double min;
+  final double max;
+  final Color activeColor;
+  final String Function(double val) valueFormat;
+  final ValueChanged<double> onChangeEnd;
+
+  @override
+  State<_SmoothSettingSlider> createState() => _SmoothSettingSliderState();
+}
+
+class _SmoothSettingSliderState extends State<_SmoothSettingSlider> {
+  late double _localValue;
+  bool _isDragging = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _localValue = widget.value;
+  }
+
+  @override
+  void didUpdateWidget(covariant _SmoothSettingSlider oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_isDragging && widget.value != oldWidget.value) {
+      _localValue = widget.value;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.title,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                    ),
+                  ),
+                  if (widget.subtitle != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.subtitle!,
+                      style: const TextStyle(
+                        color: Colors.white38,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Text(
+              widget.valueFormat(_localValue),
+              style: TextStyle(
+                color: widget.activeColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        Slider(
+          value: _localValue.clamp(widget.min, widget.max),
+          min: widget.min,
+          max: widget.max,
+          activeColor: widget.activeColor,
+          onChanged: (val) {
+            setState(() {
+              _isDragging = true;
+              _localValue = val;
+            });
+          },
+          onChangeEnd: (val) {
+            setState(() {
+              _isDragging = false;
+              _localValue = val;
+            });
+            widget.onChangeEnd(val);
+          },
         ),
       ],
     );

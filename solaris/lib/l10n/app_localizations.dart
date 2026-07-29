@@ -1419,6 +1419,18 @@ abstract class AppLocalizations {
   /// **'Locked Brightness'**
   String get lockedBrightness;
 
+  /// No description provided for @gameModeExitDelay.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimize Exit Delay'**
+  String get gameModeExitDelay;
+
+  /// No description provided for @gameModeExitDelaySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Time in seconds before game mode turns off after minimizing'**
+  String get gameModeExitDelaySubtitle;
+
   /// No description provided for @whitelist.
   ///
   /// In en, this message translates to:

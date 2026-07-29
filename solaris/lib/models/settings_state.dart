@@ -75,6 +75,7 @@ class SettingsState {
   final int sleepMaxSpread;
   final bool isGameModeEnabled;
   final double gameModeBrightness;
+  final int gameModeExitDelaySeconds;
   final List<String> gameModeWhitelist;
   final List<String> gameModeBlacklist;
   final Map<String, dynamic>? nextPresetHotKey;
@@ -169,6 +170,7 @@ class SettingsState {
     this.sleepMaxSpread = 105,
     this.isGameModeEnabled = true,
     this.gameModeBrightness = 80.0,
+    this.gameModeExitDelaySeconds = 30,
     this.gameModeWhitelist = const [],
     this.gameModeBlacklist = const [
       'chrome.exe',
@@ -331,6 +333,7 @@ class SettingsState {
     'sleepMaxSpread': sleepMaxSpread,
     'isGameModeEnabled': isGameModeEnabled,
     'gameModeBrightness': gameModeBrightness,
+    'gameModeExitDelaySeconds': gameModeExitDelaySeconds,
     'gameModeWhitelist': gameModeWhitelist,
     'gameModeBlacklist': gameModeBlacklist,
     'nextPresetHotKey': nextPresetHotKey,
@@ -512,6 +515,8 @@ class SettingsState {
       isGameModeEnabled: json['isGameModeEnabled'] as bool? ?? true,
       gameModeBrightness:
           (json['gameModeBrightness'] as num?)?.toDouble() ?? 80.0,
+      gameModeExitDelaySeconds:
+          json['gameModeExitDelaySeconds'] as int? ?? 30,
       gameModeWhitelist:
           (json['gameModeWhitelist'] as List<dynamic>?)?.cast<String>() ?? [],
       gameModeBlacklist:
@@ -651,6 +656,7 @@ class SettingsState {
     int? sleepMaxSpread,
     bool? isGameModeEnabled,
     double? gameModeBrightness,
+    int? gameModeExitDelaySeconds,
     List<String>? gameModeWhitelist,
     List<String>? gameModeBlacklist,
     Map<String, dynamic>? nextPresetHotKey,
@@ -772,6 +778,8 @@ class SettingsState {
       sleepMaxSpread: sleepMaxSpread ?? this.sleepMaxSpread,
       isGameModeEnabled: isGameModeEnabled ?? this.isGameModeEnabled,
       gameModeBrightness: gameModeBrightness ?? this.gameModeBrightness,
+      gameModeExitDelaySeconds:
+          gameModeExitDelaySeconds ?? this.gameModeExitDelaySeconds,
       gameModeWhitelist: gameModeWhitelist ?? this.gameModeWhitelist,
       gameModeBlacklist: gameModeBlacklist ?? this.gameModeBlacklist,
       nextPresetHotKey: clearNextPresetHotKey

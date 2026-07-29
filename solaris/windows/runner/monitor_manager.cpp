@@ -629,6 +629,12 @@ void MonitorManager::UpdateBlacklist(
   process_cache_.clear();
 }
 
+void MonitorManager::SetGameModeExitDelay(int delay_seconds) {
+  if (delay_seconds < 0) delay_seconds = 0;
+  if (delay_seconds > 300) delay_seconds = 300;
+  exit_delay_ms_ = delay_seconds * 1000;
+}
+
 static bool IsAppInSet(const std::string &process_name_lower,
                        const std::set<std::string> &app_set) {
   if (app_set.empty() || process_name_lower.empty())
@@ -764,7 +770,7 @@ void MonitorManager::DetectorLoop() {
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
                             now - last_gaming_match_time_)
                             .count();
-        if (duration < EXIT_DELAY_MS) {
+        if (duration < exit_delay_ms_.load()) {
           target_gaming_mode = true; // Hysteresis: Keep active
         } else {
           target_gaming_mode = false;

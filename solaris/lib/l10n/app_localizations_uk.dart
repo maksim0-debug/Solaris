@@ -745,6 +745,13 @@ class AppLocalizationsUk extends AppLocalizations {
   String get lockedBrightness => 'Заблокована яскравість';
 
   @override
+  String get gameModeExitDelay => 'Затримка при згортанні';
+
+  @override
+  String get gameModeExitDelaySubtitle =>
+      'Час у секундах до вимкнення ігрового режиму після згортання гри';
+
+  @override
   String get whitelist => 'Білий список';
 
   @override

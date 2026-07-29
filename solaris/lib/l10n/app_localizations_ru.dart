@@ -742,10 +742,17 @@ class AppLocalizationsRu extends AppLocalizations {
       'Блокировать яркость при обнаружении игры';
 
   @override
-  String get lockedBrightness => 'Заблокированная яркость';
+  String get lockedBrightness => 'Яркость в игре';
 
   @override
-  String get whitelist => 'Белый список';
+  String get gameModeExitDelay => 'Задержка при сворачивании';
+
+  @override
+  String get gameModeExitDelaySubtitle =>
+      'Время в секундах до отключения игрового режима после сворачивания игры';
+
+  @override
+  String get whitelist => 'Белый список ПО';
 
   @override
   String get whitelistSubtitle =>

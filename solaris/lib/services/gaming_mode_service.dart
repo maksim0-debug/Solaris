@@ -48,6 +48,9 @@ class GamingModeService extends Notifier<bool> {
         ...defaultBlacklist,
         ...settings.gameModeBlacklist,
       ]);
+
+      // Sync Exit Delay
+      _updateExitDelayNative(settings.gameModeExitDelaySeconds);
     });
 
     _init();
@@ -88,6 +91,14 @@ class GamingModeService extends Notifier<bool> {
       await _methodChannel.invokeMethod('updateBlacklist', blacklist);
     } catch (e) {
       debugPrint('[GamingModeService] Failed to update blacklist: $e');
+    }
+  }
+
+  Future<void> _updateExitDelayNative(int seconds) async {
+    try {
+      await _methodChannel.invokeMethod('setGameModeExitDelay', seconds);
+    } catch (e) {
+      debugPrint('[GamingModeService] Failed to update exit delay: $e');
     }
   }
 

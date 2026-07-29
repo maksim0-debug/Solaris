@@ -212,6 +212,17 @@ bool FlutterWindow::OnCreate() {
             return;
           }
           result->Error("invalid_arguments", "Expected list of strings");
+        } else if (call.method_name().compare("setGameModeExitDelay") == 0) {
+          if (const auto* delay = std::get_if<int32_t>(call.arguments())) {
+            monitor_manager_.SetGameModeExitDelay(*delay);
+            result->Success(flutter::EncodableValue(true));
+            return;
+          } else if (const auto* delay64 = std::get_if<int64_t>(call.arguments())) {
+            monitor_manager_.SetGameModeExitDelay(static_cast<int>(*delay64));
+            result->Success(flutter::EncodableValue(true));
+            return;
+          }
+          result->Error("invalid_arguments", "Expected integer seconds");
         } else {
           result->NotImplemented();
         }

@@ -56,6 +56,7 @@ class MonitorManager {
   void SetGamingModeCallback(std::function<void(bool)> callback);
   void UpdateWhitelist(const std::vector<std::string>& whitelist);
   void UpdateBlacklist(const std::vector<std::string>& blacklist);
+  void SetGameModeExitDelay(int delay_seconds);
   bool IsGamingMode() const { return is_gaming_mode_; }
 
  private:
@@ -102,7 +103,7 @@ class MonitorManager {
   // Hysteresis constants & state
   const int SCORE_THRESHOLD = 75;
   const int ENTRY_DELAY_MS = 500;
-  const int EXIT_DELAY_MS = 30000;
+  std::atomic<int> exit_delay_ms_{30000};
 
   std::chrono::steady_clock::time_point last_gaming_match_time_;
   bool is_gaming_candidate_ = false;

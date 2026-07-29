@@ -746,6 +746,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lockedBrightness => 'Locked Brightness';
 
   @override
+  String get gameModeExitDelay => 'Minimize Exit Delay';
+
+  @override
+  String get gameModeExitDelaySubtitle =>
+      'Time in seconds before game mode turns off after minimizing';
+
+  @override
   String get whitelist => 'Whitelist';
 
   @override
