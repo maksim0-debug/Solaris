@@ -807,7 +807,7 @@
   "apiKeysTableHeaderScopes": "Права (Scopes)",
   "apiKeysTableHeaderCreated": "Создан",
   "apiKeysTableHeaderActions": "Действия",
-  "apiKeysReadOnlyChip": "Read-Only ({count}/7)",
+  "apiKeysReadOnlyChip": "Read-Only ({count}/5)",
   "apiKeysActiveScopesChip": "{count, plural, =1{1 из 7 категорий} few{{count} из 7 категорий} other{{count} из 7 категорий}}",
   "apiKeysCopySuccessSnackbar": "Токен API-ключа скопирован в буфер обмена!",
   "apiKeysRegenerateConfirmTitle": "Перегенерировать токен?",

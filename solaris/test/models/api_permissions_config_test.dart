@@ -13,6 +13,18 @@ void main() {
       expect(config.allowReadCircadian, isTrue);
       expect(config.isReadOnly, isFalse);
       expect(config.allowedCategories.length, equals(7));
+      expect(config.activeReadCategoriesCount, equals(5));
+    });
+
+    test('activeReadCategoriesCount returns correct count when some read flags are disabled', () {
+      const config = ApiPermissionsConfig(
+        allowReadMonitors: true,
+        allowReadSolar: true,
+        allowReadWeather: false,
+        allowReadSleep: false,
+        allowReadCircadian: false,
+      );
+      expect(config.activeReadCategoriesCount, equals(2));
     });
 
     test('Action to Category mapping correctness', () {

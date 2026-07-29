@@ -3363,7 +3363,7 @@ abstract class AppLocalizations {
   /// No description provided for @apiKeysReadOnlyChip.
   ///
   /// In en, this message translates to:
-  /// **'Read-Only ({count}/7)'**
+  /// **'Read-Only ({count}/5)'**
   String apiKeysReadOnlyChip(int count);
 
   /// No description provided for @apiKeysActiveScopesChip.

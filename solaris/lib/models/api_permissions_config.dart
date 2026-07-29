@@ -52,6 +52,20 @@ class ApiPermissionsConfig {
     this.allowedActions,
   });
 
+  /// Total available read categories (5 in total: Monitors, Solar, Weather, Sleep, Circadian)
+  static const int totalReadCategories = 5;
+
+  /// Returns the number of enabled read categories (out of 5)
+  int get activeReadCategoriesCount {
+    var count = 0;
+    if (allowReadMonitors) count++;
+    if (allowReadSolar) count++;
+    if (allowReadWeather) count++;
+    if (allowReadSleep) count++;
+    if (allowReadCircadian) count++;
+    return count;
+  }
+
   /// Normalizes incoming action or alias into a canonical action key
   static String getCanonicalAction(String action) {
     switch (action) {

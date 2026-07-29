@@ -805,7 +805,7 @@
   "apiKeysTableHeaderScopes": "Права (Scopes)",
   "apiKeysTableHeaderCreated": "Створено",
   "apiKeysTableHeaderActions": "Дії",
-  "apiKeysReadOnlyChip": "Read-Only ({count}/7)",
+  "apiKeysReadOnlyChip": "Read-Only ({count}/5)",
   "apiKeysActiveScopesChip": "{count, plural, =1{1 з 7 категорій} few{{count} з 7 категорій} other{{count} з 7 категорій}}",
   "apiKeysCopySuccessSnackbar": "Токен API-ключа скопійовано в буфер обміну!",
   "apiKeysRegenerateConfirmTitle": "Перегенерувати токен?",

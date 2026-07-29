@@ -1930,7 +1930,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String apiKeysReadOnlyChip(int count) {
-    return 'Read-Only ($count/7)';
+    return 'Read-Only ($count/5)';
   }
 
   @override

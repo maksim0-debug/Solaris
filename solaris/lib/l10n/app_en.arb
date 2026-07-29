@@ -861,7 +861,7 @@
   "apiKeysTableHeaderScopes": "Scopes & Permissions",
   "apiKeysTableHeaderCreated": "Created",
   "apiKeysTableHeaderActions": "Actions",
-  "apiKeysReadOnlyChip": "Read-Only ({count}/7)",
+  "apiKeysReadOnlyChip": "Read-Only ({count}/5)",
   "@apiKeysReadOnlyChip": {
     "placeholders": {
       "count": { "type": "int" }

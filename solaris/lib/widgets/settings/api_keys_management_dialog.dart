@@ -343,8 +343,9 @@ class ApiKeysManagementDialog extends ConsumerWidget {
                             rows: apiKeys.map((keyEntry) {
                               final isReadOnly =
                                   keyEntry.permissions.isReadOnly;
-                              final catCount =
-                                  keyEntry.permissions.allowedCategories.length;
+                              final catCount = isReadOnly
+                                  ? keyEntry.permissions.activeReadCategoriesCount
+                                  : keyEntry.permissions.allowedCategories.length;
 
                               return DataRow(
                                 cells: [

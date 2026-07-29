@@ -154,6 +154,55 @@ void main() {
     );
 
     testWidgets(
+      'ApiKeysManagementDialog correctly renders Read-Only chip count based on active read permissions',
+      (WidgetTester tester) async {
+        final readOnlyKey = ApiKeyEntry(
+          id: 'ro_key_1',
+          name: 'Read Only Key',
+          token: 'sol_sec_ro_token',
+          permissions: const ApiPermissionsConfig(
+            isReadOnly: true,
+            allowReadMonitors: true,
+            allowReadSolar: true,
+            allowReadWeather: false,
+            allowReadSleep: false,
+            allowReadCircadian: false,
+          ),
+          createdAt: DateTime.now(),
+        );
+
+        final initialSettings = SettingsState(apiKeys: [readOnlyKey]);
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              settingsProvider.overrideWith(
+                () => SettingsNotifierFake(initialSettings),
+              ),
+            ],
+            child: MaterialApp(
+              locale: const Locale('en'),
+              localizationsDelegates: const [
+                AppLocalizations.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: const Scaffold(body: ApiKeysManagementDialog()),
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+
+        expect(find.byType(ApiKeysManagementDialog), findsOneWidget);
+        expect(find.text('Read Only Key'), findsOneWidget);
+        expect(find.text('Read-Only (2/5)'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
       'ApiSettingsCard renders DPAPI fallback banner and dismisses it',
       (WidgetTester tester) async {
         final fallbackKey = ApiKeyEntry(
