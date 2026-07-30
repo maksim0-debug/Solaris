@@ -4,6 +4,7 @@ import 'package:solaris/models/preset_type.dart';
 import 'package:solaris/models/webhook_config.dart';
 import 'package:solaris/models/api_permissions_config.dart';
 import 'package:solaris/models/api_key_entry.dart';
+import 'package:solaris/models/app_override_rule.dart';
 import 'package:solaris/env/env.dart';
 import 'package:solaris/utils/key_obfuscator.dart';
 
@@ -113,6 +114,8 @@ class SettingsState {
   final String customGoogleClientSecret;
   final bool isAutoUpdateEnabled;
   final List<WebhookConfig> webhooks;
+  final List<AppOverrideRule> appOverrides;
+  final int appOverrideExitDelaySeconds;
 
   String get apiAccessToken => apiKeys.isNotEmpty
       ? apiKeys
@@ -183,6 +186,8 @@ class SettingsState {
       'devenv.exe',
       'ShareX.exe',
     ],
+    List<AppOverrideRule>? appOverrides,
+    int? appOverrideExitDelaySeconds,
     this.nextPresetHotKey = const {
       'keyCode': 'arrowLeft',
       'modifiers': ['control', 'shift'],
@@ -227,6 +232,8 @@ class SettingsState {
        apiServerPort = apiServerPort ?? localIpcServerPort,
        isAutoUpdateEnabled = isAutoUpdateEnabled ?? Env.isOfficialRelease,
        curvesMap = curvesMap ?? PresetConstants.getAllDefaults(),
+       appOverrides = appOverrides ?? AppOverrideRule.defaultBuiltInRules,
+       appOverrideExitDelaySeconds = (appOverrideExitDelaySeconds ?? 30).clamp(0, 300),
        presetOrder =
            presetOrder ??
            [
@@ -376,6 +383,8 @@ class SettingsState {
     'customGoogleClientSecret': KeyObfuscator.encrypt(customGoogleClientSecret),
     'webhooks': webhooks.map((w) => w.toJson()).toList(),
     'apiPermissions': apiPermissions.toJson(),
+    'appOverrides': appOverrides.map((e) => e.toJson()).toList(),
+    'appOverrideExitDelaySeconds': appOverrideExitDelaySeconds,
   };
 
   factory SettingsState.fromJson(Map<String, dynamic> json) {
@@ -625,6 +634,25 @@ class SettingsState {
               ?.map((w) => WebhookConfig.fromJson(w as Map<String, dynamic>))
               .toList() ??
           [],
+      appOverrides: json.containsKey('appOverrides') && json['appOverrides'] is List
+          ? (json['appOverrides'] as List)
+              .where((e) => e is Map)
+              .map((e) {
+                try {
+                  return AppOverrideRule.fromJson(Map<String, dynamic>.from(e as Map));
+                } catch (_) {
+                  return null;
+                }
+              })
+              .whereType<AppOverrideRule>()
+              .toList()
+          : AppOverrideRule.defaultBuiltInRules,
+      appOverrideExitDelaySeconds:
+          (json['appOverrideExitDelaySeconds'] is num)
+              ? (json['appOverrideExitDelaySeconds'] as num).toInt().clamp(0, 300)
+              : (json['appOverrideExitDelaySeconds'] is String
+                  ? (int.tryParse(json['appOverrideExitDelaySeconds'] as String)?.clamp(0, 300) ?? 30)
+                  : 30),
     );
   }
 
@@ -671,6 +699,8 @@ class SettingsState {
     int? gameModeExitDelaySeconds,
     List<String>? gameModeWhitelist,
     List<String>? gameModeBlacklist,
+    List<AppOverrideRule>? appOverrides,
+    int? appOverrideExitDelaySeconds,
     Map<String, dynamic>? nextPresetHotKey,
     Map<String, dynamic>? prevPresetHotKey,
     Map<String, dynamic>? brightnessUpHotKey,
@@ -845,6 +875,9 @@ class SettingsState {
       customGoogleClientSecret:
           customGoogleClientSecret ?? this.customGoogleClientSecret,
       webhooks: webhooks ?? this.webhooks,
+      appOverrides: appOverrides ?? this.appOverrides,
+      appOverrideExitDelaySeconds:
+          appOverrideExitDelaySeconds ?? this.appOverrideExitDelaySeconds,
     );
   }
 }
