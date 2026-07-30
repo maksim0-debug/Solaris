@@ -11,6 +11,7 @@ import 'package:solaris/providers.dart';
 import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/services/active_process_service.dart';
 import 'package:solaris/widgets/glass_card.dart';
+import 'package:solaris/widgets/curve_preset_dropdown.dart';
 
 /// Screen for managing Per-App Brightness and Temperature Overrides.
 class AppOverridesScreen extends ConsumerStatefulWidget {
@@ -860,90 +861,68 @@ class _AppOverrideRuleCard extends ConsumerWidget {
   }
 
   Widget _buildBrightnessCurveDropdown(WidgetRef ref, SettingsState settings, AppLocalizations l10n) {
-    final List<DropdownMenuItem<String>> items = [];
+    final systemOptions = PresetType.values.map((type) {
+      return CurvePresetOption(
+        id: type.name,
+        title: type.getName(l10n),
+        isSystem: true,
+      );
+    }).toList();
 
-    for (final type in PresetType.values) {
-      items.add(DropdownMenuItem(
-        value: type.name,
-        child: Text('${l10n.presetSystemPrefix}: ${type.getName(l10n)}', style: const TextStyle(color: Colors.white)),
-      ));
-    }
-
-    for (final p in settings.userPresets) {
-      items.add(DropdownMenuItem(
-        value: p.id,
-        child: Text('${l10n.presetUserPrefix}: ${p.name}', style: const TextStyle(color: Colors.white)),
-      ));
-    }
+    final userOptions = settings.userPresets.map((p) {
+      return CurvePresetOption(
+        id: p.id,
+        title: p.name,
+        isSystem: false,
+      );
+    }).toList();
 
     final currentId = rule.brightnessCurvePresetId ?? PresetType.bright.name;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.06),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: items.any((i) => i.value == currentId) ? currentId : null,
-          dropdownColor: const Color(0xFF1F2937),
-          isExpanded: true,
-          hint: Text(l10n.selectPreset, style: const TextStyle(color: Colors.white54)),
-          items: items,
-          onChanged: (val) {
-            if (val != null) {
-              final updated = rule.copyWith(brightnessCurvePresetId: val);
-              ref.read(settingsProvider.notifier).updateAppOverride(updated);
-            }
-          },
-        ),
-      ),
+    return CurvePresetDropdown(
+      currentId: currentId,
+      systemOptions: systemOptions,
+      userOptions: userOptions,
+      l10n: l10n,
+      icon: LucideIcons.sun,
+      accentColor: const Color(0xFFFDBA74),
+      onSelected: (val) {
+        final updated = rule.copyWith(brightnessCurvePresetId: val);
+        ref.read(settingsProvider.notifier).updateAppOverride(updated);
+      },
     );
   }
 
   Widget _buildTemperatureCurveDropdown(WidgetRef ref, TemperatureState tempSettings, AppLocalizations l10n) {
-    final List<DropdownMenuItem<String>> items = [];
+    final systemOptions = TemperaturePresetType.values.map((type) {
+      return CurvePresetOption(
+        id: type.name,
+        title: type.getName(l10n),
+        isSystem: true,
+      );
+    }).toList();
 
-    for (final type in TemperaturePresetType.values) {
-      items.add(DropdownMenuItem(
-        value: type.name,
-        child: Text('${l10n.presetSystemPrefix}: ${type.getName(l10n)}', style: const TextStyle(color: Colors.white)),
-      ));
-    }
-
-    for (final p in tempSettings.userPresets) {
-      items.add(DropdownMenuItem(
-        value: p.id,
-        child: Text('${l10n.presetUserPrefix}: ${p.name}', style: const TextStyle(color: Colors.white)),
-      ));
-    }
+    final userOptions = tempSettings.userPresets.map((p) {
+      return CurvePresetOption(
+        id: p.id,
+        title: p.name,
+        isSystem: false,
+      );
+    }).toList();
 
     final currentId = rule.temperatureCurvePresetId ?? TemperaturePresetType.cool.name;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.06),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: items.any((i) => i.value == currentId) ? currentId : null,
-          dropdownColor: const Color(0xFF1F2937),
-          isExpanded: true,
-          hint: Text(l10n.selectPreset, style: const TextStyle(color: Colors.white54)),
-          items: items,
-          onChanged: (val) {
-            if (val != null) {
-              final updated = rule.copyWith(temperatureCurvePresetId: val);
-              ref.read(settingsProvider.notifier).updateAppOverride(updated);
-            }
-          },
-        ),
-      ),
+    return CurvePresetDropdown(
+      currentId: currentId,
+      systemOptions: systemOptions,
+      userOptions: userOptions,
+      l10n: l10n,
+      icon: LucideIcons.thermometer,
+      accentColor: const Color(0xFF60A5FA),
+      onSelected: (val) {
+        final updated = rule.copyWith(temperatureCurvePresetId: val);
+        ref.read(settingsProvider.notifier).updateAppOverride(updated);
+      },
     );
   }
 
