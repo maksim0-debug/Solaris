@@ -3809,6 +3809,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Try Again'**
   String get tryAgain;
+
+  /// No description provided for @appOverridesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Per-App Overrides'**
+  String get appOverridesTitle;
+
+  /// No description provided for @appOverridesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure custom brightness and temperature rules for individual applications.'**
+  String get appOverridesSubtitle;
+
+  /// No description provided for @appOverrideExitDelay.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit Delay'**
+  String get appOverrideExitDelay;
+
+  /// No description provided for @appOverrideExitDelaySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Time in seconds before app profile turns off after minimizing.'**
+  String get appOverrideExitDelaySubtitle;
+
+  /// No description provided for @appOverrideExitDelaySeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds} s'**
+  String appOverrideExitDelaySeconds(int seconds);
+
+  /// No description provided for @userRulesSection.
+  ///
+  /// In en, this message translates to:
+  /// **'User Rules'**
+  String get userRulesSection;
+
+  /// No description provided for @builtinRulesSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Built-in Presets ({count})'**
+  String builtinRulesSection(int count);
+
+  /// No description provided for @addAppOverride.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Application'**
+  String get addAppOverride;
+
+  /// No description provided for @resetBuiltinRules.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset System Rules'**
+  String get resetBuiltinRules;
+
+  /// No description provided for @promoteToUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Promote to Mine'**
+  String get promoteToUser;
+
+  /// No description provided for @appOverrideModeGlobal.
+  ///
+  /// In en, this message translates to:
+  /// **'Global'**
+  String get appOverrideModeGlobal;
+
+  /// No description provided for @appOverrideModeFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed'**
+  String get appOverrideModeFixed;
+
+  /// No description provided for @appOverrideModeCurve.
+  ///
+  /// In en, this message translates to:
+  /// **'Curve'**
+  String get appOverrideModeCurve;
+
+  /// No description provided for @brightnessMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Brightness Mode'**
+  String get brightnessMode;
+
+  /// No description provided for @temperatureMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Temperature Mode'**
+  String get temperatureMode;
+
+  /// No description provided for @selectAppTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Application'**
+  String get selectAppTitle;
+
+  /// No description provided for @runningApps.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Processes'**
+  String get runningApps;
+
+  /// No description provided for @selectExecutable.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse .exe file...'**
+  String get selectExecutable;
+
+  /// No description provided for @customExeName.
+  ///
+  /// In en, this message translates to:
+  /// **'Executable Name (e.g. app.exe)'**
+  String get customExeName;
+
+  /// No description provided for @customDisplayName.
+  ///
+  /// In en, this message translates to:
+  /// **'Display Name'**
+  String get customDisplayName;
+
+  /// No description provided for @appPromotedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'{appName} transferred from built-in presets to your rules'**
+  String appPromotedToast(String appName);
+
+  /// No description provided for @resetBuiltinConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Built-in Rules?'**
+  String get resetBuiltinConfirmTitle;
+
+  /// No description provided for @resetBuiltinConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to restore built-in presets to factory defaults? Your custom rules will remain intact.'**
+  String get resetBuiltinConfirmMessage;
+
+  /// No description provided for @deleteOverrideConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Rule?'**
+  String get deleteOverrideConfirmTitle;
+
+  /// No description provided for @deleteOverrideConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to remove rule for {appName}?'**
+  String deleteOverrideConfirmMessage(String appName);
+
+  /// No description provided for @noRunningApps.
+  ///
+  /// In en, this message translates to:
+  /// **'No running processes found'**
+  String get noRunningApps;
+
+  /// No description provided for @selectPreset.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Preset'**
+  String get selectPreset;
+
+  /// No description provided for @searchAppPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Search process...'**
+  String get searchAppPlaceholder;
 }
 
 class _AppLocalizationsDelegate

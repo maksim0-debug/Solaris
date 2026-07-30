@@ -887,7 +887,55 @@
   "noCitiesFound": "Города не найдены",
   "ddcNotSupportedTooltip": "Этот монитор не поддерживает DDC/CI или он отключен в настройках.\nИзменение яркости недоступно, но регулировка температуры работает.",
   "checkDdcAgain": "Проверить DDC/CI снова",
-  "tryAgain": "Повторить"
+  "tryAgain": "Повторить",
+  "appOverridesTitle": "Настройки для приложений",
+  "appOverridesSubtitle": "Настройка индивидуальной яркости и температуры для выбранных приложений.",
+  "appOverrideExitDelay": "Задержка отключения",
+  "appOverrideExitDelaySubtitle": "Время в секундах до отключения профиля при сворачивании приложения.",
+  "appOverrideExitDelaySeconds": "{seconds} сек",
+  "@appOverrideExitDelaySeconds": {
+    "placeholders": {
+      "seconds": {"type": "int"}
+    }
+  },
+  "userRulesSection": "Пользовательские правила",
+  "builtinRulesSection": "Встроенные пресеты ({count})",
+  "@builtinRulesSection": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "addAppOverride": "Добавить приложение",
+  "resetBuiltinRules": "Сбросить системные правила",
+  "promoteToUser": "Перенести в Мои",
+  "appOverrideModeGlobal": "Глобальный",
+  "appOverrideModeFixed": "Фиксированный",
+  "appOverrideModeCurve": "Кривая",
+  "brightnessMode": "Режим яркости",
+  "temperatureMode": "Режим температуры",
+  "selectAppTitle": "Выбор приложения",
+  "runningApps": "Запущенные процессы",
+  "selectExecutable": "Выбрать .exe файл...",
+  "customExeName": "Имя исполняемого файла (например app.exe)",
+  "customDisplayName": "Отображаемое имя",
+  "appPromotedToast": "Приложение {appName} перенесено из встроенных пресетов в ваши правила",
+  "@appPromotedToast": {
+    "placeholders": {
+      "appName": {"type": "String"}
+    }
+  },
+  "resetBuiltinConfirmTitle": "Сбросить системные правила?",
+  "resetBuiltinConfirmMessage": "Вы уверены, что хотите восстановить фабричные значения встроенных пресетов? Ваши пользовательские правила сохранятся.",
+  "deleteOverrideConfirmTitle": "Удалить правило?",
+  "deleteOverrideConfirmMessage": "Вы уверены, что хотите удалить правило для {appName}?",
+  "@deleteOverrideConfirmMessage": {
+    "placeholders": {
+      "appName": {"type": "String"}
+    }
+  },
+  "noRunningApps": "Запущенные процессы не найдены",
+  "selectPreset": "Выбрать пресет",
+  "searchAppPlaceholder": "Поиск процесса..."
 }
 
 

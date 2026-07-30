@@ -2195,4 +2195,99 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tryAgain => 'Try Again';
+
+  @override
+  String get appOverridesTitle => 'Per-App Overrides';
+
+  @override
+  String get appOverridesSubtitle =>
+      'Configure custom brightness and temperature rules for individual applications.';
+
+  @override
+  String get appOverrideExitDelay => 'Exit Delay';
+
+  @override
+  String get appOverrideExitDelaySubtitle =>
+      'Time in seconds before app profile turns off after minimizing.';
+
+  @override
+  String appOverrideExitDelaySeconds(int seconds) {
+    return '$seconds s';
+  }
+
+  @override
+  String get userRulesSection => 'User Rules';
+
+  @override
+  String builtinRulesSection(int count) {
+    return 'Built-in Presets ($count)';
+  }
+
+  @override
+  String get addAppOverride => 'Add Application';
+
+  @override
+  String get resetBuiltinRules => 'Reset System Rules';
+
+  @override
+  String get promoteToUser => 'Promote to Mine';
+
+  @override
+  String get appOverrideModeGlobal => 'Global';
+
+  @override
+  String get appOverrideModeFixed => 'Fixed';
+
+  @override
+  String get appOverrideModeCurve => 'Curve';
+
+  @override
+  String get brightnessMode => 'Brightness Mode';
+
+  @override
+  String get temperatureMode => 'Temperature Mode';
+
+  @override
+  String get selectAppTitle => 'Select Application';
+
+  @override
+  String get runningApps => 'Active Processes';
+
+  @override
+  String get selectExecutable => 'Browse .exe file...';
+
+  @override
+  String get customExeName => 'Executable Name (e.g. app.exe)';
+
+  @override
+  String get customDisplayName => 'Display Name';
+
+  @override
+  String appPromotedToast(String appName) {
+    return '$appName transferred from built-in presets to your rules';
+  }
+
+  @override
+  String get resetBuiltinConfirmTitle => 'Reset Built-in Rules?';
+
+  @override
+  String get resetBuiltinConfirmMessage =>
+      'Are you sure you want to restore built-in presets to factory defaults? Your custom rules will remain intact.';
+
+  @override
+  String get deleteOverrideConfirmTitle => 'Delete Rule?';
+
+  @override
+  String deleteOverrideConfirmMessage(String appName) {
+    return 'Are you sure you want to remove rule for $appName?';
+  }
+
+  @override
+  String get noRunningApps => 'No running processes found';
+
+  @override
+  String get selectPreset => 'Select Preset';
+
+  @override
+  String get searchAppPlaceholder => 'Search process...';
 }

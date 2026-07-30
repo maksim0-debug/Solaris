@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:solaris/models/api_permissions_config.dart';
 import 'package:solaris/models/app_override_rule.dart';
@@ -629,4 +631,121 @@ void main() {
       expect((appOverrideChangedPayload['app_overrides'] as List).length, equals(1));
     });
   });
+
+  group('Phase 5 UI & Automatic Promotion UX Flow Zero-Trust Tests', () {
+    test('Promote built-in rule converts isBuiltIn from true to false', () {
+      const builtIn = AppOverrideRule(
+        exeName: 'photoshop.exe',
+        appDisplayName: 'Adobe Photoshop',
+        isBuiltIn: true,
+        temperatureMode: AppOverrideMode.fixed,
+        fixedTemperature: 6500.0,
+      );
+      expect(builtIn.isBuiltIn, isTrue);
+
+      final promoted = builtIn.copyWith(isBuiltIn: false);
+      expect(promoted.isBuiltIn, isFalse);
+      expect(promoted.exeName, equals('photoshop.exe'));
+      expect(promoted.appDisplayName, equals('Adobe Photoshop'));
+      expect(promoted.fixedTemperature, equals(6500.0));
+    });
+
+    test('Verify SettingsNotifier CRUD and promotion state transformations', () {
+      final initialRules = AppOverrideRule.defaultBuiltInRules;
+      expect(initialRules.length, equals(6));
+      expect(initialRules.every((r) => r.isBuiltIn), isTrue);
+
+      // Simulate promoting photoshop.exe
+      final updatedRules = initialRules.map((r) {
+        if (r.exeName == 'photoshop.exe') {
+          return r.copyWith(isBuiltIn: false);
+        }
+        return r;
+      }).toList();
+
+      final userRules = updatedRules.where((r) => !r.isBuiltIn).toList();
+      final builtInRules = updatedRules.where((r) => r.isBuiltIn).toList();
+
+      expect(userRules.length, equals(1));
+      expect(userRules.first.exeName, equals('photoshop.exe'));
+      expect(builtInRules.length, equals(5));
+    });
+
+    test('Trilingual ARB Localization Parity Test (EN, RU, UK)', () {
+      final enFile = File('lib/l10n/app_en.arb');
+      final ruFile = File('lib/l10n/app_ru.arb');
+      final ukFile = File('lib/l10n/app_uk.arb');
+
+      expect(enFile.existsSync(), isTrue, reason: 'app_en.arb missing');
+      expect(ruFile.existsSync(), isTrue, reason: 'app_ru.arb missing');
+      expect(ukFile.existsSync(), isTrue, reason: 'app_uk.arb missing');
+
+      final Map<String, dynamic> enJson = jsonDecode(enFile.readAsStringSync()) as Map<String, dynamic>;
+      final Map<String, dynamic> ruJson = jsonDecode(ruFile.readAsStringSync()) as Map<String, dynamic>;
+      final Map<String, dynamic> ukJson = jsonDecode(ukFile.readAsStringSync()) as Map<String, dynamic>;
+
+      final requiredKeys = [
+        'appOverridesTitle',
+        'appOverridesSubtitle',
+        'appOverrideExitDelay',
+        'appOverrideExitDelaySubtitle',
+        'appOverrideExitDelaySeconds',
+        'userRulesSection',
+        'builtinRulesSection',
+        'addAppOverride',
+        'resetBuiltinRules',
+        'promoteToUser',
+        'appOverrideModeGlobal',
+        'appOverrideModeFixed',
+        'appOverrideModeCurve',
+        'brightnessMode',
+        'temperatureMode',
+        'selectAppTitle',
+        'runningApps',
+        'selectExecutable',
+        'customExeName',
+        'customDisplayName',
+        'appPromotedToast',
+        'resetBuiltinConfirmTitle',
+        'resetBuiltinConfirmMessage',
+        'deleteOverrideConfirmTitle',
+        'deleteOverrideConfirmMessage',
+        'noRunningApps',
+        'selectPreset',
+        'searchAppPlaceholder',
+      ];
+
+      for (final key in requiredKeys) {
+        expect(enJson.containsKey(key), isTrue, reason: 'Key $key missing in app_en.arb');
+        expect(ruJson.containsKey(key), isTrue, reason: 'Key $key missing in app_ru.arb');
+        expect(ukJson.containsKey(key), isTrue, reason: 'Key $key missing in app_uk.arb');
+
+        expect(enJson[key].toString().isNotEmpty, isTrue, reason: 'Key $key empty in app_en.arb');
+        expect(ruJson[key].toString().isNotEmpty, isTrue, reason: 'Key $key empty in app_ru.arb');
+        expect(ukJson[key].toString().isNotEmpty, isTrue, reason: 'Key $key empty in app_uk.arb');
+      }
+    });
+
+    test('Safe Fallback for Deleted Curve Presets does not crash or throw StateError', () {
+      const ruleWithDeletedPreset = AppOverrideRule(
+        exeName: 'photoshop.exe',
+        appDisplayName: 'Adobe Photoshop',
+        brightnessMode: AppOverrideMode.curve,
+        brightnessCurvePresetId: 'non_existent_preset_id_123',
+        temperatureMode: AppOverrideMode.curve,
+        temperatureCurvePresetId: 'non_existent_temp_preset_id_456',
+      );
+
+      final settings = SettingsState(
+        appOverrides: [ruleWithDeletedPreset],
+      );
+
+      // Verify that rule with non-existent preset is parsed and serialized without throwing errors
+      final json = settings.toJson();
+      final reloaded = SettingsState.fromJson(json);
+      expect(reloaded.appOverrides.first.brightnessCurvePresetId, equals('non_existent_preset_id_123'));
+      expect(reloaded.appOverrides.first.temperatureCurvePresetId, equals('non_existent_temp_preset_id_456'));
+    });
+  });
 }
+

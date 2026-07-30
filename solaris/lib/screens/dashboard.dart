@@ -17,6 +17,7 @@ import 'package:solaris/models/current_day_phase.dart';
 import 'package:solaris/screens/location_screen.dart';
 import 'package:solaris/screens/settings_screen.dart';
 import 'package:solaris/screens/sleep_screen.dart';
+import 'package:solaris/screens/app_overrides_screen.dart';
 import 'package:solaris/providers/lifecycle_provider.dart';
 import 'package:solaris/utils/status_helper.dart';
 import 'package:solaris/widgets/circadian_breakdown_tooltip.dart';
@@ -461,6 +462,14 @@ class _Sidebar extends ConsumerWidget {
                 .setScreen(AppScreen.sleep),
           ),
           _SidebarItem(
+            icon: LucideIcons.layers,
+            label: l10n.appOverridesTitle,
+            isActive: ref.watch(activeScreenProvider) == AppScreen.appOverrides,
+            onTap: () => ref
+                .read(activeScreenProvider.notifier)
+                .setScreen(AppScreen.appOverrides),
+          ),
+          _SidebarItem(
             icon: LucideIcons.search,
             label: l10n.searchPlaceholder.split(' (').first,
             onTap: () =>
@@ -812,6 +821,8 @@ class _MainView extends ConsumerWidget {
         return const SettingsScreen();
       case AppScreen.location:
         return const LocationScreen();
+      case AppScreen.appOverrides:
+        return const AppOverridesScreen();
     }
   }
 }

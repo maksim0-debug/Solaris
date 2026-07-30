@@ -367,6 +367,8 @@ class _SearchResultTileState extends State<_SearchResultTile> {
         return const Color(0xFF4ADE80);
       case AppScreen.sleep:
         return const Color(0xFFA78BFA);
+      case AppScreen.appOverrides:
+        return const Color(0xFF818CF8);
     }
   }
 
@@ -382,6 +384,8 @@ class _SearchResultTileState extends State<_SearchResultTile> {
         return LucideIcons.mapPin;
       case AppScreen.sleep:
         return LucideIcons.moon;
+      case AppScreen.appOverrides:
+        return LucideIcons.layers;
     }
   }
 }

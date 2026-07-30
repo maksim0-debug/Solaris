@@ -885,7 +885,55 @@
   "noCitiesFound": "Міста не знайдені",
   "ddcNotSupportedTooltip": "Цей монітор не підтримує DDC/CI або його вимкнено в налаштуваннях.\nЗміна яскравості недоступна, але регулювання температури працює.",
   "checkDdcAgain": "Перевірити DDC/CI знову",
-  "tryAgain": "Повторити"
+  "tryAgain": "Повторити",
+  "appOverridesTitle": "Налаштування для додатків",
+  "appOverridesSubtitle": "Налаштування індивідуальної яскравості та температури для вибраних додатків.",
+  "appOverrideExitDelay": "Затримка вимкнення",
+  "appOverrideExitDelaySubtitle": "Час у секундах до вимкнення профілю при згортанні додатку.",
+  "appOverrideExitDelaySeconds": "{seconds} сек",
+  "@appOverrideExitDelaySeconds": {
+    "placeholders": {
+      "seconds": {"type": "int"}
+    }
+  },
+  "userRulesSection": "Правила користувача",
+  "builtinRulesSection": "Вбудовані пресети ({count})",
+  "@builtinRulesSection": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "addAppOverride": "Додати додаток",
+  "resetBuiltinRules": "Скинути системні правила",
+  "promoteToUser": "Перенести в Мої",
+  "appOverrideModeGlobal": "Глобальний",
+  "appOverrideModeFixed": "Фіксований",
+  "appOverrideModeCurve": "Крива",
+  "brightnessMode": "Режим яскравості",
+  "temperatureMode": "Режим температури",
+  "selectAppTitle": "Вибір додатку",
+  "runningApps": "Запущені процеси",
+  "selectExecutable": "Обрати .exe файл...",
+  "customExeName": "Ім'я виконуваного файлу (наприклад app.exe)",
+  "customDisplayName": "Назва додатку",
+  "appPromotedToast": "Додаток {appName} перенесено з вбудованих пресетів у ваші правила",
+  "@appPromotedToast": {
+    "placeholders": {
+      "appName": {"type": "String"}
+    }
+  },
+  "resetBuiltinConfirmTitle": "Скинути системні правила?",
+  "resetBuiltinConfirmMessage": "Ви впевнені, що хочете відновити фабричні значення вбудованих пресетів? Ваші власні правила збережуться.",
+  "deleteOverrideConfirmTitle": "Видалити правило?",
+  "deleteOverrideConfirmMessage": "Ви впевнені, що хочете видалити правило для {appName}?",
+  "@deleteOverrideConfirmMessage": {
+    "placeholders": {
+      "appName": {"type": "String"}
+    }
+  },
+  "noRunningApps": "Запущені процеси не знайдені",
+  "selectPreset": "Обрати пресет",
+  "searchAppPlaceholder": "Пошук процесу..."
 }
 
 

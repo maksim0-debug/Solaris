@@ -2214,4 +2214,99 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get tryAgain => 'Повторить';
+
+  @override
+  String get appOverridesTitle => 'Настройки для приложений';
+
+  @override
+  String get appOverridesSubtitle =>
+      'Настройка индивидуальной яркости и температуры для выбранных приложений.';
+
+  @override
+  String get appOverrideExitDelay => 'Задержка отключения';
+
+  @override
+  String get appOverrideExitDelaySubtitle =>
+      'Время в секундах до отключения профиля при сворачивании приложения.';
+
+  @override
+  String appOverrideExitDelaySeconds(int seconds) {
+    return '$seconds сек';
+  }
+
+  @override
+  String get userRulesSection => 'Пользовательские правила';
+
+  @override
+  String builtinRulesSection(int count) {
+    return 'Встроенные пресеты ($count)';
+  }
+
+  @override
+  String get addAppOverride => 'Добавить приложение';
+
+  @override
+  String get resetBuiltinRules => 'Сбросить системные правила';
+
+  @override
+  String get promoteToUser => 'Перенести в Мои';
+
+  @override
+  String get appOverrideModeGlobal => 'Глобальный';
+
+  @override
+  String get appOverrideModeFixed => 'Фиксированный';
+
+  @override
+  String get appOverrideModeCurve => 'Кривая';
+
+  @override
+  String get brightnessMode => 'Режим яркости';
+
+  @override
+  String get temperatureMode => 'Режим температуры';
+
+  @override
+  String get selectAppTitle => 'Выбор приложения';
+
+  @override
+  String get runningApps => 'Запущенные процессы';
+
+  @override
+  String get selectExecutable => 'Выбрать .exe файл...';
+
+  @override
+  String get customExeName => 'Имя исполняемого файла (например app.exe)';
+
+  @override
+  String get customDisplayName => 'Отображаемое имя';
+
+  @override
+  String appPromotedToast(String appName) {
+    return 'Приложение $appName перенесено из встроенных пресетов в ваши правила';
+  }
+
+  @override
+  String get resetBuiltinConfirmTitle => 'Сбросить системные правила?';
+
+  @override
+  String get resetBuiltinConfirmMessage =>
+      'Вы уверены, что хотите восстановить фабричные значения встроенных пресетов? Ваши пользовательские правила сохранятся.';
+
+  @override
+  String get deleteOverrideConfirmTitle => 'Удалить правило?';
+
+  @override
+  String deleteOverrideConfirmMessage(String appName) {
+    return 'Вы уверены, что хотите удалить правило для $appName?';
+  }
+
+  @override
+  String get noRunningApps => 'Запущенные процессы не найдены';
+
+  @override
+  String get selectPreset => 'Выбрать пресет';
+
+  @override
+  String get searchAppPlaceholder => 'Поиск процесса...';
 }

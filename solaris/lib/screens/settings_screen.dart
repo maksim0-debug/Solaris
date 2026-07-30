@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/models/settings_state.dart';
+import 'package:solaris/models/app_override_rule.dart';
 import 'package:solaris/env/env.dart';
 import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/widgets/glass_card.dart';
@@ -155,6 +156,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             id: 'language',
             child: _LanguageSelectorCard(anchorKeys: _anchorKeys),
           ),
+          const SizedBox(height: 24),
+
+          // Per-App Overrides Settings Card
+          const _AppOverridesTileCard(),
           const SizedBox(height: 24),
 
           // App Settings (Autorun)
@@ -3650,6 +3655,77 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
           ],
         ),
       ],
+    );
+  }
+}
+
+class _AppOverridesTileCard extends ConsumerWidget {
+  const _AppOverridesTileCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final settingsAsync = ref.watch(settingsProvider);
+    final settings = settingsAsync.value?['all'] ?? SettingsState();
+    final count = settings.appOverrides.where((AppOverrideRule r) => !r.isBuiltIn).length;
+
+    return GlassCard(
+      padding: const EdgeInsets.all(24),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF6366F1).withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              LucideIcons.layers,
+              color: Color(0xFF818CF8),
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.appOverridesTitle,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.appOverridesSubtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.5),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          ElevatedButton.icon(
+            onPressed: () {
+              ref.read(activeScreenProvider.notifier).setScreen(AppScreen.appOverrides);
+            },
+            icon: const Icon(LucideIcons.externalLink, size: 14),
+            label: Text(count > 0 ? '$count rules' : 'Configure'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF6366F1),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -975,7 +975,55 @@
   "noCitiesFound": "No cities found",
   "ddcNotSupportedTooltip": "This monitor does not support DDC/CI or it is disabled in settings.\nBrightness adjustment is unavailable, but temperature regulation works.",
   "checkDdcAgain": "Check DDC/CI again",
-  "tryAgain": "Try Again"
+  "tryAgain": "Try Again",
+  "appOverridesTitle": "Per-App Overrides",
+  "appOverridesSubtitle": "Configure custom brightness and temperature rules for individual applications.",
+  "appOverrideExitDelay": "Exit Delay",
+  "appOverrideExitDelaySubtitle": "Time in seconds before app profile turns off after minimizing.",
+  "appOverrideExitDelaySeconds": "{seconds} s",
+  "@appOverrideExitDelaySeconds": {
+    "placeholders": {
+      "seconds": {"type": "int"}
+    }
+  },
+  "userRulesSection": "User Rules",
+  "builtinRulesSection": "Built-in Presets ({count})",
+  "@builtinRulesSection": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "addAppOverride": "Add Application",
+  "resetBuiltinRules": "Reset System Rules",
+  "promoteToUser": "Promote to Mine",
+  "appOverrideModeGlobal": "Global",
+  "appOverrideModeFixed": "Fixed",
+  "appOverrideModeCurve": "Curve",
+  "brightnessMode": "Brightness Mode",
+  "temperatureMode": "Temperature Mode",
+  "selectAppTitle": "Select Application",
+  "runningApps": "Active Processes",
+  "selectExecutable": "Browse .exe file...",
+  "customExeName": "Executable Name (e.g. app.exe)",
+  "customDisplayName": "Display Name",
+  "appPromotedToast": "{appName} transferred from built-in presets to your rules",
+  "@appPromotedToast": {
+    "placeholders": {
+      "appName": {"type": "String"}
+    }
+  },
+  "resetBuiltinConfirmTitle": "Reset Built-in Rules?",
+  "resetBuiltinConfirmMessage": "Are you sure you want to restore built-in presets to factory defaults? Your custom rules will remain intact.",
+  "deleteOverrideConfirmTitle": "Delete Rule?",
+  "deleteOverrideConfirmMessage": "Are you sure you want to remove rule for {appName}?",
+  "@deleteOverrideConfirmMessage": {
+    "placeholders": {
+      "appName": {"type": "String"}
+    }
+  },
+  "noRunningApps": "No running processes found",
+  "selectPreset": "Select Preset",
+  "searchAppPlaceholder": "Search process..."
 }
 
 
