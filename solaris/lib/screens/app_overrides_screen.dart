@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -585,31 +586,12 @@ class _AppOverrideRuleCard extends ConsumerWidget {
         ),
         if (rule.brightnessMode == AppOverrideMode.fixed) ...[
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: Slider(
-                  value: (rule.fixedBrightness ?? 80.0).clamp(0.0, 100.0),
-                  min: 0,
-                  max: 100,
-                  divisions: 100,
-                  activeColor: const Color(0xFFFDBA74),
-                  onChanged: (val) {
-                    final updated = rule.copyWith(fixedBrightness: val);
-                    ref.read(settingsProvider.notifier).updateAppOverride(updated);
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '${(rule.fixedBrightness ?? 80.0).round()}%',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFFDBA74),
-                ),
-              ),
-            ],
+          _AppRuleBrightnessSlider(
+            value: (rule.fixedBrightness ?? 80.0).clamp(0.0, 100.0),
+            onChanged: (val) {
+              final updated = rule.copyWith(fixedBrightness: val);
+              ref.read(settingsProvider.notifier).updateAppOverride(updated);
+            },
           ),
         ],
         if (rule.brightnessMode == AppOverrideMode.curve) ...[
@@ -658,31 +640,12 @@ class _AppOverrideRuleCard extends ConsumerWidget {
         ),
         if (rule.temperatureMode == AppOverrideMode.fixed) ...[
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: Slider(
-                  value: (rule.fixedTemperature ?? 6500.0).clamp(3300.0, 6500.0),
-                  min: 3300,
-                  max: 6500,
-                  divisions: 64,
-                  activeColor: const Color(0xFF60A5FA),
-                  onChanged: (val) {
-                    final updated = rule.copyWith(fixedTemperature: val);
-                    ref.read(settingsProvider.notifier).updateAppOverride(updated);
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '${(rule.fixedTemperature ?? 6500.0).round()}K',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF60A5FA),
-                ),
-              ),
-            ],
+          _AppRuleTemperatureSlider(
+            value: (rule.fixedTemperature ?? 6500.0).clamp(3300.0, 6500.0),
+            onChanged: (val) {
+              final updated = rule.copyWith(fixedTemperature: val);
+              ref.read(settingsProvider.notifier).updateAppOverride(updated);
+            },
           ),
         ],
         if (rule.temperatureMode == AppOverrideMode.curve) ...[
@@ -1114,5 +1077,296 @@ class _AddAppOverrideDialogState extends ConsumerState<_AddAppOverrideDialog> {
 
     ref.read(settingsProvider.notifier).addAppOverride(newRule);
     Navigator.of(context).pop();
+  }
+}
+
+class _AppRuleBrightnessSlider extends StatefulWidget {
+  final double value;
+  final ValueChanged<double> onChanged;
+
+  const _AppRuleBrightnessSlider({
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  State<_AppRuleBrightnessSlider> createState() =>
+      _AppRuleBrightnessSliderState();
+}
+
+class _AppRuleBrightnessSliderState extends State<_AppRuleBrightnessSlider> {
+  late double _localValue;
+  bool _isDragging = false;
+  Timer? _debounceTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _localValue = widget.value;
+  }
+
+  @override
+  void didUpdateWidget(covariant _AppRuleBrightnessSlider oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_isDragging && widget.value != oldWidget.value) {
+      _localValue = widget.value;
+    }
+  }
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
+  }
+
+  void _notifyChanged(double val) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        widget.onChanged(val);
+      }
+    });
+  }
+
+  void _notifyChangeEnd(double val) {
+    _debounceTimer?.cancel();
+    widget.onChanged(val);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final clamped = _localValue.clamp(0.0, 100.0);
+    return Row(
+      children: [
+        Expanded(
+          child: SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackShape: const _AppRuleGradientTrackShape(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFFDBA74), Color(0xFFF97316)],
+                ),
+              ),
+              activeTrackColor: const Color(0xFFF97316),
+              thumbColor: const Color(0xFFFDBA74),
+              overlayColor: const Color(0xFFFDBA74).withOpacity(0.12),
+            ),
+            child: Slider(
+              value: clamped,
+              min: 0,
+              max: 100,
+              activeColor: const Color(0xFFF97316),
+              onChanged: (val) {
+                setState(() {
+                  _isDragging = true;
+                  _localValue = val;
+                });
+                _notifyChanged(val);
+              },
+              onChangeEnd: (val) {
+                setState(() {
+                  _isDragging = false;
+                  _localValue = val;
+                });
+                _notifyChangeEnd(val);
+              },
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '${clamped.round()}%',
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFFFDBA74),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AppRuleTemperatureSlider extends StatefulWidget {
+  final double value;
+  final ValueChanged<double> onChanged;
+
+  const _AppRuleTemperatureSlider({
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  State<_AppRuleTemperatureSlider> createState() =>
+      _AppRuleTemperatureSliderState();
+}
+
+class _AppRuleTemperatureSliderState
+    extends State<_AppRuleTemperatureSlider> {
+  late double _localValue;
+  bool _isDragging = false;
+  Timer? _debounceTimer;
+
+  static const double _minTemp = 3300.0;
+  static const double _maxTemp = 6500.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _localValue = widget.value;
+  }
+
+  @override
+  void didUpdateWidget(covariant _AppRuleTemperatureSlider oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_isDragging && widget.value != oldWidget.value) {
+      _localValue = widget.value;
+    }
+  }
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
+  }
+
+  void _notifyChanged(double val) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        widget.onChanged(val);
+      }
+    });
+  }
+
+  void _notifyChangeEnd(double val) {
+    _debounceTimer?.cancel();
+    widget.onChanged(val);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final clamped = _localValue.clamp(_minTemp, _maxTemp);
+    // progress: 0.0 (Cold/Left/6500K) to 1.0 (Warm/Right/3300K)
+    final double progress = (_maxTemp - clamped) / (_maxTemp - _minTemp);
+
+    final Color currentColor = Color.lerp(
+      const Color(0xFF60A5FA),
+      const Color(0xFFFDBA74),
+      progress.clamp(0.0, 1.0),
+    )!;
+
+    return Row(
+      children: [
+        Expanded(
+          child: SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackShape: const _AppRuleGradientTrackShape(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF60A5FA), Color(0xFFFDBA74)],
+                ),
+              ),
+              activeTrackColor: currentColor,
+              thumbColor: currentColor,
+              overlayColor: currentColor.withOpacity(0.12),
+            ),
+            child: Slider(
+              value: progress.clamp(0.0, 1.0),
+              min: 0.0,
+              max: 1.0,
+              activeColor: currentColor,
+              onChanged: (val) {
+                final realTemp = _maxTemp - val * (_maxTemp - _minTemp);
+                setState(() {
+                  _isDragging = true;
+                  _localValue = realTemp;
+                });
+                _notifyChanged(realTemp);
+              },
+              onChangeEnd: (val) {
+                final realTemp = _maxTemp - val * (_maxTemp - _minTemp);
+                setState(() {
+                  _isDragging = false;
+                  _localValue = realTemp;
+                });
+                _notifyChangeEnd(realTemp);
+              },
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '${clamped.round()}K',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: currentColor,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AppRuleGradientTrackShape extends RoundedRectSliderTrackShape {
+  final LinearGradient gradient;
+
+  const _AppRuleGradientTrackShape({required this.gradient});
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset offset, {
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required Animation<double> enableAnimation,
+    required TextDirection textDirection,
+    required Offset thumbCenter,
+    Offset? secondaryOffset,
+    bool isDiscrete = false,
+    bool isEnabled = false,
+    double additionalActiveTrackHeight = 0,
+  }) {
+    final canvas = context.canvas;
+    final trackRect = getPreferredRect(
+      parentBox: parentBox,
+      offset: offset,
+      sliderTheme: sliderTheme,
+      isEnabled: isEnabled,
+      isDiscrete: isDiscrete,
+    );
+
+    // Inactive track
+    final inactivePaint = Paint()
+      ..color = sliderTheme.inactiveTrackColor ?? Colors.white10;
+    canvas.drawRRect(
+      RRect.fromLTRBAndCorners(
+        trackRect.left,
+        trackRect.top,
+        trackRect.right,
+        trackRect.bottom,
+        topLeft: const Radius.circular(10),
+        bottomLeft: const Radius.circular(10),
+        topRight: const Radius.circular(10),
+        bottomRight: const Radius.circular(10),
+      ),
+      inactivePaint,
+    );
+
+    // Active track with gradient
+    final activePaint = Paint()..shader = gradient.createShader(trackRect);
+
+    canvas.drawRRect(
+      RRect.fromLTRBAndCorners(
+        trackRect.left,
+        trackRect.top,
+        thumbCenter.dx,
+        trackRect.bottom,
+        topLeft: const Radius.circular(10),
+        bottomLeft: const Radius.circular(10),
+        topRight: Radius.zero,
+        bottomRight: Radius.zero,
+      ),
+      activePaint,
+    );
   }
 }
