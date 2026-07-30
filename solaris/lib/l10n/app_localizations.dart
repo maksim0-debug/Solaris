@@ -976,6 +976,18 @@ abstract class AppLocalizations {
   /// **'Custom'**
   String get tempCustom;
 
+  /// No description provided for @presetSystemPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get presetSystemPrefix;
+
+  /// No description provided for @presetUserPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'User'**
+  String get presetUserPrefix;
+
   /// No description provided for @blueLightFilter.
   ///
   /// In en, this message translates to:

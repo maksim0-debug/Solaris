@@ -227,6 +227,8 @@
   "tempWarm": "Теплий",
   "tempWarmest": "Найтепліший",
   "tempCustom": "Свій",
+  "presetSystemPrefix": "Системна",
+  "presetUserPrefix": "Кастомна",
   "blueLightFilter": "Адаптивна колірна температура",
   "blueLightFilterSubtitle": "Автоматично робить кольори теплішими ввечері для зниження навантаження на очі",
   "chartModeBrightness": "Яскравість",

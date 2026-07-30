@@ -865,14 +865,14 @@ class _AppOverrideRuleCard extends ConsumerWidget {
     for (final type in PresetType.values) {
       items.add(DropdownMenuItem(
         value: type.name,
-        child: Text('System: ${type.name}', style: const TextStyle(color: Colors.white)),
+        child: Text('${l10n.presetSystemPrefix}: ${type.getName(l10n)}', style: const TextStyle(color: Colors.white)),
       ));
     }
 
     for (final p in settings.userPresets) {
       items.add(DropdownMenuItem(
         value: p.id,
-        child: Text('User: ${p.name}', style: const TextStyle(color: Colors.white)),
+        child: Text('${l10n.presetUserPrefix}: ${p.name}', style: const TextStyle(color: Colors.white)),
       ));
     }
 
@@ -909,14 +909,14 @@ class _AppOverrideRuleCard extends ConsumerWidget {
     for (final type in TemperaturePresetType.values) {
       items.add(DropdownMenuItem(
         value: type.name,
-        child: Text('System: ${type.name}', style: const TextStyle(color: Colors.white)),
+        child: Text('${l10n.presetSystemPrefix}: ${type.getName(l10n)}', style: const TextStyle(color: Colors.white)),
       ));
     }
 
     for (final p in tempSettings.userPresets) {
       items.add(DropdownMenuItem(
         value: p.id,
-        child: Text('User: ${p.name}', style: const TextStyle(color: Colors.white)),
+        child: Text('${l10n.presetUserPrefix}: ${p.name}', style: const TextStyle(color: Colors.white)),
       ));
     }
 

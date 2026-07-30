@@ -502,6 +502,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get tempCustom => 'Свій';
 
   @override
+  String get presetSystemPrefix => 'Системна';
+
+  @override
+  String get presetUserPrefix => 'Кастомна';
+
+  @override
   String get blueLightFilter => 'Адаптивна колірна температура';
 
   @override

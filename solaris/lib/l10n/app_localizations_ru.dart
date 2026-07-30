@@ -500,6 +500,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get tempCustom => 'Свой';
 
   @override
+  String get presetSystemPrefix => 'Системная';
+
+  @override
+  String get presetUserPrefix => 'Кастомная';
+
+  @override
   String get blueLightFilter => 'Адаптивная цветовая температура';
 
   @override

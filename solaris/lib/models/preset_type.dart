@@ -1,4 +1,5 @@
 import 'package:fl_chart/fl_chart.dart';
+import 'package:solaris/l10n/app_localizations.dart';
 
 enum PresetType {
   brightest(0.3),
@@ -193,3 +194,38 @@ class UserPreset {
     );
   }
 }
+
+extension PresetTypeExtension on PresetType {
+  String getName(AppLocalizations l10n) {
+    switch (this) {
+      case PresetType.brightest:
+        return l10n.presetBrightest;
+      case PresetType.bright:
+        return l10n.presetBright;
+      case PresetType.dim:
+        return l10n.presetDim;
+      case PresetType.dimmest:
+        return l10n.presetDimmest;
+      case PresetType.custom:
+        return l10n.presetCustom;
+    }
+  }
+}
+
+extension TemperaturePresetTypeExtension on TemperaturePresetType {
+  String getName(AppLocalizations l10n) {
+    switch (this) {
+      case TemperaturePresetType.coolest:
+        return l10n.tempCoolest;
+      case TemperaturePresetType.cool:
+        return l10n.tempCool;
+      case TemperaturePresetType.warm:
+        return l10n.tempWarm;
+      case TemperaturePresetType.warmest:
+        return l10n.tempWarmest;
+      case TemperaturePresetType.custom:
+        return l10n.tempCustom;
+    }
+  }
+}
+

@@ -503,6 +503,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tempCustom => 'Custom';
 
   @override
+  String get presetSystemPrefix => 'System';
+
+  @override
+  String get presetUserPrefix => 'User';
+
+  @override
   String get blueLightFilter => 'Color Temperature (Blue Light Filter)';
 
   @override
