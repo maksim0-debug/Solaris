@@ -68,6 +68,12 @@ class GamingModeService extends Notifier<bool> {
         if (event is bool) {
           state = event;
           debugPrint('[GamingModeService] Gaming Mode Changed: $state');
+        } else if (event is Map) {
+          final isGaming = event['is_gaming'];
+          if (isGaming is bool) {
+            state = isGaming;
+            debugPrint('[GamingModeService] Gaming Mode Changed: $state');
+          }
         }
       },
       onError: (Object error) {

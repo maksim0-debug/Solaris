@@ -8,10 +8,25 @@
 #include <flutter/event_channel.h>
 #include <flutter/standard_method_codec.h>
 
-// StreamHandler for Gaming Mode events
+struct FocusEventData {
+  bool is_gaming;
+  std::string active_process;
+};
+
+// StreamHandler for Focus and Gaming Mode events
 class GamingModeStreamHandler : public flutter::StreamHandler<flutter::EncodableValue> {
  public:
-  GamingModeStreamHandler(MonitorManager& manager) : manager_(manager) {}
+  GamingModeStreamHandler(MonitorManager& manager, HWND window_hwnd)
+      : manager_(manager), window_hwnd_(window_hwnd) {}
+
+  void SendFocusEvent(bool is_gaming, const std::string& active_process) {
+    if (event_sink_) {
+      flutter::EncodableMap map;
+      map[flutter::EncodableValue("is_gaming")] = flutter::EncodableValue(is_gaming);
+      map[flutter::EncodableValue("active_process")] = flutter::EncodableValue(active_process);
+      event_sink_->Success(flutter::EncodableValue(map));
+    }
+  }
 
  protected:
   std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> OnListenInternal(
@@ -19,13 +34,19 @@ class GamingModeStreamHandler : public flutter::StreamHandler<flutter::Encodable
       std::unique_ptr<flutter::EventSink<flutter::EncodableValue>>&& events) override {
     event_sink_ = std::move(events);
     
-    // Initial state
-    event_sink_->Success(flutter::EncodableValue(manager_.IsGamingMode()));
+    // Initial state map
+    flutter::EncodableMap map;
+    map[flutter::EncodableValue("is_gaming")] = flutter::EncodableValue(manager_.IsGamingMode());
+    map[flutter::EncodableValue("active_process")] = flutter::EncodableValue(manager_.GetActiveProcessName());
+    event_sink_->Success(flutter::EncodableValue(map));
 
     // Set callback for future changes
-    manager_.SetGamingModeCallback([this](bool is_gaming) {
-      if (event_sink_) {
-        event_sink_->Success(flutter::EncodableValue(is_gaming));
+    manager_.SetFocusAndGamingCallback([this](bool is_gaming, const std::string& active_process) {
+      if (window_hwnd_) {
+        auto* data = new FocusEventData{is_gaming, active_process};
+        if (!PostMessage(window_hwnd_, WM_SOLARIS_DISPATCH_EVENT, 0, reinterpret_cast<LPARAM>(data))) {
+          delete data;
+        }
       }
     });
 
@@ -34,13 +55,14 @@ class GamingModeStreamHandler : public flutter::StreamHandler<flutter::Encodable
 
   std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>> OnCancelInternal(
       const flutter::EncodableValue* arguments) override {
-    manager_.SetGamingModeCallback(nullptr);
+    manager_.SetFocusAndGamingCallback(nullptr);
     event_sink_ = nullptr;
     return nullptr;
   }
 
  private:
   MonitorManager& manager_;
+  HWND window_hwnd_;
   std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> event_sink_;
 };
 
@@ -223,17 +245,29 @@ bool FlutterWindow::OnCreate() {
             return;
           }
           result->Error("invalid_arguments", "Expected integer seconds");
+        } else if (call.method_name().compare("getRunningProcesses") == 0) {
+          auto processes = monitor_manager_.GetRunningProcesses();
+          flutter::EncodableList response;
+          for (auto const& [exe, title] : processes) {
+            flutter::EncodableMap map;
+            map[flutter::EncodableValue("exe")] = flutter::EncodableValue(exe);
+            map[flutter::EncodableValue("title")] = flutter::EncodableValue(title);
+            response.push_back(flutter::EncodableValue(map));
+          }
+          result->Success(flutter::EncodableValue(response));
+          return;
         } else {
           result->NotImplemented();
         }
       });
 
-  // Set up EventChannel for Gaming Mode
+  // Set up EventChannel for Gaming Mode & Focus Events
   event_channel_ = std::make_unique<flutter::EventChannel<flutter::EncodableValue>>(
       flutter_controller_->engine()->messenger(), "com.solaris.monitor/events",
       &flutter::StandardMethodCodec::GetInstance());
   
-  auto stream_handler = std::make_unique<GamingModeStreamHandler>(monitor_manager_);
+  auto stream_handler = std::make_unique<GamingModeStreamHandler>(monitor_manager_, GetHandle());
+  gaming_stream_handler_ = stream_handler.get();
   event_channel_->SetStreamHandler(std::move(stream_handler));
 
   // Set up EventChannel for System & Hardware events
@@ -273,6 +307,17 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
   }
 
   switch (message) {
+    case WM_SOLARIS_DISPATCH_EVENT: {
+      auto* data = reinterpret_cast<FocusEventData*>(lparam);
+      if (data) {
+        if (gaming_stream_handler_) {
+          gaming_stream_handler_->SendFocusEvent(data->is_gaming, data->active_process);
+        }
+        delete data;
+      }
+      return 0;
+    }
+
     case WM_FONTCHANGE:
       flutter_controller_->engine()->ReloadSystemFonts();
       break;

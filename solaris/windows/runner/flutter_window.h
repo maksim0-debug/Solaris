@@ -12,6 +12,10 @@
 #include "win32_window.h"
 #include "monitor_manager.h"
 
+#define WM_SOLARIS_DISPATCH_EVENT (WM_USER + 101)
+
+class GamingModeStreamHandler;
+
 // A window that does nothing but host a Flutter view.
 class FlutterWindow : public Win32Window {
  public:
@@ -38,7 +42,7 @@ class FlutterWindow : public Win32Window {
 
   // EventChannel for gaming mode status.
   std::unique_ptr<flutter::EventChannel<flutter::EncodableValue>> event_channel_;
-  std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> event_sink_;
+  GamingModeStreamHandler* gaming_stream_handler_ = nullptr;
 
   // EventChannel for system & hardware events.
   std::unique_ptr<flutter::EventChannel<flutter::EncodableValue>> system_event_channel_;

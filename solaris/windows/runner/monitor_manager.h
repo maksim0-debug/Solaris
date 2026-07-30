@@ -52,12 +52,16 @@ class MonitorManager {
   // System & Hardware feedback callbacks
   void SetHardwareErrorCallback(std::function<void(const std::string&)> callback);
 
-  // Game Detection
-  void SetGamingModeCallback(std::function<void(bool)> callback);
+  // Game & Focus Detection
+  void SetFocusAndGamingCallback(std::function<void(bool is_gaming, const std::string& active_process)> callback);
   void UpdateWhitelist(const std::vector<std::string>& whitelist);
   void UpdateBlacklist(const std::vector<std::string>& blacklist);
   void SetGameModeExitDelay(int delay_seconds);
   bool IsGamingMode() const { return is_gaming_mode_; }
+  std::string GetActiveProcessName() const;
+
+  // GUI Running Processes Enumeration
+  std::vector<std::pair<std::string, std::string>> GetRunningProcesses();
 
  private:
   // Persistent Physical Monitor Handle Cache
@@ -83,11 +87,14 @@ class MonitorManager {
   std::mutex error_cb_mutex_;
   std::function<void(const std::string&)> on_hardware_error_;
 
-  // Game Detection state
+  // Game & Focus Detection state
   std::thread detector_thread_;
   std::atomic<bool> stop_detector_{false};
   std::atomic<bool> is_gaming_mode_{false};
-  std::function<void(bool)> on_gaming_mode_changed_;
+  std::function<void(bool, const std::string&)> on_focus_and_gaming_changed_;
+
+  mutable std::mutex focus_mutex_;
+  std::string active_process_name_;
   
   std::mutex lists_mutex_;
   std::set<std::string> whitelist_;

@@ -555,9 +555,170 @@ bool MonitorManager::ResetAllMonitorsTemperatureSync() {
   return all_success;
 }
 
-void MonitorManager::SetGamingModeCallback(std::function<void(bool)> callback) {
-  on_gaming_mode_changed_ = callback;
+namespace {
+struct ScopedHandle {
+  HANDLE handle = NULL;
+  explicit ScopedHandle(HANDLE h = NULL) : handle(h) {}
+  ~ScopedHandle() {
+    if (handle != NULL && handle != INVALID_HANDLE_VALUE) {
+      CloseHandle(handle);
+    }
+  }
+  ScopedHandle(const ScopedHandle&) = delete;
+  ScopedHandle& operator=(const ScopedHandle&) = delete;
+  ScopedHandle(ScopedHandle&& other) noexcept : handle(other.handle) {
+    other.handle = NULL;
+  }
+  ScopedHandle& operator=(ScopedHandle&& other) noexcept {
+    if (this != &other) {
+      if (handle != NULL && handle != INVALID_HANDLE_VALUE) {
+        CloseHandle(handle);
+      }
+      handle = other.handle;
+      other.handle = NULL;
+    }
+    return *this;
+  }
+
+  bool is_valid() const { return handle != NULL && handle != INVALID_HANDLE_VALUE; }
+  operator HANDLE() const { return handle; }
+  HANDLE get() const { return handle; }
+};
+
+std::string WideToUtf8(const std::wstring& wstr) {
+  if (wstr.empty()) return "";
+  int size_needed = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), static_cast<int>(wstr.size()), NULL, 0, NULL, NULL);
+  if (size_needed <= 0) return "";
+  std::string strTo(size_needed, 0);
+  WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), static_cast<int>(wstr.size()), &strTo[0], size_needed, NULL, NULL);
+  return strTo;
 }
+
+std::string GetProcessExeName(DWORD pid) {
+  if (pid == 0) return "";
+  ScopedHandle hProcess(OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid));
+  if (!hProcess.is_valid()) return "";
+
+  wchar_t buffer[4096];
+  DWORD size = 4096;
+  std::wstring full_path;
+  if (QueryFullProcessImageNameW(hProcess.get(), 0, buffer, &size)) {
+    full_path = std::wstring(buffer, size);
+  }
+
+  if (full_path.empty()) return "";
+
+  for (wchar_t& wc : full_path) {
+    wc = static_cast<wchar_t>(::towlower(wc));
+  }
+
+  size_t last_slash = full_path.find_last_of(L"\\/");
+  std::wstring file_name = (last_slash == std::wstring::npos) ? full_path : full_path.substr(last_slash + 1);
+
+  return WideToUtf8(file_name);
+}
+
+struct UwpSearchContext {
+  DWORD child_pid = 0;
+};
+
+BOOL CALLBACK EnumUwpChildWindowsProc(HWND hwnd, LPARAM lParam) {
+  auto* ctx = reinterpret_cast<UwpSearchContext*>(lParam);
+  if (!IsWindowVisible(hwnd)) return TRUE;
+
+  wchar_t class_name[256];
+  if (GetClassNameW(hwnd, class_name, 256)) {
+    if (wcscmp(class_name, L"Windows.UI.Core.CoreWindow") == 0) {
+      RECT rect;
+      if (GetWindowRect(hwnd, &rect) && (rect.right - rect.left > 0) && (rect.bottom - rect.top > 0)) {
+        DWORD pid = 0;
+        GetWindowThreadProcessId(hwnd, &pid);
+        if (pid != 0) {
+          ctx->child_pid = pid;
+          return FALSE;
+        }
+      }
+    }
+  }
+  return TRUE;
+}
+
+std::string ExtractProcessNameWithUwp(HWND hwnd, DWORD pid) {
+  std::string exe_name = GetProcessExeName(pid);
+  if (exe_name == "applicationframehost.exe") {
+    UwpSearchContext ctx;
+    EnumChildWindows(hwnd, EnumUwpChildWindowsProc, reinterpret_cast<LPARAM>(&ctx));
+    if (ctx.child_pid != 0 && ctx.child_pid != pid) {
+      std::string child_exe = GetProcessExeName(ctx.child_pid);
+      if (!child_exe.empty()) {
+        return child_exe;
+      }
+    }
+  }
+  return exe_name;
+}
+
+struct EnumWindowsContext {
+  DWORD current_pid = GetCurrentProcessId();
+  std::vector<std::pair<std::string, std::string>> processes;
+  std::set<std::string> seen_exes;
+};
+
+BOOL CALLBACK EnumGuiWindowsProc(HWND hwnd, LPARAM lParam) {
+  auto* ctx = reinterpret_cast<EnumWindowsContext*>(lParam);
+
+  if (!IsWindowVisible(hwnd)) return TRUE;
+
+  LONG_PTR exStyle = GetWindowLongPtr(hwnd, GWL_EXSTYLE);
+  if (exStyle & WS_EX_TOOLWINDOW) return TRUE;
+
+  int title_len = GetWindowTextLengthW(hwnd);
+  if (title_len <= 0) return TRUE;
+
+  RECT rect;
+  if (!GetWindowRect(hwnd, &rect) || (rect.right - rect.left <= 0) || (rect.bottom - rect.top <= 0)) {
+    return TRUE;
+  }
+
+  DWORD pid = 0;
+  GetWindowThreadProcessId(hwnd, &pid);
+  if (pid == 0 || pid == ctx->current_pid) return TRUE;
+
+  std::string exe_name = ExtractProcessNameWithUwp(hwnd, pid);
+  if (exe_name.empty() || exe_name == "solaris.exe") return TRUE;
+
+  if (ctx->seen_exes.count(exe_name)) return TRUE;
+
+  wchar_t title_buf[512];
+  int read_len = GetWindowTextW(hwnd, title_buf, 512);
+  std::string utf8_title;
+  if (read_len > 0) {
+    utf8_title = WideToUtf8(std::wstring(title_buf, read_len));
+  }
+
+  ctx->seen_exes.insert(exe_name);
+  ctx->processes.push_back({exe_name, utf8_title});
+  return TRUE;
+}
+} // namespace
+
+void MonitorManager::SetFocusAndGamingCallback(
+    std::function<void(bool is_gaming, const std::string& active_process)> callback) {
+  std::lock_guard<std::mutex> lock(focus_mutex_);
+  on_focus_and_gaming_changed_ = callback;
+}
+
+std::string MonitorManager::GetActiveProcessName() const {
+  std::lock_guard<std::mutex> lock(focus_mutex_);
+  return active_process_name_;
+}
+
+std::vector<std::pair<std::string, std::string>> MonitorManager::GetRunningProcesses() {
+  EnumWindowsContext ctx;
+  EnumWindows(EnumGuiWindowsProc, reinterpret_cast<LPARAM>(&ctx));
+  return ctx.processes;
+}
+
 
 void MonitorManager::UpdateWhitelist(
     const std::vector<std::string> &whitelist) {
@@ -580,12 +741,11 @@ void MonitorManager::UpdateWhitelist(
   active_game_hwnd_ = nullptr;
   active_game_pid_ = 0;
   if (last_active_game_pid_ != 0) {
-    HANDLE hProcess = OpenProcess(SYNCHRONIZE, FALSE, last_active_game_pid_);
-    if (hProcess != NULL) {
-      if (WaitForSingleObject(hProcess, 0) != WAIT_TIMEOUT) {
+    ScopedHandle hProcess(OpenProcess(SYNCHRONIZE, FALSE, last_active_game_pid_));
+    if (hProcess.is_valid()) {
+      if (WaitForSingleObject(hProcess.get(), 0) != WAIT_TIMEOUT) {
         last_active_game_pid_ = 0; // Process actually exited
       }
-      CloseHandle(hProcess);
     } else {
       last_active_game_pid_ = 0;
     }
@@ -615,12 +775,11 @@ void MonitorManager::UpdateBlacklist(
   active_game_hwnd_ = nullptr;
   active_game_pid_ = 0;
   if (last_active_game_pid_ != 0) {
-    HANDLE hProcess = OpenProcess(SYNCHRONIZE, FALSE, last_active_game_pid_);
-    if (hProcess != NULL) {
-      if (WaitForSingleObject(hProcess, 0) != WAIT_TIMEOUT) {
+    ScopedHandle hProcess(OpenProcess(SYNCHRONIZE, FALSE, last_active_game_pid_));
+    if (hProcess.is_valid()) {
+      if (WaitForSingleObject(hProcess.get(), 0) != WAIT_TIMEOUT) {
         last_active_game_pid_ = 0; // Process actually exited
       }
-      CloseHandle(hProcess);
     } else {
       last_active_game_pid_ = 0;
     }
@@ -661,75 +820,89 @@ static bool IsAppInSet(const std::string &process_name_lower,
 }
 
 void MonitorManager::DetectorLoop() {
+  HWND last_hwnd = nullptr;
+  DWORD last_pid = 0;
+  int eval_tick_counter = 0;
+  bool is_match = false;
+
   while (!stop_detector_) {
     HWND hwnd = GetForegroundWindow();
-    bool is_match = false;
-
+    DWORD processId = 0;
     if (hwnd) {
-      DWORD processId;
       GetWindowThreadProcessId(hwnd, &processId);
+    }
 
-      bool check_completed = false;
+    std::string current_active_process = "";
+    if (hwnd && processId != 0) {
+      current_active_process = ExtractProcessNameWithUwp(hwnd, processId);
+    }
 
-      // Bypass Check (State Lock):
-      if (active_game_hwnd_ != nullptr) {
-        if (hwnd == active_game_hwnd_ || processId == active_game_pid_) {
-          bool is_whitelisted = false;
-          bool is_blacklisted = false;
-          {
-            std::lock_guard<std::mutex> lock(lists_mutex_);
-            auto cache_it = process_cache_.find(processId);
-            if (cache_it != process_cache_.end() &&
-                !cache_it->second.process_name_lower.empty()) {
-              if (IsAppInSet(cache_it->second.process_name_lower, blacklist_)) {
-                is_blacklisted = true;
-              } else if (IsAppInSet(cache_it->second.process_name_lower, whitelist_)) {
-                is_whitelisted = true;
+    bool hwnd_or_pid_changed = (hwnd != last_hwnd || processId != last_pid);
+    if (hwnd_or_pid_changed) {
+      last_hwnd = hwnd;
+      last_pid = processId;
+      eval_tick_counter = 0;
+    }
+
+    bool should_eval = hwnd_or_pid_changed || (eval_tick_counter >= 20);
+    if (should_eval) {
+      eval_tick_counter = 0;
+      is_match = false;
+
+      if (hwnd) {
+        bool check_completed = false;
+
+        // Bypass Check (State Lock):
+        if (active_game_hwnd_ != nullptr) {
+          if (hwnd == active_game_hwnd_ || processId == active_game_pid_) {
+            bool is_whitelisted = false;
+            bool is_blacklisted = false;
+            {
+              std::lock_guard<std::mutex> lock(lists_mutex_);
+              auto cache_it = process_cache_.find(processId);
+              if (cache_it != process_cache_.end() &&
+                  !cache_it->second.process_name_lower.empty()) {
+                if (IsAppInSet(cache_it->second.process_name_lower, blacklist_)) {
+                  is_blacklisted = true;
+                } else if (IsAppInSet(cache_it->second.process_name_lower, whitelist_)) {
+                  is_whitelisted = true;
+                }
               }
             }
-          }
 
-          if (!is_blacklisted && (is_whitelisted || IsWindowFullscreen(hwnd))) {
-            is_match = true;
-            check_completed = true;
+            if (!is_blacklisted && (is_whitelisted || IsWindowFullscreen(hwnd))) {
+              is_match = true;
+              check_completed = true;
+            } else {
+              active_game_hwnd_ = nullptr;
+              active_game_pid_ = 0;
+              if (is_blacklisted) {
+                last_active_game_pid_ = 0;
+              }
+            }
           } else {
-            // Game window is blacklisted, no longer fullscreen, or minimized
             active_game_hwnd_ = nullptr;
             active_game_pid_ = 0;
-            if (is_blacklisted) {
-              last_active_game_pid_ = 0;
-            }
-            // Proceed to standard search
           }
-        } else {
-          // Active window changed to a completely different window (Alt-Tab)
-          active_game_hwnd_ = nullptr;
-          active_game_pid_ = 0;
-          // Proceed to standard search
         }
-      }
 
-      // Standard Search:
-      if (!check_completed) {
-        int score = EvaluateGamingScore(hwnd, processId);
-        if (score >= SCORE_THRESHOLD) {
-          is_match = true;
-          active_game_hwnd_ = hwnd;
-          active_game_pid_ = processId;
-          last_active_game_pid_ = processId;
-        } else {
-          is_match = false;
-          // Note: We intentionally do NOT reset last_active_game_pid_ here.
-          // The previous game PID must be preserved so the 30-second exit hysteresis
-          // (EXIT_DELAY_MS) can verify if the game process is still alive.
+        // Standard Search:
+        if (!check_completed) {
+          int score = EvaluateGamingScore(hwnd, processId);
+          if (score >= SCORE_THRESHOLD) {
+            is_match = true;
+            active_game_hwnd_ = hwnd;
+            active_game_pid_ = processId;
+            last_active_game_pid_ = processId;
+          } else {
+            is_match = false;
+          }
         }
+      } else {
+        is_match = false;
       }
     } else {
-      // hwnd is nullptr (desktop transition / system focus lost / resolution
-      // change)
-      is_match = false;
-      // We do NOT reset active_game_hwnd_ or active_game_pid_ here to survive
-      // temporary focus losses.
+      eval_tick_counter++;
     }
 
     auto now = std::chrono::steady_clock::now();
@@ -744,8 +917,6 @@ void MonitorManager::DetectorLoop() {
       auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
                           now - candidate_start_time_)
                           .count();
-      // If we are already in gaming mode (or returning to the game during hysteresis),
-      // keep gaming mode active immediately to prevent a 500ms brightness dip.
       if (duration >= ENTRY_DELAY_MS || is_gaming_mode_) {
         last_gaming_match_time_ = now;
         target_gaming_mode = true;
@@ -755,14 +926,12 @@ void MonitorManager::DetectorLoop() {
 
       bool is_game_process_running = false;
       if (last_active_game_pid_ != 0) {
-        HANDLE hProcess =
-            OpenProcess(SYNCHRONIZE, FALSE, last_active_game_pid_);
-        if (hProcess != NULL) {
-          DWORD waitResult = WaitForSingleObject(hProcess, 0);
+        ScopedHandle hProcess(OpenProcess(SYNCHRONIZE, FALSE, last_active_game_pid_));
+        if (hProcess.is_valid()) {
+          DWORD waitResult = WaitForSingleObject(hProcess.get(), 0);
           if (waitResult == WAIT_TIMEOUT) {
             is_game_process_running = true;
           }
-          CloseHandle(hProcess);
         }
       }
 
@@ -771,7 +940,7 @@ void MonitorManager::DetectorLoop() {
                             now - last_gaming_match_time_)
                             .count();
         if (duration < exit_delay_ms_.load()) {
-          target_gaming_mode = true; // Hysteresis: Keep active
+          target_gaming_mode = true;
         } else {
           target_gaming_mode = false;
         }
@@ -781,19 +950,30 @@ void MonitorManager::DetectorLoop() {
       }
     }
 
-    if (target_gaming_mode != is_gaming_mode_) {
-      is_gaming_mode_ = target_gaming_mode;
-      if (on_gaming_mode_changed_) {
-        on_gaming_mode_changed_(is_gaming_mode_);
+    bool gaming_changed = (target_gaming_mode != is_gaming_mode_);
+    bool process_changed = false;
+    {
+      std::lock_guard<std::mutex> lock(focus_mutex_);
+      if (active_process_name_ != current_active_process) {
+        process_changed = true;
+        active_process_name_ = current_active_process;
       }
     }
 
-    // Detector poll interval: 2 seconds. With per-PID caching the per-tick
-    // cost is a handful of cheap Win32 calls (class, rect, cursor, clip), so
-    // 2s polling is more than enough for fullscreen-toggle / alt-tab detection
-    // and keeps background CPU near zero. Hysteresis (ENTRY/EXIT_DELAY_MS)
-    // still protects against flaps.
-    for (int i = 0; i < 40 && !stop_detector_; i++) {
+    if (gaming_changed || process_changed) {
+      is_gaming_mode_ = target_gaming_mode;
+      std::function<void(bool, const std::string&)> cb;
+      {
+        std::lock_guard<std::mutex> lock(focus_mutex_);
+        cb = on_focus_and_gaming_changed_;
+      }
+      if (cb) {
+        cb(is_gaming_mode_, current_active_process);
+      }
+    }
+
+    // Fast polling tick (100ms) for high-responsiveness focus switching
+    for (int i = 0; i < 2 && !stop_detector_; i++) {
       std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
   }
@@ -854,26 +1034,22 @@ int MonitorManager::EvaluateGamingScore(HWND hwnd, DWORD processId) {
   if (!is_cached) {
     std::wstring fullPathLower;
 
-    HANDLE hProcess =
-        OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, processId);
-    if (hProcess) {
-      wchar_t buffer[MAX_PATH];
-      DWORD size = MAX_PATH;
-      if (QueryFullProcessImageNameW(hProcess, 0, buffer, &size)) {
-        fullPathLower = buffer;
-        std::transform(fullPathLower.begin(), fullPathLower.end(),
-                       fullPathLower.begin(), ::towlower);
+    ScopedHandle hProcess(OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, processId));
+    if (hProcess.is_valid()) {
+      wchar_t buffer[4096];
+      DWORD size = 4096;
+      if (QueryFullProcessImageNameW(hProcess.get(), 0, buffer, &size)) {
+        fullPathLower = std::wstring(buffer, size);
+        for (wchar_t& wc : fullPathLower) {
+          wc = static_cast<wchar_t>(::towlower(wc));
+        }
 
         size_t lastSlash = fullPathLower.find_last_of(L"\\/");
         std::wstring fileName = (lastSlash == std::wstring::npos)
                                     ? fullPathLower
                                     : fullPathLower.substr(lastSlash + 1);
-        for (wchar_t wc : fileName) {
-          process_name_lower +=
-              static_cast<char>(std::tolower(static_cast<unsigned char>(wc)));
-        }
+        process_name_lower = WideToUtf8(fileName);
       }
-      CloseHandle(hProcess);
     }
 
     // --- Path Heuristics ---
@@ -898,19 +1074,20 @@ int MonitorManager::EvaluateGamingScore(HWND hwnd, DWORD processId) {
     }
 
     // --- DLL Scanning (one-shot per PID) ---
-    HANDLE hProcDll = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
-                                  FALSE, processId);
-    if (hProcDll) {
+    ScopedHandle hProcDll(OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+                                  FALSE, processId));
+    if (hProcDll.is_valid()) {
       HMODULE hMods[1024];
       DWORD cbNeeded;
-      if (EnumProcessModules(hProcDll, hMods, sizeof(hMods), &cbNeeded)) {
+      if (EnumProcessModules(hProcDll.get(), hMods, sizeof(hMods), &cbNeeded)) {
         for (unsigned int i = 0; i < (cbNeeded / sizeof(HMODULE)); i++) {
           wchar_t szModName[MAX_PATH];
-          if (GetModuleBaseNameW(hProcDll, hMods[i], szModName,
+          if (GetModuleBaseNameW(hProcDll.get(), hMods[i], szModName,
                                  sizeof(szModName) / sizeof(wchar_t))) {
             std::wstring modName(szModName);
-            std::transform(modName.begin(), modName.end(), modName.begin(),
-                           ::towlower);
+            for (wchar_t& wc : modName) {
+              wc = static_cast<wchar_t>(::towlower(wc));
+            }
 
             if (modName.find(L"xinput") != std::wstring::npos)
               static_score += 60;
@@ -925,7 +1102,6 @@ int MonitorManager::EvaluateGamingScore(HWND hwnd, DWORD processId) {
           }
         }
       }
-      CloseHandle(hProcDll);
     }
 
     // Insert into cache under lock
