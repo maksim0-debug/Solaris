@@ -452,6 +452,29 @@ void main() {
 
         expect(container.read(activeProcessServiceProvider).suppressedPids, isNotEmpty);
       });
+
+      test('Circadian adjustment loop respects Per-App Fixed Temperature override', () {
+        container.read(isColorTemperatureEnabledProvider.notifier).set(true);
+        final settingsNotifier = container.read(settingsProvider.notifier);
+        settingsNotifier.addAppOverride(
+          const AppOverrideRule(
+            exeName: 'fotor.exe',
+            appDisplayName: 'Fotor Editor',
+            temperatureMode: AppOverrideMode.fixed,
+            fixedTemperature: 3300.0,
+          ),
+        );
+
+        final activeProcessService = container.read(activeProcessServiceProvider.notifier);
+        activeProcessService.updateActiveProcessManually('fotor.exe');
+
+        // Read current temperature provider which is listened by circadian loop
+        final targetTemp = container.read(currentTemperatureProvider);
+        expect(targetTemp, equals(3300));
+
+        // Read circadian adjustment provider to verify it initializes without errors
+        container.read(circadianAdjustmentProvider);
+      });
     });
 
     group('GamingModeService Integration Zero-Trust Tests', () {

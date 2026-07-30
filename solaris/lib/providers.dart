@@ -2873,7 +2873,24 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
             }
 
             // Calculate and Apply Temperature
-            if (isGamingMode &&
+            if (appRule != null &&
+                appRule.temperatureMode != AppOverrideMode.global &&
+                isTempEnabled) {
+              final targetTemp = ref.watch(currentTemperatureProvider);
+              debugPrint(
+                '[CircadianLoop] Device: ${monitor.deviceName} | Per-App Temperature Override ($activeProcessName): ${targetTemp}K',
+              );
+              tempService.applyTemperatureSmoothly(
+                selection: monitor.deviceName,
+                targetValue: targetTemp.toDouble(),
+                monitors: monitors,
+                monitorService: monitorService,
+                isUIVisible: visibility == AppVisibilityState.visible,
+                updateTemperatureCallback: (id, val) {
+                  monitorListNotifier.updateTemperature(id, val);
+                },
+              );
+            } else if (isGamingMode &&
                 settings.isGameModeEnabled &&
                 settings.isGameModeTemperatureEnabled &&
                 isTempEnabled) {
