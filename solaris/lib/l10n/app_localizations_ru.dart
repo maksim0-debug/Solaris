@@ -2315,4 +2315,26 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get searchAppPlaceholder => 'Поиск процесса...';
+
+  @override
+  String get noCustomAppRulesYet => 'Пользовательские правила ещё не добавлены';
+
+  @override
+  String get noCustomAppRulesHint =>
+      'Нажмите «Добавить приложение», чтобы создать собственный профиль, или перенесите встроенные пресеты ниже.';
+
+  @override
+  String get appOverridesConfigure => 'Настроить';
+
+  @override
+  String appRulesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count правил',
+      few: '$count правила',
+      one: '$count правило',
+    );
+    return '$_temp0';
+  }
 }

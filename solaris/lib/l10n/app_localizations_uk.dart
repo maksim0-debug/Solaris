@@ -2309,4 +2309,26 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get searchAppPlaceholder => 'Пошук процесу...';
+
+  @override
+  String get noCustomAppRulesYet => 'Користувацькі правила ще не додані';
+
+  @override
+  String get noCustomAppRulesHint =>
+      'Натисніть «Додати додаток», щоб створити власний профіль, або перенесіть вбудовані пресети нижче.';
+
+  @override
+  String get appOverridesConfigure => 'Налаштувати';
+
+  @override
+  String appRulesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count правил',
+      few: '$count правила',
+      one: '$count правило',
+    );
+    return '$_temp0';
+  }
 }

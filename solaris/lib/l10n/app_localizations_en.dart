@@ -2296,4 +2296,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchAppPlaceholder => 'Search process...';
+
+  @override
+  String get noCustomAppRulesYet => 'No custom application rules added yet';
+
+  @override
+  String get noCustomAppRulesHint =>
+      'Click \"Add Application\" to create a custom profile, or transfer built-in presets below.';
+
+  @override
+  String get appOverridesConfigure => 'Configure';
+
+  @override
+  String appRulesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count rules',
+      one: '1 rule',
+    );
+    return '$_temp0';
+  }
 }

@@ -392,7 +392,7 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'No custom application rules added yet',
+              l10n.noCustomAppRulesYet,
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -401,7 +401,7 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Click "Add Application" to create a custom profile, or transfer built-in presets below.',
+              l10n.noCustomAppRulesHint,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,

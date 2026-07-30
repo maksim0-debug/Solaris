@@ -937,7 +937,11 @@
   },
   "noRunningApps": "Запущенные процессы не найдены",
   "selectPreset": "Выбрать пресет",
-  "searchAppPlaceholder": "Поиск процесса..."
+  "searchAppPlaceholder": "Поиск процесса...",
+  "noCustomAppRulesYet": "Пользовательские правила ещё не добавлены",
+  "noCustomAppRulesHint": "Нажмите «Добавить приложение», чтобы создать собственный профиль, или перенесите встроенные пресеты ниже.",
+  "appOverridesConfigure": "Настроить",
+  "appRulesCount": "{count, plural, one{{count} правило} few{{count} правила} other{{count} правил}}"
 }
 
 

@@ -3989,6 +3989,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search process...'**
   String get searchAppPlaceholder;
+
+  /// No description provided for @noCustomAppRulesYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No custom application rules added yet'**
+  String get noCustomAppRulesYet;
+
+  /// No description provided for @noCustomAppRulesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Click \"Add Application\" to create a custom profile, or transfer built-in presets below.'**
+  String get noCustomAppRulesHint;
+
+  /// No description provided for @appOverridesConfigure.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure'**
+  String get appOverridesConfigure;
+
+  /// No description provided for @appRulesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 rule} other{{count} rules}}'**
+  String appRulesCount(int count);
 }
 
 class _AppLocalizationsDelegate

@@ -3681,7 +3681,7 @@ class _AppOverridesTileCard extends ConsumerWidget {
               ref.read(activeScreenProvider.notifier).setScreen(AppScreen.appOverrides);
             },
             icon: const Icon(LucideIcons.externalLink, size: 14),
-            label: Text(count > 0 ? '$count rules' : 'Configure'),
+            label: Text(count > 0 ? l10n.appRulesCount(count) : l10n.appOverridesConfigure),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF6366F1),
               foregroundColor: Colors.white,

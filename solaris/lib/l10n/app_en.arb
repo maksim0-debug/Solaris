@@ -1025,7 +1025,18 @@
   },
   "noRunningApps": "No running processes found",
   "selectPreset": "Select Preset",
-  "searchAppPlaceholder": "Search process..."
+  "searchAppPlaceholder": "Search process...",
+  "noCustomAppRulesYet": "No custom application rules added yet",
+  "noCustomAppRulesHint": "Click \"Add Application\" to create a custom profile, or transfer built-in presets below.",
+  "appOverridesConfigure": "Configure",
+  "appRulesCount": "{count, plural, =1{1 rule} other{{count} rules}}",
+  "@appRulesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }
 
 

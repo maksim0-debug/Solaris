@@ -935,7 +935,11 @@
   },
   "noRunningApps": "Запущені процеси не знайдені",
   "selectPreset": "Обрати пресет",
-  "searchAppPlaceholder": "Пошук процесу..."
+  "searchAppPlaceholder": "Пошук процесу...",
+  "noCustomAppRulesYet": "Користувацькі правила ще не додані",
+  "noCustomAppRulesHint": "Натисніть «Додати додаток», щоб створити власний профіль, або перенесіть вбудовані пресети нижче.",
+  "appOverridesConfigure": "Налаштувати",
+  "appRulesCount": "{count, plural, one{{count} правило} few{{count} правила} other{{count} правил}}"
 }
 
 
