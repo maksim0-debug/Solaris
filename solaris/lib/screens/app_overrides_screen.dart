@@ -9,7 +9,6 @@ import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/models/temperature_state.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/providers/temperature_provider.dart';
-import 'package:solaris/services/active_process_service.dart';
 import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/curve_preset_dropdown.dart';
 
@@ -29,7 +28,6 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
     final l10n = AppLocalizations.of(context)!;
     final settingsAsync = ref.watch(settingsProvider);
     final settings = settingsAsync.value?['all'] ?? SettingsState();
-    final activeProcessState = ref.watch(activeProcessServiceProvider);
     final allOverrides = settings.appOverrides;
 
     final userRules = allOverrides.where((AppOverrideRule r) => !r.isBuiltIn).toList();
@@ -42,10 +40,6 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
         children: [
           // Screen Header
           _buildHeader(l10n),
-          const SizedBox(height: 24),
-
-          // Active Process Status Card
-          _buildActiveProcessCard(context, l10n, activeProcessState),
           const SizedBox(height: 24),
 
           // Exit Delay Slider Card
@@ -177,115 +171,6 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
     );
   }
 
-  Widget _buildActiveProcessCard(
-    BuildContext context,
-    AppLocalizations l10n,
-    ActiveProcessState state,
-  ) {
-    final hasActiveExe = state.activeProcess.isNotEmpty;
-    final exeDisplay = hasActiveExe ? state.activeProcess : 'None';
-    final isSuppressed = state.suppressedPids.isNotEmpty;
-
-    return GlassCard(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: hasActiveExe
-                  ? const Color(0xFF10B981).withOpacity(0.15)
-                  : Colors.white.withOpacity(0.05),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              hasActiveExe ? LucideIcons.cpu : LucideIcons.minusCircle,
-              color: hasActiveExe ? const Color(0xFF10B981) : Colors.white54,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      'ACTIVE FOCUS',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white.withOpacity(0.4),
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    if (state.isGaming) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: Colors.purple.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          'GAME MODE',
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.purpleAccent,
-                          ),
-                        ),
-                      ),
-                    ],
-                    if (isSuppressed) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          'SUPPRESSED',
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.orangeAccent,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  exeDisplay,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-                if (state.windowTitle.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    state.windowTitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.white.withOpacity(0.5),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildExitDelayCard(
     BuildContext context,
