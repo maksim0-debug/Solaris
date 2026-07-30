@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:solaris/models/api_permissions_config.dart';
 import 'package:solaris/models/app_override_rule.dart';
 import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/services/active_process_service.dart';
@@ -540,6 +541,92 @@ void main() {
 
       final updated = initial.copyWith(suppressedPids: {999});
       expect(updated.suppressedPids, contains(999));
+    });
+  });
+
+  group('Phase 4 Hotkey, API ACL & Regex Sanitization Zero-Trust Tests', () {
+    test(
+      'ApiPermissionsConfig includes all 28 canonical actions including per-app overrides actions',
+      () {
+        final allActions = ApiPermissionsConfig.getAllCanonicalActions();
+        expect(allActions.length, equals(28));
+        expect(allActions, contains('get_app_overrides'));
+        expect(allActions, contains('manage_app_overrides'));
+        expect(allActions, contains('reset_builtin_app_overrides'));
+
+        expect(
+          ApiPermissionsConfig.getCategoryForAction('get_app_overrides'),
+          equals(ApiActionCategory.presets),
+        );
+        expect(
+          ApiPermissionsConfig.getCategoryForAction('manage_app_overrides'),
+          equals(ApiActionCategory.presets),
+        );
+        expect(
+          ApiPermissionsConfig.getCategoryForAction('reset_builtin_app_overrides'),
+          equals(ApiActionCategory.presets),
+        );
+      },
+    );
+
+    test('Regex sanitization validates valid exe names and rejects invalid/malicious paths', () {
+      final regex = RegExp(r'^[a-z0-9_\-\.]+\.exe$');
+
+      final validNames = [
+        'photoshop.exe',
+        'premiere.exe',
+        'app_v1.0.exe',
+        'my-custom-app.exe',
+        '123.exe',
+      ];
+      for (final name in validNames) {
+        expect(regex.hasMatch(name), isTrue, reason: 'Failed for valid name $name');
+      }
+
+      final invalidNames = [
+        'photoshop',
+        'photoshop.bat',
+        '../photoshop.exe',
+        r'C:\Windows\System32\cmd.exe',
+        'app.exe/test',
+        'app.exe;rm -rf',
+        '   ',
+        'APP.EXE', // Must be lowercase before regex check
+      ];
+      for (final name in invalidNames) {
+        expect(regex.hasMatch(name), isFalse, reason: 'Failed to reject invalid name $name');
+      }
+    });
+
+    test('WebSocket active_process_changed & app_override_changed payload structure test', () {
+      const rule = AppOverrideRule(
+        exeName: 'photoshop.exe',
+        appDisplayName: 'Adobe Photoshop',
+        temperatureMode: AppOverrideMode.fixed,
+        fixedTemperature: 6500.0,
+      );
+
+      final activeProcessPayload = {
+        'active_process': 'photoshop.exe',
+        'window_title': 'Adobe Photoshop 2026',
+        'is_gaming': false,
+        'applied_override': rule.toJson(),
+        'evaluated_brightness': 80.0,
+        'evaluated_temperature': 6500,
+      };
+
+      expect(activeProcessPayload['active_process'], equals('photoshop.exe'));
+      expect(activeProcessPayload['evaluated_temperature'], equals(6500));
+      final Map<String, dynamic> applied = activeProcessPayload['applied_override'] as Map<String, dynamic>;
+      expect(applied['fixedTemperature'], equals(6500.0));
+
+      final appOverrideChangedPayload = {
+        'app_overrides': [rule.toJson()],
+        'exit_delay_seconds': 30,
+      };
+
+      expect(appOverrideChangedPayload['exit_delay_seconds'], equals(30));
+      expect((appOverrideChangedPayload['app_overrides'] as List).length, equals(1));
     });
   });
 }

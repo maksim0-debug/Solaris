@@ -122,6 +122,9 @@ class ApiPermissionsConfig {
           'set_temperature_preset',
           'set_user_preset',
           'cycle_preset',
+          'get_app_overrides',
+          'manage_app_overrides',
+          'reset_builtin_app_overrides',
         ];
       case ApiActionCategory.circadian:
         return const [
@@ -177,6 +180,9 @@ class ApiPermissionsConfig {
       case 'set_temperature_preset':
       case 'set_user_preset':
       case 'cycle_preset':
+      case 'get_app_overrides':
+      case 'manage_app_overrides':
+      case 'reset_builtin_app_overrides':
         return ApiActionCategory.presets;
 
       case 'set_auto_brightness':

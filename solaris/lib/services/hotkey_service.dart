@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/providers.dart';
+import 'package:solaris/services/active_process_service.dart';
 
 class HotkeyService {
   final Ref ref;
@@ -62,6 +63,7 @@ class HotkeyService {
             hotKey,
             keyDownHandler: (hotKey) {
               debugPrint('Hotkey pressed: Next Preset (${hotKey.toJson()})');
+              ref.read(activeProcessServiceProvider.notifier).suppressActiveApp();
               ref.read(settingsProvider.notifier).cyclePreset(brighter: true);
             },
           );
@@ -78,6 +80,7 @@ class HotkeyService {
             hotKey,
             keyDownHandler: (hotKey) {
               debugPrint('Hotkey pressed: Prev Preset (${hotKey.toJson()})');
+              ref.read(activeProcessServiceProvider.notifier).suppressActiveApp();
               ref.read(settingsProvider.notifier).cyclePreset(brighter: false);
             },
           );
@@ -94,6 +97,7 @@ class HotkeyService {
             hotKey,
             keyDownHandler: (hotKey) {
               debugPrint('Hotkey pressed: Brightness Up (${hotKey.toJson()})');
+              ref.read(activeProcessServiceProvider.notifier).suppressActiveApp();
               ref
                   .read(settingsProvider.notifier)
                   .adjustManualBrightness(settings.brightnessStepUp);
@@ -114,6 +118,7 @@ class HotkeyService {
               debugPrint(
                 'Hotkey pressed: Brightness Down (${hotKey.toJson()})',
               );
+              ref.read(activeProcessServiceProvider.notifier).suppressActiveApp();
               ref
                   .read(settingsProvider.notifier)
                   .adjustManualBrightness(-settings.brightnessStepDown);
@@ -134,6 +139,7 @@ class HotkeyService {
               debugPrint(
                 'Hotkey pressed: Auto-brightness Toggle (${hotKey.toJson()})',
               );
+              ref.read(activeProcessServiceProvider.notifier).suppressActiveApp();
               ref.read(autoBrightnessAdjustmentProvider.notifier).toggle();
             },
           );

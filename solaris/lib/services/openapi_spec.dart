@@ -166,6 +166,73 @@ class OpenApiSpec {
           },
         },
       },
+      '/api/v1/app-overrides': {
+        'get': {
+          'summary': 'List Per-App Override Rules',
+          'description': 'Returns list of all active and built-in per-app override rules.',
+          'responses': {
+            '200': {'description': 'OK'},
+            if (permissions != null) '403': forbiddenResponse,
+          },
+        },
+        'post': {
+          'summary': 'Create or Update Per-App Override Rule',
+          'description': isReadOnly
+              ? '[READ-ONLY MODE ACTIVE] Prohibits all mutation execution.'
+              : 'Saves a per-app override rule.',
+          'requestBody': {
+            'required': true,
+            'content': {
+              'application/json': {
+                'schema': {r'$ref': '#/components/schemas/AppOverrideRule'},
+              },
+            },
+          },
+          'responses': {
+            '200': {'description': 'OK'},
+            '400': {'description': 'Validation Error'},
+            if (permissions != null) '403': forbiddenResponse,
+          },
+        },
+      },
+      '/api/v1/app-overrides/active': {
+        'get': {
+          'summary': 'Get Current Active Process and Override State',
+          'description': 'Returns active foreground process name, window title, and currently applied override rule.',
+          'responses': {
+            '200': {'description': 'OK'},
+            if (permissions != null) '403': forbiddenResponse,
+          },
+        },
+      },
+      '/api/v1/app-overrides/reset-builtin': {
+        'post': {
+          'summary': 'Reset Built-In Presets to Factory Defaults',
+          'description': 'Restores default 6500K color profile rules for built-in applications.',
+          'responses': {
+            '200': {'description': 'OK'},
+            if (permissions != null) '403': forbiddenResponse,
+          },
+        },
+      },
+      '/api/v1/app-overrides/{exe}': {
+        'delete': {
+          'summary': 'Delete Per-App Override Rule',
+          'parameters': [
+            {
+              'name': 'exe',
+              'in': 'path',
+              'required': true,
+              'schema': {'type': 'string', 'example': 'photoshop.exe'},
+            },
+          ],
+          'responses': {
+            '200': {'description': 'OK'},
+            '400': {'description': 'Validation Error'},
+            if (permissions != null) '403': forbiddenResponse,
+          },
+        },
+      },
     };
 
     final allowedActionsStr = permissions?.allowedActions != null
@@ -263,6 +330,22 @@ class OpenApiSpec {
               'enabled': {'type': 'boolean'},
               'preset': {'type': 'string'},
               'monitor_id': {'type': 'string', 'example': 'display-1'},
+            },
+          },
+          'AppOverrideRule': {
+            'type': 'object',
+            'required': ['exeName', 'appDisplayName'],
+            'properties': {
+              'exeName': {'type': 'string', 'example': 'photoshop.exe'},
+              'appDisplayName': {'type': 'string', 'example': 'Adobe Photoshop'},
+              'isEnabled': {'type': 'boolean', 'default': true},
+              'isBuiltIn': {'type': 'boolean', 'default': false},
+              'brightnessMode': {'type': 'string', 'enum': ['global', 'fixed', 'curve'], 'default': 'global'},
+              'fixedBrightness': {'type': 'number', 'minimum': 0.0, 'maximum': 100.0},
+              'brightnessCurvePresetId': {'type': 'string'},
+              'temperatureMode': {'type': 'string', 'enum': ['global', 'fixed', 'curve'], 'default': 'global'},
+              'fixedTemperature': {'type': 'number', 'minimum': 3300.0, 'maximum': 6500.0},
+              'temperatureCurvePresetId': {'type': 'string'},
             },
           },
         },

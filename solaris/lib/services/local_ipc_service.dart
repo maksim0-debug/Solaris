@@ -9,6 +9,7 @@ import 'package:solaris/models/sleep_session.dart';
 import 'package:solaris/models/webhook_config.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/providers/sleep_provider.dart';
+import 'package:solaris/services/api_app_overrides_handler.dart';
 import 'package:solaris/services/api_control_handler.dart';
 import 'package:solaris/services/api_monitors_handler.dart';
 import 'package:solaris/services/api_permissions_checker.dart';
@@ -22,6 +23,7 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
   late final ApiStatusHandler _statusHandler;
   late final ApiControlHandler _controlHandler;
   late final ApiMonitorsHandler _monitorsHandler;
+  late final ApiAppOverridesHandler _appOverridesHandler;
 
   ApiRouter get router => _router;
 
@@ -31,6 +33,7 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
     _statusHandler = ApiStatusHandler(ref.container);
     _controlHandler = ApiControlHandler(ref.container);
     _monitorsHandler = ApiMonitorsHandler(ref.container);
+    _appOverridesHandler = ApiAppOverridesHandler(ref.container);
 
     _setupRouter();
 
@@ -154,6 +157,33 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
       '/api/v1/monitors/:slug/temperature',
       (HttpRequest req, Map<String, String> params) =>
           _monitorsHandler.handleSetMonitorTemperature(req, params),
+    );
+
+    // Per-App Overrides Endpoints
+    _router.get(
+      '/api/v1/app-overrides',
+      (HttpRequest req, Map<String, String> params) =>
+          _appOverridesHandler.handleGetAppOverrides(req, params),
+    );
+    _router.get(
+      '/api/v1/app-overrides/active',
+      (HttpRequest req, Map<String, String> params) =>
+          _appOverridesHandler.handleGetActiveOverride(req, params),
+    );
+    _router.post(
+      '/api/v1/app-overrides',
+      (HttpRequest req, Map<String, String> params) =>
+          _appOverridesHandler.handleCreateOrUpdateAppOverride(req, params),
+    );
+    _router.post(
+      '/api/v1/app-overrides/reset-builtin',
+      (HttpRequest req, Map<String, String> params) =>
+          _appOverridesHandler.handleResetBuiltInAppOverrides(req, params),
+    );
+    _router.delete(
+      '/api/v1/app-overrides/:exe',
+      (HttpRequest req, Map<String, String> params) =>
+          _appOverridesHandler.handleDeleteAppOverride(req, params),
     );
 
     // 4. Register Phase 4 Webhook Management Endpoints

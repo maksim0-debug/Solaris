@@ -3,11 +3,15 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:collection/collection.dart';
 import 'package:solaris/models/api_key_entry.dart';
 import 'package:solaris/models/api_permissions_config.dart';
+import 'package:solaris/models/app_override_rule.dart';
+import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/providers/sleep_provider.dart';
 import 'package:solaris/providers/temperature_provider.dart';
+import 'package:solaris/services/active_process_service.dart';
 import 'package:solaris/services/api_control_handler.dart';
 import 'package:solaris/services/api_permissions_checker.dart';
 import 'package:solaris/services/api_permissions_filter.dart';
@@ -118,6 +122,15 @@ class WebSocketService {
           _auditSubscriptionsForClient(ws, oldPerms, updatedKey.permissions);
         }
       }
+
+      // 3. Broadcast app_override_changed event when appOverrides rules change
+      if (!listEquals(prevSettings?.appOverrides, nextSettings.appOverrides) ||
+          prevSettings?.appOverrideExitDelaySeconds != nextSettings.appOverrideExitDelaySeconds) {
+        broadcastEvent('app_override_changed', {
+          'app_overrides': nextSettings.appOverrides.map((e) => e.toJson()).toList(),
+          'exit_delay_seconds': nextSettings.appOverrideExitDelaySeconds,
+        });
+      }
     });
 
     // Listen to Solar State changes
@@ -186,6 +199,37 @@ class WebSocketService {
         'sessions_count': next.sessions.length,
         'last_session_end': next.lastSessionEnd?.toIso8601String(),
       });
+    });
+
+    // Listen to Active Process changes for active_process_changed event
+    ref.listen<ActiveProcessState>(activeProcessServiceProvider, (prev, next) {
+      if (prev != next) {
+        _broadcastActiveProcessChanged(next);
+      }
+    });
+  }
+
+  void _broadcastActiveProcessChanged(ActiveProcessState activeState) {
+    final settingsMap = ref.read(settingsProvider).value;
+    final settings = settingsMap?['all'] ?? SettingsState();
+
+    AppOverrideRule? appliedRule;
+    if (activeState.activeProcess.isNotEmpty && activeState.suppressedPids.isEmpty) {
+      appliedRule = settings.appOverrides.firstWhereOrNull(
+        (r) => r.exeName == activeState.activeProcess && r.isEnabled,
+      );
+    }
+
+    final evalBrightness = ref.read(currentBrightnessProvider);
+    final evalTemp = ref.read(currentTemperatureProvider);
+
+    broadcastEvent('active_process_changed', {
+      'active_process': activeState.activeProcess,
+      'window_title': activeState.windowTitle,
+      'is_gaming': activeState.isGaming,
+      'applied_override': appliedRule?.toJson(),
+      'evaluated_brightness': evalBrightness,
+      'evaluated_temperature': evalTemp,
     });
   }
 
