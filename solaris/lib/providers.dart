@@ -49,6 +49,9 @@ export 'package:solaris/models/post_update_result.dart';
 import 'package:solaris/services/windows_firewall_service.dart';
 import 'package:solaris/services/websocket_service.dart';
 import 'package:solaris/services/windows_power_listener.dart';
+import 'package:solaris/models/app_override_rule.dart';
+import 'package:solaris/services/active_process_service.dart';
+import 'package:collection/collection.dart';
 export 'package:solaris/services/post_update_service.dart';
 export 'package:solaris/providers/app_info_provider.dart';
 
@@ -1596,6 +1599,80 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     _updateSettings({'all'}, (s) => s.copyWith(customWeatherApiKey: value));
   }
 
+  // Per-App Overrides Management
+  void addAppOverride(AppOverrideRule rule) {
+    final sanitizedRule = rule.copyWith(exeName: rule.exeName);
+    final lower = sanitizedRule.exeName;
+    _updateSettings({'all'}, (s) {
+      final existing =
+          s.appOverrides.where((r) => r.exeName.toLowerCase() != lower).toList();
+      return s.copyWith(appOverrides: [...existing, sanitizedRule]);
+    });
+  }
+
+  void updateAppOverride(AppOverrideRule rule) {
+    final sanitizedRule = rule.copyWith(exeName: rule.exeName);
+    final lower = sanitizedRule.exeName;
+    _updateSettings({'all'}, (s) {
+      final list =
+          s.appOverrides.map((r) => r.exeName.toLowerCase() == lower ? sanitizedRule : r).toList();
+      return s.copyWith(appOverrides: list);
+    });
+  }
+
+  void removeAppOverride(String exeName) {
+    final lower = exeName.trim().toLowerCase();
+    _updateSettings({'all'}, (s) {
+      final list = s.appOverrides.where((r) => r.exeName != lower).toList();
+      return s.copyWith(appOverrides: list);
+    });
+  }
+
+  void toggleAppOverride(String exeName, bool enabled) {
+    final lower = exeName.trim().toLowerCase();
+    _updateSettings({'all'}, (s) {
+      final list = s.appOverrides.map((r) {
+        if (r.exeName == lower) {
+          return r.copyWith(isEnabled: enabled);
+        }
+        return r;
+      }).toList();
+      return s.copyWith(appOverrides: list);
+    });
+  }
+
+  void resetBuiltInAppOverrides() {
+    _updateSettings({'all'}, (s) {
+      final userRules = s.appOverrides.where((r) => !r.isBuiltIn).toList();
+      final userExeNames = userRules.map((r) => r.exeName).toSet();
+      final defaultBuiltInsToAdd = AppOverrideRule.defaultBuiltInRules
+          .where((r) => !userExeNames.contains(r.exeName))
+          .toList();
+      return s.copyWith(appOverrides: [...userRules, ...defaultBuiltInsToAdd]);
+    });
+  }
+
+  void promoteBuiltInToUser(String exeName) {
+    final lower = exeName.trim().toLowerCase();
+    _updateSettings({'all'}, (s) {
+      final list = s.appOverrides.map((r) {
+        if (r.exeName == lower && r.isBuiltIn) {
+          return r.copyWith(isBuiltIn: false);
+        }
+        return r;
+      }).toList();
+      return s.copyWith(appOverrides: list);
+    });
+  }
+
+  void updateAppOverrideExitDelay(int seconds) {
+    final clamped = seconds.clamp(0, 300);
+    _updateSettings(
+      {'all'},
+      (s) => s.copyWith(appOverrideExitDelaySeconds: clamped),
+    );
+  }
+
   void updateCustomMapboxToken(String value) {
     _updateSettings({'all'}, (s) => s.copyWith(customMapboxToken: value));
   }
@@ -2384,11 +2461,26 @@ final webhookServiceProvider =
 class CurrentBrightnessNotifier extends Notifier<double> {
   static const _lastBrightnessKey = 'last_known_brightness';
 
+  List<FlSpot>? _resolveBrightnessCurvePoints(
+    String? presetId,
+    SettingsState settings,
+  ) {
+    if (presetId == null) return null;
+    final userPreset =
+        settings.userPresets.firstWhereOrNull((p) => p.id == presetId);
+    if (userPreset != null) return userPreset.points;
+    final systemType =
+        PresetType.values.firstWhereOrNull((e) => e.name == presetId);
+    if (systemType != null) return settings.curvesMap[systemType];
+    return null; // Safe Fallback to global circadian curve
+  }
+
   @override
   double build() {
     final prefs = ref.watch(sharedPreferencesProvider);
     final lastBrightness = prefs?.getDouble(_lastBrightnessKey) ?? 100.0;
 
+    final activeProcessState = ref.watch(activeProcessServiceProvider);
     final isAuto = ref.watch(autoBrightnessAdjustmentProvider);
     final currentSelection = ref.watch(selectedMonitorsProvider);
     final manualBrightness = ref.watch(manualBrightnessProvider);
@@ -2401,10 +2493,67 @@ class CurrentBrightnessNotifier extends Notifier<double> {
       data: (settingsMap) {
         final selectedSettings = settingsMap[firstId] ?? settingsMap['all']!;
 
+        // 1 & 2: Active App Rule Cascade for Brightness
+        final activeAppExe = activeProcessState.activeProcess;
+        final isAppSuppressed = activeProcessState.suppressedPids.isNotEmpty;
+        final appRule = (!isAppSuppressed && activeAppExe.isNotEmpty)
+            ? selectedSettings.appOverrides.firstWhereOrNull(
+                (r) => r.isEnabled && r.exeName == activeAppExe,
+              )
+            : null;
+
+        if (appRule != null &&
+            appRule.brightnessMode != AppOverrideMode.global) {
+          if (appRule.brightnessMode == AppOverrideMode.fixed &&
+              appRule.fixedBrightness != null) {
+            final val = appRule.fixedBrightness!.clamp(0.0, 100.0);
+            _saveBrightness(val);
+            return val;
+          } else if (appRule.brightnessMode == AppOverrideMode.curve) {
+            final curvePoints = _resolveBrightnessCurvePoints(
+              appRule.brightnessCurvePresetId,
+              selectedSettings,
+            );
+            if (curvePoints != null) {
+              final solarStateAsync = ref.watch(solarStateStreamProvider);
+              final circadianService = ref.watch(circadianServiceProvider);
+              final weatherAsync = ref.watch(currentWeatherProvider);
+              return solarStateAsync.maybeWhen(
+                data: (state) {
+                  final result = circadianService.calculateTargetBrightness(
+                    state.phases,
+                    state.sunElevation,
+                    DateTime.now(),
+                    curveSharpness: selectedSettings.curveSharpness,
+                    curvePoints: curvePoints,
+                    weather: selectedSettings.isWeatherAdjustmentEnabled
+                        ? weatherAsync.value
+                        : null,
+                    presetSensitivity:
+                        selectedSettings.activePreset.weatherSensitivity,
+                    weatherIntensity:
+                        selectedSettings.weatherAdjustmentIntensity,
+                    smartData: selectedSettings.isSmartCircadianEnabled
+                        ? smartData
+                        : const SmartCircadianData.neutral(),
+                  );
+                  final val = result.finalBrightness.clamp(0.0, 100.0);
+                  _saveBrightness(val);
+                  return val;
+                },
+                orElse: () => lastBrightness,
+              );
+            }
+            // Safe Fallback to global circadian curve if preset was deleted
+          }
+        }
+
+        // 3. Game Mode Cascade
         if (isGamingMode && selectedSettings.isGameModeEnabled) {
           return selectedSettings.gameModeBrightness;
         }
 
+        // 4. Global Auto / Circadian Cascade
         if (!isAuto || !selectedSettings.isAutoBrightnessEnabled) {
           return manualBrightness;
         }
@@ -2473,6 +2622,7 @@ class CurrentBrightnessNotifier extends Notifier<double> {
   }
 
   void setManualBrightness(double value) {
+    ref.read(activeProcessServiceProvider.notifier).suppressActiveApp();
     ref.read(settingsProvider.notifier).updateAutoBrightness(false);
 
     double baseValue = value;
@@ -2517,12 +2667,7 @@ final brightnessOffsetsProvider = Provider<Map<String, double>>((ref) {
 /// It listens to solar state and applies brightness updates to hardware.
 /// If the app is minimized, it skips UI state updates to save resources.
 final circadianAdjustmentProvider = Provider<void>((ref) {
-  // Watch all required providers to ensure consistency and immediate reaction.
-  // NOTE: this path is hardware-facing. It reads the debounced solar state so
-  // the Bezier math / weather adjustment / gaming override cascade only runs
-  // when sun elevation has actually moved (>=0.1deg), the phase changed, or a
-  // 60s heartbeat elapsed — NOT every 1s tick from the raw stream that the UI
-  // chart uses.
+  final activeProcessState = ref.watch(activeProcessServiceProvider);
   final solarStateAsync = ref.watch(debouncedSolarStateProvider);
   final settingsAsync = ref.watch(settingsProvider);
   final tempSettingsAsync = ref.watch(temperatureSettingsProvider);
@@ -2612,7 +2757,35 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
             );
 
             // Calculate and Apply Brightness
-            if (isGamingMode && settings.isGameModeEnabled) {
+            final activeProcessName = activeProcessState.activeProcess;
+            final isAppSuppressed = activeProcessState.suppressedPids.isNotEmpty;
+            final appRule = (!isAppSuppressed && activeProcessName.isNotEmpty)
+                ? settings.appOverrides.firstWhereOrNull(
+                    (r) => r.isEnabled && r.exeName == activeProcessName,
+                  )
+                : null;
+
+            if (appRule != null && appRule.brightnessMode != AppOverrideMode.global) {
+              final targetBrightness = ref.watch(currentBrightnessProvider);
+              debugPrint(
+                '[CircadianLoop] Device: ${monitor.deviceName} | Per-App Brightness Override ($activeProcessName): ${targetBrightness.toStringAsFixed(1)}%',
+              );
+              // Hardware DDC/CI deduplication check
+              final currentVal = monitor.realBrightness?.toDouble() ?? targetBrightness;
+              if ((targetBrightness - currentVal).abs() >= 0.5) {
+                brightnessService.applyBrightnessSmoothly(
+                  selection: monitor.deviceName,
+                  targetValue: targetBrightness,
+                  monitors: monitors,
+                  monitorService: monitorService,
+                  offsets: offsets,
+                  isUIVisible: visibility == AppVisibilityState.visible,
+                  updateBrightnessCallback: (id, val) {
+                    monitorListNotifier.updateBrightness(id, val);
+                  },
+                );
+              }
+            } else if (isGamingMode && settings.isGameModeEnabled) {
               final targetBrightness = settings.gameModeBrightness;
               brightnessService.applyBrightnessSmoothly(
                 selection: monitor.deviceName,
@@ -2669,7 +2842,7 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
               final targetBrightness = calculationResult.finalBrightness;
 
               debugPrint(
-                '[CircadianLoop] Device: ${monitor.deviceName} | AutoBright: true | Preset: ${settings.activePreset.name} | TargetBrightness: ${targetBrightness.toStringAsFixed(1)}% | Sharpness: ${settings.curveSharpness}',
+                '[CircadianLoop] Device: ${monitor.deviceName} | AutoBright: true | ActiveApp: $activeProcessName | Preset: ${settings.activePreset.name} | TargetBrightness: ${targetBrightness.toStringAsFixed(1)}% | Sharpness: ${settings.curveSharpness}',
               );
 
               brightnessService.applyBrightnessSmoothly(

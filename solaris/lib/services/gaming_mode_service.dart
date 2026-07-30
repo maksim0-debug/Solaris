@@ -7,9 +7,6 @@ import 'package:solaris/models/settings_state.dart';
 
 class GamingModeService extends Notifier<bool> {
   static const _methodChannel = MethodChannel('com.solaris.monitor/names');
-  static const _eventChannel = EventChannel('com.solaris.monitor/events');
-
-  StreamSubscription<dynamic>? _subscription;
 
   // Default Stage 4 Blacklist (Apps that might be fullscreen but aren't games)
   static const List<String> defaultBlacklist = [
@@ -53,35 +50,15 @@ class GamingModeService extends Notifier<bool> {
       _updateExitDelayNative(settings.gameModeExitDelaySeconds);
     });
 
-    _init();
-
-    ref.onDispose(() {
-      _subscription?.cancel();
-    });
-
     return false;
   }
 
-  void _init() {
-    _subscription = _eventChannel.receiveBroadcastStream().listen(
-      (dynamic event) {
-        if (event is bool) {
-          state = event;
-          debugPrint('[GamingModeService] Gaming Mode Changed: $state');
-        } else if (event is Map) {
-          final isGaming = event['is_gaming'];
-          if (isGaming is bool) {
-            state = isGaming;
-            debugPrint('[GamingModeService] Gaming Mode Changed: $state');
-          }
-        }
-      },
-      onError: (Object error) {
-        debugPrint(
-          '[GamingModeService] Error in GamingMode EventChannel: $error',
-        );
-      },
-    );
+  /// Update gaming state from ActiveProcessService to avoid EventSink overwrite in C++
+  void setGamingState(bool isGaming) {
+    if (state != isGaming) {
+      state = isGaming;
+      debugPrint('[GamingModeService] Gaming Mode Changed: $state');
+    }
   }
 
   Future<void> _updateWhitelistNative(List<String> whitelist) async {
