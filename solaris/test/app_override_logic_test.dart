@@ -9,18 +9,37 @@ import 'package:solaris/services/active_process_service.dart';
 void main() {
   group('AppOverrideRule Phase 2 Data Model Zero-Trust Tests', () {
     test(
-      'defaultBuiltInRules returns 6 factory default 6500K color profile rules',
+      'defaultBuiltInRules returns 25 factory default 6500K color profile rules',
       () {
         final rules = AppOverrideRule.defaultBuiltInRules;
-        expect(rules.length, equals(6));
+        expect(rules.length, equals(25));
 
         final expectedExes = [
           'photoshop.exe',
           'premiere.exe',
           'resolve.exe',
           'lightroom.exe',
+          'illustrator.exe',
+          'afterfx.exe',
+          'indesign.exe',
+          'substance painter.exe',
+          'krita.exe',
+          'clipstudio.exe',
+          'captureone.exe',
+          'affinitydesigner.exe',
+          'affinityphoto.exe',
+          'affinitypublisher.exe',
+          'coreldrw.exe',
           'blender.exe',
+          'c4d.exe',
+          'houdini.exe',
+          '3dsmax.exe',
+          'maya.exe',
+          'zbrush.exe',
+          'unrealeditor.exe',
+          'unity.exe',
           'figma.exe',
+          'pureref.exe',
         ];
 
         for (int i = 0; i < rules.length; i++) {
@@ -296,7 +315,7 @@ void main() {
     );
 
     test(
-      'Verify all 6 default built-in rules conform strictly to design spec v10 section 3.2',
+      'Verify all 25 default built-in rules conform strictly to design spec v10 section 3.2',
       () {
         final defaults = AppOverrideRule.defaultBuiltInRules;
         final map = {for (var r in defaults) r.exeName: r};
@@ -308,8 +327,27 @@ void main() {
             'premiere.exe',
             'resolve.exe',
             'lightroom.exe',
+            'illustrator.exe',
+            'afterfx.exe',
+            'indesign.exe',
+            'substance painter.exe',
+            'krita.exe',
+            'clipstudio.exe',
+            'captureone.exe',
+            'affinitydesigner.exe',
+            'affinityphoto.exe',
+            'affinitypublisher.exe',
+            'coreldrw.exe',
             'blender.exe',
+            'c4d.exe',
+            'houdini.exe',
+            '3dsmax.exe',
+            'maya.exe',
+            'zbrush.exe',
+            'unrealeditor.exe',
+            'unity.exe',
             'figma.exe',
+            'pureref.exe',
           ]),
         );
 
@@ -320,8 +358,13 @@ void main() {
         );
         expect(map['resolve.exe']?.appDisplayName, equals('DaVinci Resolve'));
         expect(map['lightroom.exe']?.appDisplayName, equals('Adobe Lightroom'));
+        expect(map['illustrator.exe']?.appDisplayName, equals('Adobe Illustrator'));
+        expect(map['afterfx.exe']?.appDisplayName, equals('Adobe After Effects'));
+        expect(map['krita.exe']?.appDisplayName, equals('Krita'));
+        expect(map['captureone.exe']?.appDisplayName, equals('Capture One Pro'));
         expect(map['blender.exe']?.appDisplayName, equals('Blender 3D'));
         expect(map['figma.exe']?.appDisplayName, equals('Figma Desktop'));
+        expect(map['pureref.exe']?.appDisplayName, equals('PureRef'));
 
         for (var r in defaults) {
           expect(r.isBuiltIn, isTrue);
@@ -344,7 +387,7 @@ void main() {
         };
 
         final settings = SettingsState.fromJson(legacyJson);
-        expect(settings.appOverrides.length, equals(6));
+        expect(settings.appOverrides.length, equals(25));
         expect(settings.appOverrides.first.exeName, equals('photoshop.exe'));
         expect(settings.appOverrideExitDelaySeconds, equals(30));
       },
@@ -652,7 +695,7 @@ void main() {
 
     test('Verify SettingsNotifier CRUD and promotion state transformations', () {
       final initialRules = AppOverrideRule.defaultBuiltInRules;
-      expect(initialRules.length, equals(6));
+      expect(initialRules.length, equals(25));
       expect(initialRules.every((r) => r.isBuiltIn), isTrue);
 
       // Simulate promoting photoshop.exe
@@ -668,7 +711,7 @@ void main() {
 
       expect(userRules.length, equals(1));
       expect(userRules.first.exeName, equals('photoshop.exe'));
-      expect(builtInRules.length, equals(5));
+      expect(builtInRules.length, equals(24));
     });
 
     test('Trilingual ARB Localization Parity Test (EN, RU, UK)', () {

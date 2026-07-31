@@ -267,6 +267,21 @@ class SettingsState {
     return keys;
   }
 
+  static List<AppOverrideRule> _mergeDefaultBuiltInRules(List<AppOverrideRule> loadedRules) {
+    if (loadedRules.isEmpty) return loadedRules;
+    final hasBuiltIns = loadedRules.any((r) => r.isBuiltIn);
+    if (!hasBuiltIns) return loadedRules;
+
+    final existingExeNames = loadedRules.map((r) => r.exeName.toLowerCase()).toSet();
+    final missingBuiltIns = AppOverrideRule.defaultBuiltInRules
+        .where((b) => !existingExeNames.contains(b.exeName.toLowerCase()))
+        .toList();
+    if (missingBuiltIns.isEmpty) {
+      return loadedRules;
+    }
+    return [...loadedRules, ...missingBuiltIns];
+  }
+
   String get effectiveWeatherApiKey =>
       customWeatherApiKey.isNotEmpty ? customWeatherApiKey : Env.weatherApiKey;
 
@@ -634,19 +649,21 @@ class SettingsState {
               ?.map((w) => WebhookConfig.fromJson(w as Map<String, dynamic>))
               .toList() ??
           [],
-      appOverrides: json.containsKey('appOverrides') && json['appOverrides'] is List
-          ? (json['appOverrides'] as List)
-              .where((e) => e is Map)
-              .map((e) {
-                try {
-                  return AppOverrideRule.fromJson(Map<String, dynamic>.from(e as Map));
-                } catch (_) {
-                  return null;
-                }
-              })
-              .whereType<AppOverrideRule>()
-              .toList()
-          : AppOverrideRule.defaultBuiltInRules,
+      appOverrides: _mergeDefaultBuiltInRules(
+        json.containsKey('appOverrides') && json['appOverrides'] is List
+            ? (json['appOverrides'] as List)
+                .where((e) => e is Map)
+                .map((e) {
+                  try {
+                    return AppOverrideRule.fromJson(Map<String, dynamic>.from(e as Map));
+                  } catch (_) {
+                    return null;
+                  }
+                })
+                .whereType<AppOverrideRule>()
+                .toList()
+            : AppOverrideRule.defaultBuiltInRules,
+      ),
       appOverrideExitDelaySeconds:
           (json['appOverrideExitDelaySeconds'] is num)
               ? (json['appOverrideExitDelaySeconds'] as num).toInt().clamp(0, 300)
