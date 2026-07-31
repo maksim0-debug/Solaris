@@ -12,6 +12,8 @@ import 'package:solaris/providers.dart';
 import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/curve_preset_dropdown.dart';
+import 'package:solaris/widgets/back_navigation_handler.dart';
+import 'package:solaris/widgets/deep_link_target.dart';
 
 /// Screen for managing Per-App Brightness and Temperature Overrides.
 class AppOverridesScreen extends ConsumerStatefulWidget {
@@ -23,6 +25,37 @@ class AppOverridesScreen extends ConsumerStatefulWidget {
 
 class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
   bool _isBuiltInExpanded = false;
+  final ScrollController _scrollController = ScrollController();
+  final Map<String, GlobalKey<DeepLinkTargetState>> _anchorKeys = {
+    'app_override_exit_delay': GlobalKey<DeepLinkTargetState>(),
+    'app_override_user_rules': GlobalKey<DeepLinkTargetState>(),
+    'app_override_builtin_rules': GlobalKey<DeepLinkTargetState>(),
+  };
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToAnchor(String anchorId) {
+    final key = _anchorKeys[anchorId];
+    if (key != null && key.currentContext != null) {
+      Scrollable.ensureVisible(
+        key.currentContext!,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOutCubic,
+        alignment: 0.5,
+      );
+      key.currentState?.highlight();
+
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (mounted) {
+          ref.read(searchAnchorProvider.notifier).clear();
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,139 +67,216 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
     final userRules = allOverrides.where((AppOverrideRule r) => !r.isBuiltIn).toList();
     final builtInRules = allOverrides.where((AppOverrideRule r) => r.isBuiltIn).toList();
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Screen Header
-          _buildHeader(l10n),
-          const SizedBox(height: 24),
+    // Listen for deep link requests
+    ref.listen<String?>(searchAnchorProvider, (previous, next) {
+      if (next != null && _anchorKeys.containsKey(next)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToAnchor(next);
+        });
+      }
+    });
 
-          // Exit Delay Slider Card
-          _buildExitDelayCard(context, l10n, settings.appOverrideExitDelaySeconds),
-          const SizedBox(height: 32),
+    // Handle initial anchor on first build/mount
+    final initialAnchor = ref.read(searchAnchorProvider);
+    if (initialAnchor != null && _anchorKeys.containsKey(initialAnchor)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToAnchor(initialAnchor);
+      });
+    }
 
-          // User Rules Section Header + Add Button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
+    return BackNavigationHandler(
+      onBack: () => ref.read(activeScreenProvider.notifier).setScreen(AppScreen.settings),
+      child: SingleChildScrollView(
+        controller: _scrollController,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Screen Header
+            _buildHeader(ref, l10n),
+            const SizedBox(height: 24),
+
+            // Exit Delay Slider Card
+            DeepLinkTarget(
+              key: _anchorKeys['app_override_exit_delay'],
+              id: 'app_override_exit_delay',
+              child: _buildExitDelayCard(context, l10n, settings.appOverrideExitDelaySeconds),
+            ),
+            const SizedBox(height: 32),
+
+            // User Rules Section Header + Add Button
+            DeepLinkTarget(
+              key: _anchorKeys['app_override_user_rules'],
+              id: 'app_override_user_rules',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(LucideIcons.sliders, color: Color(0xFF6366F1), size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    l10n.userRulesSection,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF6366F1).withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${userRules.length}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF818CF8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(LucideIcons.sliders, color: Color(0xFF6366F1), size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            l10n.userRulesSection,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF6366F1).withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '${userRules.length}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF818CF8),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
+                      ElevatedButton.icon(
+                        onPressed: () => _openAddAppDialog(context, allOverrides),
+                        icon: const Icon(LucideIcons.plus, size: 16),
+                        label: Text(l10n.addAppOverride),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6366F1),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 16),
+
+                  // User Rules List or Empty State
+                  if (userRules.isEmpty)
+                    _buildEmptyUserRulesCard(l10n)
+                  else
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: userRules.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 16),
+                      itemBuilder: (context, index) {
+                        return _AppOverrideRuleCard(
+                          rule: userRules[index],
+                          isBuiltIn: false,
+                        );
+                      },
+                    ),
                 ],
               ),
-              ElevatedButton.icon(
-                onPressed: () => _openAddAppDialog(context, allOverrides),
-                icon: const Icon(LucideIcons.plus, size: 16),
-                label: Text(l10n.addAppOverride),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6366F1),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // User Rules List or Empty State
-          if (userRules.isEmpty)
-            _buildEmptyUserRulesCard(l10n)
-          else
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: userRules.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 16),
-              itemBuilder: (context, index) {
-                return _AppOverrideRuleCard(
-                  rule: userRules[index],
-                  isBuiltIn: false,
-                );
-              },
             ),
 
-          const SizedBox(height: 32),
+            const SizedBox(height: 32),
 
-          // Built-in Presets Collapsible Section
-          _buildBuiltInSection(context, l10n, builtInRules),
-        ],
+            // Built-in Presets Collapsible Section
+            DeepLinkTarget(
+              key: _anchorKeys['app_override_builtin_rules'],
+              id: 'app_override_builtin_rules',
+              child: _buildBuiltInSection(context, l10n, builtInRules),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildHeader(AppLocalizations l10n) {
-    return Row(
+  Widget _buildHeader(WidgetRef ref, AppLocalizations l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFF6366F1).withOpacity(0.15),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: const Color(0xFF6366F1).withOpacity(0.3),
-              width: 1,
+        InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => ref.read(activeScreenProvider.notifier).setScreen(AppScreen.settings),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.08),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  LucideIcons.arrowLeft,
+                  color: Colors.white,
+                  size: 16,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  l10n.backToSettings,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
             ),
           ),
-          child: const Icon(
-            LucideIcons.layers,
-            color: Color(0xFF818CF8),
-            size: 28,
-          ),
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l10n.appOverridesTitle,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: -0.5,
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF6366F1).withOpacity(0.15),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: const Color(0xFF6366F1).withOpacity(0.3),
+                  width: 1,
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                l10n.appOverridesSubtitle,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.white.withOpacity(0.6),
-                ),
+              child: const Icon(
+                LucideIcons.layers,
+                color: Color(0xFF818CF8),
+                size: 28,
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.appOverridesTitle,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    l10n.appOverridesSubtitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.white.withOpacity(0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ],
     );

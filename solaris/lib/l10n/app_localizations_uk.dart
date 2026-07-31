@@ -2216,11 +2216,26 @@ class AppLocalizationsUk extends AppLocalizations {
   String get tryAgain => 'Повторити';
 
   @override
+  String get backToSettings => 'Назад до налаштувань';
+
+  @override
   String get appOverridesTitle => 'Налаштування для додатків';
 
   @override
   String get appOverridesSubtitle =>
       'Налаштування індивідуальної яскравості та температури для вибраних додатків.';
+
+  @override
+  String get tags_app_overrides =>
+      'правила додатків, додатки, індивідуальні налаштування, гра, профілі додатків, затримка вимкнення, exe, процеси, оверрайди';
+
+  @override
+  String get tags_app_override_exit_delay =>
+      'затримка вимкнення, таймер, згортання додатку, фоновий режим, час очікування';
+
+  @override
+  String get tags_app_override_rules =>
+      'додати додаток, правила, профілі, список додатків, exe файл, кастомна яскравість, користувацькі правила';
 
   @override
   String get appOverrideExitDelay => 'Затримка вимкнення';

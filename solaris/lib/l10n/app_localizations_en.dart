@@ -2203,11 +2203,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tryAgain => 'Try Again';
 
   @override
+  String get backToSettings => 'Back to Settings';
+
+  @override
   String get appOverridesTitle => 'Per-App Overrides';
 
   @override
   String get appOverridesSubtitle =>
       'Configure custom brightness and temperature rules for individual applications.';
+
+  @override
+  String get tags_app_overrides =>
+      'app overrides, per-app settings, application rules, custom profile, game delay, exe, process rules, application brightness';
+
+  @override
+  String get tags_app_override_exit_delay =>
+      'exit delay, timeout, app minimize, background profile delay';
+
+  @override
+  String get tags_app_override_rules =>
+      'add app, custom rules, application profiles, exe file, app brightness override, user rules';
 
   @override
   String get appOverrideExitDelay => 'Exit Delay';

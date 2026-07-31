@@ -461,14 +461,7 @@ class _Sidebar extends ConsumerWidget {
                 .read(activeScreenProvider.notifier)
                 .setScreen(AppScreen.sleep),
           ),
-          _SidebarItem(
-            icon: LucideIcons.layers,
-            label: l10n.appOverridesTitle,
-            isActive: ref.watch(activeScreenProvider) == AppScreen.appOverrides,
-            onTap: () => ref
-                .read(activeScreenProvider.notifier)
-                .setScreen(AppScreen.appOverrides),
-          ),
+
           _SidebarItem(
             icon: LucideIcons.search,
             label: l10n.searchPlaceholder.split(' (').first,

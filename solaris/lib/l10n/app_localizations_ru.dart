@@ -2222,11 +2222,26 @@ class AppLocalizationsRu extends AppLocalizations {
   String get tryAgain => 'Повторить';
 
   @override
+  String get backToSettings => 'Назад в настройки';
+
+  @override
   String get appOverridesTitle => 'Настройки для приложений';
 
   @override
   String get appOverridesSubtitle =>
       'Настройка индивидуальной яркости и температуры для выбранных приложений.';
+
+  @override
+  String get tags_app_overrides =>
+      'правила приложений, приложения, индивидуальные настройки, игра, профили приложений, задержка отключения, exe, процессы, оверрайды';
+
+  @override
+  String get tags_app_override_exit_delay =>
+      'задержка отключения, таймер, сворачивание приложения, фоновый режим, время ожидания';
+
+  @override
+  String get tags_app_override_rules =>
+      'добавить приложение, правила, профили, список приложений, exe файл, кастомная яркость, пользовательские правила';
 
   @override
   String get appOverrideExitDelay => 'Задержка отключения';

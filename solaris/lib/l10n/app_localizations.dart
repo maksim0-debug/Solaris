@@ -3822,6 +3822,12 @@ abstract class AppLocalizations {
   /// **'Try Again'**
   String get tryAgain;
 
+  /// No description provided for @backToSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Settings'**
+  String get backToSettings;
+
   /// No description provided for @appOverridesTitle.
   ///
   /// In en, this message translates to:
@@ -3833,6 +3839,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Configure custom brightness and temperature rules for individual applications.'**
   String get appOverridesSubtitle;
+
+  /// No description provided for @tags_app_overrides.
+  ///
+  /// In en, this message translates to:
+  /// **'app overrides, per-app settings, application rules, custom profile, game delay, exe, process rules, application brightness'**
+  String get tags_app_overrides;
+
+  /// No description provided for @tags_app_override_exit_delay.
+  ///
+  /// In en, this message translates to:
+  /// **'exit delay, timeout, app minimize, background profile delay'**
+  String get tags_app_override_exit_delay;
+
+  /// No description provided for @tags_app_override_rules.
+  ///
+  /// In en, this message translates to:
+  /// **'add app, custom rules, application profiles, exe file, app brightness override, user rules'**
+  String get tags_app_override_rules;
 
   /// No description provided for @appOverrideExitDelay.
   ///

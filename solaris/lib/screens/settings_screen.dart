@@ -64,6 +64,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     'webhooks': GlobalKey<DeepLinkTargetState>(),
     'api_keys': GlobalKey<DeepLinkTargetState>(),
     'updates': GlobalKey<DeepLinkTargetState>(),
+    'app_overrides': GlobalKey<DeepLinkTargetState>(),
   };
 
   @override
@@ -159,7 +160,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 24),
 
           // Per-App Overrides Settings Card
-          const _AppOverridesTileCard(),
+          DeepLinkTarget(
+            key: _anchorKeys['app_overrides'],
+            id: 'app_overrides',
+            child: const _AppOverridesTileCard(),
+          ),
           const SizedBox(height: 24),
 
           // App Settings (Autorun)
@@ -3635,62 +3640,70 @@ class _AppOverridesTileCard extends ConsumerWidget {
     final settings = settingsAsync.value?['all'] ?? SettingsState();
     final count = settings.appOverrides.where((AppOverrideRule r) => !r.isBuiltIn).length;
 
-    return GlassCard(
-      padding: const EdgeInsets.all(24),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF6366F1).withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              LucideIcons.layers,
-              color: Color(0xFF818CF8),
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.appOverridesTitle,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () {
+          ref.read(activeScreenProvider.notifier).setScreen(AppScreen.appOverrides);
+        },
+        child: GlassCard(
+          padding: const EdgeInsets.all(24),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6366F1).withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  l10n.appOverridesSubtitle,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withOpacity(0.5),
-                  ),
+                child: const Icon(
+                  LucideIcons.layers,
+                  color: Color(0xFF818CF8),
+                  size: 24,
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          ElevatedButton.icon(
-            onPressed: () {
-              ref.read(activeScreenProvider.notifier).setScreen(AppScreen.appOverrides);
-            },
-            icon: const Icon(LucideIcons.externalLink, size: 14),
-            label: Text(count > 0 ? l10n.appRulesCount(count) : l10n.appOverridesConfigure),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6366F1),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
               ),
-            ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.appOverridesTitle,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      l10n.appOverridesSubtitle,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white.withOpacity(0.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              ElevatedButton.icon(
+                onPressed: () {
+                  ref.read(activeScreenProvider.notifier).setScreen(AppScreen.appOverrides);
+                },
+                icon: const Icon(LucideIcons.externalLink, size: 14),
+                label: Text(count > 0 ? l10n.appRulesCount(count) : l10n.appOverridesConfigure),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6366F1),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

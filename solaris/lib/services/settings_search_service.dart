@@ -147,6 +147,38 @@ class SettingsSearchService {
 
       // Settings
       SettingItem(
+        id: 'app_overrides',
+        title: l10n.appOverridesTitle,
+        description: l10n.appOverridesSubtitle,
+        tags: _splitTags(l10n.tags_app_overrides),
+        screen: AppScreen.settings,
+        anchorId: 'app_overrides',
+      ),
+      SettingItem(
+        id: 'app_override_exit_delay',
+        title: l10n.appOverrideExitDelay,
+        description: l10n.appOverrideExitDelaySubtitle,
+        tags: _splitTags(l10n.tags_app_override_exit_delay),
+        screen: AppScreen.appOverrides,
+        anchorId: 'app_override_exit_delay',
+      ),
+      SettingItem(
+        id: 'app_override_user_rules',
+        title: l10n.userRulesSection,
+        description: l10n.appOverridesSubtitle,
+        tags: _splitTags(l10n.tags_app_override_rules),
+        screen: AppScreen.appOverrides,
+        anchorId: 'app_override_user_rules',
+      ),
+      SettingItem(
+        id: 'app_override_builtin_rules',
+        title: l10n.builtinRulesSection(6),
+        description: l10n.appOverridesSubtitle,
+        tags: _splitTags(l10n.tags_app_override_rules),
+        screen: AppScreen.appOverrides,
+        anchorId: 'app_override_builtin_rules',
+      ),
+      SettingItem(
         id: 'game_mode',
         title: l10n.enableGameMode,
         description: l10n.enableGameModeSubtitle,
