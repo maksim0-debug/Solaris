@@ -27,7 +27,7 @@ void main() {
     'Stage 4 Zero-Trust GUI Verification: ApiPermissionsDialog & Granular Tri-State UI',
     () {
       testWidgets(
-        'BDD Scenario 1: Toggling single action triggers Tri-State [-] and returns 24 actions',
+        'BDD Scenario 1: Toggling single action triggers Tri-State [-] and returns 27 actions',
         (WidgetTester tester) async {
           tester.view.physicalSize = const Size(1200, 1200);
           tester.view.devicePixelRatio = 1.0;
@@ -82,7 +82,7 @@ void main() {
 
           expect(resultConfig, isNotNull);
           expect(resultConfig!.allowedActions, isNotNull);
-          expect(resultConfig!.allowedActions!.length, equals(24));
+          expect(resultConfig!.allowedActions!.length, equals(27));
           expect(
             resultConfig!.allowedActions!.contains('set_temperature'),
             isFalse,
@@ -91,7 +91,7 @@ void main() {
       );
 
       testWidgets(
-        'BDD Scenario 2: Clean Storage Protocol resets allowedActions to null when all 25 selected',
+        'BDD Scenario 2: Clean Storage Protocol resets allowedActions to null when all 28 selected',
         (WidgetTester tester) async {
           tester.view.physicalSize = const Size(1200, 1200);
           tester.view.devicePixelRatio = 1.0;
@@ -100,7 +100,7 @@ void main() {
 
           ApiPermissionsConfig? resultConfig;
 
-          // Start with 24 allowed actions (set_temperature omitted)
+          // Start with 27 allowed actions (set_temperature omitted)
           final initialActions = ApiPermissionsConfig.getAllCanonicalActions()
             ..remove('set_temperature');
 
@@ -147,7 +147,7 @@ void main() {
           await tester.pumpAndSettle();
 
           expect(resultConfig, isNotNull);
-          // Clean Storage Protocol must reset allowedActions to null when all 25 actions are active
+          // Clean Storage Protocol must reset allowedActions to null when all 28 actions are active
           expect(resultConfig!.allowedActions, isNull);
         },
       );

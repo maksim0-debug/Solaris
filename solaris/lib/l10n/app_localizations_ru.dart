@@ -2176,6 +2176,18 @@ class AppLocalizationsRu extends AppLocalizations {
       'Обработка аппаратных ошибок';
 
   @override
+  String get apiPermissionsActionGetAppOverrides =>
+      'Получение правил приложений';
+
+  @override
+  String get apiPermissionsActionManageAppOverrides =>
+      'Управление правилами приложений';
+
+  @override
+  String get apiPermissionsActionResetBuiltinAppOverrides =>
+      'Сброс системных пресетов приложений';
+
+  @override
   String apiKeysGranularActionChip(int count, int total) {
     return 'Разрешено действий: $count из $total';
   }

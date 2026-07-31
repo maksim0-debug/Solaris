@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/models/api_key_entry.dart';
+import 'package:solaris/models/api_permissions_config.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/widgets/settings/api_permissions_dialog.dart';
 import 'package:solaris/widgets/settings/create_api_key_dialog.dart';
@@ -447,7 +448,7 @@ class ApiKeysManagementDialog extends ConsumerWidget {
                                                               .permissions
                                                               .allowedActions!
                                                               .length,
-                                                          25,
+                                                          ApiPermissionsConfig.getAllCanonicalActions().length,
                                                         )
                                                       : l10n.apiKeysActiveScopesChip(
                                                           catCount,

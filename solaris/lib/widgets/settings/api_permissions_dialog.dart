@@ -170,10 +170,18 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
         return l10n.apiPermissionsActionSetMonitorOffset;
       case 'set_brightness_preset':
         return l10n.apiPermissionsActionSetBrightnessPreset;
+      case 'set_temperature_preset':
+        return l10n.apiPermissionsActionSetTemperaturePreset;
       case 'set_user_preset':
         return l10n.apiPermissionsActionSetUserPreset;
       case 'cycle_preset':
         return l10n.apiPermissionsActionCyclePreset;
+      case 'get_app_overrides':
+        return l10n.apiPermissionsActionGetAppOverrides;
+      case 'manage_app_overrides':
+        return l10n.apiPermissionsActionManageAppOverrides;
+      case 'reset_builtin_app_overrides':
+        return l10n.apiPermissionsActionResetBuiltinAppOverrides;
       case 'set_auto_brightness':
         return l10n.apiPermissionsActionSetAutoBrightness;
       case 'set_auto_temperature':

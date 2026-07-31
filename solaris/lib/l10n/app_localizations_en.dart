@@ -2157,6 +2157,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'Hardware Error Event Handling';
 
   @override
+  String get apiPermissionsActionGetAppOverrides =>
+      'Get Per-App Overrides Rules';
+
+  @override
+  String get apiPermissionsActionManageAppOverrides =>
+      'Manage Per-App Overrides (CRUD)';
+
+  @override
+  String get apiPermissionsActionResetBuiltinAppOverrides =>
+      'Reset Built-in App Presets';
+
+  @override
   String apiKeysGranularActionChip(int count, int total) {
     return '$count of $total Actions Allowed';
   }

@@ -869,6 +869,9 @@
   "apiPermissionsActionSetMapAnimations": "Анімації карти погоди",
   "apiPermissionsActionOnSystemResume": "Обробка відновлення ОС",
   "apiPermissionsActionOnHardwareError": "Обробка апаратних помилок",
+  "apiPermissionsActionGetAppOverrides": "Отримання правил застосунків",
+  "apiPermissionsActionManageAppOverrides": "Управління правилами застосунків",
+  "apiPermissionsActionResetBuiltinAppOverrides": "Скинути системні пресети застосунків",
   "apiKeysGranularActionChip": "Дозволено дій: {count} з {total}",
   "@apiKeysGranularActionChip": {
     "placeholders": {

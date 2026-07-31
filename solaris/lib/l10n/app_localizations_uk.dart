@@ -2170,6 +2170,18 @@ class AppLocalizationsUk extends AppLocalizations {
   String get apiPermissionsActionOnHardwareError => 'Обробка апаратних помилок';
 
   @override
+  String get apiPermissionsActionGetAppOverrides =>
+      'Отримання правил застосунків';
+
+  @override
+  String get apiPermissionsActionManageAppOverrides =>
+      'Управління правилами застосунків';
+
+  @override
+  String get apiPermissionsActionResetBuiltinAppOverrides =>
+      'Скинути системні пресети застосунків';
+
+  @override
   String apiKeysGranularActionChip(int count, int total) {
     return 'Дозволено дій: $count з $total';
   }

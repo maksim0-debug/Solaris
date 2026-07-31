@@ -4,10 +4,10 @@ import 'package:solaris/models/api_permissions_config.dart';
 void main() {
   group('Stage 1: ApiPermissionsConfig Per-Action Precision & Canonicalization', () {
     test(
-      'getAllCanonicalActions returns exactly 25 unique canonical actions',
+      'getAllCanonicalActions returns exactly 28 unique canonical actions',
       () {
         final canonicalActions = ApiPermissionsConfig.getAllCanonicalActions();
-        expect(canonicalActions.length, equals(25));
+        expect(canonicalActions.length, equals(28));
       },
     );
 
@@ -30,6 +30,9 @@ void main() {
           'set_temperature_preset',
           'set_user_preset',
           'cycle_preset',
+          'get_app_overrides',
+          'manage_app_overrides',
+          'reset_builtin_app_overrides',
         ]),
       );
 
@@ -230,7 +233,7 @@ void main() {
     );
 
     test(
-      'toJson auto-resets allowedActions to null if all 25 canonical actions are present',
+      'toJson auto-resets allowedActions to null if all 28 canonical actions are present',
       () {
         final allActions = ApiPermissionsConfig.getAllCanonicalActions();
         final config = ApiPermissionsConfig(allowedActions: allActions);
@@ -256,7 +259,7 @@ void main() {
     );
 
     test(
-      'fromJson auto-resets allowedActions to null if all 25 canonical actions are passed',
+      'fromJson auto-resets allowedActions to null if all 28 canonical actions are passed',
       () {
         final allActions = ApiPermissionsConfig.getAllCanonicalActions()
             .toList();

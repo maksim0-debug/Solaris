@@ -959,6 +959,9 @@
   "apiPermissionsActionSetMapAnimations": "Map Visual Weather Animations",
   "apiPermissionsActionOnSystemResume": "System Resume Event Handling",
   "apiPermissionsActionOnHardwareError": "Hardware Error Event Handling",
+  "apiPermissionsActionGetAppOverrides": "Get Per-App Overrides Rules",
+  "apiPermissionsActionManageAppOverrides": "Manage Per-App Overrides (CRUD)",
+  "apiPermissionsActionResetBuiltinAppOverrides": "Reset Built-in App Presets",
   "apiKeysGranularActionChip": "{count} of {total} Actions Allowed",
   "@apiKeysGranularActionChip": {
     "placeholders": {

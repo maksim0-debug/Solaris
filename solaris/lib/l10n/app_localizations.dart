@@ -3744,6 +3744,24 @@ abstract class AppLocalizations {
   /// **'Hardware Error Event Handling'**
   String get apiPermissionsActionOnHardwareError;
 
+  /// No description provided for @apiPermissionsActionGetAppOverrides.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Per-App Overrides Rules'**
+  String get apiPermissionsActionGetAppOverrides;
+
+  /// No description provided for @apiPermissionsActionManageAppOverrides.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Per-App Overrides (CRUD)'**
+  String get apiPermissionsActionManageAppOverrides;
+
+  /// No description provided for @apiPermissionsActionResetBuiltinAppOverrides.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Built-in App Presets'**
+  String get apiPermissionsActionResetBuiltinAppOverrides;
+
   /// No description provided for @apiKeysGranularActionChip.
   ///
   /// In en, this message translates to:

@@ -107,7 +107,7 @@ class ApiPermissionsConfig {
     }
   }
 
-  /// Gets all canonical actions for a specific category (25 canonical actions in total)
+  /// Gets all canonical actions for a specific category (28 canonical actions in total)
   static List<String> getActionsForCategory(ApiActionCategory category) {
     switch (category) {
       case ApiActionCategory.monitors:
@@ -160,7 +160,7 @@ class ApiPermissionsConfig {
     }
   }
 
-  /// Returns all 25 canonical actions across all categories
+  /// Returns all 28 canonical actions across all categories
   static Set<String> getAllCanonicalActions() {
     return ApiActionCategory.values
         .expand((c) => getActionsForCategory(c))

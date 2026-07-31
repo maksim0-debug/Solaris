@@ -871,6 +871,9 @@
   "apiPermissionsActionSetMapAnimations": "Анимации карты погоды",
   "apiPermissionsActionOnSystemResume": "Обработка возобновления ОС",
   "apiPermissionsActionOnHardwareError": "Обработка аппаратных ошибок",
+  "apiPermissionsActionGetAppOverrides": "Получение правил приложений",
+  "apiPermissionsActionManageAppOverrides": "Управление правилами приложений",
+  "apiPermissionsActionResetBuiltinAppOverrides": "Сброс системных пресетов приложений",
   "apiKeysGranularActionChip": "Разрешено действий: {count} из {total}",
   "@apiKeysGranularActionChip": {
     "placeholders": {
