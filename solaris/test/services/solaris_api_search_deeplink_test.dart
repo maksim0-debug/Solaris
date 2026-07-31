@@ -55,7 +55,9 @@ void main() {
       // 4. Search for "фиксировать температуру"
       final tempToggleResults = service.search('фиксировать температуру');
       expect(
-        tempToggleResults.any((item) => item.anchorId == 'game_mode_temp_toggle'),
+        tempToggleResults.any(
+          (item) => item.anchorId == 'game_mode_temp_toggle',
+        ),
         isTrue,
       );
 
@@ -82,7 +84,10 @@ void main() {
       final portResults = service.search('порт');
       expect(portResults.any((item) => item.anchorId == 'api_port'), isTrue);
       final tokenResults = service.search('токен');
-      expect(tokenResults.any((item) => item.anchorId == 'api_require_token'), isTrue);
+      expect(
+        tokenResults.any((item) => item.anchorId == 'api_require_token'),
+        isTrue,
+      );
 
       // 4. English search test
       await tester.pumpWidget(

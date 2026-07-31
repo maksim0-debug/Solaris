@@ -112,6 +112,78 @@ class OpenApiSpec {
           },
         },
       },
+      '/api/v1/monitors/{slug}/brightness': {
+        'post': {
+          'summary': 'Set Monitor Brightness by Slug',
+          'parameters': [
+            {
+              'name': 'slug',
+              'in': 'path',
+              'required': true,
+              'schema': {'type': 'string'},
+            },
+          ],
+          'requestBody': {
+            'required': true,
+            'content': {
+              'application/json': {
+                'schema': {
+                  'type': 'object',
+                  'required': ['value'],
+                  'properties': {
+                    'value': {
+                      'type': 'number',
+                      'minimum': 0.0,
+                      'maximum': 100.0,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          'responses': {
+            '202': {'description': 'Accepted'},
+            '400': {'description': 'Validation Error'},
+            if (permissions != null) '403': forbiddenResponse,
+          },
+        },
+      },
+      '/api/v1/monitors/{slug}/temperature': {
+        'post': {
+          'summary': 'Set Monitor Temperature by Slug',
+          'parameters': [
+            {
+              'name': 'slug',
+              'in': 'path',
+              'required': true,
+              'schema': {'type': 'string'},
+            },
+          ],
+          'requestBody': {
+            'required': true,
+            'content': {
+              'application/json': {
+                'schema': {
+                  'type': 'object',
+                  'required': ['value'],
+                  'properties': {
+                    'value': {
+                      'type': 'integer',
+                      'minimum': 3300,
+                      'maximum': 6500,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          'responses': {
+            '202': {'description': 'Accepted'},
+            '400': {'description': 'Validation Error'},
+            if (permissions != null) '403': forbiddenResponse,
+          },
+        },
+      },
       '/api/v1/sleep/sessions': {
         'get': {
           'summary': 'Get Paginated Sleep History',
@@ -169,7 +241,8 @@ class OpenApiSpec {
       '/api/v1/app-overrides': {
         'get': {
           'summary': 'List Per-App Override Rules',
-          'description': 'Returns list of all active and built-in per-app override rules.',
+          'description':
+              'Returns list of all active and built-in per-app override rules.',
           'responses': {
             '200': {'description': 'OK'},
             if (permissions != null) '403': forbiddenResponse,
@@ -198,7 +271,8 @@ class OpenApiSpec {
       '/api/v1/app-overrides/active': {
         'get': {
           'summary': 'Get Current Active Process and Override State',
-          'description': 'Returns active foreground process name, window title, and currently applied override rule.',
+          'description':
+              'Returns active foreground process name, window title, and currently applied override rule.',
           'responses': {
             '200': {'description': 'OK'},
             if (permissions != null) '403': forbiddenResponse,
@@ -208,7 +282,8 @@ class OpenApiSpec {
       '/api/v1/app-overrides/reset-builtin': {
         'post': {
           'summary': 'Reset Built-In Presets to Factory Defaults',
-          'description': 'Restores default 6500K color profile rules for built-in applications.',
+          'description':
+              'Restores default 6500K color profile rules for built-in applications.',
           'responses': {
             '200': {'description': 'OK'},
             if (permissions != null) '403': forbiddenResponse,
@@ -229,6 +304,83 @@ class OpenApiSpec {
           'responses': {
             '200': {'description': 'OK'},
             '400': {'description': 'Validation Error'},
+            if (permissions != null) '403': forbiddenResponse,
+          },
+        },
+      },
+      '/api/v1/webhooks': {
+        'get': {
+          'summary': 'List Configured Webhooks',
+          'responses': {
+            '200': {'description': 'OK'},
+            if (permissions != null) '403': forbiddenResponse,
+          },
+        },
+        'post': {
+          'summary': 'Create or Update Webhook Configuration',
+          'responses': {
+            '201': {'description': 'Created'},
+            if (permissions != null) '403': forbiddenResponse,
+          },
+        },
+      },
+      '/api/v1/webhooks/events': {
+        'get': {
+          'summary': 'List Available Webhook Event Types',
+          'responses': {
+            '200': {'description': 'OK'},
+            if (permissions != null) '403': forbiddenResponse,
+          },
+        },
+      },
+      '/api/v1/webhooks/dlq': {
+        'get': {
+          'summary': 'Get Dead Letter Queue Entries',
+          'responses': {
+            '200': {'description': 'OK'},
+            if (permissions != null) '403': forbiddenResponse,
+          },
+        },
+      },
+      '/api/v1/webhooks/dlq/retry': {
+        'post': {
+          'summary': 'Retry Dead Letter Queue Entries',
+          'responses': {
+            '200': {'description': 'OK'},
+            if (permissions != null) '403': forbiddenResponse,
+          },
+        },
+      },
+      '/api/v1/webhooks/{id}': {
+        'delete': {
+          'summary': 'Delete Webhook Configuration',
+          'parameters': [
+            {
+              'name': 'id',
+              'in': 'path',
+              'required': true,
+              'schema': {'type': 'string'},
+            },
+          ],
+          'responses': {
+            '200': {'description': 'OK'},
+            if (permissions != null) '403': forbiddenResponse,
+          },
+        },
+      },
+      '/api/v1/webhooks/{id}/test': {
+        'post': {
+          'summary': 'Send Test Ping Delivery to Webhook',
+          'parameters': [
+            {
+              'name': 'id',
+              'in': 'path',
+              'required': true,
+              'schema': {'type': 'string'},
+            },
+          ],
+          'responses': {
+            '200': {'description': 'OK'},
             if (permissions != null) '403': forbiddenResponse,
           },
         },
@@ -294,9 +446,18 @@ class OpenApiSpec {
           'MonitorInfo': {
             'type': 'object',
             'properties': {
-              'id': {'type': 'string', 'example': r'\\.\DISPLAY1\Monitor0'},
-              'name': {'type': 'string', 'example': 'LG 27GL850'},
-              'friendly_name': {'type': 'string', 'example': 'LG UltraGear'},
+              'id': {'type': 'string', 'example': r'\\.\DISPLAY1'},
+              'name': {'type': 'string', 'example': 'LG 27GP850'},
+              'friendly_name': {
+                'type': 'string',
+                'example': 'LG UltraGear A1F9',
+              },
+              'slug': {'type': 'string', 'example': 'display-1'},
+              'hardware_slug': {
+                'type': 'string',
+                'example': 'lg-ultragear-a1f9',
+              },
+              'device_id_hash': {'type': 'string', 'example': 'a1f9'},
               'is_primary': {'type': 'boolean'},
               'brightness': {'type': 'object'},
               'temperature': {'type': 'object'},
@@ -308,6 +469,7 @@ class OpenApiSpec {
               'status': {'type': 'string', 'example': 'ok'},
               'version': {'type': 'string', 'example': '1.0.0'},
               'uptime_seconds': {'type': 'integer', 'example': 3600},
+              'timestamp': {'type': 'string', 'format': 'date-time'},
             },
           },
           'Rfc7807Error': {
@@ -337,14 +499,33 @@ class OpenApiSpec {
             'required': ['exeName', 'appDisplayName'],
             'properties': {
               'exeName': {'type': 'string', 'example': 'photoshop.exe'},
-              'appDisplayName': {'type': 'string', 'example': 'Adobe Photoshop'},
+              'appDisplayName': {
+                'type': 'string',
+                'example': 'Adobe Photoshop',
+              },
               'isEnabled': {'type': 'boolean', 'default': true},
               'isBuiltIn': {'type': 'boolean', 'default': false},
-              'brightnessMode': {'type': 'string', 'enum': ['global', 'fixed', 'curve'], 'default': 'global'},
-              'fixedBrightness': {'type': 'number', 'minimum': 0.0, 'maximum': 100.0},
+              'brightnessMode': {
+                'type': 'string',
+                'enum': ['global', 'fixed', 'curve'],
+                'default': 'global',
+              },
+              'fixedBrightness': {
+                'type': 'number',
+                'minimum': 0.0,
+                'maximum': 100.0,
+              },
               'brightnessCurvePresetId': {'type': 'string'},
-              'temperatureMode': {'type': 'string', 'enum': ['global', 'fixed', 'curve'], 'default': 'global'},
-              'fixedTemperature': {'type': 'number', 'minimum': 3300.0, 'maximum': 6500.0},
+              'temperatureMode': {
+                'type': 'string',
+                'enum': ['global', 'fixed', 'curve'],
+                'default': 'global',
+              },
+              'fixedTemperature': {
+                'type': 'number',
+                'minimum': 3300.0,
+                'maximum': 6500.0,
+              },
               'temperatureCurvePresetId': {'type': 'string'},
             },
           },

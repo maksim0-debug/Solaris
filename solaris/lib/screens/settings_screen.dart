@@ -2842,7 +2842,8 @@ class _SmoothSettingSliderState extends State<_SmoothSettingSlider> {
 
     final Color currentActiveColor;
     if (widget.useBrightnessPalette) {
-      final double progress = (clamped - widget.min) / (widget.max - widget.min);
+      final double progress =
+          (clamped - widget.min) / (widget.max - widget.min);
       currentActiveColor = Color.lerp(
         const Color(0xFFFDBA74),
         const Color(0xFFF97316),
@@ -2873,10 +2874,7 @@ class _SmoothSettingSliderState extends State<_SmoothSettingSlider> {
                 children: [
                   Text(
                     widget.title,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
+                    style: const TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                   if (widget.subtitle != null) ...[
                     const SizedBox(height: 4),
@@ -2912,11 +2910,11 @@ class _SmoothSettingSliderState extends State<_SmoothSettingSlider> {
                   thumbColor: currentActiveColor,
                 )
               : widget.useTemperaturePalette
-                  ? SliderTheme.of(context).copyWith(
-                      activeTrackColor: currentActiveColor,
-                      thumbColor: currentActiveColor,
-                    )
-                  : SliderTheme.of(context),
+              ? SliderTheme.of(context).copyWith(
+                  activeTrackColor: currentActiveColor,
+                  thumbColor: currentActiveColor,
+                )
+              : SliderTheme.of(context),
           child: Slider(
             value: sliderValue.clamp(sliderMin, sliderMax),
             min: sliderMin,
@@ -3638,13 +3636,17 @@ class _AppOverridesTileCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final settingsAsync = ref.watch(settingsProvider);
     final settings = settingsAsync.value?['all'] ?? SettingsState();
-    final count = settings.appOverrides.where((AppOverrideRule r) => !r.isBuiltIn).length;
+    final count = settings.appOverrides
+        .where((AppOverrideRule r) => !r.isBuiltIn)
+        .length;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: () {
-          ref.read(activeScreenProvider.notifier).setScreen(AppScreen.appOverrides);
+          ref
+              .read(activeScreenProvider.notifier)
+              .setScreen(AppScreen.appOverrides);
         },
         child: GlassCard(
           padding: const EdgeInsets.all(24),
@@ -3689,10 +3691,16 @@ class _AppOverridesTileCard extends ConsumerWidget {
               const SizedBox(width: 16),
               ElevatedButton.icon(
                 onPressed: () {
-                  ref.read(activeScreenProvider.notifier).setScreen(AppScreen.appOverrides);
+                  ref
+                      .read(activeScreenProvider.notifier)
+                      .setScreen(AppScreen.appOverrides);
                 },
                 icon: const Icon(LucideIcons.externalLink, size: 14),
-                label: Text(count > 0 ? l10n.appRulesCount(count) : l10n.appOverridesConfigure),
+                label: Text(
+                  count > 0
+                      ? l10n.appRulesCount(count)
+                      : l10n.appOverridesConfigure,
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF6366F1),
                   foregroundColor: Colors.white,

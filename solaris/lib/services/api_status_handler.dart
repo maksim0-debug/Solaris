@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solaris/models/api_permissions_config.dart';
 import 'package:solaris/models/preset_type.dart';
-import 'package:solaris/models/rfc7807_error.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/providers/sleep_provider.dart';
 import 'package:solaris/providers/temperature_provider.dart';
@@ -11,7 +10,6 @@ import 'package:solaris/services/api_permissions_checker.dart';
 import 'package:solaris/services/api_permissions_filter.dart';
 import 'package:solaris/services/api_router.dart';
 import 'package:solaris/services/gaming_mode_service.dart';
-import 'package:solaris/services/monitor_service.dart';
 import 'package:solaris/services/monitor_slug_resolver.dart';
 import 'package:solaris/services/openapi_spec.dart';
 
@@ -182,7 +180,8 @@ class ApiStatusHandler {
         'enabled': globalSettings?.isGameModeEnabled ?? true,
         'active': gamingModeActive,
         'brightness_override': globalSettings?.gameModeBrightness ?? 80.0,
-        'temperature_enabled': globalSettings?.isGameModeTemperatureEnabled ?? true,
+        'temperature_enabled':
+            globalSettings?.isGameModeTemperatureEnabled ?? true,
         'temperature_override': globalSettings?.gameModeTemperature ?? 6500.0,
         'whitelist_count': globalSettings?.gameModeWhitelist.length ?? 0,
         'blacklist_count': globalSettings?.gameModeBlacklist.length ?? 0,
@@ -371,111 +370,6 @@ class ApiStatusHandler {
     }
 
     ApiRouter.sendJson(request, HttpStatus.ok, filtered);
-  }
-
-  /// GET /api/v1/monitors
-  Future<void> handleMonitors(
-    HttpRequest request,
-    Map<String, String> pathParams,
-  ) async {
-    final permissions = _getPermissions(request);
-    final check = ApiPermissionsChecker.checkReadFlag(
-      permissions.allowReadMonitors,
-      'monitors',
-    );
-    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
-
-    final monitors = await container
-        .read(monitorServiceProvider)
-        .getConnectedMonitors();
-    MonitorSlugResolver.updateMonitors(monitors);
-    final currentBrightness = container.read(currentBrightnessProvider);
-    final currentTemp = container.read(currentTemperatureProvider);
-
-    final list = monitors
-        .map(
-          (mon) => {
-            'id': mon.id,
-            'name': mon.name,
-            'friendly_name': mon.friendlyName,
-            'slug': MonitorSlugResolver.getSlugForSystemId(mon.id),
-            'is_primary': mon.isPrimary,
-            'brightness': mon.realBrightness ?? currentBrightness.round(),
-            'temperature': mon.realTemperature ?? currentTemp,
-          },
-        )
-        .toList();
-
-    ApiRouter.sendJson(request, HttpStatus.ok, {'monitors': list});
-  }
-
-  /// GET /api/v1/monitors/:slug
-  Future<void> handleMonitorBySlug(
-    HttpRequest request,
-    Map<String, String> pathParams,
-  ) async {
-    final permissions = _getPermissions(request);
-    final check = ApiPermissionsChecker.checkReadFlag(
-      permissions.allowReadMonitors,
-      'monitors',
-    );
-    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
-
-    final slug = pathParams['slug'];
-    if (slug == null || slug.isEmpty) {
-      final error = Rfc7807Error(
-        type: 'https://solaris.local/errors/bad-request',
-        title: 'Bad Request',
-        status: HttpStatus.badRequest,
-        detail: 'Monitor slug parameter missing.',
-        instance: request.uri.path,
-      );
-      ApiRouter.sendRfc7807(request, error);
-      return;
-    }
-
-    final monitors = await container
-        .read(monitorServiceProvider)
-        .getConnectedMonitors();
-    MonitorSlugResolver.updateMonitors(monitors);
-
-    final resolvedSystemId = MonitorSlugResolver.resolveToSystemId(slug);
-    MonitorInfo? matchedMon;
-
-    if (resolvedSystemId != null) {
-      for (final mon in monitors) {
-        if (mon.id == resolvedSystemId) {
-          matchedMon = mon;
-          break;
-        }
-      }
-    }
-
-    if (matchedMon == null) {
-      final error = Rfc7807Error(
-        type: 'https://solaris.local/errors/monitor-not-found',
-        title: 'Not Found',
-        status: HttpStatus.notFound,
-        detail: 'Monitor with slug or ID "$slug" was not found.',
-        instance: request.uri.path,
-      );
-      ApiRouter.sendRfc7807(request, error);
-      return;
-    }
-
-    final currentBrightness = container.read(currentBrightnessProvider);
-    final currentTemp = container.read(currentTemperatureProvider);
-
-    ApiRouter.sendJson(request, HttpStatus.ok, {
-      'id': matchedMon.id,
-      'name': matchedMon.name,
-      'friendly_name': matchedMon.friendlyName,
-      'slug': MonitorSlugResolver.getSlugForSystemId(matchedMon.id),
-      'device_id_hash': matchedMon.deviceIdHash,
-      'is_primary': matchedMon.isPrimary,
-      'brightness': matchedMon.realBrightness ?? currentBrightness.round(),
-      'temperature': matchedMon.realTemperature ?? currentTemp,
-    });
   }
 
   /// GET /api/v1/sleep/sessions (Paginated)

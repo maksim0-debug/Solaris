@@ -531,9 +531,10 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
           <WebhookEventType>{};
 
       Map<String, String>? customHeaders;
-      if (json['headers'] != null && json['headers'] is Map) {
-        customHeaders = (json['headers'] as Map<String, dynamic>).map(
-          (k, v) => MapEntry(k, v.toString()),
+      final rawHeaders = json['custom_headers'] ?? json['headers'];
+      if (rawHeaders != null && rawHeaders is Map) {
+        customHeaders = rawHeaders.map(
+          (k, v) => MapEntry(k.toString(), v.toString()),
         );
       }
 
@@ -659,10 +660,13 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
     );
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
-    await ref.read(webhookServiceProvider.notifier).clearDLQ();
+    final retriedCount = await ref
+        .read(webhookServiceProvider.notifier)
+        .retryDLQTransactions();
     _sendResponse(request, HttpStatus.ok, {
       'status': 'ok',
-      'message': 'DLQ cleared',
+      'retried_count': retriedCount,
+      'message': 'DLQ retry initiated',
     });
   }
 

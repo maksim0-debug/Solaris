@@ -11,17 +11,20 @@ void main() {
       expect(state.gameModeTemperature, equals(6500.0));
     });
 
-    test('Backwards compatibility: fromJson with old JSON sets default values', () {
-      final oldJson = <String, dynamic>{
-        'isGameModeEnabled': true,
-        'gameModeBrightness': 80.0,
-        'gameModeExitDelaySeconds': 30,
-      };
+    test(
+      'Backwards compatibility: fromJson with old JSON sets default values',
+      () {
+        final oldJson = <String, dynamic>{
+          'isGameModeEnabled': true,
+          'gameModeBrightness': 80.0,
+          'gameModeExitDelaySeconds': 30,
+        };
 
-      final state = SettingsState.fromJson(oldJson);
-      expect(state.isGameModeTemperatureEnabled, isTrue);
-      expect(state.gameModeTemperature, equals(6500.0));
-    });
+        final state = SettingsState.fromJson(oldJson);
+        expect(state.isGameModeTemperatureEnabled, isTrue);
+        expect(state.gameModeTemperature, equals(6500.0));
+      },
+    );
 
     test('fromJson correctly parses custom game mode temperature settings', () {
       final json = <String, dynamic>{

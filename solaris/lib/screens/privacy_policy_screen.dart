@@ -90,13 +90,13 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
-                child: CircularProgressIndicator(
-                  color: AppTheme.accent,
-                ),
+                child: CircularProgressIndicator(color: AppTheme.accent),
               );
             }
 
-            if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+            if (snapshot.hasError ||
+                !snapshot.hasData ||
+                snapshot.data!.isEmpty) {
               return Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
@@ -223,4 +223,3 @@ class _GlassAppBar extends StatelessWidget {
     );
   }
 }
-

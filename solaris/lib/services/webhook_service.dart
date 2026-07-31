@@ -37,7 +37,7 @@ class PendingWebhookTransaction {
   PendingWebhookTransaction copyWith({
     int? attemptCount,
     TransactionStatus? status,
-    String? lastError,
+    Object? lastError = _sentinel,
   }) {
     return PendingWebhookTransaction(
       deliveryId: deliveryId,
@@ -48,9 +48,13 @@ class PendingWebhookTransaction {
       attemptCount: attemptCount ?? this.attemptCount,
       createdAt: createdAt,
       status: status ?? this.status,
-      lastError: lastError ?? this.lastError,
+      lastError: identical(lastError, _sentinel)
+          ? this.lastError
+          : lastError as String?,
     );
   }
+
+  static const _sentinel = Object();
 
   Map<String, dynamic> toJson() => {
     'deliveryId': deliveryId,
@@ -535,11 +539,74 @@ class WebhookService extends Notifier<WebhookServiceState> {
     }
   }
 
-  Future<void> clearDLQ() async {
+  Future<void> clearDLQ([String? webhookId]) async {
     if (_dlqFile != null && await _dlqFile!.exists()) {
-      await _dlqFile!.writeAsString('');
-      state = state.copyWith(dlqCount: 0);
+      if (webhookId == null || webhookId.isEmpty) {
+        await _dlqFile!.writeAsString('');
+        state = state.copyWith(dlqCount: 0);
+      } else {
+        final lines = await _dlqFile!.readAsLines();
+        final kept = <String>[];
+        for (final line in lines) {
+          if (line.trim().isEmpty) continue;
+          try {
+            final jsonMap = jsonDecode(line) as Map<String, dynamic>;
+            final tx = PendingWebhookTransaction.fromJson(jsonMap);
+            if (tx.webhookId != webhookId) {
+              kept.add(line);
+            }
+          } catch (_) {}
+        }
+        await _dlqFile!.writeAsString(
+          kept.isEmpty ? '' : '${kept.join('\n')}\n',
+        );
+        state = state.copyWith(dlqCount: kept.length);
+      }
     }
+  }
+
+  /// Retries pending DLQ transactions by moving them back into active WAL queue
+  Future<int> retryDLQTransactions([String? webhookId]) async {
+    final entries = await getDLQEntries();
+    if (entries.isEmpty) return 0;
+
+    final toRetry = <PendingWebhookTransaction>[];
+    final toKeep = <PendingWebhookTransaction>[];
+
+    for (final tx in entries) {
+      if (webhookId == null || webhookId.isEmpty || tx.webhookId == webhookId) {
+        toRetry.add(
+          tx.copyWith(
+            attemptCount: 0,
+            status: TransactionStatus.pending,
+            lastError: null,
+          ),
+        );
+      } else {
+        toKeep.add(tx);
+      }
+    }
+
+    if (toRetry.isEmpty) return 0;
+
+    // Rewrite DLQ file with remaining items
+    if (_dlqFile != null) {
+      if (toKeep.isEmpty) {
+        await _dlqFile!.writeAsString('');
+        state = state.copyWith(dlqCount: 0);
+      } else {
+        final lines = toKeep.map((t) => jsonEncode(t.toJson())).join('\n');
+        await _dlqFile!.writeAsString('$lines\n');
+        state = state.copyWith(dlqCount: toKeep.length);
+      }
+    }
+
+    // Re-enqueue transactions into active WAL queue
+    for (final tx in toRetry) {
+      _enqueueTransaction(tx);
+    }
+
+    return toRetry.length;
   }
 
   Future<bool> sendTestPing(String webhookId) async {

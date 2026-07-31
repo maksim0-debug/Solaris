@@ -211,87 +211,92 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                       ),
                       const SizedBox(height: 10),
                       SegmentedButton<bool>(
-                  segments: [
-                    ButtonSegment<bool>(
-                      value: false,
-                      label: Text(
-                        l10n.apiModeLocalhost,
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                      icon: const Icon(LucideIcons.laptop, size: 14),
-                    ),
-                    ButtonSegment<bool>(
-                      value: true,
-                      label: Text(
-                        l10n.apiModeLan,
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                      icon: const Icon(LucideIcons.wifi, size: 14),
-                    ),
-                  ],
-                  selected: {isLanEnabled},
-                  showSelectedIcon: false,
-                  style: ButtonStyle(
-                    visualDensity: VisualDensity.compact,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    backgroundColor: WidgetStateProperty.resolveWith<Color>((
-                      Set<WidgetState> states,
-                    ) {
-                      if (states.contains(WidgetState.selected)) {
-                        return const Color(0xFFFDBA74).withOpacity(0.2);
-                      }
-                      return Colors.white.withOpacity(0.05);
-                    }),
-                    foregroundColor: WidgetStateProperty.resolveWith<Color>((
-                      Set<WidgetState> states,
-                    ) {
-                      if (states.contains(WidgetState.selected)) {
-                        return const Color(0xFFFDBA74);
-                      }
-                      return Colors.white38;
-                    }),
-                    side: WidgetStateProperty.all(BorderSide.none),
-                  ),
-                  onSelectionChanged: (Set<bool> selection) async {
-                    final enableLan = selection.first;
-
-                    ref
-                        .read(settingsProvider.notifier)
-                        .updateApiLanAccessEnabled(enableLan);
-
-                    if (enableLan) {
-                      final firewallService = ref.read(
-                        windowsFirewallServiceProvider,
-                      );
-                      final success = await firewallService.ensureRuleAdded(
-                        port: port,
-                      );
-
-                      if (!success) {
-                        ref
-                            .read(settingsProvider.notifier)
-                            .updateApiLanAccessEnabled(false);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(l10n.apiFirewallUacError),
-                              backgroundColor: Colors.redAccent,
+                        segments: [
+                          ButtonSegment<bool>(
+                            value: false,
+                            label: Text(
+                              l10n.apiModeLocalhost,
+                              style: const TextStyle(fontSize: 12),
                             ),
-                          );
-                        }
-                        return;
-                      }
-                    } else {
-                      final firewallService = ref.read(
-                        windowsFirewallServiceProvider,
-                      );
-                      await firewallService.removeAllSolarisRules(port: port);
-                    }
-                  },
+                            icon: const Icon(LucideIcons.laptop, size: 14),
+                          ),
+                          ButtonSegment<bool>(
+                            value: true,
+                            label: Text(
+                              l10n.apiModeLan,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            icon: const Icon(LucideIcons.wifi, size: 14),
+                          ),
+                        ],
+                        selected: {isLanEnabled},
+                        showSelectedIcon: false,
+                        style: ButtonStyle(
+                          visualDensity: VisualDensity.compact,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          backgroundColor:
+                              WidgetStateProperty.resolveWith<Color>((
+                                Set<WidgetState> states,
+                              ) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return const Color(
+                                    0xFFFDBA74,
+                                  ).withOpacity(0.2);
+                                }
+                                return Colors.white.withOpacity(0.05);
+                              }),
+                          foregroundColor:
+                              WidgetStateProperty.resolveWith<Color>((
+                                Set<WidgetState> states,
+                              ) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return const Color(0xFFFDBA74);
+                                }
+                                return Colors.white38;
+                              }),
+                          side: WidgetStateProperty.all(BorderSide.none),
+                        ),
+                        onSelectionChanged: (Set<bool> selection) async {
+                          final enableLan = selection.first;
+
+                          ref
+                              .read(settingsProvider.notifier)
+                              .updateApiLanAccessEnabled(enableLan);
+
+                          if (enableLan) {
+                            final firewallService = ref.read(
+                              windowsFirewallServiceProvider,
+                            );
+                            final success = await firewallService
+                                .ensureRuleAdded(port: port);
+
+                            if (!success) {
+                              ref
+                                  .read(settingsProvider.notifier)
+                                  .updateApiLanAccessEnabled(false);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(l10n.apiFirewallUacError),
+                                    backgroundColor: Colors.redAccent,
+                                  ),
+                                );
+                              }
+                              return;
+                            }
+                          } else {
+                            final firewallService = ref.read(
+                              windowsFirewallServiceProvider,
+                            );
+                            await firewallService.removeAllSolarisRules(
+                              port: port,
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
-          ),
 
                 const SizedBox(height: 20),
 

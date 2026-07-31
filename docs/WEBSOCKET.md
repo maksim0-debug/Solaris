@@ -9,13 +9,14 @@ This document describes the architecture, protocol specification, Granular Secur
 The WebSocket Streaming API provides a full-duplex, low-latency communication channel for real-time applications, dashboard widgets, and background daemons.
 
 ### Key Capabilities:
-* **Real-time State Pushes**: Instant updates when monitor brightness, color temperature, solar position, or sleep status changes.
+* **Real-time State Pushes**: Instant updates when monitor brightness, color temperature, solar position, or sleep status changes (`type: "update"`).
+* **Selective Subscriptions & Unsubscribe**: Clients can dynamically filter or unsubscribe from specific topic streams using `subscribe` and `unsubscribe` message types.
 * **Granular Data Privacy & Snapshot Protection**: Initial `snapshot` frame (`_buildSnapshotMap`) and real-time broadcasts (`broadcastModule`, `broadcastEvent`) are filtered dynamically according to per-key `ApiPermissionsConfig`.
 * **Dynamic Runtime Subscription Revocation**: Toggling read permissions in the host GUI automatically revokes active topic subscriptions and sends `subscription_revoked` frames without severing TCP/WS connections.
+* **Connection Concurrency Limit**: Maximum 20 simultaneous active WebSocket connections (`maxClients = 20`). Upgrade attempts exceeding this limit are rejected with `HTTP 503 Service Unavailable`.
 * **Reactive Disconnect Revocation (Code 4001)**: Instant socket termination with WebSocket status code `4001` when an API key is deleted, token is regenerated, or `requireLocalToken` is enabled.
-* **Bi-directional Command Execution**: Execute any of the 26 Action Control System commands over WebSocket with response correlation IDs (`cmd_id`) subject to category permissions (`allowedCategories`).
-* **Windows Power & Hardware Error Broadcasts**: Broadcasts S3/S4 sleep/resume system events (`WM_POWERBROADCAST`) and DDC/CI physical hardware errors.
-* **Slow Consumer OOM Protection & Zero Memory Leak Guard**: Automatic client disconnection if unconsumed pending frame buffer exceeds 512 KB (`1008`), and client sub-maps (`_subscriptionsPerClient`) are pruned cleanly on disconnect.
+* **Bi-directional Command Execution**: Execute any of the 28 Action Control System commands over WebSocket with response correlation IDs (`cmd_id`) subject to category permissions (`allowedCategories`).
+* **Slow Consumer OOM Protection**: Automatic client disconnection if unconsumed pending frame buffer exceeds 512 KB (`1008`).
 
 ---
 
@@ -36,7 +37,7 @@ Tokens can be passed using any of the following 3 formats:
 
 #### Format A: Query Parameter (Most convenient for web clients)
 ```http
-GET /api/v1/ws?token=sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368eae HTTP/1.1
+GET /api/v1/ws?token=sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368eae01234567 HTTP/1.1
 Host: localhost:45321
 Upgrade: websocket
 Connection: Upgrade
@@ -44,19 +45,18 @@ Connection: Upgrade
 
 #### Format B: Subprotocol Header (Standard browser WebSocket API)
 ```javascript
-const token = 'sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368eae';
+const token = 'sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368eae01234567';
 const socket = new WebSocket('ws://localhost:45321/api/v1/ws', [`bearer.${token}`]);
 ```
 
 #### Format C: Request Header
 ```http
-X-API-Key: sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368eae
+X-API-Key: sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368eae01234567
 ```
-
-> [!CAUTION]
-> **Cross-Site WebSocket Hijacking (CSWSH) Guard**: WebSockets originating from browser origins (carrying an `Origin` header) will be rejected with HTTP 403 unless a valid auth token is supplied.
->
-> **requireLocalToken Enforcement**: When `requireLocalToken = true` is enabled in GUI, anonymous localhost connections without a valid token are rejected with `HTTP 401 Unauthorized`.
+or standard Authorization header:
+```http
+Authorization: Bearer sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368eae01234567
+```
 
 ---
 
@@ -67,166 +67,89 @@ When a WebSocket connection closes, Solaris transmits precise status codes and r
 | Close Code | Reason String | Trigger Condition |
 | :--- | :--- | :--- |
 | `1000` | Normal Closure | Client gracefully disconnected. |
-| `1001` | `Solaris API Server Stopping` | Host user turned off Control API server in GUI. |
-| `1008` | `Slow Consumer OOM Guard` | Pending frame queue exceeded 512 KB memory limit. |
+| `1001` | `Solaris API Server Stopping` / `PC Entering Sleep Mode` | Host user or OS turned off Control API server or PC entered sleep state. |
+| `1001` | `Heartbeat failed` | Socket heartbeat timeout (ping/pong failure). |
+| `1008` | `Slow Consumer: Pending buffer limit exceeded 512 KB` | Pending frame queue exceeded 512 KB memory limit. |
 | `4001` | `Key Revoked` | Host user deleted the API key associated with this connection. |
 | `4001` | `Token Regenerated` | Host user regenerated the secret token for this key. |
 | `4001` | `Local Auth Required` | Host user enabled `requireLocalToken = true` while an anonymous socket was open. |
 
 ---
 
-## 🛡️ Granular Security, Per-Action ACL & Snapshot Protection
+## 🛡️ Initial Snapshot Frame
 
 Upon connection, Solaris sends an initial `snapshot` frame containing current subsystem states.
 
-### Snapshot Masking Rules (`_buildSnapshotMap` & `ApiPermissionsFilter`):
-* `monitors`: Key omitted if `allowReadMonitors = false`.
-* `solar`: Key omitted if `allowReadSolar = false`.
-* `weather`: Key omitted if `allowReadWeather = false`.
-* `sleep`: Key omitted if `allowReadSleep = false`.
-* `automation`: Key-level masking removes `weather_*` fields if `allowReadWeather = false`, and `circadian_*` fields if `allowReadCircadian = false`.
-* `smart_circadian`: Sensitive sleep metrics (`sleep_pressure`, `sleep_debt`) are stripped if `allowReadSleep = false`.
-
-#### Example Initial Snapshot Frame:
 ```json
 {
   "type": "snapshot",
   "data": {
-    "monitors": [ ... ],
-    "solar": { "elevation": 42.5, "current_phase": "day" },
-    "automation": { "auto_brightness": true, "game_mode": false },
-    "smart_circadian": { "enabled": true, "current_phase": "day" }
+    "version": "1.1.0",
+    "timestamp": "2026-07-25T14:30:00.000Z",
+    "monitors": [
+      {
+        "id": "\\\\.\\DISPLAY1",
+        "name": "LG UltraGear 27GP850",
+        "friendly_name": "LG UltraGear A1F9",
+        "slug": "display-1",
+        "device_id_hash": "a1f9",
+        "is_primary": true,
+        "brightness": { "current": 80, "target": 80.0, "offset": 0.0, "mode": "auto" },
+        "temperature": { "enabled": true, "current": 5500, "target": 5500, "mode": "auto" }
+      }
+    ],
+    "solar": {
+      "elevation": 42.5,
+      "azimuth": 185.3,
+      "zenith": 47.5,
+      "progress": 0.65,
+      "current_phase": "day",
+      "uv_index": 4.2,
+      "spectral_intensity": 0.88
+    },
+    "weather": {
+      "available": true,
+      "temperature_celsius": 24.5,
+      "weather_code": 0
+    },
+    "sleep": {
+      "is_sleeping": false,
+      "sessions_count": 12,
+      "last_session_end": "2026-07-25T07:00:00.000Z"
+    },
+    "automation": {
+      "auto_brightness": true,
+      "auto_temperature": true,
+      "color_temperature_hardware_enabled": true,
+      "weather_brightness_adjustment": true,
+      "weather_temperature_adjustment": true,
+      "weather_adjustment_intensity": 0.45,
+      "smart_circadian": true,
+      "game_mode": {
+        "enabled": true,
+        "active": false,
+        "brightness_override": 80.0,
+        "temperature_enabled": true,
+        "temperature_override": 6500.0
+      }
+    }
   }
 }
 ```
 
-### Per-Action Broadcast Event Isolation (`broadcastEvent`)
-In addition to read-flag telemetry filtering, outbound WebSocket system events (`broadcastEvent`) are evaluated against per-client action permissions:
-* Mutating system broadcast events are filtered via `clientPermissions.isActionAllowed(eventName)`.
-* If a connected client's API key has prohibited the specific action (e.g. `manage_webhooks` or `on_hardware_error`), the broadcast frame is cleanly suppressed for that specific socket without leaking data or terminating the connection.
-
 ---
 
-## 📡 Message Frame Structure
+## 📡 Subscriptions and Unsubscribe Model
 
-All WebSocket messages are JSON objects containing a `type` string field.
-
-### Heartbeat Ping/Pong
-Solaris sends a periodic heartbeat ping frame every **30 seconds**:
-```json
-{
-  "type": "ping",
-  "timestamp": "2026-07-25T14:30:00.000Z"
-}
-```
-Clients may respond with a pong frame or send application-level pings:
-```json
-{
-  "type": "pong",
-  "timestamp": "2026-07-25T14:30:00.000Z"
-}
-```
-
----
-
-## 🎯 Command Execution via WebSocket (`cmd_id` Correlation)
-
-Clients can send commands over the WebSocket connection using the `command` type message.
-
-### Request Frame Schema:
-* `type`: `"command"` (required)
-* `cmd_id`: Unique correlation string generated by client (required)
-* `action`: Action command name from the 26 supported actions (required)
-* Additional action payload fields.
-
-#### Example Command Request:
-```json
-{
-  "type": "command",
-  "cmd_id": "ws-cmd-001",
-  "action": "set_brightness",
-  "value": 90.0,
-  "monitor_id": "display-1"
-}
-```
-
-### Response Frame Schema (`type: "response"`):
-Solaris responds with a `response` frame matching the client's `cmd_id`:
-
-#### Success Response:
-```json
-{
-  "type": "response",
-  "cmd_id": "ws-cmd-001",
-  "status": "ok",
-  "action": "set_brightness",
-  "applied": {
-    "value": 90.0,
-    "monitor_id": "display-1"
-  },
-  "error": null,
-  "message": null
-}
-```
-
-#### Error Response (Validation Failure):
-```json
-{
-  "type": "response",
-  "cmd_id": "ws-cmd-001",
-  "status": "error",
-  "action": "set_brightness",
-  "error": "Validation Error",
-  "message": "Field 'value' must be a number between 0.0 and 100.0."
-}
-```
-
-#### Error Response (Forbidden by Granular Permissions / Read-Only):
-```json
-{
-  "type": "response",
-  "cmd_id": "ws-cmd-001",
-  "status": "error",
-  "action": "set_brightness",
-  "error": "Forbidden",
-  "message": "Action category \"monitors\" is disabled in API permissions settings."
-}
-```
-
-#### Error Response (Privilege Escalation Guard):
-```json
-{
-  "type": "response",
-  "cmd_id": "ws-cmd-esc",
-  "status": "error",
-  "action": "set_brightness",
-  "error": "Forbidden",
-  "message": "Modifying API permissions or keys via WebSocket commands is strictly prohibited."
-}
-```
-
----
-
-## 🔔 Selective Subscriptions & Dynamic Runtime Revocation
-
-By default, newly connected WebSocket clients receive updates across all module channels. Clients can filter module updates by sending a `subscribe` or `unsubscribe` frame.
-
-### Available State Modules:
-* `"solar"`: Real-time solar position, elevation, azimuth, UV index, and day phase.
-* `"monitors"`: Connected physical displays, brightness, color temperature, and slugs.
-* `"sleep"`: Real-time sleep tracking state and pushed relay status.
-* `"automation"`: Auto Brightness, Auto Temperature, and Gaming Mode status.
-* `"system"`: Windows Power state (S3/S4 sleep/resume) and physical DDC/CI hardware errors.
-
-### Subscription Frame Example:
+### Selective Subscriptions (`type: "subscribe"`)
+Subscribing adds modules to the client's active subscription set.
 ```json
 {
   "type": "subscribe",
   "modules": ["solar", "monitors"]
 }
 ```
-
-### Confirmation Frame (`type: "subscribed"`):
+**Response (`type: "subscribed"`)**:
 ```json
 {
   "type": "subscribed",
@@ -234,48 +157,50 @@ By default, newly connected WebSocket clients receive updates across all module 
 }
 ```
 
-### Unsubscribe Frame Example:
+#### Subscription Denied Control Frame (`type: "subscription_denied"`):
+Emitted if a client attempts to subscribe to a module disabled in its API key permissions:
+```json
+{
+  "type": "subscription_denied",
+  "module": "solar",
+  "reason": "Read access disabled in API permissions"
+}
+```
+
+#### Runtime Subscription Revocation Frame (`type: "subscription_revoked"`):
+Emitted asynchronously when a host user disables read access for a module while a socket is active:
+```json
+{
+  "type": "subscription_revoked",
+  "module": "solar"
+}
+```
+
+### Unsubscribing (`type: "unsubscribe"`)
 ```json
 {
   "type": "unsubscribe",
   "modules": ["automation"]
 }
 ```
-
-### Subscription Denial (`subscription_denied`)
-If a client attempts to subscribe to a module whose read flag is disabled (e.g. `allowReadSleep = false`), Solaris rejects the module and responds with a `subscription_denied` frame:
+**Response (`type: "unsubscribed"`)**:
 ```json
 {
-  "type": "subscription_denied",
-  "module": "sleep",
-  "reason": "Read access to resource \"sleep\" is disabled in host API permissions settings."
-}
-```
-
-### Dynamic Runtime Subscription Revocation (`subscription_revoked`)
-If the host user toggles an API permission flag OFF in the Flutter GUI (`ApiPermissionsDialog`) while WebSocket clients are connected:
-1. `WebSocketService` detects the setting change via `ref.listen(settingsProvider)`.
-2. A **synchronous atomic audit** is performed over active subscription contexts.
-3. The disabled module topic is revoked from active subscription sets.
-4. Solaris transmits a `subscription_revoked` frame to affected clients **without closing the WebSocket connection**:
-
-```json
-{
-  "type": "subscription_revoked",
-  "module": "sleep",
-  "reason": "Read permission for this module was disabled by host user in GUI"
+  "type": "unsubscribed",
+  "active_modules": ["solar", "monitors"]
 }
 ```
 
 ---
 
-## ⚡ Real-Time Module Broadcast Frames
+## ⚡ Real-Time Module & Event Broadcast Frames
 
-### 1. Solar Module (`"solar"`)
+### Module Update Frame (`type: "update"`)
 ```json
 {
-  "type": "module_update",
+  "type": "update",
   "module": "solar",
+  "timestamp": "2026-07-25T14:30:00.000Z",
   "data": {
     "elevation": 42.5,
     "azimuth": 185.3,
@@ -292,30 +217,126 @@ If the host user toggles an API permission flag OFF in the Flutter GUI (`ApiPerm
 }
 ```
 
-### 2. System & Power Events (`"system"`)
-Broadcasting Windows OS power state changes (`WM_POWERBROADCAST` S3/S4 transitions) and hardware bus failures:
+---
+
+### 💓 Heartbeat & Ping / Pong Control Frames
+
+Every 30 seconds, the Solaris API server broadcasts a heartbeat ping to active WebSocket clients:
 
 ```json
 {
-  "type": "system_event",
-  "event": "on_system_suspend",
+  "type": "ping",
+  "timestamp": "2026-07-25T14:30:00.000Z"
+}
+```
+
+Clients may also send a ping to verify connection liveness:
+```json
+{
+  "type": "ping"
+}
+```
+**Server Response**:
+```json
+{
+  "type": "pong",
+  "timestamp": "2026-07-25T14:30:00.000Z"
+}
+```
+
+### System Event Frame (`type: "event"`)
+```json
+{
+  "type": "event",
+  "event": "on_system_resume",
+  "timestamp": "2026-07-25T14:30:00.000Z",
   "data": {
-    "reason": "S3 Sleep State Entered",
-    "timestamp": "2026-07-25T03:00:00.000Z"
+    "timestamp": "2026-07-25T14:30:00.000Z"
   }
 }
 ```
 
-Hardware DDC/CI Read/Write Failure Broadcast:
+### App Override Configuration Changed Event Frame (`type: "event"`)
+Broadcasted when per-application profile rules or exit delay settings are updated:
 ```json
 {
-  "type": "system_event",
+  "type": "event",
+  "event": "app_override_changed",
+  "timestamp": "2026-07-25T14:30:00.000Z",
+  "data": {
+    "app_overrides": [ ... ],
+    "exit_delay_seconds": 5
+  }
+}
+```
+
+### Active Process Event Frame (`type: "event"`)
+Broadcasted when the foreground process changes or a per-app override rule applies:
+```json
+{
+  "type": "event",
+  "event": "active_process_changed",
+  "timestamp": "2026-07-25T14:30:00.000Z",
+  "data": {
+    "active_process": "photoshop.exe",
+    "window_title": "Adobe Photoshop 2026",
+    "is_gaming": false,
+    "applied_override": {
+      "exeName": "photoshop.exe",
+      "appDisplayName": "Adobe Photoshop",
+      "isEnabled": true,
+      "isBuiltIn": true,
+      "brightnessMode": "global",
+      "temperatureMode": "fixed",
+      "fixedTemperature": 6500.0
+    },
+    "evaluated_brightness": 80.0,
+    "evaluated_temperature": 6500.0
+  }
+}
+```
+
+### Hardware Error Event Frame (`type: "event"`)
+Broadcasted when a DDC/CI read/write error or I2C bus collision is detected:
+```json
+{
+  "type": "event",
   "event": "on_hardware_error",
+  "timestamp": "2026-07-25T14:30:00.000Z",
   "data": {
-    "monitor_slug": "lg-ultragear-a1f9",
-    "error_code": "I2C_ACK_FAILURE",
-    "message": "Failed to communicate with monitor handle via DDC/CI bus."
+    "detail": "DDC/CI I2C Bus NAK on display \\\\.\\DISPLAY1",
+    "timestamp": "2026-07-25T14:30:00.000Z"
   }
 }
 ```
 
+---
+
+## 🎯 Command Execution via WebSocket (`cmd_id` Correlation)
+
+### Request Frame Schema (`type: "command"`):
+```json
+{
+  "type": "command",
+  "cmd_id": "ws-cmd-001",
+  "action": "set_brightness",
+  "value": 90.0,
+  "monitor_id": "display-1"
+}
+```
+
+### Success Response (`type: "response"`):
+```json
+{
+  "type": "response",
+  "cmd_id": "ws-cmd-001",
+  "status": "ok",
+  "action": "set_brightness",
+  "applied": {
+    "value": 90.0,
+    "monitor_id": "display-1"
+  },
+  "error": null,
+  "message": null
+}
+```

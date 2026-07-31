@@ -233,7 +233,10 @@ class SettingsState {
        isAutoUpdateEnabled = isAutoUpdateEnabled ?? Env.isOfficialRelease,
        curvesMap = curvesMap ?? PresetConstants.getAllDefaults(),
        appOverrides = appOverrides ?? AppOverrideRule.defaultBuiltInRules,
-       appOverrideExitDelaySeconds = (appOverrideExitDelaySeconds ?? 30).clamp(0, 300),
+       appOverrideExitDelaySeconds = (appOverrideExitDelaySeconds ?? 30).clamp(
+         0,
+         300,
+       ),
        presetOrder =
            presetOrder ??
            [
@@ -267,12 +270,16 @@ class SettingsState {
     return keys;
   }
 
-  static List<AppOverrideRule> _mergeDefaultBuiltInRules(List<AppOverrideRule> loadedRules) {
+  static List<AppOverrideRule> _mergeDefaultBuiltInRules(
+    List<AppOverrideRule> loadedRules,
+  ) {
     if (loadedRules.isEmpty) return loadedRules;
     final hasBuiltIns = loadedRules.any((r) => r.isBuiltIn);
     if (!hasBuiltIns) return loadedRules;
 
-    final existingExeNames = loadedRules.map((r) => r.exeName.toLowerCase()).toSet();
+    final existingExeNames = loadedRules
+        .map((r) => r.exeName.toLowerCase())
+        .toSet();
     final missingBuiltIns = AppOverrideRule.defaultBuiltInRules
         .where((b) => !existingExeNames.contains(b.exeName.toLowerCase()))
         .toList();
@@ -548,9 +555,12 @@ class SettingsState {
       gameModeBrightness:
           (json['gameModeBrightness'] as num?)?.toDouble() ?? 80.0,
       gameModeTemperature:
-          (json['gameModeTemperature'] as num?)?.toDouble().clamp(3300.0, 6500.0) ?? 6500.0,
-      gameModeExitDelaySeconds:
-          json['gameModeExitDelaySeconds'] as int? ?? 30,
+          (json['gameModeTemperature'] as num?)?.toDouble().clamp(
+            3300.0,
+            6500.0,
+          ) ??
+          6500.0,
+      gameModeExitDelaySeconds: json['gameModeExitDelaySeconds'] as int? ?? 30,
       gameModeWhitelist:
           (json['gameModeWhitelist'] as List<dynamic>?)?.cast<String>() ?? [],
       gameModeBlacklist:
@@ -652,24 +662,28 @@ class SettingsState {
       appOverrides: _mergeDefaultBuiltInRules(
         json.containsKey('appOverrides') && json['appOverrides'] is List
             ? (json['appOverrides'] as List)
-                .where((e) => e is Map)
-                .map((e) {
-                  try {
-                    return AppOverrideRule.fromJson(Map<String, dynamic>.from(e as Map));
-                  } catch (_) {
-                    return null;
-                  }
-                })
-                .whereType<AppOverrideRule>()
-                .toList()
+                  .where((e) => e is Map)
+                  .map((e) {
+                    try {
+                      return AppOverrideRule.fromJson(
+                        Map<String, dynamic>.from(e as Map),
+                      );
+                    } catch (_) {
+                      return null;
+                    }
+                  })
+                  .whereType<AppOverrideRule>()
+                  .toList()
             : AppOverrideRule.defaultBuiltInRules,
       ),
-      appOverrideExitDelaySeconds:
-          (json['appOverrideExitDelaySeconds'] is num)
-              ? (json['appOverrideExitDelaySeconds'] as num).toInt().clamp(0, 300)
-              : (json['appOverrideExitDelaySeconds'] is String
-                  ? (int.tryParse(json['appOverrideExitDelaySeconds'] as String)?.clamp(0, 300) ?? 30)
-                  : 30),
+      appOverrideExitDelaySeconds: (json['appOverrideExitDelaySeconds'] is num)
+          ? (json['appOverrideExitDelaySeconds'] as num).toInt().clamp(0, 300)
+          : (json['appOverrideExitDelaySeconds'] is String
+                ? (int.tryParse(
+                        json['appOverrideExitDelaySeconds'] as String,
+                      )?.clamp(0, 300) ??
+                      30)
+                : 30),
     );
   }
 

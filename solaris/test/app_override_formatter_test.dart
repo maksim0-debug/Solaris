@@ -60,13 +60,9 @@ void main() {
         brightnessCurvePresetId: 'same_key',
       );
 
-      final brightnessCurveNames = {
-        'same_key': 'Brightness Curve Name',
-      };
+      final brightnessCurveNames = {'same_key': 'Brightness Curve Name'};
 
-      final temperatureCurveNames = {
-        'same_key': 'Temperature Curve Name',
-      };
+      final temperatureCurveNames = {'same_key': 'Temperature Curve Name'};
 
       final descriptors = AppOverrideRuleFormatter.getDescriptors(
         rule: rule,

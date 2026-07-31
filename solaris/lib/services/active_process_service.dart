@@ -164,7 +164,8 @@ class ActiveProcessService extends Notifier<ActiveProcessState> {
 
     if (incomingProcess == previousUserProcess) {
       _exitDelayTimer?.cancel();
-      if (state.activeProcess != incomingProcess || state.isGaming != isGaming) {
+      if (state.activeProcess != incomingProcess ||
+          state.isGaming != isGaming) {
         state = state.copyWith(
           activeProcess: incomingProcess,
           windowTitle: _rawTitle,
@@ -180,27 +181,47 @@ class ActiveProcessService extends Notifier<ActiveProcessState> {
       // 1. Direct switch to another profiled app: Immediate Preemption (0 ms)
       _exitDelayTimer?.cancel();
       _effectiveUserProcess = incomingProcess;
-      _applyStateChange(incomingProcess, _rawTitle, isGaming, clearSuppression: true);
+      _applyStateChange(
+        incomingProcess,
+        _rawTitle,
+        isGaming,
+        clearSuppression: true,
+      );
     } else if (hasOverrideForPrevious && incomingProcess.isNotEmpty) {
       // 2. Switch to a non-profiled neutral app: Hold previous profile for exit delay
       final delaySeconds = settings.appOverrideExitDelaySeconds;
       if (delaySeconds <= 0) {
         _effectiveUserProcess = incomingProcess;
-        _applyStateChange(incomingProcess, _rawTitle, isGaming, clearSuppression: true);
+        _applyStateChange(
+          incomingProcess,
+          _rawTitle,
+          isGaming,
+          clearSuppression: true,
+        );
       } else {
         // Retain previous override for delaySeconds
         _exitDelayTimer?.cancel();
         _exitDelayTimer = Timer(Duration(seconds: delaySeconds), () {
           if (!ref.mounted) return;
           _effectiveUserProcess = _rawProcess;
-          _applyStateChange(_rawProcess, _rawTitle, isGaming, clearSuppression: false);
+          _applyStateChange(
+            _rawProcess,
+            _rawTitle,
+            isGaming,
+            clearSuppression: false,
+          );
         });
       }
     } else {
       // 3. Normal process switch without active exit delay override
       _exitDelayTimer?.cancel();
       _effectiveUserProcess = incomingProcess;
-      _applyStateChange(incomingProcess, _rawTitle, isGaming, clearSuppression: true);
+      _applyStateChange(
+        incomingProcess,
+        _rawTitle,
+        isGaming,
+        clearSuppression: true,
+      );
     }
   }
 
@@ -230,7 +251,11 @@ class ActiveProcessService extends Notifier<ActiveProcessState> {
   }
 
   /// For testing or manual triggers
-  void updateActiveProcessManually(String exeName, {bool isGaming = false, String title = ''}) {
+  void updateActiveProcessManually(
+    String exeName, {
+    bool isGaming = false,
+    String title = '',
+  }) {
     _rawProcess = exeName.trim().toLowerCase();
     _rawTitle = title;
     _processFocusChange(isGaming);

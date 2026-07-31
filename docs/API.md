@@ -11,12 +11,12 @@ Welcome to the official developer documentation for **Solaris Control API v1**. 
 ### Key Architecture Features
 * **Zero External Dependencies**: Built directly on `dart:io` `HttpServer` with zero third-party HTTP framework dependencies.
 * **Multiple Scoped API Keys Architecture**: Granular per-client authentication keys (`ApiKeyEntry`) with individual names, access scope configurations (`ApiPermissionsConfig`), and DPAPI token security.
-* **Per-Action Precision Engine**: Fine-grained access control supporting **25 canonical actions** across 7 categories, 17 alias mappings (`getCanonicalAction`), and Clean Storage Protocol.
+* **Per-Action Precision Engine**: Fine-grained access control supporting **28 canonical actions** across 7 categories, 17 alias mappings (`getCanonicalAction`), and Clean Storage Protocol.
 * **Tri-State Accordion UI**: Interactive Flutter GUI (`ApiPermissionsDialog`) with `ExpansionTile` accordions, Tri-State master checkboxes (`true`/`false`/`null`), click isolation in `leading`, and dynamic scope chips.
 * **Asynchronous Trie-Router**: Fast path-segment matching with support for dynamic path variables (e.g. `:slug`).
 * **8-Layer Defense & Isolation Pipeline**: Built-in protection against Host Header Spoofing/DNS Rebinding, Payload Buffer Overflows, Unsupported Media Types, CSWSH (Cross-Site WebSocket Hijacking), Drive-by attacks, and **Granular Zero-Trust ACL Isolation**.
 * **Headless-Safe Execution (`safeStateMutator`)**: State mutations are deferred via `Future.microtask()` to avoid Flutter widget rendering cycle conflicts (`setState() or markNeedsBuild() called during build`).
-* **OpenAPI 3.0.3 Spec & Swagger UI**: Built-in Swagger UI interactive playground hosted at `/api/v1/docs` with dynamic permission status annotations.
+* **OpenAPI 3.0.3 Spec & RapiDoc UI**: Built-in RapiDoc interactive playground hosted at `/api/v1/docs` with dynamic permission status annotations.
 
 ---
 
@@ -60,10 +60,10 @@ Every HTTP and WebSocket request flows sequentially through 8 security layers:
  5. CORS & CSWSH / Drive-by Guard (Cross-Origin requests require valid X-API-Key)
          │
          ▼
- 6. LruCache Rate Limiter (Per-IP token bucket rate limiting, default 120 req/min)
+ 6. Constant-Time Auth & requireLocalToken Guard (Constant-time SHA-256 token lookup via constantTimeEquals)
          │
          ▼
- 7. Constant-Time Auth & requireLocalToken Guard (Constant-time SHA-256 token lookup via constantTimeEquals)
+ 7. LruCache Rate Limiter (Per-IP token bucket rate limiting, default 120 req/min)
          │
          ▼
  8. Granular ACL & Data Privacy Guard (ApiPermissionsChecker & ApiPermissionsFilter per-action scoping)
@@ -89,13 +89,13 @@ Controls visibility of telemetry and subsystem data in `GET /api/v1/status`, que
 > [!NOTE]
 > **Granular Masking (`ApiPermissionsFilter`)**: Disabling a read flag automatically redacts the corresponding root section and performs key-level masking on composite objects (`automation`, `smart_circadian`, `presets`). For example, when `allowReadSleep = false`, sleep metrics (`sleep_pressure`, `sleep_debt`) are automatically pruned from `smart_circadian` without stripping circadian day-phase info.
 
-### 2. Per-Action Precision (25 Canonical Actions & 7 Categories)
-In addition to 7 high-level categories (`allowedCategories`), permissions can be constrained to **25 fine-grained canonical actions** (`allowedActions` set):
+### 2. Per-Action Precision (28 Canonical Actions & 7 Categories)
+In addition to 7 high-level categories (`allowedCategories`), permissions can be constrained to **28 fine-grained canonical actions** (`allowedActions` set):
 
 | Category (`ApiActionCategory`) | Actions Count | Canonical Action Keys (`allowedActions`) |
 | :--- | :---: | :--- |
 | **`monitors`** | 3 | `set_brightness`, `set_temperature`, `set_monitor_offset` |
-| **`presets`** | 4 | `set_brightness_preset`, `set_temperature_preset`, `set_user_preset`, `cycle_preset` |
+| **`presets`** | 7 | `set_brightness_preset`, `set_temperature_preset`, `set_user_preset`, `cycle_preset`, `get_app_overrides`, `manage_app_overrides`, `reset_builtin_app_overrides` |
 | **`circadian`** | 4 | `set_auto_brightness`, `set_auto_temperature`, `set_smart_circadian`, `set_smart_circadian_submodules` |
 | **`gaming`** | 3 | `set_game_mode`, `set_game_mode_brightness`, `manage_game_mode_whitelist` |
 | **`environment`** | 6 | `set_weather_adjustment`, `set_weather_temperature_adjustment`, `set_weather_intensity`, `set_manual_location`, `set_weather_provider`, `trigger_sun_sync` |
@@ -116,10 +116,13 @@ Incoming requests (REST API, WebSocket commands, or internal triggers) undergo a
 | `openmeteo`, `weatherapi`, `auto` | `set_weather_provider` | `environment` |
 | `clear_failed_webhooks` | `manage_webhooks` | `system` |
 
+> [!NOTE]
+> **Action Execution Routing**: `on_system_resume` and `on_hardware_error` are system/hardware-triggered event signals (category `system`), and per-app override management actions (`get_app_overrides`, `manage_app_overrides`, `reset_builtin_app_overrides`) are handled via dedicated `/api/v1/app-overrides` REST endpoints rather than `POST /api/v1/control`. Executing non-control actions on `POST /api/v1/control` returns `HTTP 422 Unprocessable Entity`.
+
 ### 4. Clean Storage Protocol (Auto-Reset to Null)
 To maintain 100% backward compatibility and minimal storage footprint:
-* When `allowedActions` contains all 25 canonical actions, `toJson()` automatically omits `allowedActions` (`allowedActions = null`).
-* `fromJson()` automatically converts a full 25-action set back into `null`.
+* When `allowedActions` contains all 28 canonical actions, `toJson()` automatically omits `allowedActions` (`allowedActions = null`).
+* `fromJson()` automatically converts a full 28-action set back into `null`.
 * `allowedActions == null` represents full standard permission for all actions within enabled categories.
 
 ### 5. Tri-State Accordion GUI Architecture
@@ -129,17 +132,17 @@ The Flutter GUI (`ApiPermissionsDialog`) renders permissions using a 2-level Acc
   * `false` (Unchecked ⚪): Category is disabled (`allowedCategories` does not contain category).
   * `null` (Indeterminate / Dash 🟠): Category enabled, `allowedActions == null` (inherit default full access).
 * **Click Isolation in `leading`**: Tapping the master checkbox in `leading` is wrapped in `GestureDetector`/`InkWell` to prevent unintended expansion/collapsing of the accordion body.
-* **Scope Summary Chips (`apiKeysGranularActionChip`)**: In `ApiKeysManagementDialog`, keys display green `"7 of 7 categories"` chips when `allowedActions == null`, or orange `"Allowed N of 25 actions"` chips when a granular subset ($N < 25$) is configured.
-* **Localization (EN / RU / UK)**: All 25 actions are fully localized in `app_en.arb`, `app_ru.arb`, and `app_uk.arb`.
+* **Scope Summary Chips (`apiKeysGranularActionChip`)**: In `ApiKeysManagementDialog`, keys display green `"7 of 7 categories"` chips when `allowedActions == null`, or orange `"Allowed N of 28 actions"` chips when a granular subset ($N < 28$) is configured.
+* **Localization (EN / RU / UK)**: All 28 actions are localized in `app_en.arb`, `app_ru.arb`, and `app_uk.arb`.
 
 ### 6. Read-Only Mode (`isReadOnly`)
 When `isReadOnly = true` is enabled for a specific key or globally:
-* ALL mutation attempts (`POST /api/v1/control`, `POST /api/v1/monitors/:slug/*`, `POST /api/v1/webhooks*`, `POST /api/sleep/*`) are immediately rejected with `HTTP 403 Forbidden` (`Read-Only Mode Enabled`).
+* ALL mutation attempts (`POST /api/v1/control`, `POST /api/v1/monitors/:slug/*`, `POST /api/v1/app-overrides*`, `POST /api/v1/webhooks*`, `POST /api/sleep/*`) are immediately rejected with `HTTP 403 Forbidden` (`Read-Only Mode Enabled`).
 * Public liveness probe `GET /api/v1/health` remains 100% accessible.
 
 ### 7. Universal Privilege Escalation Guard
 To prevent external API clients or WebSocket payloads from tampering with permission configurations, `ApiControlHandler` enforces an immediate rejection rule:
-* Any mutation payload containing `apiPermissions` or permission keys is rejected with `HTTP 403 Forbidden` (`Privilege Escalation Prohibited`).
+* Any mutation payload containing `apiPermissions`, `permissions`, `apiKeys`, or `apiKey` is rejected with `HTTP 403 Forbidden` (`Privilege Escalation Prohibited`).
 * API permissions can ONLY be modified locally by the host user via the Flutter GUI `ApiPermissionsDialog`.
 
 ---
@@ -151,7 +154,7 @@ Solaris manages access tokens through a **Multiple Scoped API Keys System** (`Ap
 ### Key Attributes (`ApiKeyEntry`)
 * `id`: Unique string identifier (e.g. `key_1721800000123`).
 * `name`: Custom human-readable label (e.g. `"Home Assistant Key"`, `"Stream Deck"`). Max 50 chars, auto-trimmed.
-* `token`: Cryptographically secure random token starting with prefix `sol_sec_` (68 characters total).
+* `token`: Cryptographically secure random token starting with prefix `sol_sec_` (72 characters total: 8 char prefix + 64 hex characters from 32 bytes).
 * `createdAt`: UTC timestamp of creation.
 * `lastUsedAt`: UTC timestamp of most recent successful request execution.
 * `permissions`: Independent `ApiPermissionsConfig` instance controlling read flags and mutation categories.
@@ -159,7 +162,7 @@ Solaris manages access tokens through a **Multiple Scoped API Keys System** (`Ap
 ### Single Key Protection Guard
 To prevent accidental total lockout, Solaris enforces a strict Single Key Protection Guard:
 * The system WILL NOT allow deleting or revoking the sole remaining API key in the application.
-* Attempts to delete the final key via Notifier or GUI are rejected with `SingleKeyProtectionException`, and the delete icon 🗑️ is disabled in the GUI.
+* Attempts to delete the final key via `removeApiKey` return `false`, and the delete icon 🗑️ is disabled in the GUI (`ApiKeysManagementDialog`).
 
 ### Windows DPAPI Storage & Fallback Banner
 * On Windows, API keys are encrypted at rest using DPAPI (`crypt32.dll`) via `win32` API bindings.
@@ -173,21 +176,21 @@ Tokens can be passed using any of the following standard methods:
 
 ### 1. HTTP Request Header (Recommended for REST)
 ```http
-X-API-Key: sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368eae
+X-API-Key: sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368eae01234567
 ```
 or standard HTTP Bearer token:
 ```http
-Authorization: Bearer sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368eae
+Authorization: Bearer sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368eae01234567
 ```
 
-### 2. URL Query Parameter (Recommended for WebSocket / Simple Scripts)
+### 2. URL Query Parameter (Supported for WebSocket Handshake)
 ```http
-GET /api/v1/status?token=sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368eae HTTP/1.1
+GET /api/v1/ws?token=sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368eae01234567 HTTP/1.1
 ```
 
 ### 3. WebSocket Subprotocol Header
 ```http
-Sec-WebSocket-Protocol: bearer.sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368eae
+Sec-WebSocket-Protocol: bearer.sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368eae01234567
 ```
 
 > [!IMPORTANT]
@@ -202,8 +205,9 @@ When WebSocket sessions end, Solaris transmits explicit status codes:
 | Code | Reason String | Trigger Condition |
 | :--- | :--- | :--- |
 | `1000` | Normal Closure | Client gracefully disconnected. |
-| `1001` | `Solaris API Server Stopping` | Host user turned off Control API server in GUI. |
-| `1008` | `Slow Consumer OOM Guard` | Unconsumed client frame buffer exceeded 512 KB threshold. |
+| `1001` | `Solaris API Server Stopping` / `PC Entering Sleep Mode` | Host user or OS stopped Control API server or PC entered sleep mode. |
+| `1001` | `Heartbeat failed` | Socket heartbeat timeout (ping/pong failure). |
+| `1008` | `Slow Consumer: Pending buffer limit exceeded 512 KB` | Unconsumed client frame buffer exceeded 512 KB threshold. |
 | `4001` | `Key Revoked` | Host user revoked/deleted the key associated with this connection. |
 | `4001` | `Token Regenerated` | Host user regenerated the secret token for this key. |
 | `4001` | `Local Auth Required` | Host user enabled `requireLocalToken = true` while an anonymous socket was open. |
@@ -212,7 +216,7 @@ When WebSocket sessions end, Solaris transmits explicit status codes:
 
 ## ⚠️ Standard Error Format (RFC 7807)
 
-All non-2xx responses from Solaris Control API return `application/problem+json` formatted strictly according to [RFC 7807 (Problem Details for HTTP APIs)](https://tools.ietf.org/html/rfc7807).
+All non-2xx direct REST HTTP responses from Solaris Control API return `application/problem+json` formatted strictly according to [RFC 7807 (Problem Details for HTTP APIs)](https://tools.ietf.org/html/rfc7807). *(Note: Batch action item errors and WebSocket handshake rejection frames use simplified JSON error objects).*
 
 ### Error Schema Example
 ```json
@@ -228,29 +232,27 @@ All non-2xx responses from Solaris Control API return `application/problem+json`
 
 ### Common HTTP Error Statuses
 
-| HTTP Status | Error Type Slug | Description |
+| HTTP Status | Error Type URI | Description |
 | :--- | :--- | :--- |
-| `400 Bad Request` | `/errors/bad-request` | Invalid JSON syntax or missing required field (e.g. `'value'`). |
-| `401 Unauthorized` | `/errors/unauthorized` | Missing, empty, or invalid API access token (or `requireLocalToken` enforced). |
-| `403 Forbidden` | `/errors/access-denied` | Mutation disabled by Read-Only mode, category prohibited, or Privilege Escalation Guard. |
-| `403 Forbidden` | `/errors/drive-by-blocked` | Untrusted Origin/Referer header without valid API token (Drive-by protection). |
-| `404 Not Found` | `/errors/not-found` | Unknown endpoint or requested monitor slug/ID was not found. |
-| `413 Payload Too Large`| `/errors/payload-too-large`| Request body exceeds 64 KB (65,536 bytes). |
-| `415 Unsupported Media`| `/errors/unsupported-media-type`| Mutating request (POST) sent without `Content-Type: application/json`. |
-| `422 Unprocessable` | `/errors/unprocessable-entity` | Invalid parameter values or unknown action command name. |
-| `429 Too Many Requests`| `/errors/rate-limit-exceeded`| Rate limit quota exceeded (per-IP limit). |
-| `500 Internal Error` | `/errors/internal-server-error`| Unexpected internal server exception. |
+| `400 Bad Request` | `https://solaris.local/errors/control-error` / `monitors-error` / `app-overrides-error` | Invalid JSON syntax, missing required field, or invalid parameter. |
+| `401 Unauthorized` | `https://solaris.local/errors/unauthorized` | Missing, empty, or invalid API access token. |
+| `403 Forbidden` | `https://solaris.local/errors/access-denied` | Mutation disabled by Read-Only mode, category prohibited, or action denied in ACL. |
+| `403 Forbidden` | `https://solaris.local/errors/drive-by-blocked` | Untrusted Origin/Referer header without valid API token. |
+| `403 Forbidden` | `https://solaris.local/errors/untrusted-host` | Untrusted Host header detected (Host header validation guard). |
+| `404 Not Found` | `https://solaris.local/errors/monitors-error` / `not-found` | Unknown endpoint or requested monitor slug/ID not found. |
+| `413 Payload Too Large`| `https://solaris.local/errors/payload-too-large`| Request body exceeds 64 KB (65,536 bytes). |
+| `415 Unsupported Media`| `https://solaris.local/errors/unsupported-media-type`| Mutating request sent without `Content-Type: application/json`. |
+| `422 Unprocessable` | `https://solaris.local/errors/unprocessable-entity` / `control-error` | Invalid parameter values or unknown action command name. |
+| `429 Too Many Requests`| `https://solaris.local/errors/too-many-requests`| Rate limit quota exceeded (per-IP limit). |
+| `500 Internal Error` | `about:blank` | Unexpected internal server exception. |
 
 ---
 
 ## 📖 Interactive Documentation & OpenAPI 3.0.3
 
-Solaris Control API embeds an interactive **Swagger UI** endpoint and an **OpenAPI 3.0.3 JSON Spec** generator.
+Solaris Control API embeds an interactive **RapiDoc HTML** endpoint (`<rapi-doc>`) and an **OpenAPI 3.0.3 JSON Spec** generator.
 
-* **Swagger UI Documentation**: `GET http://localhost:45321/api/v1/docs`
+* **Interactive API Documentation (RapiDoc UI)**: `GET http://localhost:45321/api/v1/docs`
 * **OpenAPI 3.0.3 JSON Spec**: `GET http://localhost:45321/api/v1/openapi.json`
 
-The Swagger UI allows developers to inspect models, view interactive request schemas, and execute API calls directly from their browser.
-
-> [!NOTE]
-> **Dynamic OpenAPI Generation**: `OpenApiSpec.generateSpec` dynamically reflects active API permissions. Restricted endpoints automatically display `403 Forbidden` response schemas, and mutation endpoints reflect `[READ-ONLY MODE ACTIVE]` annotations when Read-Only mode is enabled in GUI.
+The interactive RapiDoc documentation allows developers to inspect models, view request schemas, and execute API calls directly from their browser.

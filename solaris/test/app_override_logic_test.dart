@@ -358,10 +358,19 @@ void main() {
         );
         expect(map['resolve.exe']?.appDisplayName, equals('DaVinci Resolve'));
         expect(map['lightroom.exe']?.appDisplayName, equals('Adobe Lightroom'));
-        expect(map['illustrator.exe']?.appDisplayName, equals('Adobe Illustrator'));
-        expect(map['afterfx.exe']?.appDisplayName, equals('Adobe After Effects'));
+        expect(
+          map['illustrator.exe']?.appDisplayName,
+          equals('Adobe Illustrator'),
+        );
+        expect(
+          map['afterfx.exe']?.appDisplayName,
+          equals('Adobe After Effects'),
+        );
         expect(map['krita.exe']?.appDisplayName, equals('Krita'));
-        expect(map['captureone.exe']?.appDisplayName, equals('Capture One Pro'));
+        expect(
+          map['captureone.exe']?.appDisplayName,
+          equals('Capture One Pro'),
+        );
         expect(map['blender.exe']?.appDisplayName, equals('Blender 3D'));
         expect(map['figma.exe']?.appDisplayName, equals('Figma Desktop'));
         expect(map['pureref.exe']?.appDisplayName, equals('PureRef'));
@@ -608,71 +617,91 @@ void main() {
           equals(ApiActionCategory.presets),
         );
         expect(
-          ApiPermissionsConfig.getCategoryForAction('reset_builtin_app_overrides'),
+          ApiPermissionsConfig.getCategoryForAction(
+            'reset_builtin_app_overrides',
+          ),
           equals(ApiActionCategory.presets),
         );
       },
     );
 
-    test('Regex sanitization validates valid exe names and rejects invalid/malicious paths', () {
-      final regex = RegExp(r'^[a-z0-9_\-\.]+\.exe$');
+    test(
+      'Regex sanitization validates valid exe names and rejects invalid/malicious paths',
+      () {
+        final regex = RegExp(r'^[a-z0-9_\-\.]+\.exe$');
 
-      final validNames = [
-        'photoshop.exe',
-        'premiere.exe',
-        'app_v1.0.exe',
-        'my-custom-app.exe',
-        '123.exe',
-      ];
-      for (final name in validNames) {
-        expect(regex.hasMatch(name), isTrue, reason: 'Failed for valid name $name');
-      }
+        final validNames = [
+          'photoshop.exe',
+          'premiere.exe',
+          'app_v1.0.exe',
+          'my-custom-app.exe',
+          '123.exe',
+        ];
+        for (final name in validNames) {
+          expect(
+            regex.hasMatch(name),
+            isTrue,
+            reason: 'Failed for valid name $name',
+          );
+        }
 
-      final invalidNames = [
-        'photoshop',
-        'photoshop.bat',
-        '../photoshop.exe',
-        r'C:\Windows\System32\cmd.exe',
-        'app.exe/test',
-        'app.exe;rm -rf',
-        '   ',
-        'APP.EXE', // Must be lowercase before regex check
-      ];
-      for (final name in invalidNames) {
-        expect(regex.hasMatch(name), isFalse, reason: 'Failed to reject invalid name $name');
-      }
-    });
+        final invalidNames = [
+          'photoshop',
+          'photoshop.bat',
+          '../photoshop.exe',
+          r'C:\Windows\System32\cmd.exe',
+          'app.exe/test',
+          'app.exe;rm -rf',
+          '   ',
+          'APP.EXE', // Must be lowercase before regex check
+        ];
+        for (final name in invalidNames) {
+          expect(
+            regex.hasMatch(name),
+            isFalse,
+            reason: 'Failed to reject invalid name $name',
+          );
+        }
+      },
+    );
 
-    test('WebSocket active_process_changed & app_override_changed payload structure test', () {
-      const rule = AppOverrideRule(
-        exeName: 'photoshop.exe',
-        appDisplayName: 'Adobe Photoshop',
-        temperatureMode: AppOverrideMode.fixed,
-        fixedTemperature: 6500.0,
-      );
+    test(
+      'WebSocket active_process_changed & app_override_changed payload structure test',
+      () {
+        const rule = AppOverrideRule(
+          exeName: 'photoshop.exe',
+          appDisplayName: 'Adobe Photoshop',
+          temperatureMode: AppOverrideMode.fixed,
+          fixedTemperature: 6500.0,
+        );
 
-      final activeProcessPayload = {
-        'active_process': 'photoshop.exe',
-        'window_title': 'Adobe Photoshop 2026',
-        'is_gaming': false,
-        'applied_override': rule.toJson(),
-        'evaluated_brightness': 80.0,
-        'evaluated_temperature': 6500,
-      };
+        final activeProcessPayload = {
+          'active_process': 'photoshop.exe',
+          'window_title': 'Adobe Photoshop 2026',
+          'is_gaming': false,
+          'applied_override': rule.toJson(),
+          'evaluated_brightness': 80.0,
+          'evaluated_temperature': 6500,
+        };
 
-      expect(activeProcessPayload['active_process'], equals('photoshop.exe'));
-      expect(activeProcessPayload['evaluated_temperature'], equals(6500));
-      final Map<String, dynamic> applied = activeProcessPayload['applied_override'] as Map<String, dynamic>;
-      expect(applied['fixedTemperature'], equals(6500.0));
+        expect(activeProcessPayload['active_process'], equals('photoshop.exe'));
+        expect(activeProcessPayload['evaluated_temperature'], equals(6500));
+        final Map<String, dynamic> applied =
+            activeProcessPayload['applied_override'] as Map<String, dynamic>;
+        expect(applied['fixedTemperature'], equals(6500.0));
 
-      final appOverrideChangedPayload = {
-        'app_overrides': [rule.toJson()],
-        'exit_delay_seconds': 30,
-      };
+        final appOverrideChangedPayload = {
+          'app_overrides': [rule.toJson()],
+          'exit_delay_seconds': 30,
+        };
 
-      expect(appOverrideChangedPayload['exit_delay_seconds'], equals(30));
-      expect((appOverrideChangedPayload['app_overrides'] as List).length, equals(1));
-    });
+        expect(appOverrideChangedPayload['exit_delay_seconds'], equals(30));
+        expect(
+          (appOverrideChangedPayload['app_overrides'] as List).length,
+          equals(1),
+        );
+      },
+    );
   });
 
   group('Phase 5 UI & Automatic Promotion UX Flow Zero-Trust Tests', () {
@@ -693,26 +722,29 @@ void main() {
       expect(promoted.fixedTemperature, equals(6500.0));
     });
 
-    test('Verify SettingsNotifier CRUD and promotion state transformations', () {
-      final initialRules = AppOverrideRule.defaultBuiltInRules;
-      expect(initialRules.length, equals(25));
-      expect(initialRules.every((r) => r.isBuiltIn), isTrue);
+    test(
+      'Verify SettingsNotifier CRUD and promotion state transformations',
+      () {
+        final initialRules = AppOverrideRule.defaultBuiltInRules;
+        expect(initialRules.length, equals(25));
+        expect(initialRules.every((r) => r.isBuiltIn), isTrue);
 
-      // Simulate promoting photoshop.exe
-      final updatedRules = initialRules.map((r) {
-        if (r.exeName == 'photoshop.exe') {
-          return r.copyWith(isBuiltIn: false);
-        }
-        return r;
-      }).toList();
+        // Simulate promoting photoshop.exe
+        final updatedRules = initialRules.map((r) {
+          if (r.exeName == 'photoshop.exe') {
+            return r.copyWith(isBuiltIn: false);
+          }
+          return r;
+        }).toList();
 
-      final userRules = updatedRules.where((r) => !r.isBuiltIn).toList();
-      final builtInRules = updatedRules.where((r) => r.isBuiltIn).toList();
+        final userRules = updatedRules.where((r) => !r.isBuiltIn).toList();
+        final builtInRules = updatedRules.where((r) => r.isBuiltIn).toList();
 
-      expect(userRules.length, equals(1));
-      expect(userRules.first.exeName, equals('photoshop.exe'));
-      expect(builtInRules.length, equals(24));
-    });
+        expect(userRules.length, equals(1));
+        expect(userRules.first.exeName, equals('photoshop.exe'));
+        expect(builtInRules.length, equals(24));
+      },
+    );
 
     test('Trilingual ARB Localization Parity Test (EN, RU, UK)', () {
       final enFile = File('lib/l10n/app_en.arb');
@@ -723,9 +755,12 @@ void main() {
       expect(ruFile.existsSync(), isTrue, reason: 'app_ru.arb missing');
       expect(ukFile.existsSync(), isTrue, reason: 'app_uk.arb missing');
 
-      final Map<String, dynamic> enJson = jsonDecode(enFile.readAsStringSync()) as Map<String, dynamic>;
-      final Map<String, dynamic> ruJson = jsonDecode(ruFile.readAsStringSync()) as Map<String, dynamic>;
-      final Map<String, dynamic> ukJson = jsonDecode(ukFile.readAsStringSync()) as Map<String, dynamic>;
+      final Map<String, dynamic> enJson =
+          jsonDecode(enFile.readAsStringSync()) as Map<String, dynamic>;
+      final Map<String, dynamic> ruJson =
+          jsonDecode(ruFile.readAsStringSync()) as Map<String, dynamic>;
+      final Map<String, dynamic> ukJson =
+          jsonDecode(ukFile.readAsStringSync()) as Map<String, dynamic>;
 
       final requiredKeys = [
         'appOverridesTitle',
@@ -759,36 +794,66 @@ void main() {
       ];
 
       for (final key in requiredKeys) {
-        expect(enJson.containsKey(key), isTrue, reason: 'Key $key missing in app_en.arb');
-        expect(ruJson.containsKey(key), isTrue, reason: 'Key $key missing in app_ru.arb');
-        expect(ukJson.containsKey(key), isTrue, reason: 'Key $key missing in app_uk.arb');
+        expect(
+          enJson.containsKey(key),
+          isTrue,
+          reason: 'Key $key missing in app_en.arb',
+        );
+        expect(
+          ruJson.containsKey(key),
+          isTrue,
+          reason: 'Key $key missing in app_ru.arb',
+        );
+        expect(
+          ukJson.containsKey(key),
+          isTrue,
+          reason: 'Key $key missing in app_uk.arb',
+        );
 
-        expect(enJson[key].toString().isNotEmpty, isTrue, reason: 'Key $key empty in app_en.arb');
-        expect(ruJson[key].toString().isNotEmpty, isTrue, reason: 'Key $key empty in app_ru.arb');
-        expect(ukJson[key].toString().isNotEmpty, isTrue, reason: 'Key $key empty in app_uk.arb');
+        expect(
+          enJson[key].toString().isNotEmpty,
+          isTrue,
+          reason: 'Key $key empty in app_en.arb',
+        );
+        expect(
+          ruJson[key].toString().isNotEmpty,
+          isTrue,
+          reason: 'Key $key empty in app_ru.arb',
+        );
+        expect(
+          ukJson[key].toString().isNotEmpty,
+          isTrue,
+          reason: 'Key $key empty in app_uk.arb',
+        );
       }
     });
 
-    test('Safe Fallback for Deleted Curve Presets does not crash or throw StateError', () {
-      const ruleWithDeletedPreset = AppOverrideRule(
-        exeName: 'photoshop.exe',
-        appDisplayName: 'Adobe Photoshop',
-        brightnessMode: AppOverrideMode.curve,
-        brightnessCurvePresetId: 'non_existent_preset_id_123',
-        temperatureMode: AppOverrideMode.curve,
-        temperatureCurvePresetId: 'non_existent_temp_preset_id_456',
-      );
+    test(
+      'Safe Fallback for Deleted Curve Presets does not crash or throw StateError',
+      () {
+        const ruleWithDeletedPreset = AppOverrideRule(
+          exeName: 'photoshop.exe',
+          appDisplayName: 'Adobe Photoshop',
+          brightnessMode: AppOverrideMode.curve,
+          brightnessCurvePresetId: 'non_existent_preset_id_123',
+          temperatureMode: AppOverrideMode.curve,
+          temperatureCurvePresetId: 'non_existent_temp_preset_id_456',
+        );
 
-      final settings = SettingsState(
-        appOverrides: [ruleWithDeletedPreset],
-      );
+        final settings = SettingsState(appOverrides: [ruleWithDeletedPreset]);
 
-      // Verify that rule with non-existent preset is parsed and serialized without throwing errors
-      final json = settings.toJson();
-      final reloaded = SettingsState.fromJson(json);
-      expect(reloaded.appOverrides.first.brightnessCurvePresetId, equals('non_existent_preset_id_123'));
-      expect(reloaded.appOverrides.first.temperatureCurvePresetId, equals('non_existent_temp_preset_id_456'));
-    });
+        // Verify that rule with non-existent preset is parsed and serialized without throwing errors
+        final json = settings.toJson();
+        final reloaded = SettingsState.fromJson(json);
+        expect(
+          reloaded.appOverrides.first.brightnessCurvePresetId,
+          equals('non_existent_preset_id_123'),
+        );
+        expect(
+          reloaded.appOverrides.first.temperatureCurvePresetId,
+          equals('non_existent_temp_preset_id_456'),
+        );
+      },
+    );
   });
 }
-

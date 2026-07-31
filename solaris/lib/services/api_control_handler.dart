@@ -771,6 +771,9 @@ class ApiControlHandler {
             "Field 'webhook_id' (string) is required.",
           );
         }
+        await safeStateMutator(() {
+          _container.read(webhookServiceProvider.notifier).clearDLQ(webhookId);
+        });
         return _ActionResult.ok('clear_failed_webhooks', {
           'webhook_id': webhookId,
         });
@@ -792,7 +795,7 @@ class ApiControlHandler {
   ) async {
     final errorDto = Rfc7807Error(
       type:
-          'https://solaris.app/errors/${statusCode == 404 ? 'not-found' : 'control-error'}',
+          'https://solaris.local/errors/${statusCode == 404 ? 'not-found' : 'control-error'}',
       title: title,
       status: statusCode,
       detail: detail,

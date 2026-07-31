@@ -11,7 +11,7 @@ enum StateChangeSource {
   system, // System event (Game Mode, Power Resume)
 }
 
-/// Outbound Webhook Event Types (21 total events).
+/// Outbound Webhook Event Types (23 total events).
 enum WebhookEventType {
   // Solar events
   onSunrise('on_sunrise'),

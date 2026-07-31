@@ -125,9 +125,12 @@ class WebSocketService {
 
       // 3. Broadcast app_override_changed event when appOverrides rules change
       if (!listEquals(prevSettings?.appOverrides, nextSettings.appOverrides) ||
-          prevSettings?.appOverrideExitDelaySeconds != nextSettings.appOverrideExitDelaySeconds) {
+          prevSettings?.appOverrideExitDelaySeconds !=
+              nextSettings.appOverrideExitDelaySeconds) {
         broadcastEvent('app_override_changed', {
-          'app_overrides': nextSettings.appOverrides.map((e) => e.toJson()).toList(),
+          'app_overrides': nextSettings.appOverrides
+              .map((e) => e.toJson())
+              .toList(),
           'exit_delay_seconds': nextSettings.appOverrideExitDelaySeconds,
         });
       }
@@ -214,7 +217,8 @@ class WebSocketService {
     final settings = settingsMap?['all'] ?? SettingsState();
 
     AppOverrideRule? appliedRule;
-    if (activeState.activeProcess.isNotEmpty && activeState.suppressedPids.isEmpty) {
+    if (activeState.activeProcess.isNotEmpty &&
+        activeState.suppressedPids.isEmpty) {
       appliedRule = settings.appOverrides.firstWhereOrNull(
         (r) => r.exeName == activeState.activeProcess && r.isEnabled,
       );
@@ -306,7 +310,8 @@ class WebSocketService {
         'enabled': globalSettings?.isGameModeEnabled ?? true,
         'active': gamingModeActive,
         'brightness_override': globalSettings?.gameModeBrightness ?? 80.0,
-        'temperature_enabled': globalSettings?.isGameModeTemperatureEnabled ?? true,
+        'temperature_enabled':
+            globalSettings?.isGameModeTemperatureEnabled ?? true,
         'temperature_override': globalSettings?.gameModeTemperature ?? 6500.0,
       },
     };
@@ -591,12 +596,34 @@ class WebSocketService {
           }
         }
 
-        _subscriptionsPerClient[ws] = allowedModules;
+        final currentSubs = _subscriptionsPerClient[ws] ?? <String>{};
+        currentSubs.addAll(allowedModules);
+        _subscriptionsPerClient[ws] = currentSubs;
 
         ws.add(
           jsonEncode({
             'type': 'subscribed',
-            'active_modules': allowedModules.toList(),
+            'active_modules': currentSubs.toList(),
+          }),
+        );
+        return;
+      }
+
+      if (type == 'unsubscribe') {
+        final removeModules =
+            (jsonMap['modules'] as List<dynamic>?)
+                ?.map((e) => e.toString().toLowerCase())
+                .toSet() ??
+            <String>{};
+
+        final currentSubs = _subscriptionsPerClient[ws] ?? <String>{};
+        currentSubs.removeAll(removeModules);
+        _subscriptionsPerClient[ws] = currentSubs;
+
+        ws.add(
+          jsonEncode({
+            'type': 'unsubscribed',
+            'active_modules': currentSubs.toList(),
           }),
         );
         return;

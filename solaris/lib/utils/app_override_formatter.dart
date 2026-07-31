@@ -4,11 +4,7 @@ import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/models/app_override_rule.dart';
 
 /// Category of rule descriptor for categorization and UI accents.
-enum RuleDescriptorCategory {
-  temperature,
-  brightness,
-  custom,
-}
+enum RuleDescriptorCategory { temperature, brightness, custom }
 
 /// Structured descriptor representing a specific active setting within an AppOverrideRule.
 class BuiltInRuleDescriptor {
@@ -39,7 +35,9 @@ abstract class AppOverrideRuleFormatter {
     required AppLocalizations l10n,
     Map<String, String>? brightnessCurveNamesById,
     Map<String, String>? temperatureCurveNamesById,
-    @Deprecated('Use brightnessCurveNamesById and temperatureCurveNamesById instead')
+    @Deprecated(
+      'Use brightnessCurveNamesById and temperatureCurveNamesById instead',
+    )
     Map<String, String>? curveNamesById,
   }) {
     final List<BuiltInRuleDescriptor> descriptors = [];

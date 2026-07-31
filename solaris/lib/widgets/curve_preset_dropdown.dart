@@ -100,12 +100,19 @@ class _CurvePresetDropdownState extends State<CurvePresetDropdown>
     final spaceAbove = triggerOffset.dy - 16;
 
     final bool showAbove = spaceBelow < 300 && spaceAbove > spaceBelow;
-    final double maxCalculatedHeight = (showAbove ? spaceAbove : spaceBelow).clamp(180.0, 420.0);
+    final double maxCalculatedHeight = (showAbove ? spaceAbove : spaceBelow)
+        .clamp(180.0, 420.0);
 
-    final Alignment targetAnchor = showAbove ? Alignment.topRight : Alignment.bottomRight;
-    final Alignment followerAnchor = showAbove ? Alignment.bottomRight : Alignment.topRight;
+    final Alignment targetAnchor = showAbove
+        ? Alignment.topRight
+        : Alignment.bottomRight;
+    final Alignment followerAnchor = showAbove
+        ? Alignment.bottomRight
+        : Alignment.topRight;
     final Offset followerOffset = Offset(0, showAbove ? -6 : 6);
-    final Alignment scaleAlignment = showAbove ? Alignment.bottomRight : Alignment.topRight;
+    final Alignment scaleAlignment = showAbove
+        ? Alignment.bottomRight
+        : Alignment.topRight;
 
     _overlayEntry = OverlayEntry(
       builder: (context) {
@@ -294,7 +301,10 @@ class _CurvePresetDropdownState extends State<CurvePresetDropdown>
                 const SizedBox(width: 8),
                 // Category Badge Tag
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: isCurrentSystem
                         ? const Color(0xFF6366F1).withOpacity(0.18)
@@ -348,7 +358,11 @@ class _CurvePresetDropdownState extends State<CurvePresetDropdown>
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         child: Row(
           children: [
-            const Icon(LucideIcons.sparkles, size: 13, color: Color(0xFF818CF8)),
+            const Icon(
+              LucideIcons.sparkles,
+              size: 13,
+              color: Color(0xFF818CF8),
+            ),
             const SizedBox(width: 6),
             Text(
               widget.l10n.presetSystemPrefix.toUpperCase(),
@@ -491,8 +505,8 @@ class _MenuItemTileState extends State<_MenuItemTile> {
               color: widget.isSelected
                   ? widget.activeColor.withOpacity(0.18)
                   : (_isHovered
-                      ? Colors.white.withOpacity(0.06)
-                      : Colors.transparent),
+                        ? Colors.white.withOpacity(0.06)
+                        : Colors.transparent),
               borderRadius: BorderRadius.circular(8),
               border: widget.isSelected
                   ? Border.all(
@@ -516,8 +530,9 @@ class _MenuItemTileState extends State<_MenuItemTile> {
                     widget.option.title,
                     style: TextStyle(
                       fontSize: 13,
-                      fontWeight:
-                          widget.isSelected ? FontWeight.w600 : FontWeight.normal,
+                      fontWeight: widget.isSelected
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                       color: widget.isSelected
                           ? Colors.white
                           : Colors.white.withOpacity(0.9),

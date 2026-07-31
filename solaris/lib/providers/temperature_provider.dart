@@ -437,8 +437,9 @@ class CurrentTemperatureNotifier extends Notifier<int> {
     TemperatureState tempSettings,
   ) {
     if (presetId == null) return null;
-    final userPreset =
-        tempSettings.userPresets.firstWhereOrNull((p) => p.id == presetId);
+    final userPreset = tempSettings.userPresets.firstWhereOrNull(
+      (p) => p.id == presetId,
+    );
     if (userPreset != null) return userPreset.points;
     final systemType = TemperaturePresetType.values.firstWhereOrNull(
       (e) => e.name == presetId,
@@ -478,8 +479,7 @@ class CurrentTemperatureNotifier extends Notifier<int> {
           )
         : null;
 
-    if (appRule != null &&
-        appRule.temperatureMode != AppOverrideMode.global) {
+    if (appRule != null && appRule.temperatureMode != AppOverrideMode.global) {
       if (appRule.temperatureMode == AppOverrideMode.fixed &&
           appRule.fixedTemperature != null) {
         final val = appRule.fixedTemperature!.clamp(3300.0, 6500.0).round();

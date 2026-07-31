@@ -244,7 +244,8 @@ class _CreateApiKeyDialogState extends State<CreateApiKeyDialog> {
                                                     _permissions
                                                         .allowedActions!
                                                         .length,
-                                                    ApiPermissionsConfig.getAllCanonicalActions().length,
+                                                    ApiPermissionsConfig.getAllCanonicalActions()
+                                                        .length,
                                                   )
                                                 : l10n.apiPermissionsSummaryCustom(
                                                     _permissions

@@ -16,11 +16,7 @@ void main() {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [
-        Locale('en'),
-        Locale('ru'),
-        Locale('uk'),
-      ],
+      supportedLocales: const [Locale('en'), Locale('ru'), Locale('uk')],
       home: const PrivacyPolicyScreen(),
     );
   }

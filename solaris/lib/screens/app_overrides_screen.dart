@@ -65,8 +65,12 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
     final settings = settingsAsync.value?['all'] ?? SettingsState();
     final allOverrides = settings.appOverrides;
 
-    final userRules = allOverrides.where((AppOverrideRule r) => !r.isBuiltIn).toList();
-    final builtInRules = allOverrides.where((AppOverrideRule r) => r.isBuiltIn).toList();
+    final userRules = allOverrides
+        .where((AppOverrideRule r) => !r.isBuiltIn)
+        .toList();
+    final builtInRules = allOverrides
+        .where((AppOverrideRule r) => r.isBuiltIn)
+        .toList();
 
     // Listen for deep link requests
     ref.listen<String?>(searchAnchorProvider, (previous, next) {
@@ -86,7 +90,8 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
     }
 
     return BackNavigationHandler(
-      onBack: () => ref.read(activeScreenProvider.notifier).setScreen(AppScreen.settings),
+      onBack: () =>
+          ref.read(activeScreenProvider.notifier).setScreen(AppScreen.settings),
       child: SingleChildScrollView(
         controller: _scrollController,
         padding: const EdgeInsets.all(24),
@@ -101,7 +106,11 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
             DeepLinkTarget(
               key: _anchorKeys['app_override_exit_delay'],
               id: 'app_override_exit_delay',
-              child: _buildExitDelayCard(context, l10n, settings.appOverrideExitDelaySeconds),
+              child: _buildExitDelayCard(
+                context,
+                l10n,
+                settings.appOverrideExitDelaySeconds,
+              ),
             ),
             const SizedBox(height: 32),
 
@@ -117,7 +126,11 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
                     children: [
                       Row(
                         children: [
-                          const Icon(LucideIcons.sliders, color: Color(0xFF6366F1), size: 20),
+                          const Icon(
+                            LucideIcons.sliders,
+                            color: Color(0xFF6366F1),
+                            size: 20,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             l10n.userRulesSection,
@@ -129,7 +142,10 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
                           ),
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFF6366F1).withOpacity(0.2),
                               borderRadius: BorderRadius.circular(12),
@@ -146,13 +162,17 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
                         ],
                       ),
                       ElevatedButton.icon(
-                        onPressed: () => _openAddAppDialog(context, allOverrides),
+                        onPressed: () =>
+                            _openAddAppDialog(context, allOverrides),
                         icon: const Icon(LucideIcons.plus, size: 16),
                         label: Text(l10n.addAppOverride),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF6366F1),
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -202,15 +222,15 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
       children: [
         InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () => ref.read(activeScreenProvider.notifier).setScreen(AppScreen.settings),
+          onTap: () => ref
+              .read(activeScreenProvider.notifier)
+              .setScreen(AppScreen.settings),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.05),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.08),
-              ),
+              border: Border.all(color: Colors.white.withOpacity(0.08)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -283,7 +303,6 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
     );
   }
 
-
   Widget _buildExitDelayCard(
     BuildContext context,
     AppLocalizations l10n,
@@ -332,7 +351,10 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(8),
@@ -421,7 +443,8 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
       child: Column(
         children: [
           InkWell(
-            onTap: () => setState(() => _isBuiltInExpanded = !_isBuiltInExpanded),
+            onTap: () =>
+                setState(() => _isBuiltInExpanded = !_isBuiltInExpanded),
             borderRadius: BorderRadius.circular(16),
             child: Padding(
               padding: const EdgeInsets.all(20),
@@ -482,7 +505,10 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
     );
   }
 
-  Future<void> _confirmResetBuiltIn(BuildContext context, AppLocalizations l10n) async {
+  Future<void> _confirmResetBuiltIn(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -517,7 +543,10 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
     }
   }
 
-  void _openAddAppDialog(BuildContext context, List<AppOverrideRule> existingRules) {
+  void _openAddAppDialog(
+    BuildContext context,
+    List<AppOverrideRule> existingRules,
+  ) {
     showDialog<void>(
       context: context,
       builder: (ctx) => _AddAppOverrideDialog(existingRules: existingRules),
@@ -530,10 +559,7 @@ class _AppOverrideRuleCard extends ConsumerWidget {
   final AppOverrideRule rule;
   final bool isBuiltIn;
 
-  const _AppOverrideRuleCard({
-    required this.rule,
-    required this.isBuiltIn,
-  });
+  const _AppOverrideRuleCard({required this.rule, required this.isBuiltIn});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -606,21 +632,31 @@ class _AppOverrideRuleCard extends ConsumerWidget {
               if (isBuiltIn)
                 ElevatedButton.icon(
                   onPressed: () {
-                    ref.read(settingsProvider.notifier).promoteBuiltInToUser(rule.exeName);
+                    ref
+                        .read(settingsProvider.notifier)
+                        .promoteBuiltInToUser(rule.exeName);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(l10n.appPromotedToast(rule.appDisplayName)),
+                        content: Text(
+                          l10n.appPromotedToast(rule.appDisplayName),
+                        ),
                         backgroundColor: const Color(0xFF10B981),
                       ),
                     );
                   },
                   icon: const Icon(LucideIcons.arrowUpRight, size: 14),
-                  label: Text(l10n.promoteToUser, style: const TextStyle(fontSize: 11)),
+                  label: Text(
+                    l10n.promoteToUser,
+                    style: const TextStyle(fontSize: 11),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6366F1).withOpacity(0.2),
                     foregroundColor: const Color(0xFFA5B4FC),
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                   ),
                 )
               else ...[
@@ -634,7 +670,11 @@ class _AppOverrideRuleCard extends ConsumerWidget {
                   },
                 ),
                 IconButton(
-                  icon: const Icon(LucideIcons.trash2, size: 18, color: Colors.white54),
+                  icon: const Icon(
+                    LucideIcons.trash2,
+                    size: 18,
+                    color: Colors.white54,
+                  ),
                   onPressed: () => _confirmDelete(context, l10n, ref),
                 ),
               ],
@@ -729,13 +769,14 @@ class _AppOverrideRuleCard extends ConsumerWidget {
             runSpacing: 6,
             children: descriptors.map((d) {
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: d.accentColor.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: d.accentColor.withOpacity(0.25),
-                  ),
+                  border: Border.all(color: d.accentColor.withOpacity(0.25)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -760,7 +801,10 @@ class _AppOverrideRuleCard extends ConsumerWidget {
                     if (d.badgeText != null) ...[
                       const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 1,
+                        ),
                         decoration: BoxDecoration(
                           color: d.accentColor.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(4),
@@ -853,7 +897,11 @@ class _AppOverrideRuleCard extends ConsumerWidget {
           children: [
             Row(
               children: [
-                const Icon(LucideIcons.thermometer, size: 16, color: Color(0xFF60A5FA)),
+                const Icon(
+                  LucideIcons.thermometer,
+                  size: 16,
+                  color: Color(0xFF60A5FA),
+                ),
                 const SizedBox(width: 6),
                 Text(
                   l10n.temperatureMode,
@@ -945,7 +993,11 @@ class _AppOverrideRuleCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildBrightnessCurveDropdown(WidgetRef ref, SettingsState settings, AppLocalizations l10n) {
+  Widget _buildBrightnessCurveDropdown(
+    WidgetRef ref,
+    SettingsState settings,
+    AppLocalizations l10n,
+  ) {
     final systemOptions = PresetType.values.map((type) {
       return CurvePresetOption(
         id: type.name,
@@ -955,11 +1007,7 @@ class _AppOverrideRuleCard extends ConsumerWidget {
     }).toList();
 
     final userOptions = settings.userPresets.map((p) {
-      return CurvePresetOption(
-        id: p.id,
-        title: p.name,
-        isSystem: false,
-      );
+      return CurvePresetOption(id: p.id, title: p.name, isSystem: false);
     }).toList();
 
     final currentId = rule.brightnessCurvePresetId ?? PresetType.bright.name;
@@ -978,7 +1026,11 @@ class _AppOverrideRuleCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildTemperatureCurveDropdown(WidgetRef ref, TemperatureState tempSettings, AppLocalizations l10n) {
+  Widget _buildTemperatureCurveDropdown(
+    WidgetRef ref,
+    TemperatureState tempSettings,
+    AppLocalizations l10n,
+  ) {
     final systemOptions = TemperaturePresetType.values.map((type) {
       return CurvePresetOption(
         id: type.name,
@@ -988,14 +1040,11 @@ class _AppOverrideRuleCard extends ConsumerWidget {
     }).toList();
 
     final userOptions = tempSettings.userPresets.map((p) {
-      return CurvePresetOption(
-        id: p.id,
-        title: p.name,
-        isSystem: false,
-      );
+      return CurvePresetOption(id: p.id, title: p.name, isSystem: false);
     }).toList();
 
-    final currentId = rule.temperatureCurvePresetId ?? TemperaturePresetType.cool.name;
+    final currentId =
+        rule.temperatureCurvePresetId ?? TemperaturePresetType.cool.name;
 
     return CurvePresetDropdown(
       currentId: currentId,
@@ -1011,13 +1060,20 @@ class _AppOverrideRuleCard extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, AppLocalizations l10n, WidgetRef ref) async {
+  Future<void> _confirmDelete(
+    BuildContext context,
+    AppLocalizations l10n,
+    WidgetRef ref,
+  ) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1F2937),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(l10n.deleteOverrideConfirmTitle, style: const TextStyle(color: Colors.white)),
+        title: Text(
+          l10n.deleteOverrideConfirmTitle,
+          style: const TextStyle(color: Colors.white),
+        ),
         content: Text(
           l10n.deleteOverrideConfirmMessage(rule.appDisplayName),
           style: const TextStyle(color: Colors.white70),
@@ -1029,7 +1085,9 @@ class _AppOverrideRuleCard extends ConsumerWidget {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+            ),
             child: Text(l10n.deleteOverrideConfirmTitle),
           ),
         ],
@@ -1049,7 +1107,8 @@ class _AddAppOverrideDialog extends ConsumerStatefulWidget {
   const _AddAppOverrideDialog({required this.existingRules});
 
   @override
-  ConsumerState<_AddAppOverrideDialog> createState() => _AddAppOverrideDialogState();
+  ConsumerState<_AddAppOverrideDialog> createState() =>
+      _AddAppOverrideDialogState();
 }
 
 class _AddAppOverrideDialogState extends ConsumerState<_AddAppOverrideDialog> {
@@ -1079,15 +1138,19 @@ class _AddAppOverrideDialogState extends ConsumerState<_AddAppOverrideDialog> {
 
   Future<void> _fetchProcesses() async {
     try {
-      final List<dynamic>? rawList = await _namesChannel.invokeMethod<List<dynamic>>('getRunningProcesses');
+      final List<dynamic>? rawList = await _namesChannel
+          .invokeMethod<List<dynamic>>('getRunningProcesses');
       if (rawList != null) {
-        final parsed = rawList.map((item) {
-          final map = Map<Object?, Object?>.from(item as Map);
-          return {
-            'exe': (map['exe'] ?? '').toString(),
-            'title': (map['title'] ?? '').toString(),
-          };
-        }).where((m) => m['exe']!.isNotEmpty).toList();
+        final parsed = rawList
+            .map((item) {
+              final map = Map<Object?, Object?>.from(item as Map);
+              return {
+                'exe': (map['exe'] ?? '').toString(),
+                'title': (map['title'] ?? '').toString(),
+              };
+            })
+            .where((m) => m['exe']!.isNotEmpty)
+            .toList();
 
         setState(() {
           _runningProcesses = parsed;
@@ -1120,7 +1183,10 @@ class _AddAppOverrideDialogState extends ConsumerState<_AddAppOverrideDialog> {
         children: [
           const Icon(LucideIcons.appWindow, color: Color(0xFF6366F1)),
           const SizedBox(width: 10),
-          Text(l10n.selectAppTitle, style: const TextStyle(color: Colors.white)),
+          Text(
+            l10n.selectAppTitle,
+            style: const TextStyle(color: Colors.white),
+          ),
         ],
       ),
       content: SizedBox(
@@ -1137,7 +1203,11 @@ class _AddAppOverrideDialogState extends ConsumerState<_AddAppOverrideDialog> {
               decoration: InputDecoration(
                 hintText: l10n.searchAppPlaceholder,
                 hintStyle: const TextStyle(color: Colors.white38),
-                prefixIcon: const Icon(LucideIcons.search, color: Colors.white38, size: 18),
+                prefixIcon: const Icon(
+                  LucideIcons.search,
+                  color: Colors.white38,
+                  size: 18,
+                ),
                 filled: true,
                 fillColor: Colors.white.withOpacity(0.05),
                 border: OutlineInputBorder(
@@ -1169,54 +1239,60 @@ class _AddAppOverrideDialogState extends ConsumerState<_AddAppOverrideDialog> {
                 border: Border.all(color: Colors.white.withOpacity(0.08)),
               ),
               child: _isLoadingProcesses
-                  ? const Center(child: CircularProgressIndicator(color: Color(0xFF6366F1)))
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF6366F1),
+                      ),
+                    )
                   : filteredProcesses.isEmpty
-                      ? Center(
-                          child: Text(
-                            l10n.noRunningApps,
-                            style: const TextStyle(color: Colors.white38),
-                          ),
-                        )
-                      : ListView.builder(
-                          itemCount: filteredProcesses.length,
-                          itemBuilder: (context, index) {
-                            final item = filteredProcesses[index];
-                            final exe = item['exe']!;
-                            final title = item['title']!;
-                            final isSelected = _selectedProcessExe == exe;
+                  ? Center(
+                      child: Text(
+                        l10n.noRunningApps,
+                        style: const TextStyle(color: Colors.white38),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: filteredProcesses.length,
+                      itemBuilder: (context, index) {
+                        final item = filteredProcesses[index];
+                        final exe = item['exe']!;
+                        final title = item['title']!;
+                        final isSelected = _selectedProcessExe == exe;
 
-                            return ListTile(
-                              dense: true,
-                              selected: isSelected,
-                              selectedTileColor: const Color(0xFF6366F1).withOpacity(0.2),
-                              title: Text(
-                                exe,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'monospace',
-                                ),
-                              ),
-                              subtitle: title.isNotEmpty
-                                  ? Text(
-                                      title,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(color: Colors.white54),
-                                    )
-                                  : null,
-                              onTap: () {
-                                setState(() {
-                                  _selectedProcessExe = exe;
-                                  _exeController.text = exe;
-                                  _nameController.text = title.isNotEmpty
-                                      ? title.split(' - ').first
-                                      : exe.replaceAll('.exe', '');
-                                });
-                              },
-                            );
+                        return ListTile(
+                          dense: true,
+                          selected: isSelected,
+                          selectedTileColor: const Color(
+                            0xFF6366F1,
+                          ).withOpacity(0.2),
+                          title: Text(
+                            exe,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                          subtitle: title.isNotEmpty
+                              ? Text(
+                                  title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(color: Colors.white54),
+                                )
+                              : null,
+                          onTap: () {
+                            setState(() {
+                              _selectedProcessExe = exe;
+                              _exeController.text = exe;
+                              _nameController.text = title.isNotEmpty
+                                  ? title.split(' - ').first
+                                  : exe.replaceAll('.exe', '');
+                            });
                           },
-                        ),
+                        );
+                      },
+                    ),
             ),
             const SizedBox(height: 16),
 
@@ -1262,7 +1338,9 @@ class _AddAppOverrideDialogState extends ConsumerState<_AddAppOverrideDialog> {
           onPressed: _saveRule,
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF6366F1),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
           child: Text(l10n.addAppOverride),
         ),
@@ -1437,8 +1515,7 @@ class _AppRuleTemperatureSlider extends StatefulWidget {
       _AppRuleTemperatureSliderState();
 }
 
-class _AppRuleTemperatureSliderState
-    extends State<_AppRuleTemperatureSlider> {
+class _AppRuleTemperatureSliderState extends State<_AppRuleTemperatureSlider> {
   late double _localValue;
   bool _isDragging = false;
   Timer? _debounceTimer;

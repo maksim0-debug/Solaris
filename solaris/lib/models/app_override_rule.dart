@@ -42,182 +42,182 @@ class AppOverrideRule {
   });
 
   static List<AppOverrideRule> get defaultBuiltInRules => const [
-        AppOverrideRule(
-          exeName: 'photoshop.exe',
-          appDisplayName: 'Adobe Photoshop',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-        AppOverrideRule(
-          exeName: 'premiere.exe',
-          appDisplayName: 'Adobe Premiere Pro',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-        AppOverrideRule(
-          exeName: 'resolve.exe',
-          appDisplayName: 'DaVinci Resolve',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-        AppOverrideRule(
-          exeName: 'lightroom.exe',
-          appDisplayName: 'Adobe Lightroom',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-        AppOverrideRule(
-          exeName: 'illustrator.exe',
-          appDisplayName: 'Adobe Illustrator',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-        AppOverrideRule(
-          exeName: 'afterfx.exe',
-          appDisplayName: 'Adobe After Effects',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-        AppOverrideRule(
-          exeName: 'indesign.exe',
-          appDisplayName: 'Adobe InDesign',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-        AppOverrideRule(
-          exeName: 'substance painter.exe',
-          appDisplayName: 'Adobe Substance 3D Painter',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-        AppOverrideRule(
-          exeName: 'krita.exe',
-          appDisplayName: 'Krita',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-        AppOverrideRule(
-          exeName: 'clipstudio.exe',
-          appDisplayName: 'Clip Studio Paint',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-        AppOverrideRule(
-          exeName: 'captureone.exe',
-          appDisplayName: 'Capture One Pro',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-        AppOverrideRule(
-          exeName: 'affinitydesigner.exe',
-          appDisplayName: 'Affinity Designer',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-        AppOverrideRule(
-          exeName: 'affinityphoto.exe',
-          appDisplayName: 'Affinity Photo',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-        AppOverrideRule(
-          exeName: 'affinitypublisher.exe',
-          appDisplayName: 'Affinity Publisher',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-        AppOverrideRule(
-          exeName: 'coreldrw.exe',
-          appDisplayName: 'CorelDRAW',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-        AppOverrideRule(
-          exeName: 'blender.exe',
-          appDisplayName: 'Blender 3D',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-        AppOverrideRule(
-          exeName: 'c4d.exe',
-          appDisplayName: 'Cinema 4D',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-        AppOverrideRule(
-          exeName: 'houdini.exe',
-          appDisplayName: 'SideFX Houdini',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-        AppOverrideRule(
-          exeName: '3dsmax.exe',
-          appDisplayName: 'Autodesk 3ds Max',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-        AppOverrideRule(
-          exeName: 'maya.exe',
-          appDisplayName: 'Autodesk Maya',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-        AppOverrideRule(
-          exeName: 'zbrush.exe',
-          appDisplayName: 'Pixologic ZBrush',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-        AppOverrideRule(
-          exeName: 'unrealeditor.exe',
-          appDisplayName: 'Unreal Engine',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-        AppOverrideRule(
-          exeName: 'unity.exe',
-          appDisplayName: 'Unity Editor',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-        AppOverrideRule(
-          exeName: 'figma.exe',
-          appDisplayName: 'Figma Desktop',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-        AppOverrideRule(
-          exeName: 'pureref.exe',
-          appDisplayName: 'PureRef',
-          isBuiltIn: true,
-          temperatureMode: AppOverrideMode.fixed,
-          fixedTemperature: 6500.0,
-        ),
-      ];
+    AppOverrideRule(
+      exeName: 'photoshop.exe',
+      appDisplayName: 'Adobe Photoshop',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+    AppOverrideRule(
+      exeName: 'premiere.exe',
+      appDisplayName: 'Adobe Premiere Pro',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+    AppOverrideRule(
+      exeName: 'resolve.exe',
+      appDisplayName: 'DaVinci Resolve',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+    AppOverrideRule(
+      exeName: 'lightroom.exe',
+      appDisplayName: 'Adobe Lightroom',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+    AppOverrideRule(
+      exeName: 'illustrator.exe',
+      appDisplayName: 'Adobe Illustrator',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+    AppOverrideRule(
+      exeName: 'afterfx.exe',
+      appDisplayName: 'Adobe After Effects',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+    AppOverrideRule(
+      exeName: 'indesign.exe',
+      appDisplayName: 'Adobe InDesign',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+    AppOverrideRule(
+      exeName: 'substance painter.exe',
+      appDisplayName: 'Adobe Substance 3D Painter',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+    AppOverrideRule(
+      exeName: 'krita.exe',
+      appDisplayName: 'Krita',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+    AppOverrideRule(
+      exeName: 'clipstudio.exe',
+      appDisplayName: 'Clip Studio Paint',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+    AppOverrideRule(
+      exeName: 'captureone.exe',
+      appDisplayName: 'Capture One Pro',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+    AppOverrideRule(
+      exeName: 'affinitydesigner.exe',
+      appDisplayName: 'Affinity Designer',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+    AppOverrideRule(
+      exeName: 'affinityphoto.exe',
+      appDisplayName: 'Affinity Photo',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+    AppOverrideRule(
+      exeName: 'affinitypublisher.exe',
+      appDisplayName: 'Affinity Publisher',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+    AppOverrideRule(
+      exeName: 'coreldrw.exe',
+      appDisplayName: 'CorelDRAW',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+    AppOverrideRule(
+      exeName: 'blender.exe',
+      appDisplayName: 'Blender 3D',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+    AppOverrideRule(
+      exeName: 'c4d.exe',
+      appDisplayName: 'Cinema 4D',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+    AppOverrideRule(
+      exeName: 'houdini.exe',
+      appDisplayName: 'SideFX Houdini',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+    AppOverrideRule(
+      exeName: '3dsmax.exe',
+      appDisplayName: 'Autodesk 3ds Max',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+    AppOverrideRule(
+      exeName: 'maya.exe',
+      appDisplayName: 'Autodesk Maya',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+    AppOverrideRule(
+      exeName: 'zbrush.exe',
+      appDisplayName: 'Pixologic ZBrush',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+    AppOverrideRule(
+      exeName: 'unrealeditor.exe',
+      appDisplayName: 'Unreal Engine',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+    AppOverrideRule(
+      exeName: 'unity.exe',
+      appDisplayName: 'Unity Editor',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+    AppOverrideRule(
+      exeName: 'figma.exe',
+      appDisplayName: 'Figma Desktop',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+    AppOverrideRule(
+      exeName: 'pureref.exe',
+      appDisplayName: 'PureRef',
+      isBuiltIn: true,
+      temperatureMode: AppOverrideMode.fixed,
+      fixedTemperature: 6500.0,
+    ),
+  ];
 
   static String _sanitizeExeName(String raw) {
     var cleaned = raw.trim().toLowerCase();
@@ -240,17 +240,17 @@ class AppOverrideRule {
   }
 
   Map<String, dynamic> toJson() => {
-        'exeName': _sanitizeExeName(exeName),
-        'appDisplayName': appDisplayName,
-        'isEnabled': isEnabled,
-        'isBuiltIn': isBuiltIn,
-        'brightnessMode': brightnessMode.toJson(),
-        'fixedBrightness': fixedBrightness,
-        'brightnessCurvePresetId': brightnessCurvePresetId,
-        'temperatureMode': temperatureMode.toJson(),
-        'fixedTemperature': fixedTemperature,
-        'temperatureCurvePresetId': temperatureCurvePresetId,
-      };
+    'exeName': _sanitizeExeName(exeName),
+    'appDisplayName': appDisplayName,
+    'isEnabled': isEnabled,
+    'isBuiltIn': isBuiltIn,
+    'brightnessMode': brightnessMode.toJson(),
+    'fixedBrightness': fixedBrightness,
+    'brightnessCurvePresetId': brightnessCurvePresetId,
+    'temperatureMode': temperatureMode.toJson(),
+    'fixedTemperature': fixedTemperature,
+    'temperatureCurvePresetId': temperatureCurvePresetId,
+  };
 
   factory AppOverrideRule.fromJson(Map<String, dynamic> json) {
     return AppOverrideRule(
@@ -258,15 +258,22 @@ class AppOverrideRule {
       appDisplayName: json['appDisplayName']?.toString() ?? '',
       isEnabled: json['isEnabled'] is bool ? json['isEnabled'] as bool : true,
       isBuiltIn: json['isBuiltIn'] is bool ? json['isBuiltIn'] as bool : false,
-      brightnessMode: json.containsKey('brightnessMode') && json['brightnessMode'] is String
+      brightnessMode:
+          json.containsKey('brightnessMode') && json['brightnessMode'] is String
           ? AppOverrideMode.fromJson(json['brightnessMode'] as String)
           : AppOverrideMode.global,
       fixedBrightness: _parseBoundedDouble(json['fixedBrightness'], 0.0, 100.0),
       brightnessCurvePresetId: json['brightnessCurvePresetId']?.toString(),
-      temperatureMode: json.containsKey('temperatureMode') && json['temperatureMode'] is String
+      temperatureMode:
+          json.containsKey('temperatureMode') &&
+              json['temperatureMode'] is String
           ? AppOverrideMode.fromJson(json['temperatureMode'] as String)
           : AppOverrideMode.global,
-      fixedTemperature: _parseBoundedDouble(json['fixedTemperature'], 3300.0, 6500.0),
+      fixedTemperature: _parseBoundedDouble(
+        json['fixedTemperature'],
+        3300.0,
+        6500.0,
+      ),
       temperatureCurvePresetId: json['temperatureCurvePresetId']?.toString(),
     );
   }
@@ -296,16 +303,20 @@ class AppOverrideRule {
       fixedBrightness: clearFixedBrightness
           ? null
           : (fixedBrightness != null && fixedBrightness.isFinite
-              ? fixedBrightness.clamp(0.0, 100.0)
-              : this.fixedBrightness),
-      brightnessCurvePresetId: clearBrightnessCurvePresetId ? null : (brightnessCurvePresetId ?? this.brightnessCurvePresetId),
+                ? fixedBrightness.clamp(0.0, 100.0)
+                : this.fixedBrightness),
+      brightnessCurvePresetId: clearBrightnessCurvePresetId
+          ? null
+          : (brightnessCurvePresetId ?? this.brightnessCurvePresetId),
       temperatureMode: temperatureMode ?? this.temperatureMode,
       fixedTemperature: clearFixedTemperature
           ? null
           : (fixedTemperature != null && fixedTemperature.isFinite
-              ? fixedTemperature.clamp(3300.0, 6500.0)
-              : this.fixedTemperature),
-      temperatureCurvePresetId: clearTemperatureCurvePresetId ? null : (temperatureCurvePresetId ?? this.temperatureCurvePresetId),
+                ? fixedTemperature.clamp(3300.0, 6500.0)
+                : this.fixedTemperature),
+      temperatureCurvePresetId: clearTemperatureCurvePresetId
+          ? null
+          : (temperatureCurvePresetId ?? this.temperatureCurvePresetId),
     );
   }
 

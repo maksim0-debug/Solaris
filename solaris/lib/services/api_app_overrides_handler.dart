@@ -72,7 +72,8 @@ class ApiAppOverridesHandler {
     final settings = settingsMap?['all'] ?? SettingsState();
 
     AppOverrideRule? appliedRule;
-    if (activeState.activeProcess.isNotEmpty && activeState.suppressedPids.isEmpty) {
+    if (activeState.activeProcess.isNotEmpty &&
+        activeState.suppressedPids.isEmpty) {
       appliedRule = settings.appOverrides.firstWhereOrNull(
         (r) => r.exeName == activeState.activeProcess && r.isEnabled,
       );
@@ -140,7 +141,9 @@ class ApiAppOverridesHandler {
       final cleanExe = exeInput.trim().toLowerCase();
 
       // Sanitization & Path Traversal Guard
-      if (cleanExe.contains('/') || cleanExe.contains('\\') || cleanExe.contains('..')) {
+      if (cleanExe.contains('/') ||
+          cleanExe.contains('\\') ||
+          cleanExe.contains('..')) {
         _sendError(
           request,
           HttpStatus.badRequest,
@@ -171,7 +174,9 @@ class ApiAppOverridesHandler {
         'app_override': rule.toJson(),
       });
     } catch (e) {
-      debugPrint('[ApiAppOverridesHandler] Error creating/updating app override: $e');
+      debugPrint(
+        '[ApiAppOverridesHandler] Error creating/updating app override: $e',
+      );
       _sendError(
         request,
         HttpStatus.badRequest,
@@ -207,7 +212,9 @@ class ApiAppOverridesHandler {
     final cleanExe = exeParam.trim().toLowerCase();
 
     // Sanitization & Path Traversal Guard
-    if (cleanExe.contains('/') || cleanExe.contains('\\') || cleanExe.contains('..')) {
+    if (cleanExe.contains('/') ||
+        cleanExe.contains('\\') ||
+        cleanExe.contains('..')) {
       _sendError(
         request,
         HttpStatus.badRequest,

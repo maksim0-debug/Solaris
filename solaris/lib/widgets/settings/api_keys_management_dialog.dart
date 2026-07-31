@@ -345,8 +345,13 @@ class ApiKeysManagementDialog extends ConsumerWidget {
                               final isReadOnly =
                                   keyEntry.permissions.isReadOnly;
                               final catCount = isReadOnly
-                                  ? keyEntry.permissions.activeReadCategoriesCount
-                                  : keyEntry.permissions.allowedCategories.length;
+                                  ? keyEntry
+                                        .permissions
+                                        .activeReadCategoriesCount
+                                  : keyEntry
+                                        .permissions
+                                        .allowedCategories
+                                        .length;
 
                               return DataRow(
                                 cells: [
@@ -448,7 +453,8 @@ class ApiKeysManagementDialog extends ConsumerWidget {
                                                               .permissions
                                                               .allowedActions!
                                                               .length,
-                                                          ApiPermissionsConfig.getAllCanonicalActions().length,
+                                                          ApiPermissionsConfig.getAllCanonicalActions()
+                                                              .length,
                                                         )
                                                       : l10n.apiKeysActiveScopesChip(
                                                           catCount,

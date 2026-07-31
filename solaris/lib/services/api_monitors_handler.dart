@@ -339,7 +339,7 @@ class ApiMonitorsHandler {
     String detail,
   ) async {
     final errorDto = Rfc7807Error(
-      type: 'https://solaris.app/errors/monitors-error',
+      type: 'https://solaris.local/errors/monitors-error',
       title: title,
       status: statusCode,
       detail: detail,

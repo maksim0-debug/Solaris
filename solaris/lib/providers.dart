@@ -1604,8 +1604,9 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     final sanitizedRule = rule.copyWith(exeName: rule.exeName);
     final lower = sanitizedRule.exeName;
     _updateSettings({'all'}, (s) {
-      final existing =
-          s.appOverrides.where((r) => r.exeName.toLowerCase() != lower).toList();
+      final existing = s.appOverrides
+          .where((r) => r.exeName.toLowerCase() != lower)
+          .toList();
       return s.copyWith(appOverrides: [...existing, sanitizedRule]);
     });
   }
@@ -1614,8 +1615,9 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     final sanitizedRule = rule.copyWith(exeName: rule.exeName);
     final lower = sanitizedRule.exeName;
     _updateSettings({'all'}, (s) {
-      final list =
-          s.appOverrides.map((r) => r.exeName.toLowerCase() == lower ? sanitizedRule : r).toList();
+      final list = s.appOverrides
+          .map((r) => r.exeName.toLowerCase() == lower ? sanitizedRule : r)
+          .toList();
       return s.copyWith(appOverrides: list);
     });
   }
@@ -1667,10 +1669,9 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
 
   void updateAppOverrideExitDelay(int seconds) {
     final clamped = seconds.clamp(0, 300);
-    _updateSettings(
-      {'all'},
-      (s) => s.copyWith(appOverrideExitDelaySeconds: clamped),
-    );
+    _updateSettings({
+      'all',
+    }, (s) => s.copyWith(appOverrideExitDelaySeconds: clamped));
   }
 
   void updateCustomMapboxToken(String value) {
@@ -2466,11 +2467,13 @@ class CurrentBrightnessNotifier extends Notifier<double> {
     SettingsState settings,
   ) {
     if (presetId == null) return null;
-    final userPreset =
-        settings.userPresets.firstWhereOrNull((p) => p.id == presetId);
+    final userPreset = settings.userPresets.firstWhereOrNull(
+      (p) => p.id == presetId,
+    );
     if (userPreset != null) return userPreset.points;
-    final systemType =
-        PresetType.values.firstWhereOrNull((e) => e.name == presetId);
+    final systemType = PresetType.values.firstWhereOrNull(
+      (e) => e.name == presetId,
+    );
     if (systemType != null) return settings.curvesMap[systemType];
     return null; // Safe Fallback to global circadian curve
   }
@@ -2758,20 +2761,23 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
 
             // Calculate and Apply Brightness
             final activeProcessName = activeProcessState.activeProcess;
-            final isAppSuppressed = activeProcessState.suppressedPids.isNotEmpty;
+            final isAppSuppressed =
+                activeProcessState.suppressedPids.isNotEmpty;
             final appRule = (!isAppSuppressed && activeProcessName.isNotEmpty)
                 ? settings.appOverrides.firstWhereOrNull(
                     (r) => r.isEnabled && r.exeName == activeProcessName,
                   )
                 : null;
 
-            if (appRule != null && appRule.brightnessMode != AppOverrideMode.global) {
+            if (appRule != null &&
+                appRule.brightnessMode != AppOverrideMode.global) {
               final targetBrightness = ref.watch(currentBrightnessProvider);
               debugPrint(
                 '[CircadianLoop] Device: ${monitor.deviceName} | Per-App Brightness Override ($activeProcessName): ${targetBrightness.toStringAsFixed(1)}%',
               );
               // Hardware DDC/CI deduplication check
-              final currentVal = monitor.realBrightness?.toDouble() ?? targetBrightness;
+              final currentVal =
+                  monitor.realBrightness?.toDouble() ?? targetBrightness;
               if ((targetBrightness - currentVal).abs() >= 0.5) {
                 brightnessService.applyBrightnessSmoothly(
                   selection: monitor.deviceName,
