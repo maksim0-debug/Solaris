@@ -946,7 +946,9 @@
   "noCustomAppRulesYet": "Користувацькі правила ще не додані",
   "noCustomAppRulesHint": "Натисніть «Додати додаток», щоб створити власний профіль, або перенесіть вбудовані пресети нижче.",
   "appOverridesConfigure": "Налаштувати",
-  "appRulesCount": "{count, plural, one{{count} правило} few{{count} правила} other{{count} правил}}"
+  "appRulesCount": "{count, plural, one{{count} правило} few{{count} правила} other{{count} правил}}",
+  "builtinRuleBadge": "Вбудований пресет",
+  "builtinActiveParameters": "Вбудоване правило, що застосовується"
 }
 
 

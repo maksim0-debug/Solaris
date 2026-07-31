@@ -2344,4 +2344,10 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get builtinRuleBadge => 'Built-in Preset';
+
+  @override
+  String get builtinActiveParameters => 'Applied Built-in Rule';
 }

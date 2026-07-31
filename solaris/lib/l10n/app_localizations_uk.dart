@@ -2358,4 +2358,10 @@ class AppLocalizationsUk extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get builtinRuleBadge => 'Вбудований пресет';
+
+  @override
+  String get builtinActiveParameters => 'Вбудоване правило, що застосовується';
 }

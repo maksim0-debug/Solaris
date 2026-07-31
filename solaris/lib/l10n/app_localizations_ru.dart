@@ -2364,4 +2364,10 @@ class AppLocalizationsRu extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get builtinRuleBadge => 'Встроенный пресет';
+
+  @override
+  String get builtinActiveParameters => 'Применяемое встроенное правило';
 }

@@ -4055,6 +4055,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 rule} other{{count} rules}}'**
   String appRulesCount(int count);
+
+  /// No description provided for @builtinRuleBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Built-in Preset'**
+  String get builtinRuleBadge;
+
+  /// No description provided for @builtinActiveParameters.
+  ///
+  /// In en, this message translates to:
+  /// **'Applied Built-in Rule'**
+  String get builtinActiveParameters;
 }
 
 class _AppLocalizationsDelegate

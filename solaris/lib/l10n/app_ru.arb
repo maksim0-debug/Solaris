@@ -948,7 +948,9 @@
   "noCustomAppRulesYet": "Пользовательские правила ещё не добавлены",
   "noCustomAppRulesHint": "Нажмите «Добавить приложение», чтобы создать собственный профиль, или перенесите встроенные пресеты ниже.",
   "appOverridesConfigure": "Настроить",
-  "appRulesCount": "{count, plural, one{{count} правило} few{{count} правила} other{{count} правил}}"
+  "appRulesCount": "{count, plural, one{{count} правило} few{{count} правила} other{{count} правил}}",
+  "builtinRuleBadge": "Встроенный пресет",
+  "builtinActiveParameters": "Применяемое встроенное правило"
 }
 
 

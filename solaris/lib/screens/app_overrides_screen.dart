@@ -14,6 +14,7 @@ import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/curve_preset_dropdown.dart';
 import 'package:solaris/widgets/back_navigation_handler.dart';
 import 'package:solaris/widgets/deep_link_target.dart';
+import 'package:solaris/utils/app_override_formatter.dart';
 
 /// Screen for managing Per-App Brightness and Temperature Overrides.
 class AppOverridesScreen extends ConsumerStatefulWidget {
@@ -640,7 +641,10 @@ class _AppOverrideRuleCard extends ConsumerWidget {
             ],
           ),
 
-          if (!isBuiltIn && rule.isEnabled) ...[
+          if (isBuiltIn) ...[
+            const SizedBox(height: 12),
+            _buildBuiltInRuleSummary(context, l10n, settings, tempSettings),
+          ] else if (rule.isEnabled) ...[
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
               child: Divider(color: Colors.white12, height: 1),
@@ -653,6 +657,129 @@ class _AppOverrideRuleCard extends ConsumerWidget {
             // Temperature Controls
             _buildTemperatureSection(context, l10n, ref, tempSettings),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBuiltInRuleSummary(
+    BuildContext context,
+    AppLocalizations l10n,
+    SettingsState settings,
+    TemperatureState tempSettings,
+  ) {
+    final Map<String, String> brightnessCurveNames = {};
+    for (final type in PresetType.values) {
+      brightnessCurveNames[type.name] = type.getName(l10n);
+    }
+    for (final p in settings.userPresets) {
+      brightnessCurveNames[p.id] = p.name;
+    }
+
+    final Map<String, String> temperatureCurveNames = {};
+    for (final type in TemperaturePresetType.values) {
+      temperatureCurveNames[type.name] = type.getName(l10n);
+    }
+    for (final p in tempSettings.userPresets) {
+      temperatureCurveNames[p.id] = p.name;
+    }
+
+    final descriptors = AppOverrideRuleFormatter.getDescriptors(
+      rule: rule,
+      l10n: l10n,
+      brightnessCurveNamesById: brightnessCurveNames,
+      temperatureCurveNamesById: temperatureCurveNames,
+    );
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF6366F1).withOpacity(0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: const Color(0xFF6366F1).withOpacity(0.15),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                LucideIcons.sparkles,
+                size: 13,
+                color: const Color(0xFF818CF8).withOpacity(0.9),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                l10n.builtinActiveParameters,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white.withOpacity(0.7),
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: descriptors.map((d) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: d.accentColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: d.accentColor.withOpacity(0.25),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(d.icon, size: 14, color: d.accentColor),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${d.label}: ',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white.withOpacity(0.7),
+                      ),
+                    ),
+                    Text(
+                      d.valueText,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: d.accentColor,
+                      ),
+                    ),
+                    if (d.badgeText != null) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: d.accentColor.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          d.badgeText!,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: d.accentColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
         ],
       ),
     );
