@@ -70,7 +70,7 @@ void main() {
     });
 
     test(
-      'GET /api/v1/app-overrides returns default 6 built-in rules and exit_delay_seconds',
+      'GET /api/v1/app-overrides returns default 25 built-in rules and exit_delay_seconds',
       () async {
         final req = await client.getUrl(
           Uri.parse('$serverUrl/api/v1/app-overrides'),
@@ -81,10 +81,10 @@ void main() {
         final bodyStr = await resp.transform(utf8.decoder).join();
         final json = jsonDecode(bodyStr);
 
-        expect(json['total'], equals(6));
+        expect(json['total'], equals(25));
         expect(json['exit_delay_seconds'], equals(30));
         final List<dynamic> rules = json['app_overrides'] as List<dynamic>;
-        expect(rules.length, equals(6));
+        expect(rules.length, equals(25));
         expect(rules.first['exeName'], equals('photoshop.exe'));
       },
     );

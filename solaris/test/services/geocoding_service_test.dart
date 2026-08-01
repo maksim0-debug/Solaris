@@ -52,9 +52,9 @@ void main() {
       expect(result.name, equals('Europe/Kyiv'));
     });
 
-    test('falls back to offline timezone when token is missing', () async {
+    test('falls back to offline timezone when token is placeholder or missing', () async {
       final service = GeocodingService();
-      final result = await service.getCityName(50.4501, 30.5234);
+      final result = await service.getCityName(50.4501, 30.5234, customToken: 'your_mapbox_token_here');
 
       expect(result.isOffline, isTrue);
       expect(result.offlineReason, equals(OfflineReason.missingToken));

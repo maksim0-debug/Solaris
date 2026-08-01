@@ -143,7 +143,7 @@ void main() {
           resultConfig!.allowedActions!.contains('set_temperature'),
           isTrue,
         );
-        expect(resultConfig!.allowedActions!.length, equals(24));
+        expect(resultConfig!.allowedActions!.length, equals(27));
       },
     );
   });
