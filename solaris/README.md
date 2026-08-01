@@ -46,13 +46,18 @@ Protect your eyes from blue light. Solaris shifts your display to warmer tones a
 - **Automation & Calibration Care**: Fully synced with the solar cycle. Automatically backs up your original system color curves and restores them when resetting or closing the app.
 - **Range**: Smooth transition from 6500K (Daylight) to 3300K (Warm).
 
-### 🎮 Smart Game Mode (Exclusions)
+### 🎮 Smart Game Mode (Smart Exclusions)
 
-Focus on the win without distractions.
+Automates display parameter locks based on active application state.
 
-- **Auto-Lock**: Solaris detects when you start a game and prevents brightness from shifting during intense sessions.
-- **Customizable Lists**: Add specific apps to a **Whitelist** (always lock) or **Blacklist** (never lock).
-  <img width="971" height="603" alt="Game Mode and Application Whitelist configuration" src="https://github.com/user-attachments/assets/4f2429b0-2470-42fb-b5a7-f6b6086cb091" />
+- **Brightness & Temperature Override:** Enforces fixed brightness and color temperature values (e.g., 80%, 6500 K) upon game detection, suspending automatic ambient adjustments.
+- **Minimize Exit Delay:** Configurable buffer delay (in seconds) before restoring default display settings after minimizing a game, preventing flickering during Alt-Tab transitions.
+- **Application Filtering:**
+  - **Whitelist:** Forcefully activates Game Mode for specified executables (e.g., `cyberpunk2077.exe`).
+  - **Blacklist:** Forcefully blocks Game Mode for specific applications (e.g., `chrome.exe`, `telegram.exe`).
+<img width="965" height="647" alt="Smart Exclusions settings panel showing game mode, brightness lock, and color temperature controls" src="https://github.com/user-attachments/assets/2c2f9d40-af44-4e7f-858c-8460842aa6cd" />
+<img width="971" height="319" alt=" Application Whitelist configuration" src="https://github.com/user-attachments/assets/5c74ab66-234a-46ff-ad71-31c27275f909" />
+
 
 ### 🎨 Per-App Overrides (Color Accuracy & Custom App Profiles)
 
@@ -62,6 +67,8 @@ Automate monitor settings for specific software applications with pinpoint preci
 - **Flexible Per-App Settings**: Set a fixed value or assign a dedicated custom curve independently for brightness and color temperature, or follow the app's global settings.
 - **Exit Delay & Immediate Preemption**: Customizable holding timer (0–300s) retains profile settings when minimizing apps to the background, while direct switching between profiled apps applies new settings **instantly (0 ms)**.
 - **Native Dual-Tier Focus Detection**: Fast 100ms Win32 polling loop detects focus switches with UWP container support (`ApplicationFrameHost.exe`), Cyrillic/UTF-8 path handling, and System Shell Blacklist filtering.
+<img width="954" height="663" alt="Per-App Overrides in Solaris" src="https://github.com/user-attachments/assets/b35bdcdb-091c-4344-888d-25696edd6f9a" />
+
 
 
 ### ☁️ Weather Influence
@@ -85,7 +92,8 @@ Control your environment without leaving your current app.
 ### 📍 Precise Location
 
 - **Auto-Geolocation**: Uses GPS to determine your coordinates automatically.
-- **Map Selection**: Choose your location on an interactive map if GPS is unavailable.
+- **Mapbox City Search**: Quickly search and select any city worldwide powered by Mapbox geocoding.
+- **Interactive Map Selection**: Pinpoint your exact location on an interactive map.
 - **Persistence**: Remembers your preferred location across sessions.
   ![Interactive map for setting geographical coordinates for solar calculations](https://github.com/user-attachments/assets/a984424a-3b9e-45de-8c8d-a601f4b8b2d0)
 
@@ -226,6 +234,9 @@ Solaris includes a built-in, local HTTP & WebSocket control server that enables 
 - **Outbound Webhooks Engine**: 23 supported event types, SSRF safe validator, True IP-Pinning (TLS SNI Handshake), HMAC-SHA256 delivery signatures (`X-Solaris-Signature-256`), WAL Staging Buffer, and Dead Letter Queue (DLQ).
 - **Real-Time WebSocket API**: Bi-directional JSON streaming channel at `/api/v1/ws` with `cmd_id` request correlation, selective module subscriptions, and Windows Power S3/S4 sleep/resume broadcasts.
 - **Interactive OpenAPI Docs**: Embedded OpenAPI Docs playground hosted locally at `/api/v1/docs` and raw spec at `/api/v1/openapi.json`.
+<img width="970" height="435" alt="Solaris Control API v1 main dashboard showing active status on localhost port 45321, network access mode, and API keys management" src="https://github.com/user-attachments/assets/29a6a90b-c8b5-43d3-b57a-84e5a2fe0b39" />
+<img width="821" height="601" alt="Solaris Control API access keys management modal displaying a table of active keys, scopes, permissions, and creation dates" src="https://github.com/user-attachments/assets/a8e1d799-61eb-4885-877d-5fcef55ee14d" />
+
 
 ---
 
