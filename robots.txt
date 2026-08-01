@@ -1,0 +1,43 @@
+# Solaris — Advanced Circadian Monitor Control & Control API for Windows
+# Robots.txt — Maximally Permissive Indexing & AI Crawling Policy
+
+User-agent: *
+Allow: /
+
+# Explicit Allowances for AI & LLM Crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+# Sitemap & LLM Context Manifest
+Sitemap: https://maksim0-debug.github.io/Solaris/sitemap.xml
+# LLMs Context Manifest: https://maksim0-debug.github.io/Solaris/llms.txt
