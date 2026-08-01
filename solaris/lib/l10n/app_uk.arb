@@ -740,7 +740,7 @@
   "apiFirewallUacError": "Помилка: Відмовлено в дозволі UAC Windows Firewall. Доступ по LAN скасовано.",
   "apiServerPort": "Порт API сервера",
   "apiDocumentation": "Інтерактивна документація",
-  "apiOpenSwagger": "Відкрити Swagger UI",
+  "apiOpenSwagger": "Відкрити OpenAPI Docs",
   "apiOpenDocsError": "Не вдалося відкрити документацію: {error}",
   "apiAccessKey": "Ключ доступу API (X-API-Key)",
   "apiTokenHintRequiredLan": "Обов'язковий для LAN",
@@ -879,7 +879,7 @@
       "total": {"type": "int"}
     }
   },
-  "tags_solaris_api": "апі, api, control api, solaris control api, http, rest, swagger, порт, локалхост, localhost, lan, сервер, розробникам",
+  "tags_solaris_api": "апі, api, control api, solaris control api, http, rest, openapi, swagger, порт, локалхост, localhost, lan, сервер, розробникам",
   "tags_api_keys": "api key, токен, доступ, ключі api, права доступу, авторизація, безпека, bearer, scopes, ключ доступу",
   "tags_webhooks": "вебхук, вебхуки, webhook, webhooks, home assistant, node-red, n8n, hmac, події, сповіщення, інтеграція, автоматизація, dlq",
   "searchCity": "ПОШУК МІСТА",

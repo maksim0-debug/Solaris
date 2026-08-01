@@ -1668,7 +1668,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get apiDocumentation => 'Interactive Documentation';
 
   @override
-  String get apiOpenSwagger => 'Open Swagger UI';
+  String get apiOpenSwagger => 'Open OpenAPI Docs';
 
   @override
   String apiOpenDocsError(String error) {
@@ -2175,7 +2175,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tags_solaris_api =>
-      'api, control api, solaris control api, http, rest, swagger, port, localhost, lan, server, endpoint, developer';
+      'api, control api, solaris control api, http, rest, openapi, swagger, port, localhost, lan, server, endpoint, developer';
 
   @override
   String get tags_api_keys =>

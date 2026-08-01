@@ -2973,7 +2973,7 @@ abstract class AppLocalizations {
   /// No description provided for @apiOpenSwagger.
   ///
   /// In en, this message translates to:
-  /// **'Open Swagger UI'**
+  /// **'Open OpenAPI Docs'**
   String get apiOpenSwagger;
 
   /// No description provided for @apiOpenDocsError.
@@ -3771,7 +3771,7 @@ abstract class AppLocalizations {
   /// No description provided for @tags_solaris_api.
   ///
   /// In en, this message translates to:
-  /// **'api, control api, solaris control api, http, rest, swagger, port, localhost, lan, server, endpoint, developer'**
+  /// **'api, control api, solaris control api, http, rest, openapi, swagger, port, localhost, lan, server, endpoint, developer'**
   String get tags_solaris_api;
 
   /// No description provided for @tags_api_keys.

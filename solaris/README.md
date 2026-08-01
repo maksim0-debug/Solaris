@@ -54,6 +54,16 @@ Focus on the win without distractions.
 - **Customizable Lists**: Add specific apps to a **Whitelist** (always lock) or **Blacklist** (never lock).
   <img width="971" height="603" alt="Game Mode and Application Whitelist configuration" src="https://github.com/user-attachments/assets/4f2429b0-2470-42fb-b5a7-f6b6086cb091" />
 
+### 🎨 Per-App Overrides (Color Accuracy & Custom App Profiles)
+
+Automate monitor settings for specific software applications with pinpoint precision.
+
+- **Automatic Color Accuracy (6500K)**: Ships with **25 factory built-in rules** targeting major color-critical creative software (Photoshop, Premiere Pro, DaVinci Resolve, Lightroom, Blender, Figma, Illustrator, After Effects, Krita, Unreal Engine, Unity, etc.), automatically locking color temperature to neutral **6500K** for accurate color grading.
+- **Flexible Per-App Settings**: Set a fixed value or assign a dedicated custom curve independently for brightness and color temperature, or follow the app's global settings.
+- **Exit Delay & Immediate Preemption**: Customizable holding timer (0–300s) retains profile settings when minimizing apps to the background, while direct switching between profiled apps applies new settings **instantly (0 ms)**.
+- **Native Dual-Tier Focus Detection**: Fast 100ms Win32 polling loop detects focus switches with UWP container support (`ApplicationFrameHost.exe`), Cyrillic/UTF-8 path handling, and System Shell Blacklist filtering.
+
+
 ### ☁️ Weather Influence
 
 The first monitor controller that cares about the sky.
@@ -210,12 +220,12 @@ Solaris includes a built-in, local HTTP & WebSocket control server that enables 
 
 ### 🌟 Key Capabilities
 
-- **Full Automation Gateway**: 26 supported Action System commands (`set_brightness`, `set_temperature`, `set_auto_brightness`, `manage_game_mode_whitelist`, etc.).
+- **Full Automation Gateway**: 28 supported Action System commands (`set_brightness`, `set_temperature`, `set_auto_brightness`, `manage_app_overrides`, `manage_game_mode_whitelist`, etc.).
 - **Friendly Monitor Slugs**: Target displays using human-readable identifiers (`display-1`, `lg-ultragear-a1f9`, `primary`) or system paths (`\\\\.\\DISPLAY1`).
-- **Hardened Middleware Defense**: 6-layer protection pipeline including Host Header DNS Rebinding guard, Payload limiters (64 KB), CSWSH/Drive-by cross-origin guard, per-IP rate limiting, and constant-time SHA-256 token authorization.
+- **Hardened Security Architecture**: 8-Layer Defense & Isolation Pipeline including Host Header DNS Rebinding guard, Payload limiters (64 KB), CSWSH/Drive-by cross-origin guard, per-IP rate limiting, constant-time SHA-256 token authorization, and Granular Zero-Trust ACL Isolation.
 - **Outbound Webhooks Engine**: 23 supported event types, SSRF safe validator, True IP-Pinning (TLS SNI Handshake), HMAC-SHA256 delivery signatures (`X-Solaris-Signature-256`), WAL Staging Buffer, and Dead Letter Queue (DLQ).
 - **Real-Time WebSocket API**: Bi-directional JSON streaming channel at `/api/v1/ws` with `cmd_id` request correlation, selective module subscriptions, and Windows Power S3/S4 sleep/resume broadcasts.
-- **Interactive OpenAPI Docs**: Embedded Swagger UI playground hosted locally at `/api/v1/docs` and raw spec at `/api/v1/openapi.json`.
+- **Interactive OpenAPI Docs**: Embedded OpenAPI Docs playground hosted locally at `/api/v1/docs` and raw spec at `/api/v1/openapi.json`.
 
 ---
 
@@ -225,8 +235,8 @@ Detailed technical documentation for integrating with Solaris Control API v1 is 
 
 | Document                                               | Description                                                                                                                                                                 |
 | :----------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **[Architecture & Core Guide](docs/API.md)**           | Core design, security pipeline, authentication formats (`X-API-Key`, `Bearer`, `?token`), RFC 7807 error format, and Swagger UI setup.                                      |
-| **[REST Endpoints & Action System](docs/REST_API.md)** | State endpoints (`/api/v1/status`, `/api/v1/health`, `/api/v1/presets`, `/api/v1/sleep/sessions`), Friendly Slugs, and comprehensive catalog of **all 26 Action commands**. |
+| **[Architecture & Core Guide](docs/API.md)**           | Core design, security pipeline, authentication formats (`X-API-Key`, `Bearer`, `?token`), RFC 7807 error format, and OpenAPI Docs setup.                                      |
+| **[REST Endpoints & Action System](docs/REST_API.md)** | State endpoints (`/api/v1/status`, `/api/v1/health`, `/api/v1/presets`, `/api/v1/app-overrides`, `/api/v1/sleep/sessions`), Friendly Slugs, and comprehensive catalog of **all 28 Action commands**. |
 | **[Outbound Webhooks Engine](docs/WEBHOOKS.md)**       | Webhook management REST endpoints, **23 Webhook events catalog**, SSRF protection, True IP-Pinning, HMAC-SHA256 signatures, WAL buffer, and DLQ handling.                   |
 | **[Real-Time WebSocket API](docs/WEBSOCKET.md)**       | Socket endpoint (`/api/v1/ws`), authentication headers, `cmd_id` correlation, selective module subscriptions, and OS/Hardware error broadcasts.                             |
 

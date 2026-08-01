@@ -752,7 +752,7 @@
   "apiFirewallUacError": "Error: Windows Firewall UAC permission denied. LAN access canceled.",
   "apiServerPort": "API Server Port",
   "apiDocumentation": "Interactive Documentation",
-  "apiOpenSwagger": "Open Swagger UI",
+  "apiOpenSwagger": "Open OpenAPI Docs",
   "apiOpenDocsError": "Failed to open documentation: {error}",
   "@apiOpenDocsError": {
     "placeholders": {
@@ -969,7 +969,7 @@
       "total": {"type": "int"}
     }
   },
-  "tags_solaris_api": "api, control api, solaris control api, http, rest, swagger, port, localhost, lan, server, endpoint, developer",
+  "tags_solaris_api": "api, control api, solaris control api, http, rest, openapi, swagger, port, localhost, lan, server, endpoint, developer",
   "tags_api_keys": "api key, access key, token, permissions, bearer, scopes, auth, authentication, security, fallback, dpapi",
   "tags_webhooks": "webhook, webhooks, home assistant, node-red, n8n, hmac, events, notifications, integration, automation, wal, dlq",
   "searchCity": "SEARCH CITY",

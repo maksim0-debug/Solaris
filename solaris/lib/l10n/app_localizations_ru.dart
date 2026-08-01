@@ -1673,7 +1673,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get apiDocumentation => 'Интерактивная документация';
 
   @override
-  String get apiOpenSwagger => 'Открыть Swagger UI';
+  String get apiOpenSwagger => 'Открыть OpenAPI Docs';
 
   @override
   String apiOpenDocsError(String error) {
@@ -2194,7 +2194,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get tags_solaris_api =>
-      'апи, api, control api, solaris control api, http, rest, swagger, порт, локалхост, localhost, lan, сервер, разработчикам';
+      'апи, api, control api, solaris control api, http, rest, openapi, swagger, порт, локалхост, localhost, lan, сервер, разработчикам';
 
   @override
   String get tags_api_keys =>

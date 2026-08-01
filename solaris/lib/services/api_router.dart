@@ -218,7 +218,7 @@ class _RouteEntry {
 // MIDDLEWARES
 // ==========================================
 
-/// Security Headers Middleware & CSP rules for Swagger / docs
+/// Security Headers Middleware & CSP rules for OpenAPI / docs
 Future<bool> securityHeadersMiddleware(HttpRequest request) async {
   final response = request.response;
   response.headers.set('X-Content-Type-Options', 'nosniff');

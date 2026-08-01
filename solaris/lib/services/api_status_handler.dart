@@ -439,7 +439,7 @@ class ApiStatusHandler {
     });
   }
 
-  /// GET /api/v1/docs (Interactive Swagger UI / RapiDoc HTML)
+  /// GET /api/v1/docs (Interactive OpenAPI Docs / RapiDoc HTML)
   Future<void> handleDocs(
     HttpRequest request,
     Map<String, String> pathParams,
