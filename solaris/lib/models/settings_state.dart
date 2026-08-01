@@ -60,6 +60,8 @@ class SettingsState {
   final bool isSleepDebtMasterEnabled;
   final double windDownBrightnessIntensity;
   final double windDownTemperatureIntensity;
+  final double timeShiftBrightnessIntensity;
+  final double timeShiftTemperatureIntensity;
   final double timeShiftIntensity;
   final double sleepPressureBrightnessIntensity;
   final double sleepPressureTemperatureIntensity;
@@ -159,6 +161,8 @@ class SettingsState {
     this.isSleepDebtMasterEnabled = false,
     this.windDownBrightnessIntensity = 1.0,
     this.windDownTemperatureIntensity = 1.0,
+    this.timeShiftBrightnessIntensity = 1.0,
+    this.timeShiftTemperatureIntensity = 1.0,
     this.timeShiftIntensity = 1.0,
     this.sleepPressureBrightnessIntensity = 1.0,
     this.sleepPressureTemperatureIntensity = 1.0,
@@ -350,7 +354,9 @@ class SettingsState {
     'isSleepDebtMasterEnabled': isSleepDebtMasterEnabled,
     'windDownBrightnessIntensity': windDownBrightnessIntensity,
     'windDownTemperatureIntensity': windDownTemperatureIntensity,
-    'timeShiftIntensity': timeShiftIntensity,
+    'timeShiftBrightnessIntensity': timeShiftBrightnessIntensity,
+    'timeShiftTemperatureIntensity': timeShiftTemperatureIntensity,
+    'timeShiftIntensity': timeShiftBrightnessIntensity,
     'sleepPressureBrightnessIntensity': sleepPressureBrightnessIntensity,
     'sleepPressureTemperatureIntensity': sleepPressureTemperatureIntensity,
     'sleepDebtBrightnessIntensity': sleepDebtBrightnessIntensity,
@@ -527,8 +533,16 @@ class SettingsState {
           (json['windDownBrightnessIntensity'] as num?)?.toDouble() ?? 1.0,
       windDownTemperatureIntensity:
           (json['windDownTemperatureIntensity'] as num?)?.toDouble() ?? 1.0,
+      timeShiftBrightnessIntensity:
+          (json['timeShiftBrightnessIntensity'] as num?)?.toDouble() ??
+          (json['timeShiftIntensity'] as num?)?.toDouble() ??
+          1.0,
+      timeShiftTemperatureIntensity:
+          (json['timeShiftTemperatureIntensity'] as num?)?.toDouble() ?? 1.0,
       timeShiftIntensity:
-          (json['timeShiftIntensity'] as num?)?.toDouble() ?? 1.0,
+          (json['timeShiftBrightnessIntensity'] as num?)?.toDouble() ??
+          (json['timeShiftIntensity'] as num?)?.toDouble() ??
+          1.0,
       sleepPressureBrightnessIntensity:
           (json['sleepPressureBrightnessIntensity'] as num?)?.toDouble() ?? 1.0,
       sleepPressureTemperatureIntensity:
@@ -709,6 +723,8 @@ class SettingsState {
     bool? isSleepDebtMasterEnabled,
     double? windDownBrightnessIntensity,
     double? windDownTemperatureIntensity,
+    double? timeShiftBrightnessIntensity,
+    double? timeShiftTemperatureIntensity,
     double? timeShiftIntensity,
     double? sleepPressureBrightnessIntensity,
     double? sleepPressureTemperatureIntensity,
@@ -825,7 +841,16 @@ class SettingsState {
           windDownBrightnessIntensity ?? this.windDownBrightnessIntensity,
       windDownTemperatureIntensity:
           windDownTemperatureIntensity ?? this.windDownTemperatureIntensity,
-      timeShiftIntensity: timeShiftIntensity ?? this.timeShiftIntensity,
+      timeShiftBrightnessIntensity:
+          timeShiftBrightnessIntensity ??
+          timeShiftIntensity ??
+          this.timeShiftBrightnessIntensity,
+      timeShiftTemperatureIntensity:
+          timeShiftTemperatureIntensity ?? this.timeShiftTemperatureIntensity,
+      timeShiftIntensity:
+          timeShiftBrightnessIntensity ??
+          timeShiftIntensity ??
+          this.timeShiftIntensity,
       sleepPressureBrightnessIntensity:
           sleepPressureBrightnessIntensity ??
           this.sleepPressureBrightnessIntensity,

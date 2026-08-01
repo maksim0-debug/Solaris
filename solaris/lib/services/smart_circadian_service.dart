@@ -20,6 +20,8 @@ class SmartCircadianService {
     double sleepPressureBrightnessIntensity = 1.0,
     double sleepPressureTemperatureIntensity = 1.0,
     double timeShiftIntensity = 1.0,
+    double? timeShiftBrightnessIntensity,
+    double? timeShiftTemperatureIntensity,
     double windDownBrightnessIntensity = 1.0,
     double windDownTemperatureIntensity = 1.0,
     int? windDownDurationMinutes = 120,
@@ -105,11 +107,15 @@ class SmartCircadianService {
           fadeFactor = 0.0;
         }
 
-        final double adjustedIntensity = timeShiftIntensity;
-        timeShiftFactorValue = adjustedIntensity * fadeFactor;
+        final double effBrightnessIntensity =
+            timeShiftBrightnessIntensity ?? timeShiftIntensity;
+
+        timeShiftFactorValue = fadeFactor;
 
         timeOffset = Duration(
-          minutes: (effectiveDiff * timeShiftFactorValue).toInt(),
+          minutes:
+              (effectiveDiff * timeShiftFactorValue * effBrightnessIntensity)
+                  .toInt(),
         );
       }
     }
@@ -288,6 +294,10 @@ class SmartCircadianService {
       sleepPressureTemperatureOffset: sleepPressureTempOffset,
       timeOffset: timeOffset,
       timeShiftFactor: timeShiftFactorValue,
+      timeShiftBrightnessIntensity:
+          timeShiftBrightnessIntensity ?? timeShiftIntensity,
+      timeShiftTemperatureIntensity:
+          timeShiftTemperatureIntensity ?? timeShiftIntensity,
       isWindDownActive: isWindDownActive,
       isSleepPressureActive: sleepPressureFactor < 0.99,
       isSleepDebtActive: sleepDebtFactor < 0.99,

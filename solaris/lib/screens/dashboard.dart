@@ -1300,6 +1300,27 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                               // 2. Temperature adjustments
                               final activeTempAdjustments = <Widget>[];
 
+                              if (isSmartEnabled &&
+                                  smartDataTemp.isTimeShiftActive &&
+                                  smartDataTemp.timeShiftTemperatureImpact
+                                          .abs() >
+                                      0.5) {
+                                final impactK = smartDataTemp
+                                    .timeShiftTemperatureImpact
+                                    .round();
+                                final remaining =
+                                    smartDataTemp.timeShiftMinutesRemaining;
+                                activeTempAdjustments.add(
+                                  _SmartAdjustmentIndicator(
+                                    icon: LucideIcons.sunrise,
+                                    label: remaining != null
+                                        ? '${l10n.featureTimeShiftShort} ${impactK > 0 ? '+$impactK' : impactK} K (${remaining}${l10n.minutesAbbreviation})'
+                                        : '${l10n.featureTimeShiftShort}: ${impactK > 0 ? '+$impactK' : impactK} K',
+                                    iconColor: const Color(0xFFF59E0B),
+                                  ),
+                                );
+                              }
+
                               if (smartDataTemp.weatherTemperatureImpact.abs() >
                                   0.5) {
                                 final impactK = smartDataTemp

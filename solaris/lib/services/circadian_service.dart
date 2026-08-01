@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:solaris/models/solar_phase_model.dart';
 import 'package:solaris/services/weather_service.dart';
@@ -27,6 +28,7 @@ class CircadianCalculationResult {
 class TemperatureCalculationResult {
   final int baseTemperature;
   final int weatherImpact;
+  final int timeShiftImpact;
   final int sleepPressureImpact;
   final int windDownImpact;
   final int sleepDebtImpact;
@@ -35,6 +37,7 @@ class TemperatureCalculationResult {
   TemperatureCalculationResult({
     required this.baseTemperature,
     this.weatherImpact = 0,
+    this.timeShiftImpact = 0,
     this.sleepPressureImpact = 0,
     this.windDownImpact = 0,
     this.sleepDebtImpact = 0,
@@ -97,8 +100,14 @@ class CircadianService {
         morningTarget = curvePoints.last.y;
       }
 
+      final double adjBrightIntensity = math
+          .pow(smartData.timeShiftBrightnessIntensity, 1.5)
+          .toDouble();
+
       timeShiftImpact =
-          (morningTarget - theoreticalFinal) * smartData.timeShiftFactor;
+          (morningTarget - theoreticalFinal) *
+          smartData.timeShiftFactor *
+          adjBrightIntensity;
       theoreticalFinal += timeShiftImpact;
     }
 
@@ -158,7 +167,7 @@ class CircadianService {
       );
     }
 
-    final int baseTemperature = _calculateFromElevation(
+    final int rawBaseTemperature = _calculateFromElevation(
       curvePoints,
       elevation,
     ).toInt();
@@ -179,9 +188,41 @@ class CircadianService {
         : 3300;
     const int maxAllowed = 6500;
 
+    final double netNegativeSmartOffset =
+        (smartData.sleepPressureTemperatureOffset < 0
+            ? smartData.sleepPressureTemperatureOffset.toDouble()
+            : 0.0) +
+        (smartData.windDownTemperatureOffset < 0
+            ? smartData.windDownTemperatureOffset.toDouble()
+            : 0.0) +
+        (smartData.sleepDebtTemperatureOffset < 0
+            ? smartData.sleepDebtTemperatureOffset.toDouble()
+            : 0.0);
+
+    // Bio-Morning Cooling Boost (Additive towards 6500K / daytime cool target)
+    // Priorities over Sleep Debt / Pressure / WindDown by calculating gap against effective base
+    int timeShiftBoost = 0;
+    if (smartData.timeShiftFactor > 0) {
+      double morningTempTarget = maxAllowed.toDouble();
+      if (curvePoints.isNotEmpty) {
+        morningTempTarget = curvePoints.last.y;
+      }
+
+      final double effectiveBase = rawBaseTemperature + netNegativeSmartOffset;
+      final double gapToCool = morningTempTarget - effectiveBase;
+      if (gapToCool > 0) {
+        final double adjTempIntensity = math
+            .pow(smartData.timeShiftTemperatureIntensity, 1.5)
+            .toDouble();
+        timeShiftBoost =
+            (gapToCool * smartData.timeShiftFactor * adjTempIntensity).round();
+      }
+    }
+
     // Unclamped theoretical temperature
     final double theoreticalFinal =
-        baseTemperature -
+        rawBaseTemperature +
+        timeShiftBoost -
         weatherDrop +
         smartData.sleepPressureTemperatureOffset +
         smartData.windDownTemperatureOffset +
@@ -192,43 +233,47 @@ class CircadianService {
       maxAllowed,
     );
 
-    // Proportional distribution logic matching brightness calculation
-    if (finalTemperature < baseTemperature) {
-      final int totalReduction = baseTemperature - finalTemperature;
+    // Clamp effective timeShiftBoost if theoreticalFinal exceeded maxAllowed
+    int effectiveTimeShiftBoost = timeShiftBoost;
+    if (theoreticalFinal > maxAllowed) {
+      final double overflow = theoreticalFinal - maxAllowed;
+      effectiveTimeShiftBoost = math.max(
+        0,
+        (timeShiftBoost - overflow).round(),
+      );
+    }
 
-      final double wWeather = weatherDrop > 0 ? weatherDrop : 0.0;
-      final double wPressure = smartData.sleepPressureTemperatureOffset < 0
-          ? smartData.sleepPressureTemperatureOffset.abs().toDouble()
-          : 0.0;
-      final double wWindDown = smartData.windDownTemperatureOffset < 0
-          ? smartData.windDownTemperatureOffset.abs().toDouble()
-          : 0.0;
-      final double wDebt = smartData.sleepDebtTemperatureOffset < 0
-          ? smartData.sleepDebtTemperatureOffset.abs().toDouble()
-          : 0.0;
+    // Proportional distribution logic when lower bound (minAllowed) is hit
+    int finalWeatherImpact = weatherDrop > 0 ? -weatherDrop.round() : 0;
+    int finalSleepPressureImpact = smartData.sleepPressureTemperatureOffset;
+    int finalWindDownImpact = smartData.windDownTemperatureOffset;
+    int finalSleepDebtImpact = smartData.sleepDebtTemperatureOffset;
 
-      final double sumOfWeights = wWeather + wPressure + wWindDown + wDebt;
-
-      if (sumOfWeights > 0) {
-        return TemperatureCalculationResult(
-          baseTemperature: baseTemperature,
-          weatherImpact: -(totalReduction * (wWeather / sumOfWeights)).round(),
-          sleepPressureImpact: -(totalReduction * (wPressure / sumOfWeights))
-              .round(),
-          windDownImpact: -(totalReduction * (wWindDown / sumOfWeights))
-              .round(),
-          sleepDebtImpact: -(totalReduction * (wDebt / sumOfWeights)).round(),
-          finalTemperature: finalTemperature,
-        );
+    if (finalTemperature < minAllowed ||
+        (theoreticalFinal < minAllowed && finalTemperature <= minAllowed)) {
+      final double totalNegativeNeeded =
+          (finalTemperature - (rawBaseTemperature + effectiveTimeShiftBoost))
+              .toDouble();
+      final double rawNegativeSum = -weatherDrop + netNegativeSmartOffset;
+      if (rawNegativeSum < 0) {
+        final double ratio = totalNegativeNeeded / rawNegativeSum;
+        finalWeatherImpact = (-weatherDrop * ratio).round();
+        finalSleepPressureImpact =
+            (smartData.sleepPressureTemperatureOffset * ratio).round();
+        finalWindDownImpact = (smartData.windDownTemperatureOffset * ratio)
+            .round();
+        finalSleepDebtImpact = (smartData.sleepDebtTemperatureOffset * ratio)
+            .round();
       }
     }
 
     return TemperatureCalculationResult(
-      baseTemperature: baseTemperature,
-      weatherImpact: 0,
-      sleepPressureImpact: 0,
-      windDownImpact: 0,
-      sleepDebtImpact: 0,
+      baseTemperature: rawBaseTemperature,
+      weatherImpact: finalWeatherImpact,
+      timeShiftImpact: effectiveTimeShiftBoost,
+      sleepPressureImpact: finalSleepPressureImpact,
+      windDownImpact: finalWindDownImpact,
+      sleepDebtImpact: finalSleepDebtImpact,
       finalTemperature: finalTemperature,
     );
   }

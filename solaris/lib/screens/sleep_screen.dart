@@ -710,12 +710,23 @@ class _CircadianRegulationSection extends ConsumerWidget {
                       brightnessLabel: l10n.influenceBrightness,
                       temperatureLabel: l10n.influenceTemperature,
                       isActive: smartData.isTimeShiftActive,
-                      brightnessIntensity: settings.timeShiftIntensity,
+                      brightnessIntensity:
+                          settings.timeShiftBrightnessIntensity,
+                      temperatureIntensity:
+                          settings.timeShiftTemperatureIntensity,
                       onBrightnessIntensityChanged: (val) => ref
                           .read(settingsProvider.notifier)
-                          .updateTimeShiftIntensity(val),
-                      showTemperatureIntensity:
-                          false, // Time shift is a single factor
+                          .updateTimeShiftIntensity(
+                            val,
+                            settings.timeShiftTemperatureIntensity,
+                          ),
+                      onTemperatureIntensityChanged: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateTimeShiftIntensity(
+                            settings.timeShiftBrightnessIntensity,
+                            val,
+                          ),
+                      showTemperatureIntensity: true,
                       durationValue: settings.timeShiftDurationMinutes
                           .toDouble(),
                       durationMin: 60,

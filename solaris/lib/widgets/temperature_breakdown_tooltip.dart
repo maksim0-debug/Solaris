@@ -28,6 +28,9 @@ class TemperatureBreakdownTooltip extends StatelessWidget {
         : 6500;
     final int weatherImpact = smartData.weatherTemperatureImpact;
 
+    final int timeShiftImpact = isSmartCircadianEnabled
+        ? smartData.timeShiftTemperatureImpact
+        : 0;
     final int sleepPressureImpact = isSmartCircadianEnabled
         ? smartData.sleepPressureTemperatureImpact
         : 0;
@@ -61,6 +64,15 @@ class TemperatureBreakdownTooltip extends StatelessWidget {
               label: l10n.temperatureBreakdownWeather,
               value: '${weatherImpact} K',
               iconColor: const Color(0xFF94A3B8),
+            ),
+          if (isSmartCircadianEnabled &&
+              (timeShiftImpact.abs() > 0.5 || smartData.isTimeShiftActive))
+            _buildRow(
+              icon: LucideIcons.sunrise,
+              label: l10n.featureTimeShift,
+              value:
+                  '${timeShiftImpact > 0 ? '+$timeShiftImpact' : timeShiftImpact} K',
+              iconColor: const Color(0xFFF59E0B),
             ),
           if (isSmartCircadianEnabled && sleepPressureImpact.abs() > 0.5)
             _buildRow(

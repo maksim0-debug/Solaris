@@ -113,7 +113,10 @@ void main() {
       // 30 min / 360 min = 0.0833 progress.
       // cos(0.0833 * pi/2) = 0.9914.
       // factor = 0.1 * 0.9914 = 0.09914.
-      expect(result.timeShiftFactor, closeTo(0.099, 0.005));
+      expect(
+        result.timeShiftFactor * result.timeShiftBrightnessIntensity,
+        closeTo(0.099, 0.005),
+      );
     });
   });
 }

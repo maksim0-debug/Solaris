@@ -228,6 +228,35 @@ void main() {
           );
         },
       );
+
+      test(
+        'should prioritize Bio-Morning cooling boost to override Sleep Debt warming penalty',
+        () {
+          final smartData = const SmartCircadianData.neutral().copyWith(
+            sleepDebtTemperatureOffset: -500,
+            timeShiftFactor: 1.0,
+            timeShiftTemperatureIntensity: 1.0,
+          );
+
+          // Elevation 10.0 -> base = 6500 K.
+          // Sleep Debt = -500 K.
+          // Bio-Morning factor = 1.0 -> effectiveBase = 6000 K -> gapToCool = 500 K.
+          // timeShiftBoost = +500 K.
+          // theoreticalFinal = 6500 + 500 - 500 = 6500 K.
+          final result = service.calculateTargetTemperature(
+            phases,
+            10.0,
+            now,
+            curvePoints: tempPoints,
+            smartData: smartData,
+          );
+
+          expect(result.baseTemperature, 6500);
+          expect(result.sleepDebtImpact, -500);
+          expect(result.timeShiftImpact, 500);
+          expect(result.finalTemperature, 6500);
+        },
+      );
     });
   });
 }

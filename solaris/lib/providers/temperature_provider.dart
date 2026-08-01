@@ -502,6 +502,10 @@ class CurrentTemperatureNotifier extends Notifier<int> {
 
           return solarStateAsync.maybeWhen(
             data: (state) {
+              final smartData = tempSettings.isSmartCircadianEnabled
+                  ? ref.watch(smartCircadianTemperatureDataProvider(id))
+                  : const SmartCircadianData.neutral();
+
               final result = circadianService.calculateTargetTemperature(
                 state.phases,
                 state.sunElevation,
@@ -511,9 +515,7 @@ class CurrentTemperatureNotifier extends Notifier<int> {
                     ? weatherAsync.value
                     : null,
                 weatherIntensity: globalSettings.weatherAdjustmentIntensity,
-                smartData: tempSettings.isSmartCircadianEnabled
-                    ? ref.watch(smartCircadianTemperatureDataProvider(id))
-                    : const SmartCircadianData.neutral(),
+                smartData: smartData,
               );
               final val = result.finalTemperature.clamp(3300, 6500).round();
               _saveTemperature(val);
@@ -559,29 +561,9 @@ class CurrentTemperatureNotifier extends Notifier<int> {
                   ? ref.watch(smartCircadianTemperatureDataProvider(id))
                   : const SmartCircadianData.neutral();
 
-              double effectiveElevation = state.sunElevation;
-              if (tempSettings.isSmartCircadianEnabled &&
-                  smartData.timeOffset != Duration.zero) {
-                final locationAsync = ref.read(effectiveLocationProvider);
-                final pos = locationAsync.value;
-                if (pos != null) {
-                  final sunService = ref.read(sunCalculatorServiceProvider);
-                  final shiftedTime = now.subtract(smartData.timeOffset);
-                  effectiveElevation = sunService.getSunElevation(
-                    pos.latitude,
-                    pos.longitude,
-                    shiftedTime,
-                  );
-
-                  if (state.sunElevation < 0 && effectiveElevation > 10) {
-                    effectiveElevation = effectiveElevation.clamp(-20.0, 10.0);
-                  }
-                }
-              }
-
               final result = circadianService.calculateTargetTemperature(
                 state.phases,
-                effectiveElevation,
+                state.sunElevation,
                 now,
                 curvePoints: tempSettings.curvePoints,
                 weather: globalSettings.isWeatherTemperatureAdjustmentEnabled

@@ -14,6 +14,8 @@ class SmartCircadianData extends Equatable {
   final double windDownFactor;
   final double timeShiftFactor;
   final double timeShiftBrightnessImpact;
+  final double timeShiftBrightnessIntensity;
+  final double timeShiftTemperatureIntensity;
   final int? timeShiftMinutesRemaining;
   final int? windDownMinutesRemaining;
   final int? minutesUntilSleep;
@@ -39,6 +41,7 @@ class SmartCircadianData extends Equatable {
   final int sleepPressureTemperatureOffset;
   final int baseTemperature;
   final int weatherTemperatureImpact;
+  final int timeShiftTemperatureImpact;
   final int sleepPressureTemperatureImpact;
   final int windDownTemperatureImpact;
   final int sleepDebtTemperatureImpact;
@@ -56,6 +59,8 @@ class SmartCircadianData extends Equatable {
     this.windDownFactor = 1.0,
     this.timeShiftFactor = 0.0,
     this.timeShiftBrightnessImpact = 0.0,
+    this.timeShiftBrightnessIntensity = 1.0,
+    this.timeShiftTemperatureIntensity = 1.0,
     this.timeShiftMinutesRemaining,
     this.windDownMinutesRemaining,
     this.minutesUntilSleep,
@@ -75,6 +80,7 @@ class SmartCircadianData extends Equatable {
     this.sleepPressureTemperatureOffset = 0,
     this.baseTemperature = 0,
     this.weatherTemperatureImpact = 0,
+    this.timeShiftTemperatureImpact = 0,
     this.sleepPressureTemperatureImpact = 0,
     this.windDownTemperatureImpact = 0,
     this.sleepDebtTemperatureImpact = 0,
@@ -93,6 +99,8 @@ class SmartCircadianData extends Equatable {
       windDownFactor = 1.0,
       timeShiftFactor = 0.0,
       timeShiftBrightnessImpact = 0.0,
+      timeShiftBrightnessIntensity = 1.0,
+      timeShiftTemperatureIntensity = 1.0,
       timeShiftMinutesRemaining = null,
       windDownMinutesRemaining = null,
       minutesUntilSleep = null,
@@ -112,6 +120,7 @@ class SmartCircadianData extends Equatable {
       sleepPressureTemperatureOffset = 0,
       baseTemperature = 0,
       weatherTemperatureImpact = 0,
+      timeShiftTemperatureImpact = 0,
       sleepPressureTemperatureImpact = 0,
       windDownTemperatureImpact = 0,
       sleepDebtTemperatureImpact = 0;
@@ -130,6 +139,8 @@ class SmartCircadianData extends Equatable {
     windDownFactor,
     timeShiftFactor,
     timeShiftBrightnessImpact,
+    timeShiftBrightnessIntensity,
+    timeShiftTemperatureIntensity,
     timeShiftMinutesRemaining,
     windDownMinutesRemaining,
     minutesUntilSleep,
@@ -149,6 +160,7 @@ class SmartCircadianData extends Equatable {
     sleepPressureTemperatureOffset,
     baseTemperature,
     weatherTemperatureImpact,
+    timeShiftTemperatureImpact,
     sleepPressureTemperatureImpact,
     windDownTemperatureImpact,
     sleepDebtTemperatureImpact,
@@ -167,6 +179,8 @@ class SmartCircadianData extends Equatable {
     double? windDownFactor,
     double? timeShiftFactor,
     double? timeShiftBrightnessImpact,
+    double? timeShiftBrightnessIntensity,
+    double? timeShiftTemperatureIntensity,
     int? timeShiftMinutesRemaining,
     int? windDownMinutesRemaining,
     int? minutesUntilSleep,
@@ -186,6 +200,7 @@ class SmartCircadianData extends Equatable {
     int? sleepPressureTemperatureOffset,
     int? baseTemperature,
     int? weatherTemperatureImpact,
+    int? timeShiftTemperatureImpact,
     int? sleepPressureTemperatureImpact,
     int? windDownTemperatureImpact,
     int? sleepDebtTemperatureImpact,
@@ -205,6 +220,10 @@ class SmartCircadianData extends Equatable {
       timeShiftFactor: timeShiftFactor ?? this.timeShiftFactor,
       timeShiftBrightnessImpact:
           timeShiftBrightnessImpact ?? this.timeShiftBrightnessImpact,
+      timeShiftBrightnessIntensity:
+          timeShiftBrightnessIntensity ?? this.timeShiftBrightnessIntensity,
+      timeShiftTemperatureIntensity:
+          timeShiftTemperatureIntensity ?? this.timeShiftTemperatureIntensity,
       timeShiftMinutesRemaining:
           timeShiftMinutesRemaining ?? this.timeShiftMinutesRemaining,
       windDownMinutesRemaining:
@@ -237,6 +256,8 @@ class SmartCircadianData extends Equatable {
       baseTemperature: baseTemperature ?? this.baseTemperature,
       weatherTemperatureImpact:
           weatherTemperatureImpact ?? this.weatherTemperatureImpact,
+      timeShiftTemperatureImpact:
+          timeShiftTemperatureImpact ?? this.timeShiftTemperatureImpact,
       sleepPressureTemperatureImpact:
           sleepPressureTemperatureImpact ?? this.sleepPressureTemperatureImpact,
       windDownTemperatureImpact:
