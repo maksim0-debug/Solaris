@@ -28,12 +28,20 @@ class WeatherData {
 }
 
 class WeatherService {
+  /// Rounds coordinate to 2 decimal places (~1.1 km resolution) for privacy preservation.
+  static double roundCoordinateTo2Decimals(double val) {
+    return (val * 100.0).roundToDouble() / 100.0;
+  }
+
   Future<WeatherData?> fetchCurrentWeather(
     double lat,
     double lon, {
     WeatherProvider provider = WeatherProvider.auto,
     String? customApiKey,
   }) async {
+    final safeLat = roundCoordinateTo2Decimals(lat);
+    final safeLon = roundCoordinateTo2Decimals(lon);
+
     final apiKey = (customApiKey != null && customApiKey.isNotEmpty)
         ? customApiKey
         : Env.weatherApiKey;
@@ -45,7 +53,7 @@ class WeatherService {
         return null;
       }
       try {
-        return await _fetchWeatherApi(lat, lon, apiKey);
+        return await _fetchWeatherApi(safeLat, safeLon, apiKey);
       } catch (e) {
         print('WeatherService: Forced WeatherAPI failed: $e');
         return null;
@@ -54,7 +62,7 @@ class WeatherService {
 
     if (provider == WeatherProvider.openMeteo) {
       try {
-        return await _fetchOpenMeteo(lat, lon);
+        return await _fetchOpenMeteo(safeLat, safeLon);
       } catch (e) {
         print('WeatherService: Forced Open-Meteo failed: $e');
         return null;
@@ -66,7 +74,7 @@ class WeatherService {
     if (apiKey.isNotEmpty && apiKey != 'YOUR_API_KEY') {
       try {
         print('WeatherService: Attempting WeatherAPI (Primary)...');
-        final data = await _fetchWeatherApi(lat, lon, apiKey);
+        final data = await _fetchWeatherApi(safeLat, safeLon, apiKey);
         print('WeatherService: WeatherAPI success.');
         return data;
       } catch (e) {
@@ -81,7 +89,7 @@ class WeatherService {
     // PLAN B: Fallback to Open-Meteo
     try {
       print('WeatherService: Attempting Open-Meteo (Fallback)...');
-      final data = await _fetchOpenMeteo(lat, lon);
+      final data = await _fetchOpenMeteo(safeLat, safeLon);
       print('WeatherService: Open-Meteo success.');
       return data;
     } catch (e) {
