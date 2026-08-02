@@ -184,7 +184,7 @@ class CircadianService {
     }
 
     final int minAllowed = curvePoints.isNotEmpty
-        ? curvePoints.first.y.toInt().clamp(1900, 6500)
+        ? curvePoints.first.y.toInt().clamp(3300, 6500)
         : 3300;
     const int maxAllowed = 6500;
 
