@@ -134,6 +134,7 @@ class WindowsPowerListener {
       'WindowsPowerListener: WM_DISPLAYCHANGE received. Re-enumerating connected monitors...',
     );
     try {
+      ref.invalidate(monitorListProvider);
       final monitors = await ref
           .read(monitorServiceProvider)
           .getConnectedMonitors();

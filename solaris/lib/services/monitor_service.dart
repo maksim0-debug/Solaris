@@ -147,7 +147,7 @@ class MonitorService {
   Future<List<MonitorInfo>> getConnectedMonitors() async {
     final monitors = <MonitorInfo>[];
 
-    // Get friendly names from native side
+    // Get friendly names from native side (keyed by device interface path, lowercased)
     Map<String, String> friendlyNames = {};
     try {
       final result = await _channel.invokeMethod<Map<Object?, Object?>>(
@@ -177,9 +177,54 @@ class MonitorService {
         monitorDevice.ref.cb = sizeOf<DISPLAY_DEVICE>();
         final deviceNamePtr = deviceName.toNativeUtf16();
 
-        if (EnumDisplayDevices(deviceNamePtr, 0, monitorDevice, 0) != 0) {
-          final monitorName = monitorDevice.ref.DeviceString;
-          final deviceID = monitorDevice.ref.DeviceID.toLowerCase();
+        // An adapter (e.g. \\.\DISPLAY1) may contain multiple historical or inactive monitor entries.
+        // We iterate through all monitor endpoints to select the actively attached monitor.
+        String? selectedMonitorName;
+        String? selectedDeviceId;
+        String? selectedInterfaceId;
+        bool foundActive = false;
+
+        var monIndex = 0;
+        while (EnumDisplayDevices(deviceNamePtr, monIndex, monitorDevice, 0) !=
+            0) {
+          final monFlags = monitorDevice.ref.StateFlags;
+          final monName = monitorDevice.ref.DeviceString;
+          final monId = monitorDevice.ref.DeviceID;
+
+          // DISPLAY_DEVICE_ATTACHED_TO_DESKTOP (0x1) / DISPLAY_DEVICE_ACTIVE (0x1)
+          final bool isMonActive =
+              (monFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP) != 0 ||
+              (monFlags & 0x1) != 0;
+
+          // Fetch device interface name using EDD_GET_DEVICE_INTERFACE_NAME (flag = 1)
+          final interfaceDevice = calloc<DISPLAY_DEVICE>();
+          interfaceDevice.ref.cb = sizeOf<DISPLAY_DEVICE>();
+          String interfaceId = '';
+          if (EnumDisplayDevices(deviceNamePtr, monIndex, interfaceDevice, 1) !=
+              0) {
+            interfaceId = interfaceDevice.ref.DeviceID;
+          }
+          free(interfaceDevice);
+
+          if (isMonActive && !foundActive) {
+            selectedMonitorName = monName;
+            selectedDeviceId = monId;
+            selectedInterfaceId = interfaceId;
+            foundActive = true;
+          } else if (selectedMonitorName == null && monId.isNotEmpty) {
+            // Fallback to first available entry if no monitor has explicit active flag
+            selectedMonitorName = monName;
+            selectedDeviceId = monId;
+            selectedInterfaceId = interfaceId;
+          }
+
+          monIndex++;
+        }
+
+        if (selectedMonitorName != null && selectedDeviceId != null) {
+          final monitorName = selectedMonitorName;
+          final deviceID = selectedDeviceId.toLowerCase();
+          final deviceInterfaceID = (selectedInterfaceId ?? '').toLowerCase();
           final deviceIdHash = deviceID.hashCode
               .toRadixString(16)
               .toLowerCase();
@@ -187,16 +232,24 @@ class MonitorService {
           // Fetch real brightness for this monitor
           final realBrightness = await getBrightness(deviceName);
 
-          String friendly = friendlyNames[deviceID] ?? monitorName;
+          // 1. Direct lookup by exact SetupAPI device interface path or deviceID
+          String friendly =
+              friendlyNames[deviceInterfaceID] ??
+              friendlyNames[deviceID] ??
+              monitorName;
 
-          // Match by searching for the deviceID substring if exact match fails
+          // 2. Substring matching for PNP hardware identifiers (e.g. GSM58D6, AUS258C)
           if (friendly == monitorName) {
             for (final entry in friendlyNames.entries) {
               final parts = entry.key.split('#');
-              if (parts.length > 1 &&
-                  deviceID.contains(parts[1].toLowerCase())) {
-                friendly = entry.value;
-                break;
+              if (parts.length > 1) {
+                final hardwareId = parts[1].toLowerCase();
+                if (hardwareId.isNotEmpty &&
+                    (deviceID.contains(hardwareId) ||
+                        deviceInterfaceID.contains(hardwareId))) {
+                  friendly = entry.value;
+                  break;
+                }
               }
             }
           }
