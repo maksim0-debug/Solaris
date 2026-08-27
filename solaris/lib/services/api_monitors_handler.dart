@@ -43,7 +43,9 @@ class ApiMonitorsHandler {
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
     try {
-      final monitors = _container.read(monitorListProvider).value ?? [];
+      final monitors =
+          _container.read(monitorListProvider).value ??
+          await _container.read(monitorServiceProvider).getConnectedMonitors();
       MonitorSlugResolver.updateMonitors(monitors);
 
       final settingsMap =
@@ -151,7 +153,9 @@ class ApiMonitorsHandler {
       return;
     }
 
-    final monitors = _container.read(monitorListProvider).value ?? [];
+    final monitors =
+        _container.read(monitorListProvider).value ??
+        await _container.read(monitorServiceProvider).getConnectedMonitors();
     MonitorSlugResolver.updateMonitors(monitors);
 
     final resolvedId = MonitorSlugResolver.resolveToSystemId(rawSlug);
@@ -220,6 +224,10 @@ class ApiMonitorsHandler {
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
     final rawSlug = pathParams['slug'] ?? '';
+    final monitors =
+        _container.read(monitorListProvider).value ??
+        await _container.read(monitorServiceProvider).getConnectedMonitors();
+    MonitorSlugResolver.updateMonitors(monitors);
     final resolvedId = MonitorSlugResolver.resolveToSystemId(rawSlug);
 
     final String content = await utf8.decoder.bind(request).join();
@@ -283,6 +291,10 @@ class ApiMonitorsHandler {
     if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
 
     final rawSlug = pathParams['slug'] ?? '';
+    final monitors =
+        _container.read(monitorListProvider).value ??
+        await _container.read(monitorServiceProvider).getConnectedMonitors();
+    MonitorSlugResolver.updateMonitors(monitors);
     final resolvedId = MonitorSlugResolver.resolveToSystemId(rawSlug);
 
     final String content = await utf8.decoder.bind(request).join();

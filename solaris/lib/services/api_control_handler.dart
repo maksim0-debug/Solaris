@@ -287,12 +287,15 @@ class ApiControlHandler {
     }
 
     final monitorIdInput = mutablePayload['monitor_id'] as String? ?? 'all';
+    final monitors =
+        _container.read(monitorListProvider).value ??
+        await _container.read(monitorServiceProvider).getConnectedMonitors();
+    MonitorSlugResolver.updateMonitors(monitors);
     final resolvedMonitorId = MonitorSlugResolver.resolveToSystemId(
       monitorIdInput,
     );
 
     if (resolvedMonitorId != 'all' && resolvedMonitorId != 'primary') {
-      final monitors = _container.read(monitorListProvider).value ?? [];
       final exists = monitors.any(
         (m) => m.id == resolvedMonitorId || m.deviceName == resolvedMonitorId,
       );
