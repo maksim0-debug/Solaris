@@ -95,7 +95,8 @@ Upon connection, Solaris sends an initial `snapshot` frame containing current su
         "device_id_hash": "a1f9",
         "is_primary": true,
         "brightness": { "current": 80, "target": 80.0, "offset": 0.0, "mode": "auto" },
-        "temperature": { "enabled": true, "current": 5500, "target": 5500, "mode": "auto" }
+        "temperature": { "enabled": true, "current": 5500, "target": 5500, "mode": "auto" },
+        "game_mode": { "enabled": true, "active": false }
       }
     ],
     "solar": {

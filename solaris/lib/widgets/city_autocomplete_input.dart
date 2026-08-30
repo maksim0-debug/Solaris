@@ -153,13 +153,12 @@ class _CityAutocompleteInputState extends State<CityAutocompleteInput> {
             offset: Offset(0, size.height + 6),
             child: Material(
               elevation: 12,
-              color: const Color(0xFF1E1E2E),
+              color: const Color(0xFF181825),
               borderRadius: BorderRadius.circular(12),
               shadowColor: Colors.black54,
               child: Container(
                 constraints: const BoxConstraints(maxHeight: 220),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF181825),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: const Color(0xFFFDBA74).withOpacity(0.3),

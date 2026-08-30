@@ -187,6 +187,14 @@ class SettingsSearchService {
         anchorId: 'game_mode',
       ),
       SettingItem(
+        id: 'game_mode_target_displays',
+        title: l10n.gameModeTargetDisplays,
+        description: l10n.gameModeTargetDisplaysSubtitle,
+        tags: _splitTags(l10n.tags_game_mode_target_displays),
+        screen: AppScreen.settings,
+        anchorId: 'game_mode_target_displays',
+      ),
+      SettingItem(
         id: 'game_mode_temp_toggle',
         title: l10n.enableGameModeTemperature,
         description: l10n.enableGameModeTemperatureSubtitle,

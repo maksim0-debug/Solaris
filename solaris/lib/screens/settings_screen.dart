@@ -23,6 +23,7 @@ import 'package:solaris/theme/app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:solaris/widgets/settings/api_settings_card.dart';
 import 'package:solaris/widgets/settings/webhooks_management_card.dart';
+import 'package:solaris/services/monitor_service.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -51,6 +52,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     'language': GlobalKey<DeepLinkTargetState>(),
     'schedule_view': GlobalKey<DeepLinkTargetState>(),
     'game_mode': GlobalKey<DeepLinkTargetState>(),
+    'game_mode_target_displays': GlobalKey<DeepLinkTargetState>(),
     'game_mode_brightness': GlobalKey<DeepLinkTargetState>(),
     'game_mode_temp_toggle': GlobalKey<DeepLinkTargetState>(),
     'game_mode_temp': GlobalKey<DeepLinkTargetState>(),
@@ -74,7 +76,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   void _scrollToAnchor(String anchorId) {
-    final key = _anchorKeys[anchorId];
+    var key = _anchorKeys[anchorId];
+    if ((key == null || key.currentContext == null) &&
+        anchorId == 'game_mode_target_displays') {
+      key = _anchorKeys['game_mode'];
+    }
     if (key != null && key.currentContext != null) {
       Scrollable.ensureVisible(
         key.currentContext!,
@@ -1583,6 +1589,7 @@ class _SmartExclusionsCard extends ConsumerWidget {
     final settingsAsync = ref.watch(settingsProvider);
     final selectedIds = ref.watch(selectedMonitorsProvider);
     final monitorId = selectedIds.firstOrNull ?? 'all';
+    final monitors = ref.watch(monitorListProvider).value ?? [];
     final l10n = AppLocalizations.of(context)!;
 
     return settingsAsync.maybeWhen(
@@ -1644,6 +1651,19 @@ class _SmartExclusionsCard extends ConsumerWidget {
                 ),
               ),
               if (settings.isGameModeEnabled) ...[
+                if (monitors.length > 1) ...[
+                  const SizedBox(height: 24),
+                  const Divider(color: Colors.white10),
+                  const SizedBox(height: 24),
+                  DeepLinkTarget(
+                    key: anchorKeys['game_mode_target_displays'],
+                    id: 'game_mode_target_displays',
+                    child: _GameModeTargetDisplaysSection(
+                      monitors: monitors,
+                      settingsMap: map,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 24),
                 const Divider(color: Colors.white10),
                 const SizedBox(height: 24),
@@ -1765,6 +1785,229 @@ class _SmartExclusionsCard extends ConsumerWidget {
         );
       },
       orElse: () => const SizedBox(),
+    );
+  }
+}
+
+class _GameModeTargetDisplaysSection extends ConsumerWidget {
+  final List<MonitorInfo> monitors;
+  final Map<String, SettingsState> settingsMap;
+
+  const _GameModeTargetDisplaysSection({
+    required this.monitors,
+    required this.settingsMap,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final globalSettings = settingsMap['all'] ?? SettingsState();
+
+    final isAllActive = monitors.every((m) {
+      final s = settingsMap[m.deviceName] ?? globalSettings;
+      return s.isGameModeEnabled;
+    });
+
+    final isPrimaryOnlyActive = monitors.every((m) {
+      final s = settingsMap[m.deviceName] ?? globalSettings;
+      return m.isPrimary ? s.isGameModeEnabled : !s.isGameModeEnabled;
+    });
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.gameModeTargetDisplays,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    l10n.gameModeTargetDisplaysSubtitle,
+                    style: const TextStyle(fontSize: 12, color: Colors.white54),
+                  ),
+                ],
+              ),
+            ),
+            Row(
+              children: [
+                _ScopeChipButton(
+                  label: l10n.gameModeAllDisplays,
+                  isSelected: isAllActive,
+                  onTap: () {
+                    ref
+                        .read(settingsProvider.notifier)
+                        .setGameModeScope(
+                          primaryOnly: false,
+                          monitors: monitors,
+                        );
+                  },
+                ),
+                const SizedBox(width: 8),
+                _ScopeChipButton(
+                  label: l10n.gameModePrimaryOnly,
+                  isSelected: isPrimaryOnlyActive,
+                  onTap: () {
+                    ref
+                        .read(settingsProvider.notifier)
+                        .setGameModeScope(
+                          primaryOnly: true,
+                          monitors: monitors,
+                        );
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Column(
+          children: monitors.map((monitor) {
+            final monitorSettings =
+                settingsMap[monitor.deviceName] ?? globalSettings;
+            final isEnabled = monitorSettings.isGameModeEnabled;
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: isEnabled
+                    ? const Color(0xFFA855F7).withOpacity(0.08)
+                    : Colors.white.withOpacity(0.03),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isEnabled
+                      ? const Color(0xFFA855F7).withOpacity(0.3)
+                      : Colors.white10,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    LucideIcons.monitor,
+                    size: 18,
+                    color: isEnabled ? const Color(0xFFA855F7) : Colors.white38,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            monitor.friendlyName.isNotEmpty
+                                ? monitor.friendlyName
+                                : monitor.deviceName,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: isEnabled ? Colors.white : Colors.white60,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (monitor.isPrimary) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF818CF8).withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: const Color(0xFF818CF8).withOpacity(0.4),
+                              ),
+                            ),
+                            child: Text(
+                              l10n.primaryBadge,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF818CF8),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  Transform.scale(
+                    scale: 0.8,
+                    child: Switch(
+                      value: isEnabled,
+                      onChanged: (val) {
+                        ref
+                            .read(settingsProvider.notifier)
+                            .updateMonitorGameModeEnabled(
+                              monitor.deviceName,
+                              val,
+                            );
+                      },
+                      activeColor: const Color(0xFFA855F7),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+}
+
+class _ScopeChipButton extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ScopeChipButton({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? const Color(0xFFA855F7).withOpacity(0.2)
+                : Colors.white.withOpacity(0.04),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isSelected
+                  ? const Color(0xFFA855F7).withOpacity(0.6)
+                  : Colors.white12,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              color: isSelected ? const Color(0xFFA855F7) : Colors.white70,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

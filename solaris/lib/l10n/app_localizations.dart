@@ -1425,6 +1425,42 @@ abstract class AppLocalizations {
   /// **'Lock brightness when a game is detected'**
   String get enableGameModeSubtitle;
 
+  /// No description provided for @gameModeTargetDisplays.
+  ///
+  /// In en, this message translates to:
+  /// **'Target Displays'**
+  String get gameModeTargetDisplays;
+
+  /// No description provided for @gameModeTargetDisplaysSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select which monitors will lock brightness and temperature when games run'**
+  String get gameModeTargetDisplaysSubtitle;
+
+  /// No description provided for @gameModeAllDisplays.
+  ///
+  /// In en, this message translates to:
+  /// **'All Displays'**
+  String get gameModeAllDisplays;
+
+  /// No description provided for @gameModePrimaryOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary Only'**
+  String get gameModePrimaryOnly;
+
+  /// No description provided for @gameModeCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get gameModeCustom;
+
+  /// No description provided for @primaryBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary'**
+  String get primaryBadge;
+
   /// No description provided for @lockedBrightness.
   ///
   /// In en, this message translates to:
@@ -2129,6 +2165,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'gaming, fullscreen, priority, lock, performance, exclude, game, app, delay, minimize, locked temperature, locked brightness, whitelist, blacklist'**
   String get tags_game_mode;
+
+  /// No description provided for @tags_game_mode_target_displays.
+  ///
+  /// In en, this message translates to:
+  /// **'gaming, target displays, displays, monitors, primary only, all displays, per monitor, screen, target screen, select monitor, lock brightness'**
+  String get tags_game_mode_target_displays;
 
   /// No description provided for @tags_game_mode_temp.
   ///

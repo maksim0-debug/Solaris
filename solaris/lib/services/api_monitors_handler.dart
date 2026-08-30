@@ -12,6 +12,8 @@ import 'package:solaris/services/api_permissions_checker.dart';
 import 'package:solaris/services/api_router.dart';
 import 'package:solaris/services/monitor_service.dart';
 import 'package:solaris/services/monitor_slug_resolver.dart';
+import 'package:solaris/services/gaming_mode_service.dart';
+import 'package:collection/collection.dart';
 
 /// Handler for per-monitor reading and control endpoints (/api/v1/monitors)
 class ApiMonitorsHandler {
@@ -64,6 +66,7 @@ class ApiMonitorsHandler {
       );
       final targetBrightness = _container.read(currentBrightnessProvider);
       final targetTemperature = _container.read(currentTemperatureProvider);
+      final isGaming = _container.read(gamingModeProvider);
 
       final List<Map<String, dynamic>> monitorListJson = [];
 
@@ -72,8 +75,14 @@ class ApiMonitorsHandler {
         final id = m.id;
 
         final mSettings =
-            settingsMap[id] ?? settingsMap['all'] ?? SettingsState();
-        final mTempSettings = tempSettingsMap[id] ?? tempSettingsMap['all'];
+            settingsMap[m.deviceName] ??
+            settingsMap[id] ??
+            settingsMap['all'] ??
+            SettingsState();
+        final mTempSettings =
+            tempSettingsMap[m.deviceName] ??
+            tempSettingsMap[id] ??
+            tempSettingsMap['all'];
 
         final friendlySlug = 'display-${i + 1}';
         final edidHash = m.deviceIdHash.length >= 4
@@ -104,6 +113,10 @@ class ApiMonitorsHandler {
             'target': targetTemperature,
             'mode': isAutoTemperature ? 'auto' : 'manual',
             'active_preset': mTempSettings?.activePreset.name ?? 'cool',
+          },
+          'game_mode': {
+            'enabled': mSettings.isGameModeEnabled,
+            'active': isGaming && mSettings.isGameModeEnabled,
           },
         });
       }
@@ -188,7 +201,11 @@ class ApiMonitorsHandler {
     final settingsMap =
         _container.read(settingsProvider).value ?? {'all': SettingsState()};
     final mSettings =
-        settingsMap[targetMonitor.id] ?? settingsMap['all'] ?? SettingsState();
+        settingsMap[targetMonitor.deviceName] ??
+        settingsMap[targetMonitor.id] ??
+        settingsMap['all'] ??
+        SettingsState();
+    final isGaming = _container.read(gamingModeProvider);
 
     final responseBody = {
       'id': targetMonitor.id,
@@ -200,6 +217,10 @@ class ApiMonitorsHandler {
       'brightness_offset': mSettings.brightnessOffset,
       'smart_circadian_enabled': mSettings.isSmartCircadianEnabled,
       'weather_adjustment_enabled': mSettings.isWeatherAdjustmentEnabled,
+      'game_mode': {
+        'enabled': mSettings.isGameModeEnabled,
+        'active': isGaming && mSettings.isGameModeEnabled,
+      },
       'timestamp': DateTime.now().toUtc().toIso8601String(),
     };
 
@@ -339,6 +360,80 @@ class ApiMonitorsHandler {
 
     request.response
       ..statusCode = HttpStatus.accepted
+      ..headers.contentType = ContentType.json
+      ..write(jsonEncode(responseBody));
+    await request.response.close();
+  }
+
+  /// POST /api/v1/monitors/:slug/game-mode
+  Future<void> handleSetMonitorGameMode(
+    HttpRequest request,
+    Map<String, String> pathParams,
+  ) async {
+    final permissions = _getPermissions(request);
+
+    final check = ApiPermissionsChecker.checkAction(
+      permissions,
+      'set_game_mode',
+    );
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, check)) return;
+
+    final rawSlug = pathParams['slug'] ?? '';
+    final monitors =
+        _container.read(monitorListProvider).value ??
+        await _container.read(monitorServiceProvider).getConnectedMonitors();
+    MonitorSlugResolver.updateMonitors(monitors);
+    final resolvedId = MonitorSlugResolver.resolveToSystemId(rawSlug);
+
+    final String content = await utf8.decoder.bind(request).join();
+    final dynamic body = jsonDecode(content);
+
+    if (body is! Map<String, dynamic> ||
+        !body.containsKey('enabled') ||
+        body['enabled'] is! bool) {
+      await _sendError(
+        request,
+        HttpStatus.badRequest,
+        'Validation Error',
+        "Field 'enabled' (boolean) is required.",
+      );
+      return;
+    }
+
+    final enabled = body['enabled'] as bool;
+    String targetDeviceName = resolvedId ?? rawSlug;
+    if (resolvedId == 'primary') {
+      final primary =
+          monitors.firstWhereOrNull((m) => m.isPrimary) ?? monitors.firstOrNull;
+      if (primary != null) {
+        targetDeviceName = primary.deviceName;
+      }
+    } else {
+      final matched = monitors.firstWhereOrNull(
+        (m) => m.id == resolvedId || m.deviceName == resolvedId,
+      );
+      if (matched != null) {
+        targetDeviceName = matched.deviceName;
+      }
+    }
+
+    await safeStateMutator(() {
+      _container
+          .read(settingsProvider.notifier)
+          .updateMonitorGameModeEnabled(targetDeviceName, enabled);
+    });
+
+    final responseBody = {
+      'status': 'ok',
+      'action': 'set_monitor_game_mode',
+      'slug': rawSlug,
+      'target_monitor': targetDeviceName,
+      'game_mode': {'enabled': enabled},
+      'timestamp': DateTime.now().toUtc().toIso8601String(),
+    };
+
+    request.response
+      ..statusCode = HttpStatus.ok
       ..headers.contentType = ContentType.json
       ..write(jsonEncode(responseBody));
     await request.response.close();

@@ -748,6 +748,25 @@ class AppLocalizationsUk extends AppLocalizations {
   String get enableGameModeSubtitle => 'Блокувати яскравість при виявленні гри';
 
   @override
+  String get gameModeTargetDisplays => 'Цільові дисплеї';
+
+  @override
+  String get gameModeTargetDisplaysSubtitle =>
+      'Оберіть, на яких моніторах блокувати яскравість та колір під час ігор';
+
+  @override
+  String get gameModeAllDisplays => 'Всі дисплеї';
+
+  @override
+  String get gameModePrimaryOnly => 'Тільки основний';
+
+  @override
+  String get gameModeCustom => 'Вибірково';
+
+  @override
+  String get primaryBadge => 'Основний';
+
+  @override
   String get lockedBrightness => 'Заблокована яскравість';
 
   @override
@@ -1164,6 +1183,10 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get tags_game_mode =>
       'ігри, повний екран, пріоритет, блок, продуктивність, виключення, гра, додаток, затримка, згортання, зафіксувати, температура, яскравість, білий список, чорний список';
+
+  @override
+  String get tags_game_mode_target_displays =>
+      'ігри, цільові дисплеї, монітори, тільки основний, всі дисплеї, помоніторно, екран, вибір монітора, блокування яскравості';
 
   @override
   String get tags_game_mode_temp =>

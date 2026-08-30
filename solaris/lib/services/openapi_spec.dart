@@ -184,6 +184,38 @@ class OpenApiSpec {
           },
         },
       },
+      '/api/v1/monitors/{slug}/game-mode': {
+        'post': {
+          'summary': 'Set Monitor Game Mode by Slug',
+          'parameters': [
+            {
+              'name': 'slug',
+              'in': 'path',
+              'required': true,
+              'schema': {'type': 'string'},
+            },
+          ],
+          'requestBody': {
+            'required': true,
+            'content': {
+              'application/json': {
+                'schema': {
+                  'type': 'object',
+                  'required': ['enabled'],
+                  'properties': {
+                    'enabled': {'type': 'boolean'},
+                  },
+                },
+              },
+            },
+          },
+          'responses': {
+            '200': {'description': 'OK'},
+            '400': {'description': 'Validation Error'},
+            if (permissions != null) '403': forbiddenResponse,
+          },
+        },
+      },
       '/api/v1/sleep/sessions': {
         'get': {
           'summary': 'Get Paginated Sleep History',
@@ -461,6 +493,7 @@ class OpenApiSpec {
               'is_primary': {'type': 'boolean'},
               'brightness': {'type': 'object'},
               'temperature': {'type': 'object'},
+              'game_mode': {'type': 'object'},
             },
           },
           'HealthResponse': {

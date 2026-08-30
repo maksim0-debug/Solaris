@@ -158,6 +158,11 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
       (HttpRequest req, Map<String, String> params) =>
           _monitorsHandler.handleSetMonitorTemperature(req, params),
     );
+    _router.post(
+      '/api/v1/monitors/:slug/game-mode',
+      (HttpRequest req, Map<String, String> params) =>
+          _monitorsHandler.handleSetMonitorGameMode(req, params),
+    );
 
     // Per-App Overrides Endpoints
     _router.get(

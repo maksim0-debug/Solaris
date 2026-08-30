@@ -89,6 +89,15 @@ void main() {
         isTrue,
       );
 
+      // 8. Search for target displays / целевые дисплеи
+      final targetDisplaysResults = service.search('целевые дисплеи');
+      expect(
+        targetDisplaysResults.any(
+          (item) => item.anchorId == 'game_mode_target_displays',
+        ),
+        isTrue,
+      );
+
       // 4. English search test
       await tester.pumpWidget(
         ProviderScope(
@@ -108,6 +117,14 @@ void main() {
 
       final enResults = service.search('swagger');
       expect(enResults.any((item) => item.anchorId == 'solaris_api'), isTrue);
+
+      final enTargetDisplays = service.search('target displays');
+      expect(
+        enTargetDisplays.any(
+          (item) => item.anchorId == 'game_mode_target_displays',
+        ),
+        isTrue,
+      );
     },
   );
 

@@ -62,5 +62,17 @@ void main() {
       expect(updated.gameModeTemperature, equals(3500.0));
       expect(state.isGameModeTemperatureEnabled, isTrue); // Immutability check
     });
+
+    test('Per-monitor game mode isolation check', () {
+      final monitor1 = SettingsState(isGameModeEnabled: true);
+      final monitor2 = SettingsState(isGameModeEnabled: false);
+
+      expect(monitor1.isGameModeEnabled, isTrue);
+      expect(monitor2.isGameModeEnabled, isFalse);
+
+      final updatedM2 = monitor2.copyWith(isGameModeEnabled: true);
+      expect(updatedM2.isGameModeEnabled, isTrue);
+      expect(monitor2.isGameModeEnabled, isFalse); // Immutability
+    });
   });
 }

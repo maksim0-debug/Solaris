@@ -566,16 +566,22 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
         color: Colors.white.withOpacity(0.02),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: SwitchListTile(
-        title: Text(
-          title,
-          style: const TextStyle(color: Colors.white70, fontSize: 13),
+      child: Material(
+        color: Colors.transparent,
+        child: SwitchListTile(
+          title: Text(
+            title,
+            style: const TextStyle(color: Colors.white70, fontSize: 13),
+          ),
+          value: value,
+          activeColor: const Color(0xFFFDBA74),
+          dense: true,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 0,
+          ),
+          onChanged: onChanged,
         ),
-        value: value,
-        activeColor: const Color(0xFFFDBA74),
-        dense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-        onChanged: onChanged,
       ),
     );
   }
@@ -601,79 +607,100 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
         border: Border.all(color: Colors.white10),
       ),
       clipBehavior: Clip.antiAlias,
-      child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-        childrenPadding: const EdgeInsets.only(left: 16, right: 12, bottom: 8),
-        iconColor: const Color(0xFFFDBA74),
-        collapsedIconColor: Colors.white54,
-        leading: Checkbox(
-          tristate: true,
-          value: triStateVal,
-          activeColor: const Color(0xFFFDBA74),
-          checkColor: Colors.black,
-          onChanged: _isReadOnly
-              ? null
-              : (bool? val) {
-                  _toggleCategory(category, val);
-                },
-        ),
-        title: Text(
-          label,
-          style: TextStyle(
-            color: _isReadOnly ? Colors.white30 : Colors.white.withOpacity(0.9),
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+      child: Material(
+        color: Colors.transparent,
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+          childrenPadding: const EdgeInsets.only(
+            left: 16,
+            right: 12,
+            bottom: 8,
           ),
-        ),
-        subtitle: Text(
-          l10n.apiKeysGranularActionChip(allowedCount, categoryActions.length),
-          style: TextStyle(color: Colors.white.withOpacity(0.45), fontSize: 11),
-        ),
-        children: categoryActions.map((actionKey) {
-          final isAllowed = _isActionAllowedInUi(actionKey);
-          return Container(
-            margin: const EdgeInsets.only(bottom: 4),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.015),
-              borderRadius: BorderRadius.circular(6),
+          iconColor: const Color(0xFFFDBA74),
+          collapsedIconColor: Colors.white54,
+          leading: Checkbox(
+            tristate: true,
+            value: triStateVal,
+            activeColor: const Color(0xFFFDBA74),
+            checkColor: Colors.black,
+            onChanged: _isReadOnly
+                ? null
+                : (bool? val) {
+                    _toggleCategory(category, val);
+                  },
+          ),
+          title: Text(
+            label,
+            style: TextStyle(
+              color: _isReadOnly
+                  ? Colors.white30
+                  : Colors.white.withOpacity(0.9),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
             ),
-            child: CheckboxListTile(
-              enabled: !_isReadOnly && _allowedCategories.contains(category),
-              title: Text(
-                _getLocalizedActionName(l10n, actionKey),
-                style: TextStyle(
-                  color: _isReadOnly || !_allowedCategories.contains(category)
-                      ? Colors.white30
-                      : Colors.white.withOpacity(0.8),
-                  fontSize: 12.5,
+          ),
+          subtitle: Text(
+            l10n.apiKeysGranularActionChip(
+              allowedCount,
+              categoryActions.length,
+            ),
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.45),
+              fontSize: 11,
+            ),
+          ),
+          children: categoryActions.map((actionKey) {
+            final isAllowed = _isActionAllowedInUi(actionKey);
+            return Container(
+              margin: const EdgeInsets.only(bottom: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.015),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: CheckboxListTile(
+                  enabled:
+                      !_isReadOnly && _allowedCategories.contains(category),
+                  title: Text(
+                    _getLocalizedActionName(l10n, actionKey),
+                    style: TextStyle(
+                      color:
+                          _isReadOnly || !_allowedCategories.contains(category)
+                          ? Colors.white30
+                          : Colors.white.withOpacity(0.8),
+                      fontSize: 12.5,
+                    ),
+                  ),
+                  subtitle: Text(
+                    actionKey,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.35),
+                      fontSize: 10,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                  value: isAllowed,
+                  activeColor: const Color(0xFFFDBA74),
+                  checkColor: Colors.black,
+                  dense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 0,
+                  ),
+                  onChanged:
+                      (_isReadOnly || !_allowedCategories.contains(category))
+                      ? null
+                      : (bool? val) {
+                          if (val != null) {
+                            _toggleAction(actionKey, val);
+                          }
+                        },
                 ),
               ),
-              subtitle: Text(
-                actionKey,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.35),
-                  fontSize: 10,
-                  fontFamily: 'monospace',
-                ),
-              ),
-              value: isAllowed,
-              activeColor: const Color(0xFFFDBA74),
-              checkColor: Colors.black,
-              dense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 0,
-              ),
-              onChanged: (_isReadOnly || !_allowedCategories.contains(category))
-                  ? null
-                  : (bool? val) {
-                      if (val != null) {
-                        _toggleAction(actionKey, val);
-                      }
-                    },
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
+        ),
       ),
     );
   }

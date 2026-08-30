@@ -13,6 +13,7 @@ import 'package:solaris/providers/sleep_provider.dart';
 import 'package:solaris/services/api_permissions_checker.dart';
 import 'package:solaris/services/api_router.dart';
 import 'package:solaris/services/monitor_slug_resolver.dart';
+import 'package:collection/collection.dart';
 
 /// Safe Riverpod state mutation outside Flutter frame rendering phase.
 Future<void> safeStateMutator(VoidCallback mutation) async {
@@ -286,7 +287,10 @@ class ApiControlHandler {
       action = 'set_weather_provider';
     }
 
-    final monitorIdInput = mutablePayload['monitor_id'] as String? ?? 'all';
+    final monitorIdInput =
+        mutablePayload['monitor_id'] as String? ??
+        mutablePayload['monitor'] as String? ??
+        'all';
     final monitors =
         _container.read(monitorListProvider).value ??
         await _container.read(monitorServiceProvider).getConnectedMonitors();
@@ -497,11 +501,38 @@ class ApiControlHandler {
           );
         }
         await safeStateMutator(() {
-          _container
-              .read(settingsProvider.notifier)
-              .updateGameModeEnabled(enabled);
+          if (resolvedMonitorId == 'all') {
+            _container
+                .read(settingsProvider.notifier)
+                .updateGameModeEnabled(enabled);
+          } else {
+            String targetDeviceName = resolvedMonitorId ?? 'all';
+            if (resolvedMonitorId == 'primary') {
+              final primary =
+                  monitors.firstWhereOrNull((m) => m.isPrimary) ??
+                  monitors.firstOrNull;
+              if (primary != null) {
+                targetDeviceName = primary.deviceName;
+              }
+            } else {
+              final matched = monitors.firstWhereOrNull(
+                (m) =>
+                    m.id == resolvedMonitorId ||
+                    m.deviceName == resolvedMonitorId,
+              );
+              if (matched != null) {
+                targetDeviceName = matched.deviceName;
+              }
+            }
+            _container
+                .read(settingsProvider.notifier)
+                .updateMonitorGameModeEnabled(targetDeviceName, enabled);
+          }
         });
-        return _ActionResult.ok('set_game_mode', {'enabled': enabled});
+        return _ActionResult.ok('set_game_mode', {
+          'enabled': enabled,
+          'monitor': monitorIdInput,
+        });
 
       case 'set_game_mode_brightness':
         final val = _toDouble(mutablePayload['value']);

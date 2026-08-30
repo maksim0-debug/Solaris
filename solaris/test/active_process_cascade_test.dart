@@ -7,6 +7,7 @@ import 'package:solaris/services/active_process_service.dart';
 import 'package:solaris/services/gaming_mode_service.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/providers/temperature_provider.dart';
+import 'package:solaris/services/monitor_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -655,6 +656,80 @@ void main() {
 
         gamingNotifier.setGamingState(false);
         expect(container.read(gamingModeProvider), isFalse);
+      });
+
+      test('Per-monitor game mode cascade isolation test', () {
+        final settingsNotifier = container.read(settingsProvider.notifier);
+        final gamingNotifier = container.read(gamingModeProvider.notifier);
+        final manualBrightnessNotifier = container.read(
+          manualBrightnessProvider.notifier,
+        );
+
+        container
+            .read(autoBrightnessAdjustmentProvider.notifier)
+            .setEnabled(false);
+        manualBrightnessNotifier.update(45.0);
+
+        // Configure Monitor 1: Game Mode Enabled, Brightness 85%
+        // Configure Monitor 2: Game Mode Disabled, Brightness 45% (Manual)
+        settingsNotifier.updateGameModeBrightness(85.0);
+        settingsNotifier.updateMonitorGameModeEnabled(r'\\.\DISPLAY1', true);
+        settingsNotifier.updateMonitorGameModeEnabled(r'\\.\DISPLAY2', false);
+
+        // Turn on Game Mode
+        gamingNotifier.setGamingState(true);
+
+        // When Monitor 1 is selected -> brightness is 85.0 (Game Mode)
+        container
+            .read(selectedMonitorsProvider.notifier)
+            .selectOnly(r'\\.\DISPLAY1');
+        expect(container.read(currentBrightnessProvider), equals(85.0));
+
+        // When Monitor 2 is selected -> brightness is NOT Game Mode (remains 45.0 manual)
+        container
+            .read(selectedMonitorsProvider.notifier)
+            .selectOnly(r'\\.\DISPLAY2');
+        expect(container.read(currentBrightnessProvider), equals(45.0));
+      });
+
+      test('setGameModeScope configures primaryOnly correctly', () {
+        final settingsNotifier = container.read(settingsProvider.notifier);
+        final mockMonitors = [
+          MonitorInfo(
+            id: r'\\.\DISPLAY1',
+            name: 'Generic PnP Monitor',
+            deviceName: r'\\.\DISPLAY1',
+            friendlyName: 'Primary Display',
+            deviceIdHash: 'a1b2',
+            isPrimary: true,
+          ),
+          MonitorInfo(
+            id: r'\\.\DISPLAY2',
+            name: 'Generic PnP Monitor',
+            deviceName: r'\\.\DISPLAY2',
+            friendlyName: 'Secondary Display',
+            deviceIdHash: 'c3d4',
+            isPrimary: false,
+          ),
+        ];
+
+        settingsNotifier.setGameModeScope(
+          primaryOnly: true,
+          monitors: mockMonitors,
+        );
+
+        final map = container.read(settingsProvider).value!;
+        expect(map[r'\\.\DISPLAY1']?.isGameModeEnabled, isTrue);
+        expect(map[r'\\.\DISPLAY2']?.isGameModeEnabled, isFalse);
+
+        settingsNotifier.setGameModeScope(
+          primaryOnly: false,
+          monitors: mockMonitors,
+        );
+
+        final map2 = container.read(settingsProvider).value!;
+        expect(map2[r'\\.\DISPLAY1']?.isGameModeEnabled, isTrue);
+        expect(map2[r'\\.\DISPLAY2']?.isGameModeEnabled, isTrue);
       });
     });
   });

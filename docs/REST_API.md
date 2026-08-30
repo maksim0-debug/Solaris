@@ -323,6 +323,10 @@ Returns a list of all currently connected physical monitors.
         "target": 5500,
         "mode": "auto",
         "active_preset": "cool"
+      },
+      "game_mode": {
+        "enabled": true,
+        "active": false
       }
     }
   ],
@@ -347,6 +351,10 @@ Returns status summary for a single monitor identified by `:slug`.
   "brightness_offset": 0.0,
   "smart_circadian_enabled": true,
   "weather_adjustment_enabled": true,
+  "game_mode": {
+    "enabled": true,
+    "active": false
+  },
   "timestamp": "2026-07-25T14:30:00.000Z"
 }
 ```
@@ -357,7 +365,8 @@ Returns status summary for a single monitor identified by `:slug`.
 
 * **`POST /api/v1/monitors/:slug/brightness`**: Body `{"value": 75.0}` (double, `0.0..100.0`)
 * **`POST /api/v1/monitors/:slug/temperature`**: Body `{"value": 5000}` (integer Kelvin, `3300..6500`)
-* **Granular Security**: Blocked with `HTTP 403 Forbidden` if `isReadOnly = true` or category `monitors` is disabled.
+* **`POST /api/v1/monitors/:slug/game-mode`**: Body `{"enabled": true}` (boolean)
+* **Granular Security**: Blocked with `HTTP 403 Forbidden` if `isReadOnly = true` or category `monitors` / `gaming` is disabled.
 
 #### Example Request:
 ```http
@@ -379,6 +388,31 @@ X-API-Key: sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368
   "target_monitor": "\\\\.\\DISPLAY1",
   "queued": {
     "value": 70.0
+  },
+  "timestamp": "2026-07-25T14:30:00.000Z"
+}
+```
+
+#### Example Game Mode Request:
+```http
+POST /api/v1/monitors/display-2/game-mode HTTP/1.1
+Content-Type: application/json
+X-API-Key: sol_sec_ae1302d9e99a8b6aad30264417a64cec8ac1b17c20f5abc5cea38b5dea368eae01234567
+
+{
+  "enabled": false
+}
+```
+
+#### Example Game Mode Response (HTTP 200 OK):
+```json
+{
+  "status": "ok",
+  "action": "set_monitor_game_mode",
+  "slug": "display-2",
+  "target_monitor": "\\\\.\\DISPLAY2",
+  "game_mode": {
+    "enabled": false
   },
   "timestamp": "2026-07-25T14:30:00.000Z"
 }
@@ -502,8 +536,8 @@ Below is the complete reference of all 28 canonical action commands supported by
 
 #### Category 4: `gaming` (3 Actions)
 * **`set_game_mode`**
-  * **Payload**: `{"action": "set_game_mode", "enabled": true, "active": false}`
-  * **Parameters**: `enabled` / `active` (boolean).
+  * **Payload**: `{"action": "set_game_mode", "enabled": true, "monitor": "display-1"}`
+  * **Parameters**: `enabled` (boolean, required), `monitor` / `monitor_id` (string, optional - `"all"`, `"primary"`, `"display-1"`, etc.).
 * **`set_game_mode_brightness`**
   * **Payload**: `{"action": "set_game_mode_brightness", "value": 85.0}`
   * **Parameters**: `value` (double, `0.0..100.0`).

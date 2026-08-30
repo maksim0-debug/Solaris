@@ -748,6 +748,25 @@ class AppLocalizationsRu extends AppLocalizations {
       'Блокировать яркость при обнаружении игры';
 
   @override
+  String get gameModeTargetDisplays => 'Целевые дисплеи';
+
+  @override
+  String get gameModeTargetDisplaysSubtitle =>
+      'Выберите, на каких мониторах фиксировать яркость и цвет во время игр';
+
+  @override
+  String get gameModeAllDisplays => 'Все дисплеи';
+
+  @override
+  String get gameModePrimaryOnly => 'Только основной';
+
+  @override
+  String get gameModeCustom => 'Выборочно';
+
+  @override
+  String get primaryBadge => 'Основной';
+
+  @override
   String get lockedBrightness => 'Яркость в игре';
 
   @override
@@ -1165,6 +1184,10 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get tags_game_mode =>
       'игры, полный экран, приоритет, блок, производительность, исключения, игра, приложение, задержка, сворачивание, фиксировать, зафиксировать, температура, яркость, белый список, черный список';
+
+  @override
+  String get tags_game_mode_target_displays =>
+      'игры, целевые дисплеи, мониторы, только основной, все дисплеи, помониторно, экран, выбор монитора, блокировка яркости';
 
   @override
   String get tags_game_mode_temp =>

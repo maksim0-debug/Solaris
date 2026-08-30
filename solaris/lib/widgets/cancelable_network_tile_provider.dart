@@ -108,7 +108,7 @@ class _CancelableNetworkImageProvider
         throw Exception('NetworkImage is an empty file: $resolved');
       }
       final ImmutableBuffer buffer = await ImmutableBuffer.fromUint8List(bytes);
-      return decode(buffer);
+      return await decode(buffer);
     } catch (e) {
       if (e is ClientException) {
         debugPrint(

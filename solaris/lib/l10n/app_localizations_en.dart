@@ -749,6 +749,25 @@ class AppLocalizationsEn extends AppLocalizations {
       'Lock brightness when a game is detected';
 
   @override
+  String get gameModeTargetDisplays => 'Target Displays';
+
+  @override
+  String get gameModeTargetDisplaysSubtitle =>
+      'Select which monitors will lock brightness and temperature when games run';
+
+  @override
+  String get gameModeAllDisplays => 'All Displays';
+
+  @override
+  String get gameModePrimaryOnly => 'Primary Only';
+
+  @override
+  String get gameModeCustom => 'Custom';
+
+  @override
+  String get primaryBadge => 'Primary';
+
+  @override
   String get lockedBrightness => 'Locked Brightness';
 
   @override
@@ -1164,6 +1183,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get tags_game_mode =>
       'gaming, fullscreen, priority, lock, performance, exclude, game, app, delay, minimize, locked temperature, locked brightness, whitelist, blacklist';
+
+  @override
+  String get tags_game_mode_target_displays =>
+      'gaming, target displays, displays, monitors, primary only, all displays, per monitor, screen, target screen, select monitor, lock brightness';
 
   @override
   String get tags_game_mode_temp =>

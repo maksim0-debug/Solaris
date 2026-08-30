@@ -1726,6 +1726,44 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     );
   }
 
+  void updateMonitorGameModeEnabled(String monitorDeviceName, bool enabled) {
+    final currentMap = state.value ?? {'all': SettingsState()};
+    final newStateMap = Map<String, SettingsState>.from(currentMap);
+    final current =
+        newStateMap[monitorDeviceName] ?? newStateMap['all'] ?? SettingsState();
+    newStateMap[monitorDeviceName] = current.copyWith(
+      isGameModeEnabled: enabled,
+    );
+    debugPrint(
+      '[SettingsNotifier] Updated game mode for monitor $monitorDeviceName to $enabled',
+    );
+    state = AsyncData(newStateMap);
+    _saveSettings();
+  }
+
+  void setGameModeScope({
+    required bool primaryOnly,
+    required List<MonitorInfo> monitors,
+  }) {
+    final currentMap = state.value ?? {'all': SettingsState()};
+    final newStateMap = Map<String, SettingsState>.from(currentMap);
+    final global = newStateMap['all'] ?? SettingsState();
+    newStateMap['all'] = global.copyWith(isGameModeEnabled: true);
+
+    for (final monitor in monitors) {
+      final current = newStateMap[monitor.deviceName] ?? global;
+      final shouldEnable = primaryOnly ? monitor.isPrimary : true;
+      newStateMap[monitor.deviceName] = current.copyWith(
+        isGameModeEnabled: shouldEnable,
+      );
+    }
+    debugPrint(
+      '[SettingsNotifier] Set game mode scope (primaryOnly: $primaryOnly) across ${monitors.length} monitors',
+    );
+    state = AsyncData(newStateMap);
+    _saveSettings();
+  }
+
   void updateGameModeBrightness(double brightness) {
     _updateSettings(
       ref.read(selectedMonitorsProvider),

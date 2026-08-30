@@ -161,21 +161,30 @@ class WebSocketService {
         MonitorSlugResolver.updateMonitors(monitors);
         final currentBrightness = ref.read(currentBrightnessProvider);
         final currentTemp = ref.read(currentTemperatureProvider);
+        final isGaming = ref.read(gamingModeProvider);
+        final settingsMap = ref.read(settingsProvider).value ?? {};
 
-        final list = monitors
-            .map(
-              (mon) => {
-                'id': mon.id,
-                'name': mon.name,
-                'friendly_name': mon.friendlyName,
-                'slug': MonitorSlugResolver.getSlugForSystemId(mon.id),
-                'device_id_hash': mon.deviceIdHash,
-                'is_primary': mon.isPrimary,
-                'brightness': mon.realBrightness ?? currentBrightness.round(),
-                'temperature': mon.realTemperature ?? currentTemp,
-              },
-            )
-            .toList();
+        final list = monitors.map((mon) {
+          final monSettings =
+              settingsMap[mon.deviceName] ??
+              settingsMap[mon.id] ??
+              settingsMap['all'] ??
+              SettingsState();
+          return {
+            'id': mon.id,
+            'name': mon.name,
+            'friendly_name': mon.friendlyName,
+            'slug': MonitorSlugResolver.getSlugForSystemId(mon.id),
+            'device_id_hash': mon.deviceIdHash,
+            'is_primary': mon.isPrimary,
+            'brightness': mon.realBrightness ?? currentBrightness.round(),
+            'temperature': mon.realTemperature ?? currentTemp,
+            'game_mode': {
+              'enabled': monSettings.isGameModeEnabled,
+              'active': isGaming && monSettings.isGameModeEnabled,
+            },
+          };
+        }).toList();
 
         broadcastModule('monitors', list);
       });
@@ -510,20 +519,29 @@ class WebSocketService {
       MonitorSlugResolver.updateMonitors(monitors);
       final currentBrightness = ref.read(currentBrightnessProvider);
       final currentTemp = ref.read(currentTemperatureProvider);
+      final isGaming = ref.read(gamingModeProvider);
+      final settingsMap = ref.read(settingsProvider).value ?? {};
 
-      map['monitors'] = monitors
-          .map(
-            (mon) => {
-              'id': mon.id,
-              'name': mon.name,
-              'friendly_name': mon.friendlyName,
-              'slug': MonitorSlugResolver.getSlugForSystemId(mon.id),
-              'is_primary': mon.isPrimary,
-              'brightness': mon.realBrightness ?? currentBrightness.round(),
-              'temperature': mon.realTemperature ?? currentTemp,
-            },
-          )
-          .toList();
+      map['monitors'] = monitors.map((mon) {
+        final monSettings =
+            settingsMap[mon.deviceName] ??
+            settingsMap[mon.id] ??
+            settingsMap['all'] ??
+            SettingsState();
+        return {
+          'id': mon.id,
+          'name': mon.name,
+          'friendly_name': mon.friendlyName,
+          'slug': MonitorSlugResolver.getSlugForSystemId(mon.id),
+          'is_primary': mon.isPrimary,
+          'brightness': mon.realBrightness ?? currentBrightness.round(),
+          'temperature': mon.realTemperature ?? currentTemp,
+          'game_mode': {
+            'enabled': monSettings.isGameModeEnabled,
+            'active': isGaming && monSettings.isGameModeEnabled,
+          },
+        };
+      }).toList();
     }
 
     if (permissions.allowReadSleep) {
