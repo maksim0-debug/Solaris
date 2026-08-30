@@ -2769,8 +2769,20 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
       final selection = ref.read(selectedMonitorsProvider);
       final monitors = ref.read(monitorListProvider).value ?? [];
       final offsets = ref.read(brightnessOffsetsProvider);
+      final isGaming = ref.read(gamingModeProvider);
+      final settingsMap = ref.read(settingsProvider).value ?? {};
 
-      for (final id in selection) {
+      final targetMonitors = selection.contains('all')
+          ? monitors.map((m) => m.deviceName).toList()
+          : selection.toList();
+
+      for (final id in targetMonitors) {
+        final mSettings =
+            settingsMap[id] ?? settingsMap['all'] ?? SettingsState();
+        if (isGaming && mSettings.isGameModeEnabled) {
+          continue;
+        }
+
         brightnessService.applyBrightnessSmoothly(
           selection: id,
           targetValue: next,
@@ -2795,11 +2807,22 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
     if (previous != next) {
       final selection = ref.read(selectedMonitorsProvider);
       final monitors = ref.read(monitorListProvider).value ?? [];
+      final isGaming = ref.read(gamingModeProvider);
+      final settingsMap = ref.read(settingsProvider).value ?? {};
+
       final targetMonitors = selection.contains('all')
           ? monitors.map((m) => m.deviceName).toList()
           : selection.toList();
 
       for (final id in targetMonitors) {
+        final mSettings =
+            settingsMap[id] ?? settingsMap['all'] ?? SettingsState();
+        if (isGaming &&
+            mSettings.isGameModeEnabled &&
+            mSettings.isGameModeTemperatureEnabled) {
+          continue;
+        }
+
         tempService.setTemperatureInstant(
           selection: id,
           targetValue: next.toDouble(),

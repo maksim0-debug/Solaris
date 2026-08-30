@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/providers/temperature_provider.dart';
+import 'package:solaris/services/gaming_mode_service.dart';
 import 'package:solaris/widgets/window_title_bar.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:solaris/screens/schedule_screen.dart';
@@ -592,7 +593,18 @@ class _Header extends ConsumerWidget {
           final targetBright = ref.read(currentBrightnessProvider);
           debugPrint('Initial sync: applying brightness $targetBright');
           final offsets = ref.read(brightnessOffsetsProvider);
-          for (final id in selection) {
+          final isGaming = ref.read(gamingModeProvider);
+          final settingsMap = ref.read(settingsProvider).value ?? {};
+
+          final targetMonitors = selection.contains('all')
+              ? monitors.map((m) => m.deviceName).toList()
+              : selection.toList();
+
+          for (final id in targetMonitors) {
+            final mSettings =
+                settingsMap[id] ?? settingsMap['all'] ?? SettingsState();
+            if (isGaming && mSettings.isGameModeEnabled) continue;
+
             brightnessService.applyBrightnessSmoothly(
               selection: id,
               targetValue: targetBright,
@@ -612,7 +624,22 @@ class _Header extends ConsumerWidget {
             !temperatureService.isResetLocked) {
           final targetTemp = ref.read(currentTemperatureProvider);
           debugPrint('Initial sync: applying temperature $targetTemp');
-          for (final id in selection) {
+          final isGaming = ref.read(gamingModeProvider);
+          final settingsMap = ref.read(settingsProvider).value ?? {};
+
+          final targetMonitors = selection.contains('all')
+              ? monitors.map((m) => m.deviceName).toList()
+              : selection.toList();
+
+          for (final id in targetMonitors) {
+            final mSettings =
+                settingsMap[id] ?? settingsMap['all'] ?? SettingsState();
+            if (isGaming &&
+                mSettings.isGameModeEnabled &&
+                mSettings.isGameModeTemperatureEnabled) {
+              continue;
+            }
+
             temperatureService.setTemperatureInstant(
               selection: id,
               targetValue: targetTemp.toDouble(),
@@ -636,16 +663,27 @@ class _Header extends ConsumerWidget {
         if (!ref.read(autoBrightnessAdjustmentProvider)) {
           final brightness = ref.read(currentBrightnessProvider);
           final offsets = ref.read(brightnessOffsetsProvider);
-          brightnessService.applyBrightnessSmoothly(
-            selection: 'all',
-            targetValue: brightness,
-            monitors: monitorValue,
-            monitorService: monitorService,
-            offsets: offsets,
-            isManual: true,
-            updateBrightnessCallback: (id, val) =>
-                monitorListNotifier.updateBrightness(id, val),
-          );
+          final isGaming = ref.read(gamingModeProvider);
+          final settingsMap = ref.read(settingsProvider).value ?? {};
+
+          for (final m in monitorValue) {
+            final mSettings =
+                settingsMap[m.deviceName] ??
+                settingsMap['all'] ??
+                SettingsState();
+            if (isGaming && mSettings.isGameModeEnabled) continue;
+
+            brightnessService.applyBrightnessSmoothly(
+              selection: m.deviceName,
+              targetValue: brightness,
+              monitors: monitorValue,
+              monitorService: monitorService,
+              offsets: offsets,
+              isManual: true,
+              updateBrightnessCallback: (id, val) =>
+                  monitorListNotifier.updateBrightness(id, val),
+            );
+          }
         }
 
         // Apply temperature only if color temperature is enabled and auto temperature is disabled and reset lock is inactive
@@ -653,14 +691,29 @@ class _Header extends ConsumerWidget {
             !ref.read(autoTemperatureAdjustmentProvider) &&
             !temperatureService.isResetLocked) {
           final targetTemp = ref.read(currentTemperatureProvider);
-          temperatureService.setTemperatureInstant(
-            selection: 'all',
-            targetValue: targetTemp.toDouble(),
-            monitors: monitorValue,
-            monitorService: monitorService,
-            updateTemperatureCallback: (id, val) =>
-                monitorListNotifier.updateTemperature(id, val),
-          );
+          final isGaming = ref.read(gamingModeProvider);
+          final settingsMap = ref.read(settingsProvider).value ?? {};
+
+          for (final m in monitorValue) {
+            final mSettings =
+                settingsMap[m.deviceName] ??
+                settingsMap['all'] ??
+                SettingsState();
+            if (isGaming &&
+                mSettings.isGameModeEnabled &&
+                mSettings.isGameModeTemperatureEnabled) {
+              continue;
+            }
+
+            temperatureService.setTemperatureInstant(
+              selection: m.deviceName,
+              targetValue: targetTemp.toDouble(),
+              monitors: monitorValue,
+              monitorService: monitorService,
+              updateTemperatureCallback: (id, val) =>
+                  monitorListNotifier.updateTemperature(id, val),
+            );
+          }
         }
       } else if (next.length == 1) {
         // If single monitor selected, sync UI to its current levels

@@ -731,6 +731,45 @@ void main() {
         expect(map2[r'\\.\DISPLAY1']?.isGameModeEnabled, isTrue);
         expect(map2[r'\\.\DISPLAY2']?.isGameModeEnabled, isTrue);
       });
+
+      test(
+        'Adjusting brightness for non-gaming monitor does not mutate gaming monitor',
+        () async {
+          await container.read(settingsProvider.future);
+          final settingsNotifier = container.read(settingsProvider.notifier);
+          final gamingNotifier = container.read(gamingModeProvider.notifier);
+
+          container
+              .read(autoBrightnessAdjustmentProvider.notifier)
+              .setEnabled(false);
+
+          // Monitor 1: Game Mode Enabled (90%)
+          // Monitor 2: Game Mode Disabled
+          settingsNotifier.updateGameModeBrightness(90.0);
+          settingsNotifier.updateMonitorGameModeEnabled(r'\\.\DISPLAY1', true);
+          settingsNotifier.updateMonitorGameModeEnabled(r'\\.\DISPLAY2', false);
+
+          // Game Mode active
+          gamingNotifier.setGamingState(true);
+
+          // Select Monitor 2 and set manual brightness to 30%
+          container
+              .read(selectedMonitorsProvider.notifier)
+              .selectOnly(r'\\.\DISPLAY2');
+          container
+              .read(currentBrightnessProvider.notifier)
+              .setManualBrightness(30.0);
+
+          // Monitor 2 should be 30%
+          expect(container.read(currentBrightnessProvider), equals(30.0));
+
+          // When switching to Monitor 1, it must still be locked to 90% (Game Mode)
+          container
+              .read(selectedMonitorsProvider.notifier)
+              .selectOnly(r'\\.\DISPLAY1');
+          expect(container.read(currentBrightnessProvider), equals(90.0));
+        },
+      );
     });
   });
 }

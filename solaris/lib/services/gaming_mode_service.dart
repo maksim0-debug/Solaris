@@ -31,24 +31,27 @@ class GamingModeService extends Notifier<bool> {
 
   @override
   bool build() {
-    // Watch settings to automatically sync blacklist/whitelist to native code
-    final settingsAsync = ref.watch(settingsProvider);
+    // Listen to settings to automatically sync blacklist/whitelist to native code
+    ref.listen<AsyncValue<Map<String, SettingsState>>>(settingsProvider, (
+      previous,
+      next,
+    ) {
+      next.whenData((Map<String, SettingsState> settingsMap) {
+        final settings = settingsMap['all'] ?? SettingsState();
 
-    settingsAsync.whenData((Map<String, SettingsState> settingsMap) {
-      final settings = settingsMap['all'] ?? SettingsState();
+        // Sync Whitelist
+        _updateWhitelistNative(settings.gameModeWhitelist);
 
-      // Sync Whitelist
-      _updateWhitelistNative(settings.gameModeWhitelist);
+        // Sync Blacklist (Default + User)
+        _updateBlacklistNative([
+          ...defaultBlacklist,
+          ...settings.gameModeBlacklist,
+        ]);
 
-      // Sync Blacklist (Default + User)
-      _updateBlacklistNative([
-        ...defaultBlacklist,
-        ...settings.gameModeBlacklist,
-      ]);
-
-      // Sync Exit Delay
-      _updateExitDelayNative(settings.gameModeExitDelaySeconds);
-    });
+        // Sync Exit Delay
+        _updateExitDelayNative(settings.gameModeExitDelaySeconds);
+      });
+    }, fireImmediately: true);
 
     return false;
   }
