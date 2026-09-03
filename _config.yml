@@ -1,0 +1,20 @@
+title: "Solaris — Auto-Brightness & Circadian Monitor Control"
+tagline: "Automatic Monitor Hardware Brightness & Color Temperature for Windows"
+description: "Free, open-source Windows 10/11 app that synchronizes monitor brightness (DDC/CI) & color temperature with natural circadian rhythms, sleep debt & weather."
+url: "https://maksim0-debug.github.io"
+baseurl: "/Solaris"
+
+# Branding & Social Sharing
+logo: "/solaris/assets/icon/icon_180.png"
+image: "/solaris/assets/icon/social_preview.png"
+
+# Social Metadata
+twitter:
+  card: "summary_large_image"
+  title: "Solaris — Auto-Brightness & Circadian Monitor Control for Windows"
+  description: "Synchronize monitor hardware brightness (DDC/CI) and color temperature with solar cycles and circadian rhythm on Windows 10/11."
+  image: "https://maksim0-debug.github.io/Solaris/solaris/assets/icon/social_preview.png"
+
+# Jekyll Plugins
+plugins:
+  - jekyll-seo-tag

@@ -1,7 +1,19 @@
 # ☀️ Solaris — Advanced Auto-Brightness & Circadian Monitor Control
 
 <p align="center">
-  <img src="solaris/assets/icon/icon.png" alt="Solaris application icon featuring a stylized sun and monitor silhouette" width="180" />
+  <img src="solaris/assets/icon/icon_180.png" alt="Solaris application icon featuring a stylized sun and monitor silhouette" width="180" />
+</p>
+
+<p align="center">
+  <a href="https://github.com/maksim0-debug/Solaris/releases/latest/download/Solaris-Windows.zip">
+    <img src="https://img.shields.io/badge/Download_for_Windows-v1.3.1_(.zip)-0284c7?style=for-the-badge&logo=windows&logoColor=white" alt="Download Solaris v1.3.1 for Windows" />
+  </a>
+  <a href="https://github.com/maksim0-debug/Solaris/releases/latest">
+    <img src="https://img.shields.io/github/v/release/maksim0-debug/Solaris?style=for-the-badge&color=fdba74&label=Latest%20Release" alt="Latest Release Badge" />
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-emerald?style=for-the-badge" alt="MIT License Badge" />
+  </a>
 </p>
 
 **Solaris** is a professional Windows application built with Flutter that synchronizes your monitor's brightness and color temperature with natural circadian rhythms. By calculating the precise position of the sun (elevation and azimuth) based on your geographic location, Solaris ensures a comfortable, healthy, and fully automated computing experience 24/7.
@@ -56,7 +68,7 @@ Automates display parameter locks based on active application state.
   - **Whitelist:** Forcefully activates Game Mode for specified executables (e.g., `cyberpunk2077.exe`).
   - **Blacklist:** Forcefully blocks Game Mode for specific applications (e.g., `chrome.exe`, `telegram.exe`).
 <img width="965" height="647" alt="Smart Exclusions settings panel showing game mode, brightness lock, and color temperature controls" src="https://github.com/user-attachments/assets/2c2f9d40-af44-4e7f-858c-8460842aa6cd" />
-<img width="971" height="319" alt=" Application Whitelist configuration" src="https://github.com/user-attachments/assets/5c74ab66-234a-46ff-ad71-31c27275f909" />
+<img width="971" height="319" alt="Solaris Game Mode Application Whitelist configuration" src="https://github.com/user-attachments/assets/5c74ab66-234a-46ff-ad71-31c27275f909" />
 
 
 ### 🎨 Per-App Overrides (Color Accuracy & Custom App Profiles)
@@ -67,7 +79,7 @@ Automate monitor settings for specific software applications with pinpoint preci
 - **Flexible Per-App Settings**: Set a fixed value or assign a dedicated custom curve independently for brightness and color temperature, or follow the app's global settings.
 - **Exit Delay & Immediate Preemption**: Customizable holding timer (0–300s) retains profile settings when minimizing apps to the background, while direct switching between profiled apps applies new settings **instantly (0 ms)**.
 - **Native Dual-Tier Focus Detection**: Fast 100ms Win32 polling loop detects focus switches with UWP container support (`ApplicationFrameHost.exe`), Cyrillic/UTF-8 path handling, and System Shell Blacklist filtering.
-<img width="954" height="663" alt="Per-App Overrides in Solaris" src="https://github.com/user-attachments/assets/b35bdcdb-091c-4344-888d-25696edd6f9a" />
+<img width="954" height="663" alt="Solaris Per-App color temperature 6500K overrides for creative software" src="https://github.com/user-attachments/assets/b35bdcdb-091c-4344-888d-25696edd6f9a" />
 
 
 
