@@ -154,13 +154,13 @@ class LuminosityGraph extends StatelessWidget {
     final now = phases.sunrise;
     final startOfDay = now is tz.TZDateTime
         ? tz.TZDateTime(now.location, now.year, now.month, now.day)
-        : DateTime(now.year, now.month, now.day); // Полночь
+        : DateTime(now.year, now.month, now.day); // Midnight
 
-    // Считаем высоту солнца каждые 30 минут (0.5 часа) для идеальной кривой
+    // Calculate sun elevation every 30 minutes (0.5 hours) for a smooth curve
     for (double hour = 0; hour <= 24; hour += 0.5) {
       final time = startOfDay.add(Duration(minutes: (hour * 60).toInt()));
 
-      // Используем реальную астрономическую формулу пакета
+      // Use astronomical formulas from the package
       final calc = SolarCalculator(Instant.fromDateTime(time), lat, lon);
       final elevation = calc.sunHorizontalPosition.elevation;
 

@@ -362,10 +362,10 @@ final smartCircadianTemperatureDataProvider =
       );
     });
 
-// Провайдер для SharedPreferences (переопределяется в main.dart)
+// SharedPreferences provider (overridden in main.dart)
 final sharedPreferencesProvider = Provider<SharedPreferences?>((ref) => null);
 
-// 1. Провайдер самого сервиса
+// 1. Service provider
 final weatherServiceProvider = Provider((ref) => WeatherService());
 
 class WeatherNotifier extends AsyncNotifier<WeatherData?> {
@@ -378,7 +378,7 @@ class WeatherNotifier extends AsyncNotifier<WeatherData?> {
     final weatherService = ref.watch(weatherServiceProvider);
     final settingsAsync = ref.watch(settingsProvider);
 
-    // При уничтожении - очищаем старый таймер
+    // Clean up old timer on disposal
     ref.onDispose(() {
       _timer?.cancel();
     });
@@ -401,7 +401,7 @@ class WeatherNotifier extends AsyncNotifier<WeatherData?> {
       orElse: () => null,
     );
 
-    // Получаем текущую локацию (уже с сохранением старого state при загрузке)
+    // Retrieve current location (preserving previous state during loading)
     final pos = locationAsync.value;
 
     _setupTimer(pos, provider, weatherService);
@@ -447,11 +447,11 @@ class WeatherNotifier extends AsyncNotifier<WeatherData?> {
         );
         if (newData != null) {
           _lastKnownWeather = newData;
-          // Обновляем состояние асинхронно, Riverpod не будет сбрасывать его в null
+          // Update state asynchronously so Riverpod does not reset it to null
           state = AsyncData(newData);
         }
       } catch (e) {
-        // Ошибка или таймаут - просто ничего не делаем, оставив старый стейт
+        // Error or timeout - preserve the previous state
         print(
           'Timer update caught error: $e. Retaining previous weather state.',
         );
@@ -654,13 +654,13 @@ final effectiveLocationProvider = Provider<AsyncValue<Position>>((ref) {
         ),
       );
     }
-    // Если авто-обновление включено, пытаемся сохранить предыдущие координаты при миганиях stream
+    // When auto-update is enabled, preserve previous coordinates during stream flickers
     final lastPos = streamAsync.value;
     if (lastPos != null) {
       return AsyncData<Position>(lastPos);
     }
 
-    // Если предыдущих данных нет (например первый запуск), то ждем данных или используем дефолт по часовому поясу
+    // If no prior data exists (e.g. first run), wait for stream data or fall back to timezone default
     return streamAsync.maybeWhen(
       data: (pos) => AsyncData<Position>(pos),
       orElse: () =>

@@ -106,10 +106,7 @@ class RegimeAnalyzer {
       final entry = entries[i];
 
       if (current.normalEntries.isEmpty) {
-        // If the very first entry of a regime is outdated, we mark it as an anomaly instead of a regime starter?
-        // Actually, if it's the start, it becomes the anchor. But if it's outdated relative to LATEST,
-        // it shouldn't be the anchor of a CURRENT regime.
-        // But the state machine builds regimes forward.
+        // The first entry initializes the regime anchor
         current.addEntry(entry, isAnomaly: false);
         continue;
       }

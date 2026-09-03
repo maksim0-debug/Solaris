@@ -9,7 +9,7 @@ import 'package:solaris/utils/key_obfuscator.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  // Создаем локальную временную директорию внутри проекта для тестирования
+  // Create local temporary directory inside project for testing
   final tempDir = Directory('test_support_dir');
 
   setUpAll(() async {
@@ -17,7 +17,7 @@ void main() {
       await tempDir.create(recursive: true);
     }
 
-    // Мокаем канал path_provider
+    // Mock path_provider channel
     const MethodChannel(
       'plugins.flutter.io/path_provider',
     ).setMockMethodCallHandler((MethodCall methodCall) async {
@@ -35,7 +35,7 @@ void main() {
   });
 
   setUp(() async {
-    // Очищаем файлы и состояние синглтона перед каждым тестом
+    // Clean up files and singleton state before each test
     await GoogleFitService().signOut();
   });
 
@@ -56,18 +56,18 @@ void main() {
     test(
       'Backward compatibility - reads plaintext token, initializes, and migrates to encrypted format on disk',
       () async {
-        // 1. Записываем обычный незашифрованный JSON на диск (эмуляция старых версий приложения)
+        // 1. Write unencrypted JSON to disk (emulating older app versions)
         final plaintextJson = jsonEncode(mockCredentials);
         final file = File('${tempDir.path}/google_fit_token.json');
         await file.writeAsString(plaintextJson, flush: true);
 
-        // 2. Инициализируем сервис — он должен прочитать токен и запустить миграцию
+        // 2. Initialize service — it should read token and trigger migration
         final service = GoogleFitService();
         final initialized = await service.initialize();
         expect(initialized, isTrue);
         expect(service.isConnected, isTrue);
 
-        // 3. Проверяем, что файл на диске был перезаписан в зашифрованном формате (миграция прошла успешно)
+        // 3. Verify file on disk was overwritten in encrypted format (migration successful)
         final onDiskContent = await file.readAsString();
         expect(onDiskContent, isNot(equals(plaintextJson)));
         expect(
@@ -84,12 +84,12 @@ void main() {
         final service = GoogleFitService();
         final storage = StorageService();
 
-        // 1. Шифруем и сохраняем токен через StorageService (эмуляция сохранения в google_fit_service)
+        // 1. Encrypt and save token via StorageService (emulating save in google_fit_service)
         final jsonStr = jsonEncode(mockCredentials);
         final encryptedStr = KeyObfuscator.encrypt(jsonStr);
         await storage.save('google_fit_token.json', encryptedStr);
 
-        // Проверяем, что на диске сохранен именно зашифрованный текст с нужным префиксом
+        // Verify that encrypted text with expected prefix is saved to disk
         final file = File('${tempDir.path}/google_fit_token.json');
         final onDiskContent = await file.readAsString();
         expect(onDiskContent, isNot(equals(jsonStr)));
@@ -99,7 +99,7 @@ void main() {
           isTrue,
         );
 
-        // 2. Инициализируем сервис — он должен успешно расшифровать и загрузить токен
+        // 2. Initialize service — it should successfully decrypt and load token
         final initialized = await service.initialize();
         expect(initialized, isTrue);
         expect(service.isConnected, isTrue);
@@ -109,17 +109,17 @@ void main() {
     test(
       'Corrupted encrypted token - fails gracefully, isConnected is false and file is deleted',
       () async {
-        // 1. Записываем поврежденные зашифрованные данные
+        // 1. Write corrupted encrypted data
         final file = File('${tempDir.path}/google_fit_token.json');
         await file.writeAsString('obf:invalid_base_64_data_!!!', flush: true);
 
-        // 2. Инициализация должна вернуть false, а сервис остаться неподключенным
+        // 2. Initialization should return false and service should remain disconnected
         final service = GoogleFitService();
         final initialized = await service.initialize();
         expect(initialized, isFalse);
         expect(service.isConnected, isFalse);
 
-        // 3. Проверяем, что битый файл был автоматически удален с диска
+        // 3. Verify corrupted file was automatically removed from disk
         expect(await file.exists(), isFalse);
       },
     );

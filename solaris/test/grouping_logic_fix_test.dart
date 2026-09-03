@@ -7,10 +7,10 @@ import 'package:solaris/services/regime_analyzer.dart';
 void main() {
   group('Session Grouping Fix Tests', () {
     test('Overlapping and nested sessions should be handled correctly', () {
-      // Data from screenshot:
+      // Test scenario:
       // Session 1: 13:26 - 19:09
       // Session 2: 13:42 - 15:52 (nested in 1)
-      // Session 3: 19:26 - 21:33 (close to 1)
+      // Session 3: 19:26 - 21:33 (adjacent to 1)
 
       final sessions = [
         SleepSession(
@@ -42,9 +42,7 @@ void main() {
       expect(nightGroups.length, 1);
       expect(nightGroups.first.date.day, 31);
 
-      // Nested session '2' should have been removed if it's perfectly nested
-      // Or at least they should all be in the same group.
-      // With my new deduplicator, '2' is removed.
+      // Nested session '2' should be removed as duplicate
       expect(nightGroups.first.allSessions.length, 2);
       expect(nightGroups.first.allSessions.any((s) => s.id == '1'), true);
       expect(nightGroups.first.allSessions.any((s) => s.id == '2'), false);

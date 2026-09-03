@@ -2,51 +2,50 @@ import 'package:solaris/models/solar_phase_model.dart';
 import 'package:solaris/services/weather_service.dart';
 
 class WeatherAdjustmentService {
-  /// Вычисляет модификатор погоды от 0.40 (сильная гроза, -60%) до 1.0 (ясно).
-  /// [weatherData] - текущая погода.
-  /// [sunElevation] - высота солнца в градусах.
+  /// Calculates weather modifier from 0.40 (severe storm, -60%) to 1.0 (clear).
+  /// [weatherData] - current weather.
+  /// [sunElevation] - sun elevation in degrees.
   double calculateWeatherFactor(WeatherData? weatherData, double sunElevation) {
     if (weatherData == null) return 1.0;
 
     double baseFactor = 1.0;
 
-    // Сначала проверяем осадки, они приоритетнее облачности
+    // Check precipitation first, taking priority over cloudiness
     if (weatherData.weatherCode >= 80 && weatherData.weatherCode <= 99) {
-      // Ливни и грозы (очень темно)
-      baseFactor = 0.50; // -50% яркости
+      // Downpours and thunderstorms (very dark)
+      baseFactor = 0.50; // -50% brightness
     } else if (weatherData.weatherCode >= 50 && weatherData.weatherCode <= 69) {
-      // Морось и дождь
-      baseFactor = 0.55; // -45% яркости
+      // Drizzle and rain
+      baseFactor = 0.55; // -45% brightness
     } else if (weatherData.cloudCover > 80) {
-      // Сильная облачность
-      baseFactor = 0.70; // -30% яркости
+      // Heavy cloud cover
+      baseFactor = 0.70; // -30% brightness
     } else if (weatherData.cloudCover < 20) {
-      // Ясно
+      // Clear sky
       baseFactor = 1.0;
     } else {
-      // Линейная интерполяция для облачности от 20% до 80% (штраф от 0 до -30%)
+      // Linear interpolation for cloud cover from 20% to 80% (penalty from 0 to -30%)
       final cloudFactor = 1.0 - ((weatherData.cloudCover - 20) / 60) * 0.30;
       baseFactor = cloudFactor;
     }
 
-    // Если ночь (солнце ниже 0), фактор погоды плавно отключается.
-    // Сужаем зону затухания до 5° (раньше было 10°).
-    // Теперь эффект погоды остается сильным вплоть до самого заката.
+    // Smoothly disable weather factor at night (sun below 0°).
+    // Narrow fade zone to 5° so weather effect stays strong until sunset.
     double elevationMultiplier = (sunElevation.clamp(0.0, 5.0)) / 5.0;
 
-    // Итоговый фактор
+    // Final factor
     final penalty = 1.0 - baseFactor;
     return 1.0 - (penalty * elevationMultiplier);
   }
 
-  /// Единая точка расчёта погодного сдвига цветовой температуры (в Кельвинах).
+  /// Centralized calculation of weather-induced color temperature shift (in Kelvin).
   ///
-  /// Возвращает величину снижения (>= 0). Вызывающий код вычитает это из базы.
-  /// Активно только в окне «восход → астрономические сумерки» и при
-  /// плохой погоде (weatherCode >= 50 || cloudCover > 50).
+  /// Returns the reduction amount (>= 0). The caller subtracts this from base temperature.
+  /// Active only during the "sunrise -> astronomical dusk" window and in
+  /// adverse weather (weatherCode >= 50 || cloudCover > 50).
   ///
-  /// Формула: `(cloudCover / 100) * 500 * intensity`.
-  /// Максимальный сдвиг при intensity=1.0: −500K.
+  /// Formula: `(cloudCover / 100) * 500 * intensity`.
+  /// Maximum shift at intensity=1.0: -500K.
   double calculateWeatherTemperatureDrop({
     required WeatherData weather,
     required DateTime now,

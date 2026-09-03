@@ -37,7 +37,7 @@ class _BackNavigationHandlerState extends State<BackNavigationHandler> {
 
   void _handlePointerDown(PointerDownEvent event) {
     if (!widget.enabled) return;
-    // 0x08 = kBackMouseButton (боковая кнопка мыши "Назад" / XButton1)
+    // 0x08 = kBackMouseButton (mouse back side button / XButton1)
     if ((event.buttons & kBackMouseButton) != 0 || event.buttons == 8) {
       widget.onBack();
     }

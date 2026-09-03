@@ -13,11 +13,6 @@ class SettingsSearchService {
   List<SettingItem> _getDatabase() {
     final l10n = AppLocalizations.of(context)!;
 
-    // In a real app, these tags would be in ARB files as well.
-    // I'll add them to ARB later, but for now I'll use placeholders that call l10n.
-    // Wait, the user specifically asked for them to be in ARB.
-    // So I should define keys in ARB like "tags_brightness" and access them here.
-
     return [
       // Dashboard
       SettingItem(

@@ -158,7 +158,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
       }
     }
 
-    // Линии бара
+    // Chart bar data
     final List<LineChartBarData> lineBars = [
       LineChartBarData(
         spots: points,
@@ -205,7 +205,9 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
         dotData: FlDotData(
           show: true,
           getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-            radius: 10 + (_pulseAnimation.value * 8), // Пульсация от 10 до 18
+            radius:
+                10 +
+                (_pulseAnimation.value * 8), // Pulsing radius from 10 to 18
             color: dayColor.withOpacity(
               0.15 * (1.0 - _pulseAnimation.value * 0.5),
             ),
@@ -220,7 +222,8 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
         dotData: FlDotData(
           show: true,
           getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-            radius: 7 + (_pulseAnimation.value * 4), // Пульсация от 7 до 11
+            radius:
+                7 + (_pulseAnimation.value * 4), // Pulsing radius from 7 to 11
             color: dayColor.withOpacity(
               0.35 * (1.0 - _pulseAnimation.value * 0.3),
             ),
@@ -394,8 +397,8 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
                   ),
                 ),
                 borderData: FlBorderData(show: false),
-                minX: -20, // От -20 градусов (ночь)
-                maxX: 90, // До +90 градусов (зенит)
+                minX: -20, // From -20 degrees (night)
+                maxX: 90, // Up to +90 degrees (zenith)
                 minY: isTemp
                     ? 3000
                     : 0, // From 3000K for temp (padding for 3300K floor)
@@ -530,7 +533,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
         y,
       ); // Not syncing ends as it's not a time cycle
     } else {
-      final double minX = newPoints[index - 1].x + 1.0; // Зазор в 1 градус
+      final double minX = newPoints[index - 1].x + 1.0; // 1-degree minimum gap
       final double maxX = newPoints[index + 1].x - 1.0;
       x = x.clamp(minX, maxX);
 

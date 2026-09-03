@@ -73,24 +73,21 @@ class SmartCircadianService {
       final actualWakeTime = lastAggSession.endTime;
       final timeSinceWake = now.difference(actualWakeTime);
 
-      // Работаем только если с момента пробуждения прошло меньше 24 часов
+      // Only calculate if less than 24 hours have passed since waking up
       if (timeSinceWake.inHours < 24) {
-        // ИСПРАВЛЕНИЕ 1: Привязываемся к астрономическому рассвету, а не к среднему времени.
-        // Это гарантирует, что в момент пробуждения система сымитирует утреннее солнце.
+        // Anchor to astronomical sunrise so morning light is simulated upon waking
         int diffMinutes = actualWakeTime
             .difference(astronomicalSunrise)
             .inMinutes;
 
-        // Нормализуем разницу в пределах суток (чтобы не было сдвигов больше 12 часов в одну сторону)
+        // Normalize difference within a 24-hour cycle (max ±12 hours)
         while (diffMinutes > 720) diffMinutes -= 1440;
         while (diffMinutes < -720) diffMinutes += 1440;
 
-        // ИСПРАВЛЕНИЕ 2: Убрано жесткое ограничение в 3 часа (clamp).
-        // Если ты встал ночью, системе разрешено сдвинуть время на 8-10 часов,
-        // чтобы вытащить солнце из-за горизонта на твой график.
+        // Allow flexible shift so night awakening aligns sun position to user schedule
         final double effectiveDiff = diffMinutes.toDouble();
 
-        // FADEOUT: Плавно сводим смещение к нулю за заданное время (твои 6 часов)
+        // Fadeout: gradually decay offset to zero over the configured duration
         double fadeFactor = 0.0;
         if (timeSinceWake.inMinutes < timeShiftDur) {
           final progress =
@@ -156,7 +153,7 @@ class SmartCircadianService {
 
         sleepPressureFactor = 1.0 - (1.0 - baseFactor) * adjBrightnessIntensity;
 
-        // Temperature: плавное снижение до -300K по мере превышения порога
+        // Temperature: gradual reduction up to -300K as threshold is exceeded
         final baseTempDrop = 1.0 - baseFactor;
         final double adjTempIntensity = math
             .pow(sleepPressureTemperatureIntensity, 1.5)

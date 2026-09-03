@@ -300,22 +300,22 @@ class SunCalculatorService {
     return 1353.0 * math.pow(0.7, math.pow(am, 0.678)) * math.sin(elevationRad);
   }
 
-  /// Реалистичный расчет температуры поверхности (например, темного асфальта или почвы).
-  /// Учитывает реальную температуру воздуха и приток солнечной радиации.
+  /// Realistic estimation of surface temperature (e.g., dark asphalt or soil).
+  /// Accounts for ambient air temperature and incoming solar irradiance.
   double getEstimatedSurfaceTemp(
     double elevation,
     double airTemp, {
     double? realIrradiance,
   }) {
     if (elevation <= 0 && (realIrradiance == null || realIrradiance <= 0)) {
-      // Ночью за счет радиационного выхолаживания открытая поверхность холоднее воздуха
+      // At night, radiative cooling causes open surfaces to be cooler than ambient air
       return airTemp - 2.5;
     }
 
     final irradiance = realIrradiance ?? getSpectralIntensity(elevation);
 
-    // Более точная физическая модель: каждые 100 Вт/м2 нагревают среднестатистическую темную
-    // поверхность (асфальт/грунт) примерно на 2.5-3.0 градуса выше температуры воздуха в безветренную погоду.
+    // Physical model: every 100 W/m² heats a typical dark surface
+    // (asphalt/soil) by ~2.5-3.0°C above air temperature in calm weather.
     final heatingFactor = (irradiance / 100.0) * 2.8;
 
     return airTemp + heatingFactor;

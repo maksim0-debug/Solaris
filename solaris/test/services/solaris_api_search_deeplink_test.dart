@@ -36,7 +36,7 @@ void main() {
       );
       expect(apiItem.screen, equals(AppScreen.settings));
 
-      // 2. Search for "ключи" / "api keys"
+      // 2. Search for API keys
       final keyResults = service.search('ключи api');
       expect(keyResults.any((item) => item.anchorId == 'api_keys'), isTrue);
       final keyItem = keyResults.firstWhere(
@@ -44,7 +44,7 @@ void main() {
       );
       expect(keyItem.screen, equals(AppScreen.settings));
 
-      // 3. Search for "вебхуки" / "webhooks"
+      // 3. Search for webhooks
       final webhookResults = service.search('вебхуки');
       expect(webhookResults.any((item) => item.anchorId == 'webhooks'), isTrue);
       final webhookItem = webhookResults.firstWhere(
@@ -52,7 +52,7 @@ void main() {
       );
       expect(webhookItem.screen, equals(AppScreen.settings));
 
-      // 4. Search for "фиксировать температуру"
+      // 4. Search for lock temperature
       final tempToggleResults = service.search('фиксировать температуру');
       expect(
         tempToggleResults.any(
@@ -61,14 +61,14 @@ void main() {
         isTrue,
       );
 
-      // 5. Search for "задержка при сворачивании"
+      // 5. Search for minimize delay
       final exitDelayResults = service.search('задержка при сворачивании');
       expect(
         exitDelayResults.any((item) => item.anchorId == 'game_mode_exit_delay'),
         isTrue,
       );
 
-      // 6. Search for "белый список" & "черный список"
+      // 6. Search for allowlist & blocklist
       final whitelistResults = service.search('белый список');
       expect(
         whitelistResults.any((item) => item.anchorId == 'game_mode_whitelist'),
@@ -89,7 +89,7 @@ void main() {
         isTrue,
       );
 
-      // 8. Search for target displays / целевые дисплеи
+      // 8. Search for target displays
       final targetDisplaysResults = service.search('целевые дисплеи');
       expect(
         targetDisplaysResults.any(

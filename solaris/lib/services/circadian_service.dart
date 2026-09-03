@@ -49,7 +49,7 @@ class CircadianService {
   final WeatherAdjustmentService weatherAdjustmentService =
       WeatherAdjustmentService();
 
-  /// Вычисляет целевую яркость и распределяет влияние факторов
+  /// Calculates target brightness and distributes factor influences.
   CircadianCalculationResult calculateTargetBrightness(
     SolarPhaseModel phases,
     double elevation,
@@ -281,17 +281,17 @@ class CircadianService {
   double _calculateFromElevation(List<FlSpot> points, double currentElevation) {
     if (points.isEmpty) return 15.0;
 
-    // Ограничители, если солнце ушло за пределы графика
+    // Clamp values if sun elevation falls outside chart boundaries
     if (currentElevation <= points.first.x) return points.first.y;
     if (currentElevation >= points.last.x) return points.last.y;
 
-    // Линейная интерполяция между двумя ближайшими точками по высоте солнца
+    // Linear interpolation between the two nearest points by sun elevation
     for (int i = 0; i < points.length - 1; i++) {
       if (currentElevation >= points[i].x &&
           currentElevation <= points[i + 1].x) {
         final p1 = points[i];
         final p2 = points[i + 1];
-        if (p2.x == p1.x) return p1.y; // Защита от деления на ноль
+        if (p2.x == p1.x) return p1.y; // Guard against division by zero
 
         final t = (currentElevation - p1.x) / (p2.x - p1.x);
         return p1.y + (p2.y - p1.y) * t;

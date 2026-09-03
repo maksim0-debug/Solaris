@@ -91,7 +91,7 @@ class BrightnessService {
         if (!isUIVisible && !currentIsManual) {
           current = target;
         } else if (currentIsManual) {
-          // Ручное управление или видимый UI (быстрое изменение, 60-120% в сек - ускорено в 3 раза)
+          // Manual control or visible UI (fast transition, 60-120%/sec)
           final step = diff > 20 ? 12 : 6;
           if (current < target) {
             current = (current + step).clamp(0, target).toInt();
@@ -99,7 +99,7 @@ class BrightnessService {
             current = (current - step).clamp(target, 100).toInt();
           }
         } else {
-          // Автоматическое фоновое влияние (медленное "дыхание", 3% каждые 150-200мс - ускорено в 3 раза)
+          // Automatic background adjustment (gradual transition, 3% every 150-200ms)
           final step = 3;
           if (current < target) {
             current = (current + step).clamp(0, target).toInt();
@@ -122,7 +122,7 @@ class BrightnessService {
         // where target updates while we were waiting for setBrightness.
         if (current == _targetBrightness[deviceName]) break;
 
-        // Если ручное изменение, ждем 100мс, если автоматика - 150мс для большей ленивости
+        // Wait 100ms for manual changes, 150ms for automatic adjustments
         await Future<void>.delayed(
           Duration(milliseconds: currentIsManual ? 100 : 150),
         );

@@ -57,7 +57,7 @@ class GoogleFitService {
         final decrypted = KeyObfuscator.decrypt(tokenJson);
         final decoded = jsonDecode(decrypted);
         if (decoded is Map<String, dynamic>) {
-          // Выполняем миграцию на диск, если токен хранился в открытом виде
+          // Migrate token on disk to encrypted format if stored in plain text
           if (!tokenJson.startsWith('dpapi:') &&
               !tokenJson.startsWith('obf:')) {
             try {

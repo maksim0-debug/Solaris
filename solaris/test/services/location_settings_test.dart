@@ -142,9 +142,9 @@ void main() {
       );
       expect(copiedWithNewValues.useManual, false);
       expect(copiedWithNewValues.manualLatitude, 10.0);
-      expect(copiedWithNewValues.manualLongitude, 90.0); // сохранено
+      expect(copiedWithNewValues.manualLongitude, 90.0); // preserved
       expect(copiedWithNewValues.lastCityName, 'NewCity');
-      expect(copiedWithNewValues.lastResolvedLatitude, 50.0); // сохранено
+      expect(copiedWithNewValues.lastResolvedLatitude, 50.0); // preserved
     });
   });
 }

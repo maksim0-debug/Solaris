@@ -179,13 +179,6 @@ class _WeatherOverlayState extends ConsumerState<WeatherOverlay>
   }
 
   void _updateCloudCount(double width, double height) {
-    // User requested: "if cloudiness is strong, then there will be fewer clouds and smaller"
-    // We'll interpret this as:
-    // cloudCover 0 -> 0 clouds
-    // cloudCover 1-30 -> 10 clouds (large)
-    // cloudCover 30-70 -> 6 clouds (medium)
-    // cloudCover 70-100 -> 3 clouds (small)
-
     int targetCloudCount;
     if (widget.cloudCover <= 0 || !widget.showClouds) {
       targetCloudCount = 0;
