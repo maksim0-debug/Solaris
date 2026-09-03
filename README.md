@@ -1,4 +1,4 @@
-# ☀️ Solaris — Advanced Auto-Brightness & Circadian Monitor Control
+## ☀️ Solaris — Advanced Auto-Brightness & Circadian Monitor Control
 
 <p align="center">
   <img src="solaris/assets/icon/icon_180.png" alt="Solaris application icon featuring a stylized sun and monitor silhouette" width="180" />
