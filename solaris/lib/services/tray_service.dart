@@ -25,9 +25,9 @@ class TrayService with TrayListener {
 
       final Menu menu = Menu(
         items: [
-          MenuItem(key: 'open_window', label: 'Открыть'),
+          MenuItem(key: 'open_window', label: 'Open'),
           MenuItem.separator(),
-          MenuItem(key: 'exit_app', label: 'Выход'),
+          MenuItem(key: 'exit_app', label: 'Exit'),
         ],
       );
       await trayManager.setContextMenu(menu);
