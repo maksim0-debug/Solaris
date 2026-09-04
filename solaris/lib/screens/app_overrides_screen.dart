@@ -14,6 +14,7 @@ import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/widgets/curve_preset_dropdown.dart';
 import 'package:solaris/widgets/back_navigation_handler.dart';
 import 'package:solaris/widgets/deep_link_target.dart';
+import 'package:solaris/widgets/glowing_app_icon.dart';
 import 'package:solaris/utils/app_override_formatter.dart';
 
 /// Screen for managing Per-App Brightness and Temperature Overrides.
@@ -586,24 +587,11 @@ class _AppOverrideRuleCard extends ConsumerWidget {
           // Header Row: Icon + Names + Switch + Delete / Promote
           Row(
             children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF6366F1).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Center(
-                  child: Text(
-                    rule.appDisplayName.isNotEmpty
-                        ? rule.appDisplayName[0].toUpperCase()
-                        : 'A',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF818CF8),
-                    ),
-                  ),
-                ),
+              GlowingAppIcon(
+                name: rule.exeName,
+                fallbackLetter: rule.appDisplayName,
+                size: 36,
+                borderRadius: 10,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1265,6 +1253,13 @@ class _AddAppOverrideDialogState extends ConsumerState<_AddAppOverrideDialog> {
                           selectedTileColor: const Color(
                             0xFF6366F1,
                           ).withOpacity(0.2),
+                          leading: GlowingAppIcon(
+                            key: ValueKey(exe),
+                            name: exe,
+                            fallbackLetter: title.isNotEmpty ? title : exe,
+                            size: 28,
+                            borderRadius: 8,
+                          ),
                           title: Text(
                             exe,
                             style: const TextStyle(

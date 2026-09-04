@@ -278,6 +278,10 @@ bool FlutterWindow::OnCreate() {
   auto sys_stream_handler = std::make_unique<SystemEventsStreamHandler>(monitor_manager_, system_event_sink_);
   system_event_channel_->SetStreamHandler(std::move(sys_stream_handler));
 
+  // Initialize AppIconExtractor for async app icon retrieval
+  app_icon_extractor_ = std::make_unique<AppIconExtractor>(
+      flutter_controller_->engine(), GetHandle());
+
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->ForceRedraw();
@@ -286,6 +290,10 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  if (app_icon_extractor_) {
+    app_icon_extractor_ = nullptr;
+  }
+
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
   }
@@ -314,6 +322,18 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
           gaming_stream_handler_->SendFocusEvent(data->is_gaming, data->active_process);
         }
         delete data;
+      }
+      return 0;
+    }
+
+    case WM_SOLARIS_ICON_RESULT: {
+      auto* data = reinterpret_cast<IconResultData*>(lparam);
+      if (data) {
+        if (flutter_controller_ && app_icon_extractor_) {
+          AppIconExtractor::HandleResult(data);
+        } else {
+          delete data;
+        }
       }
       return 0;
     }

@@ -69,6 +69,7 @@ dependencies:
   package_info_plus: ^8.1.2
   string_similarity: ^2.0.0
   crypto: ^3.0.3
+  palette_generator: ^0.3.3+7
 dev_dependencies:
   flutter_test:
     sdk: flutter
