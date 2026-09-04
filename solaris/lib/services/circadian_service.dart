@@ -66,9 +66,9 @@ class CircadianService {
     if (curvePoints != null && curvePoints.isNotEmpty) {
       baseBrightness = _calculateFromElevation(curvePoints, elevation);
     } else {
-      if (elevation < -6)
+      if (elevation < -6) {
         baseBrightness = 15.0;
-      else if (elevation > 20)
+      } else if (elevation > 20)
         baseBrightness = 100.0;
       else
         baseBrightness = 60.0;

@@ -53,8 +53,12 @@ class TerminatorService {
     var lon = 180.0 - (utMinutes + eqTime) / 4.0;
 
     // Normalize to [-180, 180]
-    while (lon > 180) lon -= 360;
-    while (lon < -180) lon += 360;
+    while (lon > 180) {
+      lon -= 360;
+    }
+    while (lon < -180) {
+      lon += 360;
+    }
 
     return LatLng(lat, lon);
   }

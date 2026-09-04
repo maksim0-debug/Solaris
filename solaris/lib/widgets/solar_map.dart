@@ -134,7 +134,7 @@ class _SolarMapState extends ConsumerState<SolarMap> {
             polygons: [
               Polygon(
                 points: _terminatorPoints,
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: 0.5),
                 isFilled: true,
                 borderColor: Colors.transparent,
               ),
@@ -178,7 +178,7 @@ class _SolarMapState extends ConsumerState<SolarMap> {
               ClipRRect(
                 child: ImageFiltered(
                   imageFilter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(color: Colors.black.withOpacity(0.2)),
+                  child: Container(color: Colors.black.withValues(alpha: 0.2)),
                 ),
               ),
               Center(
@@ -202,7 +202,7 @@ class _SolarMapState extends ConsumerState<SolarMap> {
                           color: Colors.black54,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: const Color(0xFFFDBA74).withOpacity(0.5),
+                            color: const Color(0xFFFDBA74).withValues(alpha: 0.5),
                             width: 2,
                           ),
                         ),
@@ -238,7 +238,7 @@ class _SolarMapState extends ConsumerState<SolarMap> {
                         color: Colors.black54,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: const Color(0xFFFDBA74).withOpacity(0.5),
+                          color: const Color(0xFFFDBA74).withValues(alpha: 0.5),
                         ),
                       ),
                       child: const Row(
@@ -251,7 +251,7 @@ class _SolarMapState extends ConsumerState<SolarMap> {
                           ),
                           SizedBox(width: 8),
                           Text(
-                            "MAP ISSUES",
+                            'MAP ISSUES',
                             style: TextStyle(
                               color: Color(0xFFFDBA74),
                               fontSize: 10,

@@ -25,15 +25,11 @@ class LocationSettings extends Equatable {
 
     return LocationSettings(
       useManual: json['useManual'] as bool? ?? false,
-      manualLatitude: lat != null ? lat.clamp(-90.0, 90.0) : null,
-      manualLongitude: lon != null ? lon.clamp(-180.0, 180.0) : null,
+      manualLatitude: lat?.clamp(-90.0, 90.0),
+      manualLongitude: lon?.clamp(-180.0, 180.0),
       lastCityName: json['lastCityName'] as String?,
-      lastResolvedLatitude: resolvedLat != null
-          ? resolvedLat.clamp(-90.0, 90.0)
-          : null,
-      lastResolvedLongitude: resolvedLon != null
-          ? resolvedLon.clamp(-180.0, 180.0)
-          : null,
+      lastResolvedLatitude: resolvedLat?.clamp(-90.0, 90.0),
+      lastResolvedLongitude: resolvedLon?.clamp(-180.0, 180.0),
     );
   }
 

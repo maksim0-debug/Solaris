@@ -29,13 +29,13 @@ class LuminosityGraph extends StatelessWidget {
           verticalInterval: 4,
           getDrawingHorizontalLine: (value) {
             return FlLine(
-              color: Colors.white.withOpacity(0.05),
+              color: Colors.white.withValues(alpha: 0.05),
               strokeWidth: 1,
             );
           },
           getDrawingVerticalLine: (value) {
             return FlLine(
-              color: Colors.white.withOpacity(0.05),
+              color: Colors.white.withValues(alpha: 0.05),
               strokeWidth: 1,
             );
           },
@@ -110,8 +110,8 @@ class LuminosityGraph extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  const Color(0xFFF97316).withOpacity(0.2),
-                  const Color(0xFFF97316).withOpacity(0),
+                  const Color(0xFFF97316).withValues(alpha: 0.2),
+                  const Color(0xFFF97316).withValues(alpha: 0),
                 ],
               ),
             ),
@@ -121,7 +121,7 @@ class LuminosityGraph extends StatelessWidget {
           horizontalLines: [
             HorizontalLine(
               y: 0,
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withValues(alpha: 0.1),
               strokeWidth: 1,
               dashArray: [5, 5],
             ),
@@ -129,7 +129,7 @@ class LuminosityGraph extends StatelessWidget {
         ),
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (spot) => Colors.blueGrey.withOpacity(0.8),
+            getTooltipColor: (spot) => Colors.blueGrey.withValues(alpha: 0.8),
             getTooltipItems: (touchedSpots) {
               return touchedSpots.map((spot) {
                 final totalMinutes = (spot.x * 60).round();

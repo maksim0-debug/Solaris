@@ -55,14 +55,14 @@ class TemperatureBreakdownTooltip extends StatelessWidget {
             label:
                 '${l10n.temperatureBreakdownBase} [${_getPresetName(l10n, smartData)}]'
                     .toUpperCase(),
-            value: '${baseTemp} K',
+            value: '$baseTemp K',
             iconColor: const Color(0xFF818CF8), // Blue-Indigo for temp base
           ),
           if (weatherImpact.abs() > 0.5)
             _buildRow(
               icon: getWeatherIcon(smartData.weatherCode),
               label: l10n.temperatureBreakdownWeather,
-              value: '${weatherImpact} K',
+              value: '$weatherImpact K',
               iconColor: const Color(0xFF94A3B8),
             ),
           if (isSmartCircadianEnabled &&
@@ -78,21 +78,21 @@ class TemperatureBreakdownTooltip extends StatelessWidget {
             _buildRow(
               icon: LucideIcons.hourglass,
               label: l10n.temperatureBreakdownSleepPressure,
-              value: '${sleepPressureImpact} K',
+              value: '$sleepPressureImpact K',
               iconColor: const Color(0xFFA78BFA),
             ),
           if (isSmartCircadianEnabled && windDownImpact.abs() > 0.5)
             _buildRow(
               icon: LucideIcons.moon,
               label: l10n.temperatureBreakdownWindDown,
-              value: '${windDownImpact} K',
+              value: '$windDownImpact K',
               iconColor: const Color(0xFF818CF8),
             ),
           if (isSmartCircadianEnabled && sleepDebtImpact.abs() > 0.5)
             _buildRow(
               icon: LucideIcons.battery,
               label: l10n.temperatureBreakdownSleepDebt,
-              value: '${sleepDebtImpact} K',
+              value: '$sleepDebtImpact K',
               iconColor: const Color(0xFFF43F5E),
             ),
           const TextSpan(
@@ -102,7 +102,7 @@ class TemperatureBreakdownTooltip extends StatelessWidget {
           _buildRow(
             icon: LucideIcons.checkCircle2,
             label: l10n.temperatureBreakdownFinal.toUpperCase(),
-            value: '${currentTemperature} K',
+            value: '$currentTemperature K',
             iconColor: const Color(0xFF34D399),
             isBold: true,
           ),
@@ -111,12 +111,12 @@ class TemperatureBreakdownTooltip extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A).withOpacity(0.95), // Slate-900
+        color: const Color(0xFF0F172A).withValues(alpha: 0.95), // Slate-900
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white10, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),

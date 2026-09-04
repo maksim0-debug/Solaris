@@ -206,7 +206,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     WidgetRef ref,
   ) {
     final l10n = AppLocalizations.of(context)!;
-    String message = "";
+    String message = '';
     switch (errorType) {
       case SettingsEncryptionError.passwordChanged:
         message = l10n.dpapiErrorPasswordChanged;
@@ -344,7 +344,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             content: Text(
               bodyText,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.85),
+                color: Colors.white.withValues(alpha: 0.85),
                 fontSize: 13,
                 height: 1.4,
               ),
@@ -377,7 +377,7 @@ class _Sidebar extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     return Container(
       width: 260,
-      color: const Color(0xFF0F172A).withOpacity(0.5),
+      color: const Color(0xFF0F172A).withValues(alpha: 0.5),
       padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -388,7 +388,7 @@ class _Sidebar extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFDBA74).withOpacity(0.2),
+                  color: const Color(0xFFFDBA74).withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -515,7 +515,7 @@ class _SidebarItem extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
           decoration: BoxDecoration(
             color: isActive
-                ? const Color(0xFFFDBA74).withOpacity(0.1)
+                ? const Color(0xFFFDBA74).withValues(alpha: 0.1)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
           ),
@@ -1022,12 +1022,15 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                 orElse: () {
                                   // Safe approximate progress for startup to avoid "sun flash"
                                   final hour = now.hour;
-                                  if (hour >= 21 || hour < 5)
+                                  if (hour >= 21 || hour < 5) {
                                     return -0.5; // Night
-                                  if (hour >= 5 && hour < 7)
+                                  }
+                                  if (hour >= 5 && hour < 7) {
                                     return 0.0; // Sunrise
-                                  if (hour >= 19 && hour < 21)
+                                  }
+                                  if (hour >= 19 && hour < 21) {
                                     return 1.0; // Sunset
+                                  }
                                   return 0.5; // Midday
                                 },
                               ),
@@ -1367,7 +1370,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                   _SmartAdjustmentIndicator(
                                     icon: LucideIcons.sunrise,
                                     label: remaining != null
-                                        ? '${l10n.featureTimeShiftShort} ${impactK > 0 ? '+$impactK' : impactK} K (${remaining}${l10n.minutesAbbreviation})'
+                                        ? '${l10n.featureTimeShiftShort} ${impactK > 0 ? '+$impactK' : impactK} K ($remaining${l10n.minutesAbbreviation})'
                                         : '${l10n.featureTimeShiftShort}: ${impactK > 0 ? '+$impactK' : impactK} K',
                                     iconColor: const Color(0xFFF59E0B),
                                   ),
@@ -1385,7 +1388,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                       smartDataTemp.weatherCode,
                                     ),
                                     label:
-                                        '${l10n.weatherTemperatureAdjustmentTitle}: ${impactK} K',
+                                        '${l10n.weatherTemperatureAdjustmentTitle}: $impactK K',
                                     iconColor: const Color(0xFF818CF8),
                                   ),
                                 );
@@ -1402,7 +1405,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                   _SmartAdjustmentIndicator(
                                     icon: LucideIcons.hourglass,
                                     label:
-                                        '${l10n.featureSleepPressureShort}: ${impactK} K',
+                                        '${l10n.featureSleepPressureShort}: $impactK K',
                                     iconColor: const Color(0xFFA78BFA),
                                   ),
                                 );
@@ -1419,7 +1422,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                   _SmartAdjustmentIndicator(
                                     icon: LucideIcons.moon,
                                     label:
-                                        '${l10n.featureWindDownShort}: ${impactK} K',
+                                        '${l10n.featureWindDownShort}: $impactK K',
                                     iconColor: const Color(0xFF818CF8),
                                   ),
                                 );
@@ -1436,7 +1439,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                   _SmartAdjustmentIndicator(
                                     icon: LucideIcons.battery,
                                     label:
-                                        '${l10n.featureSleepDebtShort}: ${impactK} K',
+                                        '${l10n.featureSleepDebtShort}: $impactK K',
                                     iconColor: const Color(0xFFF43F5E),
                                   ),
                                 );
@@ -1823,7 +1826,7 @@ class _Footer extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.3),
+        color: Colors.black.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -1901,7 +1904,7 @@ class _Footer extends ConsumerWidget {
               l10n.calculating,
               style: const TextStyle(fontSize: 10, color: Colors.white30),
             ),
-            error: (e, __) => Text(
+            error: (e, _) => Text(
               'Error: $e',
               style: const TextStyle(fontSize: 10, color: Colors.redAccent),
             ),
@@ -1914,7 +1917,7 @@ class _Footer extends ConsumerWidget {
 }
 
 class DisplayInfo extends ConsumerWidget {
-  const DisplayInfo({
+  const DisplayInfo({super.key, 
     required this.label,
     required this.isSelected,
     this.brightness,
@@ -1940,7 +1943,7 @@ class DisplayInfo extends ConsumerWidget {
     if (!isDdcSupported) {
       contentColor = isSelected
           ? const Color(0xFFF87171)
-          : const Color(0xFFEF4444).withOpacity(0.85);
+          : const Color(0xFFEF4444).withValues(alpha: 0.85);
     } else if (isSelected) {
       contentColor = const Color(0xFFFDBA74);
     } else {
@@ -1979,7 +1982,7 @@ class DisplayInfo extends ConsumerWidget {
                   child: Icon(
                     LucideIcons.refreshCw,
                     size: 12,
-                    color: contentColor.withOpacity(0.9),
+                    color: contentColor.withValues(alpha: 0.9),
                   ),
                 ),
               ),
@@ -1996,10 +1999,10 @@ class DisplayInfo extends ConsumerWidget {
         decoration: BoxDecoration(
           color: const Color(0xFF181825),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.redAccent.withOpacity(0.5)),
+          border: Border.all(color: Colors.redAccent.withValues(alpha: 0.5)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -2125,7 +2128,7 @@ class _MultiMonitorOffsetPopover extends ConsumerWidget {
                                   l10n.offsetFormula,
                                   style: TextStyle(
                                     fontSize: 10,
-                                    color: Colors.white.withOpacity(0.4),
+                                    color: Colors.white.withValues(alpha: 0.4),
                                   ),
                                 ),
                               ],
@@ -2137,7 +2140,7 @@ class _MultiMonitorOffsetPopover extends ConsumerWidget {
                                 onChanged: (val) => ref
                                     .read(settingsProvider.notifier)
                                     .updateMultiMonitorOffsetEnabled(val),
-                                activeColor: const Color(0xFF818CF8),
+                                activeThumbColor: const Color(0xFF818CF8),
                               ),
                             ),
                           ],
@@ -2209,12 +2212,12 @@ class _MultiMonitorOffsetPopover extends ConsumerWidget {
                                                 ),
                                             activeTrackColor: const Color(
                                               0xFFFDBA74,
-                                            ).withOpacity(0.5),
+                                            ).withValues(alpha: 0.5),
                                             inactiveTrackColor: Colors.white10,
                                             thumbColor: const Color(0xFFFDBA74),
                                             overlayColor: const Color(
                                               0xFFFDBA74,
-                                            ).withOpacity(0.2),
+                                            ).withValues(alpha: 0.2),
                                           ),
                                           child: Slider(
                                             value: offset,

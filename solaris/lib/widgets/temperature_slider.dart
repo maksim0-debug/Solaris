@@ -53,17 +53,17 @@ class TemperatureSlider extends StatelessWidget {
         Container(
           height: 48,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.03),
+            color: Colors.white.withValues(alpha: 0.03),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withOpacity(0.05)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
           ),
           child: SliderTheme(
             data: SliderTheme.of(context).copyWith(
               trackHeight: 12,
               activeTrackColor: Colors.transparent,
-              inactiveTrackColor: Colors.white.withOpacity(0.05),
+              inactiveTrackColor: Colors.white.withValues(alpha: 0.05),
               thumbColor: Colors.white,
-              overlayColor: Colors.white.withOpacity(0.1),
+              overlayColor: Colors.white.withValues(alpha: 0.1),
               thumbShape: _PremiumThumbShape(progress: progress),
               trackShape: const _PremiumTrackShape(),
             ),
@@ -181,7 +181,7 @@ class _PremiumThumbShape extends SliderComponentShape {
 
     // Draw glow
     final glowPaint = Paint()
-      ..color = currentColor.withOpacity(0.3)
+      ..color = currentColor.withValues(alpha: 0.3)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
     canvas.drawCircle(center, 12, glowPaint);
 

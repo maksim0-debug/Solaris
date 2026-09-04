@@ -63,15 +63,15 @@ class MapHealthService {
       if (response.statusCode == 200 || response.statusCode == 401) {
         return (true, null);
       }
-      return (false, "HTTP ${response.statusCode}");
+      return (false, 'HTTP ${response.statusCode}');
     } on SocketException catch (e) {
-      return (false, "Network error: ${e.message}");
+      return (false, 'Network error: ${e.message}');
     } on http.ClientException catch (e) {
-      return (false, "Client error: ${e.message}");
+      return (false, 'Client error: ${e.message}');
     } catch (e) {
       final errorStr = e.toString();
       if (errorStr.contains('CERTIFICATE_VERIFY_FAILED')) {
-        return (false, "SSL Certificate Error (Clean Windows 10?)");
+        return (false, 'SSL Certificate Error (Clean Windows 10?)');
       }
       return (false, errorStr);
     }

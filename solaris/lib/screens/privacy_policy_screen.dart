@@ -155,7 +155,7 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
                   ),
                   h2: TextStyle(
                     fontFamily: _fontFamily,
-                    color: AppTheme.accent.withOpacity(0.9),
+                    color: AppTheme.accent.withValues(alpha: 0.9),
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     height: 1.5,
@@ -169,7 +169,7 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
                   ),
                   p: TextStyle(
                     fontFamily: _fontFamily,
-                    color: AppTheme.textPrimary.withOpacity(0.8),
+                    color: AppTheme.textPrimary.withValues(alpha: 0.8),
                     fontSize: 16,
                     height: 1.6,
                   ),

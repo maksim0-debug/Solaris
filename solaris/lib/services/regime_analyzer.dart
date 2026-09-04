@@ -114,8 +114,12 @@ class RegimeAnalyzer {
       final anchor = current.getAnchorAvg(settings);
 
       int rawDiff = entry.normalizedMinutes - anchor;
-      while (rawDiff > 720) rawDiff -= 1440;
-      while (rawDiff < -720) rawDiff += 1440;
+      while (rawDiff > 720) {
+        rawDiff -= 1440;
+      }
+      while (rawDiff < -720) {
+        rawDiff += 1440;
+      }
       final diff = rawDiff.abs();
 
       // Check tolerance against the anchor
@@ -317,8 +321,12 @@ class RegimeAnalyzer {
       if (i > 0) {
         final prevAvg = results[i - 1].averageBedtimeNormalized;
         int delta = avgBedtimeMin - prevAvg;
-        while (delta > 720) delta -= 1440;
-        while (delta < -720) delta += 1440;
+        while (delta > 720) {
+          delta -= 1440;
+        }
+        while (delta < -720) {
+          delta += 1440;
+        }
         shift = RegimeShift(
           isLater: delta > 0,
           shiftDuration: Duration(minutes: delta.abs()),
@@ -403,7 +411,9 @@ class _RawRegime {
         ? source.length
         : settings.anchorSize;
     int sum = 0;
-    for (int i = 0; i < count; i++) sum += source[i].normalizedMinutes;
+    for (int i = 0; i < count; i++) {
+      sum += source[i].normalizedMinutes;
+    }
     return (sum / count).round();
   }
 

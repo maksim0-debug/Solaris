@@ -44,7 +44,7 @@ class WindowTitleBar extends StatelessWidget {
             bottom: 0,
             left: 0,
             right: 0,
-            child: Container(height: 1, color: Colors.white.withOpacity(0.05)),
+            child: Container(height: 1, color: Colors.white.withValues(alpha: 0.05)),
           ),
         ],
       ),
@@ -144,7 +144,7 @@ class _WindowButton extends StatelessWidget {
       height: 48,
       child: IconButton(
         icon: Icon(icon, size: 16, color: Colors.white60),
-        hoverColor: isClose ? Colors.red.withOpacity(0.8) : Colors.white10,
+        hoverColor: isClose ? Colors.red.withValues(alpha: 0.8) : Colors.white10,
         splashRadius: 24,
         onPressed: onPressed,
       ),

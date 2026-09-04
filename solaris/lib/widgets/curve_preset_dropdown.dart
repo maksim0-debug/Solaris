@@ -152,12 +152,12 @@ class _CurvePresetDropdownState extends State<CurvePresetDropdown>
                           color: const Color(0xFF0F172A),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.14),
+                            color: Colors.white.withValues(alpha: 0.14),
                             width: 1,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.45),
+                              color: Colors.black.withValues(alpha: 0.45),
                               blurRadius: 20,
                               offset: const Offset(0, 8),
                             ),
@@ -166,7 +166,7 @@ class _CurvePresetDropdownState extends State<CurvePresetDropdown>
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(14),
                           child: RawScrollbar(
-                            thumbColor: Colors.white.withOpacity(0.25),
+                            thumbColor: Colors.white.withValues(alpha: 0.25),
                             radius: const Radius.circular(4),
                             thickness: 4,
                             child: SingleChildScrollView(
@@ -257,19 +257,19 @@ class _CurvePresetDropdownState extends State<CurvePresetDropdown>
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: _isOpen
-                  ? Colors.white.withOpacity(0.08)
-                  : Colors.white.withOpacity(0.04),
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Colors.white.withValues(alpha: 0.04),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: _isOpen
-                    ? widget.accentColor.withOpacity(0.4)
-                    : Colors.white.withOpacity(0.1),
+                    ? widget.accentColor.withValues(alpha: 0.4)
+                    : Colors.white.withValues(alpha: 0.1),
                 width: 1,
               ),
               boxShadow: _isOpen
                   ? [
                       BoxShadow(
-                        color: widget.accentColor.withOpacity(0.15),
+                        color: widget.accentColor.withValues(alpha: 0.15),
                         blurRadius: 12,
                         spreadRadius: 1,
                       ),
@@ -281,7 +281,7 @@ class _CurvePresetDropdownState extends State<CurvePresetDropdown>
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: widget.accentColor.withOpacity(0.12),
+                    color: widget.accentColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(7),
                   ),
                   child: Icon(widget.icon, size: 16, color: widget.accentColor),
@@ -307,13 +307,13 @@ class _CurvePresetDropdownState extends State<CurvePresetDropdown>
                   ),
                   decoration: BoxDecoration(
                     color: isCurrentSystem
-                        ? const Color(0xFF6366F1).withOpacity(0.18)
-                        : const Color(0xFFA855F7).withOpacity(0.18),
+                        ? const Color(0xFF6366F1).withValues(alpha: 0.18)
+                        : const Color(0xFFA855F7).withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(6),
                     border: Border.all(
                       color: isCurrentSystem
-                          ? const Color(0xFF6366F1).withOpacity(0.3)
-                          : const Color(0xFFA855F7).withOpacity(0.3),
+                          ? const Color(0xFF6366F1).withValues(alpha: 0.3)
+                          : const Color(0xFFA855F7).withValues(alpha: 0.3),
                       width: 0.5,
                     ),
                   ),
@@ -401,7 +401,7 @@ class _CurvePresetDropdownState extends State<CurvePresetDropdown>
       Container(
         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         height: 1,
-        color: Colors.white.withOpacity(0.08),
+        color: Colors.white.withValues(alpha: 0.08),
       ),
     );
 
@@ -435,7 +435,7 @@ class _CurvePresetDropdownState extends State<CurvePresetDropdown>
             '—',
             style: TextStyle(
               fontSize: 12,
-              color: Colors.white.withOpacity(0.3),
+              color: Colors.white.withValues(alpha: 0.3),
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -503,14 +503,14 @@ class _MenuItemTileState extends State<_MenuItemTile> {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
               color: widget.isSelected
-                  ? widget.activeColor.withOpacity(0.18)
+                  ? widget.activeColor.withValues(alpha: 0.18)
                   : (_isHovered
-                        ? Colors.white.withOpacity(0.06)
+                        ? Colors.white.withValues(alpha: 0.06)
                         : Colors.transparent),
               borderRadius: BorderRadius.circular(8),
               border: widget.isSelected
                   ? Border.all(
-                      color: widget.activeColor.withOpacity(0.4),
+                      color: widget.activeColor.withValues(alpha: 0.4),
                       width: 0.8,
                     )
                   : null,
@@ -535,7 +535,7 @@ class _MenuItemTileState extends State<_MenuItemTile> {
                           : FontWeight.normal,
                       color: widget.isSelected
                           ? Colors.white
-                          : Colors.white.withOpacity(0.9),
+                          : Colors.white.withValues(alpha: 0.9),
                     ),
                   ),
                 ),

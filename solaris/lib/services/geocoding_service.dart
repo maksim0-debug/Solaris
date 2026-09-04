@@ -223,7 +223,7 @@ class GeocodingService {
     }
 
     return GeocodingResult(
-      name: "Global Coordinates",
+      name: 'Global Coordinates',
       isOffline: true,
       offlineReason: reason,
     );

@@ -14,7 +14,7 @@ class TemperatureDialPainter extends CustomPainter {
     final radius = size.width / 2;
 
     final bgPaint = Paint()
-      ..color = Colors.white.withOpacity(0.05)
+      ..color = Colors.white.withValues(alpha: 0.05)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 6
       ..strokeCap = StrokeCap.round;
@@ -59,7 +59,7 @@ class TemperatureDialPainter extends CustomPainter {
     )!;
 
     final glowPaint = Paint()
-      ..color = currentColor.withOpacity(0.5)
+      ..color = currentColor.withValues(alpha: 0.5)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
 
     canvas.drawCircle(endPos, 8, glowPaint);

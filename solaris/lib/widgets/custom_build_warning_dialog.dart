@@ -26,12 +26,12 @@ Future<bool?> showCustomBuildUpdateWarningDialog(
             color: const Color(0xFF1E1E28),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: const Color(0xFFF59E0B).withOpacity(0.3),
+              color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: 0.5),
                 blurRadius: 24,
                 spreadRadius: 4,
               ),
@@ -67,7 +67,7 @@ Future<bool?> showCustomBuildUpdateWarningDialog(
                               decoration: BoxDecoration(
                                 color: const Color(
                                   0xFFF59E0B,
-                                ).withOpacity(0.12),
+                                ).withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Icon(
@@ -93,7 +93,7 @@ Future<bool?> showCustomBuildUpdateWarningDialog(
                         Text(
                           l10n.customBuildWarningBody,
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withValues(alpha: 0.8),
                             fontSize: 13,
                             height: 1.4,
                           ),

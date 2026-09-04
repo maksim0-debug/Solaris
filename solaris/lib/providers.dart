@@ -763,7 +763,7 @@ final locationCityProvider = FutureProvider<GeocodingResult>((ref) async {
     },
     orElse: () => Future.value(
       const GeocodingResult(
-        name: "Global Coordinates",
+        name: 'Global Coordinates',
         isOffline: true,
         offlineReason: OfflineReason.missingToken,
       ),
@@ -876,9 +876,9 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
     sunProgress: roughProgress,
     uvIndex: service.getUVIndex(roughElevation),
     spectralIntensity: service.getSpectralIntensity(roughElevation),
-    azimuthTrend: "constant",
-    elevationTrend: "constant",
-    zenithTrend: "constant",
+    azimuthTrend: 'constant',
+    elevationTrend: 'constant',
+    zenithTrend: 'constant',
   );
 
   while (true) {
@@ -911,9 +911,9 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
         phases: phases,
         uvIndex: 0,
         spectralIntensity: 0,
-        elevationTrend: "constant",
-        azimuthTrend: "constant",
-        zenithTrend: "constant",
+        elevationTrend: 'constant',
+        azimuthTrend: 'constant',
+        zenithTrend: 'constant',
       );
 
       prevElevation = elevation;
@@ -932,7 +932,7 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
       timeDiffSeconds = now.difference(prevTime).inMilliseconds / 1000.0;
     }
 
-    String azTrend = "constant";
+    String azTrend = 'constant';
     if (prevAzimuth != null && timeDiffSeconds != null && timeDiffSeconds > 0) {
       double diff = currentAzimuth - prevAzimuth;
       if (diff > 180) diff -= 360;
@@ -941,12 +941,12 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
       final degPerHour = (diff / timeDiffSeconds) * 3600;
       if (degPerHour.abs() > 0.1) {
         azTrend = degPerHour > 0
-            ? "+${degPerHour.toStringAsFixed(1)}°/h"
-            : "${degPerHour.toStringAsFixed(1)}°/h";
+            ? '+${degPerHour.toStringAsFixed(1)}°/h'
+            : '${degPerHour.toStringAsFixed(1)}°/h';
       }
     }
 
-    String elTrend = "constant";
+    String elTrend = 'constant';
     if (prevElevation != null &&
         timeDiffSeconds != null &&
         timeDiffSeconds > 0) {
@@ -954,19 +954,19 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
       final degPerHour = (diff / timeDiffSeconds) * 3600;
       if (degPerHour.abs() > 0.1) {
         elTrend = degPerHour > 0
-            ? "+${degPerHour.toStringAsFixed(1)}°/h"
-            : "${degPerHour.toStringAsFixed(1)}°/h";
+            ? '+${degPerHour.toStringAsFixed(1)}°/h'
+            : '${degPerHour.toStringAsFixed(1)}°/h';
       }
     }
 
-    String zenTrend = "constant";
+    String zenTrend = 'constant';
     if (prevZenith != null && timeDiffSeconds != null && timeDiffSeconds > 0) {
       final diff = currentZenith - prevZenith;
       final degPerHour = (diff / timeDiffSeconds) * 3600;
       if (degPerHour.abs() > 0.1) {
         zenTrend = degPerHour > 0
-            ? "+${degPerHour.toStringAsFixed(1)}°/h"
-            : "${degPerHour.toStringAsFixed(1)}°/h";
+            ? '+${degPerHour.toStringAsFixed(1)}°/h'
+            : '${degPerHour.toStringAsFixed(1)}°/h';
       }
     }
 
@@ -1241,8 +1241,9 @@ class LocaleNotifier extends Notifier<Locale> {
   }
 
   void setLocale(String languageCode) {
-    if (languageCode != 'en' && languageCode != 'ru' && languageCode != 'uk')
+    if (languageCode != 'en' && languageCode != 'ru' && languageCode != 'uk') {
       return;
+    }
     state = Locale(languageCode);
     ref.read(sharedPreferencesProvider)?.setString(_localeKey, languageCode);
   }
@@ -1369,6 +1370,7 @@ class SettingsErrorNotifier extends Notifier<SettingsEncryptionError?> {
   @override
   SettingsEncryptionError? build() => null;
 
+  @override
   set state(SettingsEncryptionError? value) => super.state = value;
 }
 
@@ -1432,10 +1434,10 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
             });
             // Clean credentials and parse the rest of settings to preserve user presets
             final cleanedValue = Map<String, dynamic>.from(value as Map);
-            cleanedValue['customWeatherApiKey'] = "";
-            cleanedValue['customMapboxToken'] = "";
-            cleanedValue['customGoogleClientId'] = "";
-            cleanedValue['customGoogleClientSecret'] = "";
+            cleanedValue['customWeatherApiKey'] = '';
+            cleanedValue['customMapboxToken'] = '';
+            cleanedValue['customGoogleClientId'] = '';
+            cleanedValue['customGoogleClientSecret'] = '';
             map[key] = SettingsState.fromJson(cleanedValue);
           } on DpapiInvalidDataException catch (e) {
             debugPrint('DPAPI Invalid Data: $e');
@@ -1444,10 +1446,10 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
                   SettingsEncryptionError.invalidData;
             });
             final cleanedValue = Map<String, dynamic>.from(value as Map);
-            cleanedValue['customWeatherApiKey'] = "";
-            cleanedValue['customMapboxToken'] = "";
-            cleanedValue['customGoogleClientId'] = "";
-            cleanedValue['customGoogleClientSecret'] = "";
+            cleanedValue['customWeatherApiKey'] = '';
+            cleanedValue['customMapboxToken'] = '';
+            cleanedValue['customGoogleClientId'] = '';
+            cleanedValue['customGoogleClientSecret'] = '';
             map[key] = SettingsState.fromJson(cleanedValue);
           } on DpapiGenericException catch (e) {
             debugPrint('DPAPI Generic Error: $e');
@@ -1456,10 +1458,10 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
                   SettingsEncryptionError.generic;
             });
             final cleanedValue = Map<String, dynamic>.from(value as Map);
-            cleanedValue['customWeatherApiKey'] = "";
-            cleanedValue['customMapboxToken'] = "";
-            cleanedValue['customGoogleClientId'] = "";
-            cleanedValue['customGoogleClientSecret'] = "";
+            cleanedValue['customWeatherApiKey'] = '';
+            cleanedValue['customMapboxToken'] = '';
+            cleanedValue['customGoogleClientId'] = '';
+            cleanedValue['customGoogleClientSecret'] = '';
             map[key] = SettingsState.fromJson(cleanedValue);
           } catch (e) {
             debugPrint('Error parsing settings state for key $key: $e');
@@ -2194,8 +2196,9 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   void removeCurvePoint(int index) {
     _updateSettings(ref.read(selectedMonitorsProvider), (s) {
       if (index >= 0 && index < s.curvePoints.length) {
-        if (s.curvePoints[index].x == -20 || s.curvePoints[index].x == 90)
+        if (s.curvePoints[index].x == -20 || s.curvePoints[index].x == 90) {
           return s;
+        }
         final newPoints = List<FlSpot>.from(s.curvePoints)..removeAt(index);
         return _updatePointsInState(s, newPoints);
       }
@@ -2801,8 +2804,9 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
   // Listen to manual temperature changes to apply hardware updates even when window is minimized/hidden in tray
   ref.listen<int>(currentTemperatureProvider, (previous, next) {
     if (ref.read(autoTemperatureAdjustmentProvider) ||
-        tempService.isResetLocked)
+        tempService.isResetLocked) {
       return;
+    }
 
     if (previous != next) {
       final selection = ref.read(selectedMonitorsProvider);

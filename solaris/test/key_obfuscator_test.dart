@@ -58,10 +58,10 @@ void main() {
           final rawBase64 = encrypted.substring('dpapi:'.length);
           final encryptedBytes = base64Url.decode(rawBase64);
 
-          final _crypt32 = DynamicLibrary.open('crypt32.dll');
-          final _kernel32 = DynamicLibrary.open('kernel32.dll');
+          final crypt32 = DynamicLibrary.open('crypt32.dll');
+          final kernel32 = DynamicLibrary.open('kernel32.dll');
 
-          final cryptUnprotectData = _crypt32
+          final cryptUnprotectData = crypt32
               .lookupFunction<
                 Int32 Function(
                   Pointer<DATA_BLOB> pDataIn,
@@ -83,7 +83,7 @@ void main() {
                 )
               >('CryptUnprotectData');
 
-          final localFree = _kernel32
+          final localFree = kernel32
               .lookupFunction<
                 Pointer<Void> Function(IntPtr hMem),
                 Pointer<Void> Function(int hMem)

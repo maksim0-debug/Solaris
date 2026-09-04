@@ -224,7 +224,7 @@ class WindowEventHandler extends WindowListener {
   WindowEventHandler(this.container);
 
   @override
-  void onWindowClose() async {
+  Future<void> onWindowClose() async {
     if (kDebugMode) {
       debugPrint('🪟 [Window Debug] Event: Close (Prevented & Hidden)');
     }
@@ -260,7 +260,7 @@ class WindowEventHandler extends WindowListener {
   }
 
   @override
-  void onWindowBlur() async {
+  Future<void> onWindowBlur() async {
     if (kDebugMode) {
       debugPrint('🪟 [Window Debug] Event: Blur (Focus Lost)');
     }

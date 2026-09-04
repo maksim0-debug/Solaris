@@ -429,8 +429,9 @@ Future<bool> corsMiddleware(HttpRequest request, ApiRouter router) async {
 
 /// Constant-time SHA-256 Auth & Strict Localhost Drive-by Guard Middleware
 Future<bool> authMiddleware(HttpRequest request, ApiRouter router) async {
-  if (request.method == 'OPTIONS')
+  if (request.method == 'OPTIONS') {
     return true; // CORS preflight requests bypass auth check
+  }
 
   final token =
       request.headers.value('X-API-Key') ??

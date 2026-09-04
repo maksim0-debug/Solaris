@@ -216,7 +216,7 @@ class SleepNotifier extends Notifier<SleepState> {
       final sessions = result.sessions;
 
       if (sessions.isEmpty && state.sessions.isEmpty) {
-        state = state.copyWith(isSyncing: false, error: "No sleep data found.");
+        state = state.copyWith(isSyncing: false, error: 'No sleep data found.');
         return;
       }
 
@@ -241,7 +241,7 @@ class SleepNotifier extends Notifier<SleepState> {
       if (!ref.mounted) return;
       state = state.copyWith(
         isSyncing: false,
-        error: forceSync ? "Sync failed: ${e.toString()}" : null,
+        error: forceSync ? 'Sync failed: ${e.toString()}' : null,
       );
     }
   }

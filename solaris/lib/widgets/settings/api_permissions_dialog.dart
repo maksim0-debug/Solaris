@@ -100,11 +100,9 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
         }
       } else {
         _allowedCategories.remove(category);
-        if (_allowedActions == null) {
-          _allowedActions = Set<String>.from(
+        _allowedActions ??= Set<String>.from(
             ApiPermissionsConfig.getAllCanonicalActions(),
           );
-        }
         _allowedActions!.removeAll(categoryActions);
       }
     });
@@ -127,11 +125,9 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
     setState(() {
       final category = ApiPermissionsConfig.getCategoryForAction(actionKey);
 
-      if (_allowedActions == null) {
-        _allowedActions = Set<String>.from(
+      _allowedActions ??= Set<String>.from(
           ApiPermissionsConfig.getAllCanonicalActions(),
         );
-      }
 
       if (enabled) {
         _allowedActions!.add(actionKey);
@@ -259,12 +255,12 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
             color: const Color(0xFF1E1E28),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: const Color(0xFFFDBA74).withOpacity(0.3),
+              color: const Color(0xFFFDBA74).withValues(alpha: 0.3),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.6),
+                color: Colors.black.withValues(alpha: 0.6),
                 blurRadius: 28,
                 spreadRadius: 4,
               ),
@@ -281,7 +277,7 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
                   vertical: 16,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.03),
+                  color: Colors.white.withValues(alpha: 0.03),
                   border: const Border(
                     bottom: BorderSide(color: Colors.white10),
                   ),
@@ -291,7 +287,7 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFDBA74).withOpacity(0.12),
+                        color: const Color(0xFFFDBA74).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
@@ -336,12 +332,12 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
                           color: _isReadOnly
-                              ? const Color(0xFFEF4444).withOpacity(0.1)
-                              : Colors.white.withOpacity(0.04),
+                              ? const Color(0xFFEF4444).withValues(alpha: 0.1)
+                              : Colors.white.withValues(alpha: 0.04),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: _isReadOnly
-                                ? const Color(0xFFEF4444).withOpacity(0.4)
+                                ? const Color(0xFFEF4444).withValues(alpha: 0.4)
                                 : Colors.white10,
                           ),
                         ),
@@ -375,7 +371,7 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
                                   Text(
                                     l10n.apiPermissionsReadOnlyHint,
                                     style: TextStyle(
-                                      color: Colors.white.withOpacity(0.6),
+                                      color: Colors.white.withValues(alpha: 0.6),
                                       fontSize: 12,
                                     ),
                                   ),
@@ -384,7 +380,7 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
                             ),
                             Switch(
                               value: _isReadOnly,
-                              activeColor: const Color(0xFFEF4444),
+                              activeThumbColor: const Color(0xFFEF4444),
                               onChanged: (val) {
                                 setState(() {
                                   _isReadOnly = val;
@@ -495,7 +491,7 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.02),
+                  color: Colors.white.withValues(alpha: 0.02),
                   border: const Border(top: BorderSide(color: Colors.white10)),
                 ),
                 child: Row(
@@ -563,7 +559,7 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.02),
+        color: Colors.white.withValues(alpha: 0.02),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Material(
@@ -574,7 +570,7 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
             style: const TextStyle(color: Colors.white70, fontSize: 13),
           ),
           value: value,
-          activeColor: const Color(0xFFFDBA74),
+          activeThumbColor: const Color(0xFFFDBA74),
           dense: true,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 12,
@@ -602,7 +598,7 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.02),
+        color: Colors.white.withValues(alpha: 0.02),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.white10),
       ),
@@ -634,7 +630,7 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
             style: TextStyle(
               color: _isReadOnly
                   ? Colors.white30
-                  : Colors.white.withOpacity(0.9),
+                  : Colors.white.withValues(alpha: 0.9),
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
@@ -645,7 +641,7 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
               categoryActions.length,
             ),
             style: TextStyle(
-              color: Colors.white.withOpacity(0.45),
+              color: Colors.white.withValues(alpha: 0.45),
               fontSize: 11,
             ),
           ),
@@ -654,7 +650,7 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
             return Container(
               margin: const EdgeInsets.only(bottom: 4),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.015),
+                color: Colors.white.withValues(alpha: 0.015),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Material(
@@ -668,14 +664,14 @@ class _ApiPermissionsDialogState extends ConsumerState<ApiPermissionsDialog> {
                       color:
                           _isReadOnly || !_allowedCategories.contains(category)
                           ? Colors.white30
-                          : Colors.white.withOpacity(0.8),
+                          : Colors.white.withValues(alpha: 0.8),
                       fontSize: 12.5,
                     ),
                   ),
                   subtitle: Text(
                     actionKey,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.35),
+                      color: Colors.white.withValues(alpha: 0.35),
                       fontSize: 10,
                       fontFamily: 'monospace',
                     ),

@@ -163,7 +163,7 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
       final hours = duration.inHours;
       final minutes = duration.inMinutes % 60;
       durationString =
-          '${hours}${l10n.hoursAbbreviation} ${minutes}${l10n.minutesAbbreviation}';
+          '$hours${l10n.hoursAbbreviation} $minutes${l10n.minutesAbbreviation}';
     } else {
       durationString = l10n.invalidTimeRangeError;
     }
@@ -173,14 +173,14 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: Colors.white.withOpacity(0.12), width: 1),
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.12), width: 1),
       ),
       title: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF8B5CF6).withOpacity(0.2),
+              color: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
@@ -238,7 +238,7 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
                     Text(
                       '${l10n.duration}: ',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.6),
+                        color: Colors.white.withValues(alpha: 0.6),
                         fontSize: 13,
                       ),
                     ),
@@ -267,14 +267,14 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF8B5CF6).withOpacity(0.15),
+                            color: const Color(0xFF8B5CF6).withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                              color: const Color(0xFF8B5CF6).withOpacity(0.3),
+                              color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
                             ),
                           ),
                           child: Text(
-                            '+${h}${l10n.hoursAbbreviation}',
+                            '+$h${l10n.hoursAbbreviation}',
                             style: const TextStyle(
                               color: Color(0xFFC4B5FD),
                               fontSize: 11,
@@ -294,7 +294,7 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
             Text(
               l10n.sessionTitleLabel,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withValues(alpha: 0.8),
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -306,22 +306,22 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
               decoration: InputDecoration(
                 hintText: l10n.sleepSessionTitleHint,
                 hintStyle: TextStyle(
-                  color: Colors.white.withOpacity(0.3),
+                  color: Colors.white.withValues(alpha: 0.3),
                   fontSize: 13,
                 ),
                 filled: true,
-                fillColor: Colors.white.withOpacity(0.05),
+                fillColor: Colors.white.withValues(alpha: 0.05),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 14,
                   vertical: 12,
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -335,7 +335,7 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
             Text(
               l10n.sessionDescLabel,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withValues(alpha: 0.8),
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -347,22 +347,22 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
               decoration: InputDecoration(
                 hintText: l10n.sleepSessionDescHint,
                 hintStyle: TextStyle(
-                  color: Colors.white.withOpacity(0.3),
+                  color: Colors.white.withValues(alpha: 0.3),
                   fontSize: 13,
                 ),
                 filled: true,
-                fillColor: Colors.white.withOpacity(0.05),
+                fillColor: Colors.white.withValues(alpha: 0.05),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 14,
                   vertical: 12,
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -378,7 +378,7 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: Text(
             l10n.cancelAction,
-            style: TextStyle(color: Colors.white.withOpacity(0.6)),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
           ),
         ),
         ElevatedButton(
@@ -421,9 +421,9 @@ class _TimeTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
+          color: Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.white.withOpacity(0.1)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -431,7 +431,7 @@ class _TimeTile extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.5),
+                color: Colors.white.withValues(alpha: 0.5),
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
               ),
@@ -451,7 +451,7 @@ class _TimeTile extends StatelessWidget {
                 ),
                 Icon(
                   LucideIcons.calendar,
-                  color: Colors.white.withOpacity(0.5),
+                  color: Colors.white.withValues(alpha: 0.5),
                   size: 14,
                 ),
               ],

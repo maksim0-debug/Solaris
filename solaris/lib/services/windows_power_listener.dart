@@ -50,7 +50,7 @@ class WindowsPowerListener {
     }
   }
 
-  void _onSystemEvent(dynamic rawEvent) async {
+  Future<void> _onSystemEvent(dynamic rawEvent) async {
     if (_isDisposed || rawEvent is! Map) return;
     final eventMap = Map<String, dynamic>.from(rawEvent);
     final eventName = eventMap['event'] as String?;

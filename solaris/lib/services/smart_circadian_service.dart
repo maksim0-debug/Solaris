@@ -38,8 +38,9 @@ class SmartCircadianService {
 
     // 1. Get Quality Data from NightGroups
     final currentRegime = _getCurrentRegime(regimes);
-    if (currentRegime == null || currentRegime.nights.isEmpty)
+    if (currentRegime == null || currentRegime.nights.isEmpty) {
       return const SmartCircadianData.neutral();
+    }
 
     // Key Sleep Metric: The most recent "Night" (aggregated sessions)
     final NightGroup lastNight = currentRegime
@@ -57,8 +58,12 @@ class SmartCircadianService {
     );
     int bedtimeDev =
         lastBedtimeMinutes - currentRegime.averageBedtimeNormalized;
-    while (bedtimeDev > 720) bedtimeDev -= 1440;
-    while (bedtimeDev < -720) bedtimeDev += 1440;
+    while (bedtimeDev > 720) {
+      bedtimeDev -= 1440;
+    }
+    while (bedtimeDev < -720) {
+      bedtimeDev += 1440;
+    }
 
     if (bedtimeDev.abs() > 90) {
       effectiveBedtimeMinutes += (bedtimeDev * 0.5).toInt();
@@ -81,8 +86,12 @@ class SmartCircadianService {
             .inMinutes;
 
         // Normalize difference within a 24-hour cycle (max ±12 hours)
-        while (diffMinutes > 720) diffMinutes -= 1440;
-        while (diffMinutes < -720) diffMinutes += 1440;
+        while (diffMinutes > 720) {
+          diffMinutes -= 1440;
+        }
+        while (diffMinutes < -720) {
+          diffMinutes += 1440;
+        }
 
         // Allow flexible shift so night awakening aligns sun position to user schedule
         final double effectiveDiff = diffMinutes.toDouble();
@@ -174,8 +183,12 @@ class SmartCircadianService {
 
       int minsLeft = effectiveBedtimeMinutes - nowMinutes;
       // Handle noon-based wrap
-      while (minsLeft > 720) minsLeft -= 1440;
-      while (minsLeft < -720) minsLeft += 1440;
+      while (minsLeft > 720) {
+        minsLeft -= 1440;
+      }
+      while (minsLeft < -720) {
+        minsLeft += 1440;
+      }
 
       minutesUntilSleep = minsLeft;
 
@@ -217,8 +230,12 @@ class SmartCircadianService {
         if (!wokeUpInCurrentCycle) {
           final avgWakeMinutes = currentRegime.averageWakeTimeNormalized;
           int minsUntilMorning = avgWakeMinutes - nowMinutes;
-          while (minsUntilMorning > 720) minsUntilMorning -= 1440;
-          while (minsUntilMorning < -720) minsUntilMorning += 1440;
+          while (minsUntilMorning > 720) {
+            minsUntilMorning -= 1440;
+          }
+          while (minsUntilMorning < -720) {
+            minsUntilMorning += 1440;
+          }
 
           // Morning transition (fade out deep night over 60 mins before expected wake)
           if (minsUntilMorning > 0 && minsUntilMorning <= 60) {
@@ -264,8 +281,12 @@ class SmartCircadianService {
         final nowMinutes = BedtimeNormalization.minutesFromNoon(now);
         final avgWakeMinutes = currentRegime.averageWakeTimeNormalized;
         int minsUntilMorning = avgWakeMinutes - nowMinutes;
-        while (minsUntilMorning > 720) minsUntilMorning -= 1440;
-        while (minsUntilMorning < -720) minsUntilMorning += 1440;
+        while (minsUntilMorning > 720) {
+          minsUntilMorning -= 1440;
+        }
+        while (minsUntilMorning < -720) {
+          minsUntilMorning += 1440;
+        }
 
         if (minsUntilMorning > 0) {
           minutesUntilWakeUpValue = minsUntilMorning;

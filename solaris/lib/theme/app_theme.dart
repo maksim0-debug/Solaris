@@ -14,7 +14,7 @@ class AppTheme {
     scaffoldBackgroundColor: background,
     canvasColor: background,
     cardColor: surface,
-    dividerColor: Colors.white.withOpacity(0.1),
+    dividerColor: Colors.white.withValues(alpha: 0.1),
     appBarTheme: const AppBarTheme(
       backgroundColor: background,
       foregroundColor: textPrimary,
@@ -24,7 +24,7 @@ class AppTheme {
     listTileTheme: ListTileThemeData(
       textColor: textPrimary,
       iconColor: accent,
-      selectedTileColor: accent.withOpacity(0.1),
+      selectedTileColor: accent.withValues(alpha: 0.1),
       selectedColor: accent,
       titleTextStyle: const TextStyle(
         fontFamily: _fontFamily,
@@ -109,12 +109,12 @@ class AppTheme {
       ),
       bodyMedium: TextStyle(
         fontFamily: _fontFamily,
-        color: textPrimary.withOpacity(0.9),
+        color: textPrimary.withValues(alpha: 0.9),
         fontSize: 14,
       ),
       bodySmall: TextStyle(
         fontFamily: _fontFamily,
-        color: textPrimary.withOpacity(0.7),
+        color: textPrimary.withValues(alpha: 0.7),
         fontSize: 12,
       ),
       labelLarge: const TextStyle(

@@ -189,9 +189,9 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              dayColor.withOpacity(0.2),
-              twilightColor.withOpacity(0.1),
-              nightColor.withOpacity(0.0),
+              dayColor.withValues(alpha: 0.2),
+              twilightColor.withValues(alpha: 0.1),
+              nightColor.withValues(alpha: 0.0),
             ],
             stops: const [0.1, 0.6, 1.0],
           ),
@@ -208,8 +208,8 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
             radius:
                 10 +
                 (_pulseAnimation.value * 8), // Pulsing radius from 10 to 18
-            color: dayColor.withOpacity(
-              0.15 * (1.0 - _pulseAnimation.value * 0.5),
+            color: dayColor.withValues(
+              alpha: 0.15 * (1.0 - _pulseAnimation.value * 0.5),
             ),
             strokeWidth: 0,
           ),
@@ -224,8 +224,8 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
           getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
             radius:
                 7 + (_pulseAnimation.value * 4), // Pulsing radius from 7 to 11
-            color: dayColor.withOpacity(
-              0.35 * (1.0 - _pulseAnimation.value * 0.3),
+            color: dayColor.withValues(
+              alpha: 0.35 * (1.0 - _pulseAnimation.value * 0.3),
             ),
             strokeWidth: 0,
           ),
@@ -245,7 +245,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
             color: adjustedBrightnessY != null ? Colors.white54 : Colors.white,
             strokeWidth: 2,
             strokeColor: adjustedBrightnessY != null
-                ? dayColor.withOpacity(0.5)
+                ? dayColor.withValues(alpha: 0.5)
                 : dayColor,
           ),
         ),
@@ -278,8 +278,8 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
             getDotPainter: (spot, percent, barData, index) =>
                 FlDotCirclePainter(
                   radius: 8 + (_pulseAnimation.value * 4),
-                  color: Colors.lightBlueAccent.withOpacity(
-                    0.2 * (1.0 - _pulseAnimation.value * 0.4),
+                  color: Colors.lightBlueAccent.withValues(
+                    alpha: 0.2 * (1.0 - _pulseAnimation.value * 0.4),
                   ),
                   strokeWidth: 0,
                 ),

@@ -46,8 +46,9 @@ class SsrfValidator {
 
       // ALWAYS BLOCKED for IPv4
       if (b0 == 127) return true; // Loopback (127.0.0.0/8)
-      if (b0 == 169 && b1 == 254)
+      if (b0 == 169 && b1 == 254) {
         return true; // Link-Local / Cloud Metadata (169.254.0.0/16)
+      }
       if (b0 == 0) return true; // Current network (0.0.0.0/8)
       if (b0 >= 224) return true; // Multicast / Reserved (224.0.0.0/4)
 

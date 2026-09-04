@@ -94,12 +94,12 @@ class CircadianBreakdownTooltip extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A).withOpacity(0.95), // Slate-900
+        color: const Color(0xFF0F172A).withValues(alpha: 0.95), // Slate-900
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white10, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),

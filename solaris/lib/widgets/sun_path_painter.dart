@@ -19,12 +19,12 @@ class SunPathPainter extends CustomPainter {
     final radius = centerOffset + dialRadius + arcHeadroom;
 
     final arcPaint = Paint()
-      ..color = Colors.white.withOpacity(0.04)
+      ..color = Colors.white.withValues(alpha: 0.04)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
 
     final dashPaint = Paint()
-      ..color = Colors.white.withOpacity(0.1)
+      ..color = Colors.white.withValues(alpha: 0.1)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
 
@@ -86,11 +86,11 @@ class SunPathPainter extends CustomPainter {
 
     // Multi-layered soft glow
     final outerGlow = Paint()
-      ..color = sunColor.withOpacity(glowOpacity * 0.25)
+      ..color = sunColor.withValues(alpha: glowOpacity * 0.25)
       ..maskFilter = MaskFilter.blur(BlurStyle.normal, glowRadius * 1.0);
 
     final innerGlow = Paint()
-      ..color = sunColor.withOpacity(glowOpacity * 0.7)
+      ..color = sunColor.withValues(alpha: glowOpacity * 0.7)
       ..maskFilter = MaskFilter.blur(BlurStyle.normal, glowRadius * 0.4);
 
     canvas.drawCircle(pos, glowRadius, outerGlow);
@@ -105,13 +105,13 @@ class SunPathPainter extends CustomPainter {
 
     // Minimalist Sun Icon
     final iconPaint = Paint()
-      ..color = Colors.black.withOpacity(0.5)
+      ..color = Colors.black.withValues(alpha: 0.5)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0
       ..strokeCap = StrokeCap.round;
 
     final iconFill = Paint()
-      ..color = Colors.black.withOpacity(0.5)
+      ..color = Colors.black.withValues(alpha: 0.5)
       ..style = PaintingStyle.fill;
 
     // Inner core
@@ -139,13 +139,13 @@ class SunPathPainter extends CustomPainter {
   void _drawMoon(Canvas canvas, Offset pos) {
     // Moon Glow
     final moonGlow = Paint()
-      ..color = Colors.blueAccent.withOpacity(0.15)
+      ..color = Colors.blueAccent.withValues(alpha: 0.15)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 40);
 
     canvas.drawCircle(pos, 45, moonGlow);
 
     final moonBody = Paint()
-      ..color = Colors.white.withOpacity(0.9)
+      ..color = Colors.white.withValues(alpha: 0.9)
       ..style = PaintingStyle.fill;
 
     // Crescent Path

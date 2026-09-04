@@ -465,8 +465,9 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
       permissions.allowReadSleep,
       'sleep',
     );
-    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, readCheck))
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, readCheck)) {
       return;
+    }
 
     final sleepState = ref.read(sleepProvider);
 
@@ -487,8 +488,9 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
       permissions,
       ApiActionCategory.system,
     );
-    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, catCheck))
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, catCheck)) {
       return;
+    }
 
     final settingsMap = ref.read(settingsProvider).value;
     final webhooks = settingsMap?['all']?.webhooks ?? [];
@@ -626,8 +628,9 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
       permissions,
       ApiActionCategory.system,
     );
-    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, catCheck))
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, catCheck)) {
       return;
+    }
 
     final events = WebhookEventType.values
         .map((e) => {'type': e.name, 'wire_name': e.wireName})
@@ -644,8 +647,9 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
       permissions,
       ApiActionCategory.system,
     );
-    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, catCheck))
+    if (await ApiPermissionsChecker.sendRfc7807IfDenied(request, catCheck)) {
       return;
+    }
 
     final dlq = await ref.read(webhookServiceProvider.notifier).getDLQEntries();
     _sendResponse(request, HttpStatus.ok, {

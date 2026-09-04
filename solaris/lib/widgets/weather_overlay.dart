@@ -97,8 +97,8 @@ class _WeatherOverlayState extends ConsumerState<WeatherOverlay>
   final Random _random = Random();
   bool _isLightningStricking = false;
 
-  List<_Particle> _particles = [];
-  List<_Cloud> _clouds = [];
+  final List<_Particle> _particles = [];
+  final List<_Cloud> _clouds = [];
   Duration _lastElapsed = Duration.zero;
 
   bool _isRain = false;
@@ -414,8 +414,9 @@ class _WeatherOverlayState extends ConsumerState<WeatherOverlay>
       }
     }
 
-    if (!_isRain && !_isSnow && !_isLightningStricking && _clouds.isEmpty)
+    if (!_isRain && !_isSnow && !_isLightningStricking && _clouds.isEmpty) {
       return const SizedBox.shrink();
+    }
 
     return Stack(
       children: [
@@ -447,8 +448,8 @@ class _WeatherOverlayState extends ConsumerState<WeatherOverlay>
                 animation: _thunderController,
                 builder: (context, child) {
                   return Container(
-                    color: Colors.white.withOpacity(
-                      _thunderController.value * 0.6,
+                    color: Colors.white.withValues(
+                      alpha: _thunderController.value * 0.6,
                     ),
                   );
                 },
@@ -471,7 +472,7 @@ class PrecipitationSystemPainter extends CustomPainter {
     if (particles.isEmpty) return;
 
     final paint = Paint()
-      ..color = Colors.white.withOpacity(isSnow ? 0.7 : 0.4)
+      ..color = Colors.white.withValues(alpha: isSnow ? 0.7 : 0.4)
       ..strokeCap = StrokeCap.round;
 
     for (var p in particles) {
@@ -524,7 +525,7 @@ class CloudPainter extends CustomPainter {
       // 1. Draw the Body (Greyish, blurred for soft appearance)
       final bodyPaint = Paint()
         ..color = const Color(0xFF94A3B8)
-            .withOpacity(cloud.opacity) // Elegant slate grey
+            .withValues(alpha: cloud.opacity) // Elegant slate grey
         ..style = PaintingStyle.fill
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
       canvas.drawPath(cloudPath, bodyPaint);
@@ -532,7 +533,7 @@ class CloudPainter extends CustomPainter {
       // 2. Draw the Outline (Single continuous line)
       final outlinePaint = Paint()
         ..color = const Color(0xFF1E293B)
-            .withOpacity(0.5) // Darker slate for outline
+            .withValues(alpha: 0.5) // Darker slate for outline
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.0
         ..strokeCap = StrokeCap.round;

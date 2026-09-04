@@ -187,7 +187,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFDBA74).withOpacity(0.1),
+                          color: const Color(0xFFFDBA74).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(
@@ -213,7 +213,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               l10n.autorunSubtitle,
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.white.withOpacity(0.5),
+                                color: Colors.white.withValues(alpha: 0.5),
                               ),
                             ),
                           ],
@@ -291,9 +291,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   if (states.contains(WidgetState.selected)) {
                                     return const Color(
                                       0xFFFDBA74,
-                                    ).withOpacity(0.2);
+                                    ).withValues(alpha: 0.2);
                                   }
-                                  return Colors.white.withOpacity(0.05);
+                                  return Colors.white.withValues(alpha: 0.05);
                                 }),
                             foregroundColor:
                                 WidgetStateProperty.resolveWith<Color>((
@@ -305,7 +305,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   return Colors.white70;
                                 }),
                             side: WidgetStateProperty.all(
-                              BorderSide(color: Colors.white.withOpacity(0.1)),
+                              BorderSide(color: Colors.white.withValues(alpha: 0.1)),
                             ),
                           ),
                         ),
@@ -332,7 +332,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF38BDF8).withOpacity(0.1),
+                          color: const Color(0xFF38BDF8).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(
@@ -358,7 +358,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               l10n.autoUpdatesSubtitle,
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.white.withOpacity(0.5),
+                                color: Colors.white.withValues(alpha: 0.5),
                               ),
                             ),
                           ],
@@ -388,7 +388,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 .updateAutoUpdateEnabled(val);
                           }
                         },
-                        activeColor: const Color(0xFFFDBA74),
+                        activeThumbColor: const Color(0xFFFDBA74),
                       ),
                     ],
                   ),
@@ -411,10 +411,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF59E0B).withOpacity(0.1),
+                            color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: const Color(0xFFF59E0B).withOpacity(0.3),
+                              color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
                             ),
                           ),
                           child: Row(
@@ -476,7 +476,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFDBA74).withOpacity(0.1),
+                          color: const Color(0xFFFDBA74).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(
@@ -502,7 +502,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               l10n.weatherAdjustmentSubtitle,
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.white.withOpacity(0.5),
+                                color: Colors.white.withValues(alpha: 0.5),
                               ),
                             ),
                           ],
@@ -653,7 +653,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 Icon(
                   LucideIcons.info,
                   size: 18,
-                  color: Colors.white.withOpacity(0.4),
+                  color: Colors.white.withValues(alpha: 0.4),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -661,7 +661,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     l10n.realtimeApplyNotice,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.white.withOpacity(0.4),
+                      color: Colors.white.withValues(alpha: 0.4),
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -694,7 +694,7 @@ class _LegalSection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
+                  color: Colors.white.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
@@ -739,7 +739,7 @@ class _LegalSection extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'Outfit',
                 fontSize: 12,
-                color: Colors.white.withOpacity(0.5),
+                color: Colors.white.withValues(alpha: 0.5),
               ),
             ),
             trailing: const Icon(
@@ -1188,7 +1188,7 @@ class _PresetChip extends StatelessWidget {
           onPressed: onPressed,
           style: TextButton.styleFrom(
             backgroundColor: isActive
-                ? const Color(0xFFFDBA74).withOpacity(0.1)
+                ? const Color(0xFFFDBA74).withValues(alpha: 0.1)
                 : Colors.transparent,
             foregroundColor: isActive
                 ? const Color(0xFFFDBA74)
@@ -1198,7 +1198,7 @@ class _PresetChip extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
               side: BorderSide(
                 color: isActive
-                    ? const Color(0xFFFDBA74).withOpacity(0.5)
+                    ? const Color(0xFFFDBA74).withValues(alpha: 0.5)
                     : Colors.transparent,
               ),
             ),
@@ -1462,7 +1462,7 @@ class _TypeSelector extends ConsumerWidget {
               Set<WidgetState> states,
             ) {
               if (states.contains(WidgetState.selected)) {
-                return const Color(0xFFF97316).withOpacity(0.2);
+                return const Color(0xFFF97316).withValues(alpha: 0.2);
               }
               return Colors.transparent;
             }),
@@ -1510,7 +1510,7 @@ class _TempToggleCard extends ConsumerWidget {
                   l10n.blueLightFilterSubtitle,
                   style: TextStyle(
                     fontSize: 13,
-                    color: Colors.white.withOpacity(0.5),
+                    color: Colors.white.withValues(alpha: 0.5),
                   ),
                 ),
               ],
@@ -1521,7 +1521,7 @@ class _TempToggleCard extends ConsumerWidget {
             onChanged: (val) {
               ref.read(isColorTemperatureEnabledProvider.notifier).set(val);
             },
-            activeColor: const Color(0xFFF97316),
+            activeThumbColor: const Color(0xFFF97316),
           ),
         ],
       ),
@@ -1564,7 +1564,7 @@ class _SettingsRow extends StatelessWidget {
                 subtitle,
                 style: TextStyle(
                   fontSize: 11,
-                  color: Colors.white.withOpacity(0.4),
+                  color: Colors.white.withValues(alpha: 0.4),
                 ),
               ),
             ],
@@ -1573,7 +1573,7 @@ class _SettingsRow extends StatelessWidget {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: const Color(0xFFFDBA74),
+          activeThumbColor: const Color(0xFFFDBA74),
         ),
       ],
     );
@@ -1605,7 +1605,7 @@ class _SmartExclusionsCard extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFA855F7).withOpacity(0.1),
+                      color: const Color(0xFFA855F7).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
@@ -1882,12 +1882,12 @@ class _GameModeTargetDisplaysSection extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: isEnabled
-                    ? const Color(0xFFA855F7).withOpacity(0.08)
-                    : Colors.white.withOpacity(0.03),
+                    ? const Color(0xFFA855F7).withValues(alpha: 0.08)
+                    : Colors.white.withValues(alpha: 0.03),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: isEnabled
-                      ? const Color(0xFFA855F7).withOpacity(0.3)
+                      ? const Color(0xFFA855F7).withValues(alpha: 0.3)
                       : Colors.white10,
                 ),
               ),
@@ -1923,10 +1923,10 @@ class _GameModeTargetDisplaysSection extends ConsumerWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF818CF8).withOpacity(0.2),
+                              color: const Color(0xFF818CF8).withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(4),
                               border: Border.all(
-                                color: const Color(0xFF818CF8).withOpacity(0.4),
+                                color: const Color(0xFF818CF8).withValues(alpha: 0.4),
                               ),
                             ),
                             child: Text(
@@ -1954,7 +1954,7 @@ class _GameModeTargetDisplaysSection extends ConsumerWidget {
                               val,
                             );
                       },
-                      activeColor: const Color(0xFFA855F7),
+                      activeThumbColor: const Color(0xFFA855F7),
                     ),
                   ),
                 ],
@@ -1989,12 +1989,12 @@ class _ScopeChipButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
             color: isSelected
-                ? const Color(0xFFA855F7).withOpacity(0.2)
-                : Colors.white.withOpacity(0.04),
+                ? const Color(0xFFA855F7).withValues(alpha: 0.2)
+                : Colors.white.withValues(alpha: 0.04),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isSelected
-                  ? const Color(0xFFA855F7).withOpacity(0.6)
+                  ? const Color(0xFFA855F7).withValues(alpha: 0.6)
                   : Colors.white12,
             ),
           ),
@@ -2037,7 +2037,7 @@ class _GlobalHotkeysCard extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF60A5FA).withOpacity(0.1),
+                      color: const Color(0xFF60A5FA).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
@@ -2230,7 +2230,7 @@ class _AppListManagerState extends State<_AppListManager> {
         const SizedBox(height: 4),
         Text(
           widget.subtitle,
-          style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.3)),
+          style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.3)),
         ),
         const SizedBox(height: 12),
         Row(
@@ -2241,14 +2241,14 @@ class _AppListManagerState extends State<_AppListManager> {
                 style: const TextStyle(color: Colors.white, fontSize: 13),
                 decoration: InputDecoration(
                   hintText: l10n.gameModeHint,
-                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
+                  hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 12,
                     vertical: 12,
                   ),
                   filled: true,
-                  fillColor: Colors.white.withOpacity(0.05),
+                  fillColor: Colors.white.withValues(alpha: 0.05),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide.none,
@@ -2262,7 +2262,7 @@ class _AppListManagerState extends State<_AppListManager> {
               onPressed: _submit,
               icon: const Icon(LucideIcons.plus, size: 18),
               style: IconButton.styleFrom(
-                backgroundColor: widget.accentColor.withOpacity(0.1),
+                backgroundColor: widget.accentColor.withValues(alpha: 0.1),
                 foregroundColor: widget.accentColor,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -2280,7 +2280,7 @@ class _AppListManagerState extends State<_AppListManager> {
               return Container(
                 padding: const EdgeInsets.only(left: 10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
+                  color: Colors.white.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Row(
@@ -2377,9 +2377,9 @@ class _PremiumSlider extends StatelessWidget {
       width: 130, // Compact but clear
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.03),
+        color: Colors.white.withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -2393,7 +2393,7 @@ class _PremiumSlider extends StatelessWidget {
                 activeTrackColor: const Color(0xFF60A5FA),
                 inactiveTrackColor: Colors.white10,
                 thumbColor: Colors.white,
-                overlayColor: const Color(0xFF60A5FA).withOpacity(0.1),
+                overlayColor: const Color(0xFF60A5FA).withValues(alpha: 0.1),
               ),
               child: Slider(
                 value: value,
@@ -2477,7 +2477,7 @@ class _HotkeyRow extends StatelessWidget {
                 hotKey == null ? l10n.disabled : _formatHotKey(hotKey),
                 style: TextStyle(
                   fontSize: 11,
-                  color: Colors.white.withOpacity(0.3),
+                  color: Colors.white.withValues(alpha: 0.3),
                 ),
               ),
             ],
@@ -2496,7 +2496,7 @@ class _HotkeyRow extends StatelessWidget {
                 icon: const Icon(LucideIcons.x, size: 16),
                 onPressed: () => onChanged(null),
                 color: Colors.white24,
-                hoverColor: Colors.red.withOpacity(0.1),
+                hoverColor: Colors.red.withValues(alpha: 0.1),
                 tooltip: l10n.reset,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
@@ -2684,21 +2684,21 @@ class _PremiumHotkeyRecorderState extends State<_PremiumHotkeyRecorder>
         child: AnimatedBuilder(
           animation: _pulseController,
           builder: (context, child) {
-            final glowColor = const Color(0xFF60A5FA).withOpacity(
-              _isRecording ? 0.2 + (0.1 * _pulseController.value) : 0,
+            final glowColor = const Color(0xFF60A5FA).withValues(
+              alpha: _isRecording ? 0.2 + (0.1 * _pulseController.value) : 0,
             );
 
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: _isRecording
-                    ? Colors.white.withOpacity(0.08)
-                    : Colors.white.withOpacity(0.03),
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : Colors.white.withValues(alpha: 0.03),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: _isRecording
-                      ? const Color(0xFF60A5FA).withOpacity(0.5)
-                      : Colors.white.withOpacity(0.05),
+                      ? const Color(0xFF60A5FA).withValues(alpha: 0.5)
+                      : Colors.white.withValues(alpha: 0.05),
                   width: 1.5,
                 ),
                 boxShadow: [
@@ -2745,7 +2745,7 @@ class _PremiumHotkeyRecorderState extends State<_PremiumHotkeyRecorder>
       return [
         Text(
           l10n.disabled,
-          style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.2)),
+          style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.2)),
         ),
       ];
     }
@@ -2852,13 +2852,13 @@ class _Badge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: isModifier
-            ? const Color(0xFF60A5FA).withOpacity(0.15)
-            : Colors.white.withOpacity(0.1),
+            ? const Color(0xFF60A5FA).withValues(alpha: 0.15)
+            : Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
           color: isModifier
-              ? const Color(0xFF60A5FA).withOpacity(0.3)
-              : Colors.white.withOpacity(0.1),
+              ? const Color(0xFF60A5FA).withValues(alpha: 0.3)
+              : Colors.white.withValues(alpha: 0.1),
         ),
       ),
       child: Row(
@@ -2903,7 +2903,7 @@ class _LanguageSelectorCard extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF60A5FA).withOpacity(0.1),
+              color: const Color(0xFF60A5FA).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(
@@ -2937,10 +2937,10 @@ class _LanguageSelectorCard extends ConsumerWidget {
             style: SegmentedButton.styleFrom(
               visualDensity: VisualDensity.compact,
               backgroundColor: Colors.transparent,
-              selectedBackgroundColor: const Color(0xFF60A5FA).withOpacity(0.2),
+              selectedBackgroundColor: const Color(0xFF60A5FA).withValues(alpha: 0.2),
               selectedForegroundColor: const Color(0xFF60A5FA),
               foregroundColor: Colors.white24,
-              side: BorderSide(color: Colors.white.withOpacity(0.05)),
+              side: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -2985,7 +2985,7 @@ class _IntensitySlider extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
@@ -3005,10 +3005,10 @@ class _IntensitySlider extends StatelessWidget {
             trackHeight: 2,
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
             overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
-            activeTrackColor: color.withOpacity(0.5),
+            activeTrackColor: color.withValues(alpha: 0.5),
             inactiveTrackColor: Colors.white10,
             thumbColor: color,
-            overlayColor: color.withOpacity(0.2),
+            overlayColor: color.withValues(alpha: 0.2),
           ),
           child: Slider(value: value, min: 0.0, max: 1.0, onChanged: onChanged),
         ),
@@ -3340,9 +3340,9 @@ class _WeatherProviderSelector extends ConsumerWidget {
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
                 if (states.contains(WidgetState.selected)) {
-                  return const Color(0xFFFDBA74).withOpacity(0.2);
+                  return const Color(0xFFFDBA74).withValues(alpha: 0.2);
                 }
-                return Colors.white.withOpacity(0.05);
+                return Colors.white.withValues(alpha: 0.05);
               }),
               foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
                 if (states.contains(WidgetState.selected)) {
@@ -3497,7 +3497,7 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFDBA74).withOpacity(0.1),
+                      color: const Color(0xFFFDBA74).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
@@ -3524,7 +3524,7 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
                         style: TextStyle(
                           fontFamily: 'Outfit',
                           fontSize: 12,
-                          color: Colors.white.withOpacity(0.5),
+                          color: Colors.white.withValues(alpha: 0.5),
                         ),
                       ),
                     ],
@@ -3745,7 +3745,7 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
+                    color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -3767,9 +3767,9 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.03),
+                  color: Colors.white.withValues(alpha: 0.03),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white.withOpacity(0.08)),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                 ),
                 child: Row(
                   children: [
@@ -3784,7 +3784,7 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
                         decoration: InputDecoration(
                           hintText: placeholder,
                           hintStyle: TextStyle(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             fontSize: 13,
                           ),
                           contentPadding: const EdgeInsets.symmetric(
@@ -3815,7 +3815,7 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
             if (isModified) ...[
               IconButton(
                 style: IconButton.styleFrom(
-                  backgroundColor: Colors.white.withOpacity(0.05),
+                  backgroundColor: Colors.white.withValues(alpha: 0.05),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -3834,7 +3834,7 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
               const SizedBox(width: 4),
               IconButton(
                 style: IconButton.styleFrom(
-                  backgroundColor: const Color(0xFF8B5CF6).withOpacity(0.2),
+                  backgroundColor: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -3851,7 +3851,7 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
             ] else if (savedValue.isNotEmpty) ...[
               IconButton(
                 style: IconButton.styleFrom(
-                  backgroundColor: Colors.red.withOpacity(0.1),
+                  backgroundColor: Colors.red.withValues(alpha: 0.1),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -3898,7 +3898,7 @@ class _AppOverridesTileCard extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF6366F1).withOpacity(0.15),
+                  color: const Color(0xFF6366F1).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -3925,7 +3925,7 @@ class _AppOverridesTileCard extends ConsumerWidget {
                       l10n.appOverridesSubtitle,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.white.withOpacity(0.5),
+                        color: Colors.white.withValues(alpha: 0.5),
                       ),
                     ),
                   ],

@@ -57,7 +57,7 @@ class TrayService with TrayListener {
   }
 
   @override
-  void onTrayIconMouseDown() async {
+  Future<void> onTrayIconMouseDown() async {
     await _restoreWindowFromTray();
   }
 
@@ -67,7 +67,7 @@ class TrayService with TrayListener {
   }
 
   @override
-  void onTrayMenuItemClick(MenuItem menuItem) async {
+  Future<void> onTrayMenuItemClick(MenuItem menuItem) async {
     if (menuItem.key == 'open_window') {
       await _restoreWindowFromTray();
     } else if (menuItem.key == 'exit_app') {

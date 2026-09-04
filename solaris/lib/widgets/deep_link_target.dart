@@ -57,7 +57,7 @@ class DeepLinkTargetState extends State<DeepLinkTarget>
                 BoxShadow(
                   color: const Color(
                     0xFFFDBA74,
-                  ).withOpacity(0.3 * _glowAnimation.value),
+                  ).withValues(alpha: 0.3 * _glowAnimation.value),
                   blurRadius: 30 * _glowAnimation.value,
                   spreadRadius: 5 * _glowAnimation.value,
                 ),

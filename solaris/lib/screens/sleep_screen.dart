@@ -148,7 +148,7 @@ class _SleepScreenState extends ConsumerState<SleepScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(
                           0xFF8B5CF6,
-                        ).withOpacity(0.2),
+                        ).withValues(alpha: 0.2),
                         foregroundColor: const Color(0xFFC4B5FD),
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(
@@ -156,7 +156,7 @@ class _SleepScreenState extends ConsumerState<SleepScreen> {
                           vertical: 8,
                         ),
                         side: BorderSide(
-                          color: const Color(0xFF8B5CF6).withOpacity(0.4),
+                          color: const Color(0xFF8B5CF6).withValues(alpha: 0.4),
                           width: 1,
                         ),
                         shape: RoundedRectangleBorder(
@@ -227,7 +227,7 @@ class _SectionHeader extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: const Color(0xFF8B5CF6).withOpacity(0.1),
+            color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, color: const Color(0xFFC4B5FD), size: 24),
@@ -249,7 +249,7 @@ class _SectionHeader extends StatelessWidget {
                 subtitle,
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.white.withOpacity(0.5),
+                  color: Colors.white.withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -313,7 +313,7 @@ class _GoogleFitSyncCard extends ConsumerWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.2),
+                    color: Colors.green.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -409,7 +409,7 @@ class _GoogleFitSyncCard extends ConsumerWidget {
                     Text(
                       l10n.lastFetchLabel,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
+                        color: Colors.white.withValues(alpha: 0.5),
                         fontSize: 12,
                       ),
                     ),
@@ -495,7 +495,7 @@ class _GoogleFitSyncCard extends ConsumerWidget {
           backgroundColor: const Color(0xFF0F172A),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Colors.white.withOpacity(0.08)),
+            side: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
           ),
           title: Row(
             children: [
@@ -566,12 +566,13 @@ class _CircadianRegulationSection extends ConsumerWidget {
     final smartData = ref.watch(smartCircadianDataProvider(monitorId));
 
     String formatMins(int mins) {
-      if (mins < 0) return "";
+      if (mins < 0) return '';
       final h = mins ~/ 60;
       final m = mins % 60;
-      if (h > 0)
-        return "${h}${l10n.hoursAbbreviation} ${m}${l10n.minutesAbbreviation}";
-      return "${m}${l10n.minutesAbbreviation}";
+      if (h > 0) {
+        return '$h${l10n.hoursAbbreviation} $m${l10n.minutesAbbreviation}';
+      }
+      return '$m${l10n.minutesAbbreviation}';
     }
 
     return Column(
@@ -599,7 +600,7 @@ class _CircadianRegulationSection extends ConsumerWidget {
                     onChanged: (val) => ref
                         .read(settingsProvider.notifier)
                         .updateSmartCircadian(val),
-                    activeColor: const Color(0xFF8B5CF6),
+                    activeThumbColor: const Color(0xFF8B5CF6),
                   ),
                 ],
               ),
@@ -608,7 +609,7 @@ class _CircadianRegulationSection extends ConsumerWidget {
                 l10n.circadianRegulationBetaNote,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.white.withOpacity(0.4),
+                  color: Colors.white.withValues(alpha: 0.4),
                 ),
               ),
             ],
@@ -914,13 +915,13 @@ class _RegulationToggleState extends ConsumerState<_RegulationToggle> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: widget.isActive
-            ? Colors.white.withOpacity(0.03)
+            ? Colors.white.withValues(alpha: 0.03)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(16),
         boxShadow: widget.isActive
             ? [
                 BoxShadow(
-                  color: const Color(0xFF8B5CF6).withOpacity(0.15),
+                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.15),
                   blurRadius: 20,
                   spreadRadius: -5,
                 ),
@@ -928,7 +929,7 @@ class _RegulationToggleState extends ConsumerState<_RegulationToggle> {
             : [],
         border: Border.all(
           color: widget.isActive
-              ? const Color(0xFF8B5CF6).withOpacity(0.3)
+              ? const Color(0xFF8B5CF6).withValues(alpha: 0.3)
               : Colors.transparent,
           width: 1,
         ),
@@ -963,7 +964,7 @@ class _RegulationToggleState extends ConsumerState<_RegulationToggle> {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF8B5CF6).withOpacity(0.2),
+                              color: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -983,7 +984,7 @@ class _RegulationToggleState extends ConsumerState<_RegulationToggle> {
                             size: 14,
                             color: _isExpanded
                                 ? const Color(0xFF8B5CF6)
-                                : Colors.white.withOpacity(0.3),
+                                : Colors.white.withValues(alpha: 0.3),
                           ),
                           onPressed: () =>
                               setState(() => _isExpanded = !_isExpanded),
@@ -1010,7 +1011,7 @@ class _RegulationToggleState extends ConsumerState<_RegulationToggle> {
                           child: Icon(
                             LucideIcons.info,
                             size: 14,
-                            color: Colors.white.withOpacity(0.3),
+                            color: Colors.white.withValues(alpha: 0.3),
                           ),
                         ),
                       ],
@@ -1020,7 +1021,7 @@ class _RegulationToggleState extends ConsumerState<_RegulationToggle> {
                       widget.subtitle,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.white.withOpacity(0.4),
+                        color: Colors.white.withValues(alpha: 0.4),
                       ),
                     ),
                   ],
@@ -1031,7 +1032,7 @@ class _RegulationToggleState extends ConsumerState<_RegulationToggle> {
                 child: Switch(
                   value: widget.masterValue,
                   onChanged: widget.onMasterChanged,
-                  activeColor: const Color(0xFF8B5CF6),
+                  activeThumbColor: const Color(0xFF8B5CF6),
                 ),
               ),
             ],
@@ -1085,7 +1086,7 @@ class _RegulationToggleState extends ConsumerState<_RegulationToggle> {
                       Padding(
                         padding: const EdgeInsets.only(top: 12),
                         child: _DurationSlider(
-                          label: widget.durationLabel ?? "",
+                          label: widget.durationLabel ?? '',
                           value: widget.durationValue!,
                           min: widget.durationMin,
                           max: widget.durationMax,
@@ -1146,10 +1147,10 @@ class _IntensitySlider extends StatelessWidget {
             trackHeight: 2,
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
             overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
-            activeTrackColor: color.withOpacity(0.5),
+            activeTrackColor: color.withValues(alpha: 0.5),
             inactiveTrackColor: Colors.white10,
             thumbColor: color,
-            overlayColor: color.withOpacity(0.2),
+            overlayColor: color.withValues(alpha: 0.2),
           ),
           child: Slider(value: value, min: 0.0, max: 1.0, onChanged: onChanged),
         ),
@@ -1181,7 +1182,7 @@ class _SmallToggle extends StatelessWidget {
           child: Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: color,
+            activeThumbColor: color,
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
         ),
@@ -1221,14 +1222,15 @@ class _DurationSlider extends StatelessWidget {
 
     // Format label for mins if no unit provided
     String formatValue(double val) {
-      if (unit != null) return "${val.toStringAsFixed(1)}$unit";
+      if (unit != null) return '${val.toStringAsFixed(1)}$unit';
 
       final mins = val.toInt();
       final h = mins ~/ 60;
       final m = mins % 60;
-      if (h > 0)
-        return "${h}${l10n.hoursAbbreviation} ${m}${l10n.minutesAbbreviation}";
-      return "${m}${l10n.minutesAbbreviation}";
+      if (h > 0) {
+        return '$h${l10n.hoursAbbreviation} $m${l10n.minutesAbbreviation}';
+      }
+      return '$m${l10n.minutesAbbreviation}';
     }
 
     return Column(
@@ -1257,10 +1259,10 @@ class _DurationSlider extends StatelessWidget {
             trackHeight: 2,
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
             overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
-            activeTrackColor: const Color(0xFF8B5CF6).withOpacity(0.5),
+            activeTrackColor: const Color(0xFF8B5CF6).withValues(alpha: 0.5),
             inactiveTrackColor: Colors.white10,
             thumbColor: const Color(0xFFC4B5FD),
-            overlayColor: const Color(0xFF8B5CF6).withOpacity(0.2),
+            overlayColor: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
           ),
           child: Slider(value: value, min: min, max: max, onChanged: onChanged),
         ),
@@ -1456,7 +1458,7 @@ class _AnalysisSlider extends StatelessWidget {
                     subtitle,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.white.withOpacity(0.4),
+                      color: Colors.white.withValues(alpha: 0.4),
                     ),
                   ),
                 ],
@@ -1466,7 +1468,7 @@ class _AnalysisSlider extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFF8B5CF6).withOpacity(0.1),
+                color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -1489,7 +1491,7 @@ class _AnalysisSlider extends StatelessWidget {
             activeTrackColor: const Color(0xFF818CF8),
             inactiveTrackColor: Colors.white10,
             thumbColor: Colors.white,
-            overlayColor: const Color(0xFF8B5CF6).withOpacity(0.2),
+            overlayColor: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
           ),
           child: Slider(
             value: value,
@@ -1550,7 +1552,7 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFA78BFA).withOpacity(0.1),
+                      color: const Color(0xFFA78BFA).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
@@ -1581,7 +1583,7 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                                 icon: Icon(
                                   LucideIcons.info,
                                   size: 16,
-                                  color: Colors.white.withOpacity(0.3),
+                                  color: Colors.white.withValues(alpha: 0.3),
                                 ),
                                 onPressed: () => _showHelpDialog(context, l10n),
                                 constraints: const BoxConstraints(),
@@ -1595,7 +1597,7 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                           l10n.sleepIntegrationSubtitle,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.white.withOpacity(0.5),
+                            color: Colors.white.withValues(alpha: 0.5),
                           ),
                         ),
                       ],
@@ -1655,7 +1657,7 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                               l10n.serverPortSubtitle,
                               style: TextStyle(
                                 fontSize: 11,
-                                color: Colors.white.withOpacity(0.4),
+                                color: Colors.white.withValues(alpha: 0.4),
                               ),
                             ),
                           ],
@@ -1678,7 +1680,7 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderSide: BorderSide(
-                                color: Colors.white.withOpacity(0.1),
+                                color: Colors.white.withValues(alpha: 0.1),
                               ),
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -1766,10 +1768,10 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: Colors.redAccent.withOpacity(0.1),
+                                color: Colors.redAccent.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: Colors.redAccent.withOpacity(0.2),
+                                  color: Colors.redAccent.withValues(alpha: 0.2),
                                 ),
                               ),
                               child: Column(
@@ -1803,7 +1805,7 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                                       failedPort,
                                     ),
                                     style: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
+                                      color: Colors.white.withValues(alpha: 0.7),
                                       fontSize: 12,
                                       height: 1.4,
                                     ),
@@ -1814,7 +1816,7 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                                       failedPort,
                                     ),
                                     style: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
+                                      color: Colors.white.withValues(alpha: 0.7),
                                       fontSize: 12,
                                       height: 1.4,
                                     ),
@@ -1974,7 +1976,7 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
           text,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.white.withOpacity(0.7),
+            color: Colors.white.withValues(alpha: 0.7),
             height: 1.4,
             fontFamily: isCode ? 'monospace' : null,
           ),
@@ -2019,7 +2021,7 @@ class _SettingsRow extends StatelessWidget {
                 subtitle,
                 style: TextStyle(
                   fontSize: 11,
-                  color: Colors.white.withOpacity(0.4),
+                  color: Colors.white.withValues(alpha: 0.4),
                 ),
               ),
             ],
@@ -2028,7 +2030,7 @@ class _SettingsRow extends StatelessWidget {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: const Color(0xFFFDBA74),
+          activeThumbColor: const Color(0xFFFDBA74),
         ),
       ],
     );
@@ -2036,7 +2038,7 @@ class _SettingsRow extends StatelessWidget {
 }
 
 class _GoogleFitKeysWarning extends ConsumerStatefulWidget {
-  const _GoogleFitKeysWarning({Key? key}) : super(key: key);
+  const _GoogleFitKeysWarning();
 
   @override
   ConsumerState<_GoogleFitKeysWarning> createState() =>

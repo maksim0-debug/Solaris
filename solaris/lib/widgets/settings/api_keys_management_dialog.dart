@@ -182,12 +182,12 @@ class ApiKeysManagementDialog extends ConsumerWidget {
             color: const Color(0xFF1E1E28),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: const Color(0xFFFDBA74).withOpacity(0.3),
+              color: const Color(0xFFFDBA74).withValues(alpha: 0.3),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.6),
+                color: Colors.black.withValues(alpha: 0.6),
                 blurRadius: 28,
                 spreadRadius: 4,
               ),
@@ -216,7 +216,7 @@ class ApiKeysManagementDialog extends ConsumerWidget {
                       vertical: 16,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.03),
+                      color: Colors.white.withValues(alpha: 0.03),
                       border: const Border(
                         bottom: BorderSide(color: Colors.white10),
                       ),
@@ -226,7 +226,7 @@ class ApiKeysManagementDialog extends ConsumerWidget {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFDBA74).withOpacity(0.12),
+                            color: const Color(0xFFFDBA74).withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Icon(
@@ -252,7 +252,7 @@ class ApiKeysManagementDialog extends ConsumerWidget {
                               Text(
                                 l10n.apiKeysManagementSubtitle,
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.5),
+                                  color: Colors.white.withValues(alpha: 0.5),
                                   fontSize: 12,
                                 ),
                               ),
@@ -411,19 +411,19 @@ class ApiKeysManagementDialog extends ConsumerWidget {
                                         color: isReadOnly
                                             ? const Color(
                                                 0xFFEF4444,
-                                              ).withOpacity(0.15)
+                                              ).withValues(alpha: 0.15)
                                             : const Color(
                                                 0xFF4ADE80,
-                                              ).withOpacity(0.15),
+                                              ).withValues(alpha: 0.15),
                                         borderRadius: BorderRadius.circular(20),
                                         border: Border.all(
                                           color: isReadOnly
                                               ? const Color(
                                                   0xFFEF4444,
-                                                ).withOpacity(0.4)
+                                                ).withValues(alpha: 0.4)
                                               : const Color(
                                                   0xFF4ADE80,
-                                                ).withOpacity(0.4),
+                                                ).withValues(alpha: 0.4),
                                         ),
                                       ),
                                       child: Row(
@@ -477,7 +477,7 @@ class ApiKeysManagementDialog extends ConsumerWidget {
                                     Text(
                                       _formatDate(keyEntry.createdAt),
                                       style: TextStyle(
-                                        color: Colors.white.withOpacity(0.6),
+                                        color: Colors.white.withValues(alpha: 0.6),
                                         fontSize: 12,
                                       ),
                                     ),
@@ -582,7 +582,7 @@ class ApiKeysManagementDialog extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.02),
+                      color: Colors.white.withValues(alpha: 0.02),
                       border: const Border(
                         top: BorderSide(color: Colors.white10),
                       ),

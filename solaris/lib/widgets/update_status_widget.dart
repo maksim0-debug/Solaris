@@ -93,12 +93,12 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
             curve: Curves.easeInOut,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.04),
+              color: Colors.white.withValues(alpha: 0.04),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isIdle
-                    ? Colors.white.withOpacity(0.12)
-                    : statusColor.withOpacity(0.45),
+                    ? Colors.white.withValues(alpha: 0.12)
+                    : statusColor.withValues(alpha: 0.45),
                 width: 1,
               ),
             ),
@@ -137,8 +137,8 @@ class _UpdateStatusWidgetState extends ConsumerState<UpdateStatusWidget>
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: statusColor.withOpacity(
-                                isIdle ? 0.15 : 0.6,
+                              color: statusColor.withValues(
+                                alpha: isIdle ? 0.15 : 0.6,
                               ),
                               blurRadius: isIdle ? 2 : 4,
                               spreadRadius: isIdle ? 0 : 1,
@@ -423,7 +423,7 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
                       l10n?.updateFileSize('$sizeMb MB') ?? '$sizeMb MB',
                       style: const TextStyle(fontSize: 11),
                     ),
-                    backgroundColor: Colors.white.withOpacity(0.08),
+                    backgroundColor: Colors.white.withValues(alpha: 0.08),
                     side: BorderSide.none,
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                   ),
@@ -441,7 +441,7 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
                         color: Colors.white70,
                       ),
                     ),
-                    backgroundColor: Colors.white.withOpacity(0.08),
+                    backgroundColor: Colors.white.withValues(alpha: 0.08),
                     side: BorderSide.none,
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     onPressed: () =>
@@ -463,7 +463,7 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
                 constraints: const BoxConstraints(maxHeight: 360),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: Colors.white10),
                 ),
@@ -582,7 +582,7 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
             child: Text(
               status.errorMessage ?? 'An error occurred during update process.',
               style: TextStyle(
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withValues(alpha: 0.8),
                 fontSize: 12,
               ),
             ),
@@ -699,7 +699,7 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
                       ? status.downloadProgress
                       : null,
                   minHeight: 8,
-                  backgroundColor: Colors.white.withOpacity(0.08),
+                  backgroundColor: Colors.white.withValues(alpha: 0.08),
                   color: dialogIconColor,
                 ),
               ),
@@ -709,14 +709,14 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
                   Icon(
                     LucideIcons.info,
                     size: 13,
-                    color: Colors.white.withOpacity(0.4),
+                    color: Colors.white.withValues(alpha: 0.4),
                   ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       backgroundNotice,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.45),
+                        color: Colors.white.withValues(alpha: 0.45),
                         fontSize: 11,
                       ),
                     ),
@@ -884,10 +884,10 @@ class _StyledDialog extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color(0xFF1E1E28),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: 0.5),
                 blurRadius: 24,
                 spreadRadius: 4,
               ),
@@ -921,7 +921,7 @@ class _StyledDialog extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(6),
                               decoration: BoxDecoration(
-                                color: iconColor.withOpacity(0.12),
+                                color: iconColor.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: iconWidget,
@@ -944,7 +944,7 @@ class _StyledDialog extends StatelessWidget {
                                     Text(
                                       subtitle!,
                                       style: TextStyle(
-                                        color: Colors.white.withOpacity(0.6),
+                                        color: Colors.white.withValues(alpha: 0.6),
                                         fontSize: 12,
                                         fontWeight: FontWeight.w400,
                                       ),

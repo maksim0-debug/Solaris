@@ -673,22 +673,26 @@ class ApiControlHandler {
         final sleepPressure = mutablePayload['sleep_pressure'] as bool?;
         final sleepDebt = mutablePayload['sleep_debt'] as bool?;
         await safeStateMutator(() {
-          if (windDown != null)
+          if (windDown != null) {
             _container
                 .read(settingsProvider.notifier)
                 .updateWindDownMaster(windDown);
-          if (timeShift != null)
+          }
+          if (timeShift != null) {
             _container
                 .read(settingsProvider.notifier)
                 .updateTimeShiftMaster(timeShift);
-          if (sleepPressure != null)
+          }
+          if (sleepPressure != null) {
             _container
                 .read(settingsProvider.notifier)
                 .updateSleepPressureMaster(sleepPressure);
-          if (sleepDebt != null)
+          }
+          if (sleepDebt != null) {
             _container
                 .read(settingsProvider.notifier)
                 .updateSleepDebtMaster(sleepDebt);
+          }
         });
         return _ActionResult.ok('set_smart_circadian_submodules', {
           'wind_down': windDown,
@@ -703,22 +707,26 @@ class ApiControlHandler {
         final thunder = mutablePayload['thunder'] as bool?;
         final cloud = mutablePayload['cloud'] as bool?;
         await safeStateMutator(() {
-          if (rain != null)
+          if (rain != null) {
             _container
                 .read(settingsProvider.notifier)
                 .updateShowRainAnimation(rain);
-          if (snow != null)
+          }
+          if (snow != null) {
             _container
                 .read(settingsProvider.notifier)
                 .updateShowSnowAnimation(snow);
-          if (thunder != null)
+          }
+          if (thunder != null) {
             _container
                 .read(settingsProvider.notifier)
                 .updateShowThunderAnimation(thunder);
-          if (cloud != null)
+          }
+          if (cloud != null) {
             _container
                 .read(settingsProvider.notifier)
                 .updateShowCloudAnimation(cloud);
+          }
         });
         return _ActionResult.ok('set_map_animations', {
           'rain': rain,

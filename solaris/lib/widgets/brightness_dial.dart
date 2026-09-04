@@ -13,7 +13,7 @@ class BrightnessDialPainter extends CustomPainter {
     final radius = size.width / 2;
 
     final bgPaint = Paint()
-      ..color = Colors.white.withOpacity(0.05)
+      ..color = Colors.white.withValues(alpha: 0.05)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 12
       ..strokeCap = StrokeCap.round;
@@ -52,7 +52,7 @@ class BrightnessDialPainter extends CustomPainter {
     );
 
     final glowPaint = Paint()
-      ..color = const Color(0xFFFDBA74).withOpacity(0.5)
+      ..color = const Color(0xFFFDBA74).withValues(alpha: 0.5)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
 
     canvas.drawCircle(endPos, 10, glowPaint);

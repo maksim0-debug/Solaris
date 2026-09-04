@@ -52,7 +52,7 @@ class MapHealthDialog extends ConsumerWidget {
               if (!report.isTokenValid)
                 _IssueItem(
                   icon: LucideIcons.key,
-                  title: "Mapbox Token",
+                  title: 'Mapbox Token',
                   description: l10n.mapboxTokenMissing,
                   action: Row(
                     children: [
@@ -95,7 +95,7 @@ class MapHealthDialog extends ConsumerWidget {
               if (!report.isInternetAvailable)
                 _IssueItem(
                   icon: LucideIcons.wifiOff,
-                  title: "Internet",
+                  title: 'Internet',
                   description: l10n.noInternetAccess,
                 ),
               if (!report.isMapboxReachable && report.isInternetAvailable) ...[
@@ -115,10 +115,10 @@ class MapHealthDialog extends ConsumerWidget {
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFDBA74).withOpacity(0.1),
+                        color: const Color(0xFFFDBA74).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: const Color(0xFFFDBA74).withOpacity(0.2),
+                          color: const Color(0xFFFDBA74).withValues(alpha: 0.2),
                         ),
                       ),
                       child: Column(
@@ -136,7 +136,7 @@ class MapHealthDialog extends ConsumerWidget {
                           Text(
                             l10n.sslFixInstruction,
                             style: TextStyle(
-                              color: const Color(0xFFFDBA74).withOpacity(0.8),
+                              color: const Color(0xFFFDBA74).withValues(alpha: 0.8),
                               fontSize: 12,
                               height: 1.4,
                             ),
@@ -170,9 +170,9 @@ class MapHealthDialog extends ConsumerWidget {
               if (!report.isVCRedistInstalled)
                 _IssueItem(
                   icon: LucideIcons.binary,
-                  title: "Visual C++ Redistributable",
+                  title: 'Visual C++ Redistributable',
                   description:
-                      "${l10n.vcRedistMissing}\n\n${l10n.missingRedistHint}",
+                      '${l10n.vcRedistMissing}\n\n${l10n.missingRedistHint}',
                   action: ElevatedButton.icon(
                     onPressed: () => launchUrl(
                       Uri.parse(
@@ -234,7 +234,7 @@ class _IssueItem extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
+              color: Colors.white.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, size: 20, color: Colors.white54),

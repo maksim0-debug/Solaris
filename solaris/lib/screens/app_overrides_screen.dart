@@ -148,7 +148,7 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF6366F1).withOpacity(0.2),
+                              color: const Color(0xFF6366F1).withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -191,7 +191,7 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: userRules.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 16),
+                      separatorBuilder: (_, _) => const SizedBox(height: 16),
                       itemBuilder: (context, index) {
                         return _AppOverrideRuleCard(
                           rule: userRules[index],
@@ -229,9 +229,9 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
+              color: Colors.white.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withOpacity(0.08)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -260,10 +260,10 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF6366F1).withOpacity(0.15),
+                color: const Color(0xFF6366F1).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: const Color(0xFF6366F1).withOpacity(0.3),
+                  color: const Color(0xFF6366F1).withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
@@ -292,7 +292,7 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
                     l10n.appOverridesSubtitle,
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.white.withOpacity(0.6),
+                      color: Colors.white.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
@@ -319,7 +319,7 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF59E0B).withOpacity(0.15),
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
@@ -345,7 +345,7 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
                       l10n.appOverrideExitDelaySubtitle,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.white.withOpacity(0.5),
+                        color: Colors.white.withValues(alpha: 0.5),
                       ),
                     ),
                   ],
@@ -357,9 +357,9 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.08),
+                  color: Colors.white.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                 ),
                 child: Text(
                   l10n.appOverrideExitDelaySeconds(currentDelaySeconds),
@@ -376,9 +376,9 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
               activeTrackColor: const Color(0xFFF59E0B),
-              inactiveTrackColor: Colors.white.withOpacity(0.1),
+              inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
               thumbColor: const Color(0xFFF59E0B),
-              overlayColor: const Color(0xFFF59E0B).withOpacity(0.2),
+              overlayColor: const Color(0xFFF59E0B).withValues(alpha: 0.2),
               valueIndicatorTextStyle: const TextStyle(color: Colors.white),
             ),
             child: Slider(
@@ -408,7 +408,7 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
             Icon(
               LucideIcons.sparkles,
               size: 40,
-              color: Colors.white.withOpacity(0.3),
+              color: Colors.white.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 12),
             Text(
@@ -416,7 +416,7 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withValues(alpha: 0.8),
               ),
             ),
             const SizedBox(height: 4),
@@ -425,7 +425,7 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
-                color: Colors.white.withOpacity(0.4),
+                color: Colors.white.withValues(alpha: 0.4),
               ),
             ),
           ],
@@ -492,7 +492,7 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: builtInRules.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                separatorBuilder: (_, _) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   return _AppOverrideRuleCard(
                     rule: builtInRules[index],
@@ -573,12 +573,12 @@ class _AppOverrideRuleCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
+        color: Colors.white.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: rule.isEnabled
-              ? const Color(0xFF6366F1).withOpacity(0.3)
-              : Colors.white.withOpacity(0.08),
+              ? const Color(0xFF6366F1).withValues(alpha: 0.3)
+              : Colors.white.withValues(alpha: 0.08),
         ),
       ),
       child: Column(
@@ -610,7 +610,7 @@ class _AppOverrideRuleCard extends ConsumerWidget {
                       rule.exeName,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.white.withOpacity(0.5),
+                        color: Colors.white.withValues(alpha: 0.5),
                         fontFamily: 'monospace',
                       ),
                     ),
@@ -638,7 +638,7 @@ class _AppOverrideRuleCard extends ConsumerWidget {
                     style: const TextStyle(fontSize: 11),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6366F1).withOpacity(0.2),
+                    backgroundColor: const Color(0xFF6366F1).withValues(alpha: 0.2),
                     foregroundColor: const Color(0xFFA5B4FC),
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(
@@ -650,7 +650,7 @@ class _AppOverrideRuleCard extends ConsumerWidget {
               else ...[
                 Switch(
                   value: rule.isEnabled,
-                  activeColor: const Color(0xFF6366F1),
+                  activeThumbColor: const Color(0xFF6366F1),
                   onChanged: (val) {
                     ref
                         .read(settingsProvider.notifier)
@@ -722,10 +722,10 @@ class _AppOverrideRuleCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF6366F1).withOpacity(0.06),
+        color: const Color(0xFF6366F1).withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: const Color(0xFF6366F1).withOpacity(0.15),
+          color: const Color(0xFF6366F1).withValues(alpha: 0.15),
           width: 1,
         ),
       ),
@@ -737,7 +737,7 @@ class _AppOverrideRuleCard extends ConsumerWidget {
               Icon(
                 LucideIcons.sparkles,
                 size: 13,
-                color: const Color(0xFF818CF8).withOpacity(0.9),
+                color: const Color(0xFF818CF8).withValues(alpha: 0.9),
               ),
               const SizedBox(width: 6),
               Text(
@@ -745,7 +745,7 @@ class _AppOverrideRuleCard extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white.withOpacity(0.7),
+                  color: Colors.white.withValues(alpha: 0.7),
                   letterSpacing: 0.2,
                 ),
               ),
@@ -762,9 +762,9 @@ class _AppOverrideRuleCard extends ConsumerWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: d.accentColor.withOpacity(0.12),
+                  color: d.accentColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: d.accentColor.withOpacity(0.25)),
+                  border: Border.all(color: d.accentColor.withValues(alpha: 0.25)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -775,7 +775,7 @@ class _AppOverrideRuleCard extends ConsumerWidget {
                       '${d.label}: ',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.white.withOpacity(0.7),
+                        color: Colors.white.withValues(alpha: 0.7),
                       ),
                     ),
                     Text(
@@ -794,7 +794,7 @@ class _AppOverrideRuleCard extends ConsumerWidget {
                           vertical: 1,
                         ),
                         decoration: BoxDecoration(
-                          color: d.accentColor.withOpacity(0.2),
+                          color: d.accentColor.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -936,7 +936,7 @@ class _AppOverrideRuleCard extends ConsumerWidget {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.06),
+        color: Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -1197,7 +1197,7 @@ class _AddAppOverrideDialogState extends ConsumerState<_AddAppOverrideDialog> {
                   size: 18,
                 ),
                 filled: true,
-                fillColor: Colors.white.withOpacity(0.05),
+                fillColor: Colors.white.withValues(alpha: 0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -1222,9 +1222,9 @@ class _AddAppOverrideDialogState extends ConsumerState<_AddAppOverrideDialog> {
             Container(
               height: 180,
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withOpacity(0.08)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
               ),
               child: _isLoadingProcesses
                   ? const Center(
@@ -1252,7 +1252,7 @@ class _AddAppOverrideDialogState extends ConsumerState<_AddAppOverrideDialog> {
                           selected: isSelected,
                           selectedTileColor: const Color(
                             0xFF6366F1,
-                          ).withOpacity(0.2),
+                          ).withValues(alpha: 0.2),
                           leading: GlowingAppIcon(
                             key: ValueKey(exe),
                             name: exe,
@@ -1299,7 +1299,7 @@ class _AddAppOverrideDialogState extends ConsumerState<_AddAppOverrideDialog> {
                 labelText: l10n.customExeName,
                 labelStyle: const TextStyle(color: Colors.white54),
                 filled: true,
-                fillColor: Colors.white.withOpacity(0.05),
+                fillColor: Colors.white.withValues(alpha: 0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -1314,7 +1314,7 @@ class _AddAppOverrideDialogState extends ConsumerState<_AddAppOverrideDialog> {
                 labelText: l10n.customDisplayName,
                 labelStyle: const TextStyle(color: Colors.white54),
                 filled: true,
-                fillColor: Colors.white.withOpacity(0.05),
+                fillColor: Colors.white.withValues(alpha: 0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -1458,7 +1458,7 @@ class _AppRuleBrightnessSliderState extends State<_AppRuleBrightnessSlider> {
               ),
               activeTrackColor: const Color(0xFFF97316),
               thumbColor: const Color(0xFFFDBA74),
-              overlayColor: const Color(0xFFFDBA74).withOpacity(0.12),
+              overlayColor: const Color(0xFFFDBA74).withValues(alpha: 0.12),
             ),
             child: Slider(
               value: clamped,
@@ -1576,7 +1576,7 @@ class _AppRuleTemperatureSliderState extends State<_AppRuleTemperatureSlider> {
               ),
               activeTrackColor: currentColor,
               thumbColor: currentColor,
-              overlayColor: currentColor.withOpacity(0.12),
+              overlayColor: currentColor.withValues(alpha: 0.12),
             ),
             child: Slider(
               value: progress.clamp(0.0, 1.0),

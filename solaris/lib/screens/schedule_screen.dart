@@ -105,7 +105,7 @@ class ScheduleScreen extends ConsumerWidget {
                                   value: l10n.sunAzimuthFormat(
                                     state.sunAzimuth.toStringAsFixed(1),
                                   ),
-                                  trend: state.azimuthTrend == "constant"
+                                  trend: state.azimuthTrend == 'constant'
                                       ? l10n.constant
                                       : state.azimuthTrend,
                                   trendIcon: state.azimuthTrend.startsWith('+')
@@ -122,7 +122,7 @@ class ScheduleScreen extends ConsumerWidget {
                                   value: l10n.sunElevationFormat(
                                     state.sunElevation.toStringAsFixed(1),
                                   ),
-                                  trend: state.elevationTrend == "constant"
+                                  trend: state.elevationTrend == 'constant'
                                       ? l10n.constant
                                       : state.elevationTrend,
                                   trendIcon:
@@ -144,7 +144,7 @@ class ScheduleScreen extends ConsumerWidget {
                                   value: l10n.sunZenithFormat(
                                     state.sunZenith.toStringAsFixed(1),
                                   ),
-                                  trend: state.zenithTrend == "constant"
+                                  trend: state.zenithTrend == 'constant'
                                       ? l10n.constant
                                       : state.zenithTrend,
                                   trendIcon: state.zenithTrend.startsWith('+')
@@ -392,7 +392,7 @@ class _TelemetryRow extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, size: 16, color: iconColor),
@@ -452,7 +452,7 @@ class _ProgressBar extends StatelessWidget {
           height: 4,
           width: double.infinity,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
+            color: Colors.white.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(2),
           ),
           child: FractionallySizedBox(
@@ -465,7 +465,7 @@ class _ProgressBar extends StatelessWidget {
                     LinearGradient(
                       colors: [
                         const Color(0xFFFDBA74),
-                        const Color(0xFFFDBA74).withOpacity(0.5),
+                        const Color(0xFFFDBA74).withValues(alpha: 0.5),
                       ],
                     ),
                 borderRadius: BorderRadius.circular(2),

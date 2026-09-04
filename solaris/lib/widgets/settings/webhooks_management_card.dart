@@ -60,7 +60,7 @@ class _WebhooksManagementCardState
                         hintText:
                             'https://homeassistant.local:8123/api/webhook/solaris',
                         hintStyle: TextStyle(
-                          color: Colors.white.withOpacity(0.3),
+                          color: Colors.white.withValues(alpha: 0.3),
                           fontSize: 13,
                         ),
                         border: const OutlineInputBorder(),
@@ -75,7 +75,7 @@ class _WebhooksManagementCardState
                         labelStyle: const TextStyle(color: Colors.white70),
                         hintText: 'Home Assistant / Node-RED',
                         hintStyle: TextStyle(
-                          color: Colors.white.withOpacity(0.3),
+                          color: Colors.white.withValues(alpha: 0.3),
                           fontSize: 13,
                         ),
                         border: const OutlineInputBorder(),
@@ -91,7 +91,7 @@ class _WebhooksManagementCardState
                         labelStyle: const TextStyle(color: Colors.white70),
                         hintText: l10n.webhooksSecretHint,
                         hintStyle: TextStyle(
-                          color: Colors.white.withOpacity(0.3),
+                          color: Colors.white.withValues(alpha: 0.3),
                           fontSize: 13,
                         ),
                         border: const OutlineInputBorder(),
@@ -147,7 +147,7 @@ class _WebhooksManagementCardState
                             title: Text(
                               ev.wireName,
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.87),
+                                color: Colors.white.withValues(alpha: 0.87),
                                 fontSize: 13,
                               ),
                             ),
@@ -269,7 +269,7 @@ class _WebhooksManagementCardState
                 )
               : ListView.separated(
                   itemCount: dlqEntries.length,
-                  separatorBuilder: (_, __) =>
+                  separatorBuilder: (_, _) =>
                       const Divider(color: Colors.white10),
                   itemBuilder: (_, idx) {
                     final item = dlqEntries[idx];
@@ -285,7 +285,7 @@ class _WebhooksManagementCardState
                       subtitle: Text(
                         l10n.webhooksDlqDetails(
                           item.attemptCount,
-                          item.lastError ?? "Unknown",
+                          item.lastError ?? 'Unknown',
                           item.deliveryId,
                         ),
                         style: const TextStyle(
@@ -354,7 +354,7 @@ class _WebhooksManagementCardState
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFDBA74).withOpacity(0.1),
+                          color: const Color(0xFFFDBA74).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(
@@ -383,7 +383,7 @@ class _WebhooksManagementCardState
                             ),
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.white.withOpacity(0.5),
+                              color: Colors.white.withValues(alpha: 0.5),
                             ),
                           ),
                         ],
@@ -430,7 +430,7 @@ class _WebhooksManagementCardState
                   padding: const EdgeInsets.all(20),
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.03),
+                    color: Colors.white.withValues(alpha: 0.03),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.white10),
                   ),
@@ -439,7 +439,7 @@ class _WebhooksManagementCardState
                       l10n.webhooksEmptyMessage,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
+                        color: Colors.white.withValues(alpha: 0.5),
                         height: 1.4,
                       ),
                     ),
@@ -450,7 +450,7 @@ class _WebhooksManagementCardState
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: webhooks.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (ctx, idx) {
                     final wh = webhooks[idx];
                     final isFailed = wh.failureCount >= 10;
@@ -458,11 +458,11 @@ class _WebhooksManagementCardState
                     return Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.04),
+                        color: Colors.white.withValues(alpha: 0.04),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: isFailed
-                              ? Colors.redAccent.withOpacity(0.5)
+                              ? Colors.redAccent.withValues(alpha: 0.5)
                               : Colors.white10,
                         ),
                       ),
@@ -594,7 +594,7 @@ class _WebhooksManagementCardState
                               ),
                               Switch(
                                 value: wh.isEnabled,
-                                activeColor: const Color(0xFFFDBA74),
+                                activeThumbColor: const Color(0xFFFDBA74),
                                 onChanged: (val) {
                                   ref
                                       .read(settingsProvider.notifier)

@@ -53,12 +53,12 @@ class ShowNewTokenDialog extends StatelessWidget {
             color: const Color(0xFF1E1E28),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: const Color(0xFFFDBA74).withOpacity(0.3),
+              color: const Color(0xFFFDBA74).withValues(alpha: 0.3),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.6),
+                color: Colors.black.withValues(alpha: 0.6),
                 blurRadius: 28,
                 spreadRadius: 4,
               ),
@@ -75,7 +75,7 @@ class ShowNewTokenDialog extends StatelessWidget {
                   vertical: 16,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.03),
+                  color: Colors.white.withValues(alpha: 0.03),
                   border: const Border(
                     bottom: BorderSide(color: Colors.white10),
                   ),
@@ -85,7 +85,7 @@ class ShowNewTokenDialog extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFDBA74).withOpacity(0.12),
+                        color: const Color(0xFFFDBA74).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
@@ -120,10 +120,10 @@ class ShowNewTokenDialog extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF59E0B).withOpacity(0.1),
+                        color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: const Color(0xFFF59E0B).withOpacity(0.3),
+                          color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
                         ),
                       ),
                       child: Row(
@@ -156,7 +156,7 @@ class ShowNewTokenDialog extends StatelessWidget {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.4),
+                        color: Colors.black.withValues(alpha: 0.4),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: Colors.white12),
                       ),
@@ -199,7 +199,7 @@ class ShowNewTokenDialog extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.02),
+                  color: Colors.white.withValues(alpha: 0.02),
                   border: const Border(top: BorderSide(color: Colors.white10)),
                 ),
                 child: Wrap(

@@ -10,21 +10,21 @@ class DpapiPasswordChangedException implements Exception {
   final String message;
   DpapiPasswordChangedException(this.message);
   @override
-  String toString() => "DpapiPasswordChangedException: $message";
+  String toString() => 'DpapiPasswordChangedException: $message';
 }
 
 class DpapiInvalidDataException implements Exception {
   final String message;
   DpapiInvalidDataException(this.message);
   @override
-  String toString() => "DpapiInvalidDataException: $message";
+  String toString() => 'DpapiInvalidDataException: $message';
 }
 
 class DpapiGenericException implements Exception {
   final String message;
   DpapiGenericException(this.message);
   @override
-  String toString() => "DpapiGenericException: $message";
+  String toString() => 'DpapiGenericException: $message';
 }
 
 final class DATA_BLOB extends Struct {
@@ -95,12 +95,12 @@ abstract class _DpapiBindings {
 
 class KeyObfuscator {
   static const int _xorKey = 0x3F;
-  static const String _oldPrefix = "obf:";
-  static const String _dpapiPrefix = "dpapi:";
+  static const String _oldPrefix = 'obf:';
+  static const String _dpapiPrefix = 'dpapi:';
   static const int _cryptProtectUiForbidden = 0x1;
 
   static String encrypt(String value) {
-    if (value.isEmpty) return "";
+    if (value.isEmpty) return '';
 
     // Fallback for non-Windows platforms (e.g. testing or potential porting)
     if (!Platform.isWindows) {
@@ -206,7 +206,7 @@ class KeyObfuscator {
   }
 
   static String decrypt(String value) {
-    if (value.isEmpty) return "";
+    if (value.isEmpty) return '';
 
     // Support legacy XOR-obfuscation format for seamless migration
     if (value.startsWith(_oldPrefix)) {

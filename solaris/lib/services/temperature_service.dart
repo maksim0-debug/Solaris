@@ -170,9 +170,9 @@ class TemperatureService {
         } else {
           // Adaptive step size: smoother for small changes
           int step = 80;
-          if (diff > 1500)
+          if (diff > 1500) {
             step = 400;
-          else if (diff > 800)
+          } else if (diff > 800)
             step = 250;
           else if (diff > 300)
             step = 120;
@@ -210,8 +210,9 @@ class TemperatureService {
           // Double check if target changed during the await.
           // If null, it means stopTemperatureControl was called.
           if (_targetTemperatures[deviceName] == target ||
-              _targetTemperatures[deviceName] == null)
+              _targetTemperatures[deviceName] == null) {
             break;
+          }
         }
 
         // Wait between commands for monitor stability.

@@ -100,7 +100,7 @@ class StylishLocationCard extends ConsumerWidget {
                                     sigmaY: 8,
                                   ),
                                   child: Container(
-                                    color: Colors.black.withOpacity(0.2),
+                                    color: Colors.black.withValues(alpha: 0.2),
                                   ),
                                 ),
                               ),
@@ -124,7 +124,7 @@ class StylishLocationCard extends ConsumerWidget {
                                         color: Colors.black54,
                                         shape: BoxShape.circle,
                                         border: Border.all(
-                                          color: accentColor.withOpacity(0.5),
+                                          color: accentColor.withValues(alpha: 0.5),
                                           width: 1.5,
                                         ),
                                       ),
@@ -208,7 +208,7 @@ class StylishLocationCard extends ConsumerWidget {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            Colors.black.withOpacity(0.8),
+                            Colors.black.withValues(alpha: 0.8),
                           ],
                         ),
                       ),
@@ -263,7 +263,7 @@ class StylishLocationCard extends ConsumerWidget {
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white.withOpacity(0.7),
+                            color: Colors.white.withValues(alpha: 0.7),
                           ),
                         ),
                       ),
@@ -286,7 +286,7 @@ class StylishLocationCard extends ConsumerWidget {
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w500,
-                                color: Colors.white.withOpacity(0.4),
+                                color: Colors.white.withValues(alpha: 0.4),
                               ),
                             );
                           },
@@ -360,7 +360,7 @@ class _PulsingLocationMarkerState extends ConsumerState<PulsingLocationMarker>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: widget.color.withOpacity(1.0 - _controller.value),
+                  color: widget.color.withValues(alpha: 1.0 - _controller.value),
                   width: 1.5,
                 ),
               ),
@@ -371,7 +371,7 @@ class _PulsingLocationMarkerState extends ConsumerState<PulsingLocationMarker>
               height: 24,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: widget.color.withOpacity(0.2),
+                color: widget.color.withValues(alpha: 0.2),
               ),
             ),
             // Solid center point
@@ -520,7 +520,7 @@ class _WeatherSettingsButtonState
                                 children: [
                                   Icon(
                                     LucideIcons.cloudRain,
-                                    color: dynamicAccentColor.withOpacity(0.7),
+                                    color: dynamicAccentColor.withValues(alpha: 0.7),
                                     size: 14,
                                   ),
                                   const SizedBox(width: 6),
@@ -615,7 +615,7 @@ class _WeatherSettingsButtonState
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               color: _isOpen
-                  ? widget.accentColor.withOpacity(0.2)
+                  ? widget.accentColor.withValues(alpha: 0.2)
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(8),
             ),
@@ -624,7 +624,7 @@ class _WeatherSettingsButtonState
               size: 16,
               color: _isOpen
                   ? widget.accentColor
-                  : widget.accentColor.withOpacity(0.8),
+                  : widget.accentColor.withValues(alpha: 0.8),
             ),
           ),
           padding: EdgeInsets.zero,
@@ -678,11 +678,11 @@ class _MapStyleDropdownState extends State<_MapStyleDropdown> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
+              color: Colors.white.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: _isExpanded
-                    ? widget.accentColor.withOpacity(0.3)
+                    ? widget.accentColor.withValues(alpha: 0.3)
                     : Colors.transparent,
               ),
             ),
@@ -717,7 +717,7 @@ class _MapStyleDropdownState extends State<_MapStyleDropdown> {
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.03),
+              color: Colors.white.withValues(alpha: 0.03),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -792,8 +792,8 @@ class _WeatherToggleRow extends StatelessWidget {
           child: Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: accentColor,
-            activeTrackColor: accentColor.withOpacity(0.3),
+            activeThumbColor: accentColor,
+            activeTrackColor: accentColor.withValues(alpha: 0.3),
             inactiveThumbColor: Colors.white54,
             inactiveTrackColor: Colors.white10,
           ),
@@ -828,7 +828,7 @@ class _MapStyleOption extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 1),
         decoration: BoxDecoration(
           color: isSelected
-              ? accentColor.withOpacity(0.12)
+              ? accentColor.withValues(alpha: 0.12)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),

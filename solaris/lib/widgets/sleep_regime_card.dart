@@ -64,7 +64,7 @@ class _SleepRegimeCardState extends State<SleepRegimeCard> {
                         includeYear: false,
                       ),
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
+                        color: Colors.white.withValues(alpha: 0.5),
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
@@ -75,7 +75,7 @@ class _SleepRegimeCardState extends State<SleepRegimeCard> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF8B5CF6).withOpacity(0.15),
+                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -131,7 +131,7 @@ class _SleepRegimeCardState extends State<SleepRegimeCard> {
                 Text(
                   '${l10n.scatter}: ${widget.regime.windowStart} — ${widget.regime.windowEnd}',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.3),
+                    color: Colors.white.withValues(alpha: 0.3),
                     fontSize: 12,
                   ),
                 ),
@@ -225,10 +225,10 @@ class _SessionDetailRow extends ConsumerWidget {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.red.withOpacity(0.2),
+                                color: Colors.red.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(
-                                  color: Colors.red.withOpacity(0.3),
+                                  color: Colors.red.withValues(alpha: 0.3),
                                 ),
                               ),
                               child: Text(
@@ -247,7 +247,7 @@ class _SessionDetailRow extends ConsumerWidget {
                       Text(
                         '${DateFormat('HH:mm').format(session.startTime.toLocal())} — ${DateFormat('HH:mm').format(session.endTime.toLocal())}',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.3),
+                          color: Colors.white.withValues(alpha: 0.3),
                           fontSize: 12,
                         ),
                       ),
@@ -314,14 +314,14 @@ class _SessionChip extends ConsumerWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.08),
+            color: Colors.white.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: Colors.white.withOpacity(0.15), width: 1),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1),
           ),
           child: Text(
             '${timeFormat.format(session.startTime.toLocal())}–${timeFormat.format(session.endTime.toLocal())}',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.85),
+              color: Colors.white.withValues(alpha: 0.85),
               fontSize: 11,
               fontWeight: FontWeight.w500,
             ),
@@ -352,7 +352,7 @@ Future<void> _showDeleteSleepConfirmDialog({
             surfaceTintColor: Colors.transparent,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Colors.white.withOpacity(0.15), width: 1),
+              side: BorderSide(color: Colors.white.withValues(alpha: 0.15), width: 1),
             ),
             title: Row(
               children: [
@@ -381,7 +381,7 @@ Future<void> _showDeleteSleepConfirmDialog({
                 Text(
                   confirmMessage,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 14,
                   ),
                 ),
@@ -410,7 +410,7 @@ Future<void> _showDeleteSleepConfirmDialog({
                             activeColor: const Color(0xFF8B5CF6),
                             checkColor: Colors.white,
                             side: BorderSide(
-                              color: Colors.white.withOpacity(0.5),
+                              color: Colors.white.withValues(alpha: 0.5),
                               width: 1.5,
                             ),
                           ),
@@ -420,7 +420,7 @@ Future<void> _showDeleteSleepConfirmDialog({
                           child: Text(
                             l10n.doNotSyncInFuture,
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withValues(alpha: 0.9),
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
                             ),
@@ -437,7 +437,7 @@ Future<void> _showDeleteSleepConfirmDialog({
                 onPressed: () => Navigator.of(ctx).pop(),
                 child: Text(
                   l10n.cancelAction,
-                  style: TextStyle(color: Colors.white.withOpacity(0.6)),
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
                 ),
               ),
               ElevatedButton(

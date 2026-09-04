@@ -111,7 +111,7 @@ class _SettingsSearchOverlayState extends ConsumerState<SettingsSearchOverlay>
             GestureDetector(
               onTap: _close,
               child: Container(
-                color: Colors.black.withOpacity(0.4),
+                color: Colors.black.withValues(alpha: 0.4),
                 width: double.infinity,
                 height: double.infinity,
               ),
@@ -128,15 +128,15 @@ class _SettingsSearchOverlayState extends ConsumerState<SettingsSearchOverlay>
                     constraints: const BoxConstraints(maxHeight: 500),
                     margin: const EdgeInsets.symmetric(horizontal: 24),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1E293B).withOpacity(0.85),
+                      color: const Color(0xFF1E293B).withValues(alpha: 0.85),
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                        color: Colors.white.withOpacity(0.1),
+                        color: Colors.white.withValues(alpha: 0.1),
                         width: 1.5,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.5),
+                          color: Colors.black.withValues(alpha: 0.5),
                           blurRadius: 40,
                           spreadRadius: 10,
                         ),
@@ -156,7 +156,7 @@ class _SettingsSearchOverlayState extends ConsumerState<SettingsSearchOverlay>
                                 children: [
                                   Icon(
                                     LucideIcons.search,
-                                    color: Colors.white.withOpacity(0.4),
+                                    color: Colors.white.withValues(alpha: 0.4),
                                     size: 24,
                                   ),
                                   const SizedBox(width: 16),
@@ -173,7 +173,7 @@ class _SettingsSearchOverlayState extends ConsumerState<SettingsSearchOverlay>
                                       decoration: InputDecoration(
                                         hintText: l10n.searchPlaceholder,
                                         hintStyle: TextStyle(
-                                          color: Colors.white.withOpacity(0.35),
+                                          color: Colors.white.withValues(alpha: 0.35),
                                           fontSize: 16,
                                         ),
                                         border: InputBorder.none,
@@ -241,7 +241,7 @@ class _SettingsSearchOverlayState extends ConsumerState<SettingsSearchOverlay>
                                 vertical: 12,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.03),
+                                color: Colors.white.withValues(alpha: 0.03),
                               ),
                               child: Row(
                                 children: [
@@ -298,7 +298,7 @@ class _SearchResultTileState extends State<_SearchResultTile> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           decoration: BoxDecoration(
             color: _isHovering
-                ? Colors.white.withOpacity(0.08)
+                ? Colors.white.withValues(alpha: 0.08)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
           ),
@@ -308,7 +308,7 @@ class _SearchResultTileState extends State<_SearchResultTile> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: _getScreenColor(widget.item.screen).withOpacity(0.15),
+                  color: _getScreenColor(widget.item.screen).withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -334,7 +334,7 @@ class _SearchResultTileState extends State<_SearchResultTile> {
                     Text(
                       widget.item.description,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.4),
+                        color: Colors.white.withValues(alpha: 0.4),
                         fontSize: 12,
                       ),
                       maxLines: 1,
@@ -405,14 +405,14 @@ class _NoResultsWidget extends StatelessWidget {
           Icon(
             LucideIcons.searchX,
             size: 48,
-            color: Colors.white.withOpacity(0.1),
+            color: Colors.white.withValues(alpha: 0.1),
           ),
           const SizedBox(height: 16),
           Text(
             l10n.noResultsFound(query),
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Colors.white.withOpacity(0.5),
+              color: Colors.white.withValues(alpha: 0.5),
               fontSize: 14,
             ),
           ),
@@ -436,7 +436,7 @@ class _ShortcutKeyHint extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
+            color: Colors.white.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(4),
             border: Border.all(color: Colors.white12),
           ),

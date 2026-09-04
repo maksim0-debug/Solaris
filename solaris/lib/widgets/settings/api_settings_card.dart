@@ -87,10 +87,10 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                   margin: const EdgeInsets.only(bottom: 16),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF59E0B).withOpacity(0.12),
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: const Color(0xFFF59E0B).withOpacity(0.4),
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
                     ),
                   ),
                   child: Row(
@@ -133,7 +133,7 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFDBA74).withOpacity(0.1),
+                      color: const Color(0xFFFDBA74).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
@@ -166,7 +166,7 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                             fontSize: 12,
                             color: serverState.isRunning
                                 ? const Color(0xFF4ADE80)
-                                : Colors.white.withOpacity(0.5),
+                                : Colors.white.withValues(alpha: 0.5),
                           ),
                         ),
                       ],
@@ -174,7 +174,7 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                   ),
                   Switch(
                     value: isEnabled,
-                    activeColor: const Color(0xFFFDBA74),
+                    activeThumbColor: const Color(0xFFFDBA74),
                     onChanged: (val) async {
                       ref
                           .read(settingsProvider.notifier)
@@ -241,9 +241,9 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                                 if (states.contains(WidgetState.selected)) {
                                   return const Color(
                                     0xFFFDBA74,
-                                  ).withOpacity(0.2);
+                                  ).withValues(alpha: 0.2);
                                 }
-                                return Colors.white.withOpacity(0.05);
+                                return Colors.white.withValues(alpha: 0.05);
                               }),
                           foregroundColor:
                               WidgetStateProperty.resolveWith<Color>((
@@ -330,7 +330,7 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                               decoration: InputDecoration(
                                 isDense: true,
                                 filled: true,
-                                fillColor: Colors.white.withOpacity(0.05),
+                                fillColor: Colors.white.withValues(alpha: 0.05),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10),
                                   borderSide: BorderSide.none,
@@ -390,10 +390,10 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                               ),
                             ),
                             style: OutlinedButton.styleFrom(
-                              backgroundColor: Colors.white.withOpacity(0.05),
+                              backgroundColor: Colors.white.withValues(alpha: 0.05),
                               foregroundColor: Colors.white,
                               side: BorderSide(
-                                color: Colors.white.withOpacity(0.1),
+                                color: Colors.white.withValues(alpha: 0.1),
                               ),
                               padding: const EdgeInsets.symmetric(
                                 vertical: 12,
@@ -432,7 +432,7 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                             l10n.apiKeysActiveCountSubtitle(apiKeys.length),
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.white.withOpacity(0.6),
+                              color: Colors.white.withValues(alpha: 0.6),
                             ),
                           ),
                         ],
@@ -466,7 +466,7 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.03),
+                      color: Colors.white.withValues(alpha: 0.03),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: Colors.white10),
                     ),
@@ -494,7 +494,7 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                               Text(
                                 l10n.requireLocalTokenSubtitle,
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.5),
+                                  color: Colors.white.withValues(alpha: 0.5),
                                   fontSize: 11,
                                 ),
                               ),
@@ -503,7 +503,7 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                         ),
                         Switch(
                           value: requireLocalToken,
-                          activeColor: const Color(0xFFFDBA74),
+                          activeThumbColor: const Color(0xFFFDBA74),
                           onChanged: (val) {
                             ref
                                 .read(settingsProvider.notifier)

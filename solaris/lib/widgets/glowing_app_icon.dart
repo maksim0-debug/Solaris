@@ -261,7 +261,7 @@ class _GlowingAppIconState extends State<GlowingAppIcon> {
         borderRadius: BorderRadius.circular(widget.borderRadius),
         boxShadow: [
           BoxShadow(
-            color: color1.withOpacity(0.35),
+            color: color1.withValues(alpha: 0.35),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -292,14 +292,14 @@ class _GlowingAppIconState extends State<GlowingAppIcon> {
           // Elegant glow from the extracted logo accent color
           if (_accentColor != null)
             BoxShadow(
-              color: _accentColor!.withOpacity(0.35),
+              color: _accentColor!.withValues(alpha: 0.35),
               blurRadius: 14,
               spreadRadius: -2,
               offset: const Offset(0, 4),
             )
           else
             BoxShadow(
-              color: glowColor.withOpacity(0.15),
+              color: glowColor.withValues(alpha: 0.15),
               blurRadius: 10,
               spreadRadius: -2,
               offset: const Offset(0, 4),

@@ -562,7 +562,7 @@ class WebSocketService {
     return map;
   }
 
-  void _handleClientMessage(WebSocket ws, String messageText) async {
+  Future<void> _handleClientMessage(WebSocket ws, String messageText) async {
     try {
       final jsonMap = jsonDecode(messageText) as Map<String, dynamic>;
       final type = jsonMap['type'] as String?;
@@ -592,14 +592,17 @@ class WebSocketService {
         for (final mod in requestedModules) {
           bool isAllowed = true;
           if (mod == 'solar' && !permissions.allowReadSolar) isAllowed = false;
-          if (mod == 'weather' && !permissions.allowReadWeather)
+          if (mod == 'weather' && !permissions.allowReadWeather) {
             isAllowed = false;
-          if (mod == 'monitors' && !permissions.allowReadMonitors)
+          }
+          if (mod == 'monitors' && !permissions.allowReadMonitors) {
             isAllowed = false;
+          }
           if (mod == 'sleep' && !permissions.allowReadSleep) isAllowed = false;
           if ((mod == 'circadian' || mod == 'smart_circadian') &&
-              !permissions.allowReadCircadian)
+              !permissions.allowReadCircadian) {
             isAllowed = false;
+          }
 
           if (isAllowed) {
             allowedModules.add(mod);
@@ -737,17 +740,22 @@ class WebSocketService {
             _clientPermissions[client] ?? const ApiPermissionsConfig();
 
         // Check read permissions for module for this specific client
-        if (moduleLower == 'solar' && !clientPermissions.allowReadSolar)
+        if (moduleLower == 'solar' && !clientPermissions.allowReadSolar) {
           continue;
-        if (moduleLower == 'weather' && !clientPermissions.allowReadWeather)
+        }
+        if (moduleLower == 'weather' && !clientPermissions.allowReadWeather) {
           continue;
-        if (moduleLower == 'monitors' && !clientPermissions.allowReadMonitors)
+        }
+        if (moduleLower == 'monitors' && !clientPermissions.allowReadMonitors) {
           continue;
-        if (moduleLower == 'sleep' && !clientPermissions.allowReadSleep)
+        }
+        if (moduleLower == 'sleep' && !clientPermissions.allowReadSleep) {
           continue;
+        }
         if ((moduleLower == 'circadian' || moduleLower == 'smart_circadian') &&
-            !clientPermissions.allowReadCircadian)
+            !clientPermissions.allowReadCircadian) {
           continue;
+        }
 
         dynamic filteredData = data;
         if (moduleLower == 'automation' && data is Map<String, dynamic>) {

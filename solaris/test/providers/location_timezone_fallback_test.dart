@@ -71,7 +71,7 @@ void main() {
         addTearDown(container.dispose);
 
         await container.read(locationSettingsProvider.future);
-        final sub = container.listen(locationStreamProvider, (_, __) {});
+        final sub = container.listen(locationStreamProvider, (_, _) {});
         await Future<void>.delayed(Duration.zero);
 
         final status = container.read(locationResolutionStatusProvider);

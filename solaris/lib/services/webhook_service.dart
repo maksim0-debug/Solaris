@@ -508,7 +508,7 @@ class WebhookService extends Notifier<WebhookServiceState> {
       final lines = await _dlqFile!.readAsLines();
       if (lines.length > maxDlqEntries) {
         final trimmedLines = lines.sublist(lines.length - maxDlqEntries);
-        await _dlqFile!.writeAsString(trimmedLines.join('\n') + '\n');
+        await _dlqFile!.writeAsString('${trimmedLines.join('\n')}\n');
       }
       state = state.copyWith(
         dlqCount: lines.length > maxDlqEntries ? maxDlqEntries : lines.length,

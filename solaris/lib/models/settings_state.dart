@@ -225,10 +225,10 @@ class SettingsState {
     int? apiServerPort,
     this.isApiLanAccessEnabled = false,
     this.apiRateLimitPerMinute = 120,
-    this.customWeatherApiKey = "",
-    this.customMapboxToken = "",
-    this.customGoogleClientId = "",
-    this.customGoogleClientSecret = "",
+    this.customWeatherApiKey = '',
+    this.customMapboxToken = '',
+    this.customGoogleClientId = '',
+    this.customGoogleClientSecret = '',
     this.webhooks = const [],
   }) : apiKeys = List.unmodifiable(
          _initApiKeys(apiKeys, apiAccessToken, apiPermissions),
@@ -658,16 +658,16 @@ class SettingsState {
       apiRateLimitPerMinute: json['apiRateLimitPerMinute'] as int? ?? 120,
       customWeatherApiKey: json.containsKey('customWeatherApiKey')
           ? KeyObfuscator.decrypt(json['customWeatherApiKey'] as String)
-          : "",
+          : '',
       customMapboxToken: json.containsKey('customMapboxToken')
           ? KeyObfuscator.decrypt(json['customMapboxToken'] as String)
-          : "",
+          : '',
       customGoogleClientId: json.containsKey('customGoogleClientId')
           ? KeyObfuscator.decrypt(json['customGoogleClientId'] as String)
-          : "",
+          : '',
       customGoogleClientSecret: json.containsKey('customGoogleClientSecret')
           ? KeyObfuscator.decrypt(json['customGoogleClientSecret'] as String)
-          : "",
+          : '',
       webhooks:
           (json['webhooks'] as List<dynamic>?)
               ?.map((w) => WebhookConfig.fromJson(w as Map<String, dynamic>))
@@ -676,11 +676,11 @@ class SettingsState {
       appOverrides: _mergeDefaultBuiltInRules(
         json.containsKey('appOverrides') && json['appOverrides'] is List
             ? (json['appOverrides'] as List)
-                  .where((e) => e is Map)
+                  .whereType<Map>()
                   .map((e) {
                     try {
                       return AppOverrideRule.fromJson(
-                        Map<String, dynamic>.from(e as Map),
+                        Map<String, dynamic>.from(e),
                       );
                     } catch (_) {
                       return null;

@@ -113,8 +113,9 @@ class _CityAutocompleteInputState extends State<CityAutocompleteInput> {
       );
       if (!mounted ||
           !_focusNode.hasFocus ||
-          _cityController.text.trim() != query.trim())
+          _cityController.text.trim() != query.trim()) {
         return;
+      }
 
       setState(() {
         _suggestions = results;
@@ -161,7 +162,7 @@ class _CityAutocompleteInputState extends State<CityAutocompleteInput> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: const Color(0xFFFDBA74).withOpacity(0.3),
+                    color: const Color(0xFFFDBA74).withValues(alpha: 0.3),
                   ),
                 ),
                 child: _isLoading
@@ -203,7 +204,7 @@ class _CityAutocompleteInputState extends State<CityAutocompleteInput> {
                         padding: const EdgeInsets.symmetric(vertical: 6),
                         shrinkWrap: true,
                         itemCount: _suggestions.length,
-                        separatorBuilder: (_, __) =>
+                        separatorBuilder: (_, _) =>
                             const Divider(height: 1, color: Colors.white10),
                         itemBuilder: (context, index) {
                           final item = _suggestions[index];
@@ -310,7 +311,7 @@ class _CityAutocompleteInputState extends State<CityAutocompleteInput> {
               filled: true,
               fillColor: enabled
                   ? Colors.black26
-                  : Colors.white.withOpacity(0.03),
+                  : Colors.white.withValues(alpha: 0.03),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -318,7 +319,7 @@ class _CityAutocompleteInputState extends State<CityAutocompleteInput> {
               disabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
-                  color: Colors.orangeAccent.withOpacity(0.2),
+                  color: Colors.orangeAccent.withValues(alpha: 0.2),
                 ),
               ),
               contentPadding: const EdgeInsets.symmetric(

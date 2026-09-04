@@ -202,7 +202,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                         l10n.celestialMapSubtitle,
                                         style: TextStyle(
                                           fontSize: 12,
-                                          color: Colors.white.withOpacity(0.4),
+                                          color: Colors.white.withValues(alpha: 0.4),
                                         ),
                                       ),
                                     ],
@@ -334,7 +334,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                     child: CircularProgressIndicator(),
                                   ),
                                 ),
-                                error: (e, __) => AspectRatio(
+                                error: (e, _) => AspectRatio(
                                   aspectRatio: 16 / 9,
                                   child: Center(child: Text('Error: $e')),
                                 ),
@@ -359,7 +359,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                     final titleText = isTzFallback
                                         ? '${l10n.systemTimezoneFallbackTitle} ($tzName)'
                                         : (cityAsync.value?.name ??
-                                              "Global Coordinates");
+                                              'Global Coordinates');
                                     final showHelpIcon =
                                         isTzFallback ||
                                         ((cityAsync.value?.isOffline ??
@@ -500,7 +500,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                             child: _CoordinateInput(
                               label: l10n.latitude,
                               controller: _latController,
-                              hint: "00.0000",
+                              hint: '00.0000',
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -510,7 +510,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                             child: _CoordinateInput(
                               label: l10n.longitude,
                               controller: _lonController,
-                              hint: "00.0000",
+                              hint: '00.0000',
                             ),
                           ),
                           const SizedBox(height: 32),
@@ -552,7 +552,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                 elevation: 8,
                                 shadowColor: const Color(
                                   0xFFFDBA74,
-                                ).withOpacity(0.5),
+                                ).withValues(alpha: 0.5),
                               ),
                               child: Text(
                                 l10n.updatePosition,
@@ -591,11 +591,11 @@ class _AutoDetectToggle extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
+          color: Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isActive
-                ? const Color(0xFFFDBA74).withOpacity(0.3)
+                ? const Color(0xFFFDBA74).withValues(alpha: 0.3)
                 : Colors.white10,
           ),
         ),
@@ -687,7 +687,7 @@ class _InfoTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
