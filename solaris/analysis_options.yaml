@@ -1,5 +1,5 @@
-# Include strict rules from package
-# include: package:very_good_analysis/analysis_options.yaml
+# Official Flutter recommended lints
+include: package:flutter_lints/flutter.yaml
 
 analyzer:
   language:
@@ -9,25 +9,41 @@ analyzer:
     strict-raw-types: true # Requires type arguments for generic types (e.g. List<String> instead of List)
 
   errors:
-    # Elevate critical warnings to compilation errors
-    missing_return: error
+    # Treat critical bugs and dead code as compilation errors
     dead_code: error
     always_declare_return_types: error
 
-    # Ignored warnings
-    todo: ignore
-    deprecated_member_use: ignore
+    # Display deprecated API usage and TODOs (do not suppress)
+    deprecated_member_use: warning
+    deprecated_member_use_from_same_package: warning
+    todo: info
+    unused_import: warning
+    unused_local_variable: warning
+
   exclude:
-    - build/**
-    - android/**
-    - ios/**
-    - web/**
-    - windows/**
-    - macos/**
-    - linux/**
+    # Dart analyzer ignores build outputs, generated code, and non-Dart native platform directories:
+    - "build/**"
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - ".dart_tool/**"
+    - "windows/**"
+    - "android/**"
+    - "ios/**"
+    - "web/**"
+    - "macos/**"
+    - "linux/**"
 
 linter:
   rules:
-    # Custom rule overrides:
-    public_member_api_docs: false
+    # Code hygiene & memory leak prevention:
+    cancel_subscriptions: true
+    close_sinks: true
+    unawaited_futures: true
+    avoid_empty_else: true
+    avoid_relative_lib_imports: true
+    avoid_void_async: true
+    prefer_single_quotes: true
 
+    # Application-specific overrides:
+    # Internal desktop application; docstrings for all public members are optional
+    public_member_api_docs: false
