@@ -135,7 +135,6 @@ class _SolarMapState extends ConsumerState<SolarMap> {
               Polygon(
                 points: _terminatorPoints,
                 color: Colors.black.withValues(alpha: 0.5),
-                isFilled: true,
                 borderColor: Colors.transparent,
               ),
             ],
@@ -202,7 +201,9 @@ class _SolarMapState extends ConsumerState<SolarMap> {
                           color: Colors.black54,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: const Color(0xFFFDBA74).withValues(alpha: 0.5),
+                            color: const Color(
+                              0xFFFDBA74,
+                            ).withValues(alpha: 0.5),
                             width: 2,
                           ),
                         ),

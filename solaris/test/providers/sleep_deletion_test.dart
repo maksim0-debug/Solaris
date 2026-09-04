@@ -13,11 +13,13 @@ void main() {
 
   setUpAll(() {
     tempDir = Directory.systemTemp.createTempSync('sleep_deletion_test_');
-    const MethodChannel(
-      'plugins.flutter.io/path_provider',
-    ).setMockMethodCallHandler((MethodCall methodCall) async {
-      return tempDir.path;
-    });
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('plugins.flutter.io/path_provider'),
+          (MethodCall methodCall) async {
+            return tempDir.path;
+          },
+        );
   });
 
   tearDownAll(() {

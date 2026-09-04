@@ -172,12 +172,13 @@ class TemperatureService {
           int step = 80;
           if (diff > 1500) {
             step = 400;
-          } else if (diff > 800)
+          } else if (diff > 800) {
             step = 250;
-          else if (diff > 300)
+          } else if (diff > 300) {
             step = 120;
-          else if (diff < 30)
+          } else if (diff < 30) {
             step = diff;
+          }
 
           if (diff <= step) {
             current = target;

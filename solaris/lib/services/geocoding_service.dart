@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:lat_lng_to_timezone/lat_lng_to_timezone.dart' as tzmap;
 import 'package:solaris/env/env.dart';
@@ -143,7 +144,9 @@ class GeocodingService {
         }
       }
     } catch (e) {
-      print('GeocodingService: Mapbox Forward Geocoding search failed: $e');
+      debugPrint(
+        'GeocodingService: Mapbox Forward Geocoding search failed: $e',
+      );
     }
 
     return [];
@@ -195,7 +198,7 @@ class GeocodingService {
         return _getOfflineFallback(latitude, longitude, OfflineReason.apiError);
       } catch (e) {
         // Fallback to offline timezone-based extraction
-        print('GeocodingService: Mapbox Geocoding failed: $e');
+        debugPrint('GeocodingService: Reverse Geocoding failed: $e');
         return _getOfflineFallback(latitude, longitude, OfflineReason.apiError);
       }
     }
@@ -219,7 +222,7 @@ class GeocodingService {
         offlineReason: reason,
       );
     } catch (e) {
-      print('GeocodingService: Timezone-based extraction failed: $e');
+      debugPrint('GeocodingService: Fallback timezone extraction failed: $e');
     }
 
     return GeocodingResult(

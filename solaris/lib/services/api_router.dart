@@ -220,17 +220,16 @@ class _RouteEntry {
 
 /// Security Headers Middleware & CSP rules for OpenAPI / docs
 Future<bool> securityHeadersMiddleware(HttpRequest request) async {
-  final response = request.response;
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+  request.response.headers.set('X-Content-Type-Options', 'nosniff');
+  request.response.headers.set('X-Frame-Options', 'SAMEORIGIN');
 
   if (request.uri.path.startsWith('/api/v1/docs')) {
-    response.headers.set(
+    request.response.headers.set(
       'Content-Security-Policy',
       "default-src 'self'; connect-src 'self' http: https: ws: wss:; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;",
     );
   } else {
-    response.headers.set(
+    request.response.headers.set(
       'Content-Security-Policy',
       "default-src 'none'; frame-ancestors 'none';",
     );

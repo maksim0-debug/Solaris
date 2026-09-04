@@ -8,11 +8,13 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() {
-    const MethodChannel(
-      'plugins.flutter.io/path_provider',
-    ).setMockMethodCallHandler((MethodCall methodCall) async {
-      return '.'; // Use current directory for temp storage in tests
-    });
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('plugins.flutter.io/path_provider'),
+          (MethodCall methodCall) async {
+            return '.'; // Use current directory for temp storage in tests
+          },
+        );
   });
 
   group('Sleep Sessions Deduplication Tests', () {

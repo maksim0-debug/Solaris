@@ -43,7 +43,7 @@ class MonitorService {
       );
       return success ?? false;
     } catch (e) {
-      print('Failed to set temperature for $deviceName: $e');
+      debugPrint('Failed to set temperature for $deviceName: $e');
       return false;
     }
   }
@@ -56,7 +56,7 @@ class MonitorService {
       );
       return success ?? false;
     } catch (e) {
-      print('Failed to reset temperature for $deviceName: $e');
+      debugPrint('Failed to reset temperature for $deviceName: $e');
       return false;
     }
   }
@@ -68,7 +68,7 @@ class MonitorService {
       );
       return success ?? false;
     } catch (e) {
-      print('Failed to reset all monitors temperature: $e');
+      debugPrint('Failed to reset all monitors temperature: $e');
       return false;
     }
   }
@@ -107,7 +107,7 @@ class MonitorService {
       }
       return success ?? false;
     } catch (e) {
-      print('Failed to set brightness for $deviceName: $e');
+      debugPrint('Failed to set brightness for $deviceName: $e');
       return false;
     }
   }
@@ -120,7 +120,7 @@ class MonitorService {
       );
       return brightness;
     } catch (e) {
-      print('Failed to get brightness for $deviceName: $e');
+      debugPrint('Failed to get brightness for $deviceName: $e');
       return null;
     }
   }
@@ -159,7 +159,7 @@ class MonitorService {
         );
       }
     } catch (e) {
-      print('Failed to get friendly names: $e');
+      debugPrint('Failed to get friendly names: $e');
     }
 
     final displayDevice = calloc<DISPLAY_DEVICE>();

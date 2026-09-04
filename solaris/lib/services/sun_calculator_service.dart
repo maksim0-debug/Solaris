@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:solar_calculator/solar_calculator.dart';
 import 'dart:math' as math;
+// ignore: implementation_imports
 import 'package:solar_calculator/src/sunriseSunsetCalculator.dart';
 import '../models/solar_phase_model.dart';
 import '../models/current_day_phase.dart';

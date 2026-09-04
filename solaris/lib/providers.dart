@@ -422,7 +422,7 @@ class WeatherNotifier extends AsyncNotifier<WeatherData?> {
         _lastKnownWeather = newData;
       }
     } catch (e) {
-      print(
+      debugPrint(
         'CurrentWeather provider caught error: $e. Retaining previous weather state.',
       );
     }
@@ -452,7 +452,7 @@ class WeatherNotifier extends AsyncNotifier<WeatherData?> {
         }
       } catch (e) {
         // Error or timeout - preserve the previous state
-        print(
+        debugPrint(
           'Timer update caught error: $e. Retaining previous weather state.',
         );
       }
@@ -733,11 +733,13 @@ final locationCityProvider = FutureProvider<GeocodingResult>((ref) async {
           );
 
       if (!result.isOffline) {
-        Future.microtask(() {
-          ref
-              .read(locationSettingsProvider.notifier)
-              .saveResolvedCity(result.name, pos.latitude, pos.longitude);
-        });
+        unawaited(
+          Future.microtask(() {
+            ref
+                .read(locationSettingsProvider.notifier)
+                .saveResolvedCity(result.name, pos.latitude, pos.longitude);
+          }),
+        );
         return result;
       } else {
         if (locationSettings.lastCityName != null &&
@@ -2313,9 +2315,6 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   void reorderAllPresets(int oldIndex, int newIndex) {
     _updateSettings(ref.read(selectedMonitorsProvider), (s) {
       final newOrder = List<String>.from(s.presetOrder);
-      if (oldIndex < newIndex) {
-        newIndex -= 1;
-      }
       final item = newOrder.removeAt(oldIndex);
       newOrder.insert(newIndex, item);
       return s.copyWith(presetOrder: newOrder);

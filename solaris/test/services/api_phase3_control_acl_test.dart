@@ -140,7 +140,7 @@ void main() {
     test(
       '4. Batch Pre-flight ACL check rejects ENTIRE batch in fail_fast mode before any mutations',
       () async {
-        updatePermissions(
+        await updatePermissions(
           const ApiPermissionsConfig(
             allowedCategories: {
               ApiActionCategory.circadian,
@@ -183,7 +183,7 @@ void main() {
     test(
       '5. Batch in continue mode marks prohibited action with 403 and executes allowed ones',
       () async {
-        updatePermissions(
+        await updatePermissions(
           const ApiPermissionsConfig(
             allowedCategories: {
               ApiActionCategory.circadian,
@@ -221,7 +221,7 @@ void main() {
     test(
       '6. POST /api/v1/monitors/:slug/brightness is blocked when isReadOnly is true',
       () async {
-        updatePermissions(const ApiPermissionsConfig(isReadOnly: true));
+        await updatePermissions(const ApiPermissionsConfig(isReadOnly: true));
 
         final req = await client.postUrl(
           Uri.parse('$serverUrl/api/v1/monitors/display-1/brightness'),
@@ -239,7 +239,7 @@ void main() {
     test(
       '7. POST /api/v1/monitors/:slug/temperature is blocked when monitors category disabled',
       () async {
-        updatePermissions(
+        await updatePermissions(
           const ApiPermissionsConfig(
             allowedCategories: {ApiActionCategory.presets},
           ),

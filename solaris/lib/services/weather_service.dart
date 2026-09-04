@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:solaris/env/env.dart';
 import 'package:solaris/models/settings_state.dart';
@@ -49,13 +50,13 @@ class WeatherService {
     // --- FORCED PROVIDER LOGIC ---
     if (provider == WeatherProvider.weatherApi) {
       if (apiKey.isEmpty || apiKey == 'YOUR_API_KEY') {
-        print('WeatherService: WeatherAPI requested but key is missing.');
+        debugPrint('WeatherService: WeatherAPI requested but key is missing.');
         return null;
       }
       try {
         return await _fetchWeatherApi(safeLat, safeLon, apiKey);
       } catch (e) {
-        print('WeatherService: Forced WeatherAPI failed: $e');
+        debugPrint('WeatherService: Forced WeatherAPI failed: $e');
         return null;
       }
     }
@@ -64,7 +65,7 @@ class WeatherService {
       try {
         return await _fetchOpenMeteo(safeLat, safeLon);
       } catch (e) {
-        print('WeatherService: Forced Open-Meteo failed: $e');
+        debugPrint('WeatherService: Forced Open-Meteo failed: $e');
         return null;
       }
     }
@@ -73,27 +74,27 @@ class WeatherService {
     // PLAN A: Try WeatherAPI if key is available
     if (apiKey.isNotEmpty && apiKey != 'YOUR_API_KEY') {
       try {
-        print('WeatherService: Attempting WeatherAPI (Primary)...');
+        debugPrint('WeatherService: Attempting WeatherAPI (Primary)...');
         final data = await _fetchWeatherApi(safeLat, safeLon, apiKey);
-        print('WeatherService: WeatherAPI success.');
+        debugPrint('WeatherService: WeatherAPI success.');
         return data;
       } catch (e) {
-        print('WeatherService: WeatherAPI failed: $e');
+        debugPrint('WeatherService: WeatherAPI failed: $e');
       }
     } else {
-      print(
+      debugPrint(
         'WeatherService: WeatherAPI key is missing or invalid. Skipping Plan A...',
       );
     }
 
     // PLAN B: Fallback to Open-Meteo
     try {
-      print('WeatherService: Attempting Open-Meteo (Fallback)...');
+      debugPrint('WeatherService: Attempting Open-Meteo (Fallback)...');
       final data = await _fetchOpenMeteo(safeLat, safeLon);
-      print('WeatherService: Open-Meteo success.');
+      debugPrint('WeatherService: Open-Meteo success.');
       return data;
     } catch (e) {
-      print(
+      debugPrint(
         'WeatherService: Open-Meteo failed: $e. Both services unavailable.',
       );
       return null;
@@ -168,20 +169,20 @@ class WeatherService {
       double diffuseRad;
 
       if (shortRad != null && diffRad != null) {
-        print(
+        debugPrint(
           'WeatherService: Using real radiation from WeatherAPI (ShortRad/DiffRad).',
         );
         diffuseRad = diffRad;
         // Direct Horizontal = Global Horizontal - Diffuse Horizontal
         directRad = (shortRad - diffRad).clamp(0.0, double.infinity);
       } else if (dni != null && diffRad != null) {
-        print(
+        debugPrint(
           'WeatherService: Using DNI/DiffRad from WeatherAPI (Caution: may overstate ground intensity).',
         );
         directRad = dni;
         diffuseRad = diffRad;
       } else {
-        print(
+        debugPrint(
           'WeatherService: Radiation fields missing in WeatherAPI response. Falling back to heuristics.',
         );
         // Heuristic radiation calculation

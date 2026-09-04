@@ -315,6 +315,7 @@ void main() {
         final wsUri = Uri.parse(
           'ws://127.0.0.1:$port/api/v1/ws?token=$authToken',
         );
+        // ignore: close_sinks
         final clientSocket = await WebSocket.connect(wsUri.toString());
         await Future<void>.delayed(const Duration(milliseconds: 100));
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solaris/services/google_fit_service.dart';
 import 'package:solaris/providers.dart';
@@ -113,7 +114,9 @@ class GoogleFitNotifier extends Notifier<GoogleFitState> {
         errorMessage: null,
       );
       // Trigger a sync after successful sign-in
-      ref.read(sleepProvider.notifier).syncWithGoogleFit(forceSync: true);
+      unawaited(
+        ref.read(sleepProvider.notifier).syncWithGoogleFit(forceSync: true),
+      );
     } else {
       state = state.copyWith(
         status: GoogleFitStatus.error,

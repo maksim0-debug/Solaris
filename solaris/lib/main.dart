@@ -197,7 +197,7 @@ class SolarisApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     ref.listen<Locale>(localeProvider, (prev, next) async {
       final l10n = await AppLocalizations.delegate.load(next);
-      TrayService().updateLabels(l10n);
+      await TrayService().updateLabels(l10n);
     });
 
     final locale = ref.watch(localeProvider);

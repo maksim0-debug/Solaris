@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -239,89 +241,93 @@ class _WebhooksManagementCardState
 
     if (!mounted) return;
 
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            const Icon(LucideIcons.alertTriangle, color: Colors.orangeAccent),
-            const SizedBox(width: 10),
-            Text(
-              l10n.webhooksDlqTitle(dlqEntries.length),
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppTheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              const Icon(LucideIcons.alertTriangle, color: Colors.orangeAccent),
+              const SizedBox(width: 10),
+              Text(
+                l10n.webhooksDlqTitle(dlqEntries.length),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: 600,
+            height: 350,
+            child: dlqEntries.isEmpty
+                ? Center(
+                    child: Text(
+                      l10n.webhooksDlqEmpty,
+                      style: const TextStyle(color: Colors.white54),
+                    ),
+                  )
+                : ListView.separated(
+                    itemCount: dlqEntries.length,
+                    separatorBuilder: (_, _) =>
+                        const Divider(color: Colors.white10),
+                    itemBuilder: (_, idx) {
+                      final item = dlqEntries[idx];
+                      return ListTile(
+                        dense: true,
+                        title: Text(
+                          l10n.webhooksDlqEvent(item.eventName, item.url),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        subtitle: Text(
+                          l10n.webhooksDlqDetails(
+                            item.attemptCount,
+                            item.lastError ?? 'Unknown',
+                            item.deliveryId,
+                          ),
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 11,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+          actions: [
+            if (dlqEntries.isNotEmpty)
+              TextButton.icon(
+                icon: const Icon(
+                  LucideIcons.trash2,
+                  color: Colors.redAccent,
+                  size: 16,
+                ),
+                label: Text(
+                  l10n.webhooksClearDlq,
+                  style: const TextStyle(color: Colors.redAccent),
+                ),
+                onPressed: () async {
+                  await ref.read(webhookServiceProvider.notifier).clearDLQ();
+                  if (ctx.mounted) Navigator.of(ctx).pop();
+                },
+              ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(
+                l10n.dialogOk,
+                style: const TextStyle(color: Colors.white70),
               ),
             ),
           ],
         ),
-        content: SizedBox(
-          width: 600,
-          height: 350,
-          child: dlqEntries.isEmpty
-              ? Center(
-                  child: Text(
-                    l10n.webhooksDlqEmpty,
-                    style: const TextStyle(color: Colors.white54),
-                  ),
-                )
-              : ListView.separated(
-                  itemCount: dlqEntries.length,
-                  separatorBuilder: (_, _) =>
-                      const Divider(color: Colors.white10),
-                  itemBuilder: (_, idx) {
-                    final item = dlqEntries[idx];
-                    return ListTile(
-                      dense: true,
-                      title: Text(
-                        l10n.webhooksDlqEvent(item.eventName, item.url),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      subtitle: Text(
-                        l10n.webhooksDlqDetails(
-                          item.attemptCount,
-                          item.lastError ?? 'Unknown',
-                          item.deliveryId,
-                        ),
-                        style: const TextStyle(
-                          color: Colors.white54,
-                          fontSize: 11,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-        ),
-        actions: [
-          if (dlqEntries.isNotEmpty)
-            TextButton.icon(
-              icon: const Icon(
-                LucideIcons.trash2,
-                color: Colors.redAccent,
-                size: 16,
-              ),
-              label: Text(
-                l10n.webhooksClearDlq,
-                style: const TextStyle(color: Colors.redAccent),
-              ),
-              onPressed: () async {
-                await ref.read(webhookServiceProvider.notifier).clearDLQ();
-                if (ctx.mounted) Navigator.of(ctx).pop();
-              },
-            ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(
-              l10n.dialogOk,
-              style: const TextStyle(color: Colors.white70),
-            ),
-          ),
-        ],
       ),
     );
   }

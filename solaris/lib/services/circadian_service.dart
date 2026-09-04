@@ -68,10 +68,11 @@ class CircadianService {
     } else {
       if (elevation < -6) {
         baseBrightness = 15.0;
-      } else if (elevation > 20)
+      } else if (elevation > 20) {
         baseBrightness = 100.0;
-      else
+      } else {
         baseBrightness = 60.0;
+      }
     }
 
     double weatherFactor = 1.0;

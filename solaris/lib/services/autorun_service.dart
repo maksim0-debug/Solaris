@@ -1,6 +1,7 @@
 import 'dart:ffi';
 import 'dart:io';
 import 'package:ffi/ffi.dart';
+import 'package:flutter/foundation.dart';
 import 'package:win32/win32.dart';
 
 import 'package:solaris/models/settings_state.dart';
@@ -27,7 +28,7 @@ class AutorunService {
       free(subKeyPtr);
 
       if (status != ERROR_SUCCESS) {
-        print('Failed to open registry key: $status');
+        debugPrint('Failed to open registry key: $status');
         return false;
       }
 
@@ -51,7 +52,7 @@ class AutorunService {
         free(dataPtr);
 
         if (setStatus != ERROR_SUCCESS) {
-          print('Failed to set registry value: $setStatus');
+          debugPrint('Failed to set registry value: $setStatus');
           RegCloseKey(hKey);
           free(valueNamePtr);
           return false;
@@ -60,7 +61,7 @@ class AutorunService {
         final deleteStatus = RegDeleteValue(hKey, valueNamePtr);
         if (deleteStatus != ERROR_SUCCESS &&
             deleteStatus != ERROR_FILE_NOT_FOUND) {
-          print('Failed to delete registry value: $deleteStatus');
+          debugPrint('Failed to delete registry value: $deleteStatus');
           RegCloseKey(hKey);
           free(valueNamePtr);
           return false;

@@ -424,7 +424,7 @@ class _WeatherOverlayState extends ConsumerState<WeatherOverlay>
           Positioned.fill(
             child: IgnorePointer(
               child: CustomPaint(
-                painter: CloudPainter(clouds: _clouds),
+                painter: _CloudPainter(clouds: _clouds),
                 willChange: true,
               ),
             ),
@@ -433,7 +433,7 @@ class _WeatherOverlayState extends ConsumerState<WeatherOverlay>
           Positioned.fill(
             child: IgnorePointer(
               child: CustomPaint(
-                painter: PrecipitationSystemPainter(
+                painter: _PrecipitationSystemPainter(
                   particles: _particles,
                   isSnow: _isSnow,
                 ),
@@ -461,11 +461,11 @@ class _WeatherOverlayState extends ConsumerState<WeatherOverlay>
   }
 }
 
-class PrecipitationSystemPainter extends CustomPainter {
+class _PrecipitationSystemPainter extends CustomPainter {
   final List<_Particle> particles;
   final bool isSnow;
 
-  PrecipitationSystemPainter({required this.particles, required this.isSnow});
+  _PrecipitationSystemPainter({required this.particles, required this.isSnow});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -491,15 +491,15 @@ class PrecipitationSystemPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant PrecipitationSystemPainter oldDelegate) {
+  bool shouldRepaint(covariant _PrecipitationSystemPainter oldDelegate) {
     return true;
   }
 }
 
-class CloudPainter extends CustomPainter {
+class _CloudPainter extends CustomPainter {
   final List<_Cloud> clouds;
 
-  CloudPainter({required this.clouds});
+  _CloudPainter({required this.clouds});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -542,5 +542,5 @@ class CloudPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CloudPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _CloudPainter oldDelegate) => true;
 }

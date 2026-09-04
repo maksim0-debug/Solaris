@@ -13,21 +13,27 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() {
-    const MethodChannel(
-      'plugins.flutter.io/path_provider',
-    ).setMockMethodCallHandler((MethodCall methodCall) async {
-      return '.';
-    });
-    const MethodChannel('com.solaris.monitor/names').setMockMethodCallHandler((
-      MethodCall methodCall,
-    ) async {
-      return null;
-    });
-    const MethodChannel(
-      'flutter.baseflow.com/geolocator',
-    ).setMockMethodCallHandler((MethodCall methodCall) async {
-      return null;
-    });
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('plugins.flutter.io/path_provider'),
+          (MethodCall methodCall) async {
+            return '.';
+          },
+        );
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('com.solaris.monitor/names'),
+          (MethodCall methodCall) async {
+            return null;
+          },
+        );
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('flutter.baseflow.com/geolocator'),
+          (MethodCall methodCall) async {
+            return null;
+          },
+        );
   });
 
   group('ActiveProcessService & Priority Cascades Zero-Trust Tests', () {

@@ -154,7 +154,7 @@ class WebhookService extends Notifier<WebhookServiceState> {
       _openWALSink();
 
       _setupProviderListeners();
-      _processQueue();
+      unawaited(_processQueue());
     } catch (e) {
       debugPrint('WebhookService initialization error: $e');
     }
@@ -358,10 +358,16 @@ class WebhookService extends Notifier<WebhookServiceState> {
       _inMemoryQueue[txIndex] = tx.copyWith(status: TransactionStatus.retrying);
       _activeWorkerCount++;
 
-      _deliverTransaction(tx).then((_) {
-        _activeWorkerCount--;
-        _processQueue();
-      });
+      unawaited(
+        _deliverTransaction(tx)
+            .whenComplete(() {
+              _activeWorkerCount--;
+              _processQueue();
+            })
+            .catchError((Object e, StackTrace st) {
+              debugPrint('Webhook transaction worker error: $e\n$st');
+            }),
+      );
     }
 
     if (_activeWorkerCount == 0 && _inMemoryQueue.isEmpty) {
@@ -414,7 +420,7 @@ class WebhookService extends Notifier<WebhookServiceState> {
       _removeTransactionFromMemory(tx.deliveryId);
       _resetWebhookFailureCount(webhookConfig.id);
       if (_inMemoryQueue.length > 500) {
-        compactWAL();
+        unawaited(compactWAL());
       }
     } else {
       debugPrint(

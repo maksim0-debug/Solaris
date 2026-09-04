@@ -184,7 +184,7 @@ class IconCacheService {
       debugPrint('Error getting cached icon for $normName: $e');
       return null;
     } finally {
-      _inFlightRequests.remove(dedupeKey);
+      final _ = _inFlightRequests.remove(dedupeKey);
     }
   }
 

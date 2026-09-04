@@ -123,7 +123,7 @@ class TemperatureSettingsNotifier
         map[key] = TemperatureState.fromJson(value as Map<String, dynamic>);
       });
     } catch (e) {
-      print('Error loading temperature settings: $e');
+      debugPrint('Error loading temperature settings: $e');
     }
     return map;
   }
@@ -305,9 +305,6 @@ class TemperatureSettingsNotifier
     final current = currentSettings();
     final newOrder = List<String>.from(current.presetOrder);
 
-    if (oldIndex < newIndex) {
-      newIndex -= 1;
-    }
     final item = newOrder.removeAt(oldIndex);
     newOrder.insert(newIndex, item);
 

@@ -305,7 +305,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   return Colors.white70;
                                 }),
                             side: WidgetStateProperty.all(
-                              BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                              BorderSide(
+                                color: Colors.white.withValues(alpha: 0.1),
+                              ),
                             ),
                           ),
                         ),
@@ -411,10 +413,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
+                            color: const Color(
+                              0xFFF59E0B,
+                            ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                              color: const Color(
+                                0xFFF59E0B,
+                              ).withValues(alpha: 0.3),
                             ),
                           ),
                           child: Row(
@@ -1036,7 +1042,7 @@ class _PresetSelectorState extends ConsumerState<_PresetSelector> {
                 scrollDirection: Axis.horizontal,
                 itemCount: validPresetOrder.length,
                 buildDefaultDragHandles: false,
-                onReorder: onReorder,
+                onReorderItem: onReorder,
                 proxyDecorator: (child, index, animation) {
                   return AnimatedBuilder(
                     animation: animation,
@@ -1923,10 +1929,14 @@ class _GameModeTargetDisplaysSection extends ConsumerWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF818CF8).withValues(alpha: 0.2),
+                              color: const Color(
+                                0xFF818CF8,
+                              ).withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(4),
                               border: Border.all(
-                                color: const Color(0xFF818CF8).withValues(alpha: 0.4),
+                                color: const Color(
+                                  0xFF818CF8,
+                                ).withValues(alpha: 0.4),
                               ),
                             ),
                             child: Text(
@@ -2230,7 +2240,10 @@ class _AppListManagerState extends State<_AppListManager> {
         const SizedBox(height: 4),
         Text(
           widget.subtitle,
-          style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.3)),
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.white.withValues(alpha: 0.3),
+          ),
         ),
         const SizedBox(height: 12),
         Row(
@@ -2241,7 +2254,9 @@ class _AppListManagerState extends State<_AppListManager> {
                 style: const TextStyle(color: Colors.white, fontSize: 13),
                 decoration: InputDecoration(
                   hintText: l10n.gameModeHint,
-                  hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
+                  hintStyle: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.2),
+                  ),
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -2745,7 +2760,10 @@ class _PremiumHotkeyRecorderState extends State<_PremiumHotkeyRecorder>
       return [
         Text(
           l10n.disabled,
-          style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.2)),
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.white.withValues(alpha: 0.2),
+          ),
         ),
       ];
     }
@@ -2937,7 +2955,9 @@ class _LanguageSelectorCard extends ConsumerWidget {
             style: SegmentedButton.styleFrom(
               visualDensity: VisualDensity.compact,
               backgroundColor: Colors.transparent,
-              selectedBackgroundColor: const Color(0xFF60A5FA).withValues(alpha: 0.2),
+              selectedBackgroundColor: const Color(
+                0xFF60A5FA,
+              ).withValues(alpha: 0.2),
               selectedForegroundColor: const Color(0xFF60A5FA),
               foregroundColor: Colors.white24,
               side: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
@@ -3769,7 +3789,9 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.03),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.08),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -3834,7 +3856,9 @@ class _ApiKeysCardState extends ConsumerState<_ApiKeysCard> {
               const SizedBox(width: 4),
               IconButton(
                 style: IconButton.styleFrom(
-                  backgroundColor: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
+                  backgroundColor: const Color(
+                    0xFF8B5CF6,
+                  ).withValues(alpha: 0.2),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solaris/models/sleep_session.dart';
@@ -102,7 +103,7 @@ class SleepNotifier extends Notifier<SleepState> {
     if (!ref.mounted) return;
     final gState = ref.read(googleFitProvider);
     if (gState.status == GoogleFitStatus.connected) {
-      syncWithGoogleFit(forceSync: false);
+      unawaited(syncWithGoogleFit(forceSync: false));
     } else {
       state = state.copyWith(isLoading: false);
     }
@@ -222,7 +223,7 @@ class SleepNotifier extends Notifier<SleepState> {
 
       if (result.isLive) {
         final now = DateTime.now();
-        ref.read(googleFitProvider.notifier).updateLastFetchTime(now);
+        await ref.read(googleFitProvider.notifier).updateLastFetchTime(now);
 
         final merged = _mergeAndDeduplicate(state.sessions, sessions);
         await _sleepService.cacheSleepData(merged);

@@ -9,8 +9,11 @@ import 'package:solaris/services/monitor_slug_resolver.dart';
 /// Listener for Windows OS Power events (WM_POWERBROADCAST, WM_DISPLAYCHANGE)
 /// and C++ hardware I2C/DDC error events received over the system_events EventChannel.
 class WindowsPowerListener {
+  // ignore: constant_identifier_names
   static const int PBT_APMSUSPEND = 0x0004;
+  // ignore: constant_identifier_names
   static const int PBT_APMRESUMESUSPEND = 0x0007;
+  // ignore: constant_identifier_names
   static const int PBT_APMRESUMEAUTOMATIC = 0x0012;
 
   static const EventChannel _systemEventsChannel = EventChannel(

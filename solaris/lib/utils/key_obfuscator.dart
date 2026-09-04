@@ -27,6 +27,7 @@ class DpapiGenericException implements Exception {
   String toString() => 'DpapiGenericException: $message';
 }
 
+// ignore: camel_case_types
 final class DATA_BLOB extends Struct {
   @Uint32()
   external int cbData;

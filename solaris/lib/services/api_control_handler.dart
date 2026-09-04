@@ -18,14 +18,16 @@ import 'package:collection/collection.dart';
 /// Safe Riverpod state mutation outside Flutter frame rendering phase.
 Future<void> safeStateMutator(VoidCallback mutation) async {
   final completer = Completer<void>();
-  Future.microtask(() {
-    try {
-      mutation();
-      completer.complete();
-    } catch (e, st) {
-      completer.completeError(e, st);
-    }
-  });
+  unawaited(
+    Future.microtask(() {
+      try {
+        mutation();
+        completer.complete();
+      } catch (e, st) {
+        completer.completeError(e, st);
+      }
+    }),
+  );
   return completer.future;
 }
 

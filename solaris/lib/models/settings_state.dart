@@ -676,7 +676,7 @@ class SettingsState {
       appOverrides: _mergeDefaultBuiltInRules(
         json.containsKey('appOverrides') && json['appOverrides'] is List
             ? (json['appOverrides'] as List)
-                  .whereType<Map>()
+                  .whereType<Map<dynamic, dynamic>>()
                   .map((e) {
                     try {
                       return AppOverrideRule.fromJson(
