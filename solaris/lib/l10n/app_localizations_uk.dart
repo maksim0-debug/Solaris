@@ -2387,4 +2387,46 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get builtinActiveParameters => 'Вбудоване правило, що застосовується';
+
+  @override
+  String get manualAppEntry => 'Власний додаток';
+
+  @override
+  String get selectAppSubtitle =>
+      'Оберіть активний процес або додайте власний файл';
+
+  @override
+  String get manualAppEntryHint =>
+      'Вкажіть назву файлу .exe для налаштування правила, навіть якщо застосунок зараз не запущений';
+
+  @override
+  String get refreshProcesses => 'Оновити список процесів';
+
+  @override
+  String get clearSearch => 'Очистити пошук';
+
+  @override
+  String get selectedProcessLabel => 'Обраний процес';
+
+  @override
+  String get processDoubleTapHint => 'Подвійний клік для швидкого додавання';
+
+  @override
+  String get selectAppHint =>
+      'Оберіть процес зі списку вище для додавання правила';
+
+  @override
+  String get addApp => 'Додати';
+
+  @override
+  String processesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count процесів',
+      few: '$count процеси',
+      one: '$count процес',
+    );
+    return '$_temp0';
+  }
 }

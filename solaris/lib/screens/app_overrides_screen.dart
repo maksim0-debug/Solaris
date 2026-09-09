@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/l10n/app_localizations.dart';
@@ -15,6 +14,7 @@ import 'package:solaris/widgets/curve_preset_dropdown.dart';
 import 'package:solaris/widgets/back_navigation_handler.dart';
 import 'package:solaris/widgets/deep_link_target.dart';
 import 'package:solaris/widgets/glowing_app_icon.dart';
+import 'package:solaris/widgets/add_app_override_dialog.dart';
 import 'package:solaris/utils/app_override_formatter.dart';
 
 /// Screen for managing Per-App Brightness and Temperature Overrides.
@@ -148,7 +148,9 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF6366F1).withValues(alpha: 0.2),
+                              color: const Color(
+                                0xFF6366F1,
+                              ).withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -359,7 +361,9 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.1),
+                  ),
                 ),
                 child: Text(
                   l10n.appOverrideExitDelaySeconds(currentDelaySeconds),
@@ -512,30 +516,170 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
   ) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1F2937),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          l10n.resetBuiltinConfirmTitle,
-          style: const TextStyle(color: Colors.white),
-        ),
-        content: Text(
-          l10n.resetBuiltinConfirmMessage,
-          style: const TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF4444),
+      barrierColor: Colors.black.withValues(alpha: 0.7),
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 440),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF131D33), Color(0xFF0C1220)],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: const Color(0xFFEF4444).withValues(alpha: 0.28),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.65),
+                  blurRadius: 36,
+                  spreadRadius: 4,
+                ),
+                BoxShadow(
+                  color: const Color(0xFFEF4444).withValues(alpha: 0.10),
+                  blurRadius: 24,
+                  spreadRadius: 0,
+                ),
+              ],
             ),
-            child: Text(l10n.resetBuiltinRules),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 18, 14, 14),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(
+                            0xFFEF4444,
+                          ).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: const Color(
+                              0xFFEF4444,
+                            ).withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: const Icon(
+                          LucideIcons.rotateCcw,
+                          color: Color(0xFFF87171),
+                          size: 18,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          l10n.resetBuiltinConfirmTitle,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          LucideIcons.x,
+                          color: Colors.white54,
+                          size: 18,
+                        ),
+                        splashRadius: 18,
+                        tooltip: MaterialLocalizations.of(
+                          ctx,
+                        ).closeButtonTooltip,
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1, color: Colors.white10),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
+                  child: Text(
+                    l10n.resetBuiltinConfirmMessage,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 13,
+                      height: 1.45,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.02),
+                    border: Border(
+                      top: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.07),
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white70,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Text(
+                          l10n.cancel,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      ElevatedButton.icon(
+                        onPressed: () => Navigator.of(ctx).pop(true),
+                        icon: const Icon(LucideIcons.rotateCcw, size: 15),
+                        label: Text(
+                          l10n.resetBuiltinRules,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFDC2626),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 11,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          elevation: 3,
+                          shadowColor: const Color(
+                            0xFFDC2626,
+                          ).withValues(alpha: 0.45),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
 
@@ -548,10 +692,7 @@ class _AppOverridesScreenState extends ConsumerState<AppOverridesScreen> {
     BuildContext context,
     List<AppOverrideRule> existingRules,
   ) {
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => _AddAppOverrideDialog(existingRules: existingRules),
-    );
+    AddAppOverrideDialog.show(context, existingRules: existingRules);
   }
 }
 
@@ -638,7 +779,9 @@ class _AppOverrideRuleCard extends ConsumerWidget {
                     style: const TextStyle(fontSize: 11),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6366F1).withValues(alpha: 0.2),
+                    backgroundColor: const Color(
+                      0xFF6366F1,
+                    ).withValues(alpha: 0.2),
                     foregroundColor: const Color(0xFFA5B4FC),
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(
@@ -764,7 +907,9 @@ class _AppOverrideRuleCard extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: d.accentColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: d.accentColor.withValues(alpha: 0.25)),
+                  border: Border.all(
+                    color: d.accentColor.withValues(alpha: 0.25),
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -1055,338 +1200,245 @@ class _AppOverrideRuleCard extends ConsumerWidget {
   ) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1F2937),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          l10n.deleteOverrideConfirmTitle,
-          style: const TextStyle(color: Colors.white),
-        ),
-        content: Text(
-          l10n.deleteOverrideConfirmMessage(rule.appDisplayName),
-          style: const TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF4444),
+      barrierColor: Colors.black.withValues(alpha: 0.7),
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 440),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF131D33), Color(0xFF0C1220)],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: const Color(0xFFEF4444).withValues(alpha: 0.28),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.65),
+                  blurRadius: 36,
+                  spreadRadius: 4,
+                ),
+                BoxShadow(
+                  color: const Color(0xFFEF4444).withValues(alpha: 0.10),
+                  blurRadius: 24,
+                  spreadRadius: 0,
+                ),
+              ],
             ),
-            child: Text(l10n.deleteOverrideConfirmTitle),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Header with danger badge & close button
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 18, 14, 14),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(
+                            0xFFEF4444,
+                          ).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: const Color(
+                              0xFFEF4444,
+                            ).withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: const Icon(
+                          LucideIcons.trash2,
+                          color: Color(0xFFF87171),
+                          size: 18,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          l10n.deleteOverrideConfirmTitle,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          LucideIcons.x,
+                          color: Colors.white54,
+                          size: 18,
+                        ),
+                        splashRadius: 18,
+                        tooltip: MaterialLocalizations.of(
+                          ctx,
+                        ).closeButtonTooltip,
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Divider(height: 1, color: Colors.white10),
+
+                // Body content: description + app card
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.deleteOverrideConfirmMessage(rule.appDisplayName),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontSize: 13,
+                          height: 1.45,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.03),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.07),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            GlowingAppIcon(
+                              key: ValueKey(rule.exeName),
+                              name: rule.exeName,
+                              fallbackLetter: rule.appDisplayName.isNotEmpty
+                                  ? rule.appDisplayName
+                                  : rule.exeName,
+                              size: 32,
+                              borderRadius: 8,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    rule.appDisplayName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    rule.exeName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                      fontFamily: 'monospace',
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Footer actions
+                Container(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.02),
+                    border: Border(
+                      top: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.07),
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white70,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Text(
+                          l10n.cancel,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      ElevatedButton.icon(
+                        onPressed: () => Navigator.of(ctx).pop(true),
+                        icon: const Icon(LucideIcons.trash2, size: 15),
+                        label: Text(
+                          l10n.delete,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFDC2626),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 11,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          elevation: 3,
+                          shadowColor: const Color(
+                            0xFFDC2626,
+                          ).withValues(alpha: 0.45),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
 
     if (confirm == true) {
       ref.read(settingsProvider.notifier).removeAppOverride(rule.exeName);
     }
-  }
-}
-
-/// Dialog for adding a new application rule
-class _AddAppOverrideDialog extends ConsumerStatefulWidget {
-  final List<AppOverrideRule> existingRules;
-
-  const _AddAppOverrideDialog({required this.existingRules});
-
-  @override
-  ConsumerState<_AddAppOverrideDialog> createState() =>
-      _AddAppOverrideDialogState();
-}
-
-class _AddAppOverrideDialogState extends ConsumerState<_AddAppOverrideDialog> {
-  static const _namesChannel = MethodChannel('com.solaris.monitor/names');
-
-  final TextEditingController _exeController = TextEditingController();
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _searchController = TextEditingController();
-
-  List<Map<String, String>> _runningProcesses = [];
-  bool _isLoadingProcesses = true;
-  String? _selectedProcessExe;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchProcesses();
-  }
-
-  @override
-  void dispose() {
-    _exeController.dispose();
-    _nameController.dispose();
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _fetchProcesses() async {
-    try {
-      final List<dynamic>? rawList = await _namesChannel
-          .invokeMethod<List<dynamic>>('getRunningProcesses');
-      if (rawList != null) {
-        final parsed = rawList
-            .map((item) {
-              final map = Map<Object?, Object?>.from(item as Map);
-              return {
-                'exe': (map['exe'] ?? '').toString(),
-                'title': (map['title'] ?? '').toString(),
-              };
-            })
-            .where((m) => m['exe']!.isNotEmpty)
-            .toList();
-
-        setState(() {
-          _runningProcesses = parsed;
-          _isLoadingProcesses = false;
-        });
-        return;
-      }
-    } catch (_) {}
-
-    setState(() {
-      _isLoadingProcesses = false;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final query = _searchController.text.trim().toLowerCase();
-
-    final filteredProcesses = _runningProcesses.where((p) {
-      if (query.isEmpty) return true;
-      return p['exe']!.toLowerCase().contains(query) ||
-          p['title']!.toLowerCase().contains(query);
-    }).toList();
-
-    return AlertDialog(
-      backgroundColor: const Color(0xFF1F2937),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Row(
-        children: [
-          const Icon(LucideIcons.appWindow, color: Color(0xFF6366F1)),
-          const SizedBox(width: 10),
-          Text(
-            l10n.selectAppTitle,
-            style: const TextStyle(color: Colors.white),
-          ),
-        ],
-      ),
-      content: SizedBox(
-        width: 480,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Search Input
-            TextField(
-              controller: _searchController,
-              onChanged: (_) => setState(() {}),
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: l10n.searchAppPlaceholder,
-                hintStyle: const TextStyle(color: Colors.white38),
-                prefixIcon: const Icon(
-                  LucideIcons.search,
-                  color: Colors.white38,
-                  size: 18,
-                ),
-                filled: true,
-                fillColor: Colors.white.withValues(alpha: 0.05),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // Active Processes Header
-            Text(
-              l10n.runningApps,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: Colors.white54,
-                letterSpacing: 0.8,
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            // Processes Container
-            Container(
-              height: 180,
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-              ),
-              child: _isLoadingProcesses
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF6366F1),
-                      ),
-                    )
-                  : filteredProcesses.isEmpty
-                  ? Center(
-                      child: Text(
-                        l10n.noRunningApps,
-                        style: const TextStyle(color: Colors.white38),
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: filteredProcesses.length,
-                      itemBuilder: (context, index) {
-                        final item = filteredProcesses[index];
-                        final exe = item['exe']!;
-                        final title = item['title']!;
-                        final isSelected = _selectedProcessExe == exe;
-
-                        return ListTile(
-                          dense: true,
-                          selected: isSelected,
-                          selectedTileColor: const Color(
-                            0xFF6366F1,
-                          ).withValues(alpha: 0.2),
-                          leading: GlowingAppIcon(
-                            key: ValueKey(exe),
-                            name: exe,
-                            fallbackLetter: title.isNotEmpty ? title : exe,
-                            size: 28,
-                            borderRadius: 8,
-                          ),
-                          title: Text(
-                            exe,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'monospace',
-                            ),
-                          ),
-                          subtitle: title.isNotEmpty
-                              ? Text(
-                                  title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(color: Colors.white54),
-                                )
-                              : null,
-                          onTap: () {
-                            setState(() {
-                              _selectedProcessExe = exe;
-                              _exeController.text = exe;
-                              _nameController.text = title.isNotEmpty
-                                  ? title.split(' - ').first
-                                  : exe.replaceAll('.exe', '');
-                            });
-                          },
-                        );
-                      },
-                    ),
-            ),
-            const SizedBox(height: 16),
-
-            // Manual inputs
-            TextField(
-              controller: _exeController,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                labelText: l10n.customExeName,
-                labelStyle: const TextStyle(color: Colors.white54),
-                filled: true,
-                fillColor: Colors.white.withValues(alpha: 0.05),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _nameController,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                labelText: l10n.customDisplayName,
-                labelStyle: const TextStyle(color: Colors.white54),
-                filled: true,
-                fillColor: Colors.white.withValues(alpha: 0.05),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.cancel),
-        ),
-        ElevatedButton(
-          onPressed: _saveRule,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF6366F1),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-          child: Text(l10n.addAppOverride),
-        ),
-      ],
-    );
-  }
-
-  void _saveRule() {
-    final l10n = AppLocalizations.of(context)!;
-    var exe = _exeController.text.trim().toLowerCase();
-    var name = _nameController.text.trim();
-
-    if (exe.isEmpty) return;
-    if (!exe.endsWith('.exe')) {
-      exe = '$exe.exe';
-    }
-    if (name.isEmpty) {
-      name = exe.replaceAll('.exe', '');
-    }
-
-    // Check if the rule exists in built-in rules (isBuiltIn == true) -> Automatic Promotion UX Flow
-    final builtInMatch = widget.existingRules.firstWhere(
-      (AppOverrideRule r) => r.isBuiltIn && r.exeName.toLowerCase() == exe,
-      orElse: () => const AppOverrideRule(exeName: '', appDisplayName: ''),
-    );
-
-    if (builtInMatch.exeName.isNotEmpty) {
-      // Automatic Promotion
-      ref.read(settingsProvider.notifier).promoteBuiltInToUser(exe);
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.appPromotedToast(builtInMatch.appDisplayName)),
-          backgroundColor: const Color(0xFF10B981),
-        ),
-      );
-      return;
-    }
-
-    // Otherwise create new user rule
-    final newRule = AppOverrideRule(
-      exeName: exe,
-      appDisplayName: name,
-      isBuiltIn: false,
-      isEnabled: true,
-      brightnessMode: AppOverrideMode.global,
-      temperatureMode: AppOverrideMode.global,
-    );
-
-    ref.read(settingsProvider.notifier).addAppOverride(newRule);
-    Navigator.of(context).pop();
   }
 }
 

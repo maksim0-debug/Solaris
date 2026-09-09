@@ -2373,4 +2373,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get builtinActiveParameters => 'Applied Built-in Rule';
+
+  @override
+  String get manualAppEntry => 'Custom Application';
+
+  @override
+  String get selectAppSubtitle =>
+      'Choose an active process or specify a custom file';
+
+  @override
+  String get manualAppEntryHint =>
+      'Specify the .exe filename to configure rules, even if the application is not currently running';
+
+  @override
+  String get refreshProcesses => 'Refresh process list';
+
+  @override
+  String get clearSearch => 'Clear search';
+
+  @override
+  String get selectedProcessLabel => 'Selected process';
+
+  @override
+  String get processDoubleTapHint => 'Double-click to add immediately';
+
+  @override
+  String get selectAppHint =>
+      'Select a process from the list above to add a rule';
+
+  @override
+  String get addApp => 'Add';
+
+  @override
+  String processesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count processes',
+      one: '1 process',
+    );
+    return '$_temp0';
+  }
 }

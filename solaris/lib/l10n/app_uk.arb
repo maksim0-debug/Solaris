@@ -955,7 +955,17 @@
   "appOverridesConfigure": "Налаштувати",
   "appRulesCount": "{count, plural, one{{count} правило} few{{count} правила} other{{count} правил}}",
   "builtinRuleBadge": "Вбудований пресет",
-  "builtinActiveParameters": "Вбудоване правило, що застосовується"
+  "builtinActiveParameters": "Вбудоване правило, що застосовується",
+  "manualAppEntry": "Власний додаток",
+  "selectAppSubtitle": "Оберіть активний процес або додайте власний файл",
+  "manualAppEntryHint": "Вкажіть назву файлу .exe для налаштування правила, навіть якщо застосунок зараз не запущений",
+  "refreshProcesses": "Оновити список процесів",
+  "clearSearch": "Очистити пошук",
+  "selectedProcessLabel": "Обраний процес",
+  "processDoubleTapHint": "Подвійний клік для швидкого додавання",
+  "selectAppHint": "Оберіть процес зі списку вище для додавання правила",
+  "addApp": "Додати",
+  "processesCount": "{count, plural, one{{count} процес} few{{count} процеси} other{{count} процесів}}"
 }
 
 

@@ -1052,5 +1052,23 @@
     }
   },
   "builtinRuleBadge": "Built-in Preset",
-  "builtinActiveParameters": "Applied Built-in Rule"
+  "builtinActiveParameters": "Applied Built-in Rule",
+  "manualAppEntry": "Custom Application",
+  "selectAppSubtitle": "Choose an active process or specify a custom file",
+  "manualAppEntryHint": "Specify the .exe filename to configure rules, even if the application is not currently running",
+  "refreshProcesses": "Refresh process list",
+  "clearSearch": "Clear search",
+  "selectedProcessLabel": "Selected process",
+  "processDoubleTapHint": "Double-click to add immediately",
+  "selectAppHint": "Select a process from the list above to add a rule",
+  "addApp": "Add",
+  "processesCount": "{count, plural, =1{1 process} other{{count} processes}}",
+  "@processesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }
+

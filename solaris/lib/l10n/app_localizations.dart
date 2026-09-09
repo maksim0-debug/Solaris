@@ -4109,6 +4109,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Applied Built-in Rule'**
   String get builtinActiveParameters;
+
+  /// No description provided for @manualAppEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Application'**
+  String get manualAppEntry;
+
+  /// No description provided for @selectAppSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an active process or specify a custom file'**
+  String get selectAppSubtitle;
+
+  /// No description provided for @manualAppEntryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Specify the .exe filename to configure rules, even if the application is not currently running'**
+  String get manualAppEntryHint;
+
+  /// No description provided for @refreshProcesses.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh process list'**
+  String get refreshProcesses;
+
+  /// No description provided for @clearSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get clearSearch;
+
+  /// No description provided for @selectedProcessLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected process'**
+  String get selectedProcessLabel;
+
+  /// No description provided for @processDoubleTapHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Double-click to add immediately'**
+  String get processDoubleTapHint;
+
+  /// No description provided for @selectAppHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a process from the list above to add a rule'**
+  String get selectAppHint;
+
+  /// No description provided for @addApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get addApp;
+
+  /// No description provided for @processesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 process} other{{count} processes}}'**
+  String processesCount(int count);
 }
 
 class _AppLocalizationsDelegate

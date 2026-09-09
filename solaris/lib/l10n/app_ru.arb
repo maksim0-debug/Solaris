@@ -957,7 +957,17 @@
   "appOverridesConfigure": "Настроить",
   "appRulesCount": "{count, plural, one{{count} правило} few{{count} правила} other{{count} правил}}",
   "builtinRuleBadge": "Встроенный пресет",
-  "builtinActiveParameters": "Применяемое встроенное правило"
+  "builtinActiveParameters": "Применяемое встроенное правило",
+  "manualAppEntry": "Своё приложение",
+  "selectAppSubtitle": "Выберите активный процесс или укажите файл вручную",
+  "manualAppEntryHint": "Укажите имя файла .exe для настройки правила, даже если приложение сейчас не запущено",
+  "refreshProcesses": "Обновить список процессов",
+  "clearSearch": "Очистить поиск",
+  "selectedProcessLabel": "Выбранный процесс",
+  "processDoubleTapHint": "Двойной клик для быстрого добавления",
+  "selectAppHint": "Выберите процесс из списка выше для добавления правила",
+  "addApp": "Добавить",
+  "processesCount": "{count, plural, one{{count} процесс} few{{count} процесса} other{{count} процессов}}"
 }
 
 

@@ -2393,4 +2393,46 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get builtinActiveParameters => 'Применяемое встроенное правило';
+
+  @override
+  String get manualAppEntry => 'Своё приложение';
+
+  @override
+  String get selectAppSubtitle =>
+      'Выберите активный процесс или укажите файл вручную';
+
+  @override
+  String get manualAppEntryHint =>
+      'Укажите имя файла .exe для настройки правила, даже если приложение сейчас не запущено';
+
+  @override
+  String get refreshProcesses => 'Обновить список процессов';
+
+  @override
+  String get clearSearch => 'Очистить поиск';
+
+  @override
+  String get selectedProcessLabel => 'Выбранный процесс';
+
+  @override
+  String get processDoubleTapHint => 'Двойной клик для быстрого добавления';
+
+  @override
+  String get selectAppHint =>
+      'Выберите процесс из списка выше для добавления правила';
+
+  @override
+  String get addApp => 'Добавить';
+
+  @override
+  String processesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count процессов',
+      few: '$count процесса',
+      one: '$count процесс',
+    );
+    return '$_temp0';
+  }
 }
