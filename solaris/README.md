@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://github.com/maksim0-debug/Solaris/releases/latest/download/Solaris-Windows.zip">
-    <img src="https://img.shields.io/badge/Download_for_Windows-v1.3.2_(.zip)-0284c7?style=for-the-badge&logo=windows&logoColor=white" alt="Download Solaris v1.3.2 for Windows" />
+    <img src="https://img.shields.io/badge/Download_for_Windows-Latest_(.zip)-0284c7?style=for-the-badge&logo=windows&logoColor=white" alt="Download Latest Solaris for Windows" />
   </a>
   <a href="https://github.com/maksim0-debug/Solaris/releases/latest">
     <img src="https://img.shields.io/github/v/release/maksim0-debug/Solaris?style=for-the-badge&color=fdba74&label=Latest%20Release" alt="Latest Release Badge" />
