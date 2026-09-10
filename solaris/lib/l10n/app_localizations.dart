@@ -1204,6 +1204,18 @@ abstract class AppLocalizations {
   /// **'Outdated'**
   String get outdated;
 
+  /// No description provided for @regimeAnomaly.
+  ///
+  /// In en, this message translates to:
+  /// **'Anomaly'**
+  String get regimeAnomaly;
+
+  /// No description provided for @regimeAnomalyTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Anomaly: bedtime deviation from habitual schedule'**
+  String get regimeAnomalyTooltip;
+
   /// No description provided for @smartCircadianTitle.
   ///
   /// In en, this message translates to:

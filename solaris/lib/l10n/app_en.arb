@@ -272,6 +272,8 @@
   "detectedRegimes": "Detected Regimes",
   "currentRegime": "Current Regime",
   "outdated": "Outdated",
+  "regimeAnomaly": "Anomaly",
+  "regimeAnomalyTooltip": "Anomaly: bedtime deviation from habitual schedule",
   "smartCircadianTitle": "Smart Circadian Adjustment",
   "smartCircadianSubtitle": "Dynamic correction based on Google Fit sleep data (wind-down, bio-morning, sleep debt)",
   "circadianRegulation": "Brightness Regulation",

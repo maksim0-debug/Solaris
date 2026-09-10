@@ -51,15 +51,8 @@ class _SleepRegimeCardState extends State<SleepRegimeCard> {
                   children: [
                     Text(
                       _formatDateRange(
-                        start: widget.regime.startDate,
-                        end: widget.regime.nights.isEmpty
-                            ? widget.regime.endDate
-                            : widget
-                                  .regime
-                                  .nights
-                                  .first
-                                  .aggregatedSession
-                                  .endTime,
+                        start: widget.regime.startDate.toLocal(),
+                        end: widget.regime.endDate.toLocal(),
                         locale: l10n.localeName,
                         includeYear: false,
                       ),
@@ -143,9 +136,15 @@ class _SleepRegimeCardState extends State<SleepRegimeCard> {
         // Expanded Content: Sessions
         if (_isExpanded) ...[
           const SizedBox(height: 8),
-          ...widget.regime.nights.map(
-            (night) => _SessionDetailRow(night: night),
-          ),
+          ...widget.regime.nights.map((night) {
+            final isAnomaly = widget.regime.anomalyDates.any(
+              (d) =>
+                  d.year == night.date.year &&
+                  d.month == night.date.month &&
+                  d.day == night.date.day,
+            );
+            return _SessionDetailRow(night: night, isAnomaly: isAnomaly);
+          }),
         ],
       ],
     );
@@ -154,8 +153,9 @@ class _SleepRegimeCardState extends State<SleepRegimeCard> {
 
 class _SessionDetailRow extends ConsumerWidget {
   final NightGroup night;
+  final bool isAnomaly;
 
-  const _SessionDetailRow({required this.night});
+  const _SessionDetailRow({required this.night, this.isAnomaly = false});
 
   void _onDeleteRow(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
@@ -217,6 +217,54 @@ class _SessionDetailRow extends ConsumerWidget {
                               fontSize: 14,
                             ),
                           ),
+                          if (isAnomaly) ...[
+                            const SizedBox(width: 8),
+                            Tooltip(
+                              message: l10n.regimeAnomalyTooltip,
+                              waitDuration: const Duration(milliseconds: 200),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(
+                                    0xFFF59E0B,
+                                  ).withValues(alpha: 0.07),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: const Color(
+                                      0xFFF59E0B,
+                                    ).withValues(alpha: 0.18),
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      LucideIcons.info,
+                                      size: 10.5,
+                                      color: const Color(
+                                        0xFFFDE68A,
+                                      ).withValues(alpha: 0.85),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      l10n.regimeAnomaly,
+                                      style: TextStyle(
+                                        color: const Color(
+                                          0xFFFDE68A,
+                                        ).withValues(alpha: 0.85),
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                           if (night.isOutdated) ...[
                             const SizedBox(width: 8),
                             Container(
@@ -316,7 +364,10 @@ class _SessionChip extends ConsumerWidget {
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.15),
+              width: 1,
+            ),
           ),
           child: Text(
             '${timeFormat.format(session.startTime.toLocal())}–${timeFormat.format(session.endTime.toLocal())}',
@@ -352,7 +403,10 @@ Future<void> _showDeleteSleepConfirmDialog({
             surfaceTintColor: Colors.transparent,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Colors.white.withValues(alpha: 0.15), width: 1),
+              side: BorderSide(
+                color: Colors.white.withValues(alpha: 0.15),
+                width: 1,
+              ),
             ),
             title: Row(
               children: [

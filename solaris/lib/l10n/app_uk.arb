@@ -272,6 +272,8 @@
   "detectedRegimes": "Виявлені режими",
   "currentRegime": "Поточний режим",
   "outdated": "Застаріло",
+  "regimeAnomaly": "Аномалія",
+  "regimeAnomalyTooltip": "Аномальний час: поодиноке відхилення від звичного графіка",
   "smartCircadianTitle": "Розумне циркадне підстроювання",
   "smartCircadianSubtitle": "Динамічна корекція на основі даних про сон з Google Fit (фаза засинання, біо-ранок, недосип)",
   "circadianRegulation": "Регуляція яскравості",

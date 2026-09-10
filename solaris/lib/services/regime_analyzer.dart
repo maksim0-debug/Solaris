@@ -122,40 +122,22 @@ class RegimeAnalyzer {
       }
       final diff = rawDiff.abs();
 
-      // Check tolerance against the anchor
-      // If the entry is outdated relative to the absolute latest, it MUST be an anomaly
-      // if we are trying to maintain a consistent regime that leads up to the latest.
-      if (diff <= settings.toleranceWindow && !entry.isOutdated) {
-        final wouldExceedSpread = _wouldExceedSpread(
-          current,
-          entry.normalizedMinutes,
-          settings,
-        );
+      final withinTolerance =
+          diff <= settings.toleranceWindow && !entry.isOutdated;
+      final wouldExceedSpread =
+          withinTolerance &&
+          _wouldExceedSpread(current, entry.normalizedMinutes, settings);
 
-        if (wouldExceedSpread) {
-          // Spread exceeded — break current regime
-          regimes.add(current);
-          current = _RawRegime();
-
-          if (anomalyBuffer.isNotEmpty) {
-            int resetIndex = i - anomalyBuffer.length;
-            anomalyBuffer.clear();
-            anomalyStreak = 0;
-            i = resetIndex - 1;
-          } else {
-            i = i - 1;
-          }
-        } else {
-          // Within tolerance and spread
-          for (final a in anomalyBuffer) {
-            current.addEntry(a, isAnomaly: true);
-          }
-          anomalyBuffer.clear();
-          anomalyStreak = 0;
-          current.addEntry(entry, isAnomaly: false);
+      if (withinTolerance && !wouldExceedSpread) {
+        // Within tolerance and spread
+        for (final a in anomalyBuffer) {
+          current.addEntry(a, isAnomaly: true);
         }
+        anomalyBuffer.clear();
+        anomalyStreak = 0;
+        current.addEntry(entry, isAnomaly: false);
       } else {
-        // Outside tolerance OR Outdated
+        // Outside tolerance, outdated, OR exceeds spread: treat as anomaly candidate
         anomalyBuffer.add(entry);
         anomalyStreak++;
 
@@ -203,6 +185,23 @@ class RegimeAnalyzer {
     return (newMax - newMin) > settings.maxSpread;
   }
 
+  static bool _mergeWouldExceedSpread(
+    _RawRegime target,
+    _RawRegime source,
+    RegimeSettings settings,
+  ) {
+    final allNormal = [...target.normalEntries, ...source.normalEntries];
+    if (allNormal.isEmpty) return false;
+
+    final mins = allNormal.map((e) => e.normalizedMinutes).toList();
+    final currentMin = mins.reduce((a, b) => a < b ? a : b);
+    final currentMax = mins.reduce((a, b) => a > b ? a : b);
+
+    int spread = currentMax - currentMin;
+    if (spread > 720) spread = 1440 - spread;
+    return spread > settings.maxSpread;
+  }
+
   static List<_RawRegime> _mergeShortRegimes(
     List<_RawRegime> regimes,
     RegimeSettings settings,
@@ -223,7 +222,13 @@ class RegimeAnalyzer {
                         regimes[i - 1].getAnchorAvg(settings))
                     .abs();
             if (dist > 720) dist = 1440 - dist;
-            if (dist < bestDist) {
+            if (dist <= settings.toleranceWindow &&
+                !_mergeWouldExceedSpread(
+                  regimes[i - 1],
+                  regimes[i],
+                  settings,
+                ) &&
+                dist < bestDist) {
               bestDist = dist;
               mergeTarget = i - 1;
             }
@@ -234,7 +239,13 @@ class RegimeAnalyzer {
                         regimes[i + 1].getAnchorAvg(settings))
                     .abs();
             if (dist > 720) dist = 1440 - dist;
-            if (dist < bestDist) {
+            if (dist <= settings.toleranceWindow &&
+                !_mergeWouldExceedSpread(
+                  regimes[i + 1],
+                  regimes[i],
+                  settings,
+                ) &&
+                dist < bestDist) {
               bestDist = dist;
               mergeTarget = i + 1;
             }
@@ -249,7 +260,14 @@ class RegimeAnalyzer {
         }
       }
     }
-    return regimes;
+
+    // Filter out isolated short regimes that could not be merged into any neighbor,
+    // provided that at least one regime meets minRegimeLength.
+    final validRegimes = regimes
+        .where((r) => r.normalEntries.length >= settings.minRegimeLength)
+        .toList();
+
+    return validRegimes.isNotEmpty ? validRegimes : regimes;
   }
 
   static List<SleepRegime> _postProcess(
@@ -262,26 +280,19 @@ class RegimeAnalyzer {
 
     for (int i = 0; i < rawRegimes.length; i++) {
       final raw = rawRegimes[i];
-      // Fix: Use the actual session start times for the header date range to match the UI list
-      final sessionDates = raw.nightGroups
-          .map((n) => n.aggregatedSession.startTime)
-          .toList();
-      sessionDates.sort((a, b) => a.compareTo(b));
+      if (raw.nightGroups.isEmpty) continue;
 
-      final startDate = sessionDates.first;
-      final endDate = sessionDates.last;
+      // Ensure night groups are sorted chronologically ascending
+      raw.nightGroups.sort(
+        (a, b) => a.aggregatedSession.startTime.compareTo(
+          b.aggregatedSession.startTime,
+        ),
+      );
 
-      // Fix: Calculate day count based on unique calendar days in the sessions
-      final uniqueDays = raw.nightGroups
-          .map(
-            (n) => DateTime(
-              n.aggregatedSession.startTime.year,
-              n.aggregatedSession.startTime.month,
-              n.aggregatedSession.startTime.day,
-            ),
-          )
-          .toSet()
-          .length;
+      final startDate = raw.nightGroups.first.aggregatedSession.startTime;
+      final endDate = raw.nightGroups.last.aggregatedSession.endTime;
+
+      final uniqueDays = raw.nightGroups.map((n) => n.date).toSet().length;
       final dayCount = uniqueDays;
 
       // Fix: Exclude outdated sessions from average bedtime calculation.
@@ -300,8 +311,21 @@ class RegimeAnalyzer {
           .toList();
       if (normalMins.isEmpty) continue;
 
-      final windowStartMin = normalMins.reduce((a, b) => a < b ? a : b);
-      final windowEndMin = normalMins.reduce((a, b) => a > b ? a : b);
+      // Exclude anomalies from regime window corridor (windowStart / windowEnd),
+      // so scatter reflects normal habitual bounds rather than temporary outliers.
+      final freshNormal = raw.normalEntries
+          .where((e) => !e.isOutdated)
+          .toList();
+      final effectiveNormal = freshNormal.isNotEmpty
+          ? freshNormal
+          : raw.normalEntries;
+
+      final corridorMins = effectiveNormal.isNotEmpty
+          ? effectiveNormal.map((e) => e.normalizedMinutes).toList()
+          : normalMins;
+
+      final windowStartMin = corridorMins.reduce((a, b) => a < b ? a : b);
+      final windowEndMin = corridorMins.reduce((a, b) => a > b ? a : b);
       final avgBedtimeMin =
           (normalMins.reduce((a, b) => a + b) / normalMins.length).round();
 
@@ -357,7 +381,12 @@ class RegimeAnalyzer {
           shiftFromPrevious: shift,
           isCurrent: isCurrent,
           dayCount: dayCount,
-          nights: raw.nightGroups.toSet().toList().reversed.toList(),
+          nights: List<NightGroup>.from(raw.nightGroups.toSet())
+            ..sort(
+              (a, b) => b.aggregatedSession.startTime.compareTo(
+                a.aggregatedSession.startTime,
+              ),
+            ),
           isFloating: isFloating,
         ),
       );
@@ -430,5 +459,13 @@ class _RawRegime {
     normalEntries.addAll(other.normalEntries);
     anomalyEntries.addAll(other.anomalyEntries);
     nightGroups.addAll(other.nightGroups);
+
+    normalEntries.sort((a, b) => a.date.compareTo(b.date));
+    anomalyEntries.sort((a, b) => a.date.compareTo(b.date));
+    nightGroups.sort(
+      (a, b) => a.aggregatedSession.startTime.compareTo(
+        b.aggregatedSession.startTime,
+      ),
+    );
   }
 }

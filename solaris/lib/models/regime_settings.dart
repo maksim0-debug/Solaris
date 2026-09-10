@@ -19,7 +19,8 @@ class RegimeSettings extends Equatable {
     this.floatingThreshold = 45,
     this.mergeThresholdMinutes = 210, // 3.5 hours
     int? recencyTolerance,
-  }) : recencyTolerance = recencyTolerance ?? toleranceWindow;
+  }) : recencyTolerance =
+           recencyTolerance ?? (toleranceWindow < 90 ? 90 : toleranceWindow);
 
   @override
   List<Object?> get props => [

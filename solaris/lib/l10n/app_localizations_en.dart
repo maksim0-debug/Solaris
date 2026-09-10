@@ -622,6 +622,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get outdated => 'Outdated';
 
   @override
+  String get regimeAnomaly => 'Anomaly';
+
+  @override
+  String get regimeAnomalyTooltip =>
+      'Anomaly: bedtime deviation from habitual schedule';
+
+  @override
   String get smartCircadianTitle => 'Smart Circadian Adjustment';
 
   @override

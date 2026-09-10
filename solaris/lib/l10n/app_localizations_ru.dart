@@ -620,6 +620,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get outdated => 'Устарело';
 
   @override
+  String get regimeAnomaly => 'Аномалия';
+
+  @override
+  String get regimeAnomalyTooltip =>
+      'Аномальное время: единичное отклонение от привычного графика';
+
+  @override
   String get smartCircadianTitle => 'Умная циркадная подстройка';
 
   @override

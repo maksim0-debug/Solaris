@@ -539,12 +539,14 @@ void main() {
               ),
             ),
           );
-          await tester.pumpAndSettle();
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 300));
 
           final expandIcon = find.byIcon(LucideIcons.chevronDown);
           if (expandIcon.evaluate().isNotEmpty) {
             await tester.tap(expandIcon.first);
-            await tester.pumpAndSettle();
+            await tester.pump();
+            await tester.pump(const Duration(milliseconds: 300));
           }
 
           final portField = find.widgetWithText(TextField, '45321');
