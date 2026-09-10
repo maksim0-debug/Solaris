@@ -1479,7 +1479,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get googleFitReleaseWarningBody =>
-      'Ця офіційна версія додатка завантажена з GitHub і не містить вбудованого Google Client ID та Client Secret через сувору політику безпеки Google щодо даних про здоров\'я (Restricted Scopes). Публічним додаткам заборонено отримувати доступ до історії сну без проходження дорогого незалежного аудиту безпеки.\n\nЩоб увімкнути синхронізацію:\n1. Введіть свій власний Google Client ID та Client Secret в розділі налаштувань «API Ключі».\n2. Або зберіть додаток з вихідних кодів зі своїм ключем у файлі `.env`.';
+      'Ця офіційна версія додатка завантажена з GitHub і не містить вбудованого Google Client ID та Client Secret через сувору політику безпеки Google щодо даних про здоров\'я (Restricted Scopes). Публічним додаткам заборонено отримувати доступ до історії сну без проходження дорогого незалежного аудиту безпеки.\n\nЩоб увімкнути синхронізацію:\n1. Введіть свій власний Google Client ID та Client Secret в розділі налаштувань «API Ключі».\n2. Або зберіть додаток із вихідного коду зі своїми ключами у файлі `.env`.';
 
   @override
   String get googleFitLocalWarningTitle => 'Відсутні ключі Google Fit';

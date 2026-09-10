@@ -38,7 +38,7 @@ void main() {
     });
 
     testWidgets(
-      'Tapping a sub-session chip opens deletion confirmation dialog with checkbox',
+      'Tapping a sub-session chip opens edit dialog, long-pressing opens deletion dialog',
       (tester) async {
         final session1 = SleepSession(
           id: 'chip_1',
