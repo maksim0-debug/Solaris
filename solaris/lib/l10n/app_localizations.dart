@@ -3612,6 +3612,48 @@ abstract class AppLocalizations {
   /// **'Merges all segments of this night into a single continuous session'**
   String get mergeNightSessionsHint;
 
+  /// No description provided for @sleepCardsInteractionTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep cards:\n• Click to edit time\n• Right-click for context menu (edit/delete)\n• Long press to delete'**
+  String get sleepCardsInteractionTooltip;
+
+  /// No description provided for @sleepCardsInteractionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep Sessions Management'**
+  String get sleepCardsInteractionTitle;
+
+  /// No description provided for @sleepCardsInteractionHelpIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Solaris provides full control over sleep records in current and detected regimes:'**
+  String get sleepCardsInteractionHelpIntro;
+
+  /// No description provided for @sleepCardsInteractionHelpEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Time Editing & Merging'**
+  String get sleepCardsInteractionHelpEditTitle;
+
+  /// No description provided for @sleepCardsInteractionHelpEditText.
+  ///
+  /// In en, this message translates to:
+  /// **'Click any night row to edit the sleep time interval. If a night consists of multiple fragments, you can merge them into a single continuous session or edit a specific segment individually by clicking its chip.'**
+  String get sleepCardsInteractionHelpEditText;
+
+  /// No description provided for @sleepCardsInteractionHelpDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting Records'**
+  String get sleepCardsInteractionHelpDeleteTitle;
+
+  /// No description provided for @sleepCardsInteractionHelpDeleteText.
+  ///
+  /// In en, this message translates to:
+  /// **'To delete a night, use the context actions menu (right-click) or long press the night row.'**
+  String get sleepCardsInteractionHelpDeleteText;
+
   /// No description provided for @addSleepSession.
   ///
   /// In en, this message translates to:

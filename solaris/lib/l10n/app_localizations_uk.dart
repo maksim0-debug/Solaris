@@ -2094,6 +2094,32 @@ class AppLocalizationsUk extends AppLocalizations {
       'Об\'єднає всі сегменти цієї ночі в одну суцільну сесію';
 
   @override
+  String get sleepCardsInteractionTooltip =>
+      'Картки сну:\n• Клік — редагувати час\n• ПКМ — контекстне меню (редагувати/видалити)\n• Затискання — видалити';
+
+  @override
+  String get sleepCardsInteractionTitle => 'Керування сесіями сну';
+
+  @override
+  String get sleepCardsInteractionHelpIntro =>
+      'Solaris надає повний контроль над записами сну у поточному та збережених режимах:';
+
+  @override
+  String get sleepCardsInteractionHelpEditTitle =>
+      'Редагування часу та об\'єднання';
+
+  @override
+  String get sleepCardsInteractionHelpEditText =>
+      'Натисніть на будь-який рядок ночі, щоб відредагувати інтервал сну. Якщо ніч складається з кількох фрагментів, ви зможете об\'єднати їх в одну неперервну сесію або відредагувати конкретний сегмент окремо, натиснувши на його чип.';
+
+  @override
+  String get sleepCardsInteractionHelpDeleteTitle => 'Видалення записів';
+
+  @override
+  String get sleepCardsInteractionHelpDeleteText =>
+      'Для видалення ночі затисніть рядок ночі (довгий тап) або натисніть правою кнопкою миші (ПКМ) для виклику контекстного меню дій.';
+
+  @override
   String get addSleepSession => 'Додати сесію сну';
 
   @override

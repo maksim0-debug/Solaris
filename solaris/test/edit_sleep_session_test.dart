@@ -6,6 +6,7 @@ import 'package:solaris/models/regime_settings.dart';
 import 'package:solaris/providers/sleep_provider.dart';
 import 'package:solaris/services/sleep_service.dart';
 import 'package:solaris/services/regime_analyzer.dart';
+import 'package:solaris/services/storage_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -23,12 +24,18 @@ void main() {
   group('Edit Sleep Session & Priority Protection Tests', () {
     late ProviderContainer container;
 
-    setUp(() {
+    setUp(() async {
+      final storage = StorageService();
+      await storage.clear('ignored_sleep_sessions.json');
+      await storage.clear('sleep_data_cache.json');
       container = ProviderContainer();
     });
 
-    tearDown(() {
+    tearDown(() async {
       container.dispose();
+      final storage = StorageService();
+      await storage.clear('ignored_sleep_sessions.json');
+      await storage.clear('sleep_data_cache.json');
     });
 
     test(
@@ -236,7 +243,7 @@ void main() {
     test(
       'RegimeAnalyzer handles circular spread across noon and midnight accurately',
       () {
-        // Bedtimes: 23:30 (690 min from noon), 00:30 (750 min from noon) -> spread = 60
+        // Bedtime Sept 1 (23:30), Bedtime Sept 2 (00:30 on Sept 3), Bedtime Sept 3 (23:45)
         final s1 = SleepSession(
           id: 's1',
           startTime: DateTime(2026, 9, 1, 23, 30),
@@ -244,8 +251,8 @@ void main() {
         );
         final s2 = SleepSession(
           id: 's2',
-          startTime: DateTime(2026, 9, 2, 0, 30),
-          endTime: DateTime(2026, 9, 2, 8, 0),
+          startTime: DateTime(2026, 9, 3, 0, 30),
+          endTime: DateTime(2026, 9, 3, 8, 0),
         );
         final s3 = SleepSession(
           id: 's3',

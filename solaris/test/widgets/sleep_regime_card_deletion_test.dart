@@ -7,6 +7,8 @@ import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/models/night_group.dart';
 import 'package:solaris/models/sleep_regime.dart';
 import 'package:solaris/models/sleep_session.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:solaris/services/storage_service.dart';
 import 'package:solaris/widgets/sleep_regime_card.dart';
 
 void main() {
@@ -23,6 +25,18 @@ void main() {
   });
 
   group('SleepRegimeCard Deletion Widget Tests', () {
+    setUp(() async {
+      final storage = StorageService();
+      await storage.clear('ignored_sleep_sessions.json');
+      await storage.clear('sleep_data_cache.json');
+    });
+
+    tearDown(() async {
+      final storage = StorageService();
+      await storage.clear('ignored_sleep_sessions.json');
+      await storage.clear('sleep_data_cache.json');
+    });
+
     testWidgets(
       'Tapping a sub-session chip opens deletion confirmation dialog with checkbox',
       (tester) async {
@@ -259,6 +273,79 @@ void main() {
 
         // Verify edit dialog is open
         expect(find.byType(AlertDialog), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Trash icon is not rendered on night row; right-click context menu triggers delete dialog',
+      (tester) async {
+        final session1 = SleepSession(
+          id: 'trash_test_s1',
+          startTime: DateTime(2026, 7, 25, 18, 4),
+          endTime: DateTime(2026, 7, 26, 9, 0),
+          source: 'google_fit',
+        );
+
+        final nightGroup = NightGroup(
+          date: DateTime(2026, 7, 25),
+          aggregatedSession: session1,
+          allSessions: [session1],
+        );
+
+        final regime = SleepRegime(
+          id: 'regime_trash_test',
+          startDate: DateTime(2026, 7, 24),
+          endDate: DateTime(2026, 7, 26),
+          nights: [nightGroup],
+          averageBedtimeNormalized: 1084,
+          averageBedtimeFormatted: '18:04',
+          averageWakeTimeNormalized: 540,
+          averageWakeTimeFormatted: '09:00',
+          windowStart: '18:04',
+          windowEnd: '18:04',
+          anomalyDates: const [],
+          isCurrent: true,
+          dayCount: 2,
+          isFloating: false,
+        );
+
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Scaffold(
+                body: SleepRegimeCard(regime: regime, initiallyExpanded: true),
+              ),
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+
+        // Verify trash icon does NOT exist on the row
+        expect(find.byIcon(LucideIcons.trash2), findsNothing);
+
+        final rowFinder = find.text('18:04 — 09:00');
+        expect(rowFinder, findsOneWidget);
+
+        // Right-click row to open context menu
+        await tester.tap(rowFinder, buttons: kSecondaryMouseButton);
+        await tester.pumpAndSettle();
+
+        // Verify context menu has Delete option and click it
+        final deleteItem = find.text('Delete Sleep Session');
+        expect(deleteItem, findsOneWidget);
+        await tester.tap(deleteItem);
+        await tester.pumpAndSettle();
+
+        // Verify delete confirmation dialog is displayed with Checkbox
+        expect(find.byType(AlertDialog), findsOneWidget);
+        expect(find.byType(Checkbox), findsOneWidget);
       },
     );
   });

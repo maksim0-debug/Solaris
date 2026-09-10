@@ -2077,6 +2077,31 @@ class AppLocalizationsEn extends AppLocalizations {
       'Merges all segments of this night into a single continuous session';
 
   @override
+  String get sleepCardsInteractionTooltip =>
+      'Sleep cards:\n• Click to edit time\n• Right-click for context menu (edit/delete)\n• Long press to delete';
+
+  @override
+  String get sleepCardsInteractionTitle => 'Sleep Sessions Management';
+
+  @override
+  String get sleepCardsInteractionHelpIntro =>
+      'Solaris provides full control over sleep records in current and detected regimes:';
+
+  @override
+  String get sleepCardsInteractionHelpEditTitle => 'Time Editing & Merging';
+
+  @override
+  String get sleepCardsInteractionHelpEditText =>
+      'Click any night row to edit the sleep time interval. If a night consists of multiple fragments, you can merge them into a single continuous session or edit a specific segment individually by clicking its chip.';
+
+  @override
+  String get sleepCardsInteractionHelpDeleteTitle => 'Deleting Records';
+
+  @override
+  String get sleepCardsInteractionHelpDeleteText =>
+      'To delete a night, use the context actions menu (right-click) or long press the night row.';
+
+  @override
   String get addSleepSession => 'Add Sleep Session';
 
   @override

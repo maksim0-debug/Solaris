@@ -133,13 +133,65 @@ class _SleepScreenState extends ConsumerState<SleepScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      l10n.currentRegime,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          l10n.currentRegime,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Tooltip(
+                          message: l10n.sleepCardsInteractionTooltip,
+                          waitDuration: const Duration(milliseconds: 150),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xFF0F172A,
+                            ).withValues(alpha: 0.96),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              width: 1,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.5),
+                                blurRadius: 16,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          textStyle: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            height: 1.45,
+                            fontFamily: 'Outfit',
+                          ),
+                          child: IconButton(
+                            icon: Icon(
+                              LucideIcons.info,
+                              size: 16,
+                              color: Colors.white.withValues(alpha: 0.35),
+                            ),
+                            onPressed: () =>
+                                _showSleepInteractionsHelpDialog(context, l10n),
+                            constraints: const BoxConstraints(
+                              minWidth: 28,
+                              minHeight: 28,
+                            ),
+                            padding: const EdgeInsets.all(4),
+                            splashRadius: 18,
+                          ),
+                        ),
+                      ],
                     ),
                     ElevatedButton.icon(
                       onPressed: () => AddSleepSessionDialog.show(context),
@@ -206,6 +258,119 @@ class _SleepScreenState extends ConsumerState<SleepScreen> {
           const SizedBox(height: 48),
         ],
       ),
+    );
+  }
+
+  void _showSleepInteractionsHelpDialog(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: GlassCard(
+              padding: const EdgeInsets.all(24),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            l10n.sleepCardsInteractionTitle,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            LucideIcons.x,
+                            color: Colors.white60,
+                            size: 20,
+                          ),
+                          onPressed: () => Navigator.pop(dialogContext),
+                          padding: const EdgeInsets.all(4),
+                          constraints: const BoxConstraints(
+                            minWidth: 28,
+                            minHeight: 28,
+                          ),
+                          splashRadius: 20,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      l10n.sleepCardsInteractionHelpIntro,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.white.withValues(alpha: 0.7),
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildHelpSection(
+                      title: l10n.sleepCardsInteractionHelpEditTitle,
+                      text: l10n.sleepCardsInteractionHelpEditText,
+                    ),
+                    const SizedBox(height: 14),
+                    _buildHelpSection(
+                      title: l10n.sleepCardsInteractionHelpDeleteTitle,
+                      text: l10n.sleepCardsInteractionHelpDeleteText,
+                    ),
+                    const SizedBox(height: 16),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFFA78BFA),
+                        ),
+                        child: Text(l10n.dialogOk),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHelpSection({required String title, required String text}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFFA78BFA),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.white.withValues(alpha: 0.7),
+            height: 1.4,
+          ),
+        ),
+      ],
     );
   }
 }
