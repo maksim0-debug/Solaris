@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solaris/models/api_permissions_config.dart';
 import 'package:solaris/models/local_ipc_server_state.dart';
+import 'package:solaris/models/rfc7807_error.dart';
 import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/models/sleep_session.dart';
 import 'package:solaris/models/webhook_config.dart';
@@ -19,6 +20,7 @@ import 'package:solaris/services/api_status_handler.dart';
 class LocalIpcService extends Notifier<LocalIpcServerState> {
   HttpServer? _server;
   bool _isStarting = false;
+  int _startGeneration = 0;
   late final ApiRouter _router;
   late final ApiStatusHandler _statusHandler;
   late final ApiControlHandler _controlHandler;
@@ -43,10 +45,14 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
     ) {
       next.whenData((settingsMap) {
         Future.microtask(() async {
+          if (!ref.mounted) return;
           final settings = settingsMap['all'];
           final prevSettings = previous?.value?['all'];
           if (settings != null) {
-            final isEnabled = settings.isLocalIpcServerEnabled;
+            final isApiEnabled = settings.isApiServerEnabled;
+            final isSleepEnabled = settings.isSleepIpcServerEnabled;
+            final shouldRun = isApiEnabled || isSleepEnabled;
+
             final port = settings.apiServerPort;
             final prevPort =
                 prevSettings?.apiServerPort ?? prevSettings?.localIpcServerPort;
@@ -56,16 +62,39 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
             _router.apiKeys = settings.apiKeys;
             _router.requireLocalToken = settings.requireLocalToken;
             _router.isLanEnabled = lanEnabled;
+            _router.isApiServerEnabled = isApiEnabled;
+            _router.isSleepIpcServerEnabled = isSleepEnabled;
 
-            if (isEnabled) {
+            final prevApiEnabled = prevSettings?.isApiServerEnabled ?? false;
+            if (!isApiEnabled && prevApiEnabled) {
+              try {
+                ref
+                    .read(webSocketServiceProvider)
+                    .closeAll(
+                      code: 1001,
+                      reason: 'Solaris Control API Disabled',
+                    );
+              } catch (_) {}
+              try {
+                ref.read(webhookServiceProvider.notifier).pauseQueue();
+              } catch (_) {}
+            } else if (isApiEnabled && !prevApiEnabled) {
+              try {
+                ref.read(webhookServiceProvider.notifier).resumeQueue();
+              } catch (_) {}
+            }
+
+            if (!ref.mounted) return;
+            if (shouldRun) {
               if (!state.isRunning) {
                 await start();
               } else if (port != prevPort || lanEnabled != prevLanEnabled) {
                 await stop();
+                if (!ref.mounted) return;
                 await start();
               }
             } else {
-              if (state.isRunning) {
+              if (state.isRunning || _isStarting) {
                 await stop();
               }
             }
@@ -92,6 +121,7 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
     _router.use((HttpRequest req) => contentTypeGuardMiddleware(req));
     _router.use((HttpRequest req) => hostHeaderValidationMiddleware(req));
     _router.use((HttpRequest req) => corsMiddleware(req, _router));
+    _router.use((HttpRequest req) => subsystemGuardMiddleware(req, _router));
     _router.use((HttpRequest req) => authMiddleware(req, _router));
     _router.use((HttpRequest req) => rateLimiterMiddleware(req));
 
@@ -128,6 +158,11 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
     );
     _router.get(
       '/api/v1/sleep/sessions',
+      (HttpRequest req, Map<String, String> params) =>
+          _statusHandler.handleSleepSessions(req, params),
+    );
+    _router.get(
+      '/api/sleep/sessions',
       (HttpRequest req, Map<String, String> params) =>
           _statusHandler.handleSleepSessions(req, params),
     );
@@ -228,9 +263,14 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
           _handleRetryDLQ(req, params),
     );
 
-    // 5. Register Legacy Endpoints Aliases (100% Backward Compatibility)
+    // 5. Register Sleep Endpoints (Prefixed & Legacy Aliases)
     _router.post(
       '/api/sleep/sessions',
+      (HttpRequest req, Map<String, String> params) =>
+          _handleSleepSessions(req),
+    );
+    _router.post(
+      '/api/v1/sleep/sessions',
       (HttpRequest req, Map<String, String> params) =>
           _handleSleepSessions(req),
     );
@@ -238,8 +278,16 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
       '/api/sleep/status',
       (HttpRequest req, Map<String, String> params) => _handleSleepStatus(req),
     );
+    _router.post(
+      '/api/v1/sleep/status',
+      (HttpRequest req, Map<String, String> params) => _handleSleepStatus(req),
+    );
     _router.get(
       '/api/sleep/status',
+      (HttpRequest req, Map<String, String> params) => _handleGetStatus(req),
+    );
+    _router.get(
+      '/api/v1/sleep/status',
       (HttpRequest req, Map<String, String> params) => _handleGetStatus(req),
     );
   }
@@ -247,57 +295,125 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
   /// Starts the HTTP server on configured port with auto-fallback to ports 45322..45330
   Future<void> start() async {
     if (state.isRunning || _isStarting) return;
+
     _isStarting = true;
-    state = state.copyWith(isRunning: false, error: null, failedPort: null);
+    final generation = ++_startGeneration;
 
-    final settingsMap = ref.read(settingsProvider).value;
-    final configuredPort = settingsMap?['all']?.apiServerPort ?? 45321;
-    final isLanEnabled = settingsMap?['all']?.isApiLanAccessEnabled ?? false;
-
-    final bindAddress = isLanEnabled
-        ? InternetAddress.anyIPv4
-        : InternetAddress.loopbackIPv4;
-
-    int targetPort = configuredPort;
     HttpServer? boundServer;
 
-    for (int offset = 0; offset <= 9; offset++) {
-      final currentPort = configuredPort + offset;
-      try {
-        boundServer = await HttpServer.bind(bindAddress, currentPort);
-        targetPort = currentPort;
-        break;
-      } on SocketException catch (e) {
-        if (offset == 9) {
-          debugPrint(
-            'LocalIpcService: Failed to bind to any port in range $configuredPort..${configuredPort + 9}: $e',
-          );
-          _isStarting = false;
-          state = state.copyWith(
-            isRunning: false,
-            error: 'Failed to bind port: ${e.message}',
-            failedPort: configuredPort,
-          );
-          return;
+    try {
+      final settingsMap =
+          ref.read(settingsProvider).asData?.value ??
+          ref.read(settingsProvider).value ??
+          await ref.read(settingsProvider.future);
+
+      if (!ref.mounted || _startGeneration != generation) {
+        return;
+      }
+
+      final globalSettings = settingsMap?['all'];
+      final isControlEnabled = globalSettings?.isApiServerEnabled ?? false;
+      final isSleepEnabled = globalSettings?.isSleepIpcServerEnabled ?? false;
+
+      // Verify that at least one subsystem is enabled before binding port
+      if (!isControlEnabled && !isSleepEnabled) {
+        return;
+      }
+
+      state = state.copyWith(isRunning: false, error: null, failedPort: null);
+
+      final configuredPort = globalSettings?.apiServerPort ?? 45321;
+      final isLanEnabled = globalSettings?.isApiLanAccessEnabled ?? false;
+
+      final bindAddress = isLanEnabled
+          ? InternetAddress.anyIPv4
+          : InternetAddress.loopbackIPv4;
+
+      int targetPort = configuredPort;
+      for (int offset = 0; offset <= 9; offset++) {
+        final currentPort = configuredPort + offset;
+        try {
+          boundServer = await HttpServer.bind(bindAddress, currentPort);
+          targetPort = currentPort;
+          break;
+        } on SocketException catch (e) {
+          if (offset == 9) {
+            debugPrint(
+              'LocalIpcService: Failed to bind to any port in range $configuredPort..${configuredPort + 9}: $e',
+            );
+            if (_startGeneration == generation) {
+              state = state.copyWith(
+                isRunning: false,
+                error: 'Failed to bind port: ${e.message}',
+                failedPort: configuredPort,
+              );
+            }
+            return;
+          }
         }
       }
+
+      // Handle race condition: check if server still should run after async bind
+      if (!ref.mounted || _startGeneration != generation) {
+        try {
+          await boundServer?.close(force: true);
+        } catch (_) {}
+        return;
+      }
+
+      final currentSettings =
+          ref.read(settingsProvider).asData?.value['all'] ??
+          ref.read(settingsProvider).value?['all'];
+      final stillShouldRun =
+          (currentSettings?.isApiServerEnabled ?? false) ||
+          (currentSettings?.isSleepIpcServerEnabled ?? false);
+
+      if (!stillShouldRun || _startGeneration != generation || !_isStarting) {
+        try {
+          await boundServer?.close(force: true);
+        } catch (_) {}
+        return;
+      }
+
+      _server = boundServer;
+      _server?.autoCompress = true;
+
+      _listen();
+
+      // If Control API is enabled, resume outbound webhook queue delivery
+      final isCurrentControlEnabled =
+          currentSettings?.isApiServerEnabled ?? false;
+      if (isCurrentControlEnabled && ref.mounted) {
+        try {
+          ref.read(webhookServiceProvider.notifier).resumeQueue();
+        } catch (_) {}
+      }
+
+      state = state.copyWith(
+        isRunning: true,
+        port: targetPort,
+        error: null,
+        failedPort: null,
+      );
+      debugPrint(
+        'LocalIpcService: Server bound and listening at http://${bindAddress.address}:$targetPort',
+      );
+    } catch (e, st) {
+      debugPrint('LocalIpcService: Start error: $e\n$st');
+      try {
+        await boundServer?.close(force: true);
+      } catch (_) {}
+      if (_startGeneration == generation) {
+        state = state.copyWith(
+          isRunning: false,
+          error: 'Failed to start server: $e',
+        );
+      }
+    } finally {
+      if (_startGeneration == generation) {
+        _isStarting = false;
+      }
     }
-
-    _server = boundServer;
-    _server?.autoCompress = true;
-
-    _listen();
-    _isStarting = false;
-
-    state = state.copyWith(
-      isRunning: true,
-      port: targetPort,
-      error: null,
-      failedPort: null,
-    );
-    debugPrint(
-      'LocalIpcService: Server bound and listening at http://${bindAddress.address}:$targetPort',
-    );
   }
 
   void _listen() {
@@ -308,9 +424,23 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
       try {
         // WebSocket Upgrade Check for /api/v1/ws
         if (WebSocketTransformer.isUpgradeRequest(request) &&
-            request.uri.path == '/api/v1/ws') {
+            normalizeApiPath(request.uri.path) == '/api/v1/ws') {
           final settingsMap = ref.read(settingsProvider).value;
           final globalSettings = settingsMap?['all'];
+          final isApiEnabled =
+              globalSettings?.isApiServerEnabled ?? _router.isApiServerEnabled;
+          if (!isApiEnabled) {
+            final error = Rfc7807Error(
+              type: 'https://solaris.local/errors/service-disabled',
+              title: 'Solaris Control API Disabled',
+              status: HttpStatus.serviceUnavailable,
+              detail: 'Solaris Control API is currently disabled in settings.',
+              instance: request.uri.path,
+            );
+            ApiRouter.sendRfc7807(request, error);
+            return;
+          }
+
           final isLanEnabled =
               globalSettings?.isApiLanAccessEnabled ?? _router.isLanEnabled;
 
@@ -335,6 +465,14 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
               'GET /api/v1/presets',
               'GET /api/v1/solar',
               'POST /api/v1/control',
+              'GET /api/v1/sleep/status',
+              'POST /api/v1/sleep/status',
+              'GET /api/v1/sleep/sessions',
+              'POST /api/v1/sleep/sessions',
+              'GET /api/sleep/status',
+              'POST /api/sleep/status',
+              'GET /api/sleep/sessions',
+              'POST /api/sleep/sessions',
               'GET /api/v1/webhooks',
               'POST /api/v1/webhooks',
               'ws://host:port/api/v1/ws',
@@ -354,6 +492,8 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
   }
 
   Future<void> stop() async {
+    _startGeneration++;
+    _isStarting = false;
     if (_server != null) {
       final s = _server!;
       _server = null;

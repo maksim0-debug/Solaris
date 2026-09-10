@@ -29,10 +29,10 @@ This document provides a comprehensive REST endpoint reference for **Solaris Con
    - [Pre-Flight ACL Batch Pass & Fail-Fast Execution](#pre-flight-acl-batch-pass--fail-fast-execution)
    - [Privilege Escalation Protection](#privilege-escalation-protection)
    - [Catalog of All 28 Canonical Action Commands](#catalog-of-all-28-canonical-action-commands)
-5. [Webhook & Legacy Sleep Endpoints](#-webhook--legacy-sleep-endpoints)
+5. [Webhook & Sleep Integration Endpoints](#-webhook--sleep-integration-endpoints)
    - `/api/v1/webhooks*`
    - `GET /api/v1/webhooks/events`
-   - `/api/sleep/*`
+   - `/api/v1/sleep/*` & `/api/sleep/*`
 
 ---
 
@@ -47,11 +47,20 @@ Lightweight health check endpoint. Useful for liveness probes, load balancers, a
 ```json
 {
   "status": "ok",
-  "version": "1.0.0",
+  "version": "1.3.2+1",
   "uptime_seconds": 14250,
-  "timestamp": "2026-07-25T14:30:00.000Z"
+  "timestamp": "2026-07-25T14:30:00.000Z",
+  "subsystems": {
+    "solaris_control": true,
+    "sleep_integration": true
+  }
 }
 ```
+
+* **Subsystems Breakdown (`subsystems`)**:
+  * `solaris_control`: Indicates whether Solaris Control API endpoints (`/api/v1/control`, `/api/v1/monitors`, etc.) are currently enabled.
+  * `sleep_integration`: Indicates whether Sleep Integration API endpoints (`/api/sleep/*`, `/api/v1/sleep/*`) are currently enabled.
+  * If a subsystem is toggled off in the application settings, calling its endpoints yields `HTTP 503 Service Unavailable` (RFC 7807), while `/api/v1/health` remains healthy (`200 OK`).
 
 ---
 
@@ -71,7 +80,7 @@ Returns the complete application state graph: connected monitors, hardware brigh
 * **Response (HTTP 200 OK)**:
 ```json
 {
-  "version": "1.0.0",
+  "version": "1.3.2+1",
   "uptime_seconds": 14250,
   "timestamp": "2026-07-25T14:30:00.000Z",
   "solar": {
@@ -581,11 +590,7 @@ Below is the complete reference of all 28 canonical action commands supported by
 * **`on_hardware_error`**
   * Internal event signal triggered on DDC/CI read/write errors. *(Dispatched via EventBus / WebSockets).*
 
----
-
----
-
-## 🔔 Webhook & Legacy Sleep Endpoints
+## 🔔 Webhook & Sleep Integration Endpoints
 
 ### Webhook Management (`/api/v1/webhooks*`)
 * `GET /api/v1/webhooks`, `GET /api/v1/webhooks/dlq`
@@ -593,10 +598,13 @@ Below is the complete reference of all 28 canonical action commands supported by
 * `POST /api/v1/webhooks`: Creates webhook.
 * `DELETE /api/v1/webhooks/:id`, `POST /api/v1/webhooks/:id/test`, `POST /api/v1/webhooks/dlq/retry`.
 
-### Legacy Sleep Endpoints (`/api/sleep/*`)
-Maintained for 100% backward compatibility with legacy external integrations:
+### Sleep Integration Endpoints (`/api/v1/sleep/*` & `/api/sleep/*`)
+Solaris exposes canonical `/api/v1/sleep/*` endpoints while maintaining legacy `/api/sleep/*` aliases for 100% backward compatibility with external integrations (Sleep as Android, Tasker, automation scripts):
 
-* **`GET /api/sleep/status`**: Returns current sleep tracking state.
+> [!NOTE]
+> **Decoupled Subsystem Lifecycle**: Sleep endpoints (`/api/v1/sleep/*` and legacy `/api/sleep/*`) are governed independently via the **Sleep Integration API** switch on the "Sleep" screen. If disabled, they return RFC 7807 `503 Service Unavailable` (`Sleep Integration API Disabled`). Disabling the general Solaris Control API in Settings does NOT deactivate or interfere with Sleep API endpoints.
+
+* **`GET /api/v1/sleep/status`** (Alias: `GET /api/sleep/status`): Returns current sleep tracking state.
   * **ACL**: Requires `allowReadSleep = true`.
   * **Response (HTTP 200 OK)**:
     ```json
@@ -607,11 +615,12 @@ Maintained for 100% backward compatibility with legacy external integrations:
       "last_fetch": "2026-07-24T06:30:00.000Z"
     }
     ```
-* **`POST /api/sleep/status`**: Updates sleep tracking state.
+* **`POST /api/v1/sleep/status`** (Alias: `POST /api/sleep/status`): Updates sleep tracking state.
   * **ACL**: Requires category `sleep` and action `push_sleep_status`.
   * **Payload**: `{"is_sleeping": true}`
   * **Response (HTTP 200 OK)**: `{"status": "success"}`
-* **`POST /api/sleep/sessions`**: Pushes external sleep sessions array.
+* **`POST /api/v1/sleep/sessions`** (Alias: `POST /api/sleep/sessions`): Pushes external sleep sessions array.
   * **ACL**: Requires category `sleep` and action `push_sleep_status`.
   * **Payload**: `[{"id": "session_123", "start_time": "...", "end_time": "...", "duration_minutes": 480}]`
   * **Response (HTTP 200 OK)**: `{"status": "success"}`
+* **`GET /api/v1/sleep/sessions`** (Alias: `GET /api/sleep/sessions`): Returns paginated sleep history (see [State Query Endpoints](#5-get-apiv1sleepsessions)).

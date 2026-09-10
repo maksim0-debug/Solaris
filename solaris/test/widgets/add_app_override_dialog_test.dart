@@ -207,9 +207,9 @@ void main() {
     expect(find.text('antigravity.exe'), findsOneWidget);
 
     // Double tap on process tile
-    await tester.tap(find.text('antigravity.exe'));
+    await tester.tap(find.text('antigravity.exe').first);
     await tester.pump(const Duration(milliseconds: 100));
-    await tester.tap(find.text('antigravity.exe'));
+    await tester.tap(find.text('antigravity.exe').first);
     await tester.pumpAndSettle();
 
     // Dialog should be closed
@@ -229,11 +229,11 @@ void main() {
     await tester.pumpAndSettle();
 
     // Rapid clicks
-    await tester.tap(find.text('antigravity.exe'));
+    await tester.tap(find.text('antigravity.exe').first);
     await tester.pump(const Duration(milliseconds: 80));
-    await tester.tap(find.text('antigravity.exe'));
+    await tester.tap(find.text('antigravity.exe').first);
     await tester.pump(const Duration(milliseconds: 80));
-    await tester.tap(find.text('antigravity.exe'));
+    await tester.tap(find.text('antigravity.exe').first);
     await tester.pumpAndSettle();
 
     // The host screen must still be intact

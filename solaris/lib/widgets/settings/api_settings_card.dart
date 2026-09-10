@@ -64,9 +64,10 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
         final settings = settingsMap['all'];
         if (settings == null) return const SizedBox.shrink();
 
-        final isEnabled = settings.isLocalIpcServerEnabled;
+        final isEnabled = settings.isApiServerEnabled;
         final isLanEnabled = settings.isApiLanAccessEnabled;
         final port = settings.apiServerPort;
+        final activePort = serverState.port ?? port;
         final apiKeys = settings.apiKeys;
         final requireLocalToken = settings.requireLocalToken;
 
@@ -157,14 +158,14 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          serverState.isRunning
+                          (serverState.isRunning && isEnabled)
                               ? (isLanEnabled
-                                    ? '🟢 ${l10n.apiStatusActiveLan(port)}'
-                                    : '🟢 ${l10n.apiStatusActiveLocalhost(port)}')
+                                    ? '🟢 ${l10n.apiStatusActiveLan(activePort)}'
+                                    : '🟢 ${l10n.apiStatusActiveLocalhost(activePort)}')
                               : '🔴 ${l10n.apiStatusDisabled}',
                           style: TextStyle(
                             fontSize: 12,
-                            color: serverState.isRunning
+                            color: (serverState.isRunning && isEnabled)
                                 ? const Color(0xFF4ADE80)
                                 : Colors.white.withValues(alpha: 0.5),
                           ),
@@ -175,17 +176,10 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                   Switch(
                     value: isEnabled,
                     activeThumbColor: const Color(0xFFFDBA74),
-                    onChanged: (val) async {
+                    onChanged: (val) {
                       ref
                           .read(settingsProvider.notifier)
-                          .updateLocalIpcServerEnabled(val);
-                      if (val) {
-                        await ref
-                            .read(localIpcServiceProvider.notifier)
-                            .start();
-                      } else {
-                        await ref.read(localIpcServiceProvider.notifier).stop();
-                      }
+                          .updateApiServerEnabled(val);
                     },
                   ),
                 ],
@@ -344,14 +338,11 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                               onSubmitted: (val) async {
                                 final newPort = int.tryParse(val) ?? 45321;
                                 if (newPort != port &&
-                                    newPort > 1024 &&
-                                    newPort < 65535) {
+                                    newPort >= 1024 &&
+                                    newPort <= 65535) {
                                   ref
                                       .read(settingsProvider.notifier)
                                       .updateApiServerPort(newPort);
-                                  await ref
-                                      .read(localIpcServiceProvider.notifier)
-                                      .restartServer();
                                 }
                               },
                             ),
@@ -375,7 +366,7 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                           ),
                           const SizedBox(height: 6),
                           OutlinedButton.icon(
-                            onPressed: () => _openDocumentation(port),
+                            onPressed: () => _openDocumentation(activePort),
                             icon: const Icon(
                               LucideIcons.bookOpen,
                               size: 15,
@@ -390,7 +381,9 @@ class _ApiSettingsCardState extends ConsumerState<ApiSettingsCard> {
                               ),
                             ),
                             style: OutlinedButton.styleFrom(
-                              backgroundColor: Colors.white.withValues(alpha: 0.05),
+                              backgroundColor: Colors.white.withValues(
+                                alpha: 0.05,
+                              ),
                               foregroundColor: Colors.white,
                               side: BorderSide(
                                 color: Colors.white.withValues(alpha: 0.1),

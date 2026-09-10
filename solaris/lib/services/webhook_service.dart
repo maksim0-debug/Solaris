@@ -133,6 +133,11 @@ class WebhookService extends Notifier<WebhookServiceState> {
   @override
   WebhookServiceState build() {
     state = const WebhookServiceState();
+    final initialSettings =
+        ref.read(settingsProvider).asData?.value['all'] ??
+        ref.read(settingsProvider).value?['all'];
+    final isControlEnabled = initialSettings?.isApiServerEnabled ?? false;
+    _isQueuePaused = !isControlEnabled;
     _initStorageAndListeners();
     return state;
   }
@@ -153,8 +158,18 @@ class WebhookService extends Notifier<WebhookServiceState> {
       if (!ref.mounted) return;
       _openWALSink();
 
+      final settings =
+          ref.read(settingsProvider).asData?.value['all'] ??
+          ref.read(settingsProvider).value?['all'] ??
+          (await ref.read(settingsProvider.future))['all'];
+      final isControlEnabled = settings?.isApiServerEnabled ?? false;
+      _isQueuePaused = !isControlEnabled;
+
       _setupProviderListeners();
-      unawaited(_processQueue());
+
+      if (!_isQueuePaused) {
+        unawaited(_processQueue());
+      }
     } catch (e) {
       debugPrint('WebhookService initialization error: $e');
     }
@@ -722,6 +737,8 @@ class WebhookService extends Notifier<WebhookServiceState> {
     }
     return false;
   }
+
+  bool get isQueuePaused => _isQueuePaused;
 
   void pauseQueue() {
     _isQueuePaused = true;

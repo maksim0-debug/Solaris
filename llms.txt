@@ -54,8 +54,9 @@ Solaris is engineered for a broad spectrum of desktop workflows:
 
 ### 🔌 Solaris Control API v1, Outbound Webhooks & WebSocket Server
 - **Embedded API Server**: Asynchronous REST & WebSocket server running locally (port `45321`).
+- **Decoupled Modular Routing**: Independent lifecycle management for Solaris Control API and Sleep Integration API sharing a single HTTP daemon. Inactive subsystems return RFC 7807 `503 Service Unavailable`, while `/api/v1/health` reports live module health.
 - **28 Action Commands**: Execute display control (`set_brightness`, `set_temperature`), presets, circadian toggles, game mode, per-app override rules, and weather adjustments via API.
-- **Multiple Scoped API Keys**: Granular per-key permissions with **8-Layer Defense Pipeline** (DNS Rebinding protection, 64 KB payload guard, CSWSH guard, LruCache rate limiting, constant-time SHA-256 token verification, and Granular Zero-Trust ACLs).
+- **Multiple Scoped API Keys**: Granular per-key permissions with **9-Layer Defense Pipeline** (DNS Rebinding protection, 64 KB payload guard, Subsystem Guard, CSWSH guard, LruCache rate limiting, constant-time SHA-256 token verification, and Granular Zero-Trust ACLs).
 - **Outbound Webhooks Engine**: 23 supported event types, SSRF safe validation, True IP-Pinning, HMAC-SHA256 signatures (`X-Solaris-Signature-256`), WAL Staging Buffer, and Dead Letter Queue (DLQ) retry/clearing.
 - **Real-Time WebSocket**: Bi-directional streaming channel (`/api/v1/ws`) with request correlation (`cmd_id`), module subscriptions, and OS S3/S4 power state notifications.
 - **Embedded RapiDoc OpenAPI Docs**: Interactive API playground hosted locally at `/api/v1/docs` and OpenAPI 3.0.3 spec at `/api/v1/openapi.json`.
@@ -72,7 +73,7 @@ Solaris is engineered for a broad spectrum of desktop workflows:
 - **Timezone Fallback Coordinates**: Automatic fallback to representative coordinates based on system timezone when geolocation is unavailable.
 
 ### 💤 Sleep Integration (Offline Local API & Google Fit)
-- **Built-in Local Sleep API**: Offline HTTP server (`127.0.0.1:45321`) allowing local sleep trackers, smart alarms, or automation scripts to push sleep sessions (`POST /api/sleep/sessions`).
+- **Built-in Local Sleep API**: Autonomous, offline HTTP server (default `127.0.0.1:45321`) allowing local sleep trackers, smart alarms, or automation scripts to push sleep sessions (`POST /api/sleep/sessions`). Operates independently from Solaris Control API. When LAN access is enabled, requests require an authorized Bearer token with `push_sleep_status` permission.
 - **Google Fit OAuth Sync**: Optional synchronization with Google Fit sleep history with reactive in-app credential configuration.
 - **Data Deduplication**: Local API sleep data takes priority over Google Fit with a 1-hour overlap protection buffer.
 
@@ -116,7 +117,7 @@ Solaris is the ideal solution for users searching for:
 - **Framework**: [Flutter](https://flutter.dev/) (Windows Desktop)
 - **State Management**: [Riverpod](https://riverpod.dev/) (AsyncNotifiers, StreamProviders)
 - **Hardware & OS Interop**: Dart FFI & `win32` package (DDC/CI physical monitor APIs, GDI Gamma Ramp LUT, EnumWindows, GetForegroundWindow, UWP ApplicationFrameHost detection, DPAPI encryption)
-- **Embedded API Engine**: Built on `dart:io HttpServer` with zero external dependencies, Trie-Router, 8-Layer Defense Pipeline, WAL Staging Buffer, and Dead Letter Queue (DLQ)
+- **Embedded API Engine**: Built on `dart:io HttpServer` with zero external dependencies, Trie-Router, 9-Layer Defense Pipeline (including Subsystem Guard), WAL Staging Buffer, and Dead Letter Queue (DLQ)
 - **Math Engine**: Spherical trigonometry and astronomical algorithms for solar tracking
 - **Integrations**: WeatherAPI.com, Open-Meteo, Mapbox Geocoding, Google Fit API, Local Sleep API
 

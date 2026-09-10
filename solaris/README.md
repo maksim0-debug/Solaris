@@ -1,7 +1,19 @@
-# ☀️ Solaris — Advanced Auto-Brightness & Circadian Monitor Control
+## ☀️ Solaris — Advanced Auto-Brightness & Circadian Monitor Control
 
 <p align="center">
-  <img src="solaris/assets/icon/icon.png" alt="Solaris application icon featuring a stylized sun and monitor silhouette" width="180" />
+  <img src="solaris/assets/icon/icon_180.png" alt="Solaris application icon featuring a stylized sun and monitor silhouette" width="180" />
+</p>
+
+<p align="center">
+  <a href="https://github.com/maksim0-debug/Solaris/releases/latest/download/Solaris-Windows.zip">
+    <img src="https://img.shields.io/badge/Download_for_Windows-v1.3.2_(.zip)-0284c7?style=for-the-badge&logo=windows&logoColor=white" alt="Download Solaris v1.3.2 for Windows" />
+  </a>
+  <a href="https://github.com/maksim0-debug/Solaris/releases/latest">
+    <img src="https://img.shields.io/github/v/release/maksim0-debug/Solaris?style=for-the-badge&color=fdba74&label=Latest%20Release" alt="Latest Release Badge" />
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-emerald?style=for-the-badge" alt="MIT License Badge" />
+  </a>
 </p>
 
 **Solaris** is a professional Windows application built with Flutter that synchronizes your monitor's brightness and color temperature with natural circadian rhythms. By calculating the precise position of the sun (elevation and azimuth) based on your geographic location, Solaris ensures a comfortable, healthy, and fully automated computing experience 24/7.
@@ -35,7 +47,7 @@ Full control over your entire workspace.
 - **DDC/CI Integration**: Direct hardware communication with monitors via system-level APIs.
 - **Individual Control**: Set unique brightness offsets or manual levels for each display.
 - **Unified Sync**: Adjust all monitors at once with a single click.
-<img width="314" height="254" alt="Multi-monitor controls for individual display brightness offsets" src="https://github.com/user-attachments/assets/53066949-0c59-4fc8-afa5-79805fd59ef8" />
+  <img width="314" height="254" alt="Multi-monitor controls for individual display brightness offsets" src="https://github.com/user-attachments/assets/53066949-0c59-4fc8-afa5-79805fd59ef8" />
 
 ### 🌡️ Dynamic Color Temperature (GPU-Assisted Filter)
 
@@ -55,9 +67,8 @@ Automates display parameter locks based on active application state.
 - **Application Filtering:**
   - **Whitelist:** Forcefully activates Game Mode for specified executables (e.g., `cyberpunk2077.exe`).
   - **Blacklist:** Forcefully blocks Game Mode for specific applications (e.g., `chrome.exe`, `telegram.exe`).
-<img width="965" height="647" alt="Smart Exclusions settings panel showing game mode, brightness lock, and color temperature controls" src="https://github.com/user-attachments/assets/2c2f9d40-af44-4e7f-858c-8460842aa6cd" />
-<img width="971" height="319" alt=" Application Whitelist configuration" src="https://github.com/user-attachments/assets/5c74ab66-234a-46ff-ad71-31c27275f909" />
-
+    <img width="965" height="647" alt="Smart Exclusions settings panel showing game mode, brightness lock, and color temperature controls" src="https://github.com/user-attachments/assets/2c2f9d40-af44-4e7f-858c-8460842aa6cd" />
+    <img width="971" height="319" alt="Solaris Game Mode Application Whitelist configuration" src="https://github.com/user-attachments/assets/5c74ab66-234a-46ff-ad71-31c27275f909" />
 
 ### 🎨 Per-App Overrides (Color Accuracy & Custom App Profiles)
 
@@ -67,9 +78,7 @@ Automate monitor settings for specific software applications with pinpoint preci
 - **Flexible Per-App Settings**: Set a fixed value or assign a dedicated custom curve independently for brightness and color temperature, or follow the app's global settings.
 - **Exit Delay & Immediate Preemption**: Customizable holding timer (0–300s) retains profile settings when minimizing apps to the background, while direct switching between profiled apps applies new settings **instantly (0 ms)**.
 - **Native Dual-Tier Focus Detection**: Fast 100ms Win32 polling loop detects focus switches with UWP container support (`ApplicationFrameHost.exe`), Cyrillic/UTF-8 path handling, and System Shell Blacklist filtering.
-<img width="954" height="663" alt="Per-App Overrides in Solaris" src="https://github.com/user-attachments/assets/b35bdcdb-091c-4344-888d-25696edd6f9a" />
-
-
+  <img width="954" height="663" alt="Solaris Per-App color temperature 6500K overrides for creative software" src="https://github.com/user-attachments/assets/b35bdcdb-091c-4344-888d-25696edd6f9a" />
 
 ### ☁️ Weather Influence
 
@@ -137,7 +146,8 @@ When Smart Circadian Regulation is enabled, Solaris applies four physiological m
 If you prefer not to use Google Fit or want a completely offline, internet-free setup, Solaris features a built-in **Local API Web Server**. This allows third-party desktop sleep trackers, smart alarms, or automation scripts running on your PC to feed sleep data directly into the app.
 
 - **How to Enable**: Go to the **Sleep** tab in the app, and turn on the **"Enable local API server"** toggle. You can customize the server port (default is `45321`).
-- **Security & Privacy**: The server binds strictly to the local loopback address (`127.0.0.1`), meaning it is inaccessible from the local network or the internet. Your sleep data remains entirely on your machine.
+- **Autonomous & Decoupled Subsystem**: The Sleep API operates independently from the main Solaris Control API. You can turn off the Solaris Control API in Settings while keeping the Sleep API active (or vice versa). The server daemon only terminates when both subsystems are disabled. Modifying the server port synchronizes across both screens.
+- **Security & Privacy**: By default, the server binds strictly to the local loopback address (`127.0.0.1`), meaning it is inaccessible from external devices. If LAN access is enabled in Settings (`0.0.0.0`), incoming sleep data requests from other devices require an authorized API Bearer token with sleep write permissions (`push_sleep_status`). Unauthenticated LAN requests are strictly rejected with 401 Unauthorized.
 - **Data Deduplication**: Local sleep data takes absolute priority. If a sleep session received via Google Fit overlaps with a session from the Local API (within a 1-hour safety buffer), the Google Fit session is automatically discarded to prevent double-logging.
 - **Supported Endpoints**:
   1. **Sleep History** (`POST http://127.0.0.1:45321/api/sleep/sessions`):
@@ -229,14 +239,14 @@ Solaris includes a built-in, local HTTP & WebSocket control server that enables 
 ### 🌟 Key Capabilities
 
 - **Full Automation Gateway**: 28 supported Action System commands (`set_brightness`, `set_temperature`, `set_auto_brightness`, `manage_app_overrides`, `manage_game_mode_whitelist`, etc.).
+- **Decoupled Modular Routing**: Solaris Control API and Sleep Integration API can be independently toggled on or off while sharing a single underlying HTTP daemon. Inactive subsystems return RFC 7807 `503 Service Unavailable`, while `/api/v1/health` reports the live health of each module.
 - **Friendly Monitor Slugs**: Target displays using human-readable identifiers (`display-1`, `lg-ultragear-a1f9`, `primary`) or system paths (`\\\\.\\DISPLAY1`).
-- **Hardened Security Architecture**: 8-Layer Defense & Isolation Pipeline including Host Header DNS Rebinding guard, Payload limiters (64 KB), CSWSH/Drive-by cross-origin guard, per-IP rate limiting, constant-time SHA-256 token authorization, and Granular Zero-Trust ACL Isolation.
+- **Hardened Security Architecture**: 9-Layer Defense & Isolation Pipeline including Host Header DNS Rebinding guard, Payload limiters (64 KB), Subsystem Guard, CSWSH/Drive-by cross-origin guard, per-IP rate limiting, constant-time SHA-256 token authorization, and Granular Zero-Trust ACL Isolation.
 - **Outbound Webhooks Engine**: 23 supported event types, SSRF safe validator, True IP-Pinning (TLS SNI Handshake), HMAC-SHA256 delivery signatures (`X-Solaris-Signature-256`), WAL Staging Buffer, and Dead Letter Queue (DLQ).
 - **Real-Time WebSocket API**: Bi-directional JSON streaming channel at `/api/v1/ws` with `cmd_id` request correlation, selective module subscriptions, and Windows Power S3/S4 sleep/resume broadcasts.
 - **Interactive OpenAPI Docs**: Embedded OpenAPI Docs playground hosted locally at `/api/v1/docs` and raw spec at `/api/v1/openapi.json`.
-<img width="970" height="435" alt="Solaris Control API v1 main dashboard showing active status on localhost port 45321, network access mode, and API keys management" src="https://github.com/user-attachments/assets/29a6a90b-c8b5-43d3-b57a-84e5a2fe0b39" />
-<img width="821" height="601" alt="Solaris Control API access keys management modal displaying a table of active keys, scopes, permissions, and creation dates" src="https://github.com/user-attachments/assets/a8e1d799-61eb-4885-877d-5fcef55ee14d" />
-
+  <img width="970" height="435" alt="Solaris Control API v1 main dashboard showing active status on localhost port 45321, network access mode, and API keys management" src="https://github.com/user-attachments/assets/29a6a90b-c8b5-43d3-b57a-84e5a2fe0b39" />
+  <img width="821" height="601" alt="Solaris Control API access keys management modal displaying a table of active keys, scopes, permissions, and creation dates" src="https://github.com/user-attachments/assets/a8e1d799-61eb-4885-877d-5fcef55ee14d" />
 
 ---
 
@@ -244,12 +254,12 @@ Solaris includes a built-in, local HTTP & WebSocket control server that enables 
 
 Detailed technical documentation for integrating with Solaris Control API v1 is available in the [`docs/`](docs/) directory:
 
-| Document                                               | Description                                                                                                                                                                 |
-| :----------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **[Architecture & Core Guide](docs/API.md)**           | Core design, security pipeline, authentication formats (`X-API-Key`, `Bearer`, `?token`), RFC 7807 error format, and OpenAPI Docs setup.                                      |
+| Document                                               | Description                                                                                                                                                                                          |
+| :----------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **[Architecture & Core Guide](docs/API.md)**           | Core design, security pipeline, authentication formats (`X-API-Key`, `Bearer`, `?token`), RFC 7807 error format, and OpenAPI Docs setup.                                                             |
 | **[REST Endpoints & Action System](docs/REST_API.md)** | State endpoints (`/api/v1/status`, `/api/v1/health`, `/api/v1/presets`, `/api/v1/app-overrides`, `/api/v1/sleep/sessions`), Friendly Slugs, and comprehensive catalog of **all 28 Action commands**. |
-| **[Outbound Webhooks Engine](docs/WEBHOOKS.md)**       | Webhook management REST endpoints, **23 Webhook events catalog**, SSRF protection, True IP-Pinning, HMAC-SHA256 signatures, WAL buffer, and DLQ handling.                   |
-| **[Real-Time WebSocket API](docs/WEBSOCKET.md)**       | Socket endpoint (`/api/v1/ws`), authentication headers, `cmd_id` correlation, selective module subscriptions, and OS/Hardware error broadcasts.                             |
+| **[Outbound Webhooks Engine](docs/WEBHOOKS.md)**       | Webhook management REST endpoints, **23 Webhook events catalog**, SSRF protection, True IP-Pinning, HMAC-SHA256 signatures, WAL buffer, and DLQ handling.                                            |
+| **[Real-Time WebSocket API](docs/WEBSOCKET.md)**       | Socket endpoint (`/api/v1/ws`), authentication headers, `cmd_id` correlation, selective module subscriptions, and OS/Hardware error broadcasts.                                                      |
 
 ---
 

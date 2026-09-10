@@ -1862,6 +1862,16 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     }, (s) => s.copyWith(isLocalIpcServerEnabled: enabled));
   }
 
+  void updateApiServerEnabled(bool enabled) {
+    _updateSettings({'all'}, (s) => s.copyWith(isApiServerEnabled: enabled));
+  }
+
+  void updateSleepIpcServerEnabled(bool enabled) {
+    _updateSettings({
+      'all',
+    }, (s) => s.copyWith(isSleepIpcServerEnabled: enabled));
+  }
+
   void updateLocalIpcServerPort(int port) {
     _updateSettings({
       'all',

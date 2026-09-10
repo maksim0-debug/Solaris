@@ -103,9 +103,14 @@ class SettingsState {
   final double weatherAdjustmentIntensity;
   final WeatherProvider weatherProvider;
   final StartupMode startupMode;
-  final bool isLocalIpcServerEnabled;
+  final bool isApiServerEnabled;
+  final bool isSleepIpcServerEnabled;
   final int localIpcServerPort;
   final int apiServerPort;
+
+  /// Backward-compatibility getter for legacy code & tests.
+  bool get isLocalIpcServerEnabled =>
+      isApiServerEnabled || isSleepIpcServerEnabled;
   final bool isApiLanAccessEnabled;
   final List<ApiKeyEntry> apiKeys;
   final bool requireLocalToken;
@@ -220,7 +225,9 @@ class SettingsState {
     this.weatherAdjustmentIntensity = 0.45,
     this.weatherProvider = WeatherProvider.auto,
     this.startupMode = StartupMode.minimized,
-    this.isLocalIpcServerEnabled = false,
+    bool? isLocalIpcServerEnabled,
+    bool? isApiServerEnabled,
+    bool? isSleepIpcServerEnabled,
     this.localIpcServerPort = 45321,
     int? apiServerPort,
     this.isApiLanAccessEnabled = false,
@@ -230,7 +237,11 @@ class SettingsState {
     this.customGoogleClientId = '',
     this.customGoogleClientSecret = '',
     this.webhooks = const [],
-  }) : apiKeys = List.unmodifiable(
+  }) : isApiServerEnabled =
+           isApiServerEnabled ?? isLocalIpcServerEnabled ?? false,
+       isSleepIpcServerEnabled =
+           isSleepIpcServerEnabled ?? isLocalIpcServerEnabled ?? false,
+       apiKeys = List.unmodifiable(
          _initApiKeys(apiKeys, apiAccessToken, apiPermissions),
        ),
        apiServerPort = apiServerPort ?? localIpcServerPort,
@@ -397,6 +408,8 @@ class SettingsState {
     'weatherAdjustmentIntensity': weatherAdjustmentIntensity,
     'weatherProvider': weatherProvider.toJson(),
     'startupMode': startupMode.toJson(),
+    'isApiServerEnabled': isApiServerEnabled,
+    'isSleepIpcServerEnabled': isSleepIpcServerEnabled,
     'isLocalIpcServerEnabled': isLocalIpcServerEnabled,
     'localIpcServerPort': localIpcServerPort,
     'apiServerPort': apiServerPort,
@@ -645,8 +658,14 @@ class SettingsState {
       startupMode: StartupMode.fromJson(
         json['startupMode'] as String? ?? 'minimized',
       ),
-      isLocalIpcServerEnabled:
-          json['isLocalIpcServerEnabled'] as bool? ?? false,
+      isApiServerEnabled:
+          json['isApiServerEnabled'] as bool? ??
+          json['isLocalIpcServerEnabled'] as bool? ??
+          false,
+      isSleepIpcServerEnabled:
+          json['isSleepIpcServerEnabled'] as bool? ??
+          json['isLocalIpcServerEnabled'] as bool? ??
+          false,
       localIpcServerPort: json['localIpcServerPort'] as int? ?? 45321,
       apiServerPort:
           json['apiServerPort'] as int? ??
@@ -769,6 +788,8 @@ class SettingsState {
     WeatherProvider? weatherProvider,
     StartupMode? startupMode,
     bool? isLocalIpcServerEnabled,
+    bool? isApiServerEnabled,
+    bool? isSleepIpcServerEnabled,
     int? localIpcServerPort,
     int? apiServerPort,
     bool? isApiLanAccessEnabled,
@@ -917,8 +938,14 @@ class SettingsState {
           weatherAdjustmentIntensity ?? this.weatherAdjustmentIntensity,
       weatherProvider: weatherProvider ?? this.weatherProvider,
       startupMode: startupMode ?? this.startupMode,
-      isLocalIpcServerEnabled:
-          isLocalIpcServerEnabled ?? this.isLocalIpcServerEnabled,
+      isApiServerEnabled:
+          isApiServerEnabled ??
+          isLocalIpcServerEnabled ??
+          this.isApiServerEnabled,
+      isSleepIpcServerEnabled:
+          isSleepIpcServerEnabled ??
+          isLocalIpcServerEnabled ??
+          this.isSleepIpcServerEnabled,
       localIpcServerPort: localIpcServerPort ?? this.localIpcServerPort,
       apiServerPort: apiServerPort ?? this.apiServerPort,
       isApiLanAccessEnabled:

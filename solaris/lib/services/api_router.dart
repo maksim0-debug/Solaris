@@ -43,6 +43,8 @@ class ApiRouter {
   List<ApiKeyEntry> apiKeys = [];
   bool requireLocalToken = false;
   bool isLanEnabled = false;
+  bool isApiServerEnabled = true;
+  bool isSleepIpcServerEnabled = true;
 
   /// Callback emitted when an API key is used, for decoupled throttled persistence
   void Function(String keyId)? onKeyUsed;
@@ -110,7 +112,10 @@ class ApiRouter {
 
     // 2. Trie/Segment Route Match
     final method = request.method.toUpperCase();
-    final pathSegments = request.uri.pathSegments;
+    final rawSegments = request.uri.pathSegments;
+    final pathSegments = (rawSegments.isNotEmpty && rawSegments.last.isEmpty)
+        ? rawSegments.sublist(0, rawSegments.length - 1)
+        : rawSegments;
 
     for (final route in _routes) {
       if (route.method != method && route.method != 'ANY') continue;
@@ -426,6 +431,79 @@ Future<bool> corsMiddleware(HttpRequest request, ApiRouter router) async {
   return true;
 }
 
+/// Helper to normalize URL paths (trim trailing slashes and convert to lowercase for matching)
+String normalizeApiPath(String path) {
+  final clean = path.trim().toLowerCase();
+  if (clean.length > 1 && clean.endsWith('/')) {
+    return clean.substring(0, clean.length - 1);
+  }
+  return clean;
+}
+
+/// Helper to check if path belongs to the Sleep Integration subsystem
+bool isSleepSubsystemPath(String path) {
+  final p = normalizeApiPath(path);
+  return p == '/api/sleep/sessions' ||
+      p == '/api/sleep/status' ||
+      p == '/api/v1/sleep/sessions' ||
+      p == '/api/v1/sleep/status' ||
+      p.startsWith('/api/sleep/') ||
+      p.startsWith('/api/v1/sleep/');
+}
+
+/// Helper to check if path belongs to public diagnostics/documentation
+bool isPublicDiagnosticsPath(String path) {
+  final p = normalizeApiPath(path);
+  return p == '/api/v1/health' ||
+      p == '/api/v1/docs' ||
+      p.startsWith('/api/v1/docs/') ||
+      p == '/api/v1/openapi.json';
+}
+
+/// Helper to check if path belongs to the Solaris Control API subsystem
+bool isControlSubsystemPath(String path) {
+  final p = normalizeApiPath(path);
+  if (isSleepSubsystemPath(p) || isPublicDiagnosticsPath(p)) return false;
+  return p == '/api/v1' || p.startsWith('/api/v1/');
+}
+
+/// Modular Subsystem Routing Guard Middleware (RFC 7807 503 for disabled features)
+Future<bool> subsystemGuardMiddleware(
+  HttpRequest request,
+  ApiRouter router,
+) async {
+  if (request.method == 'OPTIONS') return true;
+
+  final path = request.uri.path;
+  if (isSleepSubsystemPath(path)) {
+    if (!router.isSleepIpcServerEnabled) {
+      final error = Rfc7807Error(
+        type: 'https://solaris.local/errors/service-disabled',
+        title: 'Sleep Integration API Disabled',
+        status: HttpStatus.serviceUnavailable,
+        detail: 'Sleep Integration API is currently disabled in settings.',
+        instance: path,
+      );
+      ApiRouter.sendRfc7807(request, error);
+      return false;
+    }
+  } else if (isControlSubsystemPath(path)) {
+    if (!router.isApiServerEnabled) {
+      final error = Rfc7807Error(
+        type: 'https://solaris.local/errors/service-disabled',
+        title: 'Solaris Control API Disabled',
+        status: HttpStatus.serviceUnavailable,
+        detail: 'Solaris Control API is currently disabled in settings.',
+        instance: path,
+      );
+      ApiRouter.sendRfc7807(request, error);
+      return false;
+    }
+  }
+
+  return true;
+}
+
 /// Constant-time SHA-256 Auth & Strict Localhost Drive-by Guard Middleware
 Future<bool> authMiddleware(HttpRequest request, ApiRouter router) async {
   if (request.method == 'OPTIONS') {
@@ -460,9 +538,7 @@ Future<bool> authMiddleware(HttpRequest request, ApiRouter router) async {
   }
 
   // 2. Anonymous passthrough for public routes (openapi.json retains attached permissions if token was passed)
-  if (request.uri.path.startsWith('/api/v1/docs') ||
-      request.uri.path == '/api/v1/openapi.json' ||
-      request.uri.path == '/api/v1/health') {
+  if (isPublicDiagnosticsPath(request.uri.path)) {
     return true;
   }
 

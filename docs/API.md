@@ -14,7 +14,8 @@ Welcome to the official developer documentation for **Solaris Control API v1**. 
 * **Per-Action Precision Engine**: Fine-grained access control supporting **28 canonical actions** across 7 categories, 17 alias mappings (`getCanonicalAction`), and Clean Storage Protocol.
 * **Tri-State Accordion UI**: Interactive Flutter GUI (`ApiPermissionsDialog`) with `ExpansionTile` accordions, Tri-State master checkboxes (`true`/`false`/`null`), click isolation in `leading`, and dynamic scope chips.
 * **Asynchronous Trie-Router**: Fast path-segment matching with support for dynamic path variables (e.g. `:slug`).
-* **8-Layer Defense & Isolation Pipeline**: Built-in protection against Host Header Spoofing/DNS Rebinding, Payload Buffer Overflows, Unsupported Media Types, CSWSH (Cross-Site WebSocket Hijacking), Drive-by attacks, and **Granular Zero-Trust ACL Isolation**.
+* **Decoupled Modular Subsystem Routing**: Independent lifecycle management for **Solaris Control API** and **Sleep Integration API**. Both run over a shared HTTP daemon, but either subsystem can be toggled on or off without affecting the other. Inactive subsystems return RFC 7807 `503 Service Unavailable`.
+* **9-Layer Defense & Isolation Pipeline**: Built-in protection against Host Header Spoofing/DNS Rebinding, Payload Buffer Overflows, Subsystem Guards (503), Unsupported Media Types, CSWSH (Cross-Site WebSocket Hijacking), Drive-by attacks, and **Granular Zero-Trust ACL Isolation**.
 * **Headless-Safe Execution (`safeStateMutator`)**: State mutations are deferred via `Future.microtask()` to avoid Flutter widget rendering cycle conflicts (`setState() or markNeedsBuild() called during build`).
 * **OpenAPI 3.0.3 Spec & RapiDoc UI**: Built-in RapiDoc interactive playground hosted at `/api/v1/docs` with dynamic permission status annotations.
 
@@ -29,6 +30,8 @@ Solaris Control API can operate in two distinct binding modes configurable via a
    * Automatically configures Windows Defender Firewall rules via `WindowsFirewallService` with a 3-stage UAC elevation fallback (`netsh` direct -> `powershell -Verb RunAs` -> fallback).
    * All old rules with prefix `Solaris_Control_API_*` are automatically pruned prior to rule updates.
 
+* **Port Configuration & Range**: Default port is `45321` (configurable in range `1024..65535` with automatic fallback to `45322..45330` if occupied). Modifying the port synchronizes seamlessly between Solaris Control API and Sleep Integration settings.
+
 ### Local Authorization Requirement (`requireLocalToken`)
 By default, anonymous requests from loopback (`127.0.0.1`) are permitted if no key authentication is required. When **"Require Authorization for Local Requests"** (`requireLocalToken = true`) is enabled in the host GUI:
 * ALL incoming HTTP and WebSocket requests (including localhost `127.0.0.1`) MUST supply a valid API key token.
@@ -37,9 +40,9 @@ By default, anonymous requests from loopback (`127.0.0.1`) are permitted if no k
 
 ---
 
-### 8-Layer Defense Pipeline
+### 9-Layer Defense Pipeline
 
-Every HTTP and WebSocket request flows sequentially through 8 security layers:
+Every HTTP and WebSocket request flows sequentially through 9 defense and isolation layers:
 
 ```
 [ Incoming Request ]
@@ -60,13 +63,16 @@ Every HTTP and WebSocket request flows sequentially through 8 security layers:
  5. CORS & CSWSH / Drive-by Guard (Cross-Origin requests require valid X-API-Key)
          │
          ▼
- 6. Constant-Time Auth & requireLocalToken Guard (Constant-time SHA-256 token lookup via constantTimeEquals)
+ 6. Modular Subsystem Routing Guard (Rejects requests to disabled subsystems with HTTP 503 RFC 7807)
          │
          ▼
- 7. LruCache Rate Limiter (Per-IP token bucket rate limiting, default 120 req/min)
+ 7. Constant-Time Auth & requireLocalToken Guard (Constant-time SHA-256 token lookup via constantTimeEquals)
          │
          ▼
- 8. Granular ACL & Data Privacy Guard (ApiPermissionsChecker & ApiPermissionsFilter per-action scoping)
+ 8. LruCache Rate Limiter (Per-IP token bucket rate limiting, default 120 req/min)
+         │
+         ▼
+ 9. Granular ACL & Data Privacy Guard (ApiPermissionsChecker & ApiPermissionsFilter per-action scoping)
          │
          ▼
 [ Route Handler / Controller ]
@@ -137,7 +143,7 @@ The Flutter GUI (`ApiPermissionsDialog`) renders permissions using a 2-level Acc
 
 ### 6. Read-Only Mode (`isReadOnly`)
 When `isReadOnly = true` is enabled for a specific key or globally:
-* ALL mutation attempts (`POST /api/v1/control`, `POST /api/v1/monitors/:slug/*`, `POST /api/v1/app-overrides*`, `POST /api/v1/webhooks*`, `POST /api/sleep/*`) are immediately rejected with `HTTP 403 Forbidden` (`Read-Only Mode Enabled`).
+* ALL mutation attempts (`POST /api/v1/control`, `POST /api/v1/monitors/:slug/*`, `POST /api/v1/app-overrides*`, `POST /api/v1/webhooks*`, `POST /api/v1/sleep/*`, `POST /api/sleep/*`) are immediately rejected with `HTTP 403 Forbidden` (`Read-Only Mode Enabled`).
 * Public liveness probe `GET /api/v1/health` remains 100% accessible.
 
 ### 7. Universal Privilege Escalation Guard
@@ -245,6 +251,7 @@ All non-2xx direct REST HTTP responses from Solaris Control API return `applicat
 | `422 Unprocessable` | `https://solaris.local/errors/unprocessable-entity` / `control-error` | Invalid parameter values or unknown action command name. |
 | `429 Too Many Requests`| `https://solaris.local/errors/too-many-requests`| Rate limit quota exceeded (per-IP limit). |
 | `500 Internal Error` | `about:blank` | Unexpected internal server exception. |
+| `503 Service Unavailable` | `https://solaris.local/errors/service-disabled` | Requested subsystem (Solaris Control API or Sleep Integration API) is disabled in application settings. |
 
 ---
 

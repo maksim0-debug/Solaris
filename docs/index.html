@@ -155,7 +155,7 @@
             <p>To enable automated, circadian-aligned display control, Solaris may process sleep data from two optional sources based on your configuration:</p>
             <ol>
                 <li><strong>Google Fit API</strong>: Synchronizes historical sleep duration, start/end timestamps, and sleep sessions from your connected Google account.</li>
-                <li><strong>Local Sleep API</strong>: Receives local sleep session payloads and real-time sleep/awake status pushed directly by third-party tracking applications, smart alarms, or custom scripts running on your local device or network via Solaris’s embedded API endpoints (<code>POST /api/v1/control</code>, <code>POST /api/sleep/sessions</code>, <code>POST /api/sleep/status</code>).</li>
+                <li><strong>Local Sleep API</strong>: Receives local sleep session payloads and real-time sleep/awake status pushed directly by third-party tracking applications, smart alarms, or custom scripts running on your local device or network via Solaris’s embedded API endpoints (<code>POST /api/v1/control</code>, <code>POST /api/v1/sleep/sessions</code>, <code>POST /api/v1/sleep/status</code>, or legacy <code>/api/sleep/*</code> aliases).</li>
             </ol>
             <p>We do NOT use sleep data for medical diagnostics, health recommendations, or fitness tracking insights. Sleep data is processed and analyzed strictly locally on your device to calibrate monitor brightness, color temperature curves, and Wind Down transitions according to your real sleep debt and circadian sleep-wake schedule.</p>
 

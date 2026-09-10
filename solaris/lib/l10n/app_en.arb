@@ -631,6 +631,7 @@
   "enableLocalIpcServerSubtitle": "Allows receiving sleep sessions on localhost port",
   "serverPort": "Server Port",
   "serverPortSubtitle": "Server will restart automatically when changed",
+  "serverPortSharedTooltip": "Changing this port also updates the general Solaris Control API port in Settings",
   "serverRunningStatus": "Server is running on port {port}",
   "@serverRunningStatus": {
     "placeholders": {
@@ -664,11 +665,11 @@
   "sleepIntegrationHelpSectionHow": "How it works",
   "sleepIntegrationHelpSectionHowText": "1. When enabled, the app starts a mini HTTP web server on your computer, listening only to local requests (127.0.0.1).\n2. External apps send sleep sessions (JSON format) or real-time status (sleeping / awake) to the server.\n3. The app automatically merges this data and applies it to adjust your screen settings.",
   "sleepIntegrationHelpSectionConfig": "How to configure",
-  "sleepIntegrationHelpSectionConfigText": "• Toggle 'Enable local API server' on.\n• Keep the default port (45321) unless it is used by another application.\n• Configure your tracking software to send POST requests to:\n  - History: http://127.0.0.1:45321/api/sleep/sessions\n  - Real-time: http://127.0.0.1:45321/api/sleep/status",
+  "sleepIntegrationHelpSectionConfigText": "• Toggle 'Enable local API server' on.\n• Modular & Autonomous: Sleep integration operates independently from the main Solaris Control API. Turning off the Control API in Settings will not disrupt the Sleep API.\n• The port (default 45321) is shared by the app daemon: modifying it here automatically synchronizes with Settings.\n• Configure your tracking software to send POST requests to:\n  - History: http://127.0.0.1:45321/api/sleep/sessions\n  - Real-time: http://127.0.0.1:45321/api/sleep/status\n(Prefixed routes /api/v1/sleep/... are also supported)",
   "sleepIntegrationHelpSectionDeduplication": "Data Deduplication",
   "sleepIntegrationHelpSectionDeduplicationText": "Local data has absolute priority. If a sleep session synced via Google Fit overlaps with a local API session (with a 1-hour safety buffer), the Google Fit session is automatically discarded to prevent double-logging and conflicts.",
   "sleepIntegrationHelpSectionSecurity": "Security & Privacy",
-  "sleepIntegrationHelpSectionSecurityText": "The server runs strictly on the local loopback address (127.0.0.1) and is inaccessible from the internet or other network devices. Your sleep data remains entirely on your machine.",
+  "sleepIntegrationHelpSectionSecurityText": "By default, the server binds strictly to 127.0.0.1 (loopback) and is inaccessible from external devices. If LAN access is enabled in Settings (0.0.0.0), incoming sleep data requests from other devices require an authorized API Bearer token with sleep write permissions (push_sleep_status). Unauthenticated LAN requests are rejected with 401 Unauthorized.",
   "sleepIntegrationHelpSectionFormat": "JSON Data Formats",
   "sleepIntegrationHelpSectionFormatText": "Solaris expects strict JSON payloads. Schema details:\n\n1. Sleep Sessions (POST to /api/sleep/sessions)\nExpected payload: A JSON array of sleep session objects.\nEach session object contains:\n• id: string (unique session identifier)\n• startTime: string (ISO 8601 date, e.g., \"2026-07-17T00:30:00Z\")\n• endTime: string (ISO 8601 date, e.g., \"2026-07-17T08:00:00Z\")\n• title: string (optional session name)\n• source: string (optional, \"local_api\" is default)\n\n2. Real-time sleep status (POST to /api/sleep/status)\nExpected payload: A JSON object containing:\n• is_sleeping: boolean (true if user is sleeping, false if awake)",
   "mapboxTokenMissingTooltip": "Mapbox access token is missing. Configure it in Settings (API Keys section).",

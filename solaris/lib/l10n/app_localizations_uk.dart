@@ -1350,6 +1350,10 @@ class AppLocalizationsUk extends AppLocalizations {
       'При зміні сервер перезапуститься автоматично';
 
   @override
+  String get serverPortSharedTooltip =>
+      'Зміна цього порту також змінює загальний порт Solaris Control API у Налаштуваннях';
+
+  @override
   String serverRunningStatus(int port) {
     return 'Сервер запущений на порту $port';
   }
@@ -1398,7 +1402,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get sleepIntegrationHelpSectionConfigText =>
-      '• Увімкніть тумблер «Увімкнути локальний API сервер».\n• Залиште порт за замовчуванням (45321), якщо він не зайнятий іншою програмою.\n• Налаштуйте ваше ПЗ для надсилання POST-запитів на адреси:\n  - Історія сну: http://127.0.0.1:45321/api/sleep/sessions\n  - Статус реального часу: http://127.0.0.1:45321/api/sleep/status';
+      '• Увімкніть тумблер «Увімкнути локальний API сервер».\n• Модульність та автономність: інтеграція сну працює повністю незалежно від Solaris Control API. Якщо основний API у Налаштуваннях вимкнено, API сну продовжить приймати дані.\n• Порт (за замовчуванням 45321) є спільним для сервера додатку: зміна номера порту тут автоматично синхронізується з Налаштуваннями.\n• Налаштуйте ваше ПЗ для надсилання POST-запитів на адреси:\n  - Історія сну: http://127.0.0.1:45321/api/sleep/sessions\n  - Статус реального часу: http://127.0.0.1:45321/api/sleep/status\n(Також підтримуються префікси /api/v1/sleep/...)';
 
   @override
   String get sleepIntegrationHelpSectionDeduplication => 'Дедуплікація даних';
@@ -1412,7 +1416,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get sleepIntegrationHelpSectionSecurityText =>
-      'Сервер працює виключно на локальній адресі 127.0.0.1 і недоступен з інтернету або локальної мережі. Ваші дані про сон залишаються тільки на вашому пристрої.';
+      'За замовчуванням сервер працює суто на локальній адресі 127.0.0.1 і недоступний із зовнішньої мережі. Якщо в Налаштуваннях увімкнено доступ по LAN (0.0.0.0), для надсилання даних сну з інших пристроїв обов\'язково вимагається валідний API-токен із дозволом на операції зі сном (push_sleep_status). Неавторизований доступ із LAN суворо блокується кодом 401 Unauthorized.';
 
   @override
   String get sleepIntegrationHelpSectionFormat => 'Формат JSON-даних';

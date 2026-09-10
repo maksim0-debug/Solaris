@@ -7,7 +7,15 @@ import 'package:solaris/providers.dart';
 import 'package:solaris/services/api_router.dart';
 import 'package:solaris/services/ssrf_validator.dart';
 import 'package:solaris/services/ssrf_safe_http_client.dart';
+import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/services/webhook_service.dart';
+
+class _Phase4SettingsNotifier extends SettingsNotifier {
+  @override
+  Future<Map<String, SettingsState>> build() async {
+    return {'all': SettingsState(isApiServerEnabled: true)};
+  }
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -497,7 +505,11 @@ void main() {
 
       setUp(() async {
         HttpOverrides.global = null;
-        container = ProviderContainer();
+        container = ProviderContainer(
+          overrides: [
+            settingsProvider.overrideWith(_Phase4SettingsNotifier.new),
+          ],
+        );
         server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
         serverUrl = 'http://localhost:${server.port}';
 
@@ -505,6 +517,7 @@ void main() {
           localIpcServiceProvider.notifier,
         );
         router = localIpcService.router;
+        await container.read(settingsProvider.future);
 
         server.listen((HttpRequest request) async {
           final handled = await router.handle(request);

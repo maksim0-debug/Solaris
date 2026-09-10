@@ -14,6 +14,7 @@ The WebSocket Streaming API provides a full-duplex, low-latency communication ch
 * **Granular Data Privacy & Snapshot Protection**: Initial `snapshot` frame (`_buildSnapshotMap`) and real-time broadcasts (`broadcastModule`, `broadcastEvent`) are filtered dynamically according to per-key `ApiPermissionsConfig`.
 * **Dynamic Runtime Subscription Revocation**: Toggling read permissions in the host GUI automatically revokes active topic subscriptions and sends `subscription_revoked` frames without severing TCP/WS connections.
 * **Connection Concurrency Limit**: Maximum 20 simultaneous active WebSocket connections (`maxClients = 20`). Upgrade attempts exceeding this limit are rejected with `HTTP 503 Service Unavailable`.
+* **Subsystem Lifecycle Guard**: The WebSocket streaming interface `/api/v1/ws` requires the **Solaris Control API** to be active (`isApiServerEnabled = true`). If Solaris Control API is disabled in settings, incoming upgrade attempts are rejected with `HTTP 503 Service Unavailable` (RFC 7807 problem details: `Solaris Control API Disabled`).
 * **Reactive Disconnect Revocation (Code 4001)**: Instant socket termination with WebSocket status code `4001` when an API key is deleted, token is regenerated, or `requireLocalToken` is enabled.
 * **Bi-directional Command Execution**: Execute any of the 28 Action Control System commands over WebSocket with response correlation IDs (`cmd_id`) subject to category permissions (`allowedCategories`).
 * **Slow Consumer OOM Protection**: Automatic client disconnection if unconsumed pending frame buffer exceeds 512 KB (`1008`).
@@ -84,7 +85,7 @@ Upon connection, Solaris sends an initial `snapshot` frame containing current su
 {
   "type": "snapshot",
   "data": {
-    "version": "1.1.0",
+    "version": "1.3.2+1",
     "timestamp": "2026-07-25T14:30:00.000Z",
     "monitors": [
       {

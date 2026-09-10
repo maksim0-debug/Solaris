@@ -44,6 +44,9 @@ All webhook administration endpoints are guarded by **Solaris Granular Security 
 * **Mutating Operations** (`POST /api/v1/webhooks`, `DELETE /api/v1/webhooks/:id`, `POST /api/v1/webhooks/:id/test`, `POST /api/v1/webhooks/dlq/retry`): Require `isReadOnly = false`, category `system` in `allowedCategories`, AND canonical action `manage_webhooks` in `allowedActions` (or `allowedActions == null`).
 * **Alias Shortcut (`clear_failed_webhooks`)**: Executing `{"action": "clear_failed_webhooks", "webhook_id": "wh_123"}` via `POST /api/v1/control` filters and clears dead-letter entries for that specific webhook.
 
+> [!NOTE]
+> **Subsystem Requirement**: Outbound webhooks and webhook management endpoints belong to the **Solaris Control API** subsystem. If Solaris Control API is disabled in settings (`isApiServerEnabled = false`), webhook management endpoints return `HTTP 503 Service Unavailable` (RFC 7807), and automated webhook delivery is suspended until the Control API is re-enabled.
+
 ---
 
 ### 1. `GET /api/v1/webhooks`

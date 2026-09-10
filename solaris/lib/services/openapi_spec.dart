@@ -19,6 +19,13 @@ class OpenApiSpec {
       },
     };
 
+    final serviceUnavailableResponse = {
+      'description': 'Service Unavailable (Subsystem Disabled in Settings)',
+      'content': {
+        'application/problem+json': {'schema': rfc7807Ref},
+      },
+    };
+
     final pathsMap = <String, dynamic>{
       '/api/v1/health': {
         'get': {
@@ -58,6 +65,7 @@ class OpenApiSpec {
               },
             },
             if (permissions != null) '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
           },
         },
       },
@@ -68,6 +76,7 @@ class OpenApiSpec {
             '200': {'description': 'OK'},
             if (permissions != null && !permissions.allowReadSolar)
               '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
           },
         },
       },
@@ -80,6 +89,7 @@ class OpenApiSpec {
                 (!permissions.allowReadMonitors &&
                     !permissions.allowReadCircadian))
               '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
           },
         },
       },
@@ -90,6 +100,7 @@ class OpenApiSpec {
             '200': {'description': 'OK'},
             if (permissions != null && !permissions.allowReadMonitors)
               '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
           },
         },
       },
@@ -109,6 +120,7 @@ class OpenApiSpec {
             '404': {'description': 'Monitor Not Found'},
             if (permissions != null && !permissions.allowReadMonitors)
               '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
           },
         },
       },
@@ -145,6 +157,7 @@ class OpenApiSpec {
             '202': {'description': 'Accepted'},
             '400': {'description': 'Validation Error'},
             if (permissions != null) '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
           },
         },
       },
@@ -181,6 +194,7 @@ class OpenApiSpec {
             '202': {'description': 'Accepted'},
             '400': {'description': 'Validation Error'},
             if (permissions != null) '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
           },
         },
       },
@@ -213,6 +227,165 @@ class OpenApiSpec {
             '200': {'description': 'OK'},
             '400': {'description': 'Validation Error'},
             if (permissions != null) '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
+          },
+        },
+      },
+      '/api/sleep/status': {
+        'get': {
+          'summary': 'Get Real-Time Sleep Status',
+          'description':
+              'Returns current real-time sleep state, session count, and last fetch timestamp.',
+          'responses': {
+            '200': {
+              'description': 'OK',
+              'content': {
+                'application/json': {
+                  'schema': {
+                    r'$ref': '#/components/schemas/SleepStatusResponse',
+                  },
+                },
+              },
+            },
+            if (permissions != null && !permissions.allowReadSleep)
+              '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
+          },
+        },
+        'post': {
+          'summary': 'Push Real-Time Sleep Status',
+          'description':
+              'Updates real-time sleep tracking state (is_sleeping flag).',
+          'requestBody': {
+            'required': true,
+            'content': {
+              'application/json': {
+                'schema': {
+                  'type': 'object',
+                  'required': ['is_sleeping'],
+                  'properties': {
+                    'is_sleeping': {'type': 'boolean'},
+                  },
+                },
+              },
+            },
+          },
+          'responses': {
+            '200': {'description': 'OK'},
+            '400': {'description': 'Validation Error'},
+            if (permissions != null) '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
+          },
+        },
+      },
+      '/api/v1/sleep/status': {
+        'get': {
+          'summary': 'Get Real-Time Sleep Status',
+          'description':
+              'Returns current real-time sleep state, session count, and last fetch timestamp.',
+          'responses': {
+            '200': {
+              'description': 'OK',
+              'content': {
+                'application/json': {
+                  'schema': {
+                    r'$ref': '#/components/schemas/SleepStatusResponse',
+                  },
+                },
+              },
+            },
+            if (permissions != null && !permissions.allowReadSleep)
+              '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
+          },
+        },
+        'post': {
+          'summary': 'Push Real-Time Sleep Status',
+          'description':
+              'Updates real-time sleep tracking state (is_sleeping flag).',
+          'requestBody': {
+            'required': true,
+            'content': {
+              'application/json': {
+                'schema': {
+                  'type': 'object',
+                  'required': ['is_sleeping'],
+                  'properties': {
+                    'is_sleeping': {'type': 'boolean'},
+                  },
+                },
+              },
+            },
+          },
+          'responses': {
+            '200': {'description': 'OK'},
+            '400': {'description': 'Validation Error'},
+            if (permissions != null) '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
+          },
+        },
+      },
+      '/api/sleep/sessions': {
+        'get': {
+          'summary': 'Get Paginated Sleep History',
+          'parameters': [
+            {
+              'name': 'limit',
+              'in': 'query',
+              'schema': {'type': 'integer', 'default': 50},
+            },
+            {
+              'name': 'offset',
+              'in': 'query',
+              'schema': {'type': 'integer', 'default': 0},
+            },
+            {
+              'name': 'from',
+              'in': 'query',
+              'schema': {'type': 'string', 'format': 'date-time'},
+            },
+            {
+              'name': 'to',
+              'in': 'query',
+              'schema': {'type': 'string', 'format': 'date-time'},
+            },
+          ],
+          'responses': {
+            '200': {
+              'description': 'OK',
+              'content': {
+                'application/json': {
+                  'schema': {
+                    r'$ref': '#/components/schemas/SleepSessionsResponse',
+                  },
+                },
+              },
+            },
+            if (permissions != null && !permissions.allowReadSleep)
+              '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
+          },
+        },
+        'post': {
+          'summary': 'Push Sleep Sessions Batch',
+          'description':
+              'Ingests an array of historical sleep session objects.',
+          'requestBody': {
+            'required': true,
+            'content': {
+              'application/json': {
+                'schema': {
+                  'type': 'array',
+                  'items': {r'$ref': '#/components/schemas/SleepSession'},
+                },
+              },
+            },
+          },
+          'responses': {
+            '200': {'description': 'OK'},
+            '400': {'description': 'Validation Error'},
+            if (permissions != null) '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
           },
         },
       },
@@ -242,9 +415,41 @@ class OpenApiSpec {
             },
           ],
           'responses': {
-            '200': {'description': 'OK'},
+            '200': {
+              'description': 'OK',
+              'content': {
+                'application/json': {
+                  'schema': {
+                    r'$ref': '#/components/schemas/SleepSessionsResponse',
+                  },
+                },
+              },
+            },
             if (permissions != null && !permissions.allowReadSleep)
               '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
+          },
+        },
+        'post': {
+          'summary': 'Push Sleep Sessions Batch',
+          'description':
+              'Ingests an array of historical sleep session objects.',
+          'requestBody': {
+            'required': true,
+            'content': {
+              'application/json': {
+                'schema': {
+                  'type': 'array',
+                  'items': {r'$ref': '#/components/schemas/SleepSession'},
+                },
+              },
+            },
+          },
+          'responses': {
+            '200': {'description': 'OK'},
+            '400': {'description': 'Validation Error'},
+            if (permissions != null) '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
           },
         },
       },
@@ -267,6 +472,7 @@ class OpenApiSpec {
             '202': {'description': 'Accepted (Queued DDC Command)'},
             '400': {'description': 'Validation Error'},
             if (permissions != null) '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
           },
         },
       },
@@ -278,6 +484,7 @@ class OpenApiSpec {
           'responses': {
             '200': {'description': 'OK'},
             if (permissions != null) '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
           },
         },
         'post': {
@@ -297,6 +504,7 @@ class OpenApiSpec {
             '200': {'description': 'OK'},
             '400': {'description': 'Validation Error'},
             if (permissions != null) '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
           },
         },
       },
@@ -308,6 +516,7 @@ class OpenApiSpec {
           'responses': {
             '200': {'description': 'OK'},
             if (permissions != null) '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
           },
         },
       },
@@ -319,6 +528,7 @@ class OpenApiSpec {
           'responses': {
             '200': {'description': 'OK'},
             if (permissions != null) '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
           },
         },
       },
@@ -337,6 +547,7 @@ class OpenApiSpec {
             '200': {'description': 'OK'},
             '400': {'description': 'Validation Error'},
             if (permissions != null) '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
           },
         },
       },
@@ -346,6 +557,7 @@ class OpenApiSpec {
           'responses': {
             '200': {'description': 'OK'},
             if (permissions != null) '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
           },
         },
         'post': {
@@ -353,6 +565,7 @@ class OpenApiSpec {
           'responses': {
             '201': {'description': 'Created'},
             if (permissions != null) '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
           },
         },
       },
@@ -362,6 +575,7 @@ class OpenApiSpec {
           'responses': {
             '200': {'description': 'OK'},
             if (permissions != null) '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
           },
         },
       },
@@ -371,6 +585,7 @@ class OpenApiSpec {
           'responses': {
             '200': {'description': 'OK'},
             if (permissions != null) '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
           },
         },
       },
@@ -380,6 +595,7 @@ class OpenApiSpec {
           'responses': {
             '200': {'description': 'OK'},
             if (permissions != null) '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
           },
         },
       },
@@ -397,6 +613,7 @@ class OpenApiSpec {
           'responses': {
             '200': {'description': 'OK'},
             if (permissions != null) '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
           },
         },
       },
@@ -414,6 +631,7 @@ class OpenApiSpec {
           'responses': {
             '200': {'description': 'OK'},
             if (permissions != null) '403': forbiddenResponse,
+            '503': serviceUnavailableResponse,
           },
         },
       },
@@ -500,9 +718,16 @@ class OpenApiSpec {
             'type': 'object',
             'properties': {
               'status': {'type': 'string', 'example': 'ok'},
-              'version': {'type': 'string', 'example': '1.0.0'},
+              'version': {'type': 'string', 'example': '1.3.2+1'},
               'uptime_seconds': {'type': 'integer', 'example': 3600},
               'timestamp': {'type': 'string', 'format': 'date-time'},
+              'subsystems': {
+                'type': 'object',
+                'properties': {
+                  'solaris_control': {'type': 'boolean', 'example': true},
+                  'sleep_integration': {'type': 'boolean', 'example': true},
+                },
+              },
             },
           },
           'Rfc7807Error': {
@@ -560,6 +785,48 @@ class OpenApiSpec {
                 'maximum': 6500.0,
               },
               'temperatureCurvePresetId': {'type': 'string'},
+            },
+          },
+          'SleepSession': {
+            'type': 'object',
+            'required': ['id', 'startTime', 'endTime'],
+            'properties': {
+              'id': {'type': 'string', 'example': 'session-123'},
+              'startTime': {'type': 'string', 'format': 'date-time'},
+              'endTime': {'type': 'string', 'format': 'date-time'},
+              'title': {'type': 'string', 'example': 'Night Sleep'},
+              'description': {'type': 'string'},
+              'source': {'type': 'string', 'example': 'local_api'},
+            },
+          },
+          'SleepStatusResponse': {
+            'type': 'object',
+            'properties': {
+              'status': {'type': 'string', 'example': 'success'},
+              'is_sleeping': {'type': 'boolean', 'example': false},
+              'sessions_count': {'type': 'integer', 'example': 42},
+              'last_fetch': {'type': 'string', 'format': 'date-time'},
+            },
+          },
+          'SleepSessionsResponse': {
+            'type': 'object',
+            'properties': {
+              'total': {'type': 'integer', 'example': 100},
+              'limit': {'type': 'integer', 'example': 50},
+              'offset': {'type': 'integer', 'example': 0},
+              'sessions': {
+                'type': 'array',
+                'items': {
+                  'type': 'object',
+                  'properties': {
+                    'id': {'type': 'string', 'example': 'session-123'},
+                    'start_time': {'type': 'string', 'format': 'date-time'},
+                    'end_time': {'type': 'string', 'format': 'date-time'},
+                    'duration_minutes': {'type': 'integer', 'example': 480},
+                    'source': {'type': 'string', 'example': 'local_api'},
+                  },
+                },
+              },
             },
           },
         },

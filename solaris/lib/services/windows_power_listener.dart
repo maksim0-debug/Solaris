@@ -103,19 +103,29 @@ class WindowsPowerListener {
     );
 
     try {
-      ref.read(webhookServiceProvider.notifier).resumeQueue();
-      await ref.read(localIpcServiceProvider.notifier).restartServer();
+      final settings =
+          ref.read(settingsProvider).asData?.value['all'] ??
+          ref.read(settingsProvider).value?['all'];
+      final isApiEnabled = settings?.isApiServerEnabled ?? false;
+      final isSleepEnabled = settings?.isSleepIpcServerEnabled ?? false;
+
+      if (isApiEnabled || isSleepEnabled) {
+        await ref.read(localIpcServiceProvider.notifier).restartServer();
+      }
 
       if (_isDisposed) return;
 
-      final nowIso = DateTime.now().toUtc().toIso8601String();
-      ref.read(webhookServiceProvider.notifier).dispatch(
-        WebhookEventType.onSystemResume,
-        {'timestamp': nowIso, 'event': 'on_system_resume'},
-      );
-      ref.read(webSocketServiceProvider).broadcastEvent('on_system_resume', {
-        'timestamp': nowIso,
-      });
+      if (isApiEnabled) {
+        ref.read(webhookServiceProvider.notifier).resumeQueue();
+        final nowIso = DateTime.now().toUtc().toIso8601String();
+        ref.read(webhookServiceProvider.notifier).dispatch(
+          WebhookEventType.onSystemResume,
+          {'timestamp': nowIso, 'event': 'on_system_resume'},
+        );
+        ref.read(webSocketServiceProvider).broadcastEvent('on_system_resume', {
+          'timestamp': nowIso,
+        });
+      }
 
       await Future<void>.delayed(const Duration(milliseconds: 100));
       if (_isDisposed) return;

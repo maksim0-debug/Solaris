@@ -41,11 +41,20 @@ class ApiStatusHandler {
     final version = appVersionAsync.value ?? fallbackAppVersion;
     final uptimeSeconds = this.uptimeSeconds;
 
+    final settingsMap = container.read(settingsProvider).value;
+    final globalSettings = settingsMap?['all'];
+    final isApiEnabled = globalSettings?.isApiServerEnabled ?? false;
+    final isSleepEnabled = globalSettings?.isSleepIpcServerEnabled ?? false;
+
     ApiRouter.sendJson(request, HttpStatus.ok, {
       'status': 'ok',
       'version': version,
       'uptime_seconds': uptimeSeconds,
       'timestamp': DateTime.now().toUtc().toIso8601String(),
+      'subsystems': {
+        'solaris_control': isApiEnabled,
+        'sleep_integration': isSleepEnabled,
+      },
     });
   }
 

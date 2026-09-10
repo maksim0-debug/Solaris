@@ -964,7 +964,9 @@ class _RegulationToggleState extends ConsumerState<_RegulationToggle> {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
+                              color: const Color(
+                                0xFF8B5CF6,
+                              ).withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -1516,10 +1518,26 @@ class _LocalIpcServerCard extends ConsumerStatefulWidget {
 
 class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
   bool _isExpanded = false;
+  late final TextEditingController _portController;
+  late final FocusNode _portFocusNode;
 
   @override
   void initState() {
     super.initState();
+    final initialPort =
+        ref.read(settingsProvider).value?['all']?.localIpcServerPort ?? 45321;
+    _portController = TextEditingController(text: initialPort.toString());
+    _portFocusNode = FocusNode();
+    _portFocusNode.addListener(() {
+      if (!_portFocusNode.hasFocus && mounted) {
+        final currentPort =
+            ref.read(settingsProvider).value?['all']?.localIpcServerPort ??
+            45321;
+        if (_portController.text != currentPort.toString()) {
+          _portController.text = currentPort.toString();
+        }
+      }
+    });
     final ipcState = ref.read(localIpcServiceProvider);
     if (ipcState.error != null) {
       _isExpanded = true;
@@ -1527,9 +1545,24 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
   }
 
   @override
+  void dispose() {
+    _portFocusNode.dispose();
+    _portController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final settingsAsync = ref.watch(settingsProvider);
+
+    final currentPortStr = settingsAsync.maybeWhen(
+      data: (map) => (map['all']?.localIpcServerPort ?? 45321).toString(),
+      orElse: () => '45321',
+    );
+    if (!_portFocusNode.hasFocus && _portController.text != currentPortStr) {
+      _portController.text = currentPortStr;
+    }
 
     ref.listen<LocalIpcServerState>(localIpcServiceProvider, (previous, next) {
       if (next.error != null && previous?.error == null) {
@@ -1625,15 +1658,15 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                   title: l10n.enableLocalIpcServer,
                   subtitle: l10n.enableLocalIpcServerSubtitle,
                   value: settingsAsync.maybeWhen(
-                    data: (map) => map['all']?.isLocalIpcServerEnabled ?? false,
+                    data: (map) => map['all']?.isSleepIpcServerEnabled ?? false,
                     orElse: () => false,
                   ),
                   onChanged: (val) => ref
                       .read(settingsProvider.notifier)
-                      .updateLocalIpcServerEnabled(val),
+                      .updateSleepIpcServerEnabled(val),
                 ),
                 if (settingsAsync.maybeWhen(
-                  data: (map) => map['all']?.isLocalIpcServerEnabled ?? false,
+                  data: (map) => map['all']?.isSleepIpcServerEnabled ?? false,
                   orElse: () => false,
                 )) ...[
                   const SizedBox(height: 16),
@@ -1644,13 +1677,30 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              l10n.serverPort,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white70,
-                              ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  l10n.serverPort,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Tooltip(
+                                  message: l10n.serverPortSharedTooltip,
+                                  waitDuration: const Duration(
+                                    milliseconds: 200,
+                                  ),
+                                  child: Icon(
+                                    LucideIcons.info,
+                                    size: 16,
+                                    color: Colors.white.withValues(alpha: 0.3),
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -1691,32 +1741,16 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          controller:
-                              TextEditingController(
-                                  text: settingsAsync.maybeWhen(
-                                    data: (map) =>
-                                        (map['all']?.localIpcServerPort ??
-                                                45321)
-                                            .toString(),
-                                    orElse: () => '45321',
-                                  ),
-                                )
-                                ..selection = TextSelection.collapsed(
-                                  offset: settingsAsync.maybeWhen(
-                                    data: (map) =>
-                                        (map['all']?.localIpcServerPort ??
-                                                45321)
-                                            .toString()
-                                            .length,
-                                    orElse: () => 5,
-                                  ),
-                                ),
+                          focusNode: _portFocusNode,
+                          controller: _portController,
                           onSubmitted: (val) {
                             final port = int.tryParse(val);
-                            if (port != null && port > 0 && port < 65535) {
+                            if (port != null && port >= 1024 && port <= 65535) {
                               ref
                                   .read(settingsProvider.notifier)
                                   .updateLocalIpcServerPort(port);
+                            } else {
+                              _portController.text = currentPortStr;
                             }
                           },
                         ),
@@ -1771,7 +1805,9 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                                 color: Colors.redAccent.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: Colors.redAccent.withValues(alpha: 0.2),
+                                  color: Colors.redAccent.withValues(
+                                    alpha: 0.2,
+                                  ),
                                 ),
                               ),
                               child: Column(
@@ -1805,7 +1841,9 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                                       failedPort,
                                     ),
                                     style: TextStyle(
-                                      color: Colors.white.withValues(alpha: 0.7),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.7,
+                                      ),
                                       fontSize: 12,
                                       height: 1.4,
                                     ),
@@ -1816,7 +1854,9 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                                       failedPort,
                                     ),
                                     style: TextStyle(
-                                      color: Colors.white.withValues(alpha: 0.7),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.7,
+                                      ),
                                       fontSize: 12,
                                       height: 1.4,
                                     ),

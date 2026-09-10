@@ -1348,6 +1348,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Server will restart automatically when changed';
 
   @override
+  String get serverPortSharedTooltip =>
+      'Changing this port also updates the general Solaris Control API port in Settings';
+
+  @override
   String serverRunningStatus(int port) {
     return 'Server is running on port $port';
   }
@@ -1396,7 +1400,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sleepIntegrationHelpSectionConfigText =>
-      '• Toggle \'Enable local API server\' on.\n• Keep the default port (45321) unless it is used by another application.\n• Configure your tracking software to send POST requests to:\n  - History: http://127.0.0.1:45321/api/sleep/sessions\n  - Real-time: http://127.0.0.1:45321/api/sleep/status';
+      '• Toggle \'Enable local API server\' on.\n• Modular & Autonomous: Sleep integration operates independently from the main Solaris Control API. Turning off the Control API in Settings will not disrupt the Sleep API.\n• The port (default 45321) is shared by the app daemon: modifying it here automatically synchronizes with Settings.\n• Configure your tracking software to send POST requests to:\n  - History: http://127.0.0.1:45321/api/sleep/sessions\n  - Real-time: http://127.0.0.1:45321/api/sleep/status\n(Prefixed routes /api/v1/sleep/... are also supported)';
 
   @override
   String get sleepIntegrationHelpSectionDeduplication => 'Data Deduplication';
@@ -1410,7 +1414,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sleepIntegrationHelpSectionSecurityText =>
-      'The server runs strictly on the local loopback address (127.0.0.1) and is inaccessible from the internet or other network devices. Your sleep data remains entirely on your machine.';
+      'By default, the server binds strictly to 127.0.0.1 (loopback) and is inaccessible from external devices. If LAN access is enabled in Settings (0.0.0.0), incoming sleep data requests from other devices require an authorized API Bearer token with sleep write permissions (push_sleep_status). Unauthenticated LAN requests are rejected with 401 Unauthorized.';
 
   @override
   String get sleepIntegrationHelpSectionFormat => 'JSON Data Formats';

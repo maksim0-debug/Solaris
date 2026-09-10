@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://github.com/maksim0-debug/Solaris/releases/latest/download/Solaris-Windows.zip">
-    <img src="https://img.shields.io/badge/Download_for_Windows-v1.3.1_(.zip)-0284c7?style=for-the-badge&logo=windows&logoColor=white" alt="Download Solaris v1.3.1 for Windows" />
+    <img src="https://img.shields.io/badge/Download_for_Windows-v1.3.2_(.zip)-0284c7?style=for-the-badge&logo=windows&logoColor=white" alt="Download Solaris v1.3.2 for Windows" />
   </a>
   <a href="https://github.com/maksim0-debug/Solaris/releases/latest">
     <img src="https://img.shields.io/github/v/release/maksim0-debug/Solaris?style=for-the-badge&color=fdba74&label=Latest%20Release" alt="Latest Release Badge" />
@@ -149,7 +149,8 @@ When Smart Circadian Regulation is enabled, Solaris applies four physiological m
 If you prefer not to use Google Fit or want a completely offline, internet-free setup, Solaris features a built-in **Local API Web Server**. This allows third-party desktop sleep trackers, smart alarms, or automation scripts running on your PC to feed sleep data directly into the app.
 
 - **How to Enable**: Go to the **Sleep** tab in the app, and turn on the **"Enable local API server"** toggle. You can customize the server port (default is `45321`).
-- **Security & Privacy**: The server binds strictly to the local loopback address (`127.0.0.1`), meaning it is inaccessible from the local network or the internet. Your sleep data remains entirely on your machine.
+- **Autonomous & Decoupled Subsystem**: The Sleep API operates independently from the main Solaris Control API. You can turn off the Solaris Control API in Settings while keeping the Sleep API active (or vice versa). The server daemon only terminates when both subsystems are disabled. Modifying the server port synchronizes across both screens.
+- **Security & Privacy**: By default, the server binds strictly to the local loopback address (`127.0.0.1`), meaning it is inaccessible from external devices. If LAN access is enabled in Settings (`0.0.0.0`), incoming sleep data requests from other devices require an authorized API Bearer token with sleep write permissions (`push_sleep_status`). Unauthenticated LAN requests are strictly rejected with 401 Unauthorized.
 - **Data Deduplication**: Local sleep data takes absolute priority. If a sleep session received via Google Fit overlaps with a session from the Local API (within a 1-hour safety buffer), the Google Fit session is automatically discarded to prevent double-logging.
 - **Supported Endpoints**:
   1. **Sleep History** (`POST http://127.0.0.1:45321/api/sleep/sessions`):
@@ -241,8 +242,9 @@ Solaris includes a built-in, local HTTP & WebSocket control server that enables 
 ### 🌟 Key Capabilities
 
 - **Full Automation Gateway**: 28 supported Action System commands (`set_brightness`, `set_temperature`, `set_auto_brightness`, `manage_app_overrides`, `manage_game_mode_whitelist`, etc.).
+- **Decoupled Modular Routing**: Solaris Control API and Sleep Integration API can be independently toggled on or off while sharing a single underlying HTTP daemon. Inactive subsystems return RFC 7807 `503 Service Unavailable`, while `/api/v1/health` reports the live health of each module.
 - **Friendly Monitor Slugs**: Target displays using human-readable identifiers (`display-1`, `lg-ultragear-a1f9`, `primary`) or system paths (`\\\\.\\DISPLAY1`).
-- **Hardened Security Architecture**: 8-Layer Defense & Isolation Pipeline including Host Header DNS Rebinding guard, Payload limiters (64 KB), CSWSH/Drive-by cross-origin guard, per-IP rate limiting, constant-time SHA-256 token authorization, and Granular Zero-Trust ACL Isolation.
+- **Hardened Security Architecture**: 9-Layer Defense & Isolation Pipeline including Host Header DNS Rebinding guard, Payload limiters (64 KB), Subsystem Guard, CSWSH/Drive-by cross-origin guard, per-IP rate limiting, constant-time SHA-256 token authorization, and Granular Zero-Trust ACL Isolation.
 - **Outbound Webhooks Engine**: 23 supported event types, SSRF safe validator, True IP-Pinning (TLS SNI Handshake), HMAC-SHA256 delivery signatures (`X-Solaris-Signature-256`), WAL Staging Buffer, and Dead Letter Queue (DLQ).
 - **Real-Time WebSocket API**: Bi-directional JSON streaming channel at `/api/v1/ws` with `cmd_id` request correlation, selective module subscriptions, and Windows Power S3/S4 sleep/resume broadcasts.
 - **Interactive OpenAPI Docs**: Embedded OpenAPI Docs playground hosted locally at `/api/v1/docs` and raw spec at `/api/v1/openapi.json`.

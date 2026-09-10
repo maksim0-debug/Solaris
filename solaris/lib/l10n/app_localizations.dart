@@ -2430,6 +2430,12 @@ abstract class AppLocalizations {
   /// **'Server will restart automatically when changed'**
   String get serverPortSubtitle;
 
+  /// No description provided for @serverPortSharedTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Changing this port also updates the general Solaris Control API port in Settings'**
+  String get serverPortSharedTooltip;
+
   /// No description provided for @serverRunningStatus.
   ///
   /// In en, this message translates to:
@@ -2505,7 +2511,7 @@ abstract class AppLocalizations {
   /// No description provided for @sleepIntegrationHelpSectionConfigText.
   ///
   /// In en, this message translates to:
-  /// **'• Toggle \'Enable local API server\' on.\n• Keep the default port (45321) unless it is used by another application.\n• Configure your tracking software to send POST requests to:\n  - History: http://127.0.0.1:45321/api/sleep/sessions\n  - Real-time: http://127.0.0.1:45321/api/sleep/status'**
+  /// **'• Toggle \'Enable local API server\' on.\n• Modular & Autonomous: Sleep integration operates independently from the main Solaris Control API. Turning off the Control API in Settings will not disrupt the Sleep API.\n• The port (default 45321) is shared by the app daemon: modifying it here automatically synchronizes with Settings.\n• Configure your tracking software to send POST requests to:\n  - History: http://127.0.0.1:45321/api/sleep/sessions\n  - Real-time: http://127.0.0.1:45321/api/sleep/status\n(Prefixed routes /api/v1/sleep/... are also supported)'**
   String get sleepIntegrationHelpSectionConfigText;
 
   /// No description provided for @sleepIntegrationHelpSectionDeduplication.
@@ -2529,7 +2535,7 @@ abstract class AppLocalizations {
   /// No description provided for @sleepIntegrationHelpSectionSecurityText.
   ///
   /// In en, this message translates to:
-  /// **'The server runs strictly on the local loopback address (127.0.0.1) and is inaccessible from the internet or other network devices. Your sleep data remains entirely on your machine.'**
+  /// **'By default, the server binds strictly to 127.0.0.1 (loopback) and is inaccessible from external devices. If LAN access is enabled in Settings (0.0.0.0), incoming sleep data requests from other devices require an authorized API Bearer token with sleep write permissions (push_sleep_status). Unauthenticated LAN requests are rejected with 401 Unauthorized.'**
   String get sleepIntegrationHelpSectionSecurityText;
 
   /// No description provided for @sleepIntegrationHelpSectionFormat.
