@@ -2574,12 +2574,6 @@ abstract class AppLocalizations {
   /// **'WeatherAPI provider is disabled. Configure WEATHER_API_KEY in Settings (API Keys section).'**
   String get weatherApiKeyMissingWarning;
 
-  /// No description provided for @googleFitKeysMissingWarning.
-  ///
-  /// In en, this message translates to:
-  /// **'Google Fit integration is disabled. Configure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in Settings (API Keys section).'**
-  String get googleFitKeysMissingWarning;
-
   /// No description provided for @apiKeysTitle.
   ///
   /// In en, this message translates to:

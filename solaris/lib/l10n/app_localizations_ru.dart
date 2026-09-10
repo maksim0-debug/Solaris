@@ -1443,10 +1443,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Провайдер WeatherAPI отключен. Настройте WEATHER_API_KEY в Настройках (раздел «API Ключи»).';
 
   @override
-  String get googleFitKeysMissingWarning =>
-      'Интеграция с Google Fit отключена. Настройте GOOGLE_CLIENT_ID и GOOGLE_CLIENT_SECRET в Настройках (раздел «API Ключи»).';
-
-  @override
   String get apiKeysTitle => 'API Ключи';
 
   @override

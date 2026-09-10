@@ -1441,10 +1441,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Провайдер WeatherAPI вимкнено. Налаштуйте WEATHER_API_KEY у Налаштуваннях (розділ «API Ключі»).';
 
   @override
-  String get googleFitKeysMissingWarning =>
-      'Інтеграція з Google Fit вимкнена. Налаштуйте GOOGLE_CLIENT_ID та GOOGLE_CLIENT_SECRET у Налаштуваннях (розділ «API Ключі»).';
-
-  @override
   String get apiKeysTitle => 'API Ключі';
 
   @override

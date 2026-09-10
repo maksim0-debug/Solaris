@@ -1439,10 +1439,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'WeatherAPI provider is disabled. Configure WEATHER_API_KEY in Settings (API Keys section).';
 
   @override
-  String get googleFitKeysMissingWarning =>
-      'Google Fit integration is disabled. Configure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in Settings (API Keys section).';
-
-  @override
   String get apiKeysTitle => 'API Keys';
 
   @override
