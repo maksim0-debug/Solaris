@@ -2082,6 +2082,22 @@ class AppLocalizationsRu extends AppLocalizations {
   String get cancelAction => 'Отмена';
 
   @override
+  String get editAction => 'Редактировать';
+
+  @override
+  String get editSleepSession => 'Редактировать сеанс сна';
+
+  @override
+  String get editSleepSegment => 'Редактировать сегмент сна';
+
+  @override
+  String get mergeAndEditNight => 'Объединить и редактировать ночь';
+
+  @override
+  String get mergeNightSessionsHint =>
+      'Объединит все сегменты этой ночи в один непрерывный сеанс';
+
+  @override
   String get addSleepSession => 'Добавить сессию сна';
 
   @override

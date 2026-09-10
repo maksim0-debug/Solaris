@@ -182,6 +182,105 @@ class SleepNotifier extends Notifier<SleepState> {
     }
   }
 
+  /// Updates an existing sleep session, enforcing 'manual' source to ensure
+  /// it cannot be overridden by subsequent Google Fit or Local API syncs.
+  Future<void> updateSession(SleepSession updatedSession) async {
+    state = state.copyWith(isSyncing: true, error: null);
+    try {
+      final manualSession = SleepSession(
+        id: updatedSession.id,
+        startTime: updatedSession.startTime,
+        endTime: updatedSession.endTime,
+        title: updatedSession.title,
+        description: updatedSession.description,
+        segments: updatedSession.segments,
+        source: 'manual',
+      );
+
+      final updated = state.sessions.map((s) {
+        if (s.id == manualSession.id) {
+          return manualSession;
+        }
+        return s;
+      }).toList();
+
+      if (!updated.any((s) => s.id == manualSession.id)) {
+        updated.add(manualSession);
+      }
+
+      updated.sort((a, b) => b.startTime.compareTo(a.startTime));
+      await _sleepService.cacheSleepData(updated);
+      if (!ref.mounted) return;
+
+      state = state.copyWith(
+        sessions: updated,
+        isSyncing: false,
+        lastFetchTime: DateTime.now(),
+        error: null,
+      );
+    } catch (e) {
+      debugPrint('Error updating sleep session: $e');
+      if (!ref.mounted) return;
+      state = state.copyWith(
+        isSyncing: false,
+        error: 'Failed to update sleep session: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Consolidates multiple fragmented night sessions into a single continuous session.
+  /// Removes [oldSessionIds] and adds [newSession] with 'manual' source.
+  Future<void> consolidateNightSessions({
+    required List<String> oldSessionIds,
+    required SleepSession newSession,
+  }) async {
+    state = state.copyWith(isSyncing: true, error: null);
+    try {
+      final manualSession = SleepSession(
+        id: newSession.id,
+        startTime: newSession.startTime,
+        endTime: newSession.endTime,
+        title: newSession.title,
+        description: newSession.description,
+        segments: newSession.segments,
+        source: 'manual',
+      );
+
+      final idsToIgnore = oldSessionIds
+          .where((id) => id != manualSession.id)
+          .toList();
+      if (idsToIgnore.isNotEmpty) {
+        await _sleepService.addIgnoredSessionIds(idsToIgnore);
+      }
+
+      final oldIdsSet = oldSessionIds.toSet();
+      // Remove the old fragmented sub-sessions and ensure idempotent addition
+      final filtered = state.sessions
+          .where((s) => !oldIdsSet.contains(s.id) && s.id != manualSession.id)
+          .toList();
+
+      filtered.add(manualSession);
+      filtered.sort((a, b) => b.startTime.compareTo(a.startTime));
+
+      await _sleepService.cacheSleepData(filtered);
+      if (!ref.mounted) return;
+
+      state = state.copyWith(
+        sessions: filtered,
+        isSyncing: false,
+        lastFetchTime: DateTime.now(),
+        error: null,
+      );
+    } catch (e) {
+      debugPrint('Error consolidating sleep sessions: $e');
+      if (!ref.mounted) return;
+      state = state.copyWith(
+        isSyncing: false,
+        error: 'Failed to consolidate sleep sessions: ${e.toString()}',
+      );
+    }
+  }
+
   /// Deletes a single sleep session by ID.
   Future<void> deleteSession(String sessionId, {bool doNotSync = true}) async {
     await deleteSessions([sessionId], doNotSync: doNotSync);

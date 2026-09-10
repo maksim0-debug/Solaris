@@ -2078,6 +2078,22 @@ class AppLocalizationsUk extends AppLocalizations {
   String get cancelAction => 'Скасувати';
 
   @override
+  String get editAction => 'Редагувати';
+
+  @override
+  String get editSleepSession => 'Редагувати сесію сну';
+
+  @override
+  String get editSleepSegment => 'Редагувати сегмент сну';
+
+  @override
+  String get mergeAndEditNight => 'Об\'єднати та редагувати ніч';
+
+  @override
+  String get mergeNightSessionsHint =>
+      'Об\'єднає всі сегменти цієї ночі в одну суцільну сесію';
+
+  @override
   String get addSleepSession => 'Додати сесію сну';
 
   @override

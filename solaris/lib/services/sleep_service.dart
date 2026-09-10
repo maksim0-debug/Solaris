@@ -45,22 +45,28 @@ class SleepService {
     }
   }
 
+  /// Returns numeric priority for a sleep session source:
+  /// manual (3) > local_api (2) > google_fit (1) > unknown (0)
+  static int getSourcePriority(String source) {
+    return switch (source) {
+      'manual' => 3,
+      'local_api' => 2,
+      'google_fit' => 1,
+      _ => 0,
+    };
+  }
+
   /// Checks if a session source has high priority (e.g. user-created or API-pushed).
   static bool isHighPrioritySource(String source) =>
-      source == 'local_api' || source == 'manual';
+      getSourcePriority(source) >= 2;
 
-  /// Checks if two sleep sessions overlap in time (with 1-hour buffer).
+  /// Checks if two sleep sessions overlap in time (strictly positive intersection).
   static bool _areSessionsOverlapping(SleepSession a, SleepSession b) {
-    final aStart = a.startTime.subtract(const Duration(hours: 1));
-    final aEnd = a.endTime.add(const Duration(hours: 1));
-    final bStart = b.startTime;
-    final bEnd = b.endTime;
-
-    return aStart.isBefore(bEnd) && aEnd.isAfter(bStart);
+    return a.startTime.isBefore(b.endTime) && a.endTime.isAfter(b.startTime);
   }
 
   /// Merges existing and incoming sleep sessions, deduplicating overlapping ones.
-  /// Gives absolute priority to 'local_api' and 'manual' sources over 'google_fit'.
+  /// Gives absolute priority to 'manual' (3), followed by 'local_api' (2), over 'google_fit' (1).
   static List<SleepSession> mergeAndDeduplicate(
     List<SleepSession> existing,
     List<SleepSession> incoming,
@@ -73,33 +79,42 @@ class SleepService {
 
     for (final s in incoming) {
       final existingSession = merged[s.id];
-      if (existingSession == null ||
-          isHighPrioritySource(s.source) ||
-          !isHighPrioritySource(existingSession.source)) {
+      if (existingSession == null) {
         merged[s.id] = s;
+      } else {
+        final inPriority = getSourcePriority(s.source);
+        final existPriority = getSourcePriority(existingSession.source);
+        // Only overwrite if incoming has greater or equal priority.
+        // If equal and both are manual, incoming user modification takes precedence.
+        if (inPriority >= existPriority) {
+          merged[s.id] = s;
+        }
       }
     }
 
     final list = merged.values.toList();
-    final highPrioritySessions = list
-        .where((s) => isHighPrioritySource(s.source))
-        .toList();
+    // Sort by priority descending first so higher priority sessions take precedence in overlap check
+    list.sort((a, b) {
+      final pA = getSourcePriority(a.source);
+      final pB = getSourcePriority(b.source);
+      if (pA != pB) return pB.compareTo(pA);
+      return b.startTime.compareTo(a.startTime);
+    });
+
     final deduplicated = <SleepSession>[];
 
     for (final s in list) {
-      if (isHighPrioritySource(s.source)) {
+      final priority = getSourcePriority(s.source);
+      bool overlaps = false;
+      for (final accepted in deduplicated) {
+        if (getSourcePriority(accepted.source) > priority &&
+            _areSessionsOverlapping(s, accepted)) {
+          overlaps = true;
+          break;
+        }
+      }
+      if (!overlaps) {
         deduplicated.add(s);
-      } else {
-        bool overlaps = false;
-        for (final hp in highPrioritySessions) {
-          if (_areSessionsOverlapping(s, hp)) {
-            overlaps = true;
-            break;
-          }
-        }
-        if (!overlaps) {
-          deduplicated.add(s);
-        }
       }
     }
 

@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -87,11 +88,22 @@ void main() {
         final chipFinder = find.text('18:04–00:18');
         expect(chipFinder, findsOneWidget);
 
-        // Tap chip to trigger delete dialog
+        // Tap chip to trigger edit dialog
         await tester.tap(chipFinder);
         await tester.pumpAndSettle();
+        expect(find.byType(AlertDialog), findsOneWidget);
+        expect(find.text('Edit Sleep Segment'), findsOneWidget);
 
-        // Verify dialog is open
+        // Close edit dialog
+        await tester.tap(find.text('Cancel'));
+        await tester.pumpAndSettle();
+        expect(find.byType(AlertDialog), findsNothing);
+
+        // Long press chip to trigger delete dialog
+        await tester.longPress(chipFinder);
+        await tester.pumpAndSettle();
+
+        // Verify delete dialog is open
         expect(find.byType(AlertDialog), findsOneWidget);
         expect(find.byType(Checkbox), findsOneWidget);
 
@@ -107,7 +119,7 @@ void main() {
     );
 
     testWidgets(
-      'Single tapping row does NOT open dialog, long-pressing row DOES open dialog',
+      'Single tapping row opens edit dialog, long-pressing row opens delete dialog',
       (tester) async {
         final session1 = SleepSession(
           id: 'row_s1',
@@ -160,14 +172,92 @@ void main() {
         final rowFinder = find.text('18:04 — 09:00');
         expect(rowFinder, findsOneWidget);
 
-        // Single tap on row should NOT open dialog
+        // Single tap on row should open edit dialog
         await tester.tap(rowFinder);
+        await tester.pumpAndSettle();
+        expect(find.byType(AlertDialog), findsOneWidget);
+        expect(find.text('Edit Sleep Session'), findsOneWidget);
+
+        // Close edit dialog
+        await tester.tap(find.text('Cancel'));
         await tester.pumpAndSettle();
         expect(find.byType(AlertDialog), findsNothing);
 
-        // Long press on row SHOULD open dialog
+        // Long press on row SHOULD open delete dialog with checkbox
         await tester.longPress(rowFinder);
         await tester.pumpAndSettle();
+        expect(find.byType(AlertDialog), findsOneWidget);
+        expect(find.byType(Checkbox), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Right clicking (secondary click) row opens glassmorphic context menu',
+      (tester) async {
+        final session1 = SleepSession(
+          id: 'row_s2',
+          startTime: DateTime(2026, 7, 25, 18, 4),
+          endTime: DateTime(2026, 7, 26, 9, 0),
+          source: 'google_fit',
+        );
+
+        final nightGroup = NightGroup(
+          date: DateTime(2026, 7, 25),
+          aggregatedSession: session1,
+          allSessions: [session1],
+        );
+
+        final regime = SleepRegime(
+          id: 'regime_2',
+          startDate: DateTime(2026, 7, 24),
+          endDate: DateTime(2026, 7, 26),
+          nights: [nightGroup],
+          averageBedtimeNormalized: 1084,
+          averageBedtimeFormatted: '18:04',
+          averageWakeTimeNormalized: 540,
+          averageWakeTimeFormatted: '09:00',
+          windowStart: '18:04',
+          windowEnd: '18:04',
+          anomalyDates: const [],
+          isCurrent: true,
+          dayCount: 2,
+          isFloating: false,
+        );
+
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Scaffold(
+                body: SleepRegimeCard(regime: regime, initiallyExpanded: true),
+              ),
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+
+        final rowFinder = find.text('18:04 — 09:00');
+        expect(rowFinder, findsOneWidget);
+
+        // Right-click / Secondary click on row
+        await tester.tap(rowFinder, buttons: kSecondaryMouseButton);
+        await tester.pumpAndSettle();
+
+        // Verify custom context menu items appear
+        expect(find.text('Edit Sleep Session'), findsOneWidget);
+        expect(find.text('Delete Sleep Session'), findsOneWidget);
+
+        // Tap Edit option from context menu
+        await tester.tap(find.text('Edit Sleep Session'));
+        await tester.pumpAndSettle();
+
+        // Verify edit dialog is open
         expect(find.byType(AlertDialog), findsOneWidget);
       },
     );

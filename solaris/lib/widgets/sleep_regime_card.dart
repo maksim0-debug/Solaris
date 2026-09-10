@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -8,6 +9,7 @@ import 'package:solaris/models/night_group.dart';
 import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers/sleep_provider.dart';
+import 'package:solaris/widgets/add_sleep_session_dialog.dart';
 
 class SleepRegimeCard extends StatefulWidget {
   final SleepRegime regime;
@@ -157,7 +159,23 @@ class _SessionDetailRow extends ConsumerWidget {
 
   const _SessionDetailRow({required this.night, this.isAnomaly = false});
 
+  void _onEditRow(BuildContext context) {
+    if (!context.mounted) return;
+    if (night.allSessions.length > 1) {
+      AddSleepSessionDialog.show(
+        context,
+        initialSession: night.aggregatedSession,
+        sessionIdsToReplaceOnSave: night.allSessions.map((s) => s.id).toList(),
+      );
+    } else {
+      final sessionToEdit =
+          night.allSessions.firstOrNull ?? night.aggregatedSession;
+      AddSleepSessionDialog.show(context, initialSession: sessionToEdit);
+    }
+  }
+
   void _onDeleteRow(BuildContext context, WidgetRef ref) {
+    if (!context.mounted) return;
     final l10n = AppLocalizations.of(context)!;
     final session = night.aggregatedSession;
     final dateRangeStr = _formatDateRange(
@@ -188,142 +206,161 @@ class _SessionDetailRow extends ConsumerWidget {
       (prev, s) => prev + s.duration,
     );
 
+    final editLabel = night.allSessions.length > 1
+        ? l10n.mergeAndEditNight
+        : l10n.editSleepSession;
+
     return Padding(
       padding: const EdgeInsets.only(left: 12, bottom: 8),
       child: GestureDetector(
+        onTap: () => _onEditRow(context),
         onLongPress: () => _onDeleteRow(context, ref),
+        onSecondaryTapUp: (details) => _showSleepContextMenu(
+          context,
+          globalPosition: details.globalPosition,
+          onEdit: () => _onEditRow(context),
+          onDelete: () => _onDeleteRow(context, ref),
+          editLabel: editLabel,
+          deleteLabel: l10n.deleteSleepSessionTitle,
+        ),
         behavior: HitTestBehavior.opaque,
-        child: GlassCard(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GlassCard(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            _formatDateRange(
-                              start: session.startTime.toLocal(),
-                              end: session.endTime.toLocal(),
-                              locale: l10n.localeName,
-                            ),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                          if (isAnomaly) ...[
-                            const SizedBox(width: 8),
-                            Tooltip(
-                              message: l10n.regimeAnomalyTooltip,
-                              waitDuration: const Duration(milliseconds: 200),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: [
+                              Text(
+                                _formatDateRange(
+                                  start: session.startTime.toLocal(),
+                                  end: session.endTime.toLocal(),
+                                  locale: l10n.localeName,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: const Color(
-                                    0xFFF59E0B,
-                                  ).withValues(alpha: 0.07),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(
-                                    color: const Color(
-                                      0xFFF59E0B,
-                                    ).withValues(alpha: 0.18),
-                                    width: 0.8,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              if (isAnomaly)
+                                Tooltip(
+                                  message: l10n.regimeAnomalyTooltip,
+                                  waitDuration: const Duration(
+                                    milliseconds: 200,
                                   ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      LucideIcons.info,
-                                      size: 10.5,
-                                      color: const Color(
-                                        0xFFFDE68A,
-                                      ).withValues(alpha: 0.85),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
                                     ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      l10n.regimeAnomaly,
-                                      style: TextStyle(
+                                    decoration: BoxDecoration(
+                                      color: const Color(
+                                        0xFFF59E0B,
+                                      ).withValues(alpha: 0.07),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
                                         color: const Color(
-                                          0xFFFDE68A,
-                                        ).withValues(alpha: 0.85),
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.w500,
+                                          0xFFF59E0B,
+                                        ).withValues(alpha: 0.18),
+                                        width: 0.8,
                                       ),
                                     ),
-                                  ],
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          LucideIcons.info,
+                                          size: 10.5,
+                                          color: const Color(
+                                            0xFFFDE68A,
+                                          ).withValues(alpha: 0.85),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          l10n.regimeAnomaly,
+                                          style: TextStyle(
+                                            color: const Color(
+                                              0xFFFDE68A,
+                                            ).withValues(alpha: 0.85),
+                                            fontSize: 9.5,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                              ),
+                              if (night.isOutdated)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(
+                                      color: Colors.red.withValues(alpha: 0.3),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    l10n.outdated.toUpperCase(),
+                                    style: const TextStyle(
+                                      color: Color(0xFFFF8A80),
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${DateFormat('HH:mm').format(session.startTime.toLocal())} — ${DateFormat('HH:mm').format(session.endTime.toLocal())}',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.3),
+                              fontSize: 12,
                             ),
-                          ],
-                          if (night.isOutdated) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.red.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(
-                                  color: Colors.red.withValues(alpha: 0.3),
-                                ),
-                              ),
-                              child: Text(
-                                l10n.outdated.toUpperCase(),
-                                style: const TextStyle(
-                                  color: Color(0xFFFF8A80),
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${DateFormat('HH:mm').format(session.startTime.toLocal())} — ${DateFormat('HH:mm').format(session.endTime.toLocal())}',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.3),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  Text(
-                    '${totalDuration.inHours}${l10n.hoursAbbreviation} ${totalDuration.inMinutes % 60}${l10n.minutesAbbreviation}',
-                    style: const TextStyle(
-                      color: Color(0xFFC4B5FD),
-                      fontWeight: FontWeight.w600,
                     ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${totalDuration.inHours}${l10n.hoursAbbreviation} ${totalDuration.inMinutes % 60}${l10n.minutesAbbreviation}',
+                      style: const TextStyle(
+                        color: Color(0xFFC4B5FD),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Sub-sessions chips
+                if (night.allSessions.length > 1) ...[
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: night.allSessions
+                        .map((s) => _SessionChip(session: s))
+                        .toList(),
                   ),
                 ],
-              ),
-
-              // Sub-sessions chips
-              if (night.allSessions.length > 1) ...[
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: night.allSessions
-                      .map((s) => _SessionChip(session: s))
-                      .toList(),
-                ),
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -336,7 +373,17 @@ class _SessionChip extends ConsumerWidget {
 
   const _SessionChip({required this.session});
 
+  void _onEditChip(BuildContext context) {
+    if (!context.mounted) return;
+    AddSleepSessionDialog.show(
+      context,
+      initialSession: session,
+      isSegment: true,
+    );
+  }
+
   void _onDeleteChip(BuildContext context, WidgetRef ref) {
+    if (!context.mounted) return;
     final l10n = AppLocalizations.of(context)!;
     final timeFormat = DateFormat('HH:mm');
     final timeRangeStr =
@@ -353,10 +400,19 @@ class _SessionChip extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final timeFormat = DateFormat('HH:mm');
     return GestureDetector(
-      onTap: () => _onDeleteChip(context, ref),
+      onTap: () => _onEditChip(context),
       onLongPress: () => _onDeleteChip(context, ref),
+      onSecondaryTapUp: (details) => _showSleepContextMenu(
+        context,
+        globalPosition: details.globalPosition,
+        onEdit: () => _onEditChip(context),
+        onDelete: () => _onDeleteChip(context, ref),
+        editLabel: l10n.editSleepSegment,
+        deleteLabel: l10n.deleteAction,
+      ),
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: Container(
@@ -383,6 +439,225 @@ class _SessionChip extends ConsumerWidget {
   }
 }
 
+Future<void> _showSleepContextMenu(
+  BuildContext context, {
+  required Offset globalPosition,
+  required VoidCallback onEdit,
+  required VoidCallback onDelete,
+  required String editLabel,
+  required String deleteLabel,
+}) async {
+  final screenSize = MediaQuery.of(context).size;
+  const menuWidth = 240.0;
+  const menuHeight = 90.0;
+
+  // Prevent menu from overflowing viewport edges
+  final maxLeft = (screenSize.width - menuWidth - 16).clamp(
+    8.0,
+    double.infinity,
+  );
+  final left = globalPosition.dx.clamp(8.0, maxLeft);
+  final top = (globalPosition.dy + menuHeight > screenSize.height - 16)
+      ? (globalPosition.dy - menuHeight).clamp(8.0, double.infinity)
+      : globalPosition.dy.clamp(8.0, double.infinity);
+
+  await showGeneralDialog<void>(
+    context: context,
+    barrierDismissible: true,
+    barrierLabel: 'Dismiss',
+    barrierColor: Colors.transparent,
+    transitionDuration: Duration.zero,
+    pageBuilder: (ctx, _, secondAnim) {
+      return Stack(
+        children: [
+          Positioned(
+            left: left,
+            top: top,
+            child: _SleepContextMenuOverlay(
+              onEdit: () {
+                Navigator.of(ctx).pop();
+                if (context.mounted) {
+                  onEdit();
+                }
+              },
+              onDelete: () {
+                Navigator.of(ctx).pop();
+                if (context.mounted) {
+                  onDelete();
+                }
+              },
+              editLabel: editLabel,
+              deleteLabel: deleteLabel,
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+class _SleepContextMenuOverlay extends StatelessWidget {
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+  final String editLabel;
+  final String deleteLabel;
+
+  const _SleepContextMenuOverlay({
+    required this.onEdit,
+    required this.onDelete,
+    required this.editLabel,
+    required this.deleteLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 240,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.6),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.8),
+            blurRadius: 10,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.95),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.12),
+                width: 0.9,
+              ),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _SleepContextMenuItem(
+                    icon: LucideIcons.pencil,
+                    iconColor: const Color(0xFFC4B5FD),
+                    label: editLabel,
+                    onTap: onEdit,
+                  ),
+                  Container(
+                    height: 1,
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 3,
+                    ),
+                    color: Colors.white.withValues(alpha: 0.06),
+                  ),
+                  _SleepContextMenuItem(
+                    icon: LucideIcons.trash2,
+                    iconColor: const Color(0xFFF87171),
+                    textColor: const Color(0xFFF87171),
+                    hoverColor: const Color(0xFFEF4444).withValues(alpha: 0.12),
+                    hoverBorderColor: const Color(
+                      0xFFEF4444,
+                    ).withValues(alpha: 0.25),
+                    label: deleteLabel,
+                    onTap: onDelete,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SleepContextMenuItem extends StatefulWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final Color? textColor;
+  final Color? hoverColor;
+  final Color? hoverBorderColor;
+  final VoidCallback onTap;
+
+  const _SleepContextMenuItem({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    this.textColor,
+    this.hoverColor,
+    this.hoverBorderColor,
+    required this.onTap,
+  });
+
+  @override
+  State<_SleepContextMenuItem> createState() => _SleepContextMenuItemState();
+}
+
+class _SleepContextMenuItemState extends State<_SleepContextMenuItem> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final effectiveHoverBg =
+        widget.hoverColor ?? Colors.white.withValues(alpha: 0.08);
+    final effectiveHoverBorder =
+        widget.hoverBorderColor ?? Colors.white.withValues(alpha: 0.08);
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 60),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: _isHovered ? effectiveHoverBg : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            border: _isHovered
+                ? Border.all(color: effectiveHoverBorder, width: 0.8)
+                : Border.all(color: Colors.transparent, width: 0.8),
+          ),
+          child: Row(
+            children: [
+              Icon(widget.icon, color: widget.iconColor, size: 15),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  widget.label,
+                  style: TextStyle(
+                    color:
+                        widget.textColor ??
+                        Colors.white.withValues(alpha: 0.95),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 Future<void> _showDeleteSleepConfirmDialog({
   required BuildContext context,
   required WidgetRef ref,
@@ -399,7 +674,7 @@ Future<void> _showDeleteSleepConfirmDialog({
       return StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
-            backgroundColor: const Color(0xFF1E1B2E),
+            backgroundColor: const Color(0xFF0F172A),
             surfaceTintColor: Colors.transparent,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),

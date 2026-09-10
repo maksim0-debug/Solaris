@@ -3582,6 +3582,36 @@ abstract class AppLocalizations {
   /// **'Cancel'**
   String get cancelAction;
 
+  /// No description provided for @editAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get editAction;
+
+  /// No description provided for @editSleepSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Sleep Session'**
+  String get editSleepSession;
+
+  /// No description provided for @editSleepSegment.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Sleep Segment'**
+  String get editSleepSegment;
+
+  /// No description provided for @mergeAndEditNight.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge & Edit Night'**
+  String get mergeAndEditNight;
+
+  /// No description provided for @mergeNightSessionsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Merges all segments of this night into a single continuous session'**
+  String get mergeNightSessionsHint;
+
   /// No description provided for @addSleepSession.
   ///
   /// In en, this message translates to:

@@ -2061,6 +2061,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cancelAction => 'Cancel';
 
   @override
+  String get editAction => 'Edit';
+
+  @override
+  String get editSleepSession => 'Edit Sleep Session';
+
+  @override
+  String get editSleepSegment => 'Edit Sleep Segment';
+
+  @override
+  String get mergeAndEditNight => 'Merge & Edit Night';
+
+  @override
+  String get mergeNightSessionsHint =>
+      'Merges all segments of this night into a single continuous session';
+
+  @override
   String get addSleepSession => 'Add Sleep Session';
 
   @override

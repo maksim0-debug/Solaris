@@ -165,24 +165,32 @@ class RegimeAnalyzer {
     return regimes;
   }
 
+  /// Calculates the minimal circular arc covering all given [minutes] on a 1440-minute circle.
+  static int _calculateCircularSpread(List<int> minutes) {
+    if (minutes.length <= 1) return 0;
+    final sorted = minutes.toSet().toList()..sort();
+    if (sorted.length <= 1) return 0;
+
+    int maxGap = 1440 - (sorted.last - sorted.first);
+    for (int i = 0; i < sorted.length - 1; i++) {
+      final gap = sorted[i + 1] - sorted[i];
+      if (gap > maxGap) {
+        maxGap = gap;
+      }
+    }
+    return 1440 - maxGap;
+  }
+
   static bool _wouldExceedSpread(
     _RawRegime regime,
     int newMinutes,
     RegimeSettings settings,
   ) {
     if (regime.normalEntries.isEmpty) return false;
-
-    final currentMin = regime.normalEntries
-        .map((e) => e.normalizedMinutes)
-        .reduce((a, b) => a < b ? a : b);
-    final currentMax = regime.normalEntries
-        .map((e) => e.normalizedMinutes)
-        .reduce((a, b) => a > b ? a : b);
-
-    final newMin = newMinutes < currentMin ? newMinutes : currentMin;
-    final newMax = newMinutes > currentMax ? newMinutes : currentMax;
-
-    return (newMax - newMin) > settings.maxSpread;
+    final mins = regime.normalEntries.map((e) => e.normalizedMinutes).toList()
+      ..add(newMinutes);
+    final spread = _calculateCircularSpread(mins);
+    return spread > settings.maxSpread;
   }
 
   static bool _mergeWouldExceedSpread(
@@ -194,11 +202,7 @@ class RegimeAnalyzer {
     if (allNormal.isEmpty) return false;
 
     final mins = allNormal.map((e) => e.normalizedMinutes).toList();
-    final currentMin = mins.reduce((a, b) => a < b ? a : b);
-    final currentMax = mins.reduce((a, b) => a > b ? a : b);
-
-    int spread = currentMax - currentMin;
-    if (spread > 720) spread = 1440 - spread;
+    final spread = _calculateCircularSpread(mins);
     return spread > settings.maxSpread;
   }
 

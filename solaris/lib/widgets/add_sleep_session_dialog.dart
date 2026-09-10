@@ -9,12 +9,30 @@ import 'package:solaris/providers/sleep_provider.dart';
 import 'package:solaris/providers.dart';
 
 class AddSleepSessionDialog extends ConsumerStatefulWidget {
-  const AddSleepSessionDialog({super.key});
+  final SleepSession? initialSession;
+  final List<String>? sessionIdsToReplaceOnSave;
+  final bool isSegment;
 
-  static Future<void> show(BuildContext context) {
+  const AddSleepSessionDialog({
+    super.key,
+    this.initialSession,
+    this.sessionIdsToReplaceOnSave,
+    this.isSegment = false,
+  });
+
+  static Future<void> show(
+    BuildContext context, {
+    SleepSession? initialSession,
+    List<String>? sessionIdsToReplaceOnSave,
+    bool isSegment = false,
+  }) {
     return showDialog<void>(
       context: context,
-      builder: (context) => const AddSleepSessionDialog(),
+      builder: (context) => AddSleepSessionDialog(
+        initialSession: initialSession,
+        sessionIdsToReplaceOnSave: sessionIdsToReplaceOnSave,
+        isSegment: isSegment,
+      ),
     );
   }
 
@@ -32,22 +50,29 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
   @override
   void initState() {
     super.initState();
-    final now = ref.read(currentTimeProvider).value ?? DateTime.now();
-    // Default start time: Yesterday at 23:00
-    final yesterday = now.subtract(const Duration(days: 1));
-    _startTime = DateTime(
-      yesterday.year,
-      yesterday.month,
-      yesterday.day,
-      23,
-      0,
-    );
-    // Default end time: Today at 07:00
-    _endTime = DateTime(now.year, now.month, now.day, 7, 0);
+    if (widget.initialSession != null) {
+      _startTime = widget.initialSession!.startTime.toLocal();
+      _endTime = widget.initialSession!.endTime.toLocal();
+      _titleController.text = widget.initialSession!.title ?? '';
+      _descController.text = widget.initialSession!.description ?? '';
+    } else {
+      final now = ref.read(currentTimeProvider).value ?? DateTime.now();
+      // Default start time: Yesterday at 23:00
+      final yesterday = now.subtract(const Duration(days: 1));
+      _startTime = DateTime(
+        yesterday.year,
+        yesterday.month,
+        yesterday.day,
+        23,
+        0,
+      );
+      // Default end time: Today at 07:00
+      _endTime = DateTime(now.year, now.month, now.day, 7, 0);
 
-    if (_endTime.isBefore(_startTime) ||
-        _endTime.isAtSameMomentAs(_startTime)) {
-      _endTime = _startTime.add(const Duration(hours: 8));
+      if (_endTime.isBefore(_startTime) ||
+          _endTime.isAtSameMomentAs(_startTime)) {
+        _endTime = _startTime.add(const Duration(hours: 8));
+      }
     }
   }
 
@@ -76,7 +101,7 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
           data: ThemeData.dark().copyWith(
             colorScheme: const ColorScheme.dark(
               primary: Color(0xFF8B5CF6),
-              surface: Color(0xFF1E1B2E),
+              surface: Color(0xFF0F172A),
             ),
           ),
           child: child!,
@@ -95,7 +120,7 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
           data: ThemeData.dark().copyWith(
             colorScheme: const ColorScheme.dark(
               primary: Color(0xFF8B5CF6),
-              surface: Color(0xFF1E1B2E),
+              surface: Color(0xFF0F172A),
             ),
           ),
           child: child!,
@@ -134,21 +159,56 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
     final rawDesc = _descController.text.trim();
 
     final title = rawTitle.isNotEmpty ? rawTitle : l10n.manualSleepTitleDefault;
-    final description = rawDesc.isNotEmpty
-        ? rawDesc
-        : l10n.manualSleepDescDefault;
+    final String? description;
+    if (widget.initialSession != null) {
+      description = rawDesc.isNotEmpty ? rawDesc : null;
+    } else {
+      description = rawDesc.isNotEmpty ? rawDesc : l10n.manualSleepDescDefault;
+    }
 
-    final session = SleepSession(
-      id: 'manual_${DateTime.now().millisecondsSinceEpoch}',
-      startTime: _startTime.toUtc(),
-      endTime: _endTime.toUtc(),
-      title: title,
-      description: description,
-      segments: const [],
-      source: 'manual',
-    );
+    if (widget.sessionIdsToReplaceOnSave != null &&
+        widget.sessionIdsToReplaceOnSave!.isNotEmpty) {
+      final session = SleepSession(
+        id:
+            widget.initialSession?.id ??
+            'manual_${DateTime.now().millisecondsSinceEpoch}',
+        startTime: _startTime.toUtc(),
+        endTime: _endTime.toUtc(),
+        title: title,
+        description: description,
+        segments: const [],
+        source: 'manual',
+      );
+      ref
+          .read(sleepProvider.notifier)
+          .consolidateNightSessions(
+            oldSessionIds: widget.sessionIdsToReplaceOnSave!,
+            newSession: session,
+          );
+    } else if (widget.initialSession != null) {
+      final session = SleepSession(
+        id: widget.initialSession!.id,
+        startTime: _startTime.toUtc(),
+        endTime: _endTime.toUtc(),
+        title: title,
+        description: description,
+        segments: widget.initialSession!.segments,
+        source: 'manual',
+      );
+      ref.read(sleepProvider.notifier).updateSession(session);
+    } else {
+      final session = SleepSession(
+        id: 'manual_${DateTime.now().millisecondsSinceEpoch}',
+        startTime: _startTime.toUtc(),
+        endTime: _endTime.toUtc(),
+        title: title,
+        description: description,
+        segments: const [],
+        source: 'manual',
+      );
+      ref.read(sleepProvider.notifier).addManualSession(session);
+    }
 
-    ref.read(sleepProvider.notifier).addManualSession(session);
     Navigator.of(context).pop();
   }
 
@@ -168,8 +228,18 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
       durationString = l10n.invalidTimeRangeError;
     }
 
+    final dialogTitle =
+        widget.sessionIdsToReplaceOnSave != null &&
+            widget.sessionIdsToReplaceOnSave!.isNotEmpty
+        ? l10n.mergeAndEditNight
+        : (widget.initialSession != null
+              ? (widget.isSegment
+                    ? l10n.editSleepSegment
+                    : l10n.editSleepSession)
+              : l10n.addSleepSession);
+
     return AlertDialog(
-      backgroundColor: const Color(0xFF1E1B2E),
+      backgroundColor: const Color(0xFF0F172A),
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
@@ -190,12 +260,14 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
             ),
           ),
           const SizedBox(width: 12),
-          Text(
-            l10n.addSleepSession,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+          Expanded(
+            child: Text(
+              dialogTitle,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -205,6 +277,39 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (widget.sessionIdsToReplaceOnSave != null &&
+                widget.sessionIdsToReplaceOnSave!.isNotEmpty) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.25),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      LucideIcons.info,
+                      color: Color(0xFFC4B5FD),
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        l10n.mergeNightSessionsHint,
+                        style: const TextStyle(
+                          color: Color(0xFFC4B5FD),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             // Start & End Time Pickers
             Row(
               children: [
@@ -267,10 +372,14 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF8B5CF6).withValues(alpha: 0.15),
+                            color: const Color(
+                              0xFF8B5CF6,
+                            ).withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                              color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                              color: const Color(
+                                0xFF8B5CF6,
+                              ).withValues(alpha: 0.3),
                             ),
                           ),
                           child: Text(
@@ -317,11 +426,15 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                  borderSide: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.1),
+                  ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                  borderSide: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.1),
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -358,11 +471,15 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                  borderSide: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.1),
+                  ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                  borderSide: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.1),
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
