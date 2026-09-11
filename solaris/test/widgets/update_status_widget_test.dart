@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/models/update_info.dart';
 import 'package:solaris/models/update_status.dart';
 import 'package:solaris/providers/app_info_provider.dart';
@@ -11,6 +12,7 @@ void main() {
   Widget createTestableWidget({
     required UpdateStatus updateStatus,
     String currentVersion = '1.0.17',
+    Locale? locale,
   }) {
     return ProviderScope(
       overrides: [
@@ -18,6 +20,9 @@ void main() {
         appVersionProvider.overrideWith((ref) => currentVersion),
       ],
       child: MaterialApp(
+        locale: locale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: const Scaffold(body: Center(child: UpdateStatusWidget())),
       ),
     );
@@ -206,6 +211,48 @@ void main() {
     expect(find.byType(Dialog), findsOneWidget);
     expect(find.textContaining('No updates found'), findsAtLeast(1));
   });
+
+  testWidgets(
+    'renders idle state dialog in Ukrainian locale without layout issues',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        createTestableWidget(
+          updateStatus: const UpdateStatus(phase: UpdatePhase.idle),
+          locale: const Locale('uk'),
+        ),
+      );
+
+      await tester.tap(find.byType(UpdateStatusWidget));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(Dialog), findsOneWidget);
+      expect(find.text('Реліз на GitHub'), findsOneWidget);
+      expect(find.text('ОК'), findsOneWidget);
+      expect(find.text('Перевірити наявність оновлень'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'renders idle state dialog in Russian locale without layout issues',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        createTestableWidget(
+          updateStatus: const UpdateStatus(phase: UpdatePhase.idle),
+          locale: const Locale('ru'),
+        ),
+      );
+
+      await tester.tap(find.byType(UpdateStatusWidget));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(Dialog), findsOneWidget);
+      expect(find.text('Релиз на GitHub'), findsOneWidget);
+      expect(find.text('ОК'), findsOneWidget);
+      expect(find.text('Проверить обновления'), findsOneWidget);
+    },
+  );
 }
 
 class _FakeUpdateNotifier extends UpdateNotifier {

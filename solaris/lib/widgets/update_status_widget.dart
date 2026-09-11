@@ -12,6 +12,7 @@ import '../models/update_status.dart';
 import '../providers/app_info_provider.dart';
 import '../providers/update_provider.dart';
 import 'custom_build_warning_dialog.dart';
+import 'responsive_dialog_actions.dart';
 
 /// Interactive update status widget integrated into the Dashboard status bar.
 ///
@@ -389,7 +390,7 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
-                l10n?.dpapiErrorActionOk ?? 'Close',
+                l10n?.close ?? 'Close',
                 style: const TextStyle(color: Colors.white60),
               ),
             ),
@@ -594,7 +595,7 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
                 Navigator.pop(context);
               },
               child: Text(
-                l10n?.dpapiErrorActionOk ?? 'Close',
+                l10n?.dialogOk ?? 'OK',
                 style: const TextStyle(color: Colors.white60),
               ),
             ),
@@ -729,7 +730,7 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
-                l10n?.dpapiErrorActionOk ?? 'Close',
+                l10n?.close ?? 'Close',
                 style: const TextStyle(color: Colors.white60),
               ),
             ),
@@ -815,7 +816,7 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: Text(
-                  l10n?.dpapiErrorActionOk ?? 'Close',
+                  l10n?.dialogOk ?? 'OK',
                   style: const TextStyle(color: Colors.white60),
                 ),
               ),
@@ -879,12 +880,15 @@ class _StyledDialog extends StatelessWidget {
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
+        constraints: const BoxConstraints(maxWidth: 520),
         child: Container(
           decoration: BoxDecoration(
             color: const Color(0xFF1E1E28),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.1),
+              width: 1,
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.5),
@@ -944,7 +948,9 @@ class _StyledDialog extends StatelessWidget {
                                     Text(
                                       subtitle!,
                                       style: TextStyle(
-                                        color: Colors.white.withValues(alpha: 0.6),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.6,
+                                        ),
                                         fontSize: 12,
                                         fontWeight: FontWeight.w400,
                                       ),
@@ -958,25 +964,11 @@ class _StyledDialog extends StatelessWidget {
                         const SizedBox(height: 18),
                         content,
                         const SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            if (leftAction != null)
-                              Flexible(child: leftAction!)
-                            else
-                              const SizedBox.shrink(),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              flex: 2,
-                              child: Wrap(
-                                alignment: WrapAlignment.end,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: actions,
-                              ),
-                            ),
-                          ],
+                        ResponsiveDialogActions(
+                          leading: leftAction,
+                          actions: actions,
+                          spacing: 8,
+                          runSpacing: 10,
                         ),
                       ],
                     ),
