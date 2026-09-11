@@ -38,153 +38,195 @@ class _SleepRegimeCardState extends State<SleepRegimeCard> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Column(
-      children: [
-        GestureDetector(
-          onTap: () => setState(() => _isExpanded = !_isExpanded),
-          child: GlassCard(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Top Row: Date Range & Day Count
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return GlassCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header section (Interactive to expand / collapse)
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => setState(() => _isExpanded = !_isExpanded),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Top Row: Date Range & Day Count
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _formatDateRange(
+                            start: widget.regime.startDate.toLocal(),
+                            end: widget.regime.endDate.toLocal(),
+                            locale: l10n.localeName,
+                            includeYear: false,
+                          ),
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.5),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xFF8B5CF6,
+                            ).withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                l10n.daysCount(widget.regime.dayCount),
+                                style: const TextStyle(
+                                  color: Color(0xFFC4B5FD),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                _isExpanded
+                                    ? LucideIcons.chevronUp
+                                    : LucideIcons.chevronDown,
+                                color: const Color(0xFFC4B5FD),
+                                size: 14,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Middle Row: Average Bedtime
+                    Row(
+                      children: [
+                        const Icon(
+                          LucideIcons.moon,
+                          color: Color(0xFF8B5CF6),
+                          size: 28,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          '~ ${widget.regime.averageBedtimeFormatted}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    // Bottom Row: Scatter
                     Text(
-                      _formatDateRange(
-                        start: widget.regime.startDate.toLocal(),
-                        end: widget.regime.endDate.toLocal(),
-                        locale: l10n.localeName,
-                        includeYear: false,
-                      ),
+                      '${l10n.scatter}: ${widget.regime.windowStart} — ${widget.regime.windowEnd}',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.5),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            l10n.daysCount(widget.regime.dayCount),
-                            style: const TextStyle(
-                              color: Color(0xFFC4B5FD),
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            _isExpanded
-                                ? LucideIcons.chevronUp
-                                : LucideIcons.chevronDown,
-                            color: const Color(0xFFC4B5FD),
-                            size: 14,
-                          ),
-                        ],
+                        color: Colors.white.withValues(alpha: 0.3),
+                        fontSize: 12,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-
-                // Middle Row: Average Bedtime
-                Row(
-                  children: [
-                    const Icon(
-                      LucideIcons.moon,
-                      color: Color(0xFF8B5CF6),
-                      size: 28,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      '~ ${widget.regime.averageBedtimeFormatted}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 8),
-
-                // Bottom Row: Scatter
-                Text(
-                  '${l10n.scatter}: ${widget.regime.windowStart} — ${widget.regime.windowEnd}',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.3),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
 
-        // Expanded Content: Sessions
-        if (_isExpanded) ...[
-          const SizedBox(height: 8),
-          ...widget.regime.nights.map((night) {
-            final isAnomaly = widget.regime.anomalyDates.any(
-              (d) =>
-                  d.year == night.date.year &&
-                  d.month == night.date.month &&
-                  d.day == night.date.day,
-            );
-            return _SessionDetailRow(night: night, isAnomaly: isAnomaly);
-          }),
+          // Expanded Content: Sessions inside the same GlassCard
+          if (_isExpanded) ...[
+            Container(
+              height: 1,
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              color: Colors.white.withValues(alpha: 0.08),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+              child: Column(
+                children: [
+                  for (final (i, night) in widget.regime.nights.indexed) ...[
+                    _SessionDetailRow(
+                      key: ValueKey(night.aggregatedSession.id),
+                      night: night,
+                      isAnomaly: widget.regime.anomalyDates.any(
+                        (d) =>
+                            d.year == night.date.year &&
+                            d.month == night.date.month &&
+                            d.day == night.date.day,
+                      ),
+                    ),
+                    if (i < widget.regime.nights.length - 1)
+                      const SizedBox(height: 8),
+                  ],
+                ],
+              ),
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 }
 
-class _SessionDetailRow extends ConsumerWidget {
+class _SessionDetailRow extends ConsumerStatefulWidget {
   final NightGroup night;
   final bool isAnomaly;
 
-  const _SessionDetailRow({required this.night, this.isAnomaly = false});
+  const _SessionDetailRow({
+    super.key,
+    required this.night,
+    this.isAnomaly = false,
+  });
+
+  @override
+  ConsumerState<_SessionDetailRow> createState() => _SessionDetailRowState();
+}
+
+class _SessionDetailRowState extends ConsumerState<_SessionDetailRow> {
+  bool _isHovered = false;
 
   void _onEditRow(BuildContext context) {
     if (!context.mounted) return;
-    if (night.allSessions.length > 1) {
+    if (widget.night.allSessions.length > 1) {
       AddSleepSessionDialog.show(
         context,
-        initialSession: night.aggregatedSession,
-        sessionIdsToReplaceOnSave: night.allSessions.map((s) => s.id).toList(),
+        initialSession: widget.night.aggregatedSession,
+        sessionIdsToReplaceOnSave: widget.night.allSessions
+            .map((s) => s.id)
+            .toList(),
       );
     } else {
       final sessionToEdit =
-          night.allSessions.firstOrNull ?? night.aggregatedSession;
+          widget.night.allSessions.firstOrNull ??
+          widget.night.aggregatedSession;
       AddSleepSessionDialog.show(context, initialSession: sessionToEdit);
     }
   }
 
-  void _onDeleteRow(BuildContext context, WidgetRef ref) {
+  void _onDeleteRow(BuildContext context) {
     if (!context.mounted) return;
     final l10n = AppLocalizations.of(context)!;
-    final session = night.aggregatedSession;
+    final session = widget.night.aggregatedSession;
     final dateRangeStr = _formatDateRange(
       start: session.startTime.toLocal(),
       end: session.endTime.toLocal(),
       locale: l10n.localeName,
     );
 
-    final sessionIds = night.allSessions.map((s) => s.id).toList();
+    final sessionIds = widget.night.allSessions.map((s) => s.id).toList();
 
     _showDeleteSleepConfirmDialog(
       context: context,
@@ -196,149 +238,164 @@ class _SessionDetailRow extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final session = night.aggregatedSession;
+    final session = widget.night.aggregatedSession;
 
     // Calculate total duration as sum of all sessions (excluding gaps)
-    final totalDuration = night.allSessions.fold<Duration>(
+    final totalDuration = widget.night.allSessions.fold<Duration>(
       Duration.zero,
       (prev, s) => prev + s.duration,
     );
 
-    final editLabel = night.allSessions.length > 1
+    final editLabel = widget.night.allSessions.length > 1
         ? l10n.mergeAndEditNight
         : l10n.editSleepSession;
 
-    return Padding(
-      padding: const EdgeInsets.only(left: 12, bottom: 8),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) {
+        if (mounted) setState(() => _isHovered = true);
+      },
+      onExit: (_) {
+        if (mounted) setState(() => _isHovered = false);
+      },
       child: GestureDetector(
         onTap: () => _onEditRow(context),
-        onLongPress: () => _onDeleteRow(context, ref),
+        onLongPress: () => _onDeleteRow(context),
         onSecondaryTapUp: (details) => _showSleepContextMenu(
           context,
           globalPosition: details.globalPosition,
           onEdit: () => _onEditRow(context),
-          onDelete: () => _onDeleteRow(context, ref),
+          onDelete: () => _onDeleteRow(context),
           editLabel: editLabel,
           deleteLabel: l10n.deleteSleepSessionTitle,
         ),
         behavior: HitTestBehavior.opaque,
-        child: MouseRegion(
-          cursor: SystemMouseCursors.click,
-          child: GlassCard(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Wrap(
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            spacing: 8,
-                            runSpacing: 4,
-                            children: [
-                              Text(
-                                _formatDateRange(
-                                  start: session.startTime.toLocal(),
-                                  end: session.endTime.toLocal(),
-                                  locale: l10n.localeName,
-                                ),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: _isHovered
+                ? Colors.white.withValues(alpha: 0.06)
+                : Colors.white.withValues(alpha: 0.025),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _isHovered
+                  ? Colors.white.withValues(alpha: 0.14)
+                  : Colors.white.withValues(alpha: 0.05),
+              width: 1,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 8,
+                          runSpacing: 4,
+                          children: [
+                            Text(
+                              _formatDateRange(
+                                start: session.startTime.toLocal(),
+                                end: session.endTime.toLocal(),
+                                locale: l10n.localeName,
                               ),
-                              if (isAnomaly)
-                                Tooltip(
-                                  message: l10n.regimeAnomalyTooltip,
-                                  waitDuration: const Duration(
-                                    milliseconds: 200,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            if (widget.isAnomaly)
+                              Tooltip(
+                                message: l10n.regimeAnomalyTooltip,
+                                waitDuration: const Duration(milliseconds: 200),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
                                   ),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
+                                  decoration: BoxDecoration(
+                                    color: const Color(
+                                      0xFFF59E0B,
+                                    ).withValues(alpha: 0.07),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
                                       color: const Color(
                                         0xFFF59E0B,
-                                      ).withValues(alpha: 0.07),
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(
-                                        color: const Color(
-                                          0xFFF59E0B,
-                                        ).withValues(alpha: 0.18),
-                                        width: 0.8,
-                                      ),
+                                      ).withValues(alpha: 0.18),
+                                      width: 0.8,
                                     ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          LucideIcons.info,
-                                          size: 10.5,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        LucideIcons.info,
+                                        size: 10.5,
+                                        color: const Color(
+                                          0xFFFDE68A,
+                                        ).withValues(alpha: 0.85),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        l10n.regimeAnomaly,
+                                        style: TextStyle(
                                           color: const Color(
                                             0xFFFDE68A,
                                           ).withValues(alpha: 0.85),
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.w500,
                                         ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          l10n.regimeAnomaly,
-                                          style: TextStyle(
-                                            color: const Color(
-                                              0xFFFDE68A,
-                                            ).withValues(alpha: 0.85),
-                                            fontSize: 9.5,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                            ],
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${DateFormat('HH:mm').format(session.startTime.toLocal())} — ${DateFormat('HH:mm').format(session.endTime.toLocal())}',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.3),
+                            fontSize: 12,
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${DateFormat('HH:mm').format(session.startTime.toLocal())} — ${DateFormat('HH:mm').format(session.endTime.toLocal())}',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.3),
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    Text(
-                      '${totalDuration.inHours}${l10n.hoursAbbreviation} ${totalDuration.inMinutes % 60}${l10n.minutesAbbreviation}',
-                      style: const TextStyle(
-                        color: Color(0xFFC4B5FD),
-                        fontWeight: FontWeight.w600,
-                      ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    '${totalDuration.inHours}${l10n.hoursAbbreviation} ${totalDuration.inMinutes % 60}${l10n.minutesAbbreviation}',
+                    style: const TextStyle(
+                      color: Color(0xFFC4B5FD),
+                      fontWeight: FontWeight.w600,
                     ),
-                  ],
-                ),
-
-                // Sub-sessions chips
-                if (night.allSessions.length > 1) ...[
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: night.allSessions
-                        .map((s) => _SessionChip(session: s))
-                        .toList(),
                   ),
                 ],
+              ),
+
+              // Sub-sessions chips
+              if (widget.night.allSessions.length > 1) ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: widget.night.allSessions
+                      .map((s) => _SessionChip(session: s))
+                      .toList(),
+                ),
               ],
-            ),
+            ],
           ),
         ),
       ),
