@@ -366,6 +366,26 @@
   "anchorSizeDesc": "Кількість перших днів для формування якірного середнього значення.",
   "maxSpread": "Максимальний розкид режиму",
   "maxSpreadDesc": "Максимальна різниця (макс — мін) у графіку відходу до сну у хвилинах. Якщо перевищена, режим розбивається.",
+  "visibleRegimeSessions": "Видимі сесії режиму",
+  "visibleRegimeSessionsDesc": "Кількість останніх сесій сну для відображення у поточному режимі за замовчуванням.",
+  "sessionsCountUnit": "сес.",
+  "showMoreSessions": "Показати більше ({count})",
+  "@showMoreSessions": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "showAllSessions": "Показати всі ({count})",
+  "@showAllSessions": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "collapseSessions": "Згорнути",
   "language": "Мова",
   "english": "Англійська",
   "russian": "Російська",

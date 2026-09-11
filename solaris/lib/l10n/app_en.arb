@@ -366,6 +366,40 @@
   "anchorSizeDesc": "Number of first days for forming the anchor average value.",
   "maxSpread": "Maximum regime spread",
   "maxSpreadDesc": "Maximum difference (max - min) in the sleep onset graph in minutes. If exceeded, the regime is split.",
+  "visibleRegimeSessions": "Visible regime sessions",
+  "@visibleRegimeSessions": {
+    "description": "Title for the setting controlling how many sleep sessions are shown by default in the current regime"
+  },
+  "visibleRegimeSessionsDesc": "Number of recent sleep sessions to display in the current regime before expanding.",
+  "@visibleRegimeSessionsDesc": {
+    "description": "Description for the visible regime sessions setting"
+  },
+  "sessionsCountUnit": "sess.",
+  "@sessionsCountUnit": {
+    "description": "Abbreviation for sleep sessions count unit"
+  },
+  "showMoreSessions": "Show more ({count})",
+  "@showMoreSessions": {
+    "description": "Button to load more sleep sessions",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "showAllSessions": "Show all ({count})",
+  "@showAllSessions": {
+    "description": "Button to reveal all sleep sessions",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "collapseSessions": "Collapse",
+  "@collapseSessions": {
+    "description": "Button to collapse sleep sessions list back to default limit"
+  },
   "language": "Language",
   "english": "English",
   "russian": "Russian",

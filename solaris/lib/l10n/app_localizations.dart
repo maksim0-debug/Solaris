@@ -1617,6 +1617,42 @@ abstract class AppLocalizations {
   /// **'Maximum difference (max - min) in the sleep onset graph in minutes. If exceeded, the regime is split.'**
   String get maxSpreadDesc;
 
+  /// Title for the setting controlling how many sleep sessions are shown by default in the current regime
+  ///
+  /// In en, this message translates to:
+  /// **'Visible regime sessions'**
+  String get visibleRegimeSessions;
+
+  /// Description for the visible regime sessions setting
+  ///
+  /// In en, this message translates to:
+  /// **'Number of recent sleep sessions to display in the current regime before expanding.'**
+  String get visibleRegimeSessionsDesc;
+
+  /// Abbreviation for sleep sessions count unit
+  ///
+  /// In en, this message translates to:
+  /// **'sess.'**
+  String get sessionsCountUnit;
+
+  /// Button to load more sleep sessions
+  ///
+  /// In en, this message translates to:
+  /// **'Show more ({count})'**
+  String showMoreSessions(int count);
+
+  /// Button to reveal all sleep sessions
+  ///
+  /// In en, this message translates to:
+  /// **'Show all ({count})'**
+  String showAllSessions(int count);
+
+  /// Button to collapse sleep sessions list back to default limit
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse'**
+  String get collapseSessions;
+
   /// No description provided for @language.
   ///
   /// In en, this message translates to:

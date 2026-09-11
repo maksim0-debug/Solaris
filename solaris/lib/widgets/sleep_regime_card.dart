@@ -8,25 +8,30 @@ import 'package:solaris/models/sleep_session.dart';
 import 'package:solaris/models/night_group.dart';
 import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/l10n/app_localizations.dart';
+import 'package:solaris/models/settings_state.dart';
+import 'package:solaris/providers.dart';
 import 'package:solaris/providers/sleep_provider.dart';
 import 'package:solaris/widgets/add_sleep_session_dialog.dart';
 
-class SleepRegimeCard extends StatefulWidget {
+class SleepRegimeCard extends ConsumerStatefulWidget {
   final SleepRegime regime;
   final bool initiallyExpanded;
+  final int? initialVisibleCount;
 
   const SleepRegimeCard({
     super.key,
     required this.regime,
     this.initiallyExpanded = false,
+    this.initialVisibleCount,
   });
 
   @override
-  State<SleepRegimeCard> createState() => _SleepRegimeCardState();
+  ConsumerState<SleepRegimeCard> createState() => _SleepRegimeCardState();
 }
 
-class _SleepRegimeCardState extends State<SleepRegimeCard> {
+class _SleepRegimeCardState extends ConsumerState<SleepRegimeCard> {
   late bool _isExpanded;
+  int? _visibleSessionsLimit;
 
   @override
   void initState() {
@@ -37,6 +42,29 @@ class _SleepRegimeCardState extends State<SleepRegimeCard> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final settingsAsync = ref.watch(settingsProvider);
+    final selectedMonitors = ref.watch(selectedMonitorsProvider);
+    final monitorId = selectedMonitors.firstOrNull ?? 'all';
+    final settings = settingsAsync.maybeWhen(
+      data: (map) => map[monitorId] ?? map['all'] ?? SettingsState(),
+      orElse: () => SettingsState(),
+    );
+
+    final totalNights = widget.regime.nights.length;
+    final defaultLimit =
+        widget.initialVisibleCount ??
+        settings.sleepVisibleSessionsCount.clamp(1, 50);
+    final activeLimit =
+        _visibleSessionsLimit != null && _visibleSessionsLimit! > defaultLimit
+        ? _visibleSessionsLimit!
+        : defaultLimit;
+    final displayedCount = activeLimit > totalNights
+        ? totalNights
+        : (activeLimit < 0 ? 0 : activeLimit);
+    final visibleNights = widget.regime.nights.take(displayedCount).toList();
+    final hasMore = displayedCount < totalNights;
+    final canCollapse =
+        _visibleSessionsLimit != null && displayedCount > defaultLimit;
 
     return GlassCard(
       padding: EdgeInsets.zero,
@@ -157,7 +185,7 @@ class _SleepRegimeCardState extends State<SleepRegimeCard> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
               child: Column(
                 children: [
-                  for (final (i, night) in widget.regime.nights.indexed) ...[
+                  for (final (i, night) in visibleNights.indexed) ...[
                     _SessionDetailRow(
                       key: ValueKey(night.aggregatedSession.id),
                       night: night,
@@ -168,8 +196,62 @@ class _SleepRegimeCardState extends State<SleepRegimeCard> {
                             d.day == night.date.day,
                       ),
                     ),
-                    if (i < widget.regime.nights.length - 1)
-                      const SizedBox(height: 8),
+                    if (i < visibleNights.length - 1) const SizedBox(height: 8),
+                  ],
+                  if (hasMore || canCollapse) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (hasMore) ...[
+                          _PaginationButton(
+                            key: const ValueKey('pagination_show_more'),
+                            icon: LucideIcons.chevronDown,
+                            label: l10n.showMoreSessions(
+                              (totalNights - displayedCount) < defaultLimit
+                                  ? (totalNights - displayedCount)
+                                  : defaultLimit,
+                            ),
+                            isSecondary: true,
+                            onTap: () {
+                              setState(() {
+                                final next = displayedCount + defaultLimit;
+                                _visibleSessionsLimit = next > totalNights
+                                    ? totalNights
+                                    : next;
+                              });
+                            },
+                          ),
+                          if (totalNights - displayedCount > defaultLimit) ...[
+                            const SizedBox(width: 8),
+                            _PaginationIconButton(
+                              key: const ValueKey('pagination_show_all'),
+                              icon: LucideIcons.ellipsis,
+                              tooltip: l10n.showAllSessions(totalNights),
+                              onTap: () {
+                                setState(() {
+                                  _visibleSessionsLimit = totalNights;
+                                });
+                              },
+                            ),
+                          ],
+                        ],
+                        if (canCollapse) ...[
+                          if (hasMore) const SizedBox(width: 8),
+                          _PaginationButton(
+                            key: const ValueKey('pagination_collapse'),
+                            icon: LucideIcons.chevronUp,
+                            label: l10n.collapseSessions,
+                            isSecondary: true,
+                            onTap: () {
+                              setState(() {
+                                _visibleSessionsLimit = null;
+                              });
+                            },
+                          ),
+                        ],
+                      ],
+                    ),
                   ],
                 ],
               ),
@@ -868,5 +950,157 @@ String _formatDateRange({
       locale,
     ).format(end);
     return '$startPart — $endPart';
+  }
+}
+
+class _PaginationButton extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool isSecondary;
+
+  const _PaginationButton({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.isSecondary = false,
+  });
+
+  @override
+  State<_PaginationButton> createState() => _PaginationButtonState();
+}
+
+class _PaginationButtonState extends State<_PaginationButton> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final themeBg = widget.isSecondary
+        ? (_isHovered
+              ? Colors.white.withValues(alpha: 0.08)
+              : Colors.white.withValues(alpha: 0.03))
+        : (_isHovered
+              ? const Color(0xFF8B5CF6).withValues(alpha: 0.22)
+              : const Color(0xFF8B5CF6).withValues(alpha: 0.12));
+
+    final themeBorder = widget.isSecondary
+        ? (_isHovered
+              ? Colors.white.withValues(alpha: 0.2)
+              : Colors.white.withValues(alpha: 0.08))
+        : (_isHovered
+              ? const Color(0xFF8B5CF6).withValues(alpha: 0.45)
+              : const Color(0xFF8B5CF6).withValues(alpha: 0.25));
+
+    final textColor = widget.isSecondary
+        ? (_isHovered ? Colors.white : Colors.white70)
+        : const Color(0xFFC4B5FD);
+
+    final content = AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.easeOutCubic,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+      decoration: BoxDecoration(
+        color: themeBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: themeBorder, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(widget.icon, size: 14, color: textColor),
+          const SizedBox(width: 6),
+          Text(
+            widget.label,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    final button = MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) {
+        if (mounted) setState(() => _isHovered = true);
+      },
+      onExit: (_) {
+        if (mounted) setState(() => _isHovered = false);
+      },
+      child: GestureDetector(
+        onTap: widget.onTap,
+        behavior: HitTestBehavior.opaque,
+        child: content,
+      ),
+    );
+
+    return button;
+  }
+}
+
+class _PaginationIconButton extends StatefulWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final String? tooltip;
+
+  const _PaginationIconButton({
+    super.key,
+    required this.icon,
+    required this.onTap,
+    this.tooltip,
+  });
+
+  @override
+  State<_PaginationIconButton> createState() => _PaginationIconButtonState();
+}
+
+class _PaginationIconButtonState extends State<_PaginationIconButton> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final themeBg = _isHovered
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.white.withValues(alpha: 0.03);
+    final themeBorder = _isHovered
+        ? Colors.white.withValues(alpha: 0.2)
+        : Colors.white.withValues(alpha: 0.08);
+    final iconColor = _isHovered ? Colors.white : Colors.white70;
+
+    final content = AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.easeOutCubic,
+      padding: const EdgeInsets.all(7),
+      decoration: BoxDecoration(
+        color: themeBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: themeBorder, width: 1),
+      ),
+      child: Icon(widget.icon, size: 14, color: iconColor),
+    );
+
+    final button = MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) {
+        if (mounted) setState(() => _isHovered = true);
+      },
+      onExit: (_) {
+        if (mounted) setState(() => _isHovered = false);
+      },
+      child: GestureDetector(
+        onTap: widget.onTap,
+        behavior: HitTestBehavior.opaque,
+        child: content,
+      ),
+    );
+
+    if (widget.tooltip != null && widget.tooltip!.isNotEmpty) {
+      return Tooltip(message: widget.tooltip!, child: button);
+    }
+    return button;
   }
 }

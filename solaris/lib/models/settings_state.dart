@@ -76,6 +76,7 @@ class SettingsState {
   final int sleepMinRegimeLength;
   final int sleepAnchorSize;
   final int sleepMaxSpread;
+  final int sleepVisibleSessionsCount;
   final bool isGameModeEnabled;
   final bool isGameModeTemperatureEnabled;
   final double gameModeBrightness;
@@ -182,6 +183,7 @@ class SettingsState {
     this.sleepMinRegimeLength = 2,
     this.sleepAnchorSize = 2,
     this.sleepMaxSpread = 105,
+    this.sleepVisibleSessionsCount = 5,
     this.isGameModeEnabled = true,
     this.isGameModeTemperatureEnabled = true,
     this.gameModeBrightness = 80.0,
@@ -381,6 +383,7 @@ class SettingsState {
     'sleepMinRegimeLength': sleepMinRegimeLength,
     'sleepAnchorSize': sleepAnchorSize,
     'sleepMaxSpread': sleepMaxSpread,
+    'sleepVisibleSessionsCount': sleepVisibleSessionsCount,
     'isGameModeEnabled': isGameModeEnabled,
     'isGameModeTemperatureEnabled': isGameModeTemperatureEnabled,
     'gameModeBrightness': gameModeBrightness,
@@ -576,6 +579,11 @@ class SettingsState {
       sleepMinRegimeLength: json['sleepMinRegimeLength'] as int? ?? 2,
       sleepAnchorSize: json['sleepAnchorSize'] as int? ?? 2,
       sleepMaxSpread: json['sleepMaxSpread'] as int? ?? 105,
+      sleepVisibleSessionsCount:
+          ((json['sleepVisibleSessionsCount'] as num?)?.toInt() ?? 5).clamp(
+            1,
+            50,
+          ),
       isGameModeEnabled: json['isGameModeEnabled'] as bool? ?? true,
       isGameModeTemperatureEnabled:
           json['isGameModeTemperatureEnabled'] as bool? ?? true,
@@ -758,6 +766,7 @@ class SettingsState {
     int? sleepMinRegimeLength,
     int? sleepAnchorSize,
     int? sleepMaxSpread,
+    int? sleepVisibleSessionsCount,
     bool? isGameModeEnabled,
     bool? isGameModeTemperatureEnabled,
     double? gameModeBrightness,
@@ -895,6 +904,8 @@ class SettingsState {
       sleepMinRegimeLength: sleepMinRegimeLength ?? this.sleepMinRegimeLength,
       sleepAnchorSize: sleepAnchorSize ?? this.sleepAnchorSize,
       sleepMaxSpread: sleepMaxSpread ?? this.sleepMaxSpread,
+      sleepVisibleSessionsCount:
+          sleepVisibleSessionsCount ?? this.sleepVisibleSessionsCount,
       isGameModeEnabled: isGameModeEnabled ?? this.isGameModeEnabled,
       isGameModeTemperatureEnabled:
           isGameModeTemperatureEnabled ?? this.isGameModeTemperatureEnabled,

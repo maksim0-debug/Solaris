@@ -1463,6 +1463,38 @@ class _SleepAnalysisSettingsSectionState
     extends ConsumerState<_SleepAnalysisSettingsSection> {
   bool _isExpanded = false;
 
+  void _updateWithScrollAnchor(VoidCallback update) {
+    final scrollable = Scrollable.maybeOf(context);
+    final renderBox = context.findRenderObject() as RenderBox?;
+    if (scrollable == null || renderBox == null || !renderBox.hasSize) {
+      update();
+      return;
+    }
+    final oldScreenY = renderBox.localToGlobal(Offset.zero).dy;
+    update();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final currentScrollable = Scrollable.maybeOf(context);
+      final newBox = context.findRenderObject() as RenderBox?;
+      if (currentScrollable == null ||
+          !currentScrollable.position.hasPixels ||
+          !currentScrollable.position.hasContentDimensions ||
+          newBox == null ||
+          !newBox.hasSize) {
+        return;
+      }
+      final newScreenY = newBox.localToGlobal(Offset.zero).dy;
+      final delta = newScreenY - oldScreenY;
+      if (delta.abs() > 0.5) {
+        final target = (currentScrollable.position.pixels + delta).clamp(
+          currentScrollable.position.minScrollExtent,
+          currentScrollable.position.maxScrollExtent,
+        );
+        currentScrollable.position.jumpTo(target);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -1522,8 +1554,9 @@ class _SleepAnalysisSettingsSectionState
                       min: 30,
                       max: 180,
                       unit: l10n.minutesAbbreviation,
-                      onChanged: (val) =>
-                          notifier.updateSleepToleranceWindow(val.toInt()),
+                      onChanged: (val) => _updateWithScrollAnchor(
+                        () => notifier.updateSleepToleranceWindow(val.round()),
+                      ),
                     ),
                     const Divider(height: 32, color: Colors.white10),
                     _AnalysisSlider(
@@ -1536,8 +1569,9 @@ class _SleepAnalysisSettingsSectionState
                           .daysCount(1)
                           .replaceAll(RegExp(r'[0-9]'), '')
                           .trim(),
-                      onChanged: (val) =>
-                          notifier.updateSleepMaxAnomalies(val.toInt()),
+                      onChanged: (val) => _updateWithScrollAnchor(
+                        () => notifier.updateSleepMaxAnomalies(val.round()),
+                      ),
                     ),
                     const Divider(height: 32, color: Colors.white10),
                     _AnalysisSlider(
@@ -1550,8 +1584,9 @@ class _SleepAnalysisSettingsSectionState
                           .daysCount(1)
                           .replaceAll(RegExp(r'[0-9]'), '')
                           .trim(),
-                      onChanged: (val) =>
-                          notifier.updateSleepMinRegimeLength(val.toInt()),
+                      onChanged: (val) => _updateWithScrollAnchor(
+                        () => notifier.updateSleepMinRegimeLength(val.round()),
+                      ),
                     ),
                     const Divider(height: 32, color: Colors.white10),
                     _AnalysisSlider(
@@ -1564,8 +1599,9 @@ class _SleepAnalysisSettingsSectionState
                           .daysCount(1)
                           .replaceAll(RegExp(r'[0-9]'), '')
                           .trim(),
-                      onChanged: (val) =>
-                          notifier.updateSleepAnchorSize(val.toInt()),
+                      onChanged: (val) => _updateWithScrollAnchor(
+                        () => notifier.updateSleepAnchorSize(val.round()),
+                      ),
                     ),
                     const Divider(height: 32, color: Colors.white10),
                     _AnalysisSlider(
@@ -1575,8 +1611,23 @@ class _SleepAnalysisSettingsSectionState
                       min: 30,
                       max: 240,
                       unit: l10n.minutesAbbreviation,
-                      onChanged: (val) =>
-                          notifier.updateSleepMaxSpread(val.toInt()),
+                      onChanged: (val) => _updateWithScrollAnchor(
+                        () => notifier.updateSleepMaxSpread(val.round()),
+                      ),
+                    ),
+                    const Divider(height: 32, color: Colors.white10),
+                    _AnalysisSlider(
+                      title: l10n.visibleRegimeSessions,
+                      subtitle: l10n.visibleRegimeSessionsDesc,
+                      value: settings.sleepVisibleSessionsCount.toDouble(),
+                      min: 1,
+                      max: 50,
+                      unit: l10n.sessionsCountUnit,
+                      onChanged: (val) => _updateWithScrollAnchor(
+                        () => notifier.updateSleepVisibleSessionsCount(
+                          val.round(),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -1594,7 +1645,7 @@ class _SleepAnalysisSettingsSectionState
   }
 }
 
-class _AnalysisSlider extends StatelessWidget {
+class _AnalysisSlider extends StatefulWidget {
   const _AnalysisSlider({
     required this.title,
     required this.subtitle,
@@ -1614,7 +1665,24 @@ class _AnalysisSlider extends StatelessWidget {
   final String unit;
 
   @override
+  State<_AnalysisSlider> createState() => _AnalysisSliderState();
+}
+
+class _AnalysisSliderState extends State<_AnalysisSlider> {
+  double? _dragValue;
+
+  @override
+  void didUpdateWidget(covariant _AnalysisSlider oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.value == _dragValue || oldWidget.value != widget.value) {
+      _dragValue = null;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final displayValue = _dragValue ?? widget.value;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1626,7 +1694,7 @@ class _AnalysisSlider extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
+                    widget.title,
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -1635,7 +1703,7 @@ class _AnalysisSlider extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    subtitle,
+                    widget.subtitle,
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.white.withValues(alpha: 0.4),
@@ -1652,7 +1720,7 @@ class _AnalysisSlider extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                '${value.toInt()} $unit',
+                '${displayValue.toInt()} ${widget.unit}',
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
@@ -1674,11 +1742,29 @@ class _AnalysisSlider extends StatelessWidget {
             overlayColor: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
           ),
           child: Slider(
-            value: value,
-            min: min,
-            max: max,
-            divisions: (max - min).toInt() > 0 ? (max - min).toInt() : null,
-            onChanged: onChanged,
+            value: displayValue.clamp(widget.min, widget.max),
+            min: widget.min,
+            max: widget.max,
+            divisions: (widget.max - widget.min).toInt() > 0
+                ? (widget.max - widget.min).toInt()
+                : null,
+            onChanged: (val) {
+              if (mounted) {
+                setState(() {
+                  _dragValue = val;
+                });
+              }
+            },
+            onChangeEnd: (val) {
+              if (!mounted) return;
+              if (val == widget.value) {
+                setState(() {
+                  _dragValue = null;
+                });
+              } else {
+                widget.onChanged(val);
+              }
+            },
           ),
         ),
       ],

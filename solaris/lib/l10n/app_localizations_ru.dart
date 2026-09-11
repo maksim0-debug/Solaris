@@ -854,6 +854,29 @@ class AppLocalizationsRu extends AppLocalizations {
       'Максимальная разница (максимум — минимум) в графике отхода ко сну в минутах. Если превышена, режим разбивается.';
 
   @override
+  String get visibleRegimeSessions => 'Видимые сессии режима';
+
+  @override
+  String get visibleRegimeSessionsDesc =>
+      'Количество последних сессий сна для отображения в текущем режиме по умолчанию.';
+
+  @override
+  String get sessionsCountUnit => 'сес.';
+
+  @override
+  String showMoreSessions(int count) {
+    return 'Показать еще ($count)';
+  }
+
+  @override
+  String showAllSessions(int count) {
+    return 'Показать все ($count)';
+  }
+
+  @override
+  String get collapseSessions => 'Свернуть';
+
+  @override
   String get language => 'Язык';
 
   @override

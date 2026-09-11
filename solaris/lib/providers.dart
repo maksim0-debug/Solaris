@@ -2130,6 +2130,13 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     );
   }
 
+  void updateSleepVisibleSessionsCount(int value) {
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(sleepVisibleSessionsCount: value.clamp(1, 50)),
+    );
+  }
+
   void updateTimeShiftIntensity(double brightness, double temperature) {
     _updateSettings(
       ref.read(selectedMonitorsProvider),

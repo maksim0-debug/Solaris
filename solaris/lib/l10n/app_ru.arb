@@ -366,6 +366,26 @@
   "anchorSizeDesc": "Количество первых дней для формирования якорного среднего значения.",
   "maxSpread": "Максимальный разброс режима",
   "maxSpreadDesc": "Максимальная разница (максимум — минимум) в графике отхода ко сну в минутах. Если превышена, режим разбивается.",
+  "visibleRegimeSessions": "Видимые сессии режима",
+  "visibleRegimeSessionsDesc": "Количество последних сессий сна для отображения в текущем режиме по умолчанию.",
+  "sessionsCountUnit": "сес.",
+  "showMoreSessions": "Показать еще ({count})",
+  "@showMoreSessions": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "showAllSessions": "Показать все ({count})",
+  "@showAllSessions": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "collapseSessions": "Свернуть",
   "language": "Язык",
   "english": "Английский",
   "russian": "Русский",

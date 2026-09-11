@@ -854,6 +854,29 @@ class AppLocalizationsEn extends AppLocalizations {
       'Maximum difference (max - min) in the sleep onset graph in minutes. If exceeded, the regime is split.';
 
   @override
+  String get visibleRegimeSessions => 'Visible regime sessions';
+
+  @override
+  String get visibleRegimeSessionsDesc =>
+      'Number of recent sleep sessions to display in the current regime before expanding.';
+
+  @override
+  String get sessionsCountUnit => 'sess.';
+
+  @override
+  String showMoreSessions(int count) {
+    return 'Show more ($count)';
+  }
+
+  @override
+  String showAllSessions(int count) {
+    return 'Show all ($count)';
+  }
+
+  @override
+  String get collapseSessions => 'Collapse';
+
+  @override
   String get language => 'Language';
 
   @override
