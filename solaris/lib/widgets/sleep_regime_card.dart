@@ -791,118 +791,224 @@ Future<void> _showDeleteSleepConfirmDialog({
       return StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
-            backgroundColor: const Color(0xFF0F172A),
+            backgroundColor: Colors.transparent,
             surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            shadowColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 24,
+            ),
+            contentPadding: EdgeInsets.zero,
+            clipBehavior: Clip.none,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(
-                color: Colors.white.withValues(alpha: 0.15),
-                width: 1,
-              ),
+              borderRadius: BorderRadius.circular(20),
             ),
-            title: Row(
-              children: [
-                const Icon(
-                  LucideIcons.trash2,
-                  color: Color(0xFFF87171),
-                  size: 22,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  confirmMessage,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                InkWell(
-                  onTap: () => setState(() => doNotSync = !doNotSync),
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 4,
-                      horizontal: 2,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+            content: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: GlassCard(
+                borderRadius: 20,
+                opacity: 0.06,
+                blur: 20,
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: Checkbox(
-                            value: doNotSync,
-                            onChanged: (val) {
-                              if (val != null) {
-                                setState(() => doNotSync = val);
-                              }
-                            },
-                            activeColor: const Color(0xFF8B5CF6),
-                            checkColor: Colors.white,
-                            side: BorderSide(
-                              color: Colors.white.withValues(alpha: 0.5),
-                              width: 1.5,
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xFFEF4444,
+                            ).withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: const Color(
+                                0xFFEF4444,
+                              ).withValues(alpha: 0.25),
+                              width: 1,
+                            ),
+                          ),
+                          child: const Icon(
+                            LucideIcons.trash2,
+                            color: Color(0xFFF87171),
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: const TextStyle(
+                              fontFamily: 'Outfit',
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
+                        IconButton(
+                          icon: const Icon(
+                            LucideIcons.x,
+                            color: Colors.white60,
+                            size: 20,
+                          ),
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          splashRadius: 20,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      confirmMessage,
+                      style: TextStyle(
+                        fontFamily: 'Outfit',
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 14,
+                        height: 1.45,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => setState(() => doNotSync = !doNotSync),
+                        borderRadius: BorderRadius.circular(12),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          curve: Curves.easeOutCubic,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: doNotSync
+                                ? const Color(
+                                    0xFFFDBA74,
+                                  ).withValues(alpha: 0.08)
+                                : Colors.white.withValues(alpha: 0.03),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: doNotSync
+                                  ? const Color(
+                                      0xFFFDBA74,
+                                    ).withValues(alpha: 0.35)
+                                  : Colors.white.withValues(alpha: 0.08),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: Checkbox(
+                                  value: doNotSync,
+                                  onChanged: (val) {
+                                    if (val != null) {
+                                      setState(() => doNotSync = val);
+                                    }
+                                  },
+                                  activeColor: const Color(0xFFFDBA74),
+                                  checkColor: const Color(0xFF0F172A),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(5),
+                                  ),
+                                  side: BorderSide(
+                                    color: Colors.white.withValues(alpha: 0.4),
+                                    width: 1.5,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  l10n.doNotSyncInFuture,
+                                  style: TextStyle(
+                                    fontFamily: 'Outfit',
+                                    color: Colors.white.withValues(alpha: 0.95),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        OutlinedButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white.withValues(
+                              alpha: 0.75,
+                            ),
+                            side: BorderSide(
+                              color: Colors.white.withValues(alpha: 0.15),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
+                          ),
                           child: Text(
-                            l10n.doNotSyncInFuture,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.9),
-                              fontSize: 13,
+                            l10n.cancelAction,
+                            style: const TextStyle(
+                              fontFamily: 'Outfit',
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
+                        const SizedBox(width: 12),
+                        ElevatedButton.icon(
+                          icon: const Icon(LucideIcons.trash2, size: 15),
+                          label: Text(
+                            l10n.deleteAction,
+                            style: const TextStyle(
+                              fontFamily: 'Outfit',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFEF4444),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 10,
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.of(ctx).pop();
+                            ref
+                                .read(sleepProvider.notifier)
+                                .deleteSessions(
+                                  sessionIdsToDelete,
+                                  doNotSync: doNotSync,
+                                );
+                          },
+                        ),
                       ],
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: Text(
-                  l10n.cancelAction,
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
-                ),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFEF4444),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                  ref
-                      .read(sleepProvider.notifier)
-                      .deleteSessions(sessionIdsToDelete, doNotSync: doNotSync);
-                },
-                child: Text(l10n.deleteAction),
-              ),
-            ],
           );
         },
       );

@@ -64,3 +64,4 @@ ignored_sleep_sessions.json
 ignored_sleep_sessions.json.bak
 color_temp_enabled.json
 color_temp_enabled.json.bak
+monitor_settings.json.tmp
