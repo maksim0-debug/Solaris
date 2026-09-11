@@ -64,27 +64,33 @@ class _SolarisAboutDialogState extends ConsumerState<SolarisAboutDialog> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.appTitle,
-                        style: Theme.of(context).textTheme.displayLarge
-                            ?.copyWith(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                            ),
-                      ),
-                      Text(
-                        l10n.appVersion(version),
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontSize: 12,
-                          color: Colors.white38,
-                          letterSpacing: 1,
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          l10n.appTitle,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.displayLarge
+                              ?.copyWith(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                              ),
                         ),
-                      ),
-                    ],
+                        Text(
+                          l10n.appVersion(version),
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                fontSize: 12,
+                                color: Colors.white38,
+                                letterSpacing: 1,
+                              ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -119,13 +125,15 @@ class _SolarisAboutDialogState extends ConsumerState<SolarisAboutDialog> {
                               size: 18,
                             ),
                             const SizedBox(width: 8),
-                            Text(
-                              l10n.disclaimerTitle.toUpperCase(),
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.2,
-                                color: Color(0xFFFDBA74),
+                            Expanded(
+                              child: Text(
+                                l10n.disclaimerTitle.toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2,
+                                  color: Color(0xFFFDBA74),
+                                ),
                               ),
                             ),
                           ],

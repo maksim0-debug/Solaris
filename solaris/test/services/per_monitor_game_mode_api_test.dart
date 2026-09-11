@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -63,6 +63,7 @@ void main() {
           monitorListProvider.overrideWith(
             () => FakeMonitorListNotifier(mockMonitors),
           ),
+          locationStreamProvider.overrideWith((ref) => const Stream.empty()),
         ],
       );
 
@@ -111,54 +112,70 @@ void main() {
       container.dispose();
     });
 
-    test('GET /api/v1/monitors includes game_mode field for each monitor', () async {
-      final req = await client.getUrl(Uri.parse('$serverUrl/api/v1/monitors'));
-      final res = await req.close();
-      expect(res.statusCode, equals(HttpStatus.ok));
+    test(
+      'GET /api/v1/monitors includes game_mode field for each monitor',
+      () async {
+        final req = await client.getUrl(
+          Uri.parse('$serverUrl/api/v1/monitors'),
+        );
+        final res = await req.close();
+        expect(res.statusCode, equals(HttpStatus.ok));
 
-      final body = jsonDecode(await res.transform(utf8.decoder).join()) as Map<String, dynamic>;
-      expect(body['count'], equals(2));
-      final monitors = body['monitors'] as List<dynamic>;
+        final body =
+            jsonDecode(await res.transform(utf8.decoder).join())
+                as Map<String, dynamic>;
+        expect(body['count'], equals(2));
+        final monitors = body['monitors'] as List<dynamic>;
 
-      expect(monitors[0]['game_mode'], isNotNull);
-      expect(monitors[0]['game_mode']['enabled'], isTrue);
-      expect(monitors[0]['game_mode']['active'], isFalse);
+        expect(monitors[0]['game_mode'], isNotNull);
+        expect(monitors[0]['game_mode']['enabled'], isTrue);
+        expect(monitors[0]['game_mode']['active'], isFalse);
 
-      expect(monitors[1]['game_mode'], isNotNull);
-      expect(monitors[1]['game_mode']['enabled'], isTrue);
-      expect(monitors[1]['game_mode']['active'], isFalse);
-    });
+        expect(monitors[1]['game_mode'], isNotNull);
+        expect(monitors[1]['game_mode']['enabled'], isTrue);
+        expect(monitors[1]['game_mode']['active'], isFalse);
+      },
+    );
 
-    test('POST /api/v1/monitors/:slug/game-mode modifies target monitor only', () async {
-      // Disable Game Mode for display-2
-      final req = await client.postUrl(
-        Uri.parse('$serverUrl/api/v1/monitors/display-2/game-mode'),
-      );
-      req.headers.contentType = ContentType.json;
-      req.write(jsonEncode({'enabled': false}));
-      final res = await req.close();
+    test(
+      'POST /api/v1/monitors/:slug/game-mode modifies target monitor only',
+      () async {
+        // Disable Game Mode for display-2
+        final req = await client.postUrl(
+          Uri.parse('$serverUrl/api/v1/monitors/display-2/game-mode'),
+        );
+        req.headers.contentType = ContentType.json;
+        req.write(jsonEncode({'enabled': false}));
+        final res = await req.close();
 
-      expect(res.statusCode, equals(HttpStatus.ok));
-      final body = jsonDecode(await res.transform(utf8.decoder).join()) as Map<String, dynamic>;
-      expect(body['status'], equals('ok'));
-      expect(body['game_mode']['enabled'], isFalse);
+        expect(res.statusCode, equals(HttpStatus.ok));
+        final body =
+            jsonDecode(await res.transform(utf8.decoder).join())
+                as Map<String, dynamic>;
+        expect(body['status'], equals('ok'));
+        expect(body['game_mode']['enabled'], isFalse);
 
-      // Verify display-1 is still enabled
-      final req1 = await client.getUrl(
-        Uri.parse('$serverUrl/api/v1/monitors/display-1'),
-      );
-      final res1 = await req1.close();
-      final body1 = jsonDecode(await res1.transform(utf8.decoder).join()) as Map<String, dynamic>;
-      expect(body1['game_mode']['enabled'], isTrue);
+        // Verify display-1 is still enabled
+        final req1 = await client.getUrl(
+          Uri.parse('$serverUrl/api/v1/monitors/display-1'),
+        );
+        final res1 = await req1.close();
+        final body1 =
+            jsonDecode(await res1.transform(utf8.decoder).join())
+                as Map<String, dynamic>;
+        expect(body1['game_mode']['enabled'], isTrue);
 
-      // Verify display-2 is disabled
-      final req2 = await client.getUrl(
-        Uri.parse('$serverUrl/api/v1/monitors/display-2'),
-      );
-      final res2 = await req2.close();
-      final body2 = jsonDecode(await res2.transform(utf8.decoder).join()) as Map<String, dynamic>;
-      expect(body2['game_mode']['enabled'], isFalse);
-    });
+        // Verify display-2 is disabled
+        final req2 = await client.getUrl(
+          Uri.parse('$serverUrl/api/v1/monitors/display-2'),
+        );
+        final res2 = await req2.close();
+        final body2 =
+            jsonDecode(await res2.transform(utf8.decoder).join())
+                as Map<String, dynamic>;
+        expect(body2['game_mode']['enabled'], isFalse);
+      },
+    );
 
     test('POST /api/v1/control set_game_mode with monitor parameter', () async {
       // Use control action to disable game mode on display-1

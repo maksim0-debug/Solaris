@@ -415,8 +415,11 @@ void main() {
               ),
             ),
           );
-          await Future<void>.delayed(const Duration(milliseconds: 50));
-          await tester.pump();
+          for (int i = 0; i < 40; i++) {
+            await Future<void>.delayed(const Duration(milliseconds: 25));
+            await tester.pump();
+            if (find.byType(Image).evaluate().isNotEmpty) break;
+          }
 
           expect(find.byType(Image), findsOneWidget);
           expect(find.text('A'), findsNothing);
@@ -429,8 +432,14 @@ void main() {
               ),
             ),
           );
-          await Future<void>.delayed(const Duration(milliseconds: 50));
-          await tester.pump();
+          for (int i = 0; i < 40; i++) {
+            await Future<void>.delayed(const Duration(milliseconds: 25));
+            await tester.pump();
+            if (find.byType(Image).evaluate().isEmpty &&
+                find.text('F').evaluate().isNotEmpty) {
+              break;
+            }
+          }
 
           // Must show fallback letter for FailingApp and NOT keep the old image
           expect(find.byType(Image), findsNothing);

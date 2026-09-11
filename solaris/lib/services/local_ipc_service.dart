@@ -824,10 +824,14 @@ class LocalIpcService extends Notifier<LocalIpcServerState> {
     int statusCode,
     Map<String, dynamic> data,
   ) {
-    request.response
-      ..statusCode = statusCode
-      ..headers.contentType = ContentType.json
-      ..write(jsonEncode(data));
-    request.response.close();
+    try {
+      request.response
+        ..statusCode = statusCode
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode(data));
+      request.response.close();
+    } catch (_) {
+      // Safely ignore if headers were already sent or client disconnected
+    }
   }
 }
