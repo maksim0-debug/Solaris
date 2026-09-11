@@ -38,41 +38,15 @@ class RegimeAnalyzer {
 
     // 4. Build raw bedtime entries
     final entries = <_BedtimeEntry>[];
-
-    // Find absolute latest bedtime for recency filtering
-    int? latestBedtime;
-    if (sorted.isNotEmpty) {
-      latestBedtime = BedtimeNormalization.minutesFromNoon(
-        sorted.last.aggregatedSession.startTime,
-      );
-    }
-
     for (final night in sorted) {
       final startTime = night.aggregatedSession.startTime;
       final normalized = BedtimeNormalization.minutesFromNoon(startTime);
 
-      bool isOutdated = false;
-      if (latestBedtime != null) {
-        int diff = (normalized - latestBedtime).abs();
-        if (diff > 720) diff = 1440 - diff;
-        if (diff > settings.recencyTolerance) {
-          isOutdated = true;
-        }
-      }
-
-      final updatedNight = NightGroup(
-        date: night.date,
-        aggregatedSession: night.aggregatedSession,
-        allSessions: night.allSessions,
-        isOutdated: isOutdated,
-      );
-
       entries.add(
         _BedtimeEntry(
-          date: updatedNight.date,
+          date: night.date,
           normalizedMinutes: normalized,
-          nightGroup: updatedNight,
-          isOutdated: isOutdated,
+          nightGroup: night,
         ),
       );
     }
@@ -122,8 +96,7 @@ class RegimeAnalyzer {
       }
       final diff = rawDiff.abs();
 
-      final withinTolerance =
-          diff <= settings.toleranceWindow && !entry.isOutdated;
+      final withinTolerance = diff <= settings.toleranceWindow;
       final wouldExceedSpread =
           withinTolerance &&
           _wouldExceedSpread(current, entry.normalizedMinutes, settings);
@@ -137,7 +110,7 @@ class RegimeAnalyzer {
         anomalyStreak = 0;
         current.addEntry(entry, isAnomaly: false);
       } else {
-        // Outside tolerance, outdated, OR exceeds spread: treat as anomaly candidate
+        // Outside tolerance OR exceeds spread: treat as anomaly candidate
         anomalyBuffer.add(entry);
         anomalyStreak++;
 
@@ -265,11 +238,17 @@ class RegimeAnalyzer {
       }
     }
 
-    // Filter out isolated short regimes that could not be merged into any neighbor,
-    // provided that at least one regime meets minRegimeLength.
-    final validRegimes = regimes
-        .where((r) => r.normalEntries.length >= settings.minRegimeLength)
-        .toList();
+    // Filter out isolated historical short regimes that could not be merged into any neighbor.
+    // However, NEVER discard the most recent (active) regime (i == regimes.length - 1),
+    // so that 1-day and 2-day regimes starting today remain active and visible.
+    final validRegimes = <_RawRegime>[];
+    for (int i = 0; i < regimes.length; i++) {
+      final isLatest = i == regimes.length - 1;
+      if (regimes[i].normalEntries.length >= settings.minRegimeLength ||
+          isLatest) {
+        validRegimes.add(regimes[i]);
+      }
+    }
 
     return validRegimes.isNotEmpty ? validRegimes : regimes;
   }
@@ -299,41 +278,23 @@ class RegimeAnalyzer {
       final uniqueDays = raw.nightGroups.map((n) => n.date).toSet().length;
       final dayCount = uniqueDays;
 
-      // Fix: Exclude outdated sessions from average bedtime calculation.
-      // We prioritize "fresh" (not outdated) entries, even if they are currently
-      // marked as anomalies, to ensure the UI header reflects current shifts.
-      final allEntries = [...raw.normalEntries, ...raw.anomalyEntries];
-      final freshEntries = allEntries.where((e) => !e.isOutdated).toList();
+      // Base average bedtime and corridor on normal entries to reflect habitual bounds.
+      // Fallback to anomaly entries only if a regime has no normal entries (e.g. single outlier).
+      final effectiveNormal = raw.normalEntries.isNotEmpty
+          ? raw.normalEntries
+          : raw.anomalyEntries;
 
-      // Fallback to normal entries only if all data in the regime is outdated
-      final effectiveEntries = freshEntries.isNotEmpty
-          ? freshEntries
-          : raw.normalEntries;
-
-      final normalMins = effectiveEntries
+      final normalMins = effectiveNormal
           .map((e) => e.normalizedMinutes)
           .toList();
       if (normalMins.isEmpty) continue;
 
-      // Exclude anomalies from regime window corridor (windowStart / windowEnd),
-      // so scatter reflects normal habitual bounds rather than temporary outliers.
-      final freshNormal = raw.normalEntries
-          .where((e) => !e.isOutdated)
-          .toList();
-      final effectiveNormal = freshNormal.isNotEmpty
-          ? freshNormal
-          : raw.normalEntries;
-
-      final corridorMins = effectiveNormal.isNotEmpty
-          ? effectiveNormal.map((e) => e.normalizedMinutes).toList()
-          : normalMins;
-
-      final windowStartMin = corridorMins.reduce((a, b) => a < b ? a : b);
-      final windowEndMin = corridorMins.reduce((a, b) => a > b ? a : b);
+      final windowStartMin = normalMins.reduce((a, b) => a < b ? a : b);
+      final windowEndMin = normalMins.reduce((a, b) => a > b ? a : b);
       final avgBedtimeMin =
           (normalMins.reduce((a, b) => a + b) / normalMins.length).round();
 
-      final wakeMins = effectiveEntries
+      final wakeMins = effectiveNormal
           .map(
             (e) => BedtimeNormalization.minutesFromNoon(
               e.nightGroup.aggregatedSession.endTime,
@@ -419,12 +380,11 @@ class _BedtimeEntry {
   final DateTime date;
   final int normalizedMinutes;
   final NightGroup nightGroup;
-  final bool isOutdated;
+
   _BedtimeEntry({
     required this.date,
     required this.normalizedMinutes,
     required this.nightGroup,
-    this.isOutdated = false,
   });
 }
 
@@ -436,16 +396,12 @@ class _RawRegime {
   int getAnchorAvg(RegimeSettings settings) {
     if (normalEntries.isEmpty) return 0;
 
-    // Prefer non-outdated entries for the anchor to adapt to recent regime shifts
-    final activeEntries = normalEntries.where((e) => !e.isOutdated).toList();
-    final source = activeEntries.isNotEmpty ? activeEntries : normalEntries;
-
-    int count = source.length < settings.anchorSize
-        ? source.length
+    int count = normalEntries.length < settings.anchorSize
+        ? normalEntries.length
         : settings.anchorSize;
     int sum = 0;
     for (int i = 0; i < count; i++) {
-      sum += source[i].normalizedMinutes;
+      sum += normalEntries[i].normalizedMinutes;
     }
     return (sum / count).round();
   }

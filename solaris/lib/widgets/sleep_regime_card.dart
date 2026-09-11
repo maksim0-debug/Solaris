@@ -302,28 +302,6 @@ class _SessionDetailRow extends ConsumerWidget {
                                     ),
                                   ),
                                 ),
-                              if (night.isOutdated)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.red.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(
-                                      color: Colors.red.withValues(alpha: 0.3),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    l10n.outdated.toUpperCase(),
-                                    style: const TextStyle(
-                                      color: Color(0xFFFF8A80),
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
                             ],
                           ),
                           const SizedBox(height: 2),

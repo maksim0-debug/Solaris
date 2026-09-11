@@ -8,7 +8,6 @@ class RegimeSettings extends Equatable {
   final int anchorSize; // num days to form anchor
   final int floatingThreshold; // avg daily delta to be "floating"
   final int mergeThresholdMinutes; // min gap between sessions to merge
-  final int recencyTolerance; // minutes difference from latest to be "outdated"
 
   const RegimeSettings({
     this.toleranceWindow = 75,
@@ -18,9 +17,7 @@ class RegimeSettings extends Equatable {
     this.anchorSize = 2,
     this.floatingThreshold = 45,
     this.mergeThresholdMinutes = 210, // 3.5 hours
-    int? recencyTolerance,
-  }) : recencyTolerance =
-           recencyTolerance ?? (toleranceWindow < 90 ? 90 : toleranceWindow);
+  });
 
   @override
   List<Object?> get props => [
@@ -31,6 +28,5 @@ class RegimeSettings extends Equatable {
     anchorSize,
     floatingThreshold,
     mergeThresholdMinutes,
-    recencyTolerance,
   ];
 }

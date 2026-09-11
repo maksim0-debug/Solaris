@@ -59,15 +59,14 @@ void main() {
       );
     });
 
-    test('Recency tolerance should follow tolerance window', () {
+    test('Tolerance window should group close sessions into single regime', () {
       final settings = RegimeSettings(toleranceWindow: 150);
-      expect(settings.recencyTolerance, 150);
+      expect(settings.toleranceWindow, 150);
 
-      // Verify analyzer uses it
       // latest at 13:45 (Apr 2)
       // entry at 12:27 (Apr 1)
       // diff = 78 min.
-      // With 150 tolerance, it should NOT be outdated.
+      // With 150 tolerance, it should form a single regime without anomalies.
 
       final latest = SleepSession(
         id: 'latest',
@@ -87,15 +86,13 @@ void main() {
         prev,
       ], settings: settings);
 
-      // Should be in the same regime (or at least 'prev' should not be outdated if it fits the anchor)
-      // but the most important is that NightGroup does not have isOutdated=true
-      final allNights = regimes.expand((r) => r.nights).toList();
-      final prevNight = allNights.firstWhere((n) => n.date.day == 1);
-
+      expect(regimes.length, 1);
+      expect(regimes.first.nights.length, 2);
       expect(
-        prevNight.isOutdated,
-        false,
-        reason: '78 min diff should be within 150 min tolerance',
+        regimes.first.anomalyDates,
+        isEmpty,
+        reason:
+            '78 min diff should be within 150 min tolerance and not be marked anomaly',
       );
     });
   });
