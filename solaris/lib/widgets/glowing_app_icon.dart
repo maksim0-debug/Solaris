@@ -272,7 +272,6 @@ class _GlowingAppIconState extends State<GlowingAppIcon> {
   }
 
   Widget _buildImage() {
-    final Color glowColor = _accentColor ?? const Color(0xFF6366F1);
     final double pixelRatio =
         MediaQuery.maybeDevicePixelRatioOf(context) ?? 1.0;
     final int targetCacheDimension = (widget.size * pixelRatio).round().clamp(
@@ -282,6 +281,49 @@ class _GlowingAppIconState extends State<GlowingAppIcon> {
     final (fallbackColor1, fallbackColor2, fallbackLetter) =
         _getFallbackStyling();
 
+    final BoxShadow glowShadow;
+    if (_accentColor != null) {
+      if (AccentColorExtractor.isAchromatic(_accentColor!)) {
+        final hsl = HSLColor.fromColor(_accentColor!);
+        if (_accentColor == AccentColorExtractor.neutralDark ||
+            hsl.lightness < 0.75) {
+          // Dark monochrome icon (e.g. pure black silhouette like terminal.exe)
+          // Very soft, subtle slate ambient backlight so the dark icon reads cleanly on dark surfaces
+          glowShadow = BoxShadow(
+            color: _accentColor!.withValues(alpha: 0.10),
+            blurRadius: 10,
+            spreadRadius: -2,
+            offset: const Offset(0, 3),
+          );
+        } else {
+          // Light/silver monochrome icon
+          // Soft, silky silver-white glow without glare
+          glowShadow = BoxShadow(
+            color: _accentColor!.withValues(alpha: 0.16),
+            blurRadius: 12,
+            spreadRadius: -2,
+            offset: const Offset(0, 3),
+          );
+        }
+      } else {
+        // Vibrant chromatic icon (e.g. Telegram, Discord, Chrome)
+        glowShadow = BoxShadow(
+          color: _accentColor!.withValues(alpha: 0.35),
+          blurRadius: 14,
+          spreadRadius: -2,
+          offset: const Offset(0, 4),
+        );
+      }
+    } else {
+      // Subtle neutral fallback if extraction had no accent color
+      glowShadow = BoxShadow(
+        color: AccentColorExtractor.neutralLight.withValues(alpha: 0.12),
+        blurRadius: 10,
+        spreadRadius: -2,
+        offset: const Offset(0, 3),
+      );
+    }
+
     return Container(
       width: widget.size,
       height: widget.size,
@@ -290,20 +332,7 @@ class _GlowingAppIconState extends State<GlowingAppIcon> {
         borderRadius: BorderRadius.circular(widget.borderRadius),
         boxShadow: [
           // Elegant glow from the extracted logo accent color
-          if (_accentColor != null)
-            BoxShadow(
-              color: _accentColor!.withValues(alpha: 0.35),
-              blurRadius: 14,
-              spreadRadius: -2,
-              offset: const Offset(0, 4),
-            )
-          else
-            BoxShadow(
-              color: glowColor.withValues(alpha: 0.15),
-              blurRadius: 10,
-              spreadRadius: -2,
-              offset: const Offset(0, 4),
-            ),
+          glowShadow,
         ],
       ),
       child: ClipRRect(

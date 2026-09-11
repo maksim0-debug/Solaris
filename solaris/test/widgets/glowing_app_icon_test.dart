@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -758,5 +759,140 @@ void main() {
         expect(callCount, 1);
       });
     });
+
+    testWidgets(
+      'renders calibrated neutral glow for monochrome app icons vs vibrant glow for colored icons',
+      (tester) async {
+        GlowingAppIcon.resetStaticCaches();
+        IconCacheService.resetInstance();
+
+        const channel = MethodChannel('com.solaris.monitor/icons');
+
+        Future<List<int>> generatePng(Color color) async {
+          final recorder = PictureRecorder();
+          final canvas = Canvas(recorder);
+          canvas.drawRect(
+            const Rect.fromLTWH(0, 0, 16, 16),
+            Paint()..color = color,
+          );
+          final picture = recorder.endRecording();
+          final image = await picture.toImage(16, 16);
+          final byteData = await image.toByteData(format: ImageByteFormat.png);
+          return byteData!.buffer.asUint8List();
+        }
+
+        await tester.runAsync(() async {
+          final lightGrayPng = await generatePng(const Color(0xFFD1D5DB));
+          final blackPng = await generatePng(const Color(0xFF000000));
+          final vibrantBluePng = await generatePng(const Color(0xFF0066FF));
+
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+              .setMockMethodCallHandler(channel, (MethodCall call) async {
+                if (call.method == 'extractAppIcon') {
+                  final args = call.arguments as Map;
+                  final exePath = (args['exePath'] as String).toLowerCase();
+                  final savePath = args['savePath'] as String;
+                  if (exePath.contains('light_mono')) {
+                    await File(savePath).writeAsBytes(lightGrayPng);
+                    return savePath;
+                  } else if (exePath.contains('dark_mono')) {
+                    await File(savePath).writeAsBytes(blackPng);
+                    return savePath;
+                  } else if (exePath.contains('chromatic')) {
+                    await File(savePath).writeAsBytes(vibrantBluePng);
+                    return savePath;
+                  }
+                }
+                return null;
+              });
+
+          Future<void> pumpUntilLoaded() async {
+            for (
+              int i = 0;
+              i < 30 && find.byType(Image).evaluate().isEmpty;
+              i++
+            ) {
+              await Future<void>.delayed(const Duration(milliseconds: 50));
+              await tester.pump();
+            }
+          }
+
+          // 1. Light monochrome (light_mono.exe) -> neutralLight glow
+          await tester.pumpWidget(
+            const MaterialApp(
+              home: Scaffold(
+                body: GlowingAppIcon(name: 'light_mono.exe', size: 36),
+              ),
+            ),
+          );
+          await pumpUntilLoaded();
+
+          expect(find.byType(Image), findsOneWidget);
+          final containerLight = tester
+              .widgetList<Container>(find.byType(Container))
+              .firstWhere(
+                (c) =>
+                    c.decoration is BoxDecoration &&
+                    (c.decoration as BoxDecoration).boxShadow != null,
+              );
+          final shadowLight =
+              (containerLight.decoration as BoxDecoration).boxShadow!.first;
+          expect(
+            shadowLight.color,
+            AccentColorExtractor.neutralLight.withValues(alpha: 0.16),
+          );
+          expect(shadowLight.blurRadius, 12);
+
+          // 2. Dark monochrome (dark_mono.exe) -> neutralDark glow
+          await tester.pumpWidget(
+            const MaterialApp(
+              home: Scaffold(
+                body: GlowingAppIcon(name: 'dark_mono.exe', size: 36),
+              ),
+            ),
+          );
+          await pumpUntilLoaded();
+
+          expect(find.byType(Image), findsOneWidget);
+          final containerDark = tester
+              .widgetList<Container>(find.byType(Container))
+              .firstWhere(
+                (c) =>
+                    c.decoration is BoxDecoration &&
+                    (c.decoration as BoxDecoration).boxShadow != null,
+              );
+          final shadowDark =
+              (containerDark.decoration as BoxDecoration).boxShadow!.first;
+          expect(
+            shadowDark.color,
+            AccentColorExtractor.neutralDark.withValues(alpha: 0.10),
+          );
+          expect(shadowDark.blurRadius, 10);
+
+          // 3. Chromatic icon -> vibrant glow with alpha: 0.35 and blurRadius: 14
+          await tester.pumpWidget(
+            const MaterialApp(
+              home: Scaffold(
+                body: GlowingAppIcon(name: 'chromatic.exe', size: 36),
+              ),
+            ),
+          );
+          await pumpUntilLoaded();
+
+          expect(find.byType(Image), findsOneWidget);
+          final containerChromatic = tester
+              .widgetList<Container>(find.byType(Container))
+              .firstWhere(
+                (c) =>
+                    c.decoration is BoxDecoration &&
+                    (c.decoration as BoxDecoration).boxShadow != null,
+              );
+          final shadowChromatic =
+              (containerChromatic.decoration as BoxDecoration).boxShadow!.first;
+          expect(shadowChromatic.color.a, closeTo(0.35, 0.02));
+          expect(shadowChromatic.blurRadius, 14);
+        });
+      },
+    );
   });
 }

@@ -7,8 +7,22 @@ import 'package:palette_generator/palette_generator.dart';
 class AccentColorExtractor {
   static const String defaultHex = '#6366F1';
   static const Color defaultColor = Color(0xFF6366F1);
+  static const Color neutralLight = Color(0xFFE2E8F0);
+  static const Color neutralDark = Color(0xFF94A3B8);
 
   AccentColorExtractor._();
+
+  /// Determines whether a color is monochromatic/achromatic.
+  /// Achromatic colors have low chroma (spread between max and min RGB components <= 45 out of 255).
+  static bool isAchromatic(Color color) {
+    final argb = color.toARGB32();
+    final r = (argb >> 16) & 0xFF;
+    final g = (argb >> 8) & 0xFF;
+    final b = argb & 0xFF;
+    final maxComponent = r > g ? (r > b ? r : b) : (g > b ? g : b);
+    final minComponent = r < g ? (r < b ? r : b) : (g < b ? g : b);
+    return (maxComponent - minComponent) <= 45;
+  }
 
   /// Extracts the most vibrant, chromatic accent color from an image file as a 6-character HEX string (e.g. `#6366F1`).
   static Future<String> extractAccentHex(
@@ -34,15 +48,17 @@ class AccentColorExtractor {
 
     try {
       final imageProvider = FileImage(file);
-      // Downsample to 32x32 and limit color count to 16 for ultra-fast, zero-overhead execution
+      // Downsample to 32x32 and limit color count to 16 for ultra-fast, zero-overhead execution.
+      // Pass filters: const [] so PaletteGenerator does not discard black, white, or grayscale pixels.
       final palette = await PaletteGenerator.fromImageProvider(
         imageProvider,
         size: const Size(32, 32),
         maximumColorCount: 16,
         timeout: const Duration(milliseconds: 300),
+        filters: const [],
       );
 
-      final selectedColor = _selectBestVibrantColor(palette);
+      final selectedColor = _selectBestAccentColor(palette);
       return selectedColor ?? fallback;
     } catch (e) {
       debugPrint(
@@ -52,10 +68,47 @@ class AccentColorExtractor {
     }
   }
 
-  /// Intelligent chromatic scoring: finds the most vibrant, vivid color from the palette,
-  /// filtering out near-black, near-white, and muddy greys.
-  static Color? _selectBestVibrantColor(PaletteGenerator palette) {
-    // 1. Direct candidate targets from PaletteGenerator (strict vibrant targets only)
+  /// Intelligent chromatic & achromatic scoring: finds the most vibrant, vivid color from the palette.
+  /// If the icon is monochromatic (no color passes saturation >= 0.15), it returns a neutral silver
+  /// or muted slate tone instead of an artificial vibrant fallback.
+  static Color? _selectBestAccentColor(PaletteGenerator palette) {
+    // 1. Score all visible chromatic palette colors by (Saturation^2 * LightnessBalance * Population).
+    // This prioritizes the dominant visual mass of the icon (e.g. blue body in Antigravity)
+    // while ensuring vivid colors beat low-saturation pastel backgrounds.
+    Color? bestChromaticColor;
+    double bestScore = -1.0;
+
+    for (final paletteColor in palette.paletteColors) {
+      final color = paletteColor.color;
+      final alpha = (color.toARGB32() >> 24) & 0xFF;
+      if (alpha < 30) continue; // Ignore transparent pixels
+
+      final hsl = HSLColor.fromColor(color);
+
+      // Discard pure black, pure white, and near-extremes
+      if (hsl.lightness < 0.10 || hsl.lightness > 0.92) continue;
+
+      // Only consider chromatic colors (saturation >= 18%)
+      if (hsl.saturation < 0.18) continue;
+
+      // Score = (Saturation^2) * (1 - |Lightness - 0.5|) * (Population + 1)
+      final lightnessBalance = 1.0 - (hsl.lightness - 0.5).abs();
+      final score =
+          (hsl.saturation * hsl.saturation) *
+          lightnessBalance *
+          (paletteColor.population + 1);
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestChromaticColor = color;
+      }
+    }
+
+    if (bestChromaticColor != null) {
+      return bestChromaticColor;
+    }
+
+    // 2. Direct candidate targets from PaletteGenerator (strict vibrant targets as fallback)
     final candidates = <Color?>[
       palette.vibrantColor?.color,
       palette.lightVibrantColor?.color,
@@ -68,37 +121,34 @@ class AccentColorExtractor {
       }
     }
 
-    // 2. Score all detected palette colors to find the highest chromatic contrast
-    Color? bestColor;
-    double bestScore = -1.0;
-
-    for (final paletteColor in palette.paletteColors) {
-      final color = paletteColor.color;
-      final hsl = HSLColor.fromColor(color);
-
-      // Discard pure black/white/transparent extremes
-      if (hsl.lightness < 0.10 || hsl.lightness > 0.92) continue;
-
-      // Score = Saturation * (1 - |Lightness - 0.5|) * Population
-      final lightnessBalance = 1.0 - (hsl.lightness - 0.5).abs();
-      final score =
-          hsl.saturation * lightnessBalance * (paletteColor.population + 1);
-
-      if (score > bestScore && hsl.saturation >= 0.15) {
-        bestScore = score;
-        bestColor = color;
-      }
-    }
-
-    if (bestColor != null) {
-      return bestColor;
-    }
-
-    // 3. Fallback to dominant or first palette color if it has adequate saturation;
-    // otherwise return null to trigger the vibrant default glow fallback.
+    // 3. Fallback to dominant or first palette color if it has adequate saturation and is chromatic
     final dominant = palette.dominantColor?.color ?? palette.colors.firstOrNull;
-    if (dominant != null && HSLColor.fromColor(dominant).saturation >= 0.15) {
+    if (dominant != null &&
+        !isAchromatic(dominant) &&
+        HSLColor.fromColor(dominant).saturation >= 0.15) {
       return dominant;
+    }
+
+    // 4. Achromatic / Monochrome handling (e.g. silver/white or black icons):
+    // Rather than returning null (which triggers an artificial vibrant indigo fallback),
+    // determine whether the icon has visible light/silver elements or is a dark/black silhouette.
+    final visibleColors = palette.paletteColors.where((p) {
+      final alpha = (p.color.toARGB32() >> 24) & 0xFF;
+      return alpha > 20;
+    }).toList();
+
+    if (visibleColors.isNotEmpty) {
+      final hasLightElement = visibleColors.any((p) {
+        final hsl = HSLColor.fromColor(p.color);
+        return hsl.lightness >= 0.25;
+      });
+
+      return hasLightElement ? neutralLight : neutralDark;
+    }
+
+    if (dominant != null) {
+      final hsl = HSLColor.fromColor(dominant);
+      return hsl.lightness >= 0.25 ? neutralLight : neutralDark;
     }
 
     return null;
