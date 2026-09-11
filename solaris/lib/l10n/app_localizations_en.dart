@@ -1385,6 +1385,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sleepIntegrationHelpTitle => 'Sleep Integration Guide';
 
   @override
+  String get sleepIntegrationHelpTooltip =>
+      'Click (LMB) to open the sleep integration guide';
+
+  @override
   String get sleepIntegrationHelpIntro =>
       'This integration allows third-party desktop sleep trackers, smart alarms, or automation scripts to send sleep data directly to this app over a secure local network connection.';
 

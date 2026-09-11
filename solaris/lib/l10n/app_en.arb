@@ -661,6 +661,7 @@
   },
   "serverPortBusyAlertSolution": "To resolve this, you can enter a different port number in the field above (e.g., 45322), or close the application that is using port {port}.",
   "sleepIntegrationHelpTitle": "Sleep Integration Guide",
+  "sleepIntegrationHelpTooltip": "Click (LMB) to open the sleep integration guide",
   "sleepIntegrationHelpIntro": "This integration allows third-party desktop sleep trackers, smart alarms, or automation scripts to send sleep data directly to this app over a secure local network connection.",
   "sleepIntegrationHelpSectionWhat": "What is it?",
   "sleepIntegrationHelpSectionWhatText": "Solaris can adjust your monitor's brightness and color temperature dynamically based on your circadian rhythm. To do this, it needs accurate sleep data. While Google Fit provides cloud sync, this local API server allows immediate, offline synchronization from apps running on your PC.",

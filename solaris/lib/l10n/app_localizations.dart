@@ -2484,6 +2484,12 @@ abstract class AppLocalizations {
   /// **'Sleep Integration Guide'**
   String get sleepIntegrationHelpTitle;
 
+  /// No description provided for @sleepIntegrationHelpTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Click (LMB) to open the sleep integration guide'**
+  String get sleepIntegrationHelpTooltip;
+
   /// No description provided for @sleepIntegrationHelpIntro.
   ///
   /// In en, this message translates to:

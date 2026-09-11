@@ -1387,6 +1387,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sleepIntegrationHelpTitle => 'Посібник з інтеграції сну';
 
   @override
+  String get sleepIntegrationHelpTooltip =>
+      'Клікніть (ЛКМ), щоб відкрити посібник з інтеграції сну';
+
+  @override
   String get sleepIntegrationHelpIntro =>
       'Ця інтеграція дозволяє стороннім програмам для відстеження сну, розумним будильникам або скриптам автоматизації надсилати дані про сон безпосередньо в цей додаток через безпечне локальне з\'єднання.';
 

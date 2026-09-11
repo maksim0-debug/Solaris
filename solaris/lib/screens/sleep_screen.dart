@@ -145,51 +145,10 @@ class _SleepScreenState extends ConsumerState<SleepScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Tooltip(
-                          message: l10n.sleepCardsInteractionTooltip,
-                          waitDuration: const Duration(milliseconds: 150),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF0F172A,
-                            ).withValues(alpha: 0.96),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.15),
-                              width: 1,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.5),
-                                blurRadius: 16,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          textStyle: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            height: 1.45,
-                            fontFamily: 'Outfit',
-                          ),
-                          child: IconButton(
-                            icon: Icon(
-                              LucideIcons.info,
-                              size: 16,
-                              color: Colors.white.withValues(alpha: 0.35),
-                            ),
-                            onPressed: () =>
-                                _showSleepInteractionsHelpDialog(context, l10n),
-                            constraints: const BoxConstraints(
-                              minWidth: 28,
-                              minHeight: 28,
-                            ),
-                            padding: const EdgeInsets.all(4),
-                            splashRadius: 18,
-                          ),
+                        _SleepInfoIconButton(
+                          tooltipMessage: l10n.sleepCardsInteractionTooltip,
+                          onPressed: () =>
+                              _showSleepInteractionsHelpDialog(context, l10n),
                         ),
                       ],
                     ),
@@ -371,6 +330,68 @@ class _SleepScreenState extends ConsumerState<SleepScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SleepInfoIconButton extends StatelessWidget {
+  final String tooltipMessage;
+  final VoidCallback onPressed;
+
+  const _SleepInfoIconButton({
+    required this.tooltipMessage,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      opaque: true,
+      child: Material(
+        color: Colors.transparent,
+        child: Tooltip(
+          message: tooltipMessage,
+          waitDuration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.96),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.15),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.5),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          textStyle: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            height: 1.45,
+            fontFamily: 'Outfit',
+          ),
+          child: IconButton(
+            mouseCursor: SystemMouseCursors.click,
+            icon: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: Icon(
+                LucideIcons.info,
+                size: 16,
+                color: Colors.white.withValues(alpha: 0.35),
+              ),
+            ),
+            onPressed: onPressed,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            padding: const EdgeInsets.all(4),
+            splashRadius: 18,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -1767,19 +1788,9 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            GestureDetector(
-                              onTap: () {}, // Prevent InkWell tap propagation
-                              child: IconButton(
-                                icon: Icon(
-                                  LucideIcons.info,
-                                  size: 16,
-                                  color: Colors.white.withValues(alpha: 0.3),
-                                ),
-                                onPressed: () => _showHelpDialog(context, l10n),
-                                constraints: const BoxConstraints(),
-                                padding: EdgeInsets.zero,
-                                splashRadius: 16,
-                              ),
+                            _SleepInfoIconButton(
+                              tooltipMessage: l10n.sleepIntegrationHelpTooltip,
+                              onPressed: () => _showHelpDialog(context, l10n),
                             ),
                           ],
                         ),
