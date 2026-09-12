@@ -97,6 +97,7 @@ class ApiControlHandler {
           actionResult.statusCode,
           actionResult.errorTitle,
           actionResult.errorMessage,
+          typeUri: actionResult.errorType,
         );
         return;
       }
@@ -325,6 +326,15 @@ class ApiControlHandler {
             false;
         final minVal = isSoftwareDimmingEnabled ? -100.0 : 0.0;
         if (val == null || val < minVal || val > 100.0) {
+          if (val != null && val < 0.0 && !isSoftwareDimmingEnabled) {
+            return _ActionResult.error(
+              HttpStatus.badRequest,
+              'Extra Dark Dimming Disabled',
+              "Brightness value $val is below 0.0, which requires 'Extra Dark Dimming' (Software Dimming) to be enabled in Solaris settings. Enable this setting in the application to unlock values down to -100.0.",
+              errorType:
+                  'https://solaris.local/errors/extra-dark-dimming-disabled',
+            );
+          }
           return _ActionResult.error(
             HttpStatus.badRequest,
             'Validation Error',
@@ -842,10 +852,12 @@ class ApiControlHandler {
     HttpRequest request,
     int statusCode,
     String title,
-    String detail,
-  ) async {
+    String detail, {
+    String? typeUri,
+  }) async {
     final errorDto = Rfc7807Error(
       type:
+          typeUri ??
           'https://solaris.local/errors/${statusCode == 404 ? 'not-found' : 'control-error'}',
       title: title,
       status: statusCode,
@@ -927,6 +939,7 @@ class _ActionResult {
   final int statusCode;
   final String errorTitle;
   final String errorMessage;
+  final String? errorType;
   final String action;
   final Map<String, dynamic> data;
 
@@ -935,20 +948,26 @@ class _ActionResult {
       isDebounced = false,
       statusCode = 200,
       errorTitle = '',
-      errorMessage = '';
+      errorMessage = '',
+      errorType = null;
 
   _ActionResult.accepted(this.action, this.data)
     : isError = false,
       isDebounced = true,
       statusCode = 202,
       errorTitle = '',
-      errorMessage = '';
+      errorMessage = '',
+      errorType = null;
 
-  _ActionResult.error(this.statusCode, this.errorTitle, this.errorMessage)
-    : isError = true,
-      isDebounced = false,
-      action = '',
-      data = const {};
+  _ActionResult.error(
+    this.statusCode,
+    this.errorTitle,
+    this.errorMessage, {
+    this.errorType,
+  }) : isError = true,
+       isDebounced = false,
+       action = '',
+       data = const {};
 
   Map<String, dynamic> toResponseBody() {
     if (isError) {

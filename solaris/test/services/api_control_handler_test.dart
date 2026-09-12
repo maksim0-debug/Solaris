@@ -192,5 +192,87 @@ void main() {
         expect(json['slug'], equals('display-1'));
       },
     );
+
+    test(
+      'POST /api/v1/control with value < 0 returns 400 Extra Dark Dimming Disabled when setting is off',
+      () async {
+        final req = await client.postUrl(
+          Uri.parse('$serverUrl/api/v1/control'),
+        );
+        req.headers.contentType = ContentType.json;
+        req.write(jsonEncode({'action': 'set_brightness', 'value': -30.0}));
+        final resp = await req.close();
+
+        expect(resp.statusCode, equals(HttpStatus.badRequest));
+        expect(
+          resp.headers.value('Content-Type'),
+          equals('application/problem+json'),
+        );
+        final bodyStr = await resp.transform(utf8.decoder).join();
+        final json = jsonDecode(bodyStr);
+        expect(json['title'], equals('Extra Dark Dimming Disabled'));
+        expect(
+          json['type'],
+          equals('https://solaris.local/errors/extra-dark-dimming-disabled'),
+        );
+        expect(
+          json['detail'],
+          contains(
+            "requires 'Extra Dark Dimming' (Software Dimming) to be enabled",
+          ),
+        );
+      },
+    );
+
+    test(
+      'POST /api/v1/monitors/display-1/brightness with value < 0 returns 400 Extra Dark Dimming Disabled when setting is off',
+      () async {
+        final req = await client.postUrl(
+          Uri.parse('$serverUrl/api/v1/monitors/display-1/brightness'),
+        );
+        req.headers.contentType = ContentType.json;
+        req.write(jsonEncode({'value': -30.0}));
+        final resp = await req.close();
+
+        expect(resp.statusCode, equals(HttpStatus.badRequest));
+        expect(
+          resp.headers.value('Content-Type'),
+          equals('application/problem+json'),
+        );
+        final bodyStr = await resp.transform(utf8.decoder).join();
+        final json = jsonDecode(bodyStr);
+        expect(json['title'], equals('Extra Dark Dimming Disabled'));
+        expect(
+          json['type'],
+          equals('https://solaris.local/errors/extra-dark-dimming-disabled'),
+        );
+        expect(
+          json['detail'],
+          contains(
+            "requires 'Extra Dark Dimming' (Software Dimming) to be enabled",
+          ),
+        );
+      },
+    );
+
+    test(
+      'POST /api/v1/control accepts negative brightness when Extra Dark Dimming is enabled',
+      () async {
+        container.read(settingsProvider.notifier).updateSoftwareDimming(true);
+
+        final req = await client.postUrl(
+          Uri.parse('$serverUrl/api/v1/control'),
+        );
+        req.headers.contentType = ContentType.json;
+        req.write(jsonEncode({'action': 'set_brightness', 'value': -40.0}));
+        final resp = await req.close();
+
+        expect(resp.statusCode, equals(HttpStatus.accepted));
+        final bodyStr = await resp.transform(utf8.decoder).join();
+        final json = jsonDecode(bodyStr);
+        expect(json['status'], equals('accepted'));
+        expect(json['queued']['value'], equals(-40.0));
+      },
+    );
   });
 }

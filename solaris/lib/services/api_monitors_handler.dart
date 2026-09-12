@@ -273,6 +273,16 @@ class ApiMonitorsHandler {
         false;
     final minVal = isSoftwareDimmingEnabled ? -100.0 : 0.0;
     if (val < minVal || val > 100.0) {
+      if (val < 0.0 && !isSoftwareDimmingEnabled) {
+        await _sendError(
+          request,
+          HttpStatus.badRequest,
+          'Extra Dark Dimming Disabled',
+          "Brightness value $val is below 0.0, which requires 'Extra Dark Dimming' (Software Dimming) to be enabled in Solaris settings. Enable this setting in the application to unlock values down to -100.0.",
+          typeUri: 'https://solaris.local/errors/extra-dark-dimming-disabled',
+        );
+        return;
+      }
       await _sendError(
         request,
         HttpStatus.badRequest,
@@ -450,10 +460,11 @@ class ApiMonitorsHandler {
     HttpRequest request,
     int statusCode,
     String title,
-    String detail,
-  ) async {
+    String detail, {
+    String? typeUri,
+  }) async {
     final errorDto = Rfc7807Error(
-      type: 'https://solaris.local/errors/monitors-error',
+      type: typeUri ?? 'https://solaris.local/errors/monitors-error',
       title: title,
       status: statusCode,
       detail: detail,
