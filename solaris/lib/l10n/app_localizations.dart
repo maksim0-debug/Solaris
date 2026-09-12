@@ -4295,6 +4295,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 process} other{{count} processes}}'**
   String processesCount(int count);
+
+  /// No description provided for @softwareDimmingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Extra Dark Dimming (Below 0%)'**
+  String get softwareDimmingTitle;
+
+  /// No description provided for @softwareDimmingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Allows manual dimming below hardware minimum using a software overlay'**
+  String get softwareDimmingSubtitle;
+
+  /// No description provided for @softwareDimmingTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'A software overlay dims the screen in complete darkness. Powered by Windows WDA_EXCLUDEFROMCAPTURE, this overlay is completely excluded from screenshots, screen recordings, and streams. Operates in manual mode only.'**
+  String get softwareDimmingTooltip;
 }
 
 class _AppLocalizationsDelegate

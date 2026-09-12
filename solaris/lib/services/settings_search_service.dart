@@ -254,6 +254,14 @@ class SettingsSearchService {
         anchorId: 'autorun',
       ),
       SettingItem(
+        id: 'software_dimming',
+        title: l10n.softwareDimmingTitle,
+        description: l10n.softwareDimmingSubtitle,
+        tags: _splitTags(l10n.tags_brightness),
+        screen: AppScreen.settings,
+        anchorId: 'software_dimming',
+      ),
+      SettingItem(
         id: 'auto_updates',
         title: l10n.autoUpdatesTitle,
         description: l10n.autoUpdatesSubtitle,

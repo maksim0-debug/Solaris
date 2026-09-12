@@ -64,6 +64,10 @@ class MonitorManager {
   std::vector<std::pair<std::string, std::string>> GetRunningProcesses();
 
  private:
+  // Hardware brightness tracking to prevent redundant I2C / DDC/CI bus flooding
+  std::mutex hardware_brightness_mutex_;
+  std::unordered_map<std::string, int> last_hardware_brightness_;
+
   // Persistent Physical Monitor Handle Cache
   std::mutex handles_mutex_;
   std::map<std::string, std::vector<PHYSICAL_MONITOR>> physical_monitors_cache_;

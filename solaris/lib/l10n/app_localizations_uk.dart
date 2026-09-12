@@ -2505,4 +2505,15 @@ class AppLocalizationsUk extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get softwareDimmingTitle => 'Глибоке затемнення (нижче 0%)';
+
+  @override
+  String get softwareDimmingSubtitle =>
+      'Дозволяє вручну знижувати яскравість нижче апаратного мінімуму через оверлей';
+
+  @override
+  String get softwareDimmingTooltip =>
+      'Програмний оверлей затемнює екран у повній темряві. Завдяки технології Windows (WDA_EXCLUDEFROMCAPTURE), оверлей повністю ігнорується під час зняття скріншотів, запису екрана та стрімів. Працює лише в ручному режимі.';
 }

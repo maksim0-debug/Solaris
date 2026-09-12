@@ -74,6 +74,9 @@ void MonitorManager::DestroyPhysicalMonitorsCache() {
     }
   }
   physical_monitors_cache_.clear();
+
+  std::lock_guard<std::mutex> lock(hardware_brightness_mutex_);
+  last_hardware_brightness_.clear();
 }
 
 std::vector<PHYSICAL_MONITOR> MonitorManager::GetOrCreatePhysicalMonitors(const std::string& device_path) {
@@ -351,8 +354,31 @@ std::string MonitorManager::GetManufacturerName(uint16_t id) {
   return std::string(name);
 }
 bool MonitorManager::SetBrightness(const std::string &device_path, int brightness) {
-  // Clamp brightness to 0-100
-  brightness = std::max(0, std::min(100, brightness));
+  // Clamp brightness to -100 to 100
+  brightness = std::max(-100, std::min(100, brightness));
+
+  if (brightness < 0) {
+    // Check if physical monitor backlight is already set to 0 to avoid I2C bus flooding
+    {
+      std::lock_guard<std::mutex> lock(hardware_brightness_mutex_);
+      auto it = last_hardware_brightness_.find(device_path);
+      if (it != last_hardware_brightness_.end() && it->second == 0) {
+        return true;
+      }
+      last_hardware_brightness_[device_path] = 0;
+    }
+
+    auto physical_monitors = GetOrCreatePhysicalMonitors(device_path);
+    for (size_t i = 0; i < physical_monitors.size(); i++) {
+      ::SetMonitorBrightness(physical_monitors[i].hPhysicalMonitor, 0);
+    }
+    return true;
+  }
+
+  {
+    std::lock_guard<std::mutex> lock(hardware_brightness_mutex_);
+    last_hardware_brightness_[device_path] = brightness;
+  }
 
   auto physical_monitors = GetOrCreatePhysicalMonitors(device_path);
   if (physical_monitors.empty()) {

@@ -93,6 +93,7 @@ class SettingsState {
   final double brightnessStepDown;
   final bool isMultiMonitorOffsetEnabled;
   final double brightnessOffset;
+  final bool isSoftwareDimmingEnabled;
   final List<UserPreset> userPresets;
   final String? activeUserPresetId;
   final List<String> presetOrder;
@@ -216,6 +217,7 @@ class SettingsState {
     this.brightnessStepDown = 5.0,
     this.isMultiMonitorOffsetEnabled = false,
     this.brightnessOffset = 0.0,
+    this.isSoftwareDimmingEnabled = false,
     this.userPresets = const [],
     this.activeUserPresetId,
     List<String>? presetOrder,
@@ -400,6 +402,7 @@ class SettingsState {
     'brightnessStepDown': brightnessStepDown,
     'isMultiMonitorOffsetEnabled': isMultiMonitorOffsetEnabled,
     'brightnessOffset': brightnessOffset,
+    'isSoftwareDimmingEnabled': isSoftwareDimmingEnabled,
     'userPresets': userPresets.map((p) => p.toJson()).toList(),
     'activeUserPresetId': activeUserPresetId,
     'presetOrder': presetOrder,
@@ -644,6 +647,8 @@ class SettingsState {
       isMultiMonitorOffsetEnabled:
           json['isMultiMonitorOffsetEnabled'] as bool? ?? false,
       brightnessOffset: (json['brightnessOffset'] as num?)?.toDouble() ?? 0.0,
+      isSoftwareDimmingEnabled:
+          json['isSoftwareDimmingEnabled'] as bool? ?? false,
       userPresets:
           (json['userPresets'] as List<dynamic>?)
               ?.map((p) => UserPreset.fromJson(p as Map<String, dynamic>))
@@ -785,6 +790,7 @@ class SettingsState {
     double? brightnessStepDown,
     bool? isMultiMonitorOffsetEnabled,
     double? brightnessOffset,
+    bool? isSoftwareDimmingEnabled,
     List<UserPreset>? userPresets,
     String? activeUserPresetId,
     List<String>? presetOrder,
@@ -935,6 +941,8 @@ class SettingsState {
       isMultiMonitorOffsetEnabled:
           isMultiMonitorOffsetEnabled ?? this.isMultiMonitorOffsetEnabled,
       brightnessOffset: brightnessOffset ?? this.brightnessOffset,
+      isSoftwareDimmingEnabled:
+          isSoftwareDimmingEnabled ?? this.isSoftwareDimmingEnabled,
       userPresets: userPresets ?? this.userPresets,
       activeUserPresetId: clearActiveUserPresetId
           ? null

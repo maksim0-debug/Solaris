@@ -1592,6 +1592,19 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     AutorunService.setEnabled(isEnabled, mode);
   }
 
+  void updateSoftwareDimming(bool enabled) {
+    _updateSettings({
+      'all',
+    }, (s) => s.copyWith(isSoftwareDimmingEnabled: enabled));
+    if (!enabled) {
+      final currentManual = ref.read(manualBrightnessProvider);
+      if (currentManual < 0) {
+        ref.read(manualBrightnessProvider.notifier).update(0.0);
+        ref.read(currentBrightnessProvider.notifier).setManualBrightness(0.0);
+      }
+    }
+  }
+
   void updateWeatherAdjustment(bool enabled) {
     _updateSettings(
       ref.read(selectedMonitorsProvider),
@@ -2464,7 +2477,11 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     updateAutoBrightness(false);
 
     final currentManual = ref.read(manualBrightnessProvider);
-    final newVal = (currentManual + delta).clamp(0.0, 100.0);
+    final isSoftwareDimmingEnabled = _getSettings(
+      'all',
+    ).isSoftwareDimmingEnabled;
+    final minVal = isSoftwareDimmingEnabled ? -100.0 : 0.0;
+    final newVal = (currentManual + delta).clamp(minVal, 100.0);
     ref.read(manualBrightnessProvider.notifier).update(newVal);
 
     // Save to prefs as well (matches setManualBrightness in CurrentBrightnessNotifier)
@@ -2650,7 +2667,10 @@ class CurrentBrightnessNotifier extends Notifier<double> {
 
         // 4. Global Auto / Circadian Cascade
         if (!isAuto || !selectedSettings.isAutoBrightnessEnabled) {
-          return manualBrightness;
+          final isDimming =
+              settingsMap['all']?.isSoftwareDimmingEnabled ?? false;
+          final minAllowed = isDimming ? -100.0 : 0.0;
+          return manualBrightness.clamp(minAllowed, 100.0);
         }
 
         final solarStateAsync = ref.watch(solarStateStreamProvider);
@@ -2720,13 +2740,20 @@ class CurrentBrightnessNotifier extends Notifier<double> {
     ref.read(activeProcessServiceProvider.notifier).suppressActiveApp();
     ref.read(settingsProvider.notifier).updateAutoBrightness(false);
 
+    final isSoftwareDimmingEnabled =
+        ref.read(settingsProvider).value?['all']?.isSoftwareDimmingEnabled ??
+        false;
+    final minVal = isSoftwareDimmingEnabled ? -100.0 : 0.0;
+
     double baseValue = value;
     final selection = ref.read(selectedMonitorsProvider);
     if (selection.length == 1 && !selection.contains('all')) {
       final id = selection.first;
       final offsets = ref.read(brightnessOffsetsProvider);
       final offset = offsets[id] ?? 0.0;
-      baseValue = (value - offset).clamp(0.0, 100.0);
+      baseValue = (value - offset).clamp(minVal, 100.0);
+    } else {
+      baseValue = value.clamp(minVal, 100.0);
     }
 
     ref.read(manualBrightnessProvider.notifier).update(baseValue);
@@ -2810,6 +2837,8 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
           offsets: offsets,
           isManual: true,
           isUIVisible: visibility == AppVisibilityState.visible,
+          isSoftwareDimmingEnabled:
+              settingsMap['all']?.isSoftwareDimmingEnabled ?? false,
           updateBrightnessCallback: (id, val) =>
               monitorListNotifier.updateBrightness(id, val),
         );
@@ -2902,6 +2931,7 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                   monitorService: monitorService,
                   offsets: offsets,
                   isUIVisible: visibility == AppVisibilityState.visible,
+                  isSoftwareDimmingEnabled: settings.isSoftwareDimmingEnabled,
                   updateBrightnessCallback: (id, val) {
                     monitorListNotifier.updateBrightness(id, val);
                   },
@@ -2916,6 +2946,7 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                 monitorService: monitorService,
                 offsets: offsets,
                 isUIVisible: visibility == AppVisibilityState.visible,
+                isSoftwareDimmingEnabled: settings.isSoftwareDimmingEnabled,
                 updateBrightnessCallback: (id, val) {
                   monitorListNotifier.updateBrightness(id, val);
                 },
@@ -2974,6 +3005,7 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                 monitorService: monitorService,
                 offsets: offsets,
                 isUIVisible: visibility == AppVisibilityState.visible,
+                isSoftwareDimmingEnabled: settings.isSoftwareDimmingEnabled,
                 updateBrightnessCallback: (id, val) {
                   monitorListNotifier.updateBrightness(id, val);
                 },
@@ -2988,6 +3020,7 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                 offsets: offsets,
                 isManual: true,
                 isUIVisible: visibility == AppVisibilityState.visible,
+                isSoftwareDimmingEnabled: settings.isSoftwareDimmingEnabled,
                 updateBrightnessCallback: (id, val) {
                   monitorListNotifier.updateBrightness(id, val);
                 },

@@ -12,6 +12,7 @@ add_executable(${BINARY_NAME} WIN32
   "utils.cpp"
   "win32_window.cpp"
   "monitor_manager.cpp"
+  "overlay_manager.cpp"
   "app_icon_extractor.cpp"
   "${FLUTTER_MANAGED_DIR}/generated_plugin_registrant.cc"
   "Runner.rc"

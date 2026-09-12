@@ -1000,7 +1000,10 @@
   "processDoubleTapHint": "Подвійний клік для швидкого додавання",
   "selectAppHint": "Оберіть процес зі списку вище для додавання правила",
   "addApp": "Додати",
-  "processesCount": "{count, plural, one{{count} процес} few{{count} процеси} other{{count} процесів}}"
+  "processesCount": "{count, plural, one{{count} процес} few{{count} процеси} other{{count} процесів}}",
+  "softwareDimmingTitle": "Глибоке затемнення (нижче 0%)",
+  "softwareDimmingSubtitle": "Дозволяє вручну знижувати яскравість нижче апаратного мінімуму через оверлей",
+  "softwareDimmingTooltip": "Програмний оверлей затемнює екран у повній темряві. Завдяки технології Windows (WDA_EXCLUDEFROMCAPTURE), оверлей повністю ігнорується під час зняття скріншотів, запису екрана та стрімів. Працює лише в ручному режимі."
 }
 
 

@@ -612,6 +612,8 @@ class _Header extends ConsumerWidget {
               monitorService: monitorService,
               offsets: offsets,
               isManual: true,
+              isSoftwareDimmingEnabled:
+                  settingsMap['all']?.isSoftwareDimmingEnabled ?? false,
               updateBrightnessCallback: (id, val) =>
                   monitorListNotifier.updateBrightness(id, val),
             );
@@ -680,6 +682,8 @@ class _Header extends ConsumerWidget {
               monitorService: monitorService,
               offsets: offsets,
               isManual: true,
+              isSoftwareDimmingEnabled:
+                  settingsMap['all']?.isSoftwareDimmingEnabled ?? false,
               updateBrightnessCallback: (id, val) =>
                   monitorListNotifier.updateBrightness(id, val),
             );
@@ -723,11 +727,18 @@ class _Header extends ConsumerWidget {
           if (monitor.realBrightness != null) {
             final offsets = ref.read(brightnessOffsetsProvider);
             final offset = offsets[id] ?? 0.0;
+            final isDimming =
+                ref
+                    .read(settingsProvider)
+                    .value?['all']
+                    ?.isSoftwareDimmingEnabled ??
+                false;
+            final minVal = isDimming ? -100.0 : 0.0;
             ref
                 .read(manualBrightnessProvider.notifier)
                 .update(
                   (monitor.realBrightness!.toDouble() - offset).clamp(
-                    0.0,
+                    minVal,
                     100.0,
                   ),
                 );
@@ -942,13 +953,17 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
     }
 
     final monitors = ref.watch(monitorListProvider).value ?? [];
+    final settingsMap = ref.watch(settingsProvider).value ?? {};
+    final isSoftwareDimmingEnabled =
+        settingsMap['all']?.isSoftwareDimmingEnabled ?? false;
+    final minBrightness = isSoftwareDimmingEnabled ? -100.0 : 0.0;
 
     double targetBrightness = baseBrightness;
     if (selection.length == 1 && !selection.contains('all')) {
       final id = selection.first;
       final offsets = ref.watch(brightnessOffsetsProvider);
       final offset = offsets[id] ?? 0.0;
-      targetBrightness = (baseBrightness + offset).clamp(0.0, 100.0);
+      targetBrightness = (baseBrightness + offset).clamp(minBrightness, 100.0);
     }
 
     double brightness = targetBrightness;
@@ -1099,6 +1114,9 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                       id: 'brightness_control',
                       child: BrightnessSlider(
                         value: brightness,
+                        min: minBrightness,
+                        max: 100.0,
+                        isSoftwareDimmingEnabled: isSoftwareDimmingEnabled,
                         onChanged: (val) => ref
                             .read(currentBrightnessProvider.notifier)
                             .setManualBrightness(val),
@@ -1917,7 +1935,8 @@ class _Footer extends ConsumerWidget {
 }
 
 class DisplayInfo extends ConsumerWidget {
-  const DisplayInfo({super.key, 
+  const DisplayInfo({
+    super.key,
     required this.label,
     required this.isSelected,
     this.brightness,

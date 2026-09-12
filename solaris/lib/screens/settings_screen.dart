@@ -36,6 +36,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final ScrollController _scrollController = ScrollController();
   final Map<String, GlobalKey<DeepLinkTargetState>> _anchorKeys = {
     'autorun': GlobalKey<DeepLinkTargetState>(),
+    'software_dimming': GlobalKey<DeepLinkTargetState>(),
     'weather_adjustment': GlobalKey<DeepLinkTargetState>(),
     'weather_brightness': GlobalKey<DeepLinkTargetState>(),
     'weather_temperature': GlobalKey<DeepLinkTargetState>(),
@@ -314,6 +315,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ],
                     ),
                   ],
+                  const SizedBox(height: 16),
+                  const Divider(color: Colors.white10),
+                  const SizedBox(height: 16),
+                  DeepLinkTarget(
+                    key: _anchorKeys['software_dimming'],
+                    id: 'software_dimming',
+                    child: _SettingsRow(
+                      title: l10n.softwareDimmingTitle,
+                      subtitle: l10n.softwareDimmingSubtitle,
+                      tooltip: l10n.softwareDimmingTooltip,
+                      value: settingsAsync.maybeWhen(
+                        data: (map) =>
+                            map['all']?.isSoftwareDimmingEnabled ?? false,
+                        orElse: () => false,
+                      ),
+                      onChanged: (val) => ref
+                          .read(settingsProvider.notifier)
+                          .updateSoftwareDimming(val),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1541,12 +1562,14 @@ class _SettingsRow extends StatelessWidget {
     required this.subtitle,
     required this.value,
     required this.onChanged,
+    this.tooltip,
   });
 
   final String title;
   final String subtitle;
   final bool value;
   final ValueChanged<bool> onChanged;
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
@@ -1557,13 +1580,43 @@ class _SettingsRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white70,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white70,
+                    ),
+                  ),
+                  if (tooltip != null) ...[
+                    const SizedBox(width: 8),
+                    Tooltip(
+                      message: tooltip!,
+                      preferBelow: false,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E1E2E),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white12),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white70,
+                      ),
+                      child: const Icon(
+                        LucideIcons.info,
+                        size: 14,
+                        color: Colors.white38,
+                      ),
+                    ),
+                  ],
+                ],
               ),
               const SizedBox(height: 4),
               Text(

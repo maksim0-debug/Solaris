@@ -11,6 +11,7 @@
 
 #include "win32_window.h"
 #include "monitor_manager.h"
+#include "overlay_manager.h"
 #include "app_icon_extractor.h"
 
 #define WM_SOLARIS_DISPATCH_EVENT (WM_USER + 101)
@@ -51,6 +52,9 @@ class FlutterWindow : public Win32Window {
 
   // Keep one manager instance alive to preserve cached original gamma ramps.
   MonitorManager monitor_manager_;
+
+  // Software Dimming Overlay Manager on the main UI thread.
+  OverlayManager overlay_manager_;
 
   // Dedicated extractor for application icons and fast disk/memory caching.
   std::unique_ptr<AppIconExtractor> app_icon_extractor_;

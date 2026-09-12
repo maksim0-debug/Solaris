@@ -145,6 +145,14 @@ bool FlutterWindow::OnCreate() {
             if (device_path_it != arguments->end() && brightness_it != arguments->end()) {
               std::string device_path = std::get<std::string>(device_path_it->second);
               int brightness = std::get<int>(brightness_it->second);
+
+              // Software Dimming Overlay is managed instantly on the UI thread
+              if (brightness < 0) {
+                double opacity = (static_cast<double>(std::abs(brightness)) / 100.0) * 0.85;
+                overlay_manager_.SetOverlayOpacity(device_path, opacity);
+              } else {
+                overlay_manager_.SetOverlayOpacity(device_path, 0.0);
+              }
               
               monitor_manager_.EnqueueTask([this, device_path, brightness]() {
                 monitor_manager_.SetBrightness(device_path, brightness);
@@ -290,6 +298,8 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  overlay_manager_.DestroyAllOverlays();
+
   if (app_icon_extractor_) {
     app_icon_extractor_ = nullptr;
   }
@@ -352,6 +362,7 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
       break;
 
     case WM_DISPLAYCHANGE:
+      overlay_manager_.UpdateMonitorBounds();
       monitor_manager_.InvalidateMonitorHandlesDebounced(1000);
       if (system_event_sink_) {
         flutter::EncodableMap map;

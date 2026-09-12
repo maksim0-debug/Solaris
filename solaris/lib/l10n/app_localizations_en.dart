@@ -2489,4 +2489,15 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get softwareDimmingTitle => 'Extra Dark Dimming (Below 0%)';
+
+  @override
+  String get softwareDimmingSubtitle =>
+      'Allows manual dimming below hardware minimum using a software overlay';
+
+  @override
+  String get softwareDimmingTooltip =>
+      'A software overlay dims the screen in complete darkness. Powered by Windows WDA_EXCLUDEFROMCAPTURE, this overlay is completely excluded from screenshots, screen recordings, and streams. Operates in manual mode only.';
 }

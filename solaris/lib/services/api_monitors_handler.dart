@@ -265,12 +265,19 @@ class ApiMonitorsHandler {
     }
 
     final val = (body['value'] as num).toDouble();
-    if (val < 0.0 || val > 100.0) {
+    final isSoftwareDimmingEnabled =
+        _container
+            .read(settingsProvider)
+            .value?['all']
+            ?.isSoftwareDimmingEnabled ??
+        false;
+    final minVal = isSoftwareDimmingEnabled ? -100.0 : 0.0;
+    if (val < minVal || val > 100.0) {
       await _sendError(
         request,
         HttpStatus.badRequest,
         'Validation Error',
-        "Field 'value' must be between 0.0 and 100.0.",
+        "Field 'value' must be between $minVal and 100.0.",
       );
       return;
     }
