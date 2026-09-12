@@ -372,7 +372,7 @@ Returns status summary for a single monitor identified by `:slug`.
 
 ### 3. Point-Mutation Endpoints
 
-* **`POST /api/v1/monitors/:slug/brightness`**: Body `{"value": 75.0}` (double, `0.0..100.0`)
+* **`POST /api/v1/monitors/:slug/brightness`**: Body `{"value": 75.0}` (double, `0.0..100.0`, or `-100.0..100.0` when Extra Dark Dimming is enabled)
 * **`POST /api/v1/monitors/:slug/temperature`**: Body `{"value": 5000}` (integer Kelvin, `3300..6500`)
 * **`POST /api/v1/monitors/:slug/game-mode`**: Body `{"enabled": true}` (boolean)
 * **Granular Security**: Blocked with `HTTP 403 Forbidden` if `isReadOnly = true` or category `monitors` / `gaming` is disabled.
@@ -501,7 +501,7 @@ Below is the complete reference of all 28 canonical action commands supported by
 #### Category 1: `monitors` (3 Actions)
 * **`set_brightness`** (Alias: `set_monitor_brightness`)
   * **Payload**: `{"action": "set_brightness", "value": 80.0, "monitor_id": "display-1"}`
-  * **Parameters**: `value` (double, `0.0..100.0`), `monitor_id` / `slug` (optional string target display).
+  * **Parameters**: `value` (double, `0.0..100.0`, or `-100.0..100.0` when Extra Dark Dimming is enabled in settings), `monitor_id` / `slug` (optional string target display).
 * **`set_temperature`** (Alias: `set_monitor_temperature`)
   * **Payload**: `{"action": "set_temperature", "value": 5500, "monitor_id": "display-1"}`
   * **Parameters**: `value` (integer Kelvin, `3300..6500`), `monitor_id` / `slug` (optional).

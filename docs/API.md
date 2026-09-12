@@ -125,6 +125,9 @@ Incoming requests (REST API, WebSocket commands, or internal triggers) undergo a
 > [!NOTE]
 > **Action Execution Routing**: `on_system_resume` and `on_hardware_error` are system/hardware-triggered event signals (category `system`), and per-app override management actions (`get_app_overrides`, `manage_app_overrides`, `reset_builtin_app_overrides`) are handled via dedicated `/api/v1/app-overrides` REST endpoints rather than `POST /api/v1/control`. Executing non-control actions on `POST /api/v1/control` returns `HTTP 422 Unprocessable Entity`.
 
+> [!TIP]
+> **Extended Brightness Range (-100% to +100%)**: When **Extra Dark Dimming** is enabled in application settings, the `set_brightness` action accepts values down to `-100.0`. In this negative range, physical monitor backlights are kept at 0% DDC/CI while a click-through Win32 DWM overlay darkens the display down to an 85% opacity safety floor. If Extra Dark Dimming is disabled, values below 0.0 are rejected with RFC 7807 `400 Bad Request`.
+
 ### 4. Clean Storage Protocol (Auto-Reset to Null)
 To maintain 100% backward compatibility and minimal storage footprint:
 * When `allowedActions` contains all 28 canonical actions, `toJson()` automatically omits `allowedActions` (`allowedActions = null`).

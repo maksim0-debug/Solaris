@@ -49,6 +49,15 @@ Full control over your entire workspace.
 - **Unified Sync**: Adjust all monitors at once with a single click.
 <img width="314" height="254" alt="Multi-monitor controls for individual display brightness offsets" src="https://github.com/user-attachments/assets/53066949-0c59-4fc8-afa5-79805fd59ef8" />
 
+### 🌙 Extra Dark Dimming (Below 0%)
+
+For late-night sessions or working in dimly lit environments where your monitor's minimum hardware brightness (0% DDC/CI) is still uncomfortably intense, Solaris extends manual brightness control down to -100% using an intelligent hybrid overlay system.
+
+- **Hybrid Hardware & Software Dimming**: In the negative range (-100% to 0%), the physical backlight remains safely locked at 0% via DDC/CI, while an ultra-lightweight Win32 Desktop Window Manager (DWM) overlay smoothly darkens the screen.
+- **Excluded from Screenshots & Screen Sharing**: Traditional overlay dimmers darken everything, ruining screenshots and rendering screen shares unreadable. Solaris applies `SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE)` to the overlay window—meaning Snipping Tool, PrintScreen, OBS recordings, and screen shares (Discord, Zoom, Teams) capture the original, pristine desktop without the dark tint.
+- **85% Safety Ceiling**: Software dimming opacity is hard-capped at 85%, ensuring desktop icons, cursor, and text always stay visible, preventing accidental screen blackouts.
+- **Click-Through & Native Performance**: Built using native Win32 layered windows (`WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE`) that pass all mouse and keyboard interactions directly to underlying applications with zero input latency or GPU overhead.
+
 ### 🌡️ Dynamic Color Temperature (GPU-Assisted Filter)
 
 Protect your eyes from blue light. Solaris shifts your display to warmer tones as the sun goes down.
@@ -242,6 +251,7 @@ Solaris includes a built-in, local HTTP & WebSocket control server that enables 
 ### 🌟 Key Capabilities
 
 - **Full Automation Gateway**: 28 supported Action System commands (`set_brightness`, `set_temperature`, `set_auto_brightness`, `manage_app_overrides`, `manage_game_mode_whitelist`, etc.).
+- **Extended Brightness Range**: `set_brightness` accepts values from `-100.0` to `100.0` when Extra Dark Dimming is enabled, providing programmable sub-zero dimming via API and WebSocket commands.
 - **Decoupled Modular Routing**: Solaris Control API and Sleep Integration API can be independently toggled on or off while sharing a single underlying HTTP daemon. Inactive subsystems return RFC 7807 `503 Service Unavailable`, while `/api/v1/health` reports the live health of each module.
 - **Friendly Monitor Slugs**: Target displays using human-readable identifiers (`display-1`, `lg-ultragear-a1f9`, `primary`) or system paths (`\\\\.\\DISPLAY1`).
 - **Hardened Security Architecture**: 9-Layer Defense & Isolation Pipeline including Host Header DNS Rebinding guard, Payload limiters (64 KB), Subsystem Guard, CSWSH/Drive-by cross-origin guard, per-IP rate limiting, constant-time SHA-256 token authorization, and Granular Zero-Trust ACL Isolation.
@@ -276,6 +286,7 @@ Solaris leverages cutting-edge technologies for peak performance on Windows:
 - **Hardware & OS Interop**:
   - [Dart FFI](https://dart.dev/guides/libraries/c-interop) and [win32](https://pub.dev/packages/win32) for low-level OS calls.
   - Custom MethodChannels for hardware DDC/CI brightness control and GPU Gamma Ramp temperature manipulation.
+  - Native C++ Win32 Overlay Manager utilizing layered click-through windows with `WDA_EXCLUDEFROMCAPTURE` for capture-safe sub-zero dimming.
 - **APIs & Services**:
   - **Google Fit API**: Health data synchronization.
   - **WeatherAPI.com**: Advanced weather and cloudiness data.

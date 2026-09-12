@@ -327,6 +327,9 @@ Broadcasted when a DDC/CI read/write error or I2C bus collision is detected:
 }
 ```
 
+> [!NOTE]
+> When **Extra Dark Dimming** is enabled in application settings, the `value` parameter for `set_brightness` accepts floating-point values from `-100.0` to `100.0`. In the negative range (`< 0.0`), physical monitor backlights are kept at 0% DDC/CI while a click-through Win32 DWM overlay smoothly darkens the screen down to an 85% opacity safety floor.
+
 ### Success Response (`type: "response"`):
 ```json
 {
