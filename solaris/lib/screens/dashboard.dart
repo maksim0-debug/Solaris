@@ -1072,7 +1072,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                       height: 240,
                       child: CustomPaint(
                         painter: BrightnessDialPainter(
-                          brightness: brightness / 100.0,
+                          brightness: (brightness / 100.0).clamp(0.0, 1.0),
                         ),
                       ),
                     ),

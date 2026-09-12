@@ -18,13 +18,7 @@ class BrightnessDialPainter extends CustomPainter {
       ..strokeWidth = 12
       ..strokeCap = StrokeCap.round;
 
-    final progressPaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFFFDBA74), Color(0xFFF97316)],
-      ).createShader(Rect.fromCircle(center: center, radius: radius))
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 12
-      ..strokeCap = StrokeCap.round;
+    final clampedBrightness = brightness.clamp(0.0, 1.0);
 
     // Draw background ring
     canvas.drawArc(
@@ -35,17 +29,27 @@ class BrightnessDialPainter extends CustomPainter {
       bgPaint,
     );
 
-    // Draw progress ring
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      pi * 0.7,
-      pi * 1.6 * brightness,
-      false,
-      progressPaint,
-    );
+    if (clampedBrightness > 0) {
+      final progressPaint = Paint()
+        ..shader = const LinearGradient(
+          colors: [Color(0xFFFDBA74), Color(0xFFF97316)],
+        ).createShader(Rect.fromCircle(center: center, radius: radius))
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 12
+        ..strokeCap = StrokeCap.round;
 
-    // Draw Glow at the end of progress
-    final endAngle = pi * 0.7 + pi * 1.6 * brightness;
+      // Draw progress ring
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        pi * 0.7,
+        pi * 1.6 * clampedBrightness,
+        false,
+        progressPaint,
+      );
+    }
+
+    // Draw Glow at the end of progress (anchored at zero position when brightness <= 0)
+    final endAngle = pi * 0.7 + pi * 1.6 * clampedBrightness;
     final endPos = Offset(
       center.dx + radius * cos(endAngle),
       center.dy + radius * sin(endAngle),
@@ -60,5 +64,5 @@ class BrightnessDialPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant BrightnessDialPainter oldDelegate) =>
-      oldDelegate.brightness != brightness;
+      oldDelegate.brightness.clamp(0.0, 1.0) != brightness.clamp(0.0, 1.0);
 }
