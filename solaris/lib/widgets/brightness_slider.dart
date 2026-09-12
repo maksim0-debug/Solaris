@@ -220,10 +220,12 @@ class _PremiumTrackShape extends RoundedRectSliderTrackShape {
       isDiscrete: isDiscrete,
     );
 
+    final trackRadius = Radius.circular(trackRect.height / 2);
+
     // Inactive track base
     final inactivePaint = Paint()..color = sliderTheme.inactiveTrackColor!;
     canvas.drawRRect(
-      RRect.fromRectAndRadius(trackRect, const Radius.circular(10)),
+      RRect.fromRectAndRadius(trackRect, trackRadius),
       inactivePaint,
     );
 
@@ -231,6 +233,31 @@ class _PremiumTrackShape extends RoundedRectSliderTrackShape {
       // 25% of the slider width is dedicated to the overlay (-100%..0%)
       const zeroRatio = 0.25;
       final zeroDx = trackRect.left + trackRect.width * zeroRatio;
+
+      // 1. Midnight Dock (Lunar Zone): Deep indigo background for the 0..25% zone
+      final lunarDockRect = Rect.fromLTRB(
+        trackRect.left,
+        trackRect.top,
+        zeroDx,
+        trackRect.bottom,
+      );
+      final lunarDockPaint = Paint()
+        ..shader = const LinearGradient(
+          colors: [Color(0xFF1E1B4B), Color(0xFF2E1065)],
+        ).createShader(lunarDockRect);
+      canvas.drawRRect(
+        RRect.fromLTRBAndCorners(
+          trackRect.left,
+          trackRect.top,
+          zeroDx,
+          trackRect.bottom,
+          topLeft: trackRadius,
+          bottomLeft: trackRadius,
+          topRight: Radius.zero,
+          bottomRight: Radius.zero,
+        ),
+        lunarDockPaint,
+      );
 
       if (thumbCenter.dx >= zeroDx) {
         // Positive zone (0% to +100%): Warm orange sun gradient
@@ -255,8 +282,8 @@ class _PremiumTrackShape extends RoundedRectSliderTrackShape {
             trackRect.bottom,
             topLeft: Radius.zero,
             bottomLeft: Radius.zero,
-            topRight: const Radius.circular(10),
-            bottomRight: const Radius.circular(10),
+            topRight: trackRadius,
+            bottomRight: trackRadius,
           ),
           activePaint,
         );
@@ -281,8 +308,8 @@ class _PremiumTrackShape extends RoundedRectSliderTrackShape {
             trackRect.top,
             zeroDx,
             trackRect.bottom,
-            topLeft: const Radius.circular(10),
-            bottomLeft: const Radius.circular(10),
+            topLeft: trackRadius,
+            bottomLeft: trackRadius,
             topRight: Radius.zero,
             bottomRight: Radius.zero,
           ),
@@ -290,14 +317,42 @@ class _PremiumTrackShape extends RoundedRectSliderTrackShape {
         );
       }
 
-      // Elegant zero-notch divider at 25% mark
-      final notchPaint = Paint()
-        ..color = Colors.white.withValues(alpha: 0.3)
-        ..strokeWidth = 2.0;
-      canvas.drawLine(
-        Offset(zeroDx, trackRect.top - 1),
-        Offset(zeroDx, trackRect.bottom + 1),
-        notchPaint,
+      // 2. Refined Seamless Chromatic Capsule Divider at 25% mark
+      final capsuleRect = Rect.fromCenter(
+        center: Offset(zeroDx, trackRect.center.dy),
+        width: 3.0,
+        height: 15.0,
+      );
+
+      // Chromatic ambient glow transitioning from lunar indigo to solar orange
+      final glowPaint = Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [Color(0xFF818CF8), Color(0xFFFDBA74)],
+        ).createShader(capsuleRect)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(capsuleRect, const Radius.circular(1.5)),
+        glowPaint,
+      );
+
+      // Chromatic gradient capsule core (Indigo -> Pure Luminous White -> Sun Orange)
+      final capsulePaint = Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            Color(0xFF818CF8), // Moon / Overlay Indigo
+            Color(0xFFFFFFFF), // Pure bright center highlight
+            Color(0xFFFDBA74), // Sun / Physical Orange
+          ],
+          stops: [0.0, 0.45, 1.0],
+        ).createShader(capsuleRect)
+        ..style = PaintingStyle.fill;
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(capsuleRect, const Radius.circular(1.5)),
+        capsulePaint,
       );
     } else {
       // Standard positive track gradient
@@ -312,8 +367,8 @@ class _PremiumTrackShape extends RoundedRectSliderTrackShape {
           trackRect.top,
           thumbCenter.dx,
           trackRect.bottom,
-          topLeft: const Radius.circular(10),
-          bottomLeft: const Radius.circular(10),
+          topLeft: trackRadius,
+          bottomLeft: trackRadius,
           topRight: Radius.zero,
           bottomRight: Radius.zero,
         ),
