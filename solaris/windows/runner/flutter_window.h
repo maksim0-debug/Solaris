@@ -50,11 +50,11 @@ class FlutterWindow : public Win32Window {
   std::unique_ptr<flutter::EventChannel<flutter::EncodableValue>> system_event_channel_;
   std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> system_event_sink_;
 
-  // Keep one manager instance alive to preserve cached original gamma ramps.
-  MonitorManager monitor_manager_;
-
   // Software Dimming Overlay Manager on the main UI thread.
   OverlayManager overlay_manager_;
+
+  // Monitor manager for physical displays, brightness DDC/CI, and game detection.
+  MonitorManager monitor_manager_;
 
   // Dedicated extractor for application icons and fast disk/memory caching.
   std::unique_ptr<AppIconExtractor> app_icon_extractor_;

@@ -2,6 +2,7 @@
 #define NOMINMAX
 #endif
 #include "monitor_manager.h"
+#include "color_science.h"
 
 #include <algorithm>
 #include <cctype>
@@ -20,6 +21,7 @@
 #pragma comment(lib, "setupapi.lib")
 #pragma comment(lib, "dxva2.lib")
 #pragma comment(lib, "Psapi.lib")
+#pragma comment(lib, "gdi32.lib")
 
 // GUID_DEVINTERFACE_MONITOR is usually {E6F07B5F-EE97-4a90-B076-33F57BF4EAA7}
 DEFINE_GUID(GUID_DEVINTERFACE_MONITOR_INTERNAL, 0xE6F07B5F, 0xEE97, 0x4a90,
@@ -30,11 +32,20 @@ MonitorManager::MonitorManager() {
       std::chrono::steady_clock::now() - std::chrono::hours(24);
   candidate_start_time_ = last_gaming_match_time_;
 
+  debounce_timer_ = CreateThreadpoolTimer(InvalidateDebounceCallback, this, nullptr);
+
   worker_thread_ = std::thread(&MonitorManager::WorkerLoop, this);
   detector_thread_ = std::thread(&MonitorManager::DetectorLoop, this);
 }
 
 MonitorManager::~MonitorManager() {
+  if (debounce_timer_) {
+    SetThreadpoolTimer(debounce_timer_, nullptr, 0, 0);
+    WaitForThreadpoolTimerCallbacks(debounce_timer_, TRUE);
+    CloseThreadpoolTimer(debounce_timer_);
+    debounce_timer_ = nullptr;
+  }
+
   stop_worker_ = true;
   condition_.notify_one();
   if (worker_thread_.joinable()) {
@@ -61,10 +72,23 @@ void MonitorManager::InvalidateMonitorHandles() {
 }
 
 void MonitorManager::InvalidateMonitorHandlesDebounced(int delay_ms) {
-  EnqueueTask([this, delay_ms]() {
-    std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
-    InvalidateMonitorHandles();
-  });
+  if (!debounce_timer_) return;
+  ULARGE_INTEGER due_time;
+  due_time.QuadPart = static_cast<ULONGLONG>(-10000LL * delay_ms);
+  FILETIME ft;
+  ft.dwLowDateTime = due_time.LowPart;
+  ft.dwHighDateTime = due_time.HighPart;
+  SetThreadpoolTimer(debounce_timer_, &ft, 0, 0);
+}
+
+VOID CALLBACK MonitorManager::InvalidateDebounceCallback(
+    PTP_CALLBACK_INSTANCE instance, PVOID context, PTP_TIMER timer) {
+  auto* self = static_cast<MonitorManager*>(context);
+  if (self) {
+    self->EnqueueTask([self]() {
+      self->InvalidateMonitorHandles();
+    });
+  }
 }
 
 void MonitorManager::DestroyPhysicalMonitorsCache() {
@@ -424,50 +448,53 @@ bool MonitorManager::GetBrightness(const std::string &device_path, int &current,
   return success;
 }
 
-bool MonitorManager::SetTemperature(const std::string &device_path,
-                                    int kelvins) {
+namespace {
+
+typedef BOOL(WINAPI *FnInternalSetDeviceGammaRamp)(HDC, LPVOID, DWORD);
+typedef BOOL(WINAPI *FnInternalGetAppliedGDIGammaRamp)(HDC, LPVOID);
+
+bool HardwareSetDeviceGammaRamp(HDC hDC, LPVOID lpRamp) {
+  static HMODULE hMscms = LoadLibraryW(L"mscms.dll");
+  static auto pInternalSet = hMscms ? reinterpret_cast<FnInternalSetDeviceGammaRamp>(
+                                          GetProcAddress(hMscms, "InternalSetDeviceGammaRamp"))
+                                    : nullptr;
+  if (pInternalSet && pInternalSet(hDC, lpRamp, 0)) {
+    return true;
+  }
+  return ::SetDeviceGammaRamp(hDC, lpRamp);
+}
+
+bool HardwareGetBaselineGammaRamp(HDC hDC, LPVOID lpRamp) {
+  static HMODULE hMscms = LoadLibraryW(L"mscms.dll");
+  static auto pInternalGetGDI = hMscms ? reinterpret_cast<FnInternalGetAppliedGDIGammaRamp>(
+                                             GetProcAddress(hMscms, "InternalGetAppliedGDIGammaRamp"))
+                                       : nullptr;
+  if (pInternalGetGDI && pInternalGetGDI(hDC, lpRamp)) {
+    return true;
+  }
+  return ::GetDeviceGammaRamp(hDC, lpRamp);
+}
+
+} // namespace
+
+bool MonitorManager::SetTemperature(const std::string &device_path, int kelvins) {
   if (kelvins >= 6500) {
     return ResetTemperature(device_path);
   }
 
-  // Convert Kelvin to RGB multipliers (0.0 to 1.0)
-  // Simplified Tanner Helland's algorithm adapted for 1000-40000K
-  double temp = std::max(1000, std::min(40000, kelvins)) / 100.0;
+  float rFactor = 1.0f;
+  float gFactor = 1.0f;
+  float bFactor = 1.0f;
+  solaris::color_science::CalculatePlanckianRgb(kelvins, rFactor, gFactor, bFactor);
 
-  double red = 1.0;
-  double green = 1.0;
-  double blue = 1.0;
+  // Safety floor: Ensure a tiny non-zero gradient for blue so WDDM drivers never reject the ramp
+  float safe_bFactor = std::max(0.005f, bFactor);
 
-  if (temp <= 66.0) {
-    red = 255.0;
-    green = 99.4708025861 * std::log(temp) - 161.1195681661;
-    if (temp <= 19.0) {
-      blue = 0.0;
-    } else {
-      blue = 138.5177312231 * std::log(temp - 10.0) - 305.0447927307;
-    }
-  } else {
-    red = 329.698727446 * std::pow(temp - 60.0, -0.1332047592);
-    green = 288.1221695283 * std::pow(temp - 60.0, -0.0755148492);
-    blue = 255.0;
-  }
-
-  // Clamp to 0-255 and normalize to 0.0-1.0
-  double rFactor = std::max(0.0, std::min(255.0, red)) / 255.0;
-  double gFactor = std::max(0.0, std::min(255.0, green)) / 255.0;
-  double bFactor = std::max(0.0, std::min(255.0, blue)) / 255.0;
-
-  // Convert device_path to wstring
-  std::wstring target_device;
-  target_device.reserve(device_path.length());
-  for (char c : device_path) {
-    target_device.push_back(static_cast<wchar_t>(c));
-  }
-
-  // Apply to Gamma Ramp
-  HDC hDC = CreateDCW(L"DISPLAY", target_device.c_str(), NULL, NULL);
-  if (!hDC)
+  std::wstring target_device(device_path.begin(), device_path.end());
+  HDC hDC = CreateDCW(L"DISPLAY", target_device.c_str(), nullptr, nullptr);
+  if (!hDC) {
     return false;
+  }
 
   std::vector<WORD> base_ramp;
   {
@@ -476,29 +503,27 @@ bool MonitorManager::SetTemperature(const std::string &device_path,
     if (it == original_gamma_ramps_.end()) {
       WORD orig_ramp[3][256];
       bool is_valid_neutral = false;
-      if (GetDeviceGammaRamp(hDC, orig_ramp)) {
-        // Validate if captured ramp isn't pre-tinted by checking blue vs red channel ratio at midpoint (L128)
+      if (HardwareGetBaselineGammaRamp(hDC, orig_ramp)) {
         if (orig_ramp[0][128] > 0) {
-          double blue_red_ratio = (double)orig_ramp[2][128] / (double)orig_ramp[0][128];
-          if (blue_red_ratio >= 0.95) {
+          double blue_red_ratio = static_cast<double>(orig_ramp[2][128]) / static_cast<double>(orig_ramp[0][128]);
+          if (blue_red_ratio > 0.85) {
             is_valid_neutral = true;
           }
         }
       }
 
-      std::vector<WORD> flat_ramp(3 * 256);
       if (is_valid_neutral) {
-        std::memcpy(flat_ramp.data(), orig_ramp, sizeof(orig_ramp));
+        base_ramp.assign(&orig_ramp[0][0], &orig_ramp[0][0] + 768);
       } else {
-        // Construct pure linear baseline if captured ramp was warm/invalid
+        base_ramp.resize(768);
         for (int i = 0; i < 256; i++) {
-          int val = i * 257;
-          flat_ramp[i] = flat_ramp[i + 256] = flat_ramp[i + 512] =
-              (WORD)std::min(65535, val);
+          WORD val = static_cast<WORD>((i * 65535) / 255);
+          base_ramp[i] = val;
+          base_ramp[i + 256] = val;
+          base_ramp[i + 512] = val;
         }
       }
-      original_gamma_ramps_[device_path] = flat_ramp;
-      base_ramp = flat_ramp;
+      original_gamma_ramps_[device_path] = base_ramp;
     } else {
       base_ramp = it->second;
     }
@@ -506,63 +531,86 @@ bool MonitorManager::SetTemperature(const std::string &device_path,
 
   WORD gammaArray[3][256];
   for (int i = 0; i < 256; i++) {
-    // Scale original ramp by our temperature factors
-    gammaArray[0][i] = (WORD)std::min(65535.0, base_ramp[i] * rFactor);
-    gammaArray[1][i] = (WORD)std::min(65535.0, base_ramp[i + 256] * gFactor);
-    gammaArray[2][i] = (WORD)std::min(65535.0, base_ramp[i + 512] * bFactor);
+    gammaArray[0][i] = static_cast<WORD>(std::clamp(std::round(base_ramp[i] * rFactor), 0.0f, 65535.0f));
+    gammaArray[1][i] = static_cast<WORD>(std::clamp(std::round(base_ramp[i + 256] * gFactor), 0.0f, 65535.0f));
+    gammaArray[2][i] = static_cast<WORD>(std::clamp(std::round(base_ramp[i + 512] * safe_bFactor), 0.0f, 65535.0f));
   }
 
-  bool success = SetDeviceGammaRamp(hDC, gammaArray);
+  bool success = HardwareSetDeviceGammaRamp(hDC, gammaArray);
   DeleteDC(hDC);
+  if (success) {
+    std::lock_guard<std::mutex> lock(temperature_mutex_);
+    last_applied_temperatures_[device_path] = kelvins;
+  }
   return success;
 }
 
 bool MonitorManager::ResetTemperature(const std::string &device_path) {
-  std::wstring target_device;
-  target_device.reserve(device_path.length());
-  for (char c : device_path) {
-    target_device.push_back(static_cast<wchar_t>(c));
-  }
-  HDC hDC = CreateDCW(L"DISPLAY", target_device.c_str(), NULL, NULL);
-  if (!hDC)
+  std::wstring target_device(device_path.begin(), device_path.end());
+  HDC hDC = CreateDCW(L"DISPLAY", target_device.c_str(), nullptr, nullptr);
+  if (!hDC) {
     return false;
+  }
 
   WORD gammaArray[3][256];
-  bool found = false;
-  std::vector<WORD> base_ramp;
-
   {
     std::lock_guard<std::mutex> lock(gamma_mutex_);
     auto it = original_gamma_ramps_.find(device_path);
-    if (it != original_gamma_ramps_.end() && it->second.size() == (3 * 256)) {
-      base_ramp = it->second;
-      found = true;
+    if (it != original_gamma_ramps_.end() && it->second.size() == 768) {
+      memcpy(gammaArray, it->second.data(), sizeof(gammaArray));
+    } else {
+      for (int i = 0; i < 256; i++) {
+        WORD val = static_cast<WORD>((i * 65535) / 255);
+        gammaArray[0][i] = val;
+        gammaArray[1][i] = val;
+        gammaArray[2][i] = val;
+      }
     }
   }
 
-  if (found) {
-    // Restore user's original calibrated baseline ramp (preserving DisplayCAL / ICC profile)
-    for (int i = 0; i < 256; i++) {
-      gammaArray[0][i] = base_ramp[i];
-      gammaArray[1][i] = base_ramp[i + 256];
-      gammaArray[2][i] = base_ramp[i + 512];
-    }
-  } else {
-    // Pure linear fallback
-    for (int i = 0; i < 256; i++) {
-      WORD linear = static_cast<WORD>(i * 257);
-      gammaArray[0][i] = linear;
-      gammaArray[1][i] = linear;
-      gammaArray[2][i] = linear;
-    }
-  }
-
-  bool success = SetDeviceGammaRamp(hDC, gammaArray);
+  bool success = HardwareSetDeviceGammaRamp(hDC, gammaArray);
   DeleteDC(hDC);
+  if (success) {
+    std::lock_guard<std::mutex> lock(temperature_mutex_);
+    last_applied_temperatures_[device_path] = 6500;
+  }
   return success;
 }
 
+bool MonitorManager::SetAllMonitorsTemperature(int kelvins) {
+  if (kelvins >= 6500) {
+    return ResetAllMonitorsTemperatureSync();
+  }
+
+  DISPLAY_DEVICEA displayDevice;
+  ZeroMemory(&displayDevice, sizeof(displayDevice));
+  displayDevice.cb = sizeof(displayDevice);
+
+  DWORD deviceIndex = 0;
+  bool all_success = true;
+  int applied_count = 0;
+  while (EnumDisplayDevicesA(NULL, deviceIndex, &displayDevice, 0)) {
+    if ((displayDevice.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP) != 0) {
+      std::string device_path(displayDevice.DeviceName);
+      if (SetTemperature(device_path, kelvins)) {
+        applied_count++;
+      } else {
+        all_success = false;
+      }
+    }
+    deviceIndex++;
+    ZeroMemory(&displayDevice, sizeof(displayDevice));
+    displayDevice.cb = sizeof(displayDevice);
+  }
+  return (applied_count > 0 && all_success);
+}
+
 bool MonitorManager::ResetAllMonitorsTemperatureSync() {
+  {
+    std::lock_guard<std::mutex> lock(temperature_mutex_);
+    last_applied_temperatures_.clear();
+  }
+
   DISPLAY_DEVICEA displayDevice;
   ZeroMemory(&displayDevice, sizeof(displayDevice));
   displayDevice.cb = sizeof(displayDevice);
@@ -577,11 +625,52 @@ bool MonitorManager::ResetAllMonitorsTemperatureSync() {
       }
     }
     deviceIndex++;
+    ZeroMemory(&displayDevice, sizeof(displayDevice));
+    displayDevice.cb = sizeof(displayDevice);
   }
   return all_success;
 }
 
+bool MonitorManager::RestoreLastTemperatures() {
+  std::unordered_map<std::string, int> temps_copy;
+  {
+    std::lock_guard<std::mutex> lock(temperature_mutex_);
+    temps_copy = last_applied_temperatures_;
+  }
+
+  if (temps_copy.empty()) {
+    return true;
+  }
+
+  DISPLAY_DEVICEA displayDevice;
+  ZeroMemory(&displayDevice, sizeof(displayDevice));
+  displayDevice.cb = sizeof(displayDevice);
+
+  DWORD deviceIndex = 0;
+  bool all_success = true;
+  int applied_count = 0;
+
+  while (EnumDisplayDevicesA(NULL, deviceIndex, &displayDevice, 0)) {
+    if ((displayDevice.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP) != 0) {
+      std::string device_path(displayDevice.DeviceName);
+      auto it = temps_copy.find(device_path);
+      if (it != temps_copy.end() && it->second < 6500) {
+        if (SetTemperature(device_path, it->second)) {
+          applied_count++;
+        } else {
+          all_success = false;
+        }
+      }
+    }
+    deviceIndex++;
+    ZeroMemory(&displayDevice, sizeof(displayDevice));
+    displayDevice.cb = sizeof(displayDevice);
+  }
+  return (applied_count > 0 && all_success);
+}
+
 namespace {
+
 struct ScopedHandle {
   HANDLE handle = NULL;
   explicit ScopedHandle(HANDLE h = NULL) : handle(h) {}

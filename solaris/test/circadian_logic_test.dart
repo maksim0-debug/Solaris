@@ -4,6 +4,8 @@ import 'package:solaris/models/solar_phase_model.dart';
 import 'package:solaris/services/weather_service.dart';
 import 'package:solaris/models/smart_circadian_data.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:solaris/models/preset_type.dart';
+import 'package:solaris/models/temperature_state.dart';
 
 void main() {
   group('CircadianService Tests', () {
@@ -255,6 +257,75 @@ void main() {
           expect(result.sleepDebtImpact, -500);
           expect(result.timeShiftImpact, 500);
           expect(result.finalTemperature, 6500);
+        },
+      );
+
+      test('should allow ultra-warm temperatures down to 1000K natively', () {
+        final ultraWarmPoints = [
+          const FlSpot(-20, 1500),
+          const FlSpot(-6, 2000),
+          const FlSpot(0, 4000),
+          const FlSpot(10, 6500),
+          const FlSpot(90, 6500),
+        ];
+
+        // At night (elevation -20), curve point is 1500K
+        final result = service.calculateTargetTemperature(
+          phases,
+          -20.0,
+          now,
+          curvePoints: ultraWarmPoints,
+        );
+
+        expect(result.finalTemperature, 1500);
+      });
+
+      test('warmest preset drops to 1900K at night natively', () {
+        final warmestPoints = PresetConstants.getTemperatureDefaultPoints(
+          TemperaturePresetType.warmest,
+        );
+        expect(warmestPoints.first.y, 1900);
+
+        final result = service.calculateTargetTemperature(
+          phases,
+          -20.0,
+          now,
+          curvePoints: warmestPoints,
+        );
+
+        expect(result.finalTemperature, 1900);
+      });
+
+      test(
+        'TemperatureState.curvePoints natively provides 1900K for warmest preset',
+        () {
+          final state = TemperatureState(
+            activePreset: TemperaturePresetType.warmest,
+          );
+
+          expect(state.curvePoints.first.y, 1900);
+        },
+      );
+
+      test(
+        'TemperatureState.fromJson migrates legacy 3300K default curves to 1900K',
+        () {
+          final legacyJson = {
+            'activePreset': 'warmest',
+            'curvesMap': {
+              'warmest': [
+                {'x': -20.0, 'y': 3300.0},
+                {'x': -6.0, 'y': 3300.0},
+                {'x': 0.0, 'y': 3300.0},
+                {'x': 10.0, 'y': 4500.0},
+                {'x': 30.0, 'y': 6000.0},
+                {'x': 90.0, 'y': 6500.0},
+              ],
+            },
+          };
+
+          final migratedState = TemperatureState.fromJson(legacyJson);
+          expect(migratedState.curvePoints.first.y, 1900);
         },
       );
     });

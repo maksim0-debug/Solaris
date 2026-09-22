@@ -182,7 +182,9 @@ class OpenApiSpec {
                   'properties': {
                     'value': {
                       'type': 'integer',
-                      'minimum': 3300,
+                      'description':
+                          'Color temperature in Kelvin (1000..6500). Applied to the target display via hardware GPU gamma LUT.',
+                      'minimum': 1000,
                       'maximum': 6500,
                     },
                   },
@@ -781,7 +783,9 @@ class OpenApiSpec {
               },
               'fixedTemperature': {
                 'type': 'number',
-                'minimum': 3300.0,
+                'description':
+                    'Fixed color temperature in Kelvin (1000..6500). Applied desktop-wide across all displays when active.',
+                'minimum': 1000.0,
                 'maximum': 6500.0,
               },
               'temperatureCurvePresetId': {'type': 'string'},

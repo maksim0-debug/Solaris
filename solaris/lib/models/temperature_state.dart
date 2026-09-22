@@ -13,6 +13,7 @@ class TemperatureState {
   final List<UserPreset> userPresets;
   final String? activeUserPresetId;
   final List<String> presetOrder;
+  final int? manualTemperature;
 
   TemperatureState({
     this.activePreset = TemperaturePresetType.cool,
@@ -26,6 +27,7 @@ class TemperatureState {
     this.userPresets = const [],
     this.activeUserPresetId,
     List<String>? presetOrder,
+    this.manualTemperature,
   }) : curvesMap = curvesMap ?? PresetConstants.getAllTemperatureDefaults(),
        presetOrder =
            presetOrder ??
@@ -59,6 +61,8 @@ class TemperatureState {
     String? activeUserPresetId,
     List<String>? presetOrder,
     bool clearActiveUserPresetId = false,
+    int? manualTemperature,
+    bool clearManualTemperature = false,
   }) {
     return TemperatureState(
       activePreset: activePreset ?? this.activePreset,
@@ -76,11 +80,15 @@ class TemperatureState {
           ? null
           : (activeUserPresetId ?? this.activeUserPresetId),
       presetOrder: presetOrder ?? this.presetOrder,
+      manualTemperature: clearManualTemperature
+          ? null
+          : (manualTemperature ?? this.manualTemperature),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'version': 2,
       'activePreset': activePreset.toJson(),
       'isEnabled': isEnabled,
       'isSmartCircadianEnabled': isSmartCircadianEnabled,
@@ -91,6 +99,7 @@ class TemperatureState {
       'userPresets': userPresets.map((p) => p.toJson()).toList(),
       'activeUserPresetId': activeUserPresetId,
       'presetOrder': presetOrder,
+      'manualTemperature': manualTemperature,
       'curvesMap': curvesMap.map(
         (key, value) => MapEntry(
           key.toJson(),
@@ -120,6 +129,33 @@ class TemperatureState {
             )
             .toList();
       });
+
+      // One-time migration for legacy schemas (< v2) with 3300K default curves
+      final int version = json['version'] as int? ?? 1;
+      if (version < 2) {
+        final warmestCurve = parsedCurvesMap[TemperaturePresetType.warmest];
+        if (warmestCurve != null &&
+            warmestCurve.length >= 3 &&
+            warmestCurve[0].y == 3300.0 &&
+            warmestCurve[1].y == 3300.0 &&
+            warmestCurve[2].y == 3300.0) {
+          parsedCurvesMap[TemperaturePresetType.warmest] =
+              PresetConstants.getTemperatureDefaultPoints(
+                TemperaturePresetType.warmest,
+              );
+        }
+
+        final warmCurve = parsedCurvesMap[TemperaturePresetType.warm];
+        if (warmCurve != null &&
+            warmCurve.length >= 2 &&
+            warmCurve[0].y == 3300.0 &&
+            warmCurve[1].y == 3300.0) {
+          parsedCurvesMap[TemperaturePresetType.warm] =
+              PresetConstants.getTemperatureDefaultPoints(
+                TemperaturePresetType.warm,
+              );
+        }
+      }
     }
 
     return TemperatureState(
@@ -140,6 +176,7 @@ class TemperatureState {
       activeUserPresetId: json['activeUserPresetId'] as String?,
       presetOrder: (json['presetOrder'] as List<dynamic>?)?.cast<String>(),
       curvesMap: parsedCurvesMap,
+      manualTemperature: json['manualTemperature'] as int?,
     );
   }
 }

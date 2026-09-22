@@ -5,6 +5,7 @@ import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/models/settings_state.dart';
+import 'package:solaris/constants/temperature_constants.dart';
 
 class CircadianChartWidget extends ConsumerStatefulWidget {
   const CircadianChartWidget({super.key});
@@ -399,9 +400,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
                 borderData: FlBorderData(show: false),
                 minX: -20, // From -20 degrees (night)
                 maxX: 90, // Up to +90 degrees (zenith)
-                minY: isTemp
-                    ? 3000
-                    : 0, // From 3000K for temp (padding for 3300K floor)
+                minY: isTemp ? 1000 : 0,
                 maxY: isTemp ? 7000 : 105, // Up to 7000K or 105%
                 lineBarsData: lineBars,
                 lineTouchData: LineTouchData(
@@ -469,7 +468,9 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
   }
 
   Offset _pixelToChart(Offset localPosition, Size widgetSize) {
-    final gridWidth = widgetSize.width - _leftTitleWidth - _containerRight;
+    final isTemp = ref.read(editingTemperatureProvider);
+    final effectiveLeftWidth = _leftTitleWidth + (isTemp ? 20.0 : 0.0);
+    final gridWidth = widgetSize.width - effectiveLeftWidth - _containerRight;
     final gridHeight =
         widgetSize.height -
         _bottomTitleHeight -
@@ -478,13 +479,12 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
 
     if (gridWidth <= 0 || gridHeight <= 0) return const Offset(0, 0);
 
-    final isTemp = ref.read(editingTemperatureProvider);
     final maxY = isTemp ? 7000.0 : 105.0;
-    final minY = isTemp ? 3000.0 : 0.0;
+    final minY = isTemp ? 1000.0 : 0.0;
     final rangeY = maxY - minY;
 
     double x =
-        -20.0 + ((localPosition.dx - _leftTitleWidth) / gridWidth) * 110.0;
+        -20.0 + ((localPosition.dx - effectiveLeftWidth) / gridWidth) * 110.0;
     double y =
         maxY - (((localPosition.dy - _containerTop) / gridHeight) * rangeY);
 
@@ -496,11 +496,12 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
     final chartCoords = _pixelToChart(localPosition, renderBox.size);
 
     final isTemp = ref.read(editingTemperatureProvider);
+    const minTemp = TemperatureConstants.minDouble;
 
     double x = chartCoords.dx;
     double y = chartCoords.dy.clamp(
-      isTemp ? 3300.0 : 0.0,
-      isTemp ? 6500.0 : 100.0,
+      isTemp ? minTemp : 0.0,
+      isTemp ? TemperatureConstants.max.toDouble() : 100.0,
     );
 
     final selectedIds = ref.read(selectedMonitorsProvider);
@@ -554,11 +555,12 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
     final chartCoords = _pixelToChart(localPosition, renderBox.size);
 
     final isTemp = ref.read(editingTemperatureProvider);
+    const minTemp = TemperatureConstants.minDouble;
 
     double x = chartCoords.dx.clamp(-20.0, 90.0);
     double y = chartCoords.dy.clamp(
-      isTemp ? 1000.0 : 0.0,
-      isTemp ? 7000.0 : 100.0,
+      isTemp ? minTemp : 0.0,
+      isTemp ? TemperatureConstants.max.toDouble() : 100.0,
     );
 
     final selectedIds = ref.read(selectedMonitorsProvider);

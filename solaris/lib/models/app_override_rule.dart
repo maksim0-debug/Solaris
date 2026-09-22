@@ -1,3 +1,5 @@
+import 'package:solaris/constants/temperature_constants.dart';
+
 enum AppOverrideMode {
   global,
   fixed,
@@ -271,8 +273,8 @@ class AppOverrideRule {
           : AppOverrideMode.global,
       fixedTemperature: _parseBoundedDouble(
         json['fixedTemperature'],
-        3300.0,
-        6500.0,
+        TemperatureConstants.minDouble,
+        TemperatureConstants.maxDouble,
       ),
       temperatureCurvePresetId: json['temperatureCurvePresetId']?.toString(),
     );
@@ -312,7 +314,10 @@ class AppOverrideRule {
       fixedTemperature: clearFixedTemperature
           ? null
           : (fixedTemperature != null && fixedTemperature.isFinite
-                ? fixedTemperature.clamp(3300.0, 6500.0)
+                ? fixedTemperature.clamp(
+                    TemperatureConstants.minDouble,
+                    TemperatureConstants.maxDouble,
+                  )
                 : this.fixedTemperature),
       temperatureCurvePresetId: clearTemperatureCurvePresetId
           ? null

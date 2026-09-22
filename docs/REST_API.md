@@ -298,8 +298,9 @@ Solaris Control API features a **Friendly Slug Resolver** (`MonitorSlugResolver`
 
 ### Supported Slug Matchers:
 1. **Ordinal Slugs**: `display-1`, `display-2`, `display-3` (Recommended)
-2. **Friendly Name Slugs**: `lg-ultragear-a1f9`, `dell-u2720q-e34b`
-3. **Keyword Slugs**: `primary`, `main` (Resolves to primary display), `all` (Targets all displays).
+2. **Model Base Slugs**: `dell-u2720q`, `lg-ultragear` (Automatically resolved when monitor model is unique across connected displays)
+3. **Friendly Name Slugs**: `lg-ultragear-a1f9`, `dell-u2720q-e34b`
+4. **Keyword Slugs**: `primary`, `main` (Resolves to primary display), `all` (Targets all displays).
 
 ---
 
@@ -373,7 +374,7 @@ Returns status summary for a single monitor identified by `:slug`.
 ### 3. Point-Mutation Endpoints
 
 * **`POST /api/v1/monitors/:slug/brightness`**: Body `{"value": 75.0}` (double, `0.0..100.0`, or `-100.0..100.0` when Extra Dark Dimming is enabled)
-* **`POST /api/v1/monitors/:slug/temperature`**: Body `{"value": 5000}` (integer Kelvin, `3300..6500`)
+* **`POST /api/v1/monitors/:slug/temperature`**: Body `{"value": 5000}` (integer Kelvin, `1000..6500`). Applied instantly via GPU Gamma Ramp LUT. Returns `404 Not Found` (RFC 7807) if the monitor slug/ID is unknown or disconnected.
 * **`POST /api/v1/monitors/:slug/game-mode`**: Body `{"enabled": true}` (boolean)
 * **Granular Security**: Blocked with `HTTP 403 Forbidden` if `isReadOnly = true` or category `monitors` / `gaming` is disabled.
 
@@ -503,8 +504,8 @@ Below is the complete reference of all 28 canonical action commands supported by
   * **Payload**: `{"action": "set_brightness", "value": 80.0, "monitor_id": "display-1"}`
   * **Parameters**: `value` (double, `0.0..100.0`, or `-100.0..100.0` when Extra Dark Dimming is enabled in settings), `monitor_id` / `slug` (optional string target display).
 * **`set_temperature`** (Alias: `set_monitor_temperature`)
-  * **Payload**: `{"action": "set_temperature", "value": 5500, "monitor_id": "display-1"}`
-  * **Parameters**: `value` (integer Kelvin, `3300..6500`), `monitor_id` / `slug` (optional).
+  * **Payload**: `{"action": "set_temperature", "value": 2400, "monitor_id": "display-1"}`
+  * **Parameters**: `value` (integer Kelvin, `1000..6500`), `monitor_id` / `slug` (optional string target display or `"all"`).
 * **`set_monitor_offset`**
   * **Payload**: `{"action": "set_monitor_offset", "offset": -10.0, "monitor_id": "display-2"}`
   * **Parameters**: `offset` (double, `-50.0..+50.0`), `monitor_id` / `slug` (required).

@@ -28,7 +28,7 @@ Solaris is engineered for a broad spectrum of desktop workflows:
 - **The "Color-Critical Creative & Designer"**: Automatically locks display color temperature to neutral **6500K** when launching color-sensitive applications (Photoshop, Premiere Pro, DaVinci Resolve, Lightroom, Blender, Figma, Illustrator, Krita, Unreal Engine, etc.) via **Per-App Overrides**, preserving color accuracy regardless of evening circadian warming.
 - **The "Hardcore Gamer"**: Uses **Smart Game Mode** to freeze display brightness and color temperature levels upon game detection, preventing unwanted lighting adjustments during gameplay, with a configurable Alt-Tab exit buffer delay (0–300s) to eliminate flickering.
 - **The "Smart Home & Automation Enthusiast"**: Connects Home Assistant, BitFocus Companion, Stream Deck, Node-RED, or custom scripts to the app using **Solaris Control API v1** (REST & WebSocket) and receive real-time **Outbound Webhooks** (with HMAC-SHA256 signatures and WAL/DLQ reliability).
-- **The "Late-Night Owl & Dark-Room Worker"**: Works comfortably in pitch-black environments using **Extra Dark Dimming (Below 0%)**, extending display dimming down to -100% with a click-through DWM overlay excluded from screen captures (`WDA_EXCLUDEFROMCAPTURE`) and protected by an 85% opacity safety floor. Smoothly shifts color temperature to warm amber tones (down to 3300K) and lowers hardware brightness during night hours to protect melatonin production.
+- **The "Late-Night Owl & Dark-Room Worker"**: Works comfortably in pitch-black environments using **Extra Dark Dimming (Below 0%)**, extending display dimming down to -100% with a click-through DWM overlay excluded from screen captures (`WDA_EXCLUDEFROMCAPTURE`) and protected by an 85% opacity safety floor. Smoothly shifts color temperature to warm amber tones (down to 1000K, Candlelight & Ultra-Warm zone) and lowers hardware brightness during night hours to protect melatonin production.
 - **The "Early Bird"**: Emulates a natural sunrise synchronized with the user's wake-up time via **Bio-Morning (Dynamic Anchor)**, prioritizing crisp morning light to boost alertness even before actual solar sunrise.
 - **The "Multi-Monitor Power User"**: Manages individual hardware brightness offsets or synchronized global levels across all connected external monitors via **DDC/CI** and friendly monitor slugs (`display-1`, `lg-ultragear-a1f9`).
 - **The "Weather-Sensitive Workspace"**: Automatically dims screen brightness and adjusts color temperature during overcast skies, rain, or storms using real-time WeatherAPI or Open-Meteo data.
@@ -40,7 +40,7 @@ Solaris is engineered for a broad spectrum of desktop workflows:
 
 ### 🌖 Circadian Engine & Hybrid Hardware/Software Control
 - **DDC/CI Hardware Brightness**: Communicates directly with external monitor microcontrollers over VESA DDC/CI to adjust actual backlight illumination without loss of contrast.
-- **GPU Gamma Ramp LUT Temperature**: Modifies graphics card hardware LUTs via Win32 GDI APIs for universal color temperature adjustments (6500K down to 3300K) across all displays (including laptops and screens without DDC/CI).
+- **GPU Gamma Ramp LUT Temperature**: Modifies graphics card hardware LUTs via Win32 GDI & WCS APIs using a high-precision 111-point Planckian Blackbody spectrum LUT for universal color temperature adjustments across an ultra-wide range (6500K down to 1000K) with independent per-monitor targeting (including laptops and screens without DDC/CI).
 - **High-Precision Solar Math**: Computes solar elevation and azimuth using spherical astronomy algorithms.
 
 ### 🌙 Extra Dark Dimming (Below 0% with Capture Exclusion)
@@ -63,7 +63,7 @@ Solaris is engineered for a broad spectrum of desktop workflows:
 ### 🔌 Solaris Control API v1, Outbound Webhooks & WebSocket Server
 - **Embedded API Server**: Asynchronous REST & WebSocket server running locally (port `45321`).
 - **Decoupled Modular Routing**: Independent lifecycle management for Solaris Control API and Sleep Integration API sharing a single HTTP daemon. Inactive subsystems return RFC 7807 `503 Service Unavailable`, while `/api/v1/health` reports live module health.
-- **28 Action Commands**: Execute display control (`set_brightness`, `set_temperature`), presets, circadian toggles, game mode, per-app override rules, and weather adjustments via API.
+- **28 Action Commands**: Execute display control (`set_brightness`, `set_temperature` with 1000..6500K range and per-monitor slug targeting), presets, circadian toggles, game mode, per-app override rules, and weather adjustments via API.
 - **Multiple Scoped API Keys**: Granular per-key permissions with **9-Layer Defense Pipeline** (DNS Rebinding protection, 64 KB payload guard, Subsystem Guard, CSWSH guard, LruCache rate limiting, constant-time SHA-256 token verification, and Granular Zero-Trust ACLs).
 - **Outbound Webhooks Engine**: 23 supported event types, SSRF safe validation, True IP-Pinning, HMAC-SHA256 signatures (`X-Solaris-Signature-256`), WAL Staging Buffer, and Dead Letter Queue (DLQ) retry/clearing.
 - **Real-Time WebSocket**: Bi-directional streaming channel (`/api/v1/ws`) with request correlation (`cmd_id`), module subscriptions, and OS S3/S4 power state notifications.
@@ -126,7 +126,7 @@ Solaris is the ideal solution for users searching for:
 ## 🛠 Technical Stack & Architecture
 - **Framework**: [Flutter](https://flutter.dev/) (Windows Desktop)
 - **State Management**: [Riverpod](https://riverpod.dev/) (AsyncNotifiers, StreamProviders)
-- **Hardware & OS Interop**: Dart FFI & C++ Win32 runner (DDC/CI physical monitor APIs, GDI Gamma Ramp LUT, EnumWindows, GetForegroundWindow, UWP ApplicationFrameHost detection, DPAPI encryption, click-through DWM layered overlay with `WDA_EXCLUDEFROMCAPTURE`)
+- **Hardware & OS Interop**: Dart FFI & C++ Win32 runner (DDC/CI physical monitor APIs, Win32 GDI/WCS Planckian Blackbody Gamma Ramp LUT, EnumWindows, GetForegroundWindow, UWP ApplicationFrameHost detection, DPAPI encryption, click-through DWM layered overlay with `WDA_EXCLUDEFROMCAPTURE`)
 - **Embedded API Engine**: Built on `dart:io HttpServer` with zero external dependencies, Trie-Router, 9-Layer Defense Pipeline (including Subsystem Guard), WAL Staging Buffer, and Dead Letter Queue (DLQ)
 - **Math Engine**: Spherical trigonometry and astronomical algorithms for solar tracking
 - **Integrations**: WeatherAPI.com, Open-Meteo, Mapbox Geocoding, Google Fit API, Local Sleep API

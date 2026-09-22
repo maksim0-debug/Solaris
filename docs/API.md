@@ -128,6 +128,9 @@ Incoming requests (REST API, WebSocket commands, or internal triggers) undergo a
 > [!TIP]
 > **Extended Brightness Range (-100% to +100%)**: When **Extra Dark Dimming** is enabled in application settings, the `set_brightness` action accepts values down to `-100.0`. In this negative range, physical monitor backlights are kept at 0% DDC/CI while a click-through Win32 DWM overlay darkens the display down to an 85% opacity safety floor. If Extra Dark Dimming is disabled, values below 0.0 are rejected with RFC 7807 `400 Bad Request`.
 
+> [!TIP]
+> **Extended Color Temperature Range (1000K to 6500K)**: The `set_temperature` action accepts color temperatures across an ultra-wide range from `1000` to `6500` Kelvin (from Daylight down to Candlelight Ember), utilizing a mathematically grounded 111-point Planckian Blackbody spectrum LUT via Win32 GDI & WCS APIs. Per-monitor targeting (`monitor_id` or `:slug` route) allows independent color temperatures per display. Values outside the `1000..6500` Kelvin range are rejected with RFC 7807 `400 Bad Request`.
+
 ### 4. Clean Storage Protocol (Auto-Reset to Null)
 To maintain 100% backward compatibility and minimal storage footprint:
 * When `allowedActions` contains all 28 canonical actions, `toJson()` automatically omits `allowedActions` (`allowedActions = null`).

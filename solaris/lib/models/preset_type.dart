@@ -113,8 +113,8 @@ class PresetConstants {
         ];
       case TemperaturePresetType.warm:
         return const [
-          FlSpot(-20, 3300),
-          FlSpot(-6, 3300),
+          FlSpot(-20, 2400),
+          FlSpot(-6, 3000),
           FlSpot(0, 4000),
           FlSpot(10, 5000),
           FlSpot(30, 6500),
@@ -122,9 +122,9 @@ class PresetConstants {
         ];
       case TemperaturePresetType.warmest:
         return const [
-          FlSpot(-20, 3300),
-          FlSpot(-6, 3300),
-          FlSpot(0, 3300),
+          FlSpot(-20, 1900),
+          FlSpot(-6, 2400),
+          FlSpot(0, 3000),
           FlSpot(10, 4500),
           FlSpot(30, 6000),
           FlSpot(90, 6500),

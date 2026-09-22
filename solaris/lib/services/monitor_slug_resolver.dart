@@ -12,6 +12,13 @@ class MonitorSlugResolver {
     _systemIdToSlug.clear();
 
     final Map<String, int> modelCounts = {};
+    for (final mon in monitors) {
+      final baseName = mon.friendlyName.isNotEmpty
+          ? mon.friendlyName
+          : (mon.name.isNotEmpty ? mon.name : 'monitor');
+      final modelSlugBase = _slugify(baseName);
+      modelCounts[modelSlugBase] = (modelCounts[modelSlugBase] ?? 0) + 1;
+    }
 
     for (int i = 0; i < monitors.length; i++) {
       final mon = monitors[i];
@@ -19,8 +26,6 @@ class MonitorSlugResolver {
           ? mon.friendlyName
           : (mon.name.isNotEmpty ? mon.name : 'monitor');
       final modelSlugBase = _slugify(baseName);
-      final count = (modelCounts[modelSlugBase] ?? 0) + 1;
-      modelCounts[modelSlugBase] = count;
 
       final deviceHash = mon.deviceIdHash.length >= 4
           ? mon.deviceIdHash.substring(0, 4)
@@ -30,6 +35,9 @@ class MonitorSlugResolver {
 
       _slugToSystemId[friendlyIndexSlug] = mon.id;
       _slugToSystemId[edidSlug] = mon.id;
+      if (modelCounts[modelSlugBase] == 1) {
+        _slugToSystemId[modelSlugBase] = mon.id;
+      }
       _slugToSystemId[mon.id] = mon.id; // Fallback for raw Win32 ID
 
       if (mon.isPrimary) {

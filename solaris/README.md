@@ -45,7 +45,7 @@ Don't settle for defaults. Visualize and refine your lighting profile.
 Full control over your entire workspace.
 
 - **DDC/CI Integration**: Direct hardware communication with monitors via system-level APIs.
-- **Individual Control**: Set unique brightness offsets or manual levels for each display.
+- **Individual Control**: Set unique brightness offsets and color temperatures independently for each display.
 - **Unified Sync**: Adjust all monitors at once with a single click.
   <img width="314" height="254" alt="Multi-monitor controls for individual display brightness offsets" src="https://github.com/user-attachments/assets/53066949-0c59-4fc8-afa5-79805fd59ef8" />
 
@@ -64,8 +64,8 @@ Protect your eyes from blue light. Solaris shifts your display to warmer tones a
 
 - **GPU-Level Control**: Modifies the display's **Gamma Ramp (LUT)** at the graphics card level using Win32 GDI APIs, eliminating hardware communication delays.
 - **Universal Compatibility**: Works on **all screens** (including built-in laptop displays, older monitors, or screens without DDC/CI support).
-- **Automation & Calibration Care**: Fully synced with the solar cycle. Automatically backs up your original system color curves and restores them when resetting or closing the app.
-- **Range**: Smooth transition from 6500K (Daylight) to 3300K (Warm).
+- **Range**: Smooth transition from 6500K (Daylight) down to 1000K (Candlelight / Ultra-Warm).
+- **Per-Monitor Control**: Adjust color temperature globally or independently for each display.
 
 ### 🎮 Smart Game Mode (Smart Exclusions)
 
@@ -248,9 +248,9 @@ Solaris includes a built-in, local HTTP & WebSocket control server that enables 
 ### 🌟 Key Capabilities
 
 - **Full Automation Gateway**: 28 supported Action System commands (`set_brightness`, `set_temperature`, `set_auto_brightness`, `manage_app_overrides`, `manage_game_mode_whitelist`, etc.).
-- **Extended Brightness Range**: `set_brightness` accepts values from `-100.0` to `100.0` when Extra Dark Dimming is enabled, providing programmable sub-zero dimming via API and WebSocket commands.
+- **Extended Ranges**: `set_brightness` accepts values from `-100.0` to `100.0` (Extra Dark Dimming), and `set_temperature` accepts `1000` to `6500` Kelvin.
 - **Decoupled Modular Routing**: Solaris Control API and Sleep Integration API can be independently toggled on or off while sharing a single underlying HTTP daemon. Inactive subsystems return RFC 7807 `503 Service Unavailable`, while `/api/v1/health` reports the live health of each module.
-- **Friendly Monitor Slugs**: Target displays using human-readable identifiers (`display-1`, `lg-ultragear-a1f9`, `primary`) or system paths (`\\\\.\\DISPLAY1`).
+- **Friendly Monitor Slugs**: Target displays using human-readable identifiers (`display-1`, `dell-u2720q`, `lg-ultragear-a1f9`, `primary`) or system paths (`\\\\.\\DISPLAY1`).
 - **Hardened Security Architecture**: 9-Layer Defense & Isolation Pipeline including Host Header DNS Rebinding guard, Payload limiters (64 KB), Subsystem Guard, CSWSH/Drive-by cross-origin guard, per-IP rate limiting, constant-time SHA-256 token authorization, and Granular Zero-Trust ACL Isolation.
 - **Outbound Webhooks Engine**: 23 supported event types, SSRF safe validator, True IP-Pinning (TLS SNI Handshake), HMAC-SHA256 delivery signatures (`X-Solaris-Signature-256`), WAL Staging Buffer, and Dead Letter Queue (DLQ).
 - **Real-Time WebSocket API**: Bi-directional JSON streaming channel at `/api/v1/ws` with `cmd_id` request correlation, selective module subscriptions, and Windows Power S3/S4 sleep/resume broadcasts.

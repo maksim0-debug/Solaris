@@ -317,6 +317,8 @@ Broadcasted when a DDC/CI read/write error or I2C bus collision is detected:
 ## 🎯 Command Execution via WebSocket (`cmd_id` Correlation)
 
 ### Request Frame Schema (`type: "command"`):
+
+#### Example A: Set Brightness
 ```json
 {
   "type": "command",
@@ -329,6 +331,20 @@ Broadcasted when a DDC/CI read/write error or I2C bus collision is detected:
 
 > [!NOTE]
 > When **Extra Dark Dimming** is enabled in application settings, the `value` parameter for `set_brightness` accepts floating-point values from `-100.0` to `100.0`. In the negative range (`< 0.0`), physical monitor backlights are kept at 0% DDC/CI while a click-through Win32 DWM overlay smoothly darkens the screen down to an 85% opacity safety floor.
+
+#### Example B: Set Color Temperature (Extended 1000K–6500K)
+```json
+{
+  "type": "command",
+  "cmd_id": "ws-cmd-002",
+  "action": "set_temperature",
+  "value": 1900.0,
+  "monitor_id": "dell-u2720q"
+}
+```
+
+> [!NOTE]
+> The `set_temperature` command accepts color temperatures from `1000.0` to `6500.0` Kelvin. Values in the 1000K–3300K range utilize the 111-point Planckian Blackbody spectrum LUT via Win32 GDI & WCS APIs. Specifying `monitor_id` (or friendly slug such as `display-1` or model base slug `dell-u2720q`) targets an individual display with independent manual temperature control. If omitted, the temperature is applied globally across all connected monitors.
 
 ### Success Response (`type: "response"`):
 ```json

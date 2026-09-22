@@ -24,6 +24,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:solaris/widgets/settings/api_settings_card.dart';
 import 'package:solaris/widgets/settings/webhooks_management_card.dart';
 import 'package:solaris/services/monitor_service.dart';
+import 'package:solaris/constants/temperature_constants.dart';
+import 'package:solaris/widgets/temperature_slider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -1767,7 +1769,7 @@ class _SmartExclusionsCard extends ConsumerWidget {
                     child: _SmoothSettingSlider(
                       title: l10n.lockedTemperature,
                       value: settings.gameModeTemperature,
-                      min: 3300,
+                      min: TemperatureConstants.minDouble,
                       max: 6500,
                       isReversed: true,
                       useTemperaturePalette: true,
@@ -3169,11 +3171,9 @@ class _SmoothSettingSliderState extends State<_SmoothSettingSlider> {
       final double progress = widget.isReversed
           ? sliderValue
           : (clamped - widget.min) / (widget.max - widget.min);
-      currentActiveColor = Color.lerp(
-        const Color(0xFF60A5FA),
-        const Color(0xFFF97316),
+      currentActiveColor = TemperatureSlider.progressToColor(
         progress.clamp(0.0, 1.0),
-      )!;
+      );
     } else {
       currentActiveColor = widget.activeColor;
     }

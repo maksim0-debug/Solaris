@@ -3,7 +3,8 @@ import 'package:solaris/services/monitor_service.dart';
 
 class TemperatureService {
   final Map<String, int> _currentHardwareTemperature = {};
-  final Map<String, Timer?> _adjustmentTimers = {};
+  Map<String, int> get currentHardwareTemperature =>
+      Map.unmodifiable(_currentHardwareTemperature);
 
   final Map<String, int?> _targetTemperatures = {};
 
@@ -20,30 +21,49 @@ class TemperatureService {
     _isResetLocked = false;
   }
 
+  final Map<String, Timer?> _throttleTrailingTimers = {};
+
   void stopTemperatureControlForDevice(String deviceName) {
-    _adjustmentTimers[deviceName]?.cancel();
-    _adjustmentTimers[deviceName] = null;
+    _throttleTrailingTimers[deviceName]?.cancel();
+    _throttleTrailingTimers.remove(deviceName);
     _targetTemperatures[deviceName] = null; // Signal loop to stop
   }
 
   Future<void> resetTemperatureNow({
-    required String selection,
+    String selection = 'all',
     required List<MonitorInfo> monitors,
     required MonitorService monitorService,
     required void Function(String, int) updateTemperatureCallback,
   }) async {
-    for (final monitor in monitors) {
-      if (selection == 'all' || selection == monitor.deviceName) {
-        stopTemperatureControlForDevice(monitor.deviceName);
-        _currentHardwareTemperature[monitor.deviceName] = 6500;
-        updateTemperatureCallback(monitor.deviceName, 6500);
-        await monitorService.resetMonitorTemperature(monitor.deviceName);
+    if (selection == 'all') {
+      for (final timer in _throttleTrailingTimers.values) {
+        timer?.cancel();
       }
+      _throttleTrailingTimers.clear();
+    } else {
+      _throttleTrailingTimers[selection]?.cancel();
+      _throttleTrailingTimers.remove(selection);
     }
+
+    if (monitors.isEmpty) return;
+
+    final targetMonitors = (selection == 'all')
+        ? monitors
+        : monitors
+              .where((m) => m.deviceName == selection || m.id == selection)
+              .toList();
+
+    for (final monitor in targetMonitors) {
+      stopTemperatureControlForDevice(monitor.deviceName);
+      _currentHardwareTemperature[monitor.deviceName] = 6500;
+      updateTemperatureCallback(monitor.deviceName, 6500);
+    }
+
+    await monitorService.resetMonitorTemperature(selection);
   }
 
   Future<void> setTemperatureInstant({
-    required String selection,
+    String selection = 'all',
     required double targetValue,
     required List<MonitorInfo> monitors,
     required MonitorService monitorService,
@@ -55,54 +75,100 @@ class TemperatureService {
     }
     final now = DateTime.now().millisecondsSinceEpoch;
 
-    for (final monitor in monitors) {
-      if (selection == 'all' || selection == monitor.deviceName) {
-        // Stop any active smooth transition
-        stopTemperatureControlForDevice(monitor.deviceName);
+    if (monitors.isEmpty) return;
 
-        // Throttle check: Software gamma is fast, but 60Hz bridge calls can be overhead.
-        // 20ms (50Hz) is a good balance between responsiveness and efficiency.
-        final lastSent = _lastTempSentTime[monitor.deviceName] ?? 0;
-        if (now - lastSent < 20 && target != 6500) {
-          // Update internal state and UI immediately, but skip native call
-          _currentHardwareTemperature[monitor.deviceName] = target;
-          updateTemperatureCallback(monitor.deviceName, target);
-          continue;
-        }
+    final targetMonitors = (selection == 'all')
+        ? monitors
+        : monitors
+              .where((m) => m.deviceName == selection || m.id == selection)
+              .toList();
 
-        _lastTempSentTime[monitor.deviceName] = now;
-        _currentHardwareTemperature[monitor.deviceName] = target;
+    // Deduplication check: If all target monitors are already at target and no trailing
+    // timer is pending, avoid redundant native GPU Gamma Ramp calls.
+    final bool isAlreadyAtTarget =
+        targetMonitors.isNotEmpty &&
+        _throttleTrailingTimers[selection] == null &&
+        targetMonitors.every(
+          (m) => _currentHardwareTemperature[m.deviceName] == target,
+        );
+
+    if (isAlreadyAtTarget) {
+      for (final monitor in targetMonitors) {
         updateTemperatureCallback(monitor.deviceName, target);
-
-        if (target == 6500) {
-          await monitorService.resetMonitorTemperature(monitor.deviceName);
-        } else {
-          await monitorService.setMonitorTemperature(
-            monitor.deviceName,
-            target,
-          );
-        }
       }
+      return;
+    }
+
+    for (final monitor in targetMonitors) {
+      // Stop any active smooth transition
+      stopTemperatureControlForDevice(monitor.deviceName);
+      _currentHardwareTemperature[monitor.deviceName] = target;
+      updateTemperatureCallback(monitor.deviceName, target);
+    }
+
+    // Throttle check: Software gamma is fast, but 60Hz bridge calls can be overhead.
+    // 20ms (50Hz) provides responsiveness while trailing edge ensures final slider point is never lost.
+    final throttleKey = selection;
+    final lastSent = _lastTempSentTime[throttleKey] ?? 0;
+    final shouldThrottle = (now - lastSent < 20) && target != 6500;
+
+    if (shouldThrottle) {
+      _throttleTrailingTimers[throttleKey]?.cancel();
+      _throttleTrailingTimers[throttleKey] = Timer(
+        const Duration(milliseconds: 25),
+        () async {
+          _throttleTrailingTimers.remove(throttleKey);
+          _lastTempSentTime[throttleKey] =
+              DateTime.now().millisecondsSinceEpoch;
+          if (target == 6500) {
+            await monitorService.resetMonitorTemperature(selection);
+          } else {
+            await monitorService.setMonitorTemperature(selection, target);
+          }
+        },
+      );
+      return;
+    }
+
+    _throttleTrailingTimers[throttleKey]?.cancel();
+    _throttleTrailingTimers.remove(throttleKey);
+    _lastTempSentTime[throttleKey] = now;
+    if (target == 6500) {
+      await monitorService.resetMonitorTemperature(selection);
+    } else {
+      await monitorService.setMonitorTemperature(selection, target);
     }
   }
 
   final Map<String, bool> _isLoopRunning = {};
 
   void applyTemperatureSmoothly({
-    required String selection,
+    String selection = 'all',
     required double targetValue,
     required List<MonitorInfo> monitors,
     required MonitorService monitorService,
     required void Function(String, int) updateTemperatureCallback,
     bool isUIVisible = true,
   }) {
+    if (selection == 'all') {
+      for (final timer in _throttleTrailingTimers.values) {
+        timer?.cancel();
+      }
+      _throttleTrailingTimers.clear();
+    } else {
+      _throttleTrailingTimers[selection]?.cancel();
+      _throttleTrailingTimers.remove(selection);
+    }
+
     final target = targetValue.round();
     if (_isResetLocked && target != 6500) {
       return;
     }
 
     for (final monitor in monitors) {
-      if (selection == 'all' || selection == monitor.deviceName) {
+      if (selection == 'all' ||
+          selection == monitor.deviceName ||
+          selection == monitor.id) {
         _targetTemperatures[monitor.deviceName] = target;
 
         // If no loop is running, start one.

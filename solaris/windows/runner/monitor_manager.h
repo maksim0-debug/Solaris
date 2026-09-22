@@ -17,6 +17,7 @@
 #include <psapi.h>
 #include <tlhelp32.h>
 #include <chrono>
+#include <memory>
 #include <physicalmonitorenumerationapi.h>
 
 class MonitorManager {
@@ -36,11 +37,17 @@ class MonitorManager {
   // Sets the color temperature (in Kelvin) of the monitor relative to original gamma.
   bool SetTemperature(const std::string& device_path, int kelvins);
 
+  // Sets the color temperature (in Kelvin) for ALL attached monitors synchronously via hardware WCS GPU LUT.
+  bool SetAllMonitorsTemperature(int kelvins);
+
   // Resets monitor gamma ramp to cached original (or linear neutral fallback).
   bool ResetTemperature(const std::string& device_path);
 
-  // Synchronously resets color temperature to pure linear 6500K for ALL attached monitors.
+  // Resets all attached monitors to neutral 6500K synchronously.
   bool ResetAllMonitorsTemperatureSync();
+
+  // Restores the last known temperature on each attached display (preserving per-monitor warmth after sleep/display changes).
+  bool RestoreLastTemperatures();
 
   // Enqueues a task to be executed on the background worker thread.
   void EnqueueTask(std::function<void()> task);
@@ -73,10 +80,17 @@ class MonitorManager {
   std::map<std::string, std::vector<PHYSICAL_MONITOR>> physical_monitors_cache_;
   std::vector<PHYSICAL_MONITOR> GetOrCreatePhysicalMonitors(const std::string& device_path);
   void DestroyPhysicalMonitorsCache();
+  // Debounced monitor handle invalidation timer using Win32 Threadpool (UAF and leak safe)
+  PTP_TIMER debounce_timer_{nullptr};
+  static VOID CALLBACK InvalidateDebounceCallback(PTP_CALLBACK_INSTANCE instance, PVOID context, PTP_TIMER timer);
 
   // Caches the original gamma ramps for displays.
-  std::map<std::string, std::vector<WORD>> original_gamma_ramps_;
   std::mutex gamma_mutex_;
+  std::map<std::string, std::vector<WORD>> original_gamma_ramps_;
+
+  // Per-monitor last applied temperature tracking
+  std::mutex temperature_mutex_;
+  std::unordered_map<std::string, int> last_applied_temperatures_;
 
   // Background worker state
   std::thread worker_thread_;

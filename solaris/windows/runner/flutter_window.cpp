@@ -1,12 +1,17 @@
 #include "flutter_window.h"
 
 #include <optional>
+#include <algorithm>
+#include <atomic>
+#include <thread>
+#include <string>
 
 #include "flutter/generated_plugin_registrant.h"
 #include "monitor_manager.h"
 #include <flutter/method_channel.h>
 #include <flutter/event_channel.h>
 #include <flutter/standard_method_codec.h>
+#include <shellapi.h>
 
 struct FocusEventData {
   bool is_gaming;
@@ -165,36 +170,70 @@ bool FlutterWindow::OnCreate() {
         } else if (call.method_name().compare("setMonitorTemperature") == 0) {
           const auto* arguments = std::get_if<flutter::EncodableMap>(call.arguments());
           if (arguments) {
-            auto device_path_it = arguments->find(flutter::EncodableValue("devicePath"));
             auto temp_it = arguments->find(flutter::EncodableValue("temperature"));
-            if (device_path_it != arguments->end() && temp_it != arguments->end()) {
-              std::string device_path = std::get<std::string>(device_path_it->second);
-              int temperature = std::get<int>(temp_it->second);
+            if (temp_it != arguments->end()) {
+              int temperature = 6500;
+              if (const int* val_i = std::get_if<int>(&temp_it->second)) {
+                temperature = *val_i;
+              } else if (const int64_t* val_i64 = std::get_if<int64_t>(&temp_it->second)) {
+                temperature = static_cast<int>(*val_i64);
+              } else if (const double* val_d = std::get_if<double>(&temp_it->second)) {
+                temperature = static_cast<int>(std::round(*val_d));
+              } else {
+                result->Error("invalid_arguments", "Temperature must be a numeric value");
+                return;
+              }
+
+              std::string device_path = "";
+              auto device_path_it = arguments->find(flutter::EncodableValue("devicePath"));
+              if (device_path_it != arguments->end()) {
+                if (const auto* path_str = std::get_if<std::string>(&device_path_it->second)) {
+                  device_path = *path_str;
+                }
+              }
+
               monitor_manager_.EnqueueTask([this, device_path, temperature]() {
-                monitor_manager_.SetTemperature(device_path, temperature);
+                if (temperature >= 6500) {
+                  if (!device_path.empty() && device_path != "all") {
+                    monitor_manager_.ResetTemperature(device_path);
+                  } else {
+                    monitor_manager_.ResetAllMonitorsTemperatureSync();
+                  }
+                } else {
+                  if (!device_path.empty() && device_path != "all") {
+                    monitor_manager_.SetTemperature(device_path, temperature);
+                  } else {
+                    monitor_manager_.SetAllMonitorsTemperature(temperature);
+                  }
+                }
               });
+
               result->Success(flutter::EncodableValue(true));
               return;
             }
           }
-          result->Error("invalid_arguments", "Expected devicePath and temperature");
-        } else if (call.method_name().compare("resetMonitorTemperature") == 0) {
+          result->Error("invalid_arguments", "Expected temperature");
+        } else if (call.method_name().compare("resetMonitorTemperature") == 0 ||
+                   call.method_name().compare("resetAllMonitorsTemperature") == 0) {
+          std::string device_path = "";
           const auto* arguments = std::get_if<flutter::EncodableMap>(call.arguments());
           if (arguments) {
             auto device_path_it = arguments->find(flutter::EncodableValue("devicePath"));
             if (device_path_it != arguments->end()) {
-              std::string device_path = std::get<std::string>(device_path_it->second);
-              monitor_manager_.EnqueueTask([this, device_path]() {
-                monitor_manager_.ResetTemperature(device_path);
-              });
-              result->Success(flutter::EncodableValue(true));
-              return;
+              if (const auto* path_str = std::get_if<std::string>(&device_path_it->second)) {
+                device_path = *path_str;
+              }
             }
           }
-          result->Error("invalid_arguments", "Expected devicePath");
-        } else if (call.method_name().compare("resetAllMonitorsTemperature") == 0) {
-          bool success = monitor_manager_.ResetAllMonitorsTemperatureSync();
-          result->Success(flutter::EncodableValue(success));
+
+          monitor_manager_.EnqueueTask([this, device_path]() {
+            if (!device_path.empty() && device_path != "all") {
+              monitor_manager_.ResetTemperature(device_path);
+            } else {
+              monitor_manager_.ResetAllMonitorsTemperatureSync();
+            }
+          });
+          result->Success(flutter::EncodableValue(true));
           return;
         } else if (call.method_name().compare("getMonitorBrightness") == 0) {
           const auto* arguments = std::get_if<flutter::EncodableMap>(call.arguments());
@@ -298,6 +337,7 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  monitor_manager_.ResetAllMonitorsTemperatureSync();
   overlay_manager_.DestroyAllOverlays();
 
   if (app_icon_extractor_) {
@@ -353,6 +393,11 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
       break;
 
     case WM_POWERBROADCAST:
+      if (wparam == PBT_APMRESUMEAUTOMATIC || wparam == PBT_APMRESUMESUSPEND) {
+        monitor_manager_.EnqueueTask([this]() {
+          monitor_manager_.RestoreLastTemperatures();
+        });
+      }
       if (system_event_sink_ && (wparam == PBT_APMSUSPEND || wparam == PBT_APMRESUMEAUTOMATIC || wparam == PBT_APMRESUMESUSPEND)) {
         flutter::EncodableMap map;
         map[flutter::EncodableValue("event")] = flutter::EncodableValue("WM_POWERBROADCAST");
@@ -364,6 +409,9 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
     case WM_DISPLAYCHANGE:
       overlay_manager_.UpdateMonitorBounds();
       monitor_manager_.InvalidateMonitorHandlesDebounced(1000);
+      monitor_manager_.EnqueueTask([this]() {
+        monitor_manager_.RestoreLastTemperatures();
+      });
       if (system_event_sink_) {
         flutter::EncodableMap map;
         map[flutter::EncodableValue("event")] = flutter::EncodableValue("WM_DISPLAYCHANGE");

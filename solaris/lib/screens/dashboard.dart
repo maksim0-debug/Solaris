@@ -629,21 +629,13 @@ class _Header extends ConsumerWidget {
           final isGaming = ref.read(gamingModeProvider);
           final settingsMap = ref.read(settingsProvider).value ?? {};
 
-          final targetMonitors = selection.contains('all')
-              ? monitors.map((m) => m.deviceName).toList()
-              : selection.toList();
+          final globalSettings = settingsMap['all'] ?? SettingsState();
 
-          for (final id in targetMonitors) {
-            final mSettings =
-                settingsMap[id] ?? settingsMap['all'] ?? SettingsState();
-            if (isGaming &&
-                mSettings.isGameModeEnabled &&
-                mSettings.isGameModeTemperatureEnabled) {
-              continue;
-            }
-
+          if (!(isGaming &&
+              globalSettings.isGameModeEnabled &&
+              globalSettings.isGameModeTemperatureEnabled)) {
             temperatureService.setTemperatureInstant(
-              selection: id,
+              selection: 'all',
               targetValue: targetTemp.toDouble(),
               monitors: monitors,
               monitorService: monitorService,
@@ -698,19 +690,13 @@ class _Header extends ConsumerWidget {
           final isGaming = ref.read(gamingModeProvider);
           final settingsMap = ref.read(settingsProvider).value ?? {};
 
-          for (final m in monitorValue) {
-            final mSettings =
-                settingsMap[m.deviceName] ??
-                settingsMap['all'] ??
-                SettingsState();
-            if (isGaming &&
-                mSettings.isGameModeEnabled &&
-                mSettings.isGameModeTemperatureEnabled) {
-              continue;
-            }
+          final globalSettings = settingsMap['all'] ?? SettingsState();
 
+          if (!(isGaming &&
+              globalSettings.isGameModeEnabled &&
+              globalSettings.isGameModeTemperatureEnabled)) {
             temperatureService.setTemperatureInstant(
-              selection: m.deviceName,
+              selection: 'all',
               targetValue: targetTemp.toDouble(),
               monitors: monitorValue,
               monitorService: monitorService,
@@ -747,7 +733,7 @@ class _Header extends ConsumerWidget {
               ref.read(isColorTemperatureEnabledProvider)) {
             ref
                 .read(manualTemperatureProvider.notifier)
-                .setTemperature(monitor.realTemperature!);
+                .update(monitor.realTemperature!);
           }
         } catch (_) {}
       }
@@ -951,7 +937,6 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
         ref.read(searchAnchorProvider.notifier).clear();
       });
     }
-
     final monitors = ref.watch(monitorListProvider).value ?? [];
     final settingsMap = ref.watch(settingsProvider).value ?? {};
     final isSoftwareDimmingEnabled =
@@ -990,14 +975,28 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
     }
 
     double tempVal = currentTemperature.toDouble();
-    if (isAutoTemp && isColorTempEnabled) {
+    if (isColorTempEnabled) {
       if (selection.length == 1 && !selection.contains('all')) {
         final id = selection.first;
         final monitor = monitors.where((m) => m.deviceName == id).firstOrNull;
-        if (monitor != null && monitor.realTemperature != null) {
+        final tempSettingsMap =
+            ref.watch(temperatureSettingsProvider).value ?? {};
+        final mTempSettings = tempSettingsMap[id] ?? tempSettingsMap['all'];
+        final isMonitorAuto = mTempSettings?.isEnabled ?? isAutoTemp;
+        if (isMonitorAuto &&
+            monitor != null &&
+            monitor.realTemperature != null) {
+          tempVal = monitor.realTemperature!.toDouble();
+        } else if (!isMonitorAuto && mTempSettings != null) {
+          final manual =
+              mTempSettings.manualTemperature ??
+              tempSettingsMap['all']?.manualTemperature ??
+              currentTemperature;
+          tempVal = manual.toDouble();
+        } else if (monitor != null && monitor.realTemperature != null) {
           tempVal = monitor.realTemperature!.toDouble();
         }
-      } else {
+      } else if (isAutoTemp) {
         final primaryMonitor = monitors.where((m) => m.isPrimary).firstOrNull;
         if (primaryMonitor != null && primaryMonitor.realTemperature != null) {
           tempVal = primaryMonitor.realTemperature!.toDouble();
@@ -1060,9 +1059,9 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                       height: 280,
                       child: CustomPaint(
                         painter: TemperatureDialPainter(
-                          progress:
-                              (6500.0 - tempVal.clamp(3300.0, 6500.0)) /
-                              (6500.0 - 3300.0),
+                          progress: TemperatureSlider.valueToProgress(
+                            value: tempVal.toDouble(),
+                          ),
                         ),
                       ),
                     ),
@@ -1128,9 +1127,20 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                       id: 'color_temperature',
                       child: TemperatureSlider(
                         value: tempVal,
-                        onChanged: (val) => ref
-                            .read(currentTemperatureProvider.notifier)
-                            .setManualTemperature(val.round()),
+                        onChanged: (val) {
+                          final monitorId = selection.contains('all')
+                              ? 'all'
+                              : (selection.length == 1
+                                    ? selection.first
+                                    : null);
+                          ref
+                              .read(currentTemperatureProvider.notifier)
+                              .setManualTemperature(
+                                val.round(),
+                                monitorId: monitorId,
+                                debounceSave: true,
+                              );
+                        },
                       ),
                     ),
                   ],

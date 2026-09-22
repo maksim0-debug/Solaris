@@ -13,6 +13,7 @@ import 'package:solaris/providers/sleep_provider.dart';
 import 'package:solaris/services/api_permissions_checker.dart';
 import 'package:solaris/services/api_router.dart';
 import 'package:solaris/services/monitor_slug_resolver.dart';
+import 'package:solaris/constants/temperature_constants.dart';
 import 'package:collection/collection.dart';
 
 /// Safe Riverpod state mutation outside Flutter frame rendering phase.
@@ -376,22 +377,44 @@ class ApiControlHandler {
         return _ActionResult.ok('toggle_auto_brightness', {'enabled': current});
 
       case 'set_temperature':
+        const minTemp = TemperatureConstants.min;
         final val = _toInt(mutablePayload['value']);
-        if (val == null || val < 3300 || val > 6500) {
+        if (val == null || val < minTemp || val > TemperatureConstants.max) {
           return _ActionResult.error(
             HttpStatus.badRequest,
             'Validation Error',
-            "Field 'value' must be an integer Kelvin between 3300 and 6500.",
+            "Field 'value' must be an integer Kelvin between $minTemp and ${TemperatureConstants.max}.",
           );
         }
+        final target = resolvedMonitorId ?? monitorIdInput;
         await safeStateMutator(() {
           _container
               .read(temperatureSettingsProvider.notifier)
-              .toggleEnabled(false);
-          _container
-              .read(manualTemperatureProvider.notifier)
-              .setTemperature(val);
+              .setManualTemperature(val, monitorId: target);
+          if (target == 'all') {
+            _container
+                .read(manualTemperatureProvider.notifier)
+                .setTemperature(val);
+          }
         });
+
+        final tempService = _container.read(temperatureServiceProvider);
+        final monitorService = _container.read(monitorServiceProvider);
+        final monitorListNotifier = _container.read(
+          monitorListProvider.notifier,
+        );
+
+        unawaited(
+          tempService.setTemperatureInstant(
+            selection: target,
+            targetValue: val.toDouble(),
+            monitors: monitors,
+            monitorService: monitorService,
+            updateTemperatureCallback: (devId, v) =>
+                monitorListNotifier.updateTemperature(devId, v),
+          ),
+        );
+
         return _ActionResult.accepted('set_temperature', {
           'value': val,
           'monitor_id': monitorIdInput,
@@ -424,20 +447,35 @@ class ApiControlHandler {
             "Field 'enabled' (boolean) is required.",
           );
         }
+        final target = resolvedMonitorId ?? monitorIdInput;
         await safeStateMutator(() {
           _container
               .read(temperatureSettingsProvider.notifier)
-              .toggleEnabled(enabled);
+              .setEnabled(enabled, monitorId: target);
         });
-        return _ActionResult.ok('set_auto_temperature', {'enabled': enabled});
+        return _ActionResult.ok('set_auto_temperature', {
+          'enabled': enabled,
+          'monitor_id': monitorIdInput,
+        });
 
       case 'toggle_auto_temperature':
+        final target = resolvedMonitorId ?? monitorIdInput;
+        final tempSettingsMap =
+            _container.read(temperatureSettingsProvider).value ?? {};
+        final currentEnabled = target == 'all'
+            ? _container.read(autoTemperatureAdjustmentProvider)
+            : (tempSettingsMap[target]?.isEnabled ??
+                  tempSettingsMap['all']?.isEnabled ??
+                  true);
+        final newEnabled = !currentEnabled;
         await safeStateMutator(() {
-          _container.read(autoTemperatureAdjustmentProvider.notifier).toggle();
+          _container
+              .read(temperatureSettingsProvider.notifier)
+              .setEnabled(newEnabled, monitorId: target);
         });
-        final current = _container.read(autoTemperatureAdjustmentProvider);
         return _ActionResult.ok('toggle_auto_temperature', {
-          'enabled': current,
+          'enabled': newEnabled,
+          'monitor_id': monitorIdInput,
         });
 
       case 'set_brightness_preset':
@@ -465,11 +503,15 @@ class ApiControlHandler {
             "Field 'preset' must be one of: coolest, cool, warm, warmest.",
           );
         }
+        final target = resolvedMonitorId ?? monitorIdInput;
         await safeStateMutator(() {
-          _container.read(temperatureSettingsProvider.notifier).setPreset(type);
+          _container
+              .read(temperatureSettingsProvider.notifier)
+              .setPreset(type, monitorId: target);
         });
         return _ActionResult.ok('set_temperature_preset', {
           'preset': presetStr,
+          'monitor_id': monitorIdInput,
         });
 
       case 'set_user_preset':

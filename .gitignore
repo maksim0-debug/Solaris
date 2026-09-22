@@ -10,6 +10,7 @@ env.g.dart
 *.log
 *.pyc
 *.swp
+*.exe
 .DS_Store
 .atom/
 .build/

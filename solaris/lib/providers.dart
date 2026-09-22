@@ -19,6 +19,7 @@ import 'package:solaris/services/brightness_service.dart';
 import 'package:solaris/services/weather_service.dart';
 import 'package:solaris/services/autorun_service.dart';
 import 'package:solaris/providers/temperature_provider.dart';
+import 'package:solaris/constants/temperature_constants.dart';
 import 'package:solaris/models/solar_state.dart';
 import 'package:solaris/models/current_day_phase.dart';
 import 'package:solaris/models/api_key_entry.dart';
@@ -2804,7 +2805,7 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
   final brightnessService = ref.read(brightnessServiceProvider);
   final tempService = ref.read(temperatureServiceProvider);
   final monitorService = ref.read(monitorServiceProvider);
-  final isTempEnabled = ref.read(isColorTemperatureEnabledProvider);
+  final isTempEnabled = ref.watch(isColorTemperatureEnabledProvider);
   final monitorListNotifier = ref.read(monitorListProvider.notifier);
 
   // Listen to manual brightness changes to apply hardware updates even when window is minimized/hidden in tray
@@ -2848,8 +2849,19 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
 
   // Listen to manual temperature changes to apply hardware updates even when window is minimized/hidden in tray
   ref.listen<int>(currentTemperatureProvider, (previous, next) {
-    if (ref.read(autoTemperatureAdjustmentProvider) ||
-        tempService.isResetLocked) {
+    if (tempService.isResetLocked) {
+      return;
+    }
+
+    final selection = ref.read(selectedMonitorsProvider);
+    final tempSettingsMap = ref.read(temperatureSettingsProvider).value ?? {};
+    final isSelectedAuto = selection.contains('all')
+        ? (tempSettingsMap['all']?.isEnabled ?? true)
+        : (tempSettingsMap[selection.firstOrNull]?.isEnabled ??
+              tempSettingsMap['all']?.isEnabled ??
+              true);
+
+    if (isSelectedAuto) {
       return;
     }
 
@@ -2859,13 +2871,24 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
       final isGaming = ref.read(gamingModeProvider);
       final settingsMap = ref.read(settingsProvider).value ?? {};
 
-      final targetMonitors = selection.contains('all')
-          ? monitors.map((m) => m.deviceName).toList()
-          : selection.toList();
+      final globalSettings = settingsMap['all'] ?? SettingsState();
+
+      final hasSpecificGamingMonitor =
+          isGaming &&
+          monitors.any((m) {
+            final s = settingsMap[m.deviceName] ?? globalSettings;
+            return s.isGameModeEnabled && s.isGameModeTemperatureEnabled;
+          });
+
+      final targetMonitors =
+          (selection.contains('all') && !hasSpecificGamingMonitor)
+          ? ['all']
+          : (selection.contains('all')
+                ? monitors.map((m) => m.deviceName).toList()
+                : selection.toList());
 
       for (final id in targetMonitors) {
-        final mSettings =
-            settingsMap[id] ?? settingsMap['all'] ?? SettingsState();
+        final mSettings = settingsMap[id] ?? globalSettings;
         if (isGaming &&
             mSettings.isGameModeEnabled &&
             mSettings.isGameModeTemperatureEnabled) {
@@ -2877,8 +2900,8 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
           targetValue: next.toDouble(),
           monitors: monitors,
           monitorService: monitorService,
-          updateTemperatureCallback: (id, val) =>
-              monitorListNotifier.updateTemperature(id, val),
+          updateTemperatureCallback: (devId, val) =>
+              monitorListNotifier.updateTemperature(devId, val),
         );
       }
     }
@@ -2909,9 +2932,12 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
             final isAppSuppressed =
                 activeProcessState.suppressedPids.isNotEmpty;
             final appRule = (!isAppSuppressed && activeProcessName.isNotEmpty)
-                ? settings.appOverrides.firstWhereOrNull(
-                    (r) => r.isEnabled && r.exeName == activeProcessName,
-                  )
+                ? (settings.appOverrides.firstWhereOrNull(
+                        (r) => r.isEnabled && r.exeName == activeProcessName,
+                      ) ??
+                      globalSettings.appOverrides.firstWhereOrNull(
+                        (r) => r.isEnabled && r.exeName == activeProcessName,
+                      ))
                 : null;
 
             if (appRule != null &&
@@ -3027,7 +3053,14 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
               );
             }
 
-            // Calculate and Apply Temperature
+            // Calculate and Apply Temperature for each display individually
+            final isMonitorGaming =
+                isGamingMode &&
+                (settings.isGameModeEnabled ||
+                    globalSettings.isGameModeEnabled) &&
+                (settings.isGameModeTemperatureEnabled ||
+                    globalSettings.isGameModeTemperatureEnabled);
+
             if (appRule != null &&
                 appRule.temperatureMode != AppOverrideMode.global &&
                 isTempEnabled) {
@@ -3045,11 +3078,10 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                   monitorListNotifier.updateTemperature(id, val);
                 },
               );
-            } else if (isGamingMode &&
-                settings.isGameModeEnabled &&
-                settings.isGameModeTemperatureEnabled &&
-                isTempEnabled) {
-              final targetTemp = settings.gameModeTemperature;
+            } else if (isMonitorGaming && isTempEnabled) {
+              final targetTemp = settings.isGameModeTemperatureEnabled
+                  ? settings.gameModeTemperature
+                  : globalSettings.gameModeTemperature;
               tempService.applyTemperatureSmoothly(
                 selection: monitor.deviceName,
                 targetValue: targetTemp,
@@ -3078,13 +3110,17 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                 smartData: effectiveSmartTempData,
               );
 
+              final effectiveFinalTemp = targetTemp.finalTemperature
+                  .clamp(TemperatureConstants.min, TemperatureConstants.max)
+                  .toDouble();
+
               debugPrint(
-                '[CircadianLoop] Device: ${monitor.deviceName} | AutoTemp: true | Preset: ${tempSettings.activePreset.name} | TargetTemp: ${targetTemp.finalTemperature}K',
+                '[CircadianLoop] Device: ${monitor.deviceName} | AutoTemp: true | Preset: ${tempSettings.activePreset.name} | TargetTemp: ${effectiveFinalTemp.round()}K',
               );
 
               tempService.applyTemperatureSmoothly(
                 selection: monitor.deviceName,
-                targetValue: targetTemp.finalTemperature.toDouble(),
+                targetValue: effectiveFinalTemp,
                 monitors: monitors,
                 monitorService: monitorService,
                 isUIVisible: visibility == AppVisibilityState.visible,
@@ -3093,10 +3129,16 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                 },
               );
             } else if (isTempEnabled) {
-              final manualTemp = ref.read(manualTemperatureProvider);
+              final int targetManualTemp =
+                  tempSettings.manualTemperature ??
+                  globalTempSettings.manualTemperature ??
+                  ref.read(manualTemperatureProvider);
+              final effectiveManualTemp = targetManualTemp
+                  .clamp(TemperatureConstants.min, TemperatureConstants.max)
+                  .toDouble();
               tempService.setTemperatureInstant(
                 selection: monitor.deviceName,
-                targetValue: manualTemp.toDouble(),
+                targetValue: effectiveManualTemp,
                 monitors: monitors,
                 monitorService: monitorService,
                 updateTemperatureCallback: (id, val) {

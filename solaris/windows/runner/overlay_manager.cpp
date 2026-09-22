@@ -14,18 +14,20 @@ OverlayManager::~OverlayManager() {
 }
 
 LRESULT CALLBACK OverlayManager::OverlayWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
+  HBRUSH brush = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
+
   switch (msg) {
     case WM_ERASEBKGND: {
       HDC hdc = reinterpret_cast<HDC>(wparam);
       RECT rc;
       GetClientRect(hwnd, &rc);
-      FillRect(hdc, &rc, static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH)));
+      FillRect(hdc, &rc, brush);
       return 1;
     }
     case WM_PAINT: {
       PAINTSTRUCT ps;
       HDC hdc = BeginPaint(hwnd, &ps);
-      FillRect(hdc, &ps.rcPaint, static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH)));
+      FillRect(hdc, &ps.rcPaint, brush);
       EndPaint(hwnd, &ps);
       return 0;
     }
@@ -88,15 +90,29 @@ RECT OverlayManager::GetMonitorRect(const std::string& device_path) {
 
 void OverlayManager::SetOverlayOpacity(const std::string& device_path, double opacity) {
   std::lock_guard<std::mutex> lock(mutex_);
+  auto& info_ptr = overlays_[device_path];
+  if (!info_ptr) {
+    info_ptr = std::make_unique<OverlayInfo>();
+  }
+  info_ptr->opacity = std::max(0.0, std::min(0.85, opacity));
+  ApplyOpacityLocked(device_path);
+}
 
-  if (opacity <= 0.001) {
-    auto it = overlays_.find(device_path);
-    if (it != overlays_.end()) {
-      if (it->second.hwnd && IsWindow(it->second.hwnd)) {
-        ShowWindow(it->second.hwnd, SW_HIDE);
-      }
-      it->second.opacity = 0.0;
+void OverlayManager::ApplyOpacityLocked(const std::string& device_path) {
+  auto it = overlays_.find(device_path);
+  if (it == overlays_.end() || !it->second) {
+    return;
+  }
+
+  OverlayInfo& info = *(it->second);
+  double dim = info.opacity;
+
+  // If dimming is 0, hide the overlay window
+  if (dim <= 0.001) {
+    if (info.hwnd && IsWindow(info.hwnd)) {
+      ShowWindow(info.hwnd, SW_HIDE);
     }
+    info.alpha = 0;
     return;
   }
 
@@ -109,13 +125,12 @@ void OverlayManager::SetOverlayOpacity(const std::string& device_path, double op
     return;
   }
 
-  // Safety Floor: Clamp opacity to a maximum of 85% to ensure the user never gets a completely black screen
-  double clamped_opacity = std::max(0.0, std::min(0.85, opacity));
-  BYTE alpha = static_cast<BYTE>(std::round(clamped_opacity * 255.0));
-
-  auto& info = overlays_[device_path];
-  info.opacity = clamped_opacity;
   info.last_rect = rc;
+
+  // Safety Floor: Clamp opacity to a maximum of 85% to ensure the user never gets a completely black screen
+  double clamped_dim = std::max(0.0, std::min(0.85, dim));
+  BYTE alpha = static_cast<BYTE>(std::round(clamped_dim * 255.0));
+  info.alpha = alpha;
 
   if (!info.hwnd || !IsWindow(info.hwnd)) {
     info.hwnd = CreateWindowExW(
@@ -126,7 +141,7 @@ void OverlayManager::SetOverlayOpacity(const std::string& device_path, double op
         rc.left, rc.top, width, height,
         nullptr, nullptr, GetModuleHandle(nullptr), nullptr);
 
-    if (!info.hwnd) {
+    if (!info.hwnd || !IsWindow(info.hwnd)) {
       return;
     }
 
@@ -140,21 +155,25 @@ void OverlayManager::SetOverlayOpacity(const std::string& device_path, double op
   // Position and show window without activating it (prevents stealing focus)
   SetWindowPos(info.hwnd, HWND_TOPMOST, rc.left, rc.top, width, height,
                SWP_NOACTIVATE | SWP_SHOWWINDOW);
+
+  if (info.hwnd && IsWindow(info.hwnd)) {
+    InvalidateRect(info.hwnd, nullptr, TRUE);
+  }
 }
 
 void OverlayManager::UpdateMonitorBounds() {
   std::lock_guard<std::mutex> lock(mutex_);
-  for (auto& [path, info] : overlays_) {
-    if (info.hwnd && IsWindow(info.hwnd) && info.opacity > 0.001) {
+  for (auto& [path, info_ptr] : overlays_) {
+    if (info_ptr && info_ptr->hwnd && IsWindow(info_ptr->hwnd) && info_ptr->alpha > 0) {
       RECT rc = GetMonitorRect(path);
       int width = rc.right - rc.left;
       int height = rc.bottom - rc.top;
       if (width > 0 && height > 0) {
-        info.last_rect = rc;
-        SetWindowPos(info.hwnd, HWND_TOPMOST, rc.left, rc.top, width, height,
+        info_ptr->last_rect = rc;
+        SetWindowPos(info_ptr->hwnd, HWND_TOPMOST, rc.left, rc.top, width, height,
                      SWP_NOACTIVATE | SWP_SHOWWINDOW);
       } else {
-        ShowWindow(info.hwnd, SW_HIDE);
+        ShowWindow(info_ptr->hwnd, SW_HIDE);
       }
     }
   }
@@ -162,10 +181,12 @@ void OverlayManager::UpdateMonitorBounds() {
 
 void OverlayManager::DestroyAllOverlays() {
   std::lock_guard<std::mutex> lock(mutex_);
-  for (auto& [path, info] : overlays_) {
-    if (info.hwnd && IsWindow(info.hwnd)) {
-      DestroyWindow(info.hwnd);
-      info.hwnd = nullptr;
+  for (auto& [path, info_ptr] : overlays_) {
+    if (info_ptr) {
+      if (info_ptr->hwnd && IsWindow(info_ptr->hwnd)) {
+        DestroyWindow(info_ptr->hwnd);
+        info_ptr->hwnd = nullptr;
+      }
     }
   }
   overlays_.clear();

@@ -10,6 +10,7 @@ import 'package:solaris/models/smart_circadian_data.dart';
 import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/services/gaming_mode_service.dart';
 import 'package:solaris/models/app_override_rule.dart';
+import 'package:solaris/constants/temperature_constants.dart';
 import 'package:solaris/services/active_process_service.dart';
 import 'package:collection/collection.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -95,6 +96,10 @@ class TemperatureSettingsNotifier
 
   @override
   Future<Map<String, TemperatureState>> build() async {
+    ref.onDispose(() {
+      _saveDebounceTimer?.cancel();
+      _saveDebounceTimer = null;
+    });
     return _loadSettings();
   }
 
@@ -128,6 +133,8 @@ class TemperatureSettingsNotifier
     return map;
   }
 
+  Timer? _saveDebounceTimer;
+
   Future<void> _saveSettingsMap(Map<String, TemperatureState> map) async {
     final prefs = ref.read(sharedPreferencesProvider);
     if (prefs != null) {
@@ -136,16 +143,26 @@ class TemperatureSettingsNotifier
     }
   }
 
-  TemperatureState currentSettings() {
-    final ids = ref.read(selectedMonitorsProvider);
+  void _debouncedSaveSettingsMap(Map<String, TemperatureState> map) {
+    _saveDebounceTimer?.cancel();
+    _saveDebounceTimer = Timer(const Duration(milliseconds: 300), () {
+      _saveDebounceTimer = null;
+      _saveSettingsMap(map);
+    });
+  }
+
+  TemperatureState currentSettings([String? monitorId]) {
+    final id =
+        monitorId ?? ref.read(selectedMonitorsProvider).firstOrNull ?? 'all';
     final currentMap = state.value ?? {'all': TemperatureState()};
-    return currentMap[ids.firstOrNull ?? 'all'] ?? currentMap['all']!;
+    return currentMap[id] ?? currentMap['all'] ?? TemperatureState();
   }
 
   Future<void> _updateSettings(
     Set<String> monitorIds,
-    TemperatureState newState,
-  ) async {
+    TemperatureState newState, {
+    bool debounceSave = false,
+  }) async {
     final currentMap = state.value ?? {'all': TemperatureState()};
     final newStateMap = Map<String, TemperatureState>.from(currentMap);
 
@@ -159,7 +176,13 @@ class TemperatureSettingsNotifier
     }
 
     state = AsyncData(newStateMap);
-    await _saveSettingsMap(newStateMap);
+    if (debounceSave) {
+      _debouncedSaveSettingsMap(newStateMap);
+    } else {
+      _saveDebounceTimer?.cancel();
+      _saveDebounceTimer = null;
+      await _saveSettingsMap(newStateMap);
+    }
   }
 
   void syncAllMonitorsToGlobal() {
@@ -175,6 +198,11 @@ class TemperatureSettingsNotifier
           clearActiveUserPresetId: global.activeUserPresetId == null,
           curvesMap: global.curvesMap,
           userPresets: global.userPresets,
+          isSmartCircadianEnabled: global.isSmartCircadianEnabled,
+          isSleepDebtEnabled: global.isSleepDebtEnabled,
+          isSleepPressureEnabled: global.isSleepPressureEnabled,
+          isTimeShiftEnabled: global.isTimeShiftEnabled,
+          isWindDownEnabled: global.isWindDownEnabled,
         );
       }
     }
@@ -186,69 +214,143 @@ class TemperatureSettingsNotifier
     _saveSettingsMap(newStateMap);
   }
 
-  void setEnabled(bool value) {
+  void setEnabled(bool value, {String? monitorId}) {
+    final ids = monitorId != null
+        ? {monitorId}
+        : ref.read(selectedMonitorsProvider);
+    final firstId = ids.firstOrNull ?? 'all';
     if (state.value != null) {
-      final ids = ref.read(selectedMonitorsProvider);
-      final firstId = ids.firstOrNull ?? 'all';
       final currentMap = state.value!;
       final current = currentMap[firstId] ?? currentMap['all']!;
-      if (current.isEnabled == value) return;
+      if (current.isEnabled == value && ids.length == 1) return;
     }
 
-    ref
-        .read(sharedPreferencesProvider)
-        ?.setBool('auto_temperature_enabled', value);
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = currentSettings();
+    if (ids.contains('all')) {
+      ref
+          .read(sharedPreferencesProvider)
+          ?.setBool('auto_temperature_enabled', value);
+    }
+    final current = currentSettings(firstId);
     _updateSettings(ids, current.copyWith(isEnabled: value));
+
+    // When auto temperature is disabled, instantly restore manual temperature to hardware & state
+    if (!value) {
+      final monitors = ref.read(monitorListProvider).value ?? [];
+      final tempService = ref.read(temperatureServiceProvider);
+      final monitorService = ref.read(monitorServiceProvider);
+      final monitorListNotifier = ref.read(monitorListProvider.notifier);
+      final currentMap = state.value ?? {'all': TemperatureState()};
+      final fallbackManualTemp = ref.read(manualTemperatureProvider);
+
+      final targetMonitors = ids.contains('all')
+          ? monitors
+          : monitors
+                .where((m) => ids.contains(m.deviceName) || ids.contains(m.id))
+                .toList();
+
+      for (final m in targetMonitors) {
+        final mState =
+            currentMap[m.deviceName] ??
+            currentMap[m.id] ??
+            currentMap['all'] ??
+            current;
+        final targetTemp =
+            mState.manualTemperature ??
+            current.manualTemperature ??
+            fallbackManualTemp;
+
+        unawaited(
+          tempService.setTemperatureInstant(
+            selection: m.deviceName,
+            targetValue: targetTemp.toDouble(),
+            monitors: monitors,
+            monitorService: monitorService,
+            updateTemperatureCallback: (id, val) {
+              monitorListNotifier.updateTemperature(id, val);
+            },
+          ),
+        );
+      }
+    }
   }
 
-  void toggleEnabled(bool isEnabled) {
-    setEnabled(isEnabled);
+  void setManualTemperature(
+    int val, {
+    String? monitorId,
+    bool debounceSave = false,
+  }) {
+    final ids = monitorId != null
+        ? {monitorId}
+        : ref.read(selectedMonitorsProvider);
+    final firstId = ids.firstOrNull ?? 'all';
+    final current = currentSettings(firstId);
+    _updateSettings(
+      ids,
+      current.copyWith(isEnabled: false, manualTemperature: val),
+      debounceSave: debounceSave,
+    );
   }
 
-  void updateSmartCircadian(bool enabled) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = currentSettings();
+  void toggleEnabled(bool isEnabled, {String? monitorId}) {
+    setEnabled(isEnabled, monitorId: monitorId);
+  }
+
+  void updateSmartCircadian(bool enabled, {String? monitorId}) {
+    final ids = monitorId != null
+        ? {monitorId}
+        : ref.read(selectedMonitorsProvider);
+    final current = currentSettings(ids.firstOrNull);
     _updateSettings(ids, current.copyWith(isSmartCircadianEnabled: enabled));
   }
 
-  void updateSleepDebt(bool enabled) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = currentSettings();
+  void updateSleepDebt(bool enabled, {String? monitorId}) {
+    final ids = monitorId != null
+        ? {monitorId}
+        : ref.read(selectedMonitorsProvider);
+    final current = currentSettings(ids.firstOrNull);
     _updateSettings(ids, current.copyWith(isSleepDebtEnabled: enabled));
   }
 
-  void updateSleepPressure(bool enabled) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = currentSettings();
+  void updateSleepPressure(bool enabled, {String? monitorId}) {
+    final ids = monitorId != null
+        ? {monitorId}
+        : ref.read(selectedMonitorsProvider);
+    final current = currentSettings(ids.firstOrNull);
     _updateSettings(ids, current.copyWith(isSleepPressureEnabled: enabled));
   }
 
-  void updateTimeShift(bool enabled) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = currentSettings();
+  void updateTimeShift(bool enabled, {String? monitorId}) {
+    final ids = monitorId != null
+        ? {monitorId}
+        : ref.read(selectedMonitorsProvider);
+    final current = currentSettings(ids.firstOrNull);
     _updateSettings(ids, current.copyWith(isTimeShiftEnabled: enabled));
   }
 
-  void updateWindDown(bool enabled) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = currentSettings();
+  void updateWindDown(bool enabled, {String? monitorId}) {
+    final ids = monitorId != null
+        ? {monitorId}
+        : ref.read(selectedMonitorsProvider);
+    final current = currentSettings(ids.firstOrNull);
     _updateSettings(ids, current.copyWith(isWindDownEnabled: enabled));
   }
 
-  void setPreset(TemperaturePresetType type) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = currentSettings();
+  void setPreset(TemperaturePresetType type, {String? monitorId}) {
+    final ids = monitorId != null
+        ? {monitorId}
+        : ref.read(selectedMonitorsProvider);
+    final current = currentSettings(ids.firstOrNull);
     _updateSettings(
       ids,
       current.copyWith(activePreset: type, clearActiveUserPresetId: true),
     );
   }
 
-  void setActiveUserPreset(String id) {
-    final ids = ref.read(selectedMonitorsProvider);
-    final current = currentSettings();
+  void setActiveUserPreset(String id, {String? monitorId}) {
+    final ids = monitorId != null
+        ? {monitorId}
+        : ref.read(selectedMonitorsProvider);
+    final current = currentSettings(ids.firstOrNull);
     _updateSettings(ids, current.copyWith(activeUserPresetId: id));
   }
 
@@ -414,6 +516,11 @@ class ManualTemperatureNotifier extends Notifier<int> {
     return prefs?.getInt(_manualTemperatureKey) ?? 6500;
   }
 
+  void update(int val) {
+    state = val;
+    ref.read(sharedPreferencesProvider)?.setInt(_manualTemperatureKey, val);
+  }
+
   void setTemperature(int val) {
     ref.read(temperatureSettingsProvider.notifier).setEnabled(false);
     state = val;
@@ -441,7 +548,9 @@ class CurrentTemperatureNotifier extends Notifier<int> {
     final systemType = TemperaturePresetType.values.firstWhereOrNull(
       (e) => e.name == presetId,
     );
-    if (systemType != null) return tempSettings.curvesMap[systemType];
+    if (systemType != null) {
+      return tempSettings.curvesMap[systemType];
+    }
     return null; // Safe Fallback to global circadian temperature
   }
 
@@ -462,7 +571,11 @@ class CurrentTemperatureNotifier extends Notifier<int> {
     final tempSettingsAsync = ref.watch(temperatureSettingsProvider);
     final id = monitorIds.firstOrNull ?? 'all';
 
-    final globalSettings = settingsAsync.maybeWhen(
+    final allSettings = settingsAsync.maybeWhen(
+      data: (map) => map['all'] ?? SettingsState(),
+      orElse: () => SettingsState(),
+    );
+    final monitorSettings = settingsAsync.maybeWhen(
       data: (map) => map[id] ?? map['all'] ?? SettingsState(),
       orElse: () => SettingsState(),
     );
@@ -471,15 +584,23 @@ class CurrentTemperatureNotifier extends Notifier<int> {
     final activeAppExe = activeProcessState.activeProcess;
     final isAppSuppressed = activeProcessState.suppressedPids.isNotEmpty;
     final appRule = (!isAppSuppressed && activeAppExe.isNotEmpty)
-        ? globalSettings.appOverrides.firstWhereOrNull(
-            (r) => r.isEnabled && r.exeName == activeAppExe,
-          )
+        ? (monitorSettings.appOverrides.firstWhereOrNull(
+                (r) => r.isEnabled && r.exeName == activeAppExe,
+              ) ??
+              allSettings.appOverrides.firstWhereOrNull(
+                (r) => r.isEnabled && r.exeName == activeAppExe,
+              ))
         : null;
+
+    const minTemp = TemperatureConstants.min;
+    const maxTemp = TemperatureConstants.max;
 
     if (appRule != null && appRule.temperatureMode != AppOverrideMode.global) {
       if (appRule.temperatureMode == AppOverrideMode.fixed &&
           appRule.fixedTemperature != null) {
-        final val = appRule.fixedTemperature!.clamp(3300.0, 6500.0).round();
+        final val = appRule.fixedTemperature!
+            .clamp(minTemp.toDouble(), maxTemp.toDouble())
+            .round();
         _saveTemperature(val);
         return val;
       } else if (appRule.temperatureMode == AppOverrideMode.curve) {
@@ -508,13 +629,15 @@ class CurrentTemperatureNotifier extends Notifier<int> {
                 state.sunElevation,
                 now,
                 curvePoints: curvePoints,
-                weather: globalSettings.isWeatherTemperatureAdjustmentEnabled
+                weather: allSettings.isWeatherTemperatureAdjustmentEnabled
                     ? weatherAsync.value
                     : null,
-                weatherIntensity: globalSettings.weatherAdjustmentIntensity,
+                weatherIntensity: allSettings.weatherAdjustmentIntensity,
                 smartData: smartData,
               );
-              final val = result.finalTemperature.clamp(3300, 6500).round();
+              final val = result.finalTemperature
+                  .clamp(minTemp, maxTemp)
+                  .round();
               _saveTemperature(val);
               return val;
             },
@@ -526,10 +649,18 @@ class CurrentTemperatureNotifier extends Notifier<int> {
     }
 
     // 3. Game Mode Cascade for Temperature
-    if (isGamingMode &&
-        globalSettings.isGameModeEnabled &&
-        globalSettings.isGameModeTemperatureEnabled) {
-      return globalSettings.gameModeTemperature.round();
+    final isMonitorGaming =
+        isGamingMode &&
+        (monitorSettings.isGameModeEnabled || allSettings.isGameModeEnabled);
+    final isTempGaming =
+        monitorSettings.isGameModeTemperatureEnabled ||
+        allSettings.isGameModeTemperatureEnabled;
+
+    if (isMonitorGaming && isTempGaming) {
+      final gameTemp = monitorSettings.isGameModeTemperatureEnabled
+          ? monitorSettings.gameModeTemperature
+          : allSettings.gameModeTemperature;
+      return gameTemp.round();
     }
 
     // 4. Global Auto / Circadian Cascade for Temperature
@@ -548,10 +679,14 @@ class CurrentTemperatureNotifier extends Notifier<int> {
           return tempSettingsAsync.maybeWhen(
             data: (tempSettingsMap) {
               final tempSettings =
-                  tempSettingsMap[id] ?? tempSettingsMap['all']!;
+                  tempSettingsMap[id] ??
+                  tempSettingsMap['all'] ??
+                  TemperatureState();
 
               if (!tempSettings.isEnabled) {
-                return ref.watch(manualTemperatureProvider);
+                return tempSettings.manualTemperature ??
+                    tempSettingsMap['all']?.manualTemperature ??
+                    ref.watch(manualTemperatureProvider);
               }
 
               final smartData = tempSettings.isSmartCircadianEnabled
@@ -563,14 +698,18 @@ class CurrentTemperatureNotifier extends Notifier<int> {
                 state.sunElevation,
                 now,
                 curvePoints: tempSettings.curvePoints,
-                weather: globalSettings.isWeatherTemperatureAdjustmentEnabled
+                weather: allSettings.isWeatherTemperatureAdjustmentEnabled
                     ? weatherAsync.value
                     : null,
-                weatherIntensity: globalSettings.weatherAdjustmentIntensity,
+                weatherIntensity: allSettings.weatherAdjustmentIntensity,
                 smartData: smartData,
               );
-              _saveTemperature(result.finalTemperature);
-              return result.finalTemperature;
+              final val = result.finalTemperature.clamp(
+                minTemp,
+                TemperatureConstants.max,
+              );
+              _saveTemperature(val);
+              return val;
             },
             orElse: () => lastTemp,
           );
@@ -578,17 +717,36 @@ class CurrentTemperatureNotifier extends Notifier<int> {
         orElse: () => lastTemp,
       );
     }
-    return ref.watch(manualTemperatureProvider);
+    final tempSettings = tempSettingsAsync.maybeWhen(
+      data: (map) => map[id] ?? map['all'] ?? TemperatureState(),
+      orElse: () => TemperatureState(),
+    );
+    final globalManual = tempSettingsAsync.value?['all']?.manualTemperature;
+    return tempSettings.manualTemperature ??
+        globalManual ??
+        ref.watch(manualTemperatureProvider);
   }
 
-  void setManualTemperature(int val) {
+  void setManualTemperature(
+    int val, {
+    String? monitorId,
+    bool debounceSave = false,
+  }) {
     ref.read(activeProcessServiceProvider.notifier).suppressActiveApp();
     if (!ref.read(isColorTemperatureEnabledProvider)) {
       ref.read(isColorTemperatureEnabledProvider.notifier).set(true);
     }
-    ref.read(temperatureSettingsProvider.notifier).setEnabled(false);
-    ref.read(manualTemperatureProvider.notifier).setTemperature(val);
-    _saveTemperature(val);
+    if (monitorId == null || monitorId == 'all') {
+      ref.read(manualTemperatureProvider.notifier).setTemperature(val);
+      _saveTemperature(val);
+    }
+    ref
+        .read(temperatureSettingsProvider.notifier)
+        .setManualTemperature(
+          val,
+          monitorId: monitorId,
+          debounceSave: debounceSave,
+        );
   }
 
   void _saveTemperature(int val) {

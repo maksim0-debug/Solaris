@@ -15,6 +15,8 @@ import 'package:solaris/widgets/back_navigation_handler.dart';
 import 'package:solaris/widgets/deep_link_target.dart';
 import 'package:solaris/widgets/glowing_app_icon.dart';
 import 'package:solaris/widgets/add_app_override_dialog.dart';
+import 'package:solaris/widgets/temperature_slider.dart';
+import 'package:solaris/constants/temperature_constants.dart';
 import 'package:solaris/utils/app_override_formatter.dart';
 
 /// Screen for managing Per-App Brightness and Temperature Overrides.
@@ -1059,7 +1061,11 @@ class _AppOverrideRuleCard extends ConsumerWidget {
         if (rule.temperatureMode == AppOverrideMode.fixed) ...[
           const SizedBox(height: 8),
           _AppRuleTemperatureSlider(
-            value: (rule.fixedTemperature ?? 6500.0).clamp(3300.0, 6500.0),
+            value: (rule.fixedTemperature ?? TemperatureConstants.maxDouble)
+                .clamp(
+                  TemperatureConstants.minDouble,
+                  TemperatureConstants.maxDouble,
+                ),
             onChanged: (val) {
               final updated = rule.copyWith(fixedTemperature: val);
               ref.read(settingsProvider.notifier).updateAppOverride(updated);
@@ -1567,8 +1573,8 @@ class _AppRuleTemperatureSliderState extends State<_AppRuleTemperatureSlider> {
   bool _isDragging = false;
   Timer? _debounceTimer;
 
-  static const double _minTemp = 3300.0;
-  static const double _maxTemp = 6500.0;
+  static const double _minTemp = TemperatureConstants.minDouble;
+  static const double _maxTemp = TemperatureConstants.maxDouble;
 
   @override
   void initState() {
@@ -1607,14 +1613,8 @@ class _AppRuleTemperatureSliderState extends State<_AppRuleTemperatureSlider> {
   @override
   Widget build(BuildContext context) {
     final clamped = _localValue.clamp(_minTemp, _maxTemp);
-    // progress: 0.0 (Cold/Left/6500K) to 1.0 (Warm/Right/3300K)
-    final double progress = (_maxTemp - clamped) / (_maxTemp - _minTemp);
-
-    final Color currentColor = Color.lerp(
-      const Color(0xFF60A5FA),
-      const Color(0xFFFDBA74),
-      progress.clamp(0.0, 1.0),
-    )!;
+    final double progress = TemperatureSlider.valueToProgress(value: clamped);
+    final Color currentColor = TemperatureSlider.progressToColor(progress);
 
     return Row(
       children: [
@@ -1622,9 +1622,7 @@ class _AppRuleTemperatureSliderState extends State<_AppRuleTemperatureSlider> {
           child: SliderTheme(
             data: SliderTheme.of(context).copyWith(
               trackShape: const _AppRuleGradientTrackShape(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF60A5FA), Color(0xFFFDBA74)],
-                ),
+                gradient: TemperatureSlider.trackGradient,
               ),
               activeTrackColor: currentColor,
               thumbColor: currentColor,
@@ -1636,7 +1634,9 @@ class _AppRuleTemperatureSliderState extends State<_AppRuleTemperatureSlider> {
               max: 1.0,
               activeColor: currentColor,
               onChanged: (val) {
-                final realTemp = _maxTemp - val * (_maxTemp - _minTemp);
+                final realTemp = TemperatureSlider.progressToValue(
+                  progress: val,
+                );
                 setState(() {
                   _isDragging = true;
                   _localValue = realTemp;
@@ -1644,7 +1644,9 @@ class _AppRuleTemperatureSliderState extends State<_AppRuleTemperatureSlider> {
                 _notifyChanged(realTemp);
               },
               onChangeEnd: (val) {
-                final realTemp = _maxTemp - val * (_maxTemp - _minTemp);
+                final realTemp = TemperatureSlider.progressToValue(
+                  progress: val,
+                );
                 setState(() {
                   _isDragging = false;
                   _localValue = realTemp;

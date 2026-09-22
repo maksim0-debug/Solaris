@@ -6,6 +6,7 @@ import 'package:solaris/models/api_permissions_config.dart';
 import 'package:solaris/models/api_key_entry.dart';
 import 'package:solaris/models/app_override_rule.dart';
 import 'package:solaris/env/env.dart';
+import 'package:solaris/constants/temperature_constants.dart';
 import 'package:solaris/utils/key_obfuscator.dart';
 
 enum MapStyleMode {
@@ -594,10 +595,10 @@ class SettingsState {
           (json['gameModeBrightness'] as num?)?.toDouble() ?? 80.0,
       gameModeTemperature:
           (json['gameModeTemperature'] as num?)?.toDouble().clamp(
-            3300.0,
-            6500.0,
+            TemperatureConstants.minDouble,
+            TemperatureConstants.maxDouble,
           ) ??
-          6500.0,
+          TemperatureConstants.maxDouble,
       gameModeExitDelaySeconds: json['gameModeExitDelaySeconds'] as int? ?? 30,
       gameModeWhitelist:
           (json['gameModeWhitelist'] as List<dynamic>?)?.cast<String>() ?? [],

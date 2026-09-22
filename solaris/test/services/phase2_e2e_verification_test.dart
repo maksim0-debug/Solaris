@@ -129,7 +129,7 @@ void main() {
     );
 
     test(
-      'Verification: Action 4 - set_temperature (3300..6500 Kelvin)',
+      'Verification: Action 4 - set_temperature (1000..6500 Kelvin)',
       () async {
         final resp = await sendPost('/api/v1/control', {
           'action': 'set_temperature',
@@ -139,7 +139,7 @@ void main() {
 
         final invalidResp = await sendPost('/api/v1/control', {
           'action': 'set_temperature',
-          'value': 2000,
+          'value': 800,
         });
         expect(invalidResp.statusCode, equals(HttpStatus.badRequest));
       },

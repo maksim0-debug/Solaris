@@ -1,9 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:solaris/widgets/temperature_slider.dart';
 
 class TemperatureDialPainter extends CustomPainter {
-  // progress from 0.0 to 1.0 (left to right)
-  // mapped to - something similar to brightness
   TemperatureDialPainter({required this.progress});
 
   final double progress;
@@ -20,9 +19,9 @@ class TemperatureDialPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     final progressPaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFF60A5FA), Color(0xFFFDBA74)],
-      ).createShader(Rect.fromCircle(center: center, radius: radius))
+      ..shader = TemperatureSlider.trackGradient.createShader(
+        Rect.fromCircle(center: center, radius: radius),
+      )
       ..style = PaintingStyle.stroke
       ..strokeWidth = 6
       ..strokeCap = StrokeCap.round;
@@ -36,27 +35,27 @@ class TemperatureDialPainter extends CustomPainter {
       bgPaint,
     );
 
+    final double clampedProgress = progress.clamp(0.0, 1.0);
+
     // Draw progress ring
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
       pi * 0.7,
-      pi * 1.6 * progress,
+      pi * 1.6 * clampedProgress,
       false,
       progressPaint,
     );
 
     // Draw Glow at the end of progress
-    final endAngle = pi * 0.7 + pi * 1.6 * progress;
+    final endAngle = pi * 0.7 + pi * 1.6 * clampedProgress;
     final endPos = Offset(
       center.dx + radius * cos(endAngle),
       center.dy + radius * sin(endAngle),
     );
 
-    final Color currentColor = Color.lerp(
-      const Color(0xFF60A5FA),
-      const Color(0xFFFDBA74),
-      progress,
-    )!;
+    final Color currentColor = TemperatureSlider.progressToColor(
+      clampedProgress,
+    );
 
     final glowPaint = Paint()
       ..color = currentColor.withValues(alpha: 0.5)

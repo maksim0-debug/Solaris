@@ -144,11 +144,18 @@ void main() {
         final jsonLow = {
           'exeName': 'test.exe',
           'fixedBrightness': -20.0,
-          'fixedTemperature': 1000.0,
+          'fixedTemperature': 500.0,
         };
         final ruleLow = AppOverrideRule.fromJson(jsonLow);
         expect(ruleLow.fixedBrightness, equals(0.0));
-        expect(ruleLow.fixedTemperature, equals(3300.0));
+        expect(ruleLow.fixedTemperature, equals(1000.0));
+
+        final jsonExtended = {
+          'exeName': 'test.exe',
+          'fixedTemperature': 1000.0,
+        };
+        final ruleExtended = AppOverrideRule.fromJson(jsonExtended);
+        expect(ruleExtended.fixedTemperature, equals(1000.0));
 
         final jsonStringValues = {
           'exeName': 'test.exe',
@@ -196,6 +203,15 @@ void main() {
         expect(cleared.brightnessCurvePresetId, isNull);
         expect(cleared.fixedTemperature, isNull);
         expect(cleared.temperatureCurvePresetId, isNull);
+
+        final updatedTempExtended = rule.copyWith(fixedTemperature: 1000.0);
+        expect(updatedTempExtended.fixedTemperature, equals(1000.0));
+
+        final updatedTempBelowMin = rule.copyWith(fixedTemperature: 500.0);
+        expect(updatedTempBelowMin.fixedTemperature, equals(1000.0));
+
+        final updatedTempAboveMax = rule.copyWith(fixedTemperature: 8000.0);
+        expect(updatedTempAboveMax.fixedTemperature, equals(6500.0));
       },
     );
 
@@ -300,10 +316,13 @@ void main() {
 
         final updatedLow = rule.copyWith(
           fixedBrightness: -50.0,
-          fixedTemperature: 1000.0,
+          fixedTemperature: 500.0,
         );
         expect(updatedLow.fixedBrightness, equals(0.0));
-        expect(updatedLow.fixedTemperature, equals(3300.0));
+        expect(updatedLow.fixedTemperature, equals(1000.0));
+
+        final updatedExtended = rule.copyWith(fixedTemperature: 1000.0);
+        expect(updatedExtended.fixedTemperature, equals(1000.0));
 
         final updatedInvalid = rule.copyWith(
           fixedBrightness: double.nan,

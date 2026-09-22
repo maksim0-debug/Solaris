@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:solaris/constants/temperature_constants.dart';
 
 class TemperatureSlider extends StatelessWidget {
   const TemperatureSlider({
@@ -8,20 +9,65 @@ class TemperatureSlider extends StatelessWidget {
     super.key,
   });
 
-  final double value; // Real value: 3300.0 to 6500.0
+  /// Real value: 1000.0 to 6500.0
+  final double value;
   final ValueChanged<double> onChanged;
+
+  /// Pure linear mapping across the entire 1000K..6500K range:
+  /// 0.0 = 6500K (Daylight Blue)
+  /// 0.58 ≈ 3300K (Warm Amber)
+  /// 1.0 = 1000K (Candlelight Ember)
+  static double valueToProgress({required double value}) {
+    final double maxTemp = TemperatureConstants.maxDouble;
+    final double minTemp = TemperatureConstants.minDouble;
+    final clamped = value.clamp(minTemp, maxTemp);
+    return ((maxTemp - clamped) / (maxTemp - minTemp)).clamp(0.0, 1.0);
+  }
+
+  static double progressToValue({required double progress}) {
+    final double maxTemp = TemperatureConstants.maxDouble;
+    final double minTemp = TemperatureConstants.minDouble;
+    final clampedP = progress.clamp(0.0, 1.0);
+    return maxTemp - clampedP * (maxTemp - minTemp);
+  }
+
+  static Color progressToColor(double progress) {
+    final clampedP = progress.clamp(0.0, 1.0);
+    if (clampedP <= 0.58) {
+      final ratio = (clampedP / 0.58).clamp(0.0, 1.0);
+      return Color.lerp(
+        const Color(0xFF60A5FA),
+        const Color(0xFFFDBA74),
+        ratio,
+      )!;
+    } else {
+      final ratio = ((clampedP - 0.58) / 0.42).clamp(0.0, 1.0);
+      return Color.lerp(
+        const Color(0xFFFDBA74),
+        const Color(0xFFEA580C),
+        ratio,
+      )!;
+    }
+  }
+
+  static const LinearGradient trackGradient = LinearGradient(
+    colors: [Color(0xFF60A5FA), Color(0xFFFDBA74), Color(0xFFEA580C)],
+    stops: [0.0, 0.58, 1.0],
+  );
+
+  void _handleChanged(double progress) {
+    final rawVal = progressToValue(progress: progress);
+    onChanged(rawVal);
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Map value so 6500 is Left (0.0) and 3300 is Right (1.0)
-    final minTemp = 3300.0;
-    final maxTemp = 6500.0;
+    final double minTemp = TemperatureConstants.minDouble;
+    final double maxTemp = TemperatureConstants.maxDouble;
 
-    // clamp value just in case
     final clampedValue = value.clamp(minTemp, maxTemp);
-
-    // progress: 0.0 (Cold/Left/6500K) to 1.0 (Warm/Right/3300K)
-    final double progress = (maxTemp - clampedValue) / (maxTemp - minTemp);
+    final double progress = valueToProgress(value: clampedValue);
+    final Color currentColor = progressToColor(progress);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,14 +84,22 @@ class TemperatureSlider extends StatelessWidget {
               ),
               Text(
                 '${value.round()}K',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white54,
+                  color: currentColor,
                   letterSpacing: 1,
                 ),
               ),
-              const Icon(LucideIcons.flame, size: 18, color: Color(0xFFFDBA74)),
+              Icon(
+                LucideIcons.flame,
+                size: 18,
+                color: Color.lerp(
+                  const Color(0xFFFDBA74),
+                  const Color(0xFFEA580C),
+                  ((progress - 0.58) / 0.42).clamp(0.0, 1.0),
+                ),
+              ),
             ],
           ),
         ),
@@ -71,11 +125,7 @@ class TemperatureSlider extends StatelessWidget {
               value: progress,
               min: 0.0,
               max: 1.0,
-              onChanged: (val) {
-                // val is 0.0 (Cold) to 1.0 (Warm)
-                final realTemp = maxTemp - val * (maxTemp - minTemp);
-                onChanged(realTemp);
-              },
+              onChanged: _handleChanged,
             ),
           ),
         ),
@@ -126,11 +176,9 @@ class _PremiumTrackShape extends RoundedRectSliderTrackShape {
       inactivePaint,
     );
 
-    // Active track with gradient from Blue to Orange
+    // Active track with pure linear gradient from Blue -> Amber -> Candlelight Ember
     final activePaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFF60A5FA), Color(0xFFFDBA74)],
-      ).createShader(trackRect);
+      ..shader = TemperatureSlider.trackGradient.createShader(trackRect);
 
     canvas.drawRRect(
       RRect.fromLTRBAndCorners(
@@ -172,12 +220,7 @@ class _PremiumThumbShape extends SliderComponentShape {
   }) {
     final canvas = context.canvas;
 
-    // Interpolate color based on progress
-    final Color currentColor = Color.lerp(
-      const Color(0xFF60A5FA),
-      const Color(0xFFFDBA74),
-      progress,
-    )!;
+    final Color currentColor = TemperatureSlider.progressToColor(progress);
 
     // Draw glow
     final glowPaint = Paint()

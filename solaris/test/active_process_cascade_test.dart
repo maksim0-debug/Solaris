@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:solaris/models/app_override_rule.dart';
+import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/services/active_process_service.dart';
 import 'package:solaris/services/gaming_mode_service.dart';
 import 'package:solaris/providers.dart';
@@ -516,7 +517,7 @@ void main() {
       );
 
       test(
-        'Fixed Temperature is clamped strictly between 3300K and 6500K and rounded',
+        'Fixed Temperature is clamped strictly between 1000K and 6500K and rounded',
         () {
           container.read(isColorTemperatureEnabledProvider.notifier).set(true);
 
@@ -541,11 +542,11 @@ void main() {
               exeName: 'app2.exe',
               appDisplayName: 'App 2',
               temperatureMode: AppOverrideMode.fixed,
-              fixedTemperature: 1000.0,
+              fixedTemperature: 500.0,
             ),
           );
           activeProcessService.updateActiveProcessManually('app2.exe');
-          expect(container.read(currentTemperatureProvider), equals(3300));
+          expect(container.read(currentTemperatureProvider), equals(1000));
         },
       );
 
@@ -648,6 +649,45 @@ void main() {
 
           // Read circadian adjustment provider to verify it initializes without errors
           container.read(circadianAdjustmentProvider);
+        },
+      );
+
+      test(
+        'Circadian adjustment loop falls back to globalSettings.appOverrides when monitor has custom settings',
+        () {
+          container.read(isColorTemperatureEnabledProvider.notifier).set(true);
+          final settingsNotifier = container.read(settingsProvider.notifier);
+
+          // Add rule to global settings ('all')
+          settingsNotifier.addAppOverride(
+            const AppOverrideRule(
+              exeName: 'global_editor.exe',
+              appDisplayName: 'Global Editor',
+              temperatureMode: AppOverrideMode.fixed,
+              fixedTemperature: 2800.0,
+            ),
+          );
+
+          // Give DISPLAY1 specific monitor settings with empty appOverrides
+          final currentMap = Map<String, SettingsState>.from(
+            container.read(settingsProvider).value ?? {},
+          );
+          currentMap[r'\\.\DISPLAY1'] = SettingsState(appOverrides: const []);
+          settingsNotifier.state = AsyncData(currentMap);
+          final activeProcessService = container.read(
+            activeProcessServiceProvider.notifier,
+          );
+          activeProcessService.updateActiveProcessManually('global_editor.exe');
+
+          // Target temp should resolve from global override
+          final targetTemp = container.read(currentTemperatureProvider);
+          expect(targetTemp, equals(2800));
+
+          // Circadian adjustment provider reads both settings and globalSettings fallback safely
+          expect(
+            () => container.read(circadianAdjustmentProvider),
+            returnsNormally,
+          );
         },
       );
     });

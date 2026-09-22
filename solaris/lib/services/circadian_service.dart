@@ -4,6 +4,7 @@ import 'package:solaris/models/solar_phase_model.dart';
 import 'package:solaris/services/weather_service.dart';
 import 'package:solaris/services/weather_adjustment_service.dart';
 import 'package:solaris/models/smart_circadian_data.dart';
+import 'package:solaris/constants/temperature_constants.dart';
 
 class CircadianCalculationResult {
   final double finalBrightness;
@@ -184,10 +185,11 @@ class CircadianService {
       );
     }
 
+    const int minFloor = TemperatureConstants.min;
     final int minAllowed = curvePoints.isNotEmpty
-        ? curvePoints.first.y.toInt().clamp(3300, 6500)
-        : 3300;
-    const int maxAllowed = 6500;
+        ? curvePoints.first.y.toInt().clamp(minFloor, TemperatureConstants.max)
+        : minFloor;
+    const int maxAllowed = TemperatureConstants.max;
 
     final double netNegativeSmartOffset =
         (smartData.sleepPressureTemperatureOffset < 0

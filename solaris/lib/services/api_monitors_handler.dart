@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -13,6 +14,7 @@ import 'package:solaris/services/api_router.dart';
 import 'package:solaris/services/monitor_service.dart';
 import 'package:solaris/services/monitor_slug_resolver.dart';
 import 'package:solaris/services/gaming_mode_service.dart';
+import 'package:solaris/constants/temperature_constants.dart';
 import 'package:collection/collection.dart';
 
 /// Handler for per-monitor reading and control endpoints (/api/v1/monitors)
@@ -111,7 +113,9 @@ class ApiMonitorsHandler {
             'enabled': isColorTempEnabled,
             'current': m.realTemperature ?? targetTemperature,
             'target': targetTemperature,
-            'mode': isAutoTemperature ? 'auto' : 'manual',
+            'mode': (mTempSettings?.isEnabled ?? isAutoTemperature)
+                ? 'auto'
+                : 'manual',
             'active_preset': mTempSettings?.activePreset.name ?? 'cool',
           },
           'game_mode': {
@@ -251,6 +255,17 @@ class ApiMonitorsHandler {
     MonitorSlugResolver.updateMonitors(monitors);
     final resolvedId = MonitorSlugResolver.resolveToSystemId(rawSlug);
 
+    if (resolvedId == null) {
+      await _sendError(
+        request,
+        HttpStatus.notFound,
+        'Monitor Not Found',
+        "Monitor '$rawSlug' was not found or is disconnected.",
+        typeUri: 'https://solaris.local/errors/monitor-not-found',
+      );
+      return;
+    }
+
     final String content = await utf8.decoder.bind(request).join();
     final dynamic body = jsonDecode(content);
 
@@ -303,7 +318,7 @@ class ApiMonitorsHandler {
       'status': 'accepted',
       'action': 'set_monitor_brightness',
       'slug': rawSlug,
-      'target_monitor': resolvedId ?? rawSlug,
+      'target_monitor': resolvedId,
       'queued': {'value': val},
       'timestamp': DateTime.now().toUtc().toIso8601String(),
     };
@@ -335,6 +350,17 @@ class ApiMonitorsHandler {
     MonitorSlugResolver.updateMonitors(monitors);
     final resolvedId = MonitorSlugResolver.resolveToSystemId(rawSlug);
 
+    if (resolvedId == null) {
+      await _sendError(
+        request,
+        HttpStatus.notFound,
+        'Monitor Not Found',
+        "Monitor '$rawSlug' was not found or is disconnected.",
+        typeUri: 'https://solaris.local/errors/monitor-not-found',
+      );
+      return;
+    }
+
     final String content = await utf8.decoder.bind(request).join();
     final dynamic body = jsonDecode(content);
 
@@ -348,29 +374,53 @@ class ApiMonitorsHandler {
       return;
     }
 
-    final val = (body['value'] as num).toInt();
-    if (val < 3300 || val > 6500) {
+    const minTemp = TemperatureConstants.min;
+
+    final rawVal = body['value'];
+    final int? val = rawVal is num
+        ? rawVal.toInt()
+        : (rawVal is String ? int.tryParse(rawVal) : null);
+    if (val == null || val < minTemp || val > TemperatureConstants.max) {
       await _sendError(
         request,
         HttpStatus.badRequest,
         'Validation Error',
-        "Field 'value' must be an integer Kelvin between 3300 and 6500.",
+        "Field 'value' must be an integer Kelvin between $minTemp and ${TemperatureConstants.max}.",
       );
       return;
     }
 
+    final target = resolvedId;
+
     await safeStateMutator(() {
       _container
           .read(temperatureSettingsProvider.notifier)
-          .toggleEnabled(false);
-      _container.read(manualTemperatureProvider.notifier).setTemperature(val);
+          .setManualTemperature(val, monitorId: target);
+      if (target == 'all') {
+        _container.read(manualTemperatureProvider.notifier).setTemperature(val);
+      }
     });
+
+    final tempService = _container.read(temperatureServiceProvider);
+    final monitorService = _container.read(monitorServiceProvider);
+    final monitorListNotifier = _container.read(monitorListProvider.notifier);
+
+    unawaited(
+      tempService.setTemperatureInstant(
+        selection: target,
+        targetValue: val.toDouble(),
+        monitors: monitors,
+        monitorService: monitorService,
+        updateTemperatureCallback: (devId, v) =>
+            monitorListNotifier.updateTemperature(devId, v),
+      ),
+    );
 
     final responseBody = {
       'status': 'accepted',
       'action': 'set_monitor_temperature',
       'slug': rawSlug,
-      'target_monitor': resolvedId ?? rawSlug,
+      'target_monitor': resolvedId,
       'queued': {'value': val},
       'timestamp': DateTime.now().toUtc().toIso8601String(),
     };
@@ -402,6 +452,17 @@ class ApiMonitorsHandler {
     MonitorSlugResolver.updateMonitors(monitors);
     final resolvedId = MonitorSlugResolver.resolveToSystemId(rawSlug);
 
+    if (resolvedId == null) {
+      await _sendError(
+        request,
+        HttpStatus.notFound,
+        'Monitor Not Found',
+        "Monitor '$rawSlug' was not found or is disconnected.",
+        typeUri: 'https://solaris.local/errors/monitor-not-found',
+      );
+      return;
+    }
+
     final String content = await utf8.decoder.bind(request).join();
     final dynamic body = jsonDecode(content);
 
@@ -418,7 +479,7 @@ class ApiMonitorsHandler {
     }
 
     final enabled = body['enabled'] as bool;
-    String targetDeviceName = resolvedId ?? rawSlug;
+    String targetDeviceName = resolvedId;
     if (resolvedId == 'primary') {
       final primary =
           monitors.firstWhereOrNull((m) => m.isPrimary) ?? monitors.firstOrNull;
