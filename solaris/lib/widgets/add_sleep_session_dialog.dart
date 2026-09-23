@@ -46,6 +46,7 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
   late DateTime _endTime;
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
+  bool _isPermanent = false;
 
   @override
   void initState() {
@@ -55,6 +56,7 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
       _endTime = widget.initialSession!.endTime.toLocal();
       _titleController.text = widget.initialSession!.title ?? '';
       _descController.text = widget.initialSession!.description ?? '';
+      _isPermanent = widget.initialSession!.isPermanent;
     } else {
       final now = ref.read(currentTimeProvider).value ?? DateTime.now();
       // Default start time: Yesterday at 23:00
@@ -178,6 +180,7 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
         description: description,
         segments: const [],
         source: 'manual',
+        isPermanent: _isPermanent,
       );
       ref
           .read(sleepProvider.notifier)
@@ -194,6 +197,7 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
         description: description,
         segments: widget.initialSession!.segments,
         source: 'manual',
+        isPermanent: _isPermanent,
       );
       ref.read(sleepProvider.notifier).updateSession(session);
     } else {
@@ -205,6 +209,7 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
         description: description,
         segments: const [],
         source: 'manual',
+        isPermanent: _isPermanent,
       );
       ref.read(sleepProvider.notifier).addManualSession(session);
     }
@@ -485,6 +490,92 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
                   borderRadius: BorderRadius.circular(10),
                   borderSide: const BorderSide(color: Color(0xFF8B5CF6)),
                 ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.04),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: _isPermanent
+                      ? const Color(0xFF8B5CF6).withValues(alpha: 0.5)
+                      : Colors.white.withValues(alpha: 0.08),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    LucideIcons.repeat,
+                    size: 16,
+                    color: _isPermanent
+                        ? const Color(0xFFC4B5FD)
+                        : Colors.white.withValues(alpha: 0.6),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            l10n.permanentSleepSchedule,
+                            style: TextStyle(
+                              color: _isPermanent
+                                  ? Colors.white
+                                  : Colors.white70,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Tooltip(
+                          message: l10n.permanentSleepScheduleTooltip,
+                          waitDuration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E293B),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.15),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.4),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          textStyle: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            height: 1.4,
+                          ),
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: Icon(
+                              LucideIcons.info,
+                              size: 14,
+                              color: Colors.white.withValues(alpha: 0.5),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Transform.scale(
+                    scale: 0.85,
+                    child: Switch(
+                      value: _isPermanent,
+                      activeThumbColor: const Color(0xFF8B5CF6),
+                      onChanged: (val) => setState(() => _isPermanent = val),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

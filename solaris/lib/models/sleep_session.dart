@@ -27,6 +27,7 @@ class SleepSession extends Equatable {
   final List<SleepSegment> segments;
 
   final String source;
+  final bool isPermanent;
 
   const SleepSession({
     required this.id,
@@ -36,9 +37,32 @@ class SleepSession extends Equatable {
     this.description,
     this.segments = const [],
     this.source = 'google_fit',
+    this.isPermanent = false,
   });
 
   Duration get duration => endTime.difference(startTime);
+
+  SleepSession copyWith({
+    String? id,
+    DateTime? startTime,
+    DateTime? endTime,
+    String? title,
+    String? description,
+    List<SleepSegment>? segments,
+    String? source,
+    bool? isPermanent,
+  }) {
+    return SleepSession(
+      id: id ?? this.id,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      segments: segments ?? this.segments,
+      source: source ?? this.source,
+      isPermanent: isPermanent ?? this.isPermanent,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -48,6 +72,7 @@ class SleepSession extends Equatable {
     'description': description,
     'segments': segments.map((s) => s.toJson()).toList(),
     'source': source,
+    'isPermanent': isPermanent,
   };
 
   factory SleepSession.fromJson(Map<String, dynamic> json) => SleepSession(
@@ -62,6 +87,7 @@ class SleepSession extends Equatable {
             .toList() ??
         [],
     source: json['source'] as String? ?? 'google_fit',
+    isPermanent: json['isPermanent'] as bool? ?? false,
   );
 
   @override
@@ -73,6 +99,7 @@ class SleepSession extends Equatable {
     description,
     segments,
     source,
+    isPermanent,
   ];
 }
 

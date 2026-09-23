@@ -3657,7 +3657,7 @@ abstract class AppLocalizations {
   /// No description provided for @sleepCardsInteractionTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Sleep cards:\n• Click to edit time\n• Right-click for context menu (edit/delete)\n• Long press to delete'**
+  /// **'Schedule management:\n• Click \"+ Add\" to create a permanent daily schedule without setting up API or Google Fit\n\nSleep cards:\n• Click — edit time\n• Right-click — context menu (make permanent/delete)\n• Long press — delete'**
   String get sleepCardsInteractionTooltip;
 
   /// No description provided for @sleepCardsInteractionTitle.
@@ -4319,6 +4319,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A software overlay dims the screen in complete darkness. Powered by Windows WDA_EXCLUDEFROMCAPTURE, this overlay is completely excluded from screenshots, screen recordings, and streams. Operates in manual mode only.'**
   String get softwareDimmingTooltip;
+
+  /// No description provided for @permanentSleepSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanent Sleep Schedule'**
+  String get permanentSleepSchedule;
+
+  /// No description provided for @permanentSleepScheduleTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'When enabled, this bedtime and wake-up schedule will be applied daily on a permanent basis without requiring manual daily entries. If new sleep data arrives later from Google Fit, Local API, or a new manual session, permanent mode will automatically yield.'**
+  String get permanentSleepScheduleTooltip;
+
+  /// No description provided for @makePermanentScheduleAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Set as Permanent Schedule'**
+  String get makePermanentScheduleAction;
+
+  /// No description provided for @removePermanentScheduleAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable Permanent Schedule'**
+  String get removePermanentScheduleAction;
+
+  /// No description provided for @permanentScheduleBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanent Schedule'**
+  String get permanentScheduleBadge;
+
+  /// No description provided for @dailyScheduleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Schedule'**
+  String get dailyScheduleTitle;
 }
 
 class _AppLocalizationsDelegate

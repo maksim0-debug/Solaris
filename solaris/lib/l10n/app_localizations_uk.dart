@@ -2122,7 +2122,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get sleepCardsInteractionTooltip =>
-      'Картки сну:\n• Клік — редагувати час\n• ПКМ — контекстне меню (редагувати/видалити)\n• Затискання — видалити';
+      'Керування режимом:\n• Натисніть «+ Додати», щоб створити постійний графік на кожен день без потреби налаштовувати API чи Google Fit\n\nКартки сну:\n• Клік — редагувати час\n• ПКМ — контекстне меню (зробити постійним/видалити)\n• Затискання — видалити';
 
   @override
   String get sleepCardsInteractionTitle => 'Керування сесіями сну';
@@ -2520,4 +2520,23 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get softwareDimmingTooltip =>
       'Програмний оверлей затемнює екран у повній темряві. Завдяки технології Windows (WDA_EXCLUDEFROMCAPTURE), оверлей повністю ігнорується під час зняття скріншотів, запису екрана та стрімів. Працює лише в ручному режимі.';
+
+  @override
+  String get permanentSleepSchedule => 'Постійний графік сну';
+
+  @override
+  String get permanentSleepScheduleTooltip =>
+      'Якщо увімкнено, цей час відбою та підйому застосовуватиметься щоденно на постійній основі без потреби вводити сесії щодня. Якщо згодом надійдуть нові дані з Google Fit, API чи нової сесії, постійний режим автоматично вимкнеться на користь актуальних даних.';
+
+  @override
+  String get makePermanentScheduleAction => 'Зробити постійним графіком';
+
+  @override
+  String get removePermanentScheduleAction => 'Вимкнути постійний графік';
+
+  @override
+  String get permanentScheduleBadge => 'Постійний розклад';
+
+  @override
+  String get dailyScheduleTitle => 'Щоденний розклад';
 }

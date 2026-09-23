@@ -48,25 +48,34 @@ class SmartCircadianService {
         .first; // Reordered to show newest first in analysis
     final SleepSession lastAggSession = lastNight.aggregatedSession;
 
+    final actualWakeTime = _resolveEffectiveWakeTime(
+      regime: currentRegime,
+      lastAggSession: lastAggSession,
+      now: now,
+    );
+
     // 2. Dynamic Bedtime Anchor (Override for tonight)
     int effectiveBedtimeMinutes = currentRegime.averageBedtimeNormalized;
 
     // If the last bedtime deviated by more than 1.5 hours, shift tonight's target halfway
     // to accommodate "weekend mode" or schedule shifts without breaking the regime.
-    final lastBedtimeMinutes = BedtimeNormalization.minutesFromNoon(
-      lastAggSession.startTime,
-    );
-    int bedtimeDev =
-        lastBedtimeMinutes - currentRegime.averageBedtimeNormalized;
-    while (bedtimeDev > 720) {
-      bedtimeDev -= 1440;
-    }
-    while (bedtimeDev < -720) {
-      bedtimeDev += 1440;
-    }
+    // Do not apply to permanent schedules as they represent a fixed anchor.
+    if (!currentRegime.isPermanent) {
+      final lastBedtimeMinutes = BedtimeNormalization.minutesFromNoon(
+        lastAggSession.startTime,
+      );
+      int bedtimeDev =
+          lastBedtimeMinutes - currentRegime.averageBedtimeNormalized;
+      while (bedtimeDev > 720) {
+        bedtimeDev -= 1440;
+      }
+      while (bedtimeDev < -720) {
+        bedtimeDev += 1440;
+      }
 
-    if (bedtimeDev.abs() > 90) {
-      effectiveBedtimeMinutes += (bedtimeDev * 0.5).toInt();
+      if (bedtimeDev.abs() > 90) {
+        effectiveBedtimeMinutes += (bedtimeDev * 0.5).toInt();
+      }
     }
 
     // 3. Bio-Morning Shift (Time Offset)
@@ -75,7 +84,6 @@ class SmartCircadianService {
     int? timeShiftMinutesRemaining;
 
     if (useTimeShift) {
-      final actualWakeTime = lastAggSession.endTime;
       final timeSinceWake = now.difference(actualWakeTime);
 
       // Only calculate if less than 24 hours have passed since waking up
@@ -147,7 +155,6 @@ class SmartCircadianService {
     double sleepPressureFactor = 1.0;
     int sleepPressureTempOffset = 0;
     if (useSleepPressure) {
-      final actualWakeTime = lastAggSession.endTime;
       final timeSinceWake = now.difference(actualWakeTime);
 
       // Ignore very short sleep sessions/naps for reset
@@ -219,7 +226,6 @@ class SmartCircadianService {
         // The 12-hour threshold ensures that if the user stays up past bedtime
         // without sleeping, the deep night mode still activates correctly
         // (timeSinceWake would be 17+ hours → wokeUpInCurrentCycle = false).
-        final actualWakeTime = lastAggSession.endTime;
         final timeSinceWake = now.difference(actualWakeTime);
         final isRealSleep = lastAggSession.duration.inMinutes >= 120;
         final wokeUpInCurrentCycle =
@@ -332,10 +338,51 @@ class SmartCircadianService {
 
   SleepRegime? _getCurrentRegime(List<SleepRegime> regimes) {
     if (regimes.isEmpty) return null;
-    try {
-      return regimes.firstWhere((r) => r.isCurrent);
-    } catch (_) {
-      return regimes.first;
+    return regimes.where((r) => r.isPermanent).firstOrNull ??
+        regimes.where((r) => r.isCurrent).firstOrNull ??
+        regimes.first;
+  }
+
+  /// Resolves the effective wake time.
+  /// For dynamic regimes, uses the actual end time of the most recent session.
+  /// For permanent/fixed regimes, calculates the virtual wake time for the current 24-hour cycle,
+  /// preventing stale historical timestamps from falsely triggering extreme sleep pressure.
+  DateTime _resolveEffectiveWakeTime({
+    required SleepRegime regime,
+    required SleepSession lastAggSession,
+    required DateTime now,
+  }) {
+    if (!regime.isPermanent) {
+      return lastAggSession.endTime;
     }
+
+    final (:hour, :minute) = BedtimeNormalization.minutesFromNoonToHourMinute(
+      regime.averageWakeTimeNormalized,
+    );
+
+    // BedtimeNormalization computes hour and minute in local time.
+    final localNow = now.toLocal();
+    final todayWakeLocal = DateTime(
+      localNow.year,
+      localNow.month,
+      localNow.day,
+      hour,
+      minute,
+    );
+
+    // Using calendar subtraction (day - 1) prevents ±1h clock drift across DST transitions
+    final effectiveWakeLocal =
+        (localNow.isAfter(todayWakeLocal) ||
+            localNow.isAtSameMomentAs(todayWakeLocal))
+        ? todayWakeLocal
+        : DateTime(
+            localNow.year,
+            localNow.month,
+            localNow.day - 1,
+            hour,
+            minute,
+          );
+
+    return now.isUtc ? effectiveWakeLocal.toUtc() : effectiveWakeLocal;
   }
 }

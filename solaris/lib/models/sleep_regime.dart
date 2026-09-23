@@ -33,6 +33,7 @@ class SleepRegime extends Equatable {
   final int dayCount;
   final List<NightGroup> nights;
   final bool isFloating;
+  final bool isPermanent;
 
   const SleepRegime({
     required this.id,
@@ -50,6 +51,7 @@ class SleepRegime extends Equatable {
     required this.dayCount,
     required this.nights,
     required this.isFloating,
+    this.isPermanent = false,
   });
 
   @override
@@ -69,6 +71,7 @@ class SleepRegime extends Equatable {
     dayCount,
     nights,
     isFloating,
+    isPermanent,
   ];
 }
 

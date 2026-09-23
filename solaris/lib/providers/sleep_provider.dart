@@ -8,6 +8,7 @@ import 'package:solaris/services/regime_analyzer.dart';
 import 'package:solaris/providers/google_fit_provider.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/models/regime_settings.dart';
+import 'package:solaris/utils/bedtime_normalization.dart';
 import 'package:equatable/equatable.dart';
 
 const _pushedIsSleepingSentinel = Object();
@@ -29,15 +30,37 @@ class SleepState extends Equatable {
     this.pushedIsSleeping,
   });
 
-  bool get isCurrentlySleeping {
+  /// Evaluates whether the user is sleeping at the specified [time].
+  /// Checks against active permanent sleep windows as well as the latest recorded session.
+  bool isSleepingAt(DateTime time) {
     if (pushedIsSleeping != null) return pushedIsSleeping!;
     if (sessions.isEmpty) return false;
+
+    // Check if there is an active permanent session
+    final permanentSession = sessions.where((s) => s.isPermanent).firstOrNull;
+    if (permanentSession != null) {
+      final timeMins = BedtimeNormalization.minutesFromNoon(time);
+      final startMins = BedtimeNormalization.minutesFromNoon(
+        permanentSession.startTime,
+      );
+      final endMins = BedtimeNormalization.minutesFromNoon(
+        permanentSession.endTime,
+      );
+
+      if (startMins <= endMins) {
+        if (timeMins >= startMins && timeMins < endMins) return true;
+      } else {
+        if (timeMins >= startMins || timeMins < endMins) return true;
+      }
+    }
+
     final latest = sessions.first;
-    final now = DateTime.now();
-    return (now.isAfter(latest.startTime) ||
-            now.isAtSameMomentAs(latest.startTime)) &&
-        now.isBefore(latest.endTime);
+    return (time.isAfter(latest.startTime) ||
+            time.isAtSameMomentAs(latest.startTime)) &&
+        time.isBefore(latest.endTime);
   }
+
+  bool get isCurrentlySleeping => isSleepingAt(DateTime.now());
 
   DateTime? get lastSessionEnd {
     if (sessions.isEmpty) return null;
@@ -131,8 +154,23 @@ class SleepNotifier extends Notifier<SleepState> {
       final filteredNew = newSessions
           .where((s) => !ignored.contains(s.id))
           .toList();
+
+      final existingMap = {for (final s in state.sessions) s.id: s};
+      // A session is considered fresh only if it wasn't in state or its endTime was extended
+      final trulyNewIpcSessions = filteredNew.where((s) {
+        final existing = existingMap[s.id];
+        if (existing == null) return true;
+        return s.endTime.isAfter(existing.endTime);
+      }).toList();
+
+      // Auto-yield: reset permanent status on historical sessions only when fresh IPC data actually arrives
       final filteredExisting = state.sessions
           .where((s) => !ignored.contains(s.id))
+          .map(
+            (s) => trulyNewIpcSessions.isNotEmpty && s.isPermanent
+                ? s.copyWith(isPermanent: false)
+                : s,
+          )
           .toList();
       final merged = _mergeAndDeduplicate(filteredExisting, filteredNew);
       await _sleepService.cacheSleepData(merged);
@@ -159,8 +197,15 @@ class SleepNotifier extends Notifier<SleepState> {
     state = state.copyWith(isSyncing: true, error: null);
     try {
       final ignored = await _sleepService.loadIgnoredSessionIds();
+      // If the incoming session is also permanent, reset prior permanent status
       final filteredExisting = state.sessions
           .where((s) => !ignored.contains(s.id))
+          .map((s) {
+            if (s.isPermanent && session.isPermanent) {
+              return s.copyWith(isPermanent: false);
+            }
+            return s;
+          })
           .toList();
       final merged = _mergeAndDeduplicate(filteredExisting, [session]);
       await _sleepService.cacheSleepData(merged);
@@ -195,11 +240,14 @@ class SleepNotifier extends Notifier<SleepState> {
         description: updatedSession.description,
         segments: updatedSession.segments,
         source: 'manual',
+        isPermanent: updatedSession.isPermanent,
       );
 
       final updated = state.sessions.map((s) {
         if (s.id == manualSession.id) {
           return manualSession;
+        } else if (manualSession.isPermanent && s.isPermanent) {
+          return s.copyWith(isPermanent: false);
         }
         return s;
       }).toList();
@@ -228,6 +276,42 @@ class SleepNotifier extends Notifier<SleepState> {
     }
   }
 
+  /// Sets or unsets the permanent status of a sleep session.
+  /// If [isPermanent] is true, resets permanent status on all other sessions.
+  Future<void> setSessionPermanent(String sessionId, bool isPermanent) async {
+    state = state.copyWith(isSyncing: true, error: null);
+    try {
+      final updated = state.sessions.map((s) {
+        if (s.id == sessionId) {
+          return s.copyWith(
+            isPermanent: isPermanent,
+            source: isPermanent ? 'manual' : s.source,
+          );
+        } else if (isPermanent && s.isPermanent) {
+          return s.copyWith(isPermanent: false);
+        }
+        return s;
+      }).toList();
+
+      await _sleepService.cacheSleepData(updated);
+      if (!ref.mounted) return;
+
+      state = state.copyWith(
+        sessions: updated,
+        isSyncing: false,
+        lastFetchTime: DateTime.now(),
+        error: null,
+      );
+    } catch (e) {
+      debugPrint('Error setting permanent sleep session: $e');
+      if (!ref.mounted) return;
+      state = state.copyWith(
+        isSyncing: false,
+        error: 'Failed to update permanent status: ${e.toString()}',
+      );
+    }
+  }
+
   /// Consolidates multiple fragmented night sessions into a single continuous session.
   /// Removes [oldSessionIds] and adds [newSession] with 'manual' source.
   Future<void> consolidateNightSessions({
@@ -244,6 +328,7 @@ class SleepNotifier extends Notifier<SleepState> {
         description: newSession.description,
         segments: newSession.segments,
         source: 'manual',
+        isPermanent: newSession.isPermanent,
       );
 
       final idsToIgnore = oldSessionIds
@@ -254,9 +339,14 @@ class SleepNotifier extends Notifier<SleepState> {
       }
 
       final oldIdsSet = oldSessionIds.toSet();
-      // Remove the old fragmented sub-sessions and ensure idempotent addition
+      // Remove old fragmented sub-sessions, enforce single-permanent invariant, and add consolidated session
       final filtered = state.sessions
           .where((s) => !oldIdsSet.contains(s.id) && s.id != manualSession.id)
+          .map(
+            (s) => manualSession.isPermanent && s.isPermanent
+                ? s.copyWith(isPermanent: false)
+                : s,
+          )
           .toList();
 
       filtered.add(manualSession);
@@ -324,7 +414,15 @@ class SleepNotifier extends Notifier<SleepState> {
         final now = DateTime.now();
         await ref.read(googleFitProvider.notifier).updateLastFetchTime(now);
 
-        final merged = _mergeAndDeduplicate(state.sessions, sessions);
+        final hasNewLiveSessions = result.liveSessionsCount > 0;
+        final nonPermanentExisting = state.sessions
+            .map(
+              (s) => hasNewLiveSessions && s.isPermanent
+                  ? s.copyWith(isPermanent: false)
+                  : s,
+            )
+            .toList();
+        final merged = _mergeAndDeduplicate(nonPermanentExisting, sessions);
         await _sleepService.cacheSleepData(merged);
         if (!ref.mounted) return;
 

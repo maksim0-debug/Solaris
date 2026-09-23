@@ -123,11 +123,10 @@ class SleepService {
   }
 
   /// Fetches sleep data from Google Fit for the specified number of [daysBack].
-  /// Returns a record with the fetched sessions and a boolean indicating if it was a live sync.
-  Future<({List<SleepSession> sessions, bool isLive})> fetchSleepData({
-    int daysBack = 14,
-    bool forceNetwork = false,
-  }) async {
+  /// Returns a record with the fetched sessions, a boolean indicating if it was a live sync,
+  /// and the count of fresh live sessions retrieved.
+  Future<({List<SleepSession> sessions, bool isLive, int liveSessionsCount})>
+  fetchSleepData({int daysBack = 14, bool forceNetwork = false}) async {
     final endTime = DateTime.now();
     final startTime = endTime.subtract(Duration(days: daysBack));
     final ignored = await loadIgnoredSessionIds();
@@ -142,10 +141,37 @@ class SleepService {
         final sleepSessions = _mapToSleepSessions(
           googleFitSessions,
         ).where((s) => !ignored.contains(s.id)).toList();
-        final existingCached = await loadCachedSleepData();
+        final rawCached = await loadCachedSleepData();
+
+        final cachedMap = {for (final s in rawCached) s.id: s};
+        // A session is considered fresh/new only if it is not yet in the cache,
+        // or if its end time was extended (e.g. an active session finished).
+        final freshLiveSessions = sleepSessions.where((s) {
+          final cached = cachedMap[s.id];
+          if (cached == null) return true;
+          return s.endTime.isAfter(cached.endTime);
+        }).toList();
+
+        // If fresh live sessions arrived from Google Fit, historical permanent schedules yield.
+        // Also preserve 'manual' priority on permanent sessions to prevent deduplication overwrite.
+        final existingCached = rawCached.map((s) {
+          if (s.isPermanent) {
+            if (freshLiveSessions.isNotEmpty) {
+              return s.copyWith(isPermanent: false);
+            } else if (s.source != 'manual') {
+              return s.copyWith(source: 'manual');
+            }
+          }
+          return s;
+        }).toList();
+
         final merged = mergeAndDeduplicate(existingCached, sleepSessions);
         await cacheSleepData(merged);
-        return (sessions: merged, isLive: true);
+        return (
+          sessions: merged,
+          isLive: true,
+          liveSessionsCount: freshLiveSessions.length,
+        );
       } else if (forceNetwork) {
         // If forceNetwork is true, we should not fall back to cache quietly
         throw Exception('Failed to fetch data from Google Fit');
@@ -160,7 +186,7 @@ class SleepService {
     final filteredCached = cachedSessions
         .where((s) => !ignored.contains(s.id))
         .toList();
-    return (sessions: filteredCached, isLive: false);
+    return (sessions: filteredCached, isLive: false, liveSessionsCount: 0);
   }
 
   List<SleepSession> _mapToSleepSessions(List<Session> sessions) {

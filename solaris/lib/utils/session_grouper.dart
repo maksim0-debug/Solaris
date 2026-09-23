@@ -93,6 +93,7 @@ class SessionGrouper {
         startTime: first.startTime,
         endTime: last.endTime,
         title: 'Sleep on ${nightDate.year}-${nightDate.month}-${nightDate.day}',
+        isPermanent: cluster.any((s) => s.isPermanent),
       );
 
       result.add(

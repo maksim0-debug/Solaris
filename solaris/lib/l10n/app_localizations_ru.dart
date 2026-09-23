@@ -2126,7 +2126,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get sleepCardsInteractionTooltip =>
-      'Карточки сна:\n• Клик — редактировать время\n• ПКМ — контекстное меню (редактировать/удалить)\n• Удержание — удалить';
+      'Управление режимом:\n• Нажмите «+ Добавить», чтобы создать постоянный график на каждый день без необходимости настраивать API или Google Fit\n\nКарточки сна:\n• Клик — редактировать время\n• ПКМ — контекстное меню (сделать постоянным/удалить)\n• Удержание — удалить';
 
   @override
   String get sleepCardsInteractionTitle => 'Управление сеансами сна';
@@ -2526,4 +2526,23 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get softwareDimmingTooltip =>
       'Программный оверлей затемняет экран в полной темноте. Благодаря технологии Windows (WDA_EXCLUDEFROMCAPTURE), оверлей полностью игнорируется при создании скриншотов, записи экрана и стримах. Работает только в ручном режиме.';
+
+  @override
+  String get permanentSleepSchedule => 'Постоянный график сна';
+
+  @override
+  String get permanentSleepScheduleTooltip =>
+      'Если включено, это время отхода ко сну и пробуждения будет применяться ежедневно на постоянной основе без необходимости вводить данные каждый день. Если позже поступят новые данные из Google Fit, API или новой сессии, постоянный режим автоматически отключится в пользу актуальных данных.';
+
+  @override
+  String get makePermanentScheduleAction => 'Сделать постоянным графиком';
+
+  @override
+  String get removePermanentScheduleAction => 'Отключить постоянный график';
+
+  @override
+  String get permanentScheduleBadge => 'Постоянный график';
+
+  @override
+  String get dailyScheduleTitle => 'Ежедневный график';
 }

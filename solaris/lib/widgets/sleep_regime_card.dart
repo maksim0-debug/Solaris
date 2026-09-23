@@ -87,19 +87,79 @@ class _SleepRegimeCardState extends ConsumerState<SleepRegimeCard> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          _formatDateRange(
-                            start: widget.regime.startDate.toLocal(),
-                            end: widget.regime.endDate.toLocal(),
-                            locale: l10n.localeName,
-                            includeYear: false,
+                        if (widget.regime.isPermanent)
+                          Expanded(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(
+                                      0xFF8B5CF6,
+                                    ).withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: const Color(
+                                        0xFF8B5CF6,
+                                      ).withValues(alpha: 0.4),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        LucideIcons.repeat,
+                                        size: 12,
+                                        color: Color(0xFFC4B5FD),
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Text(
+                                        l10n.permanentScheduleBadge,
+                                        style: const TextStyle(
+                                          color: Color(0xFFC4B5FD),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(
+                                    l10n.dailyScheduleTitle,
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        else
+                          Text(
+                            _formatDateRange(
+                              start: widget.regime.startDate.toLocal(),
+                              end: widget.regime.endDate.toLocal(),
+                              locale: l10n.localeName,
+                              includeYear: false,
+                            ),
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.5),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
@@ -114,15 +174,17 @@ class _SleepRegimeCardState extends ConsumerState<SleepRegimeCard> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(
-                                l10n.daysCount(widget.regime.dayCount),
-                                style: const TextStyle(
-                                  color: Color(0xFFC4B5FD),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
+                              if (!widget.regime.isPermanent) ...[
+                                Text(
+                                  l10n.daysCount(widget.regime.dayCount),
+                                  style: const TextStyle(
+                                    color: Color(0xFFC4B5FD),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 4),
+                                const SizedBox(width: 4),
+                              ],
                               Icon(
                                 _isExpanded
                                     ? LucideIcons.chevronUp
@@ -160,9 +222,11 @@ class _SleepRegimeCardState extends ConsumerState<SleepRegimeCard> {
 
                     const SizedBox(height: 8),
 
-                    // Bottom Row: Scatter
+                    // Bottom Row: Scatter or Permanent schedule bounds
                     Text(
-                      '${l10n.scatter}: ${widget.regime.windowStart} — ${widget.regime.windowEnd}',
+                      widget.regime.isPermanent
+                          ? '${widget.regime.averageBedtimeFormatted} — ${widget.regime.averageWakeTimeFormatted}'
+                          : '${l10n.scatter}: ${widget.regime.windowStart} — ${widget.regime.windowEnd}',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.3),
                         fontSize: 12,
@@ -333,6 +397,9 @@ class _SessionDetailRowState extends ConsumerState<_SessionDetailRow> {
     final editLabel = widget.night.allSessions.length > 1
         ? l10n.mergeAndEditNight
         : l10n.editSleepSession;
+    final isPermanent =
+        session.isPermanent ||
+        widget.night.allSessions.any((s) => s.isPermanent);
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -350,8 +417,47 @@ class _SessionDetailRowState extends ConsumerState<_SessionDetailRow> {
           globalPosition: details.globalPosition,
           onEdit: () => _onEditRow(context),
           onDelete: () => _onDeleteRow(context),
+          onTogglePermanent: () {
+            if (isPermanent) {
+              // Disabling: find whichever session in this night has isPermanent == true
+              final target = widget.night.allSessions.firstWhere(
+                (s) => s.isPermanent,
+                orElse: () => session,
+              );
+              ref
+                  .read(sleepProvider.notifier)
+                  .setSessionPermanent(target.id, false);
+            } else {
+              // Enabling: if fragmented into multiple sessions, consolidate into the aggregated bounds
+              if (widget.night.allSessions.length > 1) {
+                final consolidated = widget.night.aggregatedSession.copyWith(
+                  isPermanent: true,
+                  source: 'manual',
+                );
+                ref
+                    .read(sleepProvider.notifier)
+                    .consolidateNightSessions(
+                      oldSessionIds: widget.night.allSessions
+                          .map((s) => s.id)
+                          .toList(),
+                      newSession: consolidated,
+                    );
+              } else {
+                final targetId = widget.night.allSessions.isNotEmpty
+                    ? widget.night.allSessions.first.id
+                    : session.id;
+                ref
+                    .read(sleepProvider.notifier)
+                    .setSessionPermanent(targetId, true);
+              }
+            }
+          },
           editLabel: editLabel,
           deleteLabel: l10n.deleteSleepSessionTitle,
+          permanentLabel: isPermanent
+              ? l10n.removePermanentScheduleAction
+              : l10n.makePermanentScheduleAction,
+          isPermanent: isPermanent,
         ),
         behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
@@ -396,6 +502,44 @@ class _SessionDetailRowState extends ConsumerState<_SessionDetailRow> {
                                 fontSize: 14,
                               ),
                             ),
+                            if (isPermanent)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(
+                                    0xFF8B5CF6,
+                                  ).withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: const Color(
+                                      0xFF8B5CF6,
+                                    ).withValues(alpha: 0.35),
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      LucideIcons.repeat,
+                                      size: 10.5,
+                                      color: Color(0xFFC4B5FD),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      l10n.permanentScheduleBadge,
+                                      style: const TextStyle(
+                                        color: Color(0xFFC4B5FD),
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             if (widget.isAnomaly)
                               Tooltip(
                                 message: l10n.regimeAnomalyTooltip,
@@ -527,28 +671,56 @@ class _SessionChip extends ConsumerWidget {
         globalPosition: details.globalPosition,
         onEdit: () => _onEditChip(context),
         onDelete: () => _onDeleteChip(context, ref),
+        onTogglePermanent: () {
+          ref
+              .read(sleepProvider.notifier)
+              .setSessionPermanent(session.id, !session.isPermanent);
+        },
         editLabel: l10n.editSleepSegment,
         deleteLabel: l10n.deleteAction,
+        permanentLabel: session.isPermanent
+            ? l10n.removePermanentScheduleAction
+            : l10n.makePermanentScheduleAction,
+        isPermanent: session.isPermanent,
       ),
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.08),
+            color: session.isPermanent
+                ? const Color(0xFF8B5CF6).withValues(alpha: 0.15)
+                : Colors.white.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(6),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.15),
+              color: session.isPermanent
+                  ? const Color(0xFF8B5CF6).withValues(alpha: 0.45)
+                  : Colors.white.withValues(alpha: 0.15),
               width: 1,
             ),
           ),
-          child: Text(
-            '${timeFormat.format(session.startTime.toLocal())}–${timeFormat.format(session.endTime.toLocal())}',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.85),
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (session.isPermanent) ...[
+                const Icon(
+                  LucideIcons.repeat,
+                  size: 10,
+                  color: Color(0xFFC4B5FD),
+                ),
+                const SizedBox(width: 4),
+              ],
+              Text(
+                '${timeFormat.format(session.startTime.toLocal())}–${timeFormat.format(session.endTime.toLocal())}',
+                style: TextStyle(
+                  color: session.isPermanent
+                      ? const Color(0xFFC4B5FD)
+                      : Colors.white.withValues(alpha: 0.85),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -561,12 +733,15 @@ Future<void> _showSleepContextMenu(
   required Offset globalPosition,
   required VoidCallback onEdit,
   required VoidCallback onDelete,
+  VoidCallback? onTogglePermanent,
   required String editLabel,
   required String deleteLabel,
+  String? permanentLabel,
+  bool isPermanent = false,
 }) async {
   final screenSize = MediaQuery.of(context).size;
   const menuWidth = 240.0;
-  const menuHeight = 90.0;
+  final menuHeight = onTogglePermanent != null ? 135.0 : 90.0;
 
   // Prevent menu from overflowing viewport edges
   final maxLeft = (screenSize.width - menuWidth - 16).clamp(
@@ -603,8 +778,18 @@ Future<void> _showSleepContextMenu(
                   onDelete();
                 }
               },
+              onTogglePermanent: onTogglePermanent != null
+                  ? () {
+                      Navigator.of(ctx).pop();
+                      if (context.mounted) {
+                        onTogglePermanent();
+                      }
+                    }
+                  : null,
               editLabel: editLabel,
               deleteLabel: deleteLabel,
+              permanentLabel: permanentLabel,
+              isPermanent: isPermanent,
             ),
           ),
         ],
@@ -616,14 +801,20 @@ Future<void> _showSleepContextMenu(
 class _SleepContextMenuOverlay extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback? onTogglePermanent;
   final String editLabel;
   final String deleteLabel;
+  final String? permanentLabel;
+  final bool isPermanent;
 
   const _SleepContextMenuOverlay({
     required this.onEdit,
     required this.onDelete,
+    this.onTogglePermanent,
     required this.editLabel,
     required this.deleteLabel,
+    this.permanentLabel,
+    this.isPermanent = false,
   });
 
   @override
@@ -671,6 +862,24 @@ class _SleepContextMenuOverlay extends StatelessWidget {
                     label: editLabel,
                     onTap: onEdit,
                   ),
+                  if (onTogglePermanent != null && permanentLabel != null) ...[
+                    Container(
+                      height: 1,
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 3,
+                      ),
+                      color: Colors.white.withValues(alpha: 0.06),
+                    ),
+                    _SleepContextMenuItem(
+                      icon: isPermanent ? LucideIcons.repeat : LucideIcons.pin,
+                      iconColor: isPermanent
+                          ? const Color(0xFFFBBF24)
+                          : const Color(0xFFA78BFA),
+                      label: permanentLabel!,
+                      onTap: onTogglePermanent!,
+                    ),
+                  ],
                   Container(
                     height: 1,
                     margin: const EdgeInsets.symmetric(

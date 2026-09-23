@@ -193,10 +193,10 @@ class _SleepScreenState extends ConsumerState<SleepScreen> {
                 else ...[
                   Builder(
                     builder: (context) {
-                      final currentRegime = regimes.firstWhere(
-                        (r) => r.isCurrent,
-                        orElse: () => regimes.first,
-                      );
+                      final currentRegime =
+                          regimes.where((r) => r.isPermanent).firstOrNull ??
+                          regimes.where((r) => r.isCurrent).firstOrNull ??
+                          regimes.first;
                       return SleepRegimeCard(
                         regime: currentRegime,
                         initiallyExpanded: false,
@@ -343,6 +343,37 @@ class _SleepInfoIconButton extends StatelessWidget {
     required this.onPressed,
   });
 
+  InlineSpan _buildRichMessage(String text) {
+    final regex = RegExp(r'(«\+[^»]+»|"\+[^"]+")');
+    final matches = regex.allMatches(text);
+    if (matches.isEmpty) {
+      return TextSpan(text: text);
+    }
+
+    final spans = <InlineSpan>[];
+    int lastEnd = 0;
+    for (final match in matches) {
+      if (match.start > lastEnd) {
+        spans.add(TextSpan(text: text.substring(lastEnd, match.start)));
+      }
+      spans.add(
+        TextSpan(
+          text: match.group(0),
+          style: const TextStyle(
+            color: Color(0xFFC4B5FD),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+      lastEnd = match.end;
+    }
+    if (lastEnd < text.length) {
+      spans.add(TextSpan(text: text.substring(lastEnd)));
+    }
+
+    return TextSpan(children: spans);
+  }
+
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
@@ -351,9 +382,10 @@ class _SleepInfoIconButton extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: Tooltip(
-          message: tooltipMessage,
+          richMessage: _buildRichMessage(tooltipMessage),
           waitDuration: const Duration(milliseconds: 150),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          constraints: const BoxConstraints(maxWidth: 350),
           decoration: BoxDecoration(
             color: const Color(0xFF0F172A).withValues(alpha: 0.96),
             borderRadius: BorderRadius.circular(10),

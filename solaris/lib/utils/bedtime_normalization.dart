@@ -20,16 +20,21 @@ class BedtimeNormalization {
     }
   }
 
+  /// Decomposes "minutes from noon" into 24-hour [hour] and [minute] components.
+  static ({int hour, int minute}) minutesFromNoonToHourMinute(
+    int minutesFromNoon,
+  ) {
+    // Normalize to 0-1439 handling any negative offset
+    final normalized = (minutesFromNoon % 1440 + 1440) % 1440;
+    final hourFromMidnight = (normalized ~/ 60 + 12) % 24;
+    final minute = normalized % 60;
+    return (hour: hourFromMidnight, minute: minute);
+  }
+
   /// Converts "minutes from noon" back into a readable string (e.g. "23:45").
   static String minutesFromNoonToString(int totalMinutes) {
-    // Normalize to 0-1439
-    int normalized = totalMinutes % 1440;
-
-    // Add 12 hours to shift back to midnight-based
-    int hourFromMidnight = (normalized ~/ 60 + 12) % 24;
-    int minute = normalized % 60;
-
-    return '${hourFromMidnight.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+    final (:hour, :minute) = minutesFromNoonToHourMinute(totalMinutes);
+    return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
   }
 }
 

@@ -2105,7 +2105,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sleepCardsInteractionTooltip =>
-      'Sleep cards:\n• Click to edit time\n• Right-click for context menu (edit/delete)\n• Long press to delete';
+      'Schedule management:\n• Click \"+ Add\" to create a permanent daily schedule without setting up API or Google Fit\n\nSleep cards:\n• Click — edit time\n• Right-click — context menu (make permanent/delete)\n• Long press — delete';
 
   @override
   String get sleepCardsInteractionTitle => 'Sleep Sessions Management';
@@ -2504,4 +2504,23 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get softwareDimmingTooltip =>
       'A software overlay dims the screen in complete darkness. Powered by Windows WDA_EXCLUDEFROMCAPTURE, this overlay is completely excluded from screenshots, screen recordings, and streams. Operates in manual mode only.';
+
+  @override
+  String get permanentSleepSchedule => 'Permanent Sleep Schedule';
+
+  @override
+  String get permanentSleepScheduleTooltip =>
+      'When enabled, this bedtime and wake-up schedule will be applied daily on a permanent basis without requiring manual daily entries. If new sleep data arrives later from Google Fit, Local API, or a new manual session, permanent mode will automatically yield.';
+
+  @override
+  String get makePermanentScheduleAction => 'Set as Permanent Schedule';
+
+  @override
+  String get removePermanentScheduleAction => 'Disable Permanent Schedule';
+
+  @override
+  String get permanentScheduleBadge => 'Permanent Schedule';
+
+  @override
+  String get dailyScheduleTitle => 'Daily Schedule';
 }

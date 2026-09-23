@@ -51,14 +51,36 @@ class RegimeAnalyzer {
       );
     }
 
-    // 5. Run the anchor-based state machine
-    final rawRegimes = _findRawRegimes(entries, settings);
+    // 5. Separate organic and permanent entries
+    final organicEntries = entries.where((e) => !e.isPermanent).toList();
+    final permanentEntries = entries.where((e) => e.isPermanent).toList();
 
-    // 6. Merge short regimes
-    final merged = _mergeShortRegimes(rawRegimes, settings);
+    // 6. Analyze organic entries through the anchor-based state machine and merge short regimes
+    final rawOrganicRegimes = organicEntries.isNotEmpty
+        ? _findRawRegimes(organicEntries, settings)
+        : <_RawRegime>[];
+    final mergedOrganic = _mergeShortRegimes(rawOrganicRegimes, settings);
 
-    // 7. Post-process: compute stats, windows, detect floating, mark current
-    return _postProcess(merged, settings);
+    // 7. Permanent entries form dedicated permanent regimes (never treated as anomalies)
+    final rawPermRegimes = <_RawRegime>[];
+    if (permanentEntries.isNotEmpty) {
+      final permRegime = _RawRegime();
+      for (final p in permanentEntries) {
+        permRegime.addEntry(p, isAnomaly: false);
+      }
+      rawPermRegimes.add(permRegime);
+    }
+
+    // 8. Combine organic and permanent regimes, sorted chronologically ascending before post-processing
+    final combined = [...mergedOrganic, ...rawPermRegimes]
+      ..sort((a, b) {
+        final aStart = a.nightGroups.first.aggregatedSession.startTime;
+        final bStart = b.nightGroups.first.aggregatedSession.startTime;
+        return aStart.compareTo(bStart);
+      });
+
+    // 9. Post-process: compute stats, windows, detect floating, mark current
+    return _postProcess(combined, settings);
   }
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -189,11 +211,14 @@ class RegimeAnalyzer {
     while (changed) {
       changed = false;
       for (int i = 0; i < regimes.length; i++) {
+        // Never attempt to merge or alter a permanent regime
+        if (regimes[i].hasPermanent) continue;
+
         if (regimes[i].normalEntries.length < settings.minRegimeLength) {
           int? mergeTarget;
           int bestDist = 1440;
 
-          if (i > 0) {
+          if (i > 0 && !regimes[i - 1].hasPermanent) {
             int dist =
                 (regimes[i].getAnchorAvg(settings) -
                         regimes[i - 1].getAnchorAvg(settings))
@@ -210,7 +235,7 @@ class RegimeAnalyzer {
               mergeTarget = i - 1;
             }
           }
-          if (i < regimes.length - 1) {
+          if (i < regimes.length - 1 && !regimes[i + 1].hasPermanent) {
             int dist =
                 (regimes[i].getAnchorAvg(settings) -
                         regimes[i + 1].getAnchorAvg(settings))
@@ -240,12 +265,14 @@ class RegimeAnalyzer {
 
     // Filter out isolated historical short regimes that could not be merged into any neighbor.
     // However, NEVER discard the most recent (active) regime (i == regimes.length - 1),
-    // so that 1-day and 2-day regimes starting today remain active and visible.
+    // nor any regime marked as permanent.
     final validRegimes = <_RawRegime>[];
     for (int i = 0; i < regimes.length; i++) {
       final isLatest = i == regimes.length - 1;
+      final isPermanent = regimes[i].hasPermanent;
       if (regimes[i].normalEntries.length >= settings.minRegimeLength ||
-          isLatest) {
+          isLatest ||
+          isPermanent) {
         validRegimes.add(regimes[i]);
       }
     }
@@ -322,9 +349,15 @@ class RegimeAnalyzer {
         );
       }
 
-      final isCurrent = endDate.isAfter(
-        today.subtract(const Duration(days: 2)),
+      final isPermanent = raw.nightGroups.any(
+        (n) =>
+            n.allSessions.any((s) => s.isPermanent) ||
+            n.aggregatedSession.isPermanent,
       );
+
+      final isCurrent =
+          isPermanent ||
+          endDate.isAfter(today.subtract(const Duration(days: 2)));
 
       results.add(
         SleepRegime(
@@ -353,6 +386,7 @@ class RegimeAnalyzer {
               ),
             ),
           isFloating: isFloating,
+          isPermanent: isPermanent,
         ),
       );
     }
@@ -386,12 +420,22 @@ class _BedtimeEntry {
     required this.normalizedMinutes,
     required this.nightGroup,
   });
+
+  bool get isPermanent =>
+      nightGroup.aggregatedSession.isPermanent ||
+      nightGroup.allSessions.any((s) => s.isPermanent);
 }
 
 class _RawRegime {
   final List<_BedtimeEntry> normalEntries = [];
   final List<_BedtimeEntry> anomalyEntries = [];
   final List<NightGroup> nightGroups = [];
+
+  bool get hasPermanent => nightGroups.any(
+    (n) =>
+        n.aggregatedSession.isPermanent ||
+        n.allSessions.any((s) => s.isPermanent),
+  );
 
   int getAnchorAvg(RegimeSettings settings) {
     if (normalEntries.isEmpty) return 0;
