@@ -1081,7 +1081,7 @@ abstract class AppLocalizations {
   /// No description provided for @sleep.
   ///
   /// In en, this message translates to:
-  /// **'Sleep (Beta)'**
+  /// **'Sleep'**
   String get sleep;
 
   /// No description provided for @circadianRegulationBetaNote.

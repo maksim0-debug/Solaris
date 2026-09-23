@@ -556,7 +556,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get testSync => 'Test Sync';
 
   @override
-  String get sleep => 'Sleep (Beta)';
+  String get sleep => 'Sleep';
 
   @override
   String get circadianRegulationBetaNote =>

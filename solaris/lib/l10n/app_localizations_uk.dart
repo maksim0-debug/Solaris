@@ -555,7 +555,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get testSync => 'Перевірити синхронізацію';
 
   @override
-  String get sleep => 'Сон (Beta)';
+  String get sleep => 'Сон';
 
   @override
   String get circadianRegulationBetaNote =>

@@ -553,7 +553,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get testSync => 'Проверить синхронизацию';
 
   @override
-  String get sleep => 'Сон (Beta)';
+  String get sleep => 'Сон';
 
   @override
   String get circadianRegulationBetaNote =>
