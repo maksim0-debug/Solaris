@@ -12,7 +12,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get appTitle => 'Solaris';
 
   @override
-  String get celestialControl => 'НЕБЕСНЫЙ КОНТРОЛЬ';
+  String get celestialControl => 'СОЛНЕЧНАЯ СИНХРОНИЗАЦИЯ';
 
   @override
   String get dashboard => 'Панель управления';

@@ -109,7 +109,7 @@ abstract class AppLocalizations {
   /// No description provided for @celestialControl.
   ///
   /// In en, this message translates to:
-  /// **'CELESTIAL CONTROL'**
+  /// **'SOLAR SYNC'**
   String get celestialControl;
 
   /// No description provided for @dashboard.

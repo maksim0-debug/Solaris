@@ -73,6 +73,21 @@ void main() {
       },
     );
 
+    test(
+      'getNextEvent late at night returns civilTwilightBegin for next day',
+      () async {
+        final phases = await service.calculatePhases(lat, lon, testDate);
+
+        // 2 hours after civilTwilightEnd (deep night before midnight)
+        final lateNight = phases.civilTwilightEnd.add(const Duration(hours: 2));
+        final nextEvent = service.getNextEvent(phases, lateNight);
+
+        expect(nextEvent.type, SolarEventType.civilTwilightBegin);
+        expect(nextEvent.duration.isNegative, isFalse);
+        expect(nextEvent.duration.inHours, greaterThan(0));
+      },
+    );
+
     test('updateLocation invalidates cache', () async {
       final phases = await service.calculatePhases(lat, lon, testDate);
 

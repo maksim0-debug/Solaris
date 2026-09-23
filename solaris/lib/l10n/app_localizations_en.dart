@@ -12,7 +12,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'Solaris';
 
   @override
-  String get celestialControl => 'CELESTIAL CONTROL';
+  String get celestialControl => 'SOLAR SYNC';
 
   @override
   String get dashboard => 'Dashboard';

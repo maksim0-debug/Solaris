@@ -2847,66 +2847,6 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
     }
   });
 
-  // Listen to manual temperature changes to apply hardware updates even when window is minimized/hidden in tray
-  ref.listen<int>(currentTemperatureProvider, (previous, next) {
-    if (tempService.isResetLocked) {
-      return;
-    }
-
-    final selection = ref.read(selectedMonitorsProvider);
-    final tempSettingsMap = ref.read(temperatureSettingsProvider).value ?? {};
-    final isSelectedAuto = selection.contains('all')
-        ? (tempSettingsMap['all']?.isEnabled ?? true)
-        : (tempSettingsMap[selection.firstOrNull]?.isEnabled ??
-              tempSettingsMap['all']?.isEnabled ??
-              true);
-
-    if (isSelectedAuto) {
-      return;
-    }
-
-    if (previous != next) {
-      final selection = ref.read(selectedMonitorsProvider);
-      final monitors = ref.read(monitorListProvider).value ?? [];
-      final isGaming = ref.read(gamingModeProvider);
-      final settingsMap = ref.read(settingsProvider).value ?? {};
-
-      final globalSettings = settingsMap['all'] ?? SettingsState();
-
-      final hasSpecificGamingMonitor =
-          isGaming &&
-          monitors.any((m) {
-            final s = settingsMap[m.deviceName] ?? globalSettings;
-            return s.isGameModeEnabled && s.isGameModeTemperatureEnabled;
-          });
-
-      final targetMonitors =
-          (selection.contains('all') && !hasSpecificGamingMonitor)
-          ? ['all']
-          : (selection.contains('all')
-                ? monitors.map((m) => m.deviceName).toList()
-                : selection.toList());
-
-      for (final id in targetMonitors) {
-        final mSettings = settingsMap[id] ?? globalSettings;
-        if (isGaming &&
-            mSettings.isGameModeEnabled &&
-            mSettings.isGameModeTemperatureEnabled) {
-          continue;
-        }
-
-        tempService.setTemperatureInstant(
-          selection: id,
-          targetValue: next.toDouble(),
-          monitors: monitors,
-          monitorService: monitorService,
-          updateTemperatureCallback: (devId, val) =>
-              monitorListNotifier.updateTemperature(devId, val),
-        );
-      }
-    }
-  });
-
   solarStateAsync.whenData((state) {
     monitorsAsync.whenData((monitors) {
       settingsAsync.whenData((settingsMap) {

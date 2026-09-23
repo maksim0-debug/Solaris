@@ -3,6 +3,7 @@
 #endif
 #include "monitor_manager.h"
 #include "color_science.h"
+#include "utils.h"
 
 #include <algorithm>
 #include <cctype>
@@ -103,6 +104,26 @@ void MonitorManager::DestroyPhysicalMonitorsCache() {
   last_hardware_brightness_.clear();
 }
 
+namespace {
+std::string WideToUtf8(const std::wstring& wstr) {
+  if (wstr.empty()) return "";
+  int size_needed = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), static_cast<int>(wstr.size()), NULL, 0, NULL, NULL);
+  if (size_needed <= 0) return "";
+  std::string strTo(size_needed, 0);
+  WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), static_cast<int>(wstr.size()), &strTo[0], size_needed, NULL, NULL);
+  return strTo;
+}
+
+std::wstring Utf8ToWide(const std::string& str) {
+  if (str.empty()) return L"";
+  int size_needed = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), static_cast<int>(str.size()), NULL, 0);
+  if (size_needed <= 0) return L"";
+  std::wstring wstrTo(size_needed, 0);
+  MultiByteToWideChar(CP_UTF8, 0, str.c_str(), static_cast<int>(str.size()), &wstrTo[0], size_needed);
+  return wstrTo;
+}
+} // namespace
+
 std::vector<PHYSICAL_MONITOR> MonitorManager::GetOrCreatePhysicalMonitors(const std::string& device_path) {
   std::lock_guard<std::mutex> lock(handles_mutex_);
   auto it = physical_monitors_cache_.find(device_path);
@@ -110,7 +131,7 @@ std::vector<PHYSICAL_MONITOR> MonitorManager::GetOrCreatePhysicalMonitors(const 
     return it->second;
   }
 
-  std::wstring target_device(device_path.begin(), device_path.end());
+  std::wstring target_device = Utf8ToWide(device_path);
   struct MonitorContext {
     std::wstring target_name;
     HMONITOR h_monitor = nullptr;
@@ -212,11 +233,7 @@ std::map<std::string, std::string> MonitorManager::GetMonitorFriendlyNames() {
     if (SetupDiGetDeviceInterfaceDetailW(dev_info, &interface_data, detail_data,
                                          detail_size, nullptr, &device_data)) {
       // Get the device path (e.g., \\?\DISPLAY#...)
-      std::wstring device_path_w(detail_data->DevicePath);
-      std::string device_path;
-      for (wchar_t wc : device_path_w) {
-        device_path += static_cast<char>(wc);
-      }
+      std::string device_path = WideToUtf8(detail_data->DevicePath);
 
       // Standardize the path for comparison (Windows might use different
       // casing/separators)
@@ -450,28 +467,14 @@ bool MonitorManager::GetBrightness(const std::string &device_path, int &current,
 
 namespace {
 
-typedef BOOL(WINAPI *FnInternalSetDeviceGammaRamp)(HDC, LPVOID, DWORD);
-typedef BOOL(WINAPI *FnInternalGetAppliedGDIGammaRamp)(HDC, LPVOID);
-
 bool HardwareSetDeviceGammaRamp(HDC hDC, LPVOID lpRamp) {
-  static HMODULE hMscms = LoadLibraryW(L"mscms.dll");
-  static auto pInternalSet = hMscms ? reinterpret_cast<FnInternalSetDeviceGammaRamp>(
-                                          GetProcAddress(hMscms, "InternalSetDeviceGammaRamp"))
-                                    : nullptr;
-  if (pInternalSet && pInternalSet(hDC, lpRamp, 0)) {
-    return true;
-  }
+  // Use official and safe Windows API.
+  // With mathematical floor safe_bFactor >= 0.005f, drivers
+  // will not reject extreme warm color temperatures.
   return ::SetDeviceGammaRamp(hDC, lpRamp);
 }
 
 bool HardwareGetBaselineGammaRamp(HDC hDC, LPVOID lpRamp) {
-  static HMODULE hMscms = LoadLibraryW(L"mscms.dll");
-  static auto pInternalGetGDI = hMscms ? reinterpret_cast<FnInternalGetAppliedGDIGammaRamp>(
-                                             GetProcAddress(hMscms, "InternalGetAppliedGDIGammaRamp"))
-                                       : nullptr;
-  if (pInternalGetGDI && pInternalGetGDI(hDC, lpRamp)) {
-    return true;
-  }
   return ::GetDeviceGammaRamp(hDC, lpRamp);
 }
 
@@ -490,7 +493,7 @@ bool MonitorManager::SetTemperature(const std::string &device_path, int kelvins)
   // Safety floor: Ensure a tiny non-zero gradient for blue so WDDM drivers never reject the ramp
   float safe_bFactor = std::max(0.005f, bFactor);
 
-  std::wstring target_device(device_path.begin(), device_path.end());
+  std::wstring target_device = Utf8ToWide(device_path);
   HDC hDC = CreateDCW(L"DISPLAY", target_device.c_str(), nullptr, nullptr);
   if (!hDC) {
     return false;
@@ -546,7 +549,7 @@ bool MonitorManager::SetTemperature(const std::string &device_path, int kelvins)
 }
 
 bool MonitorManager::ResetTemperature(const std::string &device_path) {
-  std::wstring target_device(device_path.begin(), device_path.end());
+  std::wstring target_device = Utf8ToWide(device_path);
   HDC hDC = CreateDCW(L"DISPLAY", target_device.c_str(), nullptr, nullptr);
   if (!hDC) {
     return false;
@@ -582,27 +585,24 @@ bool MonitorManager::SetAllMonitorsTemperature(int kelvins) {
     return ResetAllMonitorsTemperatureSync();
   }
 
-  DISPLAY_DEVICEA displayDevice;
+  DISPLAY_DEVICEW displayDevice;
   ZeroMemory(&displayDevice, sizeof(displayDevice));
   displayDevice.cb = sizeof(displayDevice);
 
   DWORD deviceIndex = 0;
-  bool all_success = true;
   int applied_count = 0;
-  while (EnumDisplayDevicesA(NULL, deviceIndex, &displayDevice, 0)) {
+  while (EnumDisplayDevicesW(NULL, deviceIndex, &displayDevice, 0)) {
     if ((displayDevice.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP) != 0) {
-      std::string device_path(displayDevice.DeviceName);
+      std::string device_path = Utf8FromUtf16(displayDevice.DeviceName);
       if (SetTemperature(device_path, kelvins)) {
         applied_count++;
-      } else {
-        all_success = false;
       }
     }
     deviceIndex++;
     ZeroMemory(&displayDevice, sizeof(displayDevice));
     displayDevice.cb = sizeof(displayDevice);
   }
-  return (applied_count > 0 && all_success);
+  return applied_count > 0;
 }
 
 bool MonitorManager::ResetAllMonitorsTemperatureSync() {
@@ -611,24 +611,24 @@ bool MonitorManager::ResetAllMonitorsTemperatureSync() {
     last_applied_temperatures_.clear();
   }
 
-  DISPLAY_DEVICEA displayDevice;
+  DISPLAY_DEVICEW displayDevice;
   ZeroMemory(&displayDevice, sizeof(displayDevice));
   displayDevice.cb = sizeof(displayDevice);
 
   DWORD deviceIndex = 0;
-  bool all_success = true;
-  while (EnumDisplayDevicesA(NULL, deviceIndex, &displayDevice, 0)) {
+  int reset_count = 0;
+  while (EnumDisplayDevicesW(NULL, deviceIndex, &displayDevice, 0)) {
     if ((displayDevice.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP) != 0) {
-      std::string device_path(displayDevice.DeviceName);
-      if (!ResetTemperature(device_path)) {
-        all_success = false;
+      std::string device_path = Utf8FromUtf16(displayDevice.DeviceName);
+      if (ResetTemperature(device_path)) {
+        reset_count++;
       }
     }
     deviceIndex++;
     ZeroMemory(&displayDevice, sizeof(displayDevice));
     displayDevice.cb = sizeof(displayDevice);
   }
-  return all_success;
+  return reset_count > 0;
 }
 
 bool MonitorManager::RestoreLastTemperatures() {
@@ -642,23 +642,20 @@ bool MonitorManager::RestoreLastTemperatures() {
     return true;
   }
 
-  DISPLAY_DEVICEA displayDevice;
+  DISPLAY_DEVICEW displayDevice;
   ZeroMemory(&displayDevice, sizeof(displayDevice));
   displayDevice.cb = sizeof(displayDevice);
 
   DWORD deviceIndex = 0;
-  bool all_success = true;
   int applied_count = 0;
 
-  while (EnumDisplayDevicesA(NULL, deviceIndex, &displayDevice, 0)) {
+  while (EnumDisplayDevicesW(NULL, deviceIndex, &displayDevice, 0)) {
     if ((displayDevice.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP) != 0) {
-      std::string device_path(displayDevice.DeviceName);
+      std::string device_path = Utf8FromUtf16(displayDevice.DeviceName);
       auto it = temps_copy.find(device_path);
       if (it != temps_copy.end() && it->second < 6500) {
         if (SetTemperature(device_path, it->second)) {
           applied_count++;
-        } else {
-          all_success = false;
         }
       }
     }
@@ -666,7 +663,7 @@ bool MonitorManager::RestoreLastTemperatures() {
     ZeroMemory(&displayDevice, sizeof(displayDevice));
     displayDevice.cb = sizeof(displayDevice);
   }
-  return (applied_count > 0 && all_success);
+  return applied_count > 0;
 }
 
 namespace {
@@ -699,15 +696,6 @@ struct ScopedHandle {
   operator HANDLE() const { return handle; }
   HANDLE get() const { return handle; }
 };
-
-std::string WideToUtf8(const std::wstring& wstr) {
-  if (wstr.empty()) return "";
-  int size_needed = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), static_cast<int>(wstr.size()), NULL, 0, NULL, NULL);
-  if (size_needed <= 0) return "";
-  std::string strTo(size_needed, 0);
-  WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), static_cast<int>(wstr.size()), &strTo[0], size_needed, NULL, NULL);
-  return strTo;
-}
 
 std::string GetProcessExeName(DWORD pid) {
   if (pid == 0) return "";
@@ -1323,11 +1311,9 @@ std::string MonitorManager::GetParentProcessName(DWORD processId) {
       if (Process32FirstW(hSnapshot, &pe32)) {
         do {
           if (pe32.th32ProcessID == ppid) {
-            std::wstring wsParent(pe32.szExeFile);
-            std::string parentName = "";
-            for (wchar_t wc : wsParent) {
-              parentName += static_cast<char>(
-                  std::tolower(static_cast<unsigned char>(wc)));
+            std::string parentName = WideToUtf8(pe32.szExeFile);
+            for (char& c : parentName) {
+              c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
             }
             CloseHandle(hSnapshot);
             return parentName;

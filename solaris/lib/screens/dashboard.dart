@@ -398,24 +398,31 @@ class _Sidebar extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.appTitle,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.displayLarge?.copyWith(fontSize: 20),
-                  ),
-                  Text(
-                    l10n.celestialControl,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 10,
-                      letterSpacing: 1.5,
-                      fontWeight: FontWeight.bold,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      l10n.appTitle,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.displayLarge?.copyWith(fontSize: 20),
                     ),
-                  ),
-                ],
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        l10n.celestialControl,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontSize: 9.5,
+                          letterSpacing: 0.8,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -553,7 +560,6 @@ class _Header extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final timeAsync = ref.watch<AsyncValue<DateTime>>(currentTimeProvider);
-    final now = timeAsync.value ?? DateTime.now();
     final solarAsync = ref.watch(solarStateStreamProvider);
     final timeService = ref.watch(timeServiceProvider);
     final monitorListNotifier = ref.read(monitorListProvider.notifier);
@@ -631,11 +637,16 @@ class _Header extends ConsumerWidget {
 
           final globalSettings = settingsMap['all'] ?? SettingsState();
 
-          if (!(isGaming &&
-              globalSettings.isGameModeEnabled &&
-              globalSettings.isGameModeTemperatureEnabled)) {
+          for (final m in monitors) {
+            final mSettings = settingsMap[m.deviceName] ?? globalSettings;
+            if (isGaming &&
+                mSettings.isGameModeEnabled &&
+                mSettings.isGameModeTemperatureEnabled) {
+              continue;
+            }
+
             temperatureService.setTemperatureInstant(
-              selection: 'all',
+              selection: m.deviceName,
               targetValue: targetTemp.toDouble(),
               monitors: monitors,
               monitorService: monitorService,
@@ -692,11 +703,16 @@ class _Header extends ConsumerWidget {
 
           final globalSettings = settingsMap['all'] ?? SettingsState();
 
-          if (!(isGaming &&
-              globalSettings.isGameModeEnabled &&
-              globalSettings.isGameModeTemperatureEnabled)) {
+          for (final m in monitorValue) {
+            final mSettings = settingsMap[m.deviceName] ?? globalSettings;
+            if (isGaming &&
+                mSettings.isGameModeEnabled &&
+                mSettings.isGameModeTemperatureEnabled) {
+              continue;
+            }
+
             temperatureService.setTemperatureInstant(
-              selection: 'all',
+              selection: m.deviceName,
               targetValue: targetTemp.toDouble(),
               monitors: monitorValue,
               monitorService: monitorService,
@@ -754,7 +770,7 @@ class _Header extends ConsumerWidget {
       String getEventName(SolarEventType type) {
         switch (type) {
           case SolarEventType.civilTwilightBegin:
-            return l10n.civilTwilight;
+            return l10n.phaseDawn;
           case SolarEventType.sunrise:
             return l10n.sunriseLabel;
           case SolarEventType.goldenHourMorning:
@@ -774,16 +790,13 @@ class _Header extends ConsumerWidget {
           case SolarEventType.sunset:
             return l10n.sunsetLabel;
           case SolarEventType.civilTwilightEnd:
-            return l10n.civilTwilight;
+            return l10n.phaseTwilight;
         }
       }
 
       if (state.currentPhase == CurrentDayPhase.goldenHour) {
         nextEventStatus = l10n.goldenHourActive;
         nextEventTime = l10n.remaining(timeStr);
-      } else if (now.isAfter(state.phases.civilTwilightEnd)) {
-        nextEventStatus = l10n.night;
-        nextEventTime = l10n.finished;
       } else {
         nextEventStatus = getEventName(state.nextEventType);
         nextEventTime = l10n.comingIn(timeStr);
@@ -1211,20 +1224,6 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                 final timeStr = timeService.formatCountdown(
                                   state.timeUntilNextEvent,
                                 );
-
-                                if (now.isAfter(
-                                  state.phases.civilTwilightEnd,
-                                )) {
-                                  return l10n.finished;
-                                }
-
-                                // If we are in the middle of a phase, show "Time remaining"
-                                // If we are before the sun cycle starts, show "Coming in"
-                                if (now.isBefore(
-                                  state.phases.civilTwilightBegin,
-                                )) {
-                                  return l10n.remainingLower(timeStr);
-                                }
 
                                 return l10n.remainingLower(timeStr);
                               },

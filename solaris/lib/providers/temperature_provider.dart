@@ -233,22 +233,34 @@ class TemperatureSettingsNotifier
     final current = currentSettings(firstId);
     _updateSettings(ids, current.copyWith(isEnabled: value));
 
+    final monitors = ref.read(monitorListProvider).value ?? [];
+    if (monitors.isEmpty) return;
+    final tempService = ref.read(temperatureServiceProvider);
+    final monitorService = ref.read(monitorServiceProvider);
+    final monitorListNotifier = ref.read(monitorListProvider.notifier);
+    final isGaming = ref.read(gamingModeProvider);
+    final settingsMap = ref.read(settingsProvider).value ?? {};
+    final globalSettings = settingsMap['all'] ?? SettingsState();
+
+    final targetMonitors = ids.contains('all')
+        ? monitors
+        : monitors
+              .where((m) => ids.contains(m.deviceName) || ids.contains(m.id))
+              .toList();
+
     // When auto temperature is disabled, instantly restore manual temperature to hardware & state
     if (!value) {
-      final monitors = ref.read(monitorListProvider).value ?? [];
-      final tempService = ref.read(temperatureServiceProvider);
-      final monitorService = ref.read(monitorServiceProvider);
-      final monitorListNotifier = ref.read(monitorListProvider.notifier);
       final currentMap = state.value ?? {'all': TemperatureState()};
       final fallbackManualTemp = ref.read(manualTemperatureProvider);
 
-      final targetMonitors = ids.contains('all')
-          ? monitors
-          : monitors
-                .where((m) => ids.contains(m.deviceName) || ids.contains(m.id))
-                .toList();
-
       for (final m in targetMonitors) {
+        final mSettings = settingsMap[m.deviceName] ?? globalSettings;
+        if (isGaming &&
+            mSettings.isGameModeEnabled &&
+            mSettings.isGameModeTemperatureEnabled) {
+          continue;
+        }
+
         final mState =
             currentMap[m.deviceName] ??
             currentMap[m.id] ??
@@ -270,6 +282,60 @@ class TemperatureSettingsNotifier
             },
           ),
         );
+      }
+    } else {
+      // When auto temperature is enabled, instantly calculate circadian temperature and apply smoothly
+      final solarState = ref.read(solarStateStreamProvider).value;
+      if (solarState != null) {
+        final circadianService = ref.read(circadianServiceProvider);
+        final weather = ref.read(currentWeatherProvider).value;
+        final now = DateTime.now();
+        final currentMap = state.value ?? {'all': TemperatureState()};
+
+        for (final m in targetMonitors) {
+          final mSettings = settingsMap[m.deviceName] ?? globalSettings;
+          if (isGaming &&
+              mSettings.isGameModeEnabled &&
+              mSettings.isGameModeTemperatureEnabled) {
+            continue;
+          }
+
+          final mTempSettings =
+              currentMap[m.deviceName] ??
+              currentMap[m.id] ??
+              currentMap['all'] ??
+              current;
+          final smartTempData = mTempSettings.isSmartCircadianEnabled
+              ? ref.read(smartCircadianTemperatureDataProvider(m.deviceName))
+              : const SmartCircadianData.neutral();
+
+          final result = circadianService.calculateTargetTemperature(
+            solarState.phases,
+            solarState.sunElevation,
+            now,
+            curvePoints: mTempSettings.curvePoints,
+            weather: mSettings.isWeatherTemperatureAdjustmentEnabled
+                ? weather
+                : null,
+            weatherIntensity: mSettings.weatherAdjustmentIntensity,
+            smartData: smartTempData,
+          );
+
+          final effectiveTemp = result.finalTemperature
+              .clamp(TemperatureConstants.min, TemperatureConstants.max)
+              .toDouble();
+
+          tempService.applyTemperatureSmoothly(
+            selection: m.deviceName,
+            targetValue: effectiveTemp,
+            monitors: monitors,
+            monitorService: monitorService,
+            isUIVisible: true,
+            updateTemperatureCallback: (id, val) {
+              monitorListNotifier.updateTemperature(id, val);
+            },
+          );
+        }
       }
     }
   }
@@ -736,10 +802,6 @@ class CurrentTemperatureNotifier extends Notifier<int> {
     if (!ref.read(isColorTemperatureEnabledProvider)) {
       ref.read(isColorTemperatureEnabledProvider.notifier).set(true);
     }
-    if (monitorId == null || monitorId == 'all') {
-      ref.read(manualTemperatureProvider.notifier).setTemperature(val);
-      _saveTemperature(val);
-    }
     ref
         .read(temperatureSettingsProvider.notifier)
         .setManualTemperature(
@@ -747,6 +809,56 @@ class CurrentTemperatureNotifier extends Notifier<int> {
           monitorId: monitorId,
           debounceSave: debounceSave,
         );
+    if (monitorId == null || monitorId == 'all') {
+      ref.read(manualTemperatureProvider.notifier).update(val);
+      _saveTemperature(val);
+    }
+    state = val;
+
+    final monitors = ref.read(monitorListProvider).value ?? [];
+    if (monitors.isNotEmpty) {
+      final tempService = ref.read(temperatureServiceProvider);
+      final monitorService = ref.read(monitorServiceProvider);
+      final monitorListNotifier = ref.read(monitorListProvider.notifier);
+      final isGaming = ref.read(gamingModeProvider);
+      final settingsMap = ref.read(settingsProvider).value ?? {};
+      final globalSettings = settingsMap['all'] ?? SettingsState();
+
+      final selection = monitorId != null
+          ? {monitorId}
+          : ref.read(selectedMonitorsProvider);
+
+      final targetMonitors = selection.contains('all')
+          ? monitors
+          : monitors
+                .where(
+                  (m) =>
+                      selection.contains(m.deviceName) ||
+                      selection.contains(m.id),
+                )
+                .toList();
+
+      for (final m in targetMonitors) {
+        final mSettings = settingsMap[m.deviceName] ?? globalSettings;
+        if (isGaming &&
+            mSettings.isGameModeEnabled &&
+            mSettings.isGameModeTemperatureEnabled) {
+          continue;
+        }
+
+        unawaited(
+          tempService.setTemperatureInstant(
+            selection: m.deviceName,
+            targetValue: val.toDouble(),
+            monitors: monitors,
+            monitorService: monitorService,
+            updateTemperatureCallback: (id, v) {
+              monitorListNotifier.updateTemperature(id, v);
+            },
+          ),
+        );
+      }
+    }
   }
 
   void _saveTemperature(int val) {

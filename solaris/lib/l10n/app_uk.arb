@@ -3,7 +3,7 @@
   "@appTitle": {
     "description": "The title of the application"
   },
-  "celestialControl": "НЕБЕСНИЙ КОНТРОЛЬ",
+  "celestialControl": "СОНЯЧНА СИНХРОНІЗАЦІЯ",
   "dashboard": "Панель керування",
   "schedule": "Графік",
   "settings": "Налаштування",
