@@ -17,6 +17,8 @@ import 'package:intl/intl.dart';
 
 import 'package:solaris/widgets/deep_link_target.dart';
 import 'package:solaris/widgets/add_sleep_session_dialog.dart';
+import 'package:solaris/widgets/sleep_info_icon_button.dart';
+export 'package:solaris/widgets/sleep_info_icon_button.dart';
 
 class SleepScreen extends ConsumerStatefulWidget {
   const SleepScreen({super.key});
@@ -334,99 +336,81 @@ class _SleepScreenState extends ConsumerState<SleepScreen> {
   }
 }
 
-class _SleepInfoIconButton extends StatelessWidget {
-  final String tooltipMessage;
-  final VoidCallback onPressed;
-
-  const _SleepInfoIconButton({
-    required this.tooltipMessage,
-    required this.onPressed,
-  });
-
-  InlineSpan _buildRichMessage(String text) {
-    final regex = RegExp(r'(«\+[^»]+»|"\+[^"]+")');
-    final matches = regex.allMatches(text);
-    if (matches.isEmpty) {
-      return TextSpan(text: text);
-    }
-
-    final spans = <InlineSpan>[];
-    int lastEnd = 0;
-    for (final match in matches) {
-      if (match.start > lastEnd) {
-        spans.add(TextSpan(text: text.substring(lastEnd, match.start)));
-      }
-      spans.add(
-        TextSpan(
-          text: match.group(0),
-          style: const TextStyle(
-            color: Color(0xFFC4B5FD),
-            fontWeight: FontWeight.w600,
+/// Displays a unified information modal dialog with glass styling and defensive scrolling.
+void showSleepInfoDialog(
+  BuildContext context, {
+  required String title,
+  required String message,
+}) {
+  showDialog<void>(
+    context: context,
+    builder: (dialogContext) {
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 440, maxHeight: 520),
+          child: GlassCard(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        LucideIcons.x,
+                        color: Colors.white60,
+                        size: 20,
+                      ),
+                      tooltip: MaterialLocalizations.of(
+                        dialogContext,
+                      ).closeButtonTooltip,
+                      onPressed: () => Navigator.pop(dialogContext),
+                      padding: const EdgeInsets.all(4),
+                      constraints: const BoxConstraints(
+                        minWidth: 28,
+                        minHeight: 28,
+                      ),
+                      splashRadius: 20,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Text(
+                      message,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.white.withValues(alpha: 0.85),
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );
-      lastEnd = match.end;
-    }
-    if (lastEnd < text.length) {
-      spans.add(TextSpan(text: text.substring(lastEnd)));
-    }
-
-    return TextSpan(children: spans);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      opaque: true,
-      child: Material(
-        color: Colors.transparent,
-        child: Tooltip(
-          richMessage: _buildRichMessage(tooltipMessage),
-          waitDuration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          constraints: const BoxConstraints(maxWidth: 350),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.96),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.15),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.5),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          textStyle: const TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-            height: 1.45,
-            fontFamily: 'Outfit',
-          ),
-          child: IconButton(
-            mouseCursor: SystemMouseCursors.click,
-            icon: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: Icon(
-                LucideIcons.info,
-                size: 16,
-                color: Colors.white.withValues(alpha: 0.35),
-              ),
-            ),
-            onPressed: onPressed,
-            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-            padding: const EdgeInsets.all(4),
-            splashRadius: 18,
-          ),
-        ),
-      ),
-    );
-  }
+    },
+  );
 }
+
+typedef _SleepInfoIconButton = SleepInfoIconButton;
 
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({
@@ -1116,6 +1100,14 @@ class _RegulationToggle extends ConsumerStatefulWidget {
 class _RegulationToggleState extends ConsumerState<_RegulationToggle> {
   bool _isExpanded = false;
 
+  void _showRegulationInfoDialog(
+    BuildContext context,
+    String title,
+    String info,
+  ) {
+    showSleepInfoDialog(context, title: title, message: info);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -1205,25 +1197,21 @@ class _RegulationToggleState extends ConsumerState<_RegulationToggle> {
                           splashRadius: 16,
                           tooltip: l10n.settings,
                         ),
-                        const SizedBox(width: 8),
-                        Tooltip(
-                          message: widget.info,
-                          padding: const EdgeInsets.all(12),
-                          margin: const EdgeInsets.symmetric(horizontal: 24),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1E1B4B),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.white10),
+                        const SizedBox(width: 6),
+                        _SleepInfoIconButton(
+                          tooltipMessage: widget.info,
+                          iconSize: 14,
+                          constraints: const BoxConstraints(
+                            minWidth: 24,
+                            minHeight: 24,
                           ),
-                          textStyle: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
+                          padding: const EdgeInsets.all(2),
+                          splashRadius: 16,
                           preferBelow: false,
-                          child: Icon(
-                            LucideIcons.info,
-                            size: 14,
-                            color: Colors.white.withValues(alpha: 0.3),
+                          onPressed: () => _showRegulationInfoDialog(
+                            context,
+                            widget.title,
+                            widget.info,
                           ),
                         ),
                       ],
@@ -1975,15 +1963,19 @@ class _LocalIpcServerCardState extends ConsumerState<_LocalIpcServerCard> {
                                   ),
                                 ),
                                 const SizedBox(width: 6),
-                                Tooltip(
-                                  message: l10n.serverPortSharedTooltip,
-                                  waitDuration: const Duration(
-                                    milliseconds: 200,
+                                _SleepInfoIconButton(
+                                  tooltipMessage: l10n.serverPortSharedTooltip,
+                                  iconSize: 14,
+                                  constraints: const BoxConstraints(
+                                    minWidth: 24,
+                                    minHeight: 24,
                                   ),
-                                  child: Icon(
-                                    LucideIcons.info,
-                                    size: 16,
-                                    color: Colors.white.withValues(alpha: 0.3),
+                                  padding: const EdgeInsets.all(2),
+                                  splashRadius: 14,
+                                  onPressed: () => showSleepInfoDialog(
+                                    context,
+                                    title: l10n.serverPort,
+                                    message: l10n.serverPortSharedTooltip,
                                   ),
                                 ),
                               ],
