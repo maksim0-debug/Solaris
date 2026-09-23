@@ -790,14 +790,15 @@ class _UpdateReactiveDialogState extends ConsumerState<_UpdateReactiveDialog>
           return _StyledDialog(
             icon: LucideIcons.info,
             iconColor: Colors.orangeAccent,
-            title: 'Solaris v$currentVersion',
+            title: l10n?.appTitle ?? 'Solaris',
             subtitle: currentVerText,
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  l10n?.appVersion(currentVersion) ?? 'Solaris is up to date.',
+                  l10n?.updateIdlePrompt ??
+                      'You can check for new versions or download releases on GitHub.',
                   style: const TextStyle(color: Colors.white70, fontSize: 13),
                 ),
               ],

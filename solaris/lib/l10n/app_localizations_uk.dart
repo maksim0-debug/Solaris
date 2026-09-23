@@ -296,7 +296,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String appVersion(String version) {
-    return 'Версія Solaris $version';
+    return 'Solaris v$version';
   }
 
   @override
@@ -1678,6 +1678,10 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get updateNoUpdatesFound =>
       'Оновлень не знайдено, у вас актуальна версія.';
+
+  @override
+  String get updateIdlePrompt =>
+      'Ви можете перевірити наявність нових версій або завантажити релізи на GitHub.';
 
   @override
   String get updateInstallingTitle => 'Оновлення...';

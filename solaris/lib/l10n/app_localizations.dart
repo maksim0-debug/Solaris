@@ -595,7 +595,7 @@ abstract class AppLocalizations {
   /// No description provided for @appVersion.
   ///
   /// In en, this message translates to:
-  /// **'Solaris Version {version}'**
+  /// **'Solaris v{version}'**
   String appVersion(String version);
 
   /// No description provided for @allMonitors.
@@ -2981,6 +2981,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No updates found. You are running the latest version.'**
   String get updateNoUpdatesFound;
+
+  /// No description provided for @updateIdlePrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'You can check for new versions or download releases on GitHub.'**
+  String get updateIdlePrompt;
 
   /// No description provided for @updateInstallingTitle.
   ///

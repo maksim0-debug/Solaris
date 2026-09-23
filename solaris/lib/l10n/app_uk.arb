@@ -149,7 +149,7 @@
   "high": "Висока",
   "sunriseLabel": "Схід сонця",
   "sunsetLabel": "Захід сонця",
-  "appVersion": "Версія Solaris {version}",
+  "appVersion": "Solaris v{version}",
   "@appVersion": {
     "placeholders": {
       "version": {
@@ -756,6 +756,7 @@
   "dialogOk": "ОК",
   "updateNoUpdatesTitle": "Оновлень не знайдено",
   "updateNoUpdatesFound": "Оновлень не знайдено, у вас актуальна версія.",
+  "updateIdlePrompt": "Ви можете перевірити наявність нових версій або завантажити релізи на GitHub.",
   "updateInstallingTitle": "Оновлення...",
   "updateInstallingStatus": "Встановлення оновлення...",
   "updateDownloadingPackage": "Завантаження пакета оновлення...",

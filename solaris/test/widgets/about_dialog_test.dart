@@ -30,7 +30,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Solaris'), findsWidgets);
-      expect(find.text('Solaris Version 1.3.2'), findsOneWidget);
+      expect(find.text('Solaris v1.3.2'), findsOneWidget);
       expect(find.text('DISCLAIMER'), findsOneWidget);
       expect(find.text('Privacy Policy'), findsOneWidget);
       expect(find.text('View Licenses'), findsOneWidget);
@@ -45,7 +45,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Solaris'), findsWidgets);
-      expect(find.text('Версія Solaris 1.3.2'), findsOneWidget);
+      expect(find.text('Solaris v1.3.2'), findsOneWidget);
       expect(find.text('ВІДМОВА ВІД ВІДПОВІДАЛЬНОСТІ'), findsOneWidget);
       expect(find.text('Політика конфіденційності'), findsOneWidget);
       expect(find.text('Переглянути ліцензії'), findsOneWidget);
@@ -60,7 +60,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Solaris'), findsWidgets);
-      expect(find.text('Версия Solaris 1.3.2'), findsOneWidget);
+      expect(find.text('Solaris v1.3.2'), findsOneWidget);
       expect(find.text('ОТКАЗ ОТ ОТВЕТСТВЕННОСТИ'), findsOneWidget);
       expect(find.text('Политика конфиденциальности'), findsOneWidget);
       expect(find.text('Лицензии'), findsOneWidget);

@@ -149,7 +149,7 @@
   "high": "Высокая",
   "sunriseLabel": "Восход",
   "sunsetLabel": "Закат",
-  "appVersion": "Версия Solaris {version}",
+  "appVersion": "Solaris v{version}",
   "@appVersion": {
     "placeholders": {
       "version": {
@@ -756,6 +756,7 @@
   "customBuildWarningBody": "При обновлении с неофициальной версии на официальную вы можете потерять сохраненные API-ключи (Mapbox, WeatherAPI, Google Fit), а также созданные ключи Solaris Control API. Обязательно скопируйте и сохраните их перед обновлением.",
   "updateNoUpdatesTitle": "Обновлений не найдено",
   "updateNoUpdatesFound": "Обновлений не найдено, у вас актуальная версия.",
+  "updateIdlePrompt": "Вы можете проверить наличие новых версий или загрузить релизы на GitHub.",
   "updateInstallingTitle": "Обновление...",
   "updateInstallingStatus": "Установка обновления...",
   "updateDownloadingPackage": "Загрузка пакета обновления...",

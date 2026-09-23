@@ -1190,51 +1190,56 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    status.title.toUpperCase(),
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: status.color,
-                                      letterSpacing: -0.5,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      status.title.toUpperCase(),
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: status.color,
+                                        letterSpacing: -0.5,
+                                      ),
                                     ),
-                                  ),
-                                  Text(
-                                    status.subtitle,
-                                    style: const TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.white24,
-                                      letterSpacing: 1.2,
+                                    Text(
+                                      status.subtitle,
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.white24,
+                                        letterSpacing: 1.2,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      solarAsync.maybeWhen(
+                                        data: (state) {
+                                          final timeStr = timeService
+                                              .formatCountdown(
+                                                state.timeUntilNextEvent,
+                                              );
+
+                                          return l10n.remainingLower(timeStr);
+                                        },
+                                        orElse: () => l10n.calculatingLower,
+                                      ),
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
+                              const SizedBox(width: 8),
                               Icon(status.icon, size: 24, color: status.color),
                             ],
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            solarAsync.maybeWhen(
-                              data: (state) {
-                                final timeStr = timeService.formatCountdown(
-                                  state.timeUntilNextEvent,
-                                );
-
-                                return l10n.remainingLower(timeStr);
-                              },
-                              orElse: () => l10n.calculatingLower,
-                            ),
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 12),
                           Text(
                             status.description,
                             style: const TextStyle(

@@ -149,7 +149,7 @@
   "high": "High",
   "sunriseLabel": "Sunrise",
   "sunsetLabel": "Sunset",
-  "appVersion": "Solaris Version {version}",
+  "appVersion": "Solaris v{version}",
   "@appVersion": {
     "placeholders": {
       "version": {
@@ -772,6 +772,7 @@
   "dialogOk": "OK",
   "updateNoUpdatesTitle": "No updates found",
   "updateNoUpdatesFound": "No updates found. You are running the latest version.",
+  "updateIdlePrompt": "You can check for new versions or download releases on GitHub.",
   "updateInstallingTitle": "Updating...",
   "updateInstallingStatus": "Installing update...",
   "updateDownloadingPackage": "Downloading update package...",
