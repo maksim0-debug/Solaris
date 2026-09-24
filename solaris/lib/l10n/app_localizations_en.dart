@@ -2523,4 +2523,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dailyScheduleTitle => 'Daily Schedule';
+
+  @override
+  String get openLogsFolder => 'Open Logs Folder';
+
+  @override
+  String get openLogFile => 'Open Log File';
+
+  @override
+  String get viewLogs => 'Logs & Diagnostics';
+
+  @override
+  String get crashDialogTitle => 'Unexpected Error';
+
+  @override
+  String get crashDialogSubtitle =>
+      'Solaris encountered an unhandled error. A detailed crash report has been saved to the logs folder.';
+
+  @override
+  String get copyCrashDetails => 'Copy Error';
+
+  @override
+  String get crashCopiedToast => 'Error details copied to clipboard';
+
+  @override
+  String get showTracebackDetails => 'Show Traceback Details';
+
+  @override
+  String get hideTraceback => 'Hide Traceback';
+
+  @override
+  String get copied => 'Copied';
 }

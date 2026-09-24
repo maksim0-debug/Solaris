@@ -1010,7 +1010,17 @@
   "makePermanentScheduleAction": "Зробити постійним графіком",
   "removePermanentScheduleAction": "Вимкнути постійний графік",
   "permanentScheduleBadge": "Постійний розклад",
-  "dailyScheduleTitle": "Щоденний розклад"
+  "dailyScheduleTitle": "Щоденний розклад",
+  "openLogsFolder": "Відкрити папку з логами",
+  "openLogFile": "Відкрити файл логів",
+  "viewLogs": "Логи та діагностика",
+  "crashDialogTitle": "Непередбачена помилка",
+  "crashDialogSubtitle": "У Solaris сталася непередбачена помилка. Детальний звіт про збій збережено у папку з логами.",
+  "copyCrashDetails": "Скопіювати помилку",
+  "crashCopiedToast": "Деталі помилки скопійовано у буфер обміну",
+  "showTracebackDetails": "Показати деталі стек-трейсу",
+  "hideTraceback": "Сховати стек-трейс",
+  "copied": "Скопійовано"
 }
 
 

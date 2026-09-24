@@ -1012,7 +1012,17 @@
   "makePermanentScheduleAction": "Сделать постоянным графиком",
   "removePermanentScheduleAction": "Отключить постоянный график",
   "permanentScheduleBadge": "Постоянный график",
-  "dailyScheduleTitle": "Ежедневный график"
+  "dailyScheduleTitle": "Ежедневный график",
+  "openLogsFolder": "Открыть папку с логами",
+  "openLogFile": "Открыть файл логов",
+  "viewLogs": "Логи и диагностика",
+  "crashDialogTitle": "Непредвиденная ошибка",
+  "crashDialogSubtitle": "В Solaris произошла непредвиденная ошибка. Подробный отчет о сбое сохранен в папку с логами.",
+  "copyCrashDetails": "Скопировать ошибку",
+  "crashCopiedToast": "Детали ошибки скопированы в буфер обмена",
+  "showTracebackDetails": "Показать детали стек-трейса",
+  "hideTraceback": "Скрыть стек-трейс",
+  "copied": "Скопировано"
 }
 
 

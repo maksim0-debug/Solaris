@@ -2545,4 +2545,35 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get dailyScheduleTitle => 'Ежедневный график';
+
+  @override
+  String get openLogsFolder => 'Открыть папку с логами';
+
+  @override
+  String get openLogFile => 'Открыть файл логов';
+
+  @override
+  String get viewLogs => 'Логи и диагностика';
+
+  @override
+  String get crashDialogTitle => 'Непредвиденная ошибка';
+
+  @override
+  String get crashDialogSubtitle =>
+      'В Solaris произошла непредвиденная ошибка. Подробный отчет о сбое сохранен в папку с логами.';
+
+  @override
+  String get copyCrashDetails => 'Скопировать ошибку';
+
+  @override
+  String get crashCopiedToast => 'Детали ошибки скопированы в буфер обмена';
+
+  @override
+  String get showTracebackDetails => 'Показать детали стек-трейса';
+
+  @override
+  String get hideTraceback => 'Скрыть стек-трейс';
+
+  @override
+  String get copied => 'Скопировано';
 }

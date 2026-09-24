@@ -1128,6 +1128,16 @@
   "makePermanentScheduleAction": "Set as Permanent Schedule",
   "removePermanentScheduleAction": "Disable Permanent Schedule",
   "permanentScheduleBadge": "Permanent Schedule",
-  "dailyScheduleTitle": "Daily Schedule"
+  "dailyScheduleTitle": "Daily Schedule",
+  "openLogsFolder": "Open Logs Folder",
+  "openLogFile": "Open Log File",
+  "viewLogs": "Logs & Diagnostics",
+  "crashDialogTitle": "Unexpected Error",
+  "crashDialogSubtitle": "Solaris encountered an unhandled error. A detailed crash report has been saved to the logs folder.",
+  "copyCrashDetails": "Copy Error",
+  "crashCopiedToast": "Error details copied to clipboard",
+  "showTracebackDetails": "Show Traceback Details",
+  "hideTraceback": "Hide Traceback",
+  "copied": "Copied"
 }
 

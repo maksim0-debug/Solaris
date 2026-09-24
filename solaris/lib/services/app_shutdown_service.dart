@@ -40,7 +40,10 @@ class AppShutdownService {
 
     debugPrint('AppShutdownService: Shutdown sequence complete.');
 
-    // Step 6: Terminate process if requested
+    // Step 6: Flush and close diagnostic log streams
+    await LogService.instance.dispose();
+
+    // Step 7: Terminate process if requested
     if (exitProcess) {
       exit(0);
     }

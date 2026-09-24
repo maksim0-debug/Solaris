@@ -4355,6 +4355,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Daily Schedule'**
   String get dailyScheduleTitle;
+
+  /// No description provided for @openLogsFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Logs Folder'**
+  String get openLogsFolder;
+
+  /// No description provided for @openLogFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Log File'**
+  String get openLogFile;
+
+  /// No description provided for @viewLogs.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs & Diagnostics'**
+  String get viewLogs;
+
+  /// No description provided for @crashDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unexpected Error'**
+  String get crashDialogTitle;
+
+  /// No description provided for @crashDialogSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Solaris encountered an unhandled error. A detailed crash report has been saved to the logs folder.'**
+  String get crashDialogSubtitle;
+
+  /// No description provided for @copyCrashDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Error'**
+  String get copyCrashDetails;
+
+  /// No description provided for @crashCopiedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Error details copied to clipboard'**
+  String get crashCopiedToast;
+
+  /// No description provided for @showTracebackDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Traceback Details'**
+  String get showTracebackDetails;
+
+  /// No description provided for @hideTraceback.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide Traceback'**
+  String get hideTraceback;
+
+  /// No description provided for @copied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied'**
+  String get copied;
 }
 
 class _AppLocalizationsDelegate

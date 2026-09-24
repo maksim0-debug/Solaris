@@ -6,6 +6,7 @@ import 'package:solaris/widgets/glass_card.dart';
 import 'package:solaris/providers/app_info_provider.dart';
 import 'package:solaris/screens/privacy_policy_screen.dart';
 import 'package:solaris/widgets/responsive_dialog_actions.dart';
+import 'package:solaris/services/log_service.dart';
 
 class SolarisAboutDialog extends ConsumerStatefulWidget {
   const SolarisAboutDialog({super.key});
@@ -200,6 +201,21 @@ class _SolarisAboutDialogState extends ConsumerState<SolarisAboutDialog> {
                       ),
                       child: Text(
                         l10n.viewLicenses,
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => LogService.instance.openLogsFolder(),
+                      icon: const Icon(
+                        LucideIcons.folder,
+                        size: 14,
+                        color: Colors.white54,
+                      ),
+                      label: Text(
+                        l10n.viewLogs,
                         style: const TextStyle(
                           color: Colors.white54,
                           fontSize: 13,

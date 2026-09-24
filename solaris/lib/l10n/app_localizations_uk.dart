@@ -2539,4 +2539,35 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get dailyScheduleTitle => 'Щоденний розклад';
+
+  @override
+  String get openLogsFolder => 'Відкрити папку з логами';
+
+  @override
+  String get openLogFile => 'Відкрити файл логів';
+
+  @override
+  String get viewLogs => 'Логи та діагностика';
+
+  @override
+  String get crashDialogTitle => 'Непередбачена помилка';
+
+  @override
+  String get crashDialogSubtitle =>
+      'У Solaris сталася непередбачена помилка. Детальний звіт про збій збережено у папку з логами.';
+
+  @override
+  String get copyCrashDetails => 'Скопіювати помилку';
+
+  @override
+  String get crashCopiedToast => 'Деталі помилки скопійовано у буфер обміну';
+
+  @override
+  String get showTracebackDetails => 'Показати деталі стек-трейсу';
+
+  @override
+  String get hideTraceback => 'Сховати стек-трейс';
+
+  @override
+  String get copied => 'Скопійовано';
 }

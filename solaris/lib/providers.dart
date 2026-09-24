@@ -53,9 +53,12 @@ import 'package:solaris/services/windows_power_listener.dart';
 import 'package:solaris/models/app_override_rule.dart';
 import 'package:solaris/services/active_process_service.dart';
 import 'package:collection/collection.dart';
+import 'package:solaris/services/log_service.dart';
 export 'package:solaris/services/post_update_service.dart';
 export 'package:solaris/providers/app_info_provider.dart';
+export 'package:solaris/services/log_service.dart';
 
+final logServiceProvider = Provider((ref) => LogService.instance);
 final locationServiceProvider = Provider((ref) => LocationService());
 final sunCalculatorServiceProvider = Provider((ref) => SunCalculatorService());
 final timeServiceProvider = Provider((ref) => TimeService());

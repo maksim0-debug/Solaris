@@ -22,26 +22,36 @@ import 'package:solaris/services/hotkey_service.dart';
 import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/utils/memory_utils.dart';
 
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+
 void main(List<String> args) {
   final format = DateFormat('yyyy-MM-dd HH:mm:ss.SSS');
   final timestampRegex = RegExp(r'^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}');
 
-  // Global override for debugPrint
+  // Global override for debugPrint: formats timestamps and routes to console,
+  // while ZoneSpecification.print reliably captures all prints/debugPrints to LogService once.
   final originalDebugPrint = debugPrint;
   debugPrint = (String? message, {int? wrapWidth}) {
     if (message != null) {
       final timeStr = format.format(DateTime.now());
-      if (!timestampRegex.hasMatch(message)) {
-        originalDebugPrint('[$timeStr] $message', wrapWidth: wrapWidth);
-        return;
-      }
+      final formatted = !timestampRegex.hasMatch(message)
+          ? '[$timeStr] $message'
+          : message;
+      originalDebugPrint(formatted, wrapWidth: wrapWidth);
+      return;
     }
     originalDebugPrint(message, wrapWidth: wrapWidth);
   };
 
-  runZoned(
+  runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+
+      // Bootstrap diagnostic logger & attach global error traps
+      await LogService.instance.init();
+      LogService.instance.setupGlobalErrorHooks(
+        rootNavigatorKey: rootNavigatorKey,
+      );
 
       // Strict ImageCache limits to prevent map tiles from bloating RAM to 150+ MB
       PaintingBinding.instance.imageCache.maximumSizeBytes =
@@ -177,14 +187,22 @@ void main(List<String> args) {
         ),
       );
     },
+    (Object error, StackTrace stack) {
+      LogService.instance.handleCrash(
+        error,
+        stack,
+        context: 'runZonedGuarded',
+        rootNavigatorKey: rootNavigatorKey,
+      );
+    },
     zoneSpecification: ZoneSpecification(
       print: (Zone self, ZoneDelegate parent, Zone zone, String line) {
         final timeStr = format.format(DateTime.now());
-        if (!timestampRegex.hasMatch(line)) {
-          parent.print(zone, '[$timeStr] $line');
-        } else {
-          parent.print(zone, line);
-        }
+        final formattedLine = !timestampRegex.hasMatch(line)
+            ? '[$timeStr] $line'
+            : line;
+        parent.print(zone, formattedLine);
+        LogService.instance.log(formattedLine);
       },
     ),
   );
@@ -203,6 +221,7 @@ class SolarisApp extends ConsumerWidget {
     final locale = ref.watch(localeProvider);
 
     return MaterialApp(
+      navigatorKey: rootNavigatorKey,
       title: 'Solaris',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
@@ -296,7 +315,9 @@ class WindowEventHandler extends WindowListener {
 
   @override
   void onWindowEvent(String eventName) {
-    if (kDebugMode && eventName != 'resize') {
+    // Filter out continuous high-frequency stream events ('move', 'resize')
+    // while preserving discrete state events ('moved', 'resized', etc.)
+    if (kDebugMode && eventName != 'resize' && eventName != 'move') {
       debugPrint('🪟 [Window Debug] Raw Event: $eventName');
     }
   }
