@@ -1303,6 +1303,9 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                     smartData.windDownMinutesRemaining;
                                 final untilWakeUp =
                                     smartData.minutesUntilWakeUp;
+                                final impactStr = impactPercent > 0
+                                    ? '-$impactPercent'
+                                    : '$impactPercent';
 
                                 activeAdjustments.add(
                                   _SmartAdjustmentIndicator(
@@ -1310,19 +1313,19 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                     label: remaining != null
                                         ? l10n.circadianImpactWithTime(
                                             l10n.featureWindDownShort,
-                                            -impactPercent,
+                                            impactStr,
                                             remaining,
                                             l10n.minutesAbbreviation,
                                           )
                                         : (untilWakeUp != null)
                                         ? l10n.circadianImpactWithStatus(
                                             l10n.featureWindDownShort,
-                                            -impactPercent,
+                                            impactStr,
                                             l10n.remainingUntilWakeUp,
                                           )
                                         : l10n.circadianImpact(
                                             l10n.featureWindDownShort,
-                                            -impactPercent,
+                                            impactStr,
                                           ),
                                   ),
                                 );
@@ -1335,19 +1338,22 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                     .round();
                                 final remaining =
                                     smartData.timeShiftMinutesRemaining;
+                                final impactStr = impactPercent > 0
+                                    ? '+$impactPercent'
+                                    : '$impactPercent';
                                 activeAdjustments.add(
                                   _SmartAdjustmentIndicator(
                                     icon: LucideIcons.sunrise,
                                     label: remaining != null
                                         ? l10n.circadianImpactWithTime(
                                             l10n.featureTimeShiftShort,
-                                            impactPercent,
+                                            impactStr,
                                             remaining,
                                             l10n.minutesAbbreviation,
                                           )
                                         : l10n.circadianImpact(
                                             l10n.featureTimeShiftShort,
-                                            impactPercent,
+                                            impactStr,
                                           ),
                                   ),
                                 );
@@ -1358,12 +1364,15 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                 final impactPercent = smartData
                                     .sleepPressureAbsoluteImpact
                                     .round();
+                                final impactStr = impactPercent > 0
+                                    ? '-$impactPercent'
+                                    : '$impactPercent';
                                 activeAdjustments.add(
                                   _SmartAdjustmentIndicator(
                                     icon: LucideIcons.hourglass,
                                     label: l10n.circadianImpact(
                                       l10n.featureSleepPressureShort,
-                                      -impactPercent,
+                                      impactStr,
                                     ),
                                   ),
                                 );
@@ -1374,12 +1383,15 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                 final impactPercent = smartData
                                     .sleepDebtAbsoluteImpact
                                     .round();
+                                final impactStr = impactPercent > 0
+                                    ? '-$impactPercent'
+                                    : '$impactPercent';
                                 activeAdjustments.add(
                                   _SmartAdjustmentIndicator(
                                     icon: LucideIcons.battery,
                                     label: l10n.circadianImpact(
                                       l10n.featureSleepDebtShort,
-                                      -impactPercent,
+                                      impactStr,
                                     ),
                                   ),
                                 );

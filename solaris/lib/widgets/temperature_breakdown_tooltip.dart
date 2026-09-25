@@ -41,6 +41,11 @@ class TemperatureBreakdownTooltip extends StatelessWidget {
         ? smartData.sleepDebtTemperatureImpact
         : 0;
 
+    final int displayedFinalTemp =
+        (smartData.finalTemperature > 0 && isSmartCircadianEnabled)
+        ? smartData.finalTemperature
+        : currentTemperature;
+
     return Tooltip(
       richMessage: TextSpan(
         style: const TextStyle(
@@ -102,7 +107,7 @@ class TemperatureBreakdownTooltip extends StatelessWidget {
           _buildRow(
             icon: LucideIcons.checkCircle2,
             label: l10n.temperatureBreakdownFinal.toUpperCase(),
-            value: '$currentTemperature K',
+            value: '$displayedFinalTemp K',
             iconColor: const Color(0xFF34D399),
             isBold: true,
           ),

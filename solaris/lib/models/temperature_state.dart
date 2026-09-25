@@ -19,11 +19,11 @@ class TemperatureState {
     this.activePreset = TemperaturePresetType.cool,
     Map<TemperaturePresetType, List<FlSpot>>? curvesMap,
     this.isEnabled = false,
-    this.isSmartCircadianEnabled = false,
-    this.isSleepDebtEnabled = false,
-    this.isSleepPressureEnabled = false,
-    this.isTimeShiftEnabled = false,
-    this.isWindDownEnabled = false,
+    this.isSmartCircadianEnabled = true,
+    this.isSleepDebtEnabled = true,
+    this.isSleepPressureEnabled = true,
+    this.isTimeShiftEnabled = true,
+    this.isWindDownEnabled = true,
     this.userPresets = const [],
     this.activeUserPresetId,
     List<String>? presetOrder,
@@ -163,11 +163,11 @@ class TemperatureState {
           ? TemperaturePresetType.fromJson(json['activePreset'].toString())
           : TemperaturePresetType.cool,
       isEnabled: json['isEnabled'] == true,
-      isSmartCircadianEnabled: json['isSmartCircadianEnabled'] == true,
-      isSleepDebtEnabled: json['isSleepDebtEnabled'] as bool? ?? true,
-      isSleepPressureEnabled: json['isSleepPressureEnabled'] as bool? ?? true,
-      isTimeShiftEnabled: json['isTimeShiftEnabled'] as bool? ?? true,
-      isWindDownEnabled: json['isWindDownEnabled'] as bool? ?? true,
+      isSmartCircadianEnabled: json['isSmartCircadianEnabled'] != false,
+      isSleepDebtEnabled: json['isSleepDebtEnabled'] != false,
+      isSleepPressureEnabled: json['isSleepPressureEnabled'] != false,
+      isTimeShiftEnabled: json['isTimeShiftEnabled'] != false,
+      isWindDownEnabled: json['isWindDownEnabled'] != false,
       userPresets:
           (json['userPresets'] as List<dynamic>?)
               ?.map((p) => UserPreset.fromJson(p as Map<String, dynamic>))

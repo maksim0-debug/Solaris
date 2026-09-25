@@ -129,7 +129,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get remainingUntilWakeUp => 'Until wake-up';
 
   @override
-  String circadianImpactWithStatus(String feature, int impact, String status) {
+  String circadianImpactWithStatus(
+    String feature,
+    String impact,
+    String status,
+  ) {
     return '$feature $impact% brightness ($status)';
   }
 
@@ -704,7 +708,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shiftStrength => 'Shift Strength';
 
   @override
-  String circadianImpact(String feature, int impact) {
+  String circadianImpact(String feature, String impact) {
     return '$feature $impact% brightness';
   }
 
@@ -723,7 +727,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String circadianImpactWithTime(
     String feature,
-    int impact,
+    String impact,
     int time,
     String unit,
   ) {

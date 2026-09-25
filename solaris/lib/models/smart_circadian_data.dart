@@ -45,6 +45,7 @@ class SmartCircadianData extends Equatable {
   final int sleepPressureTemperatureImpact;
   final int windDownTemperatureImpact;
   final int sleepDebtTemperatureImpact;
+  final int finalTemperature;
 
   const SmartCircadianData({
     this.brightnessMultiplier = 1.0,
@@ -84,6 +85,7 @@ class SmartCircadianData extends Equatable {
     this.sleepPressureTemperatureImpact = 0,
     this.windDownTemperatureImpact = 0,
     this.sleepDebtTemperatureImpact = 0,
+    this.finalTemperature = 0,
   });
 
   const SmartCircadianData.neutral()
@@ -123,7 +125,8 @@ class SmartCircadianData extends Equatable {
       timeShiftTemperatureImpact = 0,
       sleepPressureTemperatureImpact = 0,
       windDownTemperatureImpact = 0,
-      sleepDebtTemperatureImpact = 0;
+      sleepDebtTemperatureImpact = 0,
+      finalTemperature = 0;
 
   @override
   List<Object?> get props => [
@@ -164,6 +167,7 @@ class SmartCircadianData extends Equatable {
     sleepPressureTemperatureImpact,
     windDownTemperatureImpact,
     sleepDebtTemperatureImpact,
+    finalTemperature,
   ];
 
   SmartCircadianData copyWith({
@@ -204,6 +208,7 @@ class SmartCircadianData extends Equatable {
     int? sleepPressureTemperatureImpact,
     int? windDownTemperatureImpact,
     int? sleepDebtTemperatureImpact,
+    int? finalTemperature,
   }) {
     return SmartCircadianData(
       brightnessMultiplier: brightnessMultiplier ?? this.brightnessMultiplier,
@@ -264,6 +269,7 @@ class SmartCircadianData extends Equatable {
           windDownTemperatureImpact ?? this.windDownTemperatureImpact,
       sleepDebtTemperatureImpact:
           sleepDebtTemperatureImpact ?? this.sleepDebtTemperatureImpact,
+      finalTemperature: finalTemperature ?? this.finalTemperature,
     );
   }
 }

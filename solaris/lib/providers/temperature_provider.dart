@@ -283,61 +283,10 @@ class TemperatureSettingsNotifier
           ),
         );
       }
-    } else {
-      // When auto temperature is enabled, instantly calculate circadian temperature and apply smoothly
-      final solarState = ref.read(solarStateStreamProvider).value;
-      if (solarState != null) {
-        final circadianService = ref.read(circadianServiceProvider);
-        final weather = ref.read(currentWeatherProvider).value;
-        final now = DateTime.now();
-        final currentMap = state.value ?? {'all': TemperatureState()};
-
-        for (final m in targetMonitors) {
-          final mSettings = settingsMap[m.deviceName] ?? globalSettings;
-          if (isGaming &&
-              mSettings.isGameModeEnabled &&
-              mSettings.isGameModeTemperatureEnabled) {
-            continue;
-          }
-
-          final mTempSettings =
-              currentMap[m.deviceName] ??
-              currentMap[m.id] ??
-              currentMap['all'] ??
-              current;
-          final smartTempData = mTempSettings.isSmartCircadianEnabled
-              ? ref.read(smartCircadianTemperatureDataProvider(m.deviceName))
-              : const SmartCircadianData.neutral();
-
-          final result = circadianService.calculateTargetTemperature(
-            solarState.phases,
-            solarState.sunElevation,
-            now,
-            curvePoints: mTempSettings.curvePoints,
-            weather: mSettings.isWeatherTemperatureAdjustmentEnabled
-                ? weather
-                : null,
-            weatherIntensity: mSettings.weatherAdjustmentIntensity,
-            smartData: smartTempData,
-          );
-
-          final effectiveTemp = result.finalTemperature
-              .clamp(TemperatureConstants.min, TemperatureConstants.max)
-              .toDouble();
-
-          tempService.applyTemperatureSmoothly(
-            selection: m.deviceName,
-            targetValue: effectiveTemp,
-            monitors: monitors,
-            monitorService: monitorService,
-            isUIVisible: true,
-            updateTemperatureCallback: (id, val) {
-              monitorListNotifier.updateTemperature(id, val);
-            },
-          );
-        }
-      }
     }
+    // When auto temperature is enabled (value == true), circadianAdjustmentProvider
+    // reactively detects temperatureSettingsProvider change and smoothly applies
+    // the circadian temperature without creating a circular dependency.
   }
 
   void setManualTemperature(
@@ -361,44 +310,82 @@ class TemperatureSettingsNotifier
     setEnabled(isEnabled, monitorId: monitorId);
   }
 
+  void _updateMonitorSettings(
+    Set<String> monitorIds,
+    TemperatureState Function(TemperatureState current) updater,
+  ) {
+    _saveDebounceTimer?.cancel();
+    _saveDebounceTimer = null;
+
+    final currentMap = state.value ?? {'all': TemperatureState()};
+    final newStateMap = Map<String, TemperatureState>.from(currentMap);
+
+    for (final id in monitorIds) {
+      if (id == 'all') {
+        newStateMap['all'] = updater(newStateMap['all'] ?? TemperatureState());
+        for (final key in newStateMap.keys.toList()) {
+          if (key != 'all') {
+            newStateMap[key] = updater(newStateMap[key]!);
+          }
+        }
+      } else {
+        final cur = newStateMap[id] ?? newStateMap['all'] ?? TemperatureState();
+        newStateMap[id] = updater(cur);
+      }
+    }
+
+    state = AsyncData(newStateMap);
+    _saveSettingsMap(newStateMap);
+  }
+
   void updateSmartCircadian(bool enabled, {String? monitorId}) {
     final ids = monitorId != null
         ? {monitorId}
         : ref.read(selectedMonitorsProvider);
-    final current = currentSettings(ids.firstOrNull);
-    _updateSettings(ids, current.copyWith(isSmartCircadianEnabled: enabled));
+    _updateMonitorSettings(
+      ids,
+      (cur) => cur.copyWith(isSmartCircadianEnabled: enabled),
+    );
   }
 
   void updateSleepDebt(bool enabled, {String? monitorId}) {
     final ids = monitorId != null
         ? {monitorId}
         : ref.read(selectedMonitorsProvider);
-    final current = currentSettings(ids.firstOrNull);
-    _updateSettings(ids, current.copyWith(isSleepDebtEnabled: enabled));
+    _updateMonitorSettings(
+      ids,
+      (cur) => cur.copyWith(isSleepDebtEnabled: enabled),
+    );
   }
 
   void updateSleepPressure(bool enabled, {String? monitorId}) {
     final ids = monitorId != null
         ? {monitorId}
         : ref.read(selectedMonitorsProvider);
-    final current = currentSettings(ids.firstOrNull);
-    _updateSettings(ids, current.copyWith(isSleepPressureEnabled: enabled));
+    _updateMonitorSettings(
+      ids,
+      (cur) => cur.copyWith(isSleepPressureEnabled: enabled),
+    );
   }
 
   void updateTimeShift(bool enabled, {String? monitorId}) {
     final ids = monitorId != null
         ? {monitorId}
         : ref.read(selectedMonitorsProvider);
-    final current = currentSettings(ids.firstOrNull);
-    _updateSettings(ids, current.copyWith(isTimeShiftEnabled: enabled));
+    _updateMonitorSettings(
+      ids,
+      (cur) => cur.copyWith(isTimeShiftEnabled: enabled),
+    );
   }
 
   void updateWindDown(bool enabled, {String? monitorId}) {
     final ids = monitorId != null
         ? {monitorId}
         : ref.read(selectedMonitorsProvider);
-    final current = currentSettings(ids.firstOrNull);
-    _updateSettings(ids, current.copyWith(isWindDownEnabled: enabled));
+    _updateMonitorSettings(
+      ids,
+      (cur) => cur.copyWith(isWindDownEnabled: enabled),
+    );
   }
 
   void setPreset(TemperaturePresetType type, {String? monitorId}) {
@@ -686,7 +673,8 @@ class CurrentTemperatureNotifier extends Notifier<int> {
 
           return solarStateAsync.maybeWhen(
             data: (state) {
-              final smartData = tempSettings.isSmartCircadianEnabled
+              final isSmart = monitorSettings.isSmartCircadianEnabled;
+              final smartData = isSmart
                   ? ref.watch(smartCircadianTemperatureDataProvider(id))
                   : const SmartCircadianData.neutral();
 
@@ -755,7 +743,8 @@ class CurrentTemperatureNotifier extends Notifier<int> {
                     ref.watch(manualTemperatureProvider);
               }
 
-              final smartData = tempSettings.isSmartCircadianEnabled
+              final isSmart = monitorSettings.isSmartCircadianEnabled;
+              final smartData = isSmart
                   ? ref.watch(smartCircadianTemperatureDataProvider(id))
                   : const SmartCircadianData.neutral();
 

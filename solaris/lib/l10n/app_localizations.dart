@@ -320,7 +320,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{feature} {impact}% brightness ({status})'**
-  String circadianImpactWithStatus(String feature, int impact, String status);
+  String circadianImpactWithStatus(
+    String feature,
+    String impact,
+    String status,
+  );
 
   /// No description provided for @activeLower.
   ///
@@ -1352,7 +1356,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{feature} {impact}% brightness'**
-  String circadianImpact(String feature, int impact);
+  String circadianImpact(String feature, String impact);
 
   /// No description provided for @featureWindDownShort.
   ///
@@ -1384,7 +1388,7 @@ abstract class AppLocalizations {
   /// **'{feature} {impact}% brightness ({time}{unit})'**
   String circadianImpactWithTime(
     String feature,
-    int impact,
+    String impact,
     int time,
     String unit,
   );

@@ -83,7 +83,7 @@
         "type": "String"
       },
       "impact": {
-        "type": "int"
+        "type": "String"
       },
       "status": {
         "type": "String"
@@ -303,7 +303,7 @@
         "type": "String"
       },
       "impact": {
-        "type": "int"
+        "type": "String"
       }
     }
   },
@@ -318,7 +318,7 @@
         "type": "String"
       },
       "impact": {
-        "type": "int"
+        "type": "String"
       },
       "time": {
         "type": "int"

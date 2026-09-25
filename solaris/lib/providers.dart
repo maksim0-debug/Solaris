@@ -360,6 +360,7 @@ final smartCircadianTemperatureDataProvider =
             weatherCode: weatherAsync.value?.weatherCode,
             activeSystemTemperaturePreset: activeSystemTempPreset,
             activeUserTemperaturePresetName: activeUserTempPresetName,
+            finalTemperature: tempResult.finalTemperature,
           );
         },
         orElse: () => const SmartCircadianData.neutral(),
@@ -3036,8 +3037,8 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                 },
               );
             } else if (tempSettings.isEnabled && isTempEnabled) {
-              final effectiveSmartTempData =
-                  tempSettings.isSmartCircadianEnabled
+              final isSmart = settings.isSmartCircadianEnabled;
+              final effectiveSmartTempData = isSmart
                   ? monitorSmartTempData
                   : const SmartCircadianData.neutral();
 

@@ -814,15 +814,9 @@ class _CircadianRegulationSection extends ConsumerWidget {
           padding: const EdgeInsets.all(24),
           child: AnimatedOpacity(
             duration: const Duration(milliseconds: 300),
-            opacity:
-                (settings.isSmartCircadianEnabled ||
-                    tempSettings.isSmartCircadianEnabled)
-                ? 1.0
-                : 0.4,
+            opacity: settings.isSmartCircadianEnabled ? 1.0 : 0.4,
             child: AbsorbPointer(
-              absorbing:
-                  !settings.isSmartCircadianEnabled &&
-                  !tempSettings.isSmartCircadianEnabled,
+              absorbing: !settings.isSmartCircadianEnabled,
               child: Column(
                 children: [
                   DeepLinkTarget(
