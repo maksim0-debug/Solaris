@@ -20,7 +20,7 @@ Solaris is a Windows desktop app that automatically adjusts monitor brightness a
 
 Built with Flutter. Talks to monitors over DDC/CI.
 
-<img width="1284" height="881" alt="Solaris dashboard — brightness curve, sun position, multi-monitor controls" src="https://github.com/user-attachments/assets/363bfcb9-094f-4d62-84fc-7389fcdc77b0" />
+<img width="1221" height="816" alt="Solaris dashboard — brightness curve, sun position, multi-monitor controls" src="https://github.com/user-attachments/assets/1596351e-de2c-4db6-b9fb-859c916d5d18" />
 
 ---
 
@@ -36,7 +36,7 @@ The app tracks the sun's elevation angle for your coordinates and adjusts bright
 
 Each connected display can have its own brightness offset. You can adjust a specific monitor individually or control all screens at once. Solaris communicates with monitors over DDC/CI for hardware-level brightness control.
 
-<img width="314" height="254" alt="Per-monitor brightness offsets" src="https://github.com/user-attachments/assets/53066949-0c59-4fc8-afa5-79805fd59ef8" />
+<img width="308" height="240" alt="Per-monitor brightness offsets" src="https://github.com/user-attachments/assets/67fdd963-d406-4130-88fe-6efde9899b74" />
 
 ### Extra-dark dimming (below 0%)
 
@@ -56,7 +56,7 @@ Automatically detects fullscreen games and locks brightness and color temperatur
 
 Override brightness and/or color temperature for specific applications. Ships with 25 built-in rules for creative software (Photoshop, DaVinci Resolve, Blender, Figma, etc.) that lock color temperature to 6500 K for accurate color work. You can add your own rules with custom curves, fixed values, or inherit global settings. Configurable exit delay so settings don't flicker when switching between apps.
 
-<img width="954" height="663" alt="Per-app profile overrides" src="https://github.com/user-attachments/assets/b35bdcdb-091c-4344-888d-25696edd6f9a" />
+<img width="904" height="655" alt="Per-app profile overrides" src="https://github.com/user-attachments/assets/09e20195-852a-49de-a2db-bd2ca6864915" />
 
 ### Weather influence
 
@@ -72,7 +72,7 @@ Bind keyboard shortcuts to common actions: brightness up/down, next/previous pre
 
 Coordinates can be set automatically via GPS, by searching for a city (Mapbox geocoding), or by clicking on an interactive map. Your choice is saved between sessions.
 
-![Location picker with interactive map](https://github.com/user-attachments/assets/a984424a-3b9e-45de-8c8d-a601f4b8b2d0)
+<img width="878" height="455" alt="Location picker with interactive map" src="https://github.com/user-attachments/assets/e943ec81-61af-4b67-b240-d85523a19ef3" />
 
 ### Auto-updates
 
