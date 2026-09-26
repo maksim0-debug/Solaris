@@ -99,6 +99,24 @@ jobs:
           Copy-Item "$buildDir/*.dll" -Destination $releaseDir/
           Copy-Item -Path "$buildDir/data" -Destination "$releaseDir/data" -Recurse
 
+          # Ensure VC++ Redistributable runtime DLLs are present for clean Windows environments
+          if (-not (Test-Path "$releaseDir/msvcp140.dll")) {
+              $vcRedistDir = $env:VCToolsRedistDir
+              if (-not $vcRedistDir) {
+                  $vsPath = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+                  if ($vsPath) {
+                      $vcRedistDir = Join-Path $vsPath "VC\Redist\MSVC"
+                  }
+              }
+              if ($vcRedistDir -and (Test-Path $vcRedistDir)) {
+                  $crtDir = Get-ChildItem -Path $vcRedistDir -Filter "*CRT" -Recurse | Where-Object { $_.FullName -like "*x64*" -and $_.FullName -notlike "*onecore*" -and $_.FullName -notlike "*debug*" } | Select-Object -First 1
+                  if ($crtDir) {
+                      Copy-Item "$($crtDir.FullName)/*.dll" -Destination $releaseDir/ -Force
+                      Write-Host "Bundled VC++ runtime DLLs from $($crtDir.FullName)"
+                  }
+              }
+          }
+
           # Copy native updater
           if (Test-Path "../updater/build/Release/solaris_updater.exe") {
               Copy-Item "../updater/build/Release/solaris_updater.exe" -Destination $releaseDir/
