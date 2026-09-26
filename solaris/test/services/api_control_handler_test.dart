@@ -196,6 +196,8 @@ void main() {
     test(
       'POST /api/v1/control with value < 0 returns 400 Extra Dark Dimming Disabled when setting is off',
       () async {
+        container.read(settingsProvider.notifier).updateSoftwareDimming(false);
+
         final req = await client.postUrl(
           Uri.parse('$serverUrl/api/v1/control'),
         );
@@ -227,6 +229,8 @@ void main() {
     test(
       'POST /api/v1/monitors/display-1/brightness with value < 0 returns 400 Extra Dark Dimming Disabled when setting is off',
       () async {
+        container.read(settingsProvider.notifier).updateSoftwareDimming(false);
+
         final req = await client.postUrl(
           Uri.parse('$serverUrl/api/v1/monitors/display-1/brightness'),
         );
