@@ -1508,7 +1508,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                             MainAxisAlignment.spaceBetween,
                                         children: [
                                           Text(
-                                            l10n.circadianRegulation
+                                            l10n.brightnessRegulationTitle
                                                 .toUpperCase(),
                                             style: const TextStyle(
                                               fontSize: 10,

@@ -429,6 +429,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Reduce color temperature in cloudy or rainy weather to ease eye strain';
 
   @override
+  String get brightnessRegulationTitle => 'Brightness Regulation';
+
+  @override
   String get temperatureRegulationTitle => 'Temperature Regulation';
 
   @override
@@ -563,8 +566,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sleep => 'Sleep';
 
   @override
-  String get circadianRegulationBetaNote =>
-      'This feature is currently in beta testing. Stable performance is not guaranteed.';
+  String get circadianRegulationSubtitle =>
+      'The app considers your sleep schedule to adjust brightness and temperature to your routine. All settings are customizable.';
 
   @override
   String get sleepSubtitle => 'Analyze your sleep regimes and sync data';
@@ -644,7 +647,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Dynamic correction based on Google Fit sleep data (wind-down, bio-morning, sleep debt)';
 
   @override
-  String get circadianRegulation => 'Brightness Regulation';
+  String get circadianRegulation => 'Sleep Connection';
 
   @override
   String get featureWindDown => 'Wind-down Phase';

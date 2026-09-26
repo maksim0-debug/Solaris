@@ -800,7 +800,7 @@ class _CircadianRegulationSection extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                l10n.circadianRegulationBetaNote,
+                l10n.circadianRegulationSubtitle,
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.white.withValues(alpha: 0.4),

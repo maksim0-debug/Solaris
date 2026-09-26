@@ -830,6 +830,12 @@ abstract class AppLocalizations {
   /// **'Reduce color temperature in cloudy or rainy weather to ease eye strain'**
   String get weatherTemperatureAdjustmentSubtitle;
 
+  /// No description provided for @brightnessRegulationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Brightness Regulation'**
+  String get brightnessRegulationTitle;
+
   /// No description provided for @temperatureRegulationTitle.
   ///
   /// In en, this message translates to:
@@ -1088,11 +1094,11 @@ abstract class AppLocalizations {
   /// **'Sleep'**
   String get sleep;
 
-  /// No description provided for @circadianRegulationBetaNote.
+  /// No description provided for @circadianRegulationSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'This feature is currently in beta testing. Stable performance is not guaranteed.'**
-  String get circadianRegulationBetaNote;
+  /// **'The app considers your sleep schedule to adjust brightness and temperature to your routine. All settings are customizable.'**
+  String get circadianRegulationSubtitle;
 
   /// No description provided for @sleepSubtitle.
   ///
@@ -1241,7 +1247,7 @@ abstract class AppLocalizations {
   /// No description provided for @circadianRegulation.
   ///
   /// In en, this message translates to:
-  /// **'Brightness Regulation'**
+  /// **'Sleep Connection'**
   String get circadianRegulation;
 
   /// No description provided for @featureWindDown.

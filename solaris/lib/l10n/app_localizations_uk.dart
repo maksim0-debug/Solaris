@@ -428,6 +428,9 @@ class AppLocalizationsUk extends AppLocalizations {
       'Зниження колірної температури в похмуру або дощову погоду для відпочинку очей';
 
   @override
+  String get brightnessRegulationTitle => 'Регуляція яскравості';
+
+  @override
   String get temperatureRegulationTitle => 'Регуляція температури';
 
   @override
@@ -562,8 +565,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sleep => 'Сон';
 
   @override
-  String get circadianRegulationBetaNote =>
-      'Даний функціонал перебуває на стадії бета-тестування. Стабільна робота не гарантується.';
+  String get circadianRegulationSubtitle =>
+      'Додаток враховує графік сну для адаптації яскравості та температури під ваш режим. Усі параметри налаштовуються.';
 
   @override
   String get sleepSubtitle => 'Аналізуйте режими сну та синхронізуйте дані';
@@ -643,7 +646,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Динамічна корекція на основі даних про сон з Google Fit (фаза засинання, біо-ранок, недосип)';
 
   @override
-  String get circadianRegulation => 'Регуляція яскравості';
+  String get circadianRegulation => 'Зв\'язок зі сном';
 
   @override
   String get featureWindDown => 'Фаза «Підготовки до сну» (Wind-down)';
