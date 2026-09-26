@@ -619,7 +619,7 @@ class _Header extends ConsumerWidget {
               offsets: offsets,
               isManual: true,
               isSoftwareDimmingEnabled:
-                  settingsMap['all']?.isSoftwareDimmingEnabled ?? false,
+                  settingsMap['all']?.isSoftwareDimmingEnabled ?? true,
               updateBrightnessCallback: (id, val) =>
                   monitorListNotifier.updateBrightness(id, val),
             );
@@ -686,7 +686,7 @@ class _Header extends ConsumerWidget {
               offsets: offsets,
               isManual: true,
               isSoftwareDimmingEnabled:
-                  settingsMap['all']?.isSoftwareDimmingEnabled ?? false,
+                  settingsMap['all']?.isSoftwareDimmingEnabled ?? true,
               updateBrightnessCallback: (id, val) =>
                   monitorListNotifier.updateBrightness(id, val),
             );
@@ -734,7 +734,7 @@ class _Header extends ConsumerWidget {
                     .read(settingsProvider)
                     .value?['all']
                     ?.isSoftwareDimmingEnabled ??
-                false;
+                true;
             final minVal = isDimming ? -100.0 : 0.0;
             ref
                 .read(manualBrightnessProvider.notifier)
@@ -953,7 +953,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
     final monitors = ref.watch(monitorListProvider).value ?? [];
     final settingsMap = ref.watch(settingsProvider).value ?? {};
     final isSoftwareDimmingEnabled =
-        settingsMap['all']?.isSoftwareDimmingEnabled ?? false;
+        settingsMap['all']?.isSoftwareDimmingEnabled ?? true;
     final minBrightness = isSoftwareDimmingEnabled ? -100.0 : 0.0;
 
     double targetBrightness = baseBrightness;

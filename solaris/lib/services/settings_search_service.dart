@@ -102,7 +102,7 @@ class SettingsSearchService {
       SettingItem(
         id: 'google_fit_sync',
         title: l10n.googleFitSync,
-        description: l10n.sleepDataSubtitle,
+        description: l10n.googleFitSyncSubtitle,
         tags: _splitTags(l10n.tags_google_fit),
         screen: AppScreen.sleep,
         anchorId: 'google_fit',

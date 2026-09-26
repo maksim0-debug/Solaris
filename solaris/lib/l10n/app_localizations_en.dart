@@ -536,7 +536,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sleepDataSubtitle =>
-      'Sync with Google Fit to track your rest cycles';
+      'Add a permanent sleep session to adjust brightness and temperature to your schedule';
 
   @override
   String get connectGoogleFit => 'Connect Google Fit';
@@ -571,6 +571,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get googleFitSync => 'Google Fit Sync';
+
+  @override
+  String get googleFitSyncSubtitle =>
+      'Sync with Google Fit to track your rest cycles';
 
   @override
   String get connectedStatusSmall => 'Connected';

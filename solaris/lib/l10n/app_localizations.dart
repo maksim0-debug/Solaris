@@ -1037,7 +1037,7 @@ abstract class AppLocalizations {
   /// No description provided for @sleepDataSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Sync with Google Fit to track your rest cycles'**
+  /// **'Add a permanent sleep session to adjust brightness and temperature to your schedule'**
   String get sleepDataSubtitle;
 
   /// No description provided for @connectGoogleFit.
@@ -1105,6 +1105,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Google Fit Sync'**
   String get googleFitSync;
+
+  /// No description provided for @googleFitSyncSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync with Google Fit to track your rest cycles'**
+  String get googleFitSyncSubtitle;
 
   /// No description provided for @connectedStatusSmall.
   ///

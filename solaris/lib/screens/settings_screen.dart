@@ -329,8 +329,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       tooltip: l10n.softwareDimmingTooltip,
                       value: settingsAsync.maybeWhen(
                         data: (map) =>
-                            map['all']?.isSoftwareDimmingEnabled ?? false,
-                        orElse: () => false,
+                            map['all']?.isSoftwareDimmingEnabled ?? true,
+                        orElse: () => true,
                       ),
                       onChanged: (val) => ref
                           .read(settingsProvider.notifier)

@@ -21,7 +21,7 @@ class BrightnessService {
     Map<String, double>? offsets,
     bool isUIVisible = true,
     bool isManual = false,
-    bool isSoftwareDimmingEnabled = false,
+    bool isSoftwareDimmingEnabled = true,
   }) {
     for (final monitor in monitors) {
       if (selection == 'all' || selection == monitor.deviceName) {

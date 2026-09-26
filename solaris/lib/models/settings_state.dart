@@ -158,15 +158,15 @@ class SettingsState {
     this.isWeatherAdjustmentEnabled = true,
     this.isWeatherTemperatureAdjustmentEnabled = true,
     this.isAutoBrightnessEnabled = true,
-    this.isSmartCircadianEnabled = false,
-    this.isSleepDebtEnabled = false,
-    this.isSleepPressureEnabled = false,
-    this.isTimeShiftEnabled = false,
-    this.isWindDownEnabled = false,
-    this.isWindDownMasterEnabled = false,
-    this.isTimeShiftMasterEnabled = false,
-    this.isSleepPressureMasterEnabled = false,
-    this.isSleepDebtMasterEnabled = false,
+    this.isSmartCircadianEnabled = true,
+    this.isSleepDebtEnabled = true,
+    this.isSleepPressureEnabled = true,
+    this.isTimeShiftEnabled = true,
+    this.isWindDownEnabled = true,
+    this.isWindDownMasterEnabled = true,
+    this.isTimeShiftMasterEnabled = true,
+    this.isSleepPressureMasterEnabled = true,
+    this.isSleepDebtMasterEnabled = true,
     this.windDownBrightnessIntensity = 1.0,
     this.windDownTemperatureIntensity = 1.0,
     this.timeShiftBrightnessIntensity = 1.0,
@@ -218,7 +218,7 @@ class SettingsState {
     this.brightnessStepDown = 5.0,
     this.isMultiMonitorOffsetEnabled = false,
     this.brightnessOffset = 0.0,
-    this.isSoftwareDimmingEnabled = false,
+    this.isSoftwareDimmingEnabled = true,
     this.userPresets = const [],
     this.activeUserPresetId,
     List<String>? presetOrder,
@@ -536,8 +536,7 @@ class SettingsState {
           json['isWeatherAdjustmentEnabled'] as bool? ??
           true,
       isAutoBrightnessEnabled: json['isAutoBrightnessEnabled'] as bool? ?? true,
-      isSmartCircadianEnabled:
-          json['isSmartCircadianEnabled'] as bool? ?? false,
+      isSmartCircadianEnabled: json['isSmartCircadianEnabled'] as bool? ?? true,
       isSleepDebtEnabled: json['isSleepDebtEnabled'] as bool? ?? true,
       isSleepPressureEnabled: json['isSleepPressureEnabled'] as bool? ?? true,
       isTimeShiftEnabled: json['isTimeShiftEnabled'] as bool? ?? true,
@@ -649,7 +648,7 @@ class SettingsState {
           json['isMultiMonitorOffsetEnabled'] as bool? ?? false,
       brightnessOffset: (json['brightnessOffset'] as num?)?.toDouble() ?? 0.0,
       isSoftwareDimmingEnabled:
-          json['isSoftwareDimmingEnabled'] as bool? ?? false,
+          json['isSoftwareDimmingEnabled'] as bool? ?? true,
       userPresets:
           (json['userPresets'] as List<dynamic>?)
               ?.map((p) => UserPreset.fromJson(p as Map<String, dynamic>))

@@ -324,7 +324,7 @@ class ApiControlHandler {
                 .read(settingsProvider)
                 .value?['all']
                 ?.isSoftwareDimmingEnabled ??
-            false;
+            true;
         final minVal = isSoftwareDimmingEnabled ? -100.0 : 0.0;
         if (val == null || val < minVal || val > 100.0) {
           if (val != null && val < 0.0 && !isSoftwareDimmingEnabled) {

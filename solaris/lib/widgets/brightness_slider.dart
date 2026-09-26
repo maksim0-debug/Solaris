@@ -5,9 +5,9 @@ class BrightnessSlider extends StatelessWidget {
   const BrightnessSlider({
     required this.value,
     required this.onChanged,
-    this.min = 0.0,
+    this.min = -100.0,
     this.max = 100.0,
-    this.isSoftwareDimmingEnabled = false,
+    this.isSoftwareDimmingEnabled = true,
     super.key,
   });
 

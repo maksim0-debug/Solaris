@@ -21,13 +21,13 @@ void main() {
   group('Software Dimming (Below 0) - Zero Trust Tests', () {
     test('SettingsState default and copyWith for isSoftwareDimmingEnabled', () {
       final state = SettingsState();
-      expect(state.isSoftwareDimmingEnabled, isFalse);
+      expect(state.isSoftwareDimmingEnabled, isTrue);
 
-      final updated = state.copyWith(isSoftwareDimmingEnabled: true);
-      expect(updated.isSoftwareDimmingEnabled, isTrue);
+      final updated = state.copyWith(isSoftwareDimmingEnabled: false);
+      expect(updated.isSoftwareDimmingEnabled, isFalse);
 
-      final reverted = updated.copyWith(isSoftwareDimmingEnabled: false);
-      expect(reverted.isSoftwareDimmingEnabled, isFalse);
+      final reverted = updated.copyWith(isSoftwareDimmingEnabled: true);
+      expect(reverted.isSoftwareDimmingEnabled, isTrue);
     });
 
     test(

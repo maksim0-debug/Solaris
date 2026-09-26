@@ -285,7 +285,7 @@ class ApiMonitorsHandler {
             .read(settingsProvider)
             .value?['all']
             ?.isSoftwareDimmingEnabled ??
-        false;
+        true;
     final minVal = isSoftwareDimmingEnabled ? -100.0 : 0.0;
     if (val < minVal || val > 100.0) {
       if (val < 0.0 && !isSoftwareDimmingEnabled) {

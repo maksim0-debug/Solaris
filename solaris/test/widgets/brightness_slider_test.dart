@@ -253,5 +253,24 @@ void main() {
         expect((changedValue - 6.666666666666667).abs(), lessThan(1e-4));
       },
     );
+
+    testWidgets(
+      'BrightnessSlider with default constructor args allows negative values down to -100',
+      (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: BrightnessSlider(value: -50.0, onChanged: (_) {}),
+            ),
+          ),
+        );
+
+        final sliderWidget = tester.widget<Slider>(find.byType(Slider));
+        // -50% -> ratio = 50/100 -> progress = 0.5 * 0.25 = 0.125
+        expect((sliderWidget.value - 0.125).abs(), lessThan(1e-6));
+        expect(find.text('-50%'), findsOneWidget);
+        expect(find.byIcon(LucideIcons.moon), findsNWidgets(2));
+      },
+    );
   });
 }

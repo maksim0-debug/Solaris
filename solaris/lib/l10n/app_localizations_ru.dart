@@ -533,7 +533,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get sleepDataSubtitle =>
-      'Синхронизация с Google Fit для отслеживания циклов отдыха';
+      'Добавьте постоянную сессию сна для регулировки яркости и температуры под ваш режим';
 
   @override
   String get connectGoogleFit => 'Подключить Google Fit';
@@ -569,6 +569,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get googleFitSync => 'Синхронизация Google Fit';
+
+  @override
+  String get googleFitSyncSubtitle =>
+      'Синхронизация с Google Fit для отслеживания циклов отдыха';
 
   @override
   String get connectedStatusSmall => 'Подключено';

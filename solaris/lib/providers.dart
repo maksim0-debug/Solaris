@@ -2673,7 +2673,7 @@ class CurrentBrightnessNotifier extends Notifier<double> {
         // 4. Global Auto / Circadian Cascade
         if (!isAuto || !selectedSettings.isAutoBrightnessEnabled) {
           final isDimming =
-              settingsMap['all']?.isSoftwareDimmingEnabled ?? false;
+              settingsMap['all']?.isSoftwareDimmingEnabled ?? true;
           final minAllowed = isDimming ? -100.0 : 0.0;
           return manualBrightness.clamp(minAllowed, 100.0);
         }
@@ -2747,7 +2747,7 @@ class CurrentBrightnessNotifier extends Notifier<double> {
 
     final isSoftwareDimmingEnabled =
         ref.read(settingsProvider).value?['all']?.isSoftwareDimmingEnabled ??
-        false;
+        true;
     final minVal = isSoftwareDimmingEnabled ? -100.0 : 0.0;
 
     double baseValue = value;
@@ -2843,7 +2843,7 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
           isManual: true,
           isUIVisible: visibility == AppVisibilityState.visible,
           isSoftwareDimmingEnabled:
-              settingsMap['all']?.isSoftwareDimmingEnabled ?? false,
+              settingsMap['all']?.isSoftwareDimmingEnabled ?? true,
           updateBrightnessCallback: (id, val) =>
               monitorListNotifier.updateBrightness(id, val),
         );
