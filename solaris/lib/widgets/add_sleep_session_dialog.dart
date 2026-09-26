@@ -535,6 +535,9 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
                         Tooltip(
                           message: l10n.permanentSleepScheduleTooltip,
                           waitDuration: const Duration(milliseconds: 200),
+                          preferBelow: false,
+                          verticalOffset: 14,
+                          constraints: const BoxConstraints(maxWidth: 320),
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color: const Color(0xFF1E293B),
@@ -553,7 +556,8 @@ class _AddSleepSessionDialogState extends ConsumerState<AddSleepSessionDialog> {
                           textStyle: const TextStyle(
                             color: Colors.white,
                             fontSize: 12,
-                            height: 1.4,
+                            height: 1.45,
+                            fontFamily: 'Outfit',
                           ),
                           child: MouseRegion(
                             cursor: SystemMouseCursors.click,
