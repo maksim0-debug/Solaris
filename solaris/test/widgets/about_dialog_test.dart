@@ -8,7 +8,7 @@ import 'package:solaris/widgets/about_dialog.dart';
 void main() {
   Widget createTestableWidget({
     Locale locale = const Locale('en'),
-    String appVersion = '1.3.2',
+    String appVersion = '1.4.0',
   }) {
     return ProviderScope(
       overrides: [appVersionProvider.overrideWith((ref) => appVersion)],
@@ -30,7 +30,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Solaris'), findsWidgets);
-      expect(find.text('Solaris v1.3.2'), findsOneWidget);
+      expect(find.text('Solaris v1.4.0'), findsOneWidget);
       expect(find.text('DISCLAIMER'), findsOneWidget);
       expect(find.text('Privacy Policy'), findsOneWidget);
       expect(find.text('View Licenses'), findsOneWidget);
@@ -45,7 +45,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Solaris'), findsWidgets);
-      expect(find.text('Solaris v1.3.2'), findsOneWidget);
+      expect(find.text('Solaris v1.4.0'), findsOneWidget);
       expect(find.text('ВІДМОВА ВІД ВІДПОВІДАЛЬНОСТІ'), findsOneWidget);
       expect(find.text('Політика конфіденційності'), findsOneWidget);
       expect(find.text('Переглянути ліцензії'), findsOneWidget);
@@ -60,7 +60,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Solaris'), findsWidgets);
-      expect(find.text('Solaris v1.3.2'), findsOneWidget);
+      expect(find.text('Solaris v1.4.0'), findsOneWidget);
       expect(find.text('ОТКАЗ ОТ ОТВЕТСТВЕННОСТИ'), findsOneWidget);
       expect(find.text('Политика конфиденциальности'), findsOneWidget);
       expect(find.text('Лицензии'), findsOneWidget);

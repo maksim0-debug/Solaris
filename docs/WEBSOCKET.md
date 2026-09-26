@@ -85,7 +85,7 @@ Upon connection, Solaris sends an initial `snapshot` frame containing current su
 {
   "type": "snapshot",
   "data": {
-    "version": "1.3.2+1",
+    "version": "1.4.0+1",
     "timestamp": "2026-07-25T14:30:00.000Z",
     "monitors": [
       {

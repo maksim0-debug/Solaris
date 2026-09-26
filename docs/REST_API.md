@@ -47,7 +47,7 @@ Lightweight health check endpoint. Useful for liveness probes, load balancers, a
 ```json
 {
   "status": "ok",
-  "version": "1.3.2+1",
+  "version": "1.4.0+1",
   "uptime_seconds": 14250,
   "timestamp": "2026-07-25T14:30:00.000Z",
   "subsystems": {
@@ -80,7 +80,7 @@ Returns the complete application state graph: connected monitors, hardware brigh
 * **Response (HTTP 200 OK)**:
 ```json
 {
-  "version": "1.3.2+1",
+  "version": "1.4.0+1",
   "uptime_seconds": 14250,
   "timestamp": "2026-07-25T14:30:00.000Z",
   "solar": {

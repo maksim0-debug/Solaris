@@ -720,7 +720,7 @@ class OpenApiSpec {
             'type': 'object',
             'properties': {
               'status': {'type': 'string', 'example': 'ok'},
-              'version': {'type': 'string', 'example': '1.3.2+1'},
+              'version': {'type': 'string', 'example': '1.4.0+1'},
               'uptime_seconds': {'type': 'integer', 'example': 3600},
               'timestamp': {'type': 'string', 'format': 'date-time'},
               'subsystems': {
