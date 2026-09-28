@@ -2587,4 +2587,41 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get copied => 'Скопировано';
+
+  @override
+  String get circadianModePhases => 'Фазы дня';
+
+  @override
+  String get circadianModeCurve => 'Адаптивная кривая';
+
+  @override
+  String get circadianModeLegacy => 'Угол солнца (Градусы)';
+
+  @override
+  String get phaseNight => 'Ночь';
+
+  @override
+  String get phaseSunrise => 'Рассвет';
+
+  @override
+  String get phaseDay => 'День';
+
+  @override
+  String get phaseSunset => 'Закат';
+
+  @override
+  String get phasePlateauTooltip =>
+      'Дневное плато поддерживает стабильный и комфортный уровень света в течение рабочего дня.';
+
+  @override
+  String get tapToEnterValue => 'Нажмите для точного ввода с клавиатуры';
+
+  @override
+  String get normalizedNadir => 'Ночь';
+
+  @override
+  String get normalizedHorizon => 'Горизонт (0°)';
+
+  @override
+  String get normalizedNoon => 'Полдень';
 }

@@ -1140,6 +1140,18 @@
   "crashCopiedToast": "Error details copied to clipboard",
   "showTracebackDetails": "Show Traceback Details",
   "hideTraceback": "Hide Traceback",
-  "copied": "Copied"
+  "copied": "Copied",
+  "circadianModePhases": "Solar Phases",
+  "circadianModeCurve": "Adaptive Curve",
+  "circadianModeLegacy": "Sun Angle (Degrees)",
+  "phaseNight": "Night",
+  "phaseSunrise": "Sunrise",
+  "phaseDay": "Day",
+  "phaseSunset": "Sunset",
+  "phasePlateauTooltip": "The daytime plateau maintains steady, comfortable illumination during your peak work hours.",
+  "tapToEnterValue": "Click to type exact value",
+  "normalizedNadir": "Night",
+  "normalizedHorizon": "Horizon (0°)",
+  "normalizedNoon": "Solar Noon"
 }
 

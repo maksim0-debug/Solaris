@@ -14,6 +14,8 @@ import 'package:solaris/constants/temperature_constants.dart';
 import 'package:solaris/services/active_process_service.dart';
 import 'package:collection/collection.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:solaris/models/circadian_mode.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 final temperatureServiceProvider = Provider((ref) => TemperatureService());
 
@@ -669,7 +671,10 @@ class CurrentTemperatureNotifier extends Notifier<int> {
           final solarStateAsync = ref.watch(solarStateStreamProvider);
           final circadianService = ref.watch(circadianServiceProvider);
           final weatherAsync = ref.watch(currentWeatherProvider);
-          final now = ref.watch(minuteTimeProvider).value ?? DateTime.now();
+          final timezoneVal = ref.watch(effectiveTimezoneProvider);
+          final now =
+              ref.watch(minuteTimeProvider).value ??
+              tz.TZDateTime.now(timezoneVal);
 
           return solarStateAsync.maybeWhen(
             data: (state) {
@@ -688,6 +693,10 @@ class CurrentTemperatureNotifier extends Notifier<int> {
                     : null,
                 weatherIntensity: allSettings.weatherAdjustmentIntensity,
                 smartData: smartData,
+                circadianMode: CircadianMode.normalizedCurve,
+                phasesConfig: null,
+                maxElevation: state.maxElevation,
+                minElevation: state.minElevation,
               );
               final val = result.finalTemperature
                   .clamp(minTemp, maxTemp)
@@ -726,7 +735,9 @@ class CurrentTemperatureNotifier extends Notifier<int> {
       final tempSettingsAsync = ref.watch(temperatureSettingsProvider);
       final weatherAsync = ref.watch(currentWeatherProvider);
 
-      final now = ref.watch(minuteTimeProvider).value ?? DateTime.now();
+      final timezoneVal = ref.watch(effectiveTimezoneProvider);
+      final now =
+          ref.watch(minuteTimeProvider).value ?? tz.TZDateTime.now(timezoneVal);
 
       return solarStateAsync.maybeWhen(
         data: (state) {
@@ -758,6 +769,10 @@ class CurrentTemperatureNotifier extends Notifier<int> {
                     : null,
                 weatherIntensity: allSettings.weatherAdjustmentIntensity,
                 smartData: smartData,
+                circadianMode: monitorSettings.circadianMode,
+                phasesConfig: monitorSettings.phasesConfig,
+                maxElevation: state.maxElevation,
+                minElevation: state.minElevation,
               );
               final val = result.finalTemperature.clamp(
                 minTemp,

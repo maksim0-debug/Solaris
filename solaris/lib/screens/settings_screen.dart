@@ -26,6 +26,8 @@ import 'package:solaris/widgets/settings/webhooks_management_card.dart';
 import 'package:solaris/services/monitor_service.dart';
 import 'package:solaris/constants/temperature_constants.dart';
 import 'package:solaris/widgets/temperature_slider.dart';
+import 'package:solaris/models/circadian_mode.dart';
+import 'package:solaris/widgets/solar_phase_cards.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -125,6 +127,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       });
     }
 
+    final selectedMonitors = ref.watch(selectedMonitorsProvider);
+    final settingsMap = ref.watch(settingsProvider).value;
+    final currentSettings =
+        settingsMap?[selectedMonitors.firstOrNull ?? 'all'] ??
+        settingsMap?['all'] ??
+        SettingsState();
+    final isPhasesMode =
+        currentSettings.circadianMode == CircadianMode.solarPhases;
+
     return SingleChildScrollView(
       controller: _scrollController,
       physics: const BouncingScrollPhysics(),
@@ -147,10 +158,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               id: 'schedule_view',
               child: Column(
                 children: [
-                  const _PresetSelector(),
-                  const SizedBox(height: 8),
+                  const _CircadianModeSelector(),
+                  const SizedBox(height: 16),
+                  if (isPhasesMode) ...[
+                    const SolarPhaseCardsWidget(),
+                  ] else ...[
+                    const _PresetSelector(),
+                  ],
+                  const SizedBox(height: 16),
                   const _TypeSelector(),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
                   const CircadianChartWidget(),
                   const SizedBox(height: 8),
                   const _TempToggleCard(),
@@ -1453,6 +1470,67 @@ class _SectionHeader extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _CircadianModeSelector extends ConsumerWidget {
+  const _CircadianModeSelector();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final selectedMonitors = ref.watch(selectedMonitorsProvider);
+    final settingsMap = ref.watch(settingsProvider).value;
+    final currentSettings =
+        settingsMap?[selectedMonitors.firstOrNull ?? 'all'] ??
+        settingsMap?['all'] ??
+        SettingsState();
+    final mode = currentSettings.circadianMode;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+      child: Center(
+        child: SegmentedButton<CircadianMode>(
+          showSelectedIcon: false,
+          segments: [
+            ButtonSegment<CircadianMode>(
+              value: CircadianMode.solarPhases,
+              label: Text(l10n.circadianModePhases),
+              icon: const Icon(LucideIcons.sunMedium),
+            ),
+            ButtonSegment<CircadianMode>(
+              value: CircadianMode.normalizedCurve,
+              label: Text(l10n.circadianModeCurve),
+              icon: const Icon(LucideIcons.spline),
+            ),
+          ],
+          selected: {mode},
+          onSelectionChanged: (Set<CircadianMode> newSelection) {
+            ref
+                .read(settingsProvider.notifier)
+                .updateCircadianMode(newSelection.first);
+          },
+          style: ButtonStyle(
+            backgroundColor: WidgetStateProperty.resolveWith<Color>((
+              Set<WidgetState> states,
+            ) {
+              if (states.contains(WidgetState.selected)) {
+                return const Color(0xFF6366F1).withValues(alpha: 0.2);
+              }
+              return Colors.transparent;
+            }),
+            foregroundColor: WidgetStateProperty.resolveWith<Color>((
+              Set<WidgetState> states,
+            ) {
+              if (states.contains(WidgetState.selected)) {
+                return const Color(0xFF6366F1);
+              }
+              return Colors.white70;
+            }),
+          ),
+        ),
+      ),
     );
   }
 }

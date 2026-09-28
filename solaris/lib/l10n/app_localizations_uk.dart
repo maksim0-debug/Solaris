@@ -2581,4 +2581,41 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get copied => 'Скопійовано';
+
+  @override
+  String get circadianModePhases => 'Фази доби';
+
+  @override
+  String get circadianModeCurve => 'Адаптивна крива';
+
+  @override
+  String get circadianModeLegacy => 'Кут сонця (Градуси)';
+
+  @override
+  String get phaseNight => 'Ніч';
+
+  @override
+  String get phaseSunrise => 'Світанок';
+
+  @override
+  String get phaseDay => 'День';
+
+  @override
+  String get phaseSunset => 'Захід сонця';
+
+  @override
+  String get phasePlateauTooltip =>
+      'Денне плато підтримує стабільний і комфортний рівень світла протягом робочого дня.';
+
+  @override
+  String get tapToEnterValue => 'Натисніть для точного введення з клавіатури';
+
+  @override
+  String get normalizedNadir => 'Ніч';
+
+  @override
+  String get normalizedHorizon => 'Горизонт (0°)';
+
+  @override
+  String get normalizedNoon => 'Полудень';
 }

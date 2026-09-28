@@ -30,6 +30,7 @@ import 'package:flutter/services.dart';
 import 'package:solaris/widgets/settings_search_overlay.dart';
 import 'package:solaris/widgets/deep_link_target.dart';
 import 'package:solaris/widgets/update_status_widget.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -923,7 +924,9 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
     final l10n = AppLocalizations.of(context)!;
     final solarAsync = ref.watch(solarStateStreamProvider);
     final timeService = ref.watch(timeServiceProvider);
-    final now = ref.watch(currentTimeProvider).value ?? DateTime.now();
+    final timezoneVal = ref.watch(effectiveTimezoneProvider);
+    final now =
+        ref.watch(currentTimeProvider).value ?? tz.TZDateTime.now(timezoneVal);
     final baseBrightness = ref.watch(currentBrightnessProvider);
     final currentTemperature = ref.watch(currentTemperatureProvider);
     final selection = ref.watch(selectedMonitorsProvider);

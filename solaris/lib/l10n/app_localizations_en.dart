@@ -2565,4 +2565,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get copied => 'Copied';
+
+  @override
+  String get circadianModePhases => 'Solar Phases';
+
+  @override
+  String get circadianModeCurve => 'Adaptive Curve';
+
+  @override
+  String get circadianModeLegacy => 'Sun Angle (Degrees)';
+
+  @override
+  String get phaseNight => 'Night';
+
+  @override
+  String get phaseSunrise => 'Sunrise';
+
+  @override
+  String get phaseDay => 'Day';
+
+  @override
+  String get phaseSunset => 'Sunset';
+
+  @override
+  String get phasePlateauTooltip =>
+      'The daytime plateau maintains steady, comfortable illumination during your peak work hours.';
+
+  @override
+  String get tapToEnterValue => 'Click to type exact value';
+
+  @override
+  String get normalizedNadir => 'Night';
+
+  @override
+  String get normalizedHorizon => 'Horizon (0°)';
+
+  @override
+  String get normalizedNoon => 'Solar Noon';
 }

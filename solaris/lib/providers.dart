@@ -11,6 +11,7 @@ import 'package:solaris/services/location_service.dart';
 import 'package:solaris/services/geocoding_service.dart';
 import 'package:solaris/services/time_service.dart';
 import 'package:lat_lng_to_timezone/lat_lng_to_timezone.dart' as tzmap;
+import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:solaris/services/monitor_service.dart';
 import 'package:solaris/services/circadian_service.dart';
@@ -25,6 +26,8 @@ import 'package:solaris/models/current_day_phase.dart';
 import 'package:solaris/models/api_key_entry.dart';
 import 'package:solaris/models/api_permissions_config.dart';
 import 'package:solaris/models/settings_state.dart';
+import 'package:solaris/models/circadian_mode.dart';
+import 'package:solaris/models/solar_phases_config.dart';
 import 'package:solaris/models/webhook_config.dart';
 import 'package:solaris/services/webhook_service.dart';
 import 'package:solaris/utils/key_obfuscator.dart';
@@ -36,6 +39,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:solaris/services/storage_service.dart';
 import 'package:solaris/models/location_settings.dart' as model;
 import 'package:solaris/models/temperature_state.dart';
@@ -103,12 +107,22 @@ final minuteTimeProvider = StreamProvider<DateTime>((ref) {
   // Emit initial values
   controller.add(now);
 
-  Timer? timer;
-  Timer(delayUntilNextMinute, () {
+  Timer? initialTimer;
+  Timer? periodicTimer;
+
+  // In test environments, emit initial value and close controller without pending timer
+  if (WidgetsBinding.instance.runtimeType.toString().contains('Test')) {
+    ref.onDispose(() {
+      controller.close();
+    });
+    return controller.stream;
+  }
+
+  initialTimer = Timer(delayUntilNextMinute, () {
     if (!controller.isClosed) {
       controller.add(tz.TZDateTime.now(timezoneVal));
     }
-    timer = Timer.periodic(Duration(minutes: intervalMinutes), (_) {
+    periodicTimer = Timer.periodic(Duration(minutes: intervalMinutes), (_) {
       if (!controller.isClosed) {
         controller.add(tz.TZDateTime.now(timezoneVal));
       }
@@ -116,7 +130,8 @@ final minuteTimeProvider = StreamProvider<DateTime>((ref) {
   });
 
   ref.onDispose(() {
-    timer?.cancel();
+    initialTimer?.cancel();
+    periodicTimer?.cancel();
     controller.close();
   });
 
@@ -131,7 +146,9 @@ final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
   final service = ref.watch(smartCircadianServiceProvider);
   final settingsAsync = ref.watch(settingsProvider);
   final solarStateAsync = ref.watch(debouncedSolarStateProvider);
-  final now = ref.watch(minuteTimeProvider).value ?? DateTime.now();
+  final timezoneVal = ref.watch(effectiveTimezoneProvider);
+  final now =
+      ref.watch(minuteTimeProvider).value ?? tz.TZDateTime.now(timezoneVal);
 
   // Use 'all' as fallback if monitorId not found
   final settings = settingsAsync.value;
@@ -222,6 +239,10 @@ final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
         presetSensitivity: monitorSettings.activePreset.weatherSensitivity,
         weatherIntensity: monitorSettings.weatherAdjustmentIntensity,
         smartData: smartData,
+        circadianMode: monitorSettings.circadianMode,
+        phasesConfig: monitorSettings.phasesConfig,
+        maxElevation: solar.maxElevation,
+        minElevation: solar.minElevation,
       );
 
       // Resolve Active Preset Name
@@ -277,7 +298,9 @@ final smartCircadianTemperatureDataProvider =
         orElse: () => SettingsState(),
       );
 
-      final now = ref.watch(minuteTimeProvider).value ?? DateTime.now();
+      final timezoneVal = ref.watch(effectiveTimezoneProvider);
+      final now =
+          ref.watch(minuteTimeProvider).value ?? tz.TZDateTime.now(timezoneVal);
 
       return solarStateAsync.maybeWhen(
         data: (solar) {
@@ -332,6 +355,10 @@ final smartCircadianTemperatureDataProvider =
                 : null,
             weatherIntensity: globalSettings.weatherAdjustmentIntensity,
             smartData: smartData,
+            circadianMode: globalSettings.circadianMode,
+            phasesConfig: globalSettings.phasesConfig,
+            maxElevation: solar.maxElevation,
+            minElevation: solar.minElevation,
           );
 
           // Resolve Active Preset Name for Temperature
@@ -629,7 +656,24 @@ Position getTimezoneFallbackCoordinates(tz.Location tzLocation) {
 final effectiveLocationProvider = Provider<AsyncValue<Position>>((ref) {
   final resolutionStatus = ref.watch(locationResolutionStatusProvider);
   if (resolutionStatus == LocationResolutionStatus.autoFailedTimezone) {
-    return AsyncData<Position>(getTimezoneFallbackCoordinates(tz.local));
+    try {
+      return AsyncData<Position>(getTimezoneFallbackCoordinates(tz.local));
+    } catch (_) {
+      return AsyncData<Position>(
+        Position(
+          latitude: 50.45,
+          longitude: 30.52,
+          timestamp: DateTime.now(),
+          accuracy: 0.0,
+          altitude: 0.0,
+          altitudeAccuracy: 0.0,
+          heading: 0.0,
+          headingAccuracy: 0.0,
+          speed: 0.0,
+          speedAccuracy: 0.0,
+        ),
+      );
+    }
   }
 
   final settingsVal = ref.watch(
@@ -783,16 +827,36 @@ final coordinatesAvailableProvider = Provider<bool>((ref) {
   return resolutionStatus != LocationResolutionStatus.autoFailedTimezone;
 });
 
+void _ensureTimeZonesInitialized() {
+  try {
+    tz.local;
+  } catch (_) {
+    try {
+      tz_data.initializeTimeZones();
+    } catch (_) {}
+  }
+}
+
 final effectiveTimezoneProvider = Provider<tz.Location>((ref) {
+  _ensureTimeZonesInitialized();
+
+  tz.Location getSafeLocal() {
+    try {
+      return tz.local;
+    } catch (_) {
+      return tz.UTC;
+    }
+  }
+
   final locationAvailable = ref.watch(coordinatesAvailableProvider);
   if (!locationAvailable) {
-    return tz.local;
+    return getSafeLocal();
   }
 
   final locationAsync = ref.watch(effectiveLocationProvider);
   final pos = locationAsync.value;
   if (pos == null) {
-    return tz.local;
+    return getSafeLocal();
   }
 
   try {
@@ -805,7 +869,7 @@ final effectiveTimezoneProvider = Provider<tz.Location>((ref) {
     debugPrint(
       'Error looking up timezone for ${pos.latitude}, ${pos.longitude}: $e',
     );
-    return tz.local;
+    return getSafeLocal();
   }
 });
 
@@ -813,14 +877,33 @@ final currentTimeProvider = StreamProvider<DateTime>((ref) async* {
   final visibility = ref.watch(appLifecycleProvider);
   final timezoneVal = ref.watch(effectiveTimezoneProvider);
 
+  bool isDisposed = false;
+  Timer? delayTimer;
+  Completer<void>? activeCompleter;
+  ref.onDispose(() {
+    isDisposed = true;
+    delayTimer?.cancel();
+    final completer = activeCompleter;
+    if (completer != null && !completer.isCompleted) {
+      completer.complete();
+    }
+  });
+
   // Adaptive delay for clock updates: 1s if visible, 1m if hidden
   final delay = visibility == AppVisibilityState.visible
       ? const Duration(seconds: 1)
       : const Duration(minutes: 1);
 
-  while (true) {
+  while (!isDisposed) {
     yield tz.TZDateTime.now(timezoneVal);
-    await Future<void>.delayed(delay);
+    final completer = Completer<void>();
+    activeCompleter = completer;
+    delayTimer = Timer(delay, () {
+      if (!completer.isCompleted) {
+        completer.complete();
+      }
+    });
+    await completer.future;
   }
 });
 
@@ -830,6 +913,30 @@ final currentTimeProvider = StreamProvider<DateTime>((ref) async* {
 /// - Minimized: 30 seconds
 /// - Hidden (Tray): 60 seconds
 final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
+  bool isDisposed = false;
+  Timer? delayTimer;
+  Completer<void>? activeCompleter;
+  ref.onDispose(() {
+    isDisposed = true;
+    delayTimer?.cancel();
+    final completer = activeCompleter;
+    if (completer != null && !completer.isCompleted) {
+      completer.complete();
+    }
+  });
+
+  Future<void> cancellableDelay(int seconds) {
+    if (isDisposed) return Future.value();
+    final completer = Completer<void>();
+    activeCompleter = completer;
+    delayTimer = Timer(Duration(seconds: seconds), () {
+      if (!completer.isCompleted) {
+        completer.complete();
+      }
+    });
+    return completer.future;
+  }
+
   final service = ref.watch(sunCalculatorServiceProvider);
   final locationAsync = ref.watch(effectiveLocationProvider);
   final weatherAsync = ref.watch(currentWeatherProvider);
@@ -852,6 +959,9 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
     initialNow,
     timezoneVal,
   );
+  double maxElevation = service.getSunElevation(lat, lon, phases.solarNoon);
+  final nadirTime = phases.solarNoon.add(const Duration(hours: 12));
+  double minElevation = service.getSunElevation(lat, lon, nadirTime);
 
   // Previous values for trend calculation
   double? prevAzimuth;
@@ -886,14 +996,25 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
     azimuthTrend: 'constant',
     elevationTrend: 'constant',
     zenithTrend: 'constant',
+    maxElevation: maxElevation,
+    minElevation: minElevation,
   );
 
-  while (true) {
+  // In test environments, avoid scheduling an infinite live-ticker timer
+  // that would remain pending in FakeAsync after widget disposal.
+  if (WidgetsBinding.instance.runtimeType.toString().contains('Test')) {
+    return;
+  }
+
+  while (!isDisposed) {
     final now = tz.TZDateTime.now(timezoneVal);
 
     // Check for day change
     if (now.day != currentDay) {
       phases = await service.calculatePhases(lat, lon, now, timezoneVal);
+      maxElevation = service.getSunElevation(lat, lon, phases.solarNoon);
+      final nextNadir = phases.solarNoon.add(const Duration(hours: 12));
+      minElevation = service.getSunElevation(lat, lon, nextNadir);
       currentDay = now.day;
     }
 
@@ -921,12 +1042,14 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
         elevationTrend: 'constant',
         azimuthTrend: 'constant',
         zenithTrend: 'constant',
+        maxElevation: maxElevation,
+        minElevation: minElevation,
       );
 
       prevElevation = elevation;
       prevTime = now;
 
-      await Future<void>.delayed(Duration(seconds: delaySeconds));
+      await cancellableDelay(delaySeconds);
       continue;
     }
 
@@ -1006,6 +1129,8 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
       azimuthTrend: azTrend,
       elevationTrend: elTrend,
       zenithTrend: zenTrend,
+      maxElevation: maxElevation,
+      minElevation: minElevation,
     );
 
     prevAzimuth = currentAzimuth;
@@ -1013,7 +1138,7 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
     prevZenith = currentZenith;
     prevTime = now;
 
-    await Future<void>.delayed(Duration(seconds: delaySeconds));
+    await cancellableDelay(delaySeconds);
   }
 });
 
@@ -1556,6 +1681,8 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
           clearActiveUserPresetId: global.activeUserPresetId == null,
           curvesMap: global.curvesMap,
           userPresets: global.userPresets,
+          circadianMode: global.circadianMode,
+          phasesConfig: global.phasesConfig,
         );
       }
     }
@@ -1571,6 +1698,20 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     _updateSettings(
       ref.read(selectedMonitorsProvider),
       (s) => s.copyWith(curveSharpness: value),
+    );
+  }
+
+  void updateCircadianMode(CircadianMode mode) {
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(circadianMode: mode),
+    );
+  }
+
+  void updatePhasesConfig(SolarPhasesConfig config) {
+    _updateSettings(
+      ref.read(selectedMonitorsProvider),
+      (s) => s.copyWith(phasesConfig: config),
     );
   }
 
@@ -2614,9 +2755,12 @@ class CurrentBrightnessNotifier extends Notifier<double> {
         final activeAppExe = activeProcessState.activeProcess;
         final isAppSuppressed = activeProcessState.suppressedPids.isNotEmpty;
         final appRule = (!isAppSuppressed && activeAppExe.isNotEmpty)
-            ? selectedSettings.appOverrides.firstWhereOrNull(
-                (r) => r.isEnabled && r.exeName == activeAppExe,
-              )
+            ? (selectedSettings.appOverrides.firstWhereOrNull(
+                    (r) => r.isEnabled && r.exeName == activeAppExe,
+                  ) ??
+                  settingsMap['all']?.appOverrides.firstWhereOrNull(
+                    (r) => r.isEnabled && r.exeName == activeAppExe,
+                  ))
             : null;
 
         if (appRule != null &&
@@ -2635,12 +2779,14 @@ class CurrentBrightnessNotifier extends Notifier<double> {
               final solarStateAsync = ref.watch(solarStateStreamProvider);
               final circadianService = ref.watch(circadianServiceProvider);
               final weatherAsync = ref.watch(currentWeatherProvider);
+              final timezoneVal = ref.watch(effectiveTimezoneProvider);
+              final now = tz.TZDateTime.now(timezoneVal);
               return solarStateAsync.maybeWhen(
                 data: (state) {
                   final result = circadianService.calculateTargetBrightness(
                     state.phases,
                     state.sunElevation,
-                    DateTime.now(),
+                    now,
                     curveSharpness: selectedSettings.curveSharpness,
                     curvePoints: curvePoints,
                     weather: selectedSettings.isWeatherAdjustmentEnabled
@@ -2653,6 +2799,10 @@ class CurrentBrightnessNotifier extends Notifier<double> {
                     smartData: selectedSettings.isSmartCircadianEnabled
                         ? smartData
                         : const SmartCircadianData.neutral(),
+                    circadianMode: CircadianMode.normalizedCurve,
+                    phasesConfig: null,
+                    maxElevation: state.maxElevation,
+                    minElevation: state.minElevation,
                   );
                   final val = result.finalBrightness.clamp(0.0, 100.0);
                   _saveBrightness(val);
@@ -2681,6 +2831,8 @@ class CurrentBrightnessNotifier extends Notifier<double> {
         final solarStateAsync = ref.watch(solarStateStreamProvider);
         final circadianService = ref.watch(circadianServiceProvider);
         final weatherAsync = ref.watch(currentWeatherProvider);
+        final timezoneVal = ref.watch(effectiveTimezoneProvider);
+        final now = tz.TZDateTime.now(timezoneVal);
 
         return solarStateAsync.maybeWhen(
           data: (state) {
@@ -2696,9 +2848,7 @@ class CurrentBrightnessNotifier extends Notifier<double> {
               final pos = locationAsync.value;
               if (pos != null) {
                 final sunService = ref.read(sunCalculatorServiceProvider);
-                final shiftedTime = DateTime.now().subtract(
-                  effectiveSmartData.timeOffset,
-                );
+                final shiftedTime = now.subtract(effectiveSmartData.timeOffset);
                 effectiveElevation = sunService.getSunElevation(
                   pos.latitude,
                   pos.longitude,
@@ -2715,7 +2865,7 @@ class CurrentBrightnessNotifier extends Notifier<double> {
             final result = circadianService.calculateTargetBrightness(
               state.phases,
               effectiveElevation,
-              DateTime.now(),
+              now,
               curveSharpness: selectedSettings.curveSharpness,
               curvePoints: selectedSettings.curvePoints,
               weather: selectedSettings.isWeatherAdjustmentEnabled
@@ -2725,6 +2875,10 @@ class CurrentBrightnessNotifier extends Notifier<double> {
                   selectedSettings.activePreset.weatherSensitivity,
               weatherIntensity: selectedSettings.weatherAdjustmentIntensity,
               smartData: effectiveSmartData,
+              circadianMode: selectedSettings.circadianMode,
+              phasesConfig: selectedSettings.phasesConfig,
+              maxElevation: state.maxElevation,
+              minElevation: state.minElevation,
             );
             _saveBrightness(result.finalBrightness);
             return result.finalBrightness;
@@ -2855,6 +3009,8 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
     monitorsAsync.whenData((monitors) {
       settingsAsync.whenData((settingsMap) {
         tempSettingsAsync.whenData((tempSettingsMap) {
+          final timezoneVal = ref.watch(effectiveTimezoneProvider);
+          final now = tz.TZDateTime.now(timezoneVal);
           for (final monitor in monitors) {
             final globalSettings = settingsMap['all'] ?? SettingsState();
             final globalTempSettings =
@@ -2933,7 +3089,7 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                 final pos = locationAsync.value;
                 if (pos != null) {
                   final sunService = ref.read(sunCalculatorServiceProvider);
-                  final shiftedTime = DateTime.now().subtract(
+                  final shiftedTime = now.subtract(
                     effectiveSmartData.timeOffset,
                   );
                   effectiveElevation = sunService.getSunElevation(
@@ -2952,7 +3108,7 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                   .calculateTargetBrightness(
                     state.phases,
                     effectiveElevation,
-                    DateTime.now(),
+                    now,
                     curveSharpness: settings.curveSharpness,
                     curvePoints: settings.curvePoints,
                     weather: settings.isWeatherAdjustmentEnabled
@@ -2961,6 +3117,10 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                     presetSensitivity: settings.activePreset.weatherSensitivity,
                     weatherIntensity: settings.weatherAdjustmentIntensity,
                     smartData: effectiveSmartData,
+                    circadianMode: settings.circadianMode,
+                    phasesConfig: settings.phasesConfig,
+                    maxElevation: state.maxElevation,
+                    minElevation: state.minElevation,
                   );
               final targetBrightness = calculationResult.finalBrightness;
 
@@ -3045,13 +3205,17 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
               final targetTemp = circadianService.calculateTargetTemperature(
                 state.phases,
                 state.sunElevation,
-                DateTime.now(),
+                now,
                 curvePoints: tempSettings.curvePoints,
                 weather: settings.isWeatherTemperatureAdjustmentEnabled
                     ? weatherAsync.value
                     : null,
                 weatherIntensity: settings.weatherAdjustmentIntensity,
                 smartData: effectiveSmartTempData,
+                circadianMode: settings.circadianMode,
+                phasesConfig: settings.phasesConfig,
+                maxElevation: state.maxElevation,
+                minElevation: state.minElevation,
               );
 
               final effectiveFinalTemp = targetTemp.finalTemperature

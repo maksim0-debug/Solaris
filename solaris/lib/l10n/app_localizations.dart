@@ -4431,6 +4431,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Copied'**
   String get copied;
+
+  /// No description provided for @circadianModePhases.
+  ///
+  /// In en, this message translates to:
+  /// **'Solar Phases'**
+  String get circadianModePhases;
+
+  /// No description provided for @circadianModeCurve.
+  ///
+  /// In en, this message translates to:
+  /// **'Adaptive Curve'**
+  String get circadianModeCurve;
+
+  /// No description provided for @circadianModeLegacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Sun Angle (Degrees)'**
+  String get circadianModeLegacy;
+
+  /// No description provided for @phaseNight.
+  ///
+  /// In en, this message translates to:
+  /// **'Night'**
+  String get phaseNight;
+
+  /// No description provided for @phaseSunrise.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunrise'**
+  String get phaseSunrise;
+
+  /// No description provided for @phaseDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day'**
+  String get phaseDay;
+
+  /// No description provided for @phaseSunset.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunset'**
+  String get phaseSunset;
+
+  /// No description provided for @phasePlateauTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'The daytime plateau maintains steady, comfortable illumination during your peak work hours.'**
+  String get phasePlateauTooltip;
+
+  /// No description provided for @tapToEnterValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Click to type exact value'**
+  String get tapToEnterValue;
+
+  /// No description provided for @normalizedNadir.
+  ///
+  /// In en, this message translates to:
+  /// **'Night'**
+  String get normalizedNadir;
+
+  /// No description provided for @normalizedHorizon.
+  ///
+  /// In en, this message translates to:
+  /// **'Horizon (0°)'**
+  String get normalizedHorizon;
+
+  /// No description provided for @normalizedNoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Solar Noon'**
+  String get normalizedNoon;
 }
 
 class _AppLocalizationsDelegate

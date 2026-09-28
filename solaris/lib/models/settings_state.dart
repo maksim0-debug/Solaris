@@ -6,8 +6,10 @@ import 'package:solaris/models/api_permissions_config.dart';
 import 'package:solaris/models/api_key_entry.dart';
 import 'package:solaris/models/app_override_rule.dart';
 import 'package:solaris/env/env.dart';
-import 'package:solaris/constants/temperature_constants.dart';
 import 'package:solaris/utils/key_obfuscator.dart';
+import 'package:solaris/models/circadian_mode.dart';
+import 'package:solaris/models/solar_phases_config.dart';
+import 'package:solaris/constants/temperature_constants.dart';
 
 enum MapStyleMode {
   auto,
@@ -46,6 +48,8 @@ class SettingsState {
   final PresetType activePreset;
   final Map<PresetType, List<FlSpot>> curvesMap;
   final double curveSharpness;
+  final CircadianMode circadianMode;
+  final SolarPhasesConfig phasesConfig;
   final bool isAutorunEnabled;
   final bool isWeatherAdjustmentEnabled;
   final bool isWeatherTemperatureAdjustmentEnabled;
@@ -153,6 +157,8 @@ class SettingsState {
     this.activePreset = PresetType.bright,
     Map<PresetType, List<FlSpot>>? curvesMap,
     this.curveSharpness = 1.0,
+    this.circadianMode = CircadianMode.solarPhases,
+    this.phasesConfig = SolarPhasesConfig.defaultBalanced,
     this.isAutorunEnabled = true,
     bool? isAutoUpdateEnabled,
     this.isWeatherAdjustmentEnabled = true,
@@ -353,6 +359,8 @@ class SettingsState {
           MapEntry(key.name, value.map((p) => {'x': p.x, 'y': p.y}).toList()),
     ),
     'curveSharpness': curveSharpness,
+    'circadianMode': circadianMode.toJson(),
+    'phasesConfig': phasesConfig.toJson(),
     'isAutorunEnabled': isAutorunEnabled,
     'isAutoUpdateEnabled': isAutoUpdateEnabled,
     'isWeatherAdjustmentEnabled': isWeatherAdjustmentEnabled,
@@ -526,6 +534,14 @@ class SettingsState {
       activePreset: activePreset,
       curvesMap: curvesMap,
       curveSharpness: (json['curveSharpness'] as num?)?.toDouble() ?? 1.0,
+      circadianMode: json.containsKey('circadianMode')
+          ? CircadianMode.fromJson(json['circadianMode'] as String?)
+          : CircadianMode.solarPhases,
+      phasesConfig: json.containsKey('phasesConfig')
+          ? SolarPhasesConfig.fromJson(
+              json['phasesConfig'] as Map<String, dynamic>?,
+            )
+          : SolarPhasesConfig.defaultBalanced,
       isAutorunEnabled: json['isAutorunEnabled'] as bool? ?? true,
       isAutoUpdateEnabled:
           json['isAutoUpdateEnabled'] as bool? ?? Env.isOfficialRelease,
@@ -739,6 +755,8 @@ class SettingsState {
     PresetType? activePreset,
     Map<PresetType, List<FlSpot>>? curvesMap,
     double? curveSharpness,
+    CircadianMode? circadianMode,
+    SolarPhasesConfig? phasesConfig,
     bool? isAutorunEnabled,
     bool? isAutoUpdateEnabled,
     bool? isWeatherAdjustmentEnabled,
@@ -849,6 +867,8 @@ class SettingsState {
       activePreset: activePreset ?? this.activePreset,
       curvesMap: curvesMap ?? this.curvesMap,
       curveSharpness: curveSharpness ?? this.curveSharpness,
+      circadianMode: circadianMode ?? this.circadianMode,
+      phasesConfig: phasesConfig ?? this.phasesConfig,
       isAutorunEnabled: isAutorunEnabled ?? this.isAutorunEnabled,
       isAutoUpdateEnabled: isAutoUpdateEnabled ?? this.isAutoUpdateEnabled,
       isWeatherAdjustmentEnabled:

@@ -1022,7 +1022,19 @@
   "crashCopiedToast": "Деталі помилки скопійовано у буфер обміну",
   "showTracebackDetails": "Показати деталі стек-трейсу",
   "hideTraceback": "Сховати стек-трейс",
-  "copied": "Скопійовано"
+  "copied": "Скопійовано",
+  "circadianModePhases": "Фази доби",
+  "circadianModeCurve": "Адаптивна крива",
+  "circadianModeLegacy": "Кут сонця (Градуси)",
+  "phaseNight": "Ніч",
+  "phaseSunrise": "Світанок",
+  "phaseDay": "День",
+  "phaseSunset": "Захід сонця",
+  "phasePlateauTooltip": "Денне плато підтримує стабільний і комфортний рівень світла протягом робочого дня.",
+  "tapToEnterValue": "Натисніть для точного введення з клавіатури",
+  "normalizedNadir": "Ніч",
+  "normalizedHorizon": "Горизонт (0°)",
+  "normalizedNoon": "Полудень"
 }
 
 

@@ -9,11 +9,15 @@ import 'package:solaris/services/gaming_mode_service.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/services/monitor_service.dart';
+import 'package:solaris/models/preset_type.dart';
+import 'package:solaris/models/circadian_mode.dart';
+import 'package:timezone/data/latest.dart' as tz;
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() {
+    tz.initializeTimeZones();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
           const MethodChannel('plugins.flutter.io/path_provider'),
@@ -395,6 +399,34 @@ void main() {
       );
 
       test(
+        'CurrentBrightnessNotifier falls back to global settings appOverrides when specific monitor is selected',
+        () {
+          final settingsNotifier = container.read(settingsProvider.notifier);
+          settingsNotifier.addAppOverride(
+            const AppOverrideRule(
+              exeName: 'photoshop.exe',
+              appDisplayName: 'Photoshop',
+              brightnessMode: AppOverrideMode.fixed,
+              fixedBrightness: 92.0,
+            ),
+          );
+
+          // Select specific monitor DISPLAY1 which has no monitor-specific appOverrides
+          container
+              .read(selectedMonitorsProvider.notifier)
+              .selectOnly(r'\\.\DISPLAY1');
+
+          final activeProcessService = container.read(
+            activeProcessServiceProvider.notifier,
+          );
+          activeProcessService.updateActiveProcessManually('photoshop.exe');
+
+          final brightness = container.read(currentBrightnessProvider);
+          expect(brightness, equals(92.0));
+        },
+      );
+
+      test(
         'Safe Fallback when curve preset ID is deleted/missing in brightness cascade',
         () {
           final settingsNotifier = container.read(settingsProvider.notifier);
@@ -413,6 +445,32 @@ void main() {
           activeProcessService.updateActiveProcessManually('blender.exe');
 
           // Safe fallback should evaluate without throwing StateError exception
+          expect(
+            () => container.read(currentBrightnessProvider),
+            returnsNormally,
+          );
+        },
+      );
+
+      test(
+        'App Override with curve mode applies curve preset even if global circadianMode is solarPhases',
+        () {
+          final settingsNotifier = container.read(settingsProvider.notifier);
+          settingsNotifier.updateCircadianMode(CircadianMode.solarPhases);
+          settingsNotifier.addAppOverride(
+            AppOverrideRule(
+              exeName: 'code.exe',
+              appDisplayName: 'VS Code',
+              brightnessMode: AppOverrideMode.curve,
+              brightnessCurvePresetId: PresetType.dim.name,
+            ),
+          );
+
+          final activeProcessService = container.read(
+            activeProcessServiceProvider.notifier,
+          );
+          activeProcessService.updateActiveProcessManually('code.exe');
+
           expect(
             () => container.read(currentBrightnessProvider),
             returnsNormally,
@@ -569,6 +627,33 @@ void main() {
             activeProcessServiceProvider.notifier,
           );
           activeProcessService.updateActiveProcessManually('lightroom.exe');
+
+          expect(
+            () => container.read(currentTemperatureProvider),
+            returnsNormally,
+          );
+        },
+      );
+
+      test(
+        'App Override with temperature curve mode applies curve preset even if global circadianMode is solarPhases',
+        () {
+          container.read(isColorTemperatureEnabledProvider.notifier).set(true);
+          final settingsNotifier = container.read(settingsProvider.notifier);
+          settingsNotifier.updateCircadianMode(CircadianMode.solarPhases);
+          settingsNotifier.addAppOverride(
+            AppOverrideRule(
+              exeName: 'obsidian.exe',
+              appDisplayName: 'Obsidian',
+              temperatureMode: AppOverrideMode.curve,
+              temperatureCurvePresetId: TemperaturePresetType.warm.name,
+            ),
+          );
+
+          final activeProcessService = container.read(
+            activeProcessServiceProvider.notifier,
+          );
+          activeProcessService.updateActiveProcessManually('obsidian.exe');
 
           expect(
             () => container.read(currentTemperatureProvider),

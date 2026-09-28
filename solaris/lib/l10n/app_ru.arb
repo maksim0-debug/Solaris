@@ -1024,7 +1024,19 @@
   "crashCopiedToast": "Детали ошибки скопированы в буфер обмена",
   "showTracebackDetails": "Показать детали стек-трейса",
   "hideTraceback": "Скрыть стек-трейс",
-  "copied": "Скопировано"
+  "copied": "Скопировано",
+  "circadianModePhases": "Фазы дня",
+  "circadianModeCurve": "Адаптивная кривая",
+  "circadianModeLegacy": "Угол солнца (Градусы)",
+  "phaseNight": "Ночь",
+  "phaseSunrise": "Рассвет",
+  "phaseDay": "День",
+  "phaseSunset": "Закат",
+  "phasePlateauTooltip": "Дневное плато поддерживает стабильный и комфортный уровень света в течение рабочего дня.",
+  "tapToEnterValue": "Нажмите для точного ввода с клавиатуры",
+  "normalizedNadir": "Ночь",
+  "normalizedHorizon": "Горизонт (0°)",
+  "normalizedNoon": "Полдень"
 }
 
 

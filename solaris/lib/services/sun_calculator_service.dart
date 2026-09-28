@@ -21,6 +21,7 @@ class SunCalculatorService {
   DateTime? _cacheDate;
   double? _lastLat;
   double? _lastLon;
+  tz.Location? _lastTimezone;
 
   /// Calculates or retrieves from cache the solar phases for a given location and date.
   ///
@@ -31,7 +32,9 @@ class SunCalculatorService {
     DateTime? date,
     tz.Location? timezone,
   ]) async {
-    final localDate = date ?? DateTime.now();
+    final localDate =
+        date ??
+        (timezone != null ? tz.TZDateTime.now(timezone) : DateTime.now());
     final targetDate = DateTime.utc(
       localDate.year,
       localDate.month,
@@ -39,11 +42,12 @@ class SunCalculatorService {
     );
     final dateOnly = targetDate;
 
-    // Cache hit criteria: same date (day) and same location
+    // Cache hit criteria: same date (day), same location, and same timezone
     if (_cachedPhases != null &&
         _cacheDate == dateOnly &&
         _lastLat == lat &&
-        _lastLon == lon) {
+        _lastLon == lon &&
+        _lastTimezone == timezone) {
       return _cachedPhases!;
     }
 
@@ -115,6 +119,7 @@ class SunCalculatorService {
     _cacheDate = dateOnly;
     _lastLat = lat;
     _lastLon = lon;
+    _lastTimezone = timezone;
 
     return model;
   }
@@ -124,6 +129,7 @@ class SunCalculatorService {
     _cachedPhases = null;
     _lastLat = null;
     _lastLon = null;
+    _lastTimezone = null;
   }
 
   /// Determines the current solar phase based on time.

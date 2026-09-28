@@ -16,6 +16,8 @@ class SolarState {
   final String azimuthTrend;
   final String elevationTrend;
   final String zenithTrend;
+  final double maxElevation;
+  final double minElevation;
 
   SolarState({
     required this.phases,
@@ -31,5 +33,7 @@ class SolarState {
     required this.azimuthTrend,
     required this.elevationTrend,
     required this.zenithTrend,
+    this.maxElevation = 60.0,
+    this.minElevation = -60.0,
   });
 }

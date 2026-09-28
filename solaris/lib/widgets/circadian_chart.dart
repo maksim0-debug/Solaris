@@ -4,8 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/providers/temperature_provider.dart';
-import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/constants/temperature_constants.dart';
+import 'package:solaris/models/circadian_mode.dart';
+import 'package:solaris/models/settings_state.dart';
+import 'package:solaris/models/solar_phase_model.dart';
+import 'package:solaris/models/solar_phases_config.dart';
+import 'package:solaris/services/circadian_service.dart';
+import 'package:solaris/services/sun_calculator_service.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 class CircadianChartWidget extends ConsumerStatefulWidget {
   const CircadianChartWidget({super.key});
@@ -20,6 +26,16 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
   int? _touchedIndex;
+
+  List<FlSpot>? _cachedPhaseSpots;
+  int? _lastPhaseSpotsDay;
+  SolarPhasesConfig? _lastPhasesConfig;
+  bool? _lastIsTemp;
+  double? _lastLat;
+  double? _lastLon;
+  double? _lastMaxElev;
+  double? _lastMinElev;
+  tz.Location? _lastTimezone;
 
   @override
   void initState() {
@@ -83,7 +99,8 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
     final weatherAsync = ref.watch(currentWeatherProvider);
     final circadianService = ref.read(circadianServiceProvider);
     final currentTimeAsync = ref.watch(currentTimeProvider);
-    final now = currentTimeAsync.value ?? DateTime.now();
+    final timezoneVal = ref.watch(effectiveTimezoneProvider);
+    final now = currentTimeAsync.value ?? tz.TZDateTime.now(timezoneVal);
 
     final selectedIds = ref.watch(selectedMonitorsProvider);
     final settingsMap = ref.watch(settingsProvider).value;
@@ -102,20 +119,94 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
       orElse: () => 0.0,
     );
 
-    // Calculate marker Y position
+    final mode = currentSettings.circadianMode;
+    final isPhasesMode = mode == CircadianMode.solarPhases;
+    final sunService = ref.read(sunCalculatorServiceProvider);
+    final locationAsync = ref.watch(effectiveLocationProvider);
+    final lat = locationAsync.value?.latitude ?? 50.45;
+    final lon = locationAsync.value?.longitude ?? 30.52;
+    final phases = solarAsync.value?.phases;
+    final maxElev =
+        solarAsync.value?.maxElevation ??
+        (phases != null
+            ? sunService.getSunElevation(lat, lon, phases.solarNoon)
+            : 60.0);
+    final minElev =
+        solarAsync.value?.minElevation ??
+        (phases != null
+            ? sunService.getSunElevation(
+                lat,
+                lon,
+                phases.solarNoon.add(const Duration(hours: 12)),
+              )
+            : -60.0);
+
+    List<FlSpot> displaySpots = points;
+    double markerX = 0.0;
     double currentBrightnessY = points.first.y;
-    if (currentElevation >= points.last.x) {
-      currentBrightnessY = points.last.y;
-    } else if (currentElevation > points.first.x) {
-      for (int i = 0; i < points.length - 1; i++) {
-        if (currentElevation >= points[i].x &&
-            currentElevation <= points[i + 1].x) {
-          final t =
-              (currentElevation - points[i].x) /
-              (points[i + 1].x - points[i].x);
-          currentBrightnessY =
-              points[i].y + (points[i + 1].y - points[i].y) * t;
-          break;
+
+    if (mode == CircadianMode.solarPhases) {
+      displaySpots = _getPhaseSpots(
+        now: now,
+        timezoneVal: timezoneVal,
+        phases: phases,
+        sunService: sunService,
+        circadianService: circadianService,
+        config: currentSettings.phasesConfig,
+        isTemp: isTemp,
+        lat: lat,
+        lon: lon,
+        maxElev: maxElev,
+        minElev: minElev,
+        fallbackPoints: points,
+      );
+      markerX = (now.hour + now.minute / 60.0 + now.second / 3600.0).clamp(
+        0.0,
+        24.0,
+      );
+      currentBrightnessY = isTemp
+          ? (phases != null
+                ? circadianService
+                      .calculateTemperatureFromPhases(
+                        config: currentSettings.phasesConfig,
+                        phases: phases,
+                        elevation: currentElevation,
+                        maxElevation: maxElev,
+                        minElevation: minElev,
+                        now: now,
+                      )
+                      .toDouble()
+                : TemperatureConstants.maxDouble)
+          : (phases != null
+                ? circadianService.calculateBrightnessFromPhases(
+                    config: currentSettings.phasesConfig,
+                    phases: phases,
+                    elevation: currentElevation,
+                    maxElevation: maxElev,
+                    minElevation: minElev,
+                    now: now,
+                  )
+                : 100.0);
+    } else {
+      displaySpots = points;
+      markerX = circadianService
+          .normalizeElevationToStandardRange(
+            elevation: currentElevation,
+            minElevation: minElev,
+            maxElevation: maxElev,
+          )
+          .clamp(-20.0, 90.0);
+
+      if (markerX >= points.last.x) {
+        currentBrightnessY = points.last.y;
+      } else if (markerX > points.first.x) {
+        for (int i = 0; i < points.length - 1; i++) {
+          if (markerX >= points[i].x && markerX <= points[i + 1].x) {
+            final t = (markerX - points[i].x) / (points[i + 1].x - points[i].x);
+            currentBrightnessY =
+                points[i].y + (points[i + 1].y - points[i].y) * t;
+            break;
+          }
         }
       }
     }
@@ -134,7 +225,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
             );
         if (drop > 0) {
           adjustedBrightnessY = (currentBrightnessY - drop).clamp(
-            points.first.y,
+            displaySpots.first.y,
             6500.0,
           );
         }
@@ -152,7 +243,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
               currentSettings.weatherAdjustmentIntensity;
           final finalFactor = 1.0 - penalty;
           adjustedBrightnessY = (currentBrightnessY * finalFactor).clamp(
-            points.first.y,
+            displaySpots.first.y,
             100.0,
           );
         }
@@ -162,17 +253,29 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
     // Chart bar data
     final List<LineChartBarData> lineBars = [
       LineChartBarData(
-        spots: points,
-        isCurved: true,
+        spots: displaySpots,
+        isCurved: !isPhasesMode,
         curveSmoothness: 0.3,
-        gradient: const LinearGradient(
-          colors: [nightColor, twilightColor, dayColor],
-          stops: [0.0, 0.2, 0.8],
-        ),
+        preventCurveOverShooting: true,
+        gradient: isPhasesMode
+            ? const LinearGradient(
+                colors: [
+                  nightColor,
+                  twilightColor,
+                  dayColor,
+                  twilightColor,
+                  nightColor,
+                ],
+                stops: [0.0, 0.25, 0.5, 0.75, 1.0],
+              )
+            : const LinearGradient(
+                colors: [nightColor, twilightColor, dayColor],
+                stops: [0.0, 0.2, 0.8],
+              ),
         barWidth: 3,
         isStrokeCapRound: true,
         dotData: FlDotData(
-          show: true,
+          show: !isPhasesMode,
           getDotPainter: (spot, percent, barData, index) {
             final isTouched = index == _touchedIndex;
             return FlDotCirclePainter(
@@ -182,10 +285,12 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
               strokeColor: isTouched ? dayColor : Colors.white24,
             );
           },
-          checkToShowDot: (spot, barData) => true,
+          checkToShowDot: (spot, barData) => !isPhasesMode,
         ),
         belowBarData: BarAreaData(
           show: true,
+          cutOffY: isTemp ? TemperatureConstants.minDouble : 0.0,
+          applyCutOffY: true,
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -200,9 +305,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
       ),
       // Animated halo around the marker
       LineChartBarData(
-        spots: [
-          FlSpot(currentElevation.clamp(-20.0, 90.0), currentBrightnessY),
-        ],
+        spots: [FlSpot(markerX, currentBrightnessY)],
         dotData: FlDotData(
           show: true,
           getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
@@ -217,9 +320,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
         ),
       ),
       LineChartBarData(
-        spots: [
-          FlSpot(currentElevation.clamp(-20.0, 90.0), currentBrightnessY),
-        ],
+        spots: [FlSpot(markerX, currentBrightnessY)],
         dotData: FlDotData(
           show: true,
           getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
@@ -234,9 +335,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
       ),
       // Main sun position marker (larger by 25%)
       LineChartBarData(
-        spots: [
-          FlSpot(currentElevation.clamp(-20.0, 90.0), currentBrightnessY),
-        ],
+        spots: [FlSpot(markerX, currentBrightnessY)],
         dotData: FlDotData(
           show: true,
           getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
@@ -258,8 +357,8 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
       lineBars.add(
         LineChartBarData(
           spots: [
-            FlSpot(currentElevation.clamp(-20.0, 90.0), currentBrightnessY),
-            FlSpot(currentElevation.clamp(-20.0, 90.0), adjustedBrightnessY),
+            FlSpot(markerX, currentBrightnessY),
+            FlSpot(markerX, adjustedBrightnessY),
           ],
           isCurved: false,
           color: Colors.white24,
@@ -271,9 +370,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
       // Weather marker halo (animated)
       lineBars.add(
         LineChartBarData(
-          spots: [
-            FlSpot(currentElevation.clamp(-20.0, 90.0), adjustedBrightnessY),
-          ],
+          spots: [FlSpot(markerX, adjustedBrightnessY)],
           dotData: FlDotData(
             show: true,
             getDotPainter: (spot, percent, barData, index) =>
@@ -290,9 +387,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
       // Actual marker with weather (larger by 25%)
       lineBars.add(
         LineChartBarData(
-          spots: [
-            FlSpot(currentElevation.clamp(-20.0, 90.0), adjustedBrightnessY),
-          ],
+          spots: [FlSpot(markerX, adjustedBrightnessY)],
           dotData: FlDotData(
             show: true,
             getDotPainter: (spot, percent, barData, index) =>
@@ -324,10 +419,23 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
                   show: true,
                   drawVerticalLine: true,
                   horizontalInterval: isTemp ? 500 : 25,
-                  verticalInterval: 10,
+                  verticalInterval: mode == CircadianMode.solarPhases ? 4 : 10,
                   getDrawingHorizontalLine: (value) =>
                       const FlLine(color: Colors.white10, strokeWidth: 1),
                   getDrawingVerticalLine: (value) {
+                    if (mode == CircadianMode.solarPhases) {
+                      if (value == 12) {
+                        return const FlLine(
+                          color: Color(0xFFFDBA74),
+                          strokeWidth: 1.5,
+                          dashArray: [5, 5],
+                        );
+                      }
+                      return const FlLine(
+                        color: Colors.white10,
+                        strokeWidth: 1,
+                      );
+                    }
                     // Highlight the horizon line (0 degrees)
                     if (value == 0) {
                       return const FlLine(
@@ -351,25 +459,59 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: _bottomTitleHeight,
-                      interval: 20,
+                      interval: mode == CircadianMode.solarPhases ? 4 : 10,
                       getTitlesWidget: (value, meta) {
-                        // Show degrees (-20°, 0°, 20°, 40°...)
-                        return SideTitleWidget(
-                          meta: meta,
-                          space: 4,
-                          child: Text(
-                            l10n.chartDegreesFormat(value.toInt()),
-                            style: TextStyle(
-                              color: value == 0
-                                  ? const Color(0xFFFDBA74)
-                                  : Colors.white30,
-                              fontWeight: value == 0
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                              fontSize: 10,
+                        if (mode == CircadianMode.solarPhases) {
+                          final rounded = value.round();
+                          if ((value - rounded).abs() > 0.05 ||
+                              rounded % 4 != 0) {
+                            return const SizedBox();
+                          }
+                          return SideTitleWidget(
+                            meta: meta,
+                            space: 4,
+                            child: Text(
+                              '${rounded.toString().padLeft(2, '0')}:00',
+                              style: TextStyle(
+                                color: rounded == 12
+                                    ? const Color(0xFFFDBA74)
+                                    : Colors.white30,
+                                fontWeight: rounded == 12
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                fontSize: 10,
+                              ),
                             ),
-                          ),
-                        );
+                          );
+                        } else {
+                          final rounded = value.round();
+                          if ((value - rounded).abs() > 0.05) {
+                            return const SizedBox();
+                          }
+                          final text = switch (rounded) {
+                            -20 => l10n.normalizedNadir,
+                            0 => l10n.normalizedHorizon,
+                            90 => l10n.normalizedNoon,
+                            _ => null,
+                          };
+                          if (text == null) return const SizedBox();
+                          return SideTitleWidget(
+                            meta: meta,
+                            space: 4,
+                            child: Text(
+                              text,
+                              style: TextStyle(
+                                color: rounded == 0
+                                    ? const Color(0xFFFDBA74)
+                                    : Colors.white60,
+                                fontWeight: rounded == 0
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                fontSize: 10,
+                              ),
+                            ),
+                          );
+                        }
                       },
                     ),
                   ),
@@ -379,8 +521,14 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
                       interval: isTemp ? 500 : 25,
                       reservedSize: _leftTitleWidth + (isTemp ? 20 : 0),
                       getTitlesWidget: (value, meta) {
-                        if (!isTemp && value > 100) return const SizedBox();
-                        if (isTemp && value > 7000) return const SizedBox();
+                        if (!isTemp && (value > 100 || value < 0)) {
+                          return const SizedBox();
+                        }
+                        if (isTemp &&
+                            (value > TemperatureConstants.max ||
+                                value < TemperatureConstants.min)) {
+                          return const SizedBox();
+                        }
                         return SideTitleWidget(
                           meta: meta,
                           child: Text(
@@ -398,13 +546,13 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
                   ),
                 ),
                 borderData: FlBorderData(show: false),
-                minX: -20, // From -20 degrees (night)
-                maxX: 90, // Up to +90 degrees (zenith)
-                minY: isTemp ? 1000 : 0,
-                maxY: isTemp ? 7000 : 105, // Up to 7000K or 105%
+                minX: mode == CircadianMode.solarPhases ? 0 : -20,
+                maxX: mode == CircadianMode.solarPhases ? 24 : 90,
+                minY: isTemp ? TemperatureConstants.minDouble : 0,
+                maxY: isTemp ? TemperatureConstants.maxDouble : 100,
                 lineBarsData: lineBars,
                 lineTouchData: LineTouchData(
-                  enabled: true,
+                  enabled: mode != CircadianMode.solarPhases,
                   handleBuiltInTouches: false,
                   touchCallback:
                       (FlTouchEvent event, LineTouchResponse? touchResponse) {
@@ -467,6 +615,90 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
     );
   }
 
+  List<FlSpot> _getPhaseSpots({
+    required DateTime now,
+    required tz.Location timezoneVal,
+    required SolarPhaseModel? phases,
+    required SunCalculatorService sunService,
+    required CircadianService circadianService,
+    required SolarPhasesConfig config,
+    required bool isTemp,
+    required double lat,
+    required double lon,
+    required double maxElev,
+    required double minElev,
+    required List<FlSpot> fallbackPoints,
+  }) {
+    if (phases == null) return fallbackPoints;
+
+    final isCacheValid =
+        _cachedPhaseSpots != null &&
+        _lastPhaseSpotsDay == now.day &&
+        _lastPhasesConfig == config &&
+        _lastIsTemp == isTemp &&
+        _lastLat == lat &&
+        _lastLon == lon &&
+        _lastMaxElev == maxElev &&
+        _lastMinElev == minElev &&
+        _lastTimezone == timezoneVal;
+
+    if (isCacheValid) {
+      return _cachedPhaseSpots!;
+    }
+
+    final List<FlSpot> spots = [];
+    const stepHours = 5.0 / 60.0; // 5-minute sampling interval
+    for (double h = 0.0; h <= 24.0001; h += stepHours) {
+      final sampleMinutes = (h * 60).round();
+      final sampleTime = tz.TZDateTime(
+        timezoneVal,
+        now.year,
+        now.month,
+        now.day,
+        0,
+      ).add(Duration(minutes: sampleMinutes));
+      final elev = sunService.getSunElevation(lat, lon, sampleTime);
+      final rawY = isTemp
+          ? circadianService
+                .calculateTemperatureFromPhases(
+                  config: config,
+                  phases: phases,
+                  elevation: elev,
+                  maxElevation: maxElev,
+                  minElevation: minElev,
+                  now: sampleTime,
+                )
+                .toDouble()
+          : circadianService.calculateBrightnessFromPhases(
+              config: config,
+              phases: phases,
+              elevation: elev,
+              maxElevation: maxElev,
+              minElevation: minElev,
+              now: sampleTime,
+            );
+      final clampedY = isTemp
+          ? rawY.clamp(
+              TemperatureConstants.minDouble,
+              TemperatureConstants.maxDouble,
+            )
+          : rawY.clamp(0.0, 100.0);
+      spots.add(FlSpot(h.clamp(0.0, 24.0), clampedY));
+    }
+
+    _cachedPhaseSpots = spots;
+    _lastPhaseSpotsDay = now.day;
+    _lastPhasesConfig = config;
+    _lastIsTemp = isTemp;
+    _lastLat = lat;
+    _lastLon = lon;
+    _lastMaxElev = maxElev;
+    _lastMinElev = minElev;
+    _lastTimezone = timezoneVal;
+
+    return spots;
+  }
+
   Offset _pixelToChart(Offset localPosition, Size widgetSize) {
     final isTemp = ref.read(editingTemperatureProvider);
     final effectiveLeftWidth = _leftTitleWidth + (isTemp ? 20.0 : 0.0);
@@ -479,8 +711,8 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
 
     if (gridWidth <= 0 || gridHeight <= 0) return const Offset(0, 0);
 
-    final maxY = isTemp ? 7000.0 : 105.0;
-    final minY = isTemp ? 1000.0 : 0.0;
+    final maxY = isTemp ? TemperatureConstants.maxDouble : 100.0;
+    final minY = isTemp ? TemperatureConstants.minDouble : 0.0;
     final rangeY = maxY - minY;
 
     double x =
