@@ -1474,8 +1474,8 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _CircadianModeSelector extends ConsumerWidget {
-  const _CircadianModeSelector();
+class CircadianModeSelector extends ConsumerWidget {
+  const CircadianModeSelector({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1487,53 +1487,103 @@ class _CircadianModeSelector extends ConsumerWidget {
         settingsMap?['all'] ??
         SettingsState();
     final mode = currentSettings.circadianMode;
+    final isTemp = ref.watch(editingTemperatureProvider);
+    final isPhasesMode = mode == CircadianMode.solarPhases;
+    final showReset =
+        isPhasesMode && currentSettings.phasesConfig.isModified(isTemp: isTemp);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-      child: Center(
-        child: SegmentedButton<CircadianMode>(
-          showSelectedIcon: false,
-          segments: [
-            ButtonSegment<CircadianMode>(
-              value: CircadianMode.solarPhases,
-              label: Text(l10n.circadianModePhases),
-              icon: const Icon(LucideIcons.sunMedium),
+      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 640;
+
+          final segmentedButton = SegmentedButton<CircadianMode>(
+            showSelectedIcon: false,
+            segments: [
+              ButtonSegment<CircadianMode>(
+                value: CircadianMode.solarPhases,
+                label: Text(l10n.circadianModePhases),
+                icon: const Icon(LucideIcons.sunMedium),
+              ),
+              ButtonSegment<CircadianMode>(
+                value: CircadianMode.normalizedCurve,
+                label: Text(l10n.circadianModeCurve),
+                icon: const Icon(LucideIcons.spline),
+              ),
+            ],
+            selected: {mode},
+            onSelectionChanged: (Set<CircadianMode> newSelection) {
+              ref
+                  .read(settingsProvider.notifier)
+                  .updateCircadianMode(newSelection.first);
+            },
+            style: ButtonStyle(
+              backgroundColor: WidgetStateProperty.resolveWith<Color>((
+                Set<WidgetState> states,
+              ) {
+                if (states.contains(WidgetState.selected)) {
+                  return const Color(0xFF6366F1).withValues(alpha: 0.2);
+                }
+                return Colors.transparent;
+              }),
+              foregroundColor: WidgetStateProperty.resolveWith<Color>((
+                Set<WidgetState> states,
+              ) {
+                if (states.contains(WidgetState.selected)) {
+                  return const Color(0xFF6366F1);
+                }
+                return Colors.white70;
+              }),
             ),
-            ButtonSegment<CircadianMode>(
-              value: CircadianMode.normalizedCurve,
-              label: Text(l10n.circadianModeCurve),
-              icon: const Icon(LucideIcons.spline),
-            ),
-          ],
-          selected: {mode},
-          onSelectionChanged: (Set<CircadianMode> newSelection) {
-            ref
-                .read(settingsProvider.notifier)
-                .updateCircadianMode(newSelection.first);
-          },
-          style: ButtonStyle(
-            backgroundColor: WidgetStateProperty.resolveWith<Color>((
-              Set<WidgetState> states,
-            ) {
-              if (states.contains(WidgetState.selected)) {
-                return const Color(0xFF6366F1).withValues(alpha: 0.2);
-              }
-              return Colors.transparent;
-            }),
-            foregroundColor: WidgetStateProperty.resolveWith<Color>((
-              Set<WidgetState> states,
-            ) {
-              if (states.contains(WidgetState.selected)) {
-                return const Color(0xFF6366F1);
-              }
-              return Colors.white70;
-            }),
-          ),
-        ),
+          );
+
+          if (!showReset) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Center(child: segmentedButton),
+            );
+          }
+
+          if (isNarrow) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Center(child: segmentedButton),
+                  const SizedBox(height: 4),
+                  const Align(
+                    alignment: Alignment.centerRight,
+                    child: SolarPhaseResetButton(),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Center(child: segmentedButton),
+              ),
+              const Positioned(
+                right: 0,
+                top: 0,
+                bottom: 0,
+                child: Center(child: SolarPhaseResetButton()),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 }
+
+typedef _CircadianModeSelector = CircadianModeSelector;
 
 class _TypeSelector extends ConsumerWidget {
   const _TypeSelector();
@@ -1663,12 +1713,14 @@ class _SettingsRow extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white70,
+                  Flexible(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white70,
+                      ),
                     ),
                   ),
                   if (tooltip != null) ...[

@@ -103,6 +103,45 @@ class SolarPhasesConfig extends Equatable {
     );
   }
 
+  /// Returns whether this configuration differs from [defaultBalanced] for
+  /// either temperature or brightness depending on [isTemp].
+  bool isModified({required bool isTemp}) {
+    const def = defaultBalanced;
+    if (isTemp) {
+      return night.temperature != def.night.temperature ||
+          sunrise.temperature != def.sunrise.temperature ||
+          day.temperature != def.day.temperature ||
+          sunset.temperature != def.sunset.temperature;
+    } else {
+      return (night.brightness - def.night.brightness).abs() > 0.05 ||
+          (sunrise.brightness - def.sunrise.brightness).abs() > 0.05 ||
+          (day.brightness - def.day.brightness).abs() > 0.05 ||
+          (sunset.brightness - def.sunset.brightness).abs() > 0.05;
+    }
+  }
+
+  /// Resets the targets of this configuration to [defaultBalanced] for
+  /// either temperature or brightness depending on [isTemp], while preserving
+  /// the custom values of the other metric.
+  SolarPhasesConfig resetToDefault({required bool isTemp}) {
+    const def = defaultBalanced;
+    if (isTemp) {
+      return copyWith(
+        night: night.copyWith(temperature: def.night.temperature),
+        sunrise: sunrise.copyWith(temperature: def.sunrise.temperature),
+        day: day.copyWith(temperature: def.day.temperature),
+        sunset: sunset.copyWith(temperature: def.sunset.temperature),
+      );
+    } else {
+      return copyWith(
+        night: night.copyWith(brightness: def.night.brightness),
+        sunrise: sunrise.copyWith(brightness: def.sunrise.brightness),
+        day: day.copyWith(brightness: def.day.brightness),
+        sunset: sunset.copyWith(brightness: def.sunset.brightness),
+      );
+    }
+  }
+
   @override
   List<Object?> get props => [night, sunrise, day, sunset];
 }
