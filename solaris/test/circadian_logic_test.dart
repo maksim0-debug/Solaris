@@ -199,17 +199,17 @@ void main() {
         'should apply smart offsets and respect clamp logic with proportional impact',
         () {
           final smartData = const SmartCircadianData.neutral().copyWith(
-            sleepPressureTemperatureOffset: -1000,
-            windDownTemperatureOffset: -3000,
+            sleepPressureTemperatureOffset: -2000,
+            windDownTemperatureOffset: -6000,
           );
 
           // Elevation 0.0 -> base = 5000 K
-          // Total raw offset = -4000 K -> theoretical 1000 K.
-          // Clamped final = 3300 K.
-          // Total reduction = 5000 - 3300 = 1700 K.
-          // windDown weight = 3000, pressure weight = 1000 (total = 4000).
-          // windDownImpact = -1700 * 3000 / 4000 = -1275 K.
-          // sleepPressureImpact = -1700 * 1000 / 4000 = -425 K.
+          // Total raw offset = -8000 K -> theoretical -3000 K.
+          // Clamped final = 1000 K (TemperatureConstants.min floor).
+          // Total reduction = 5000 - 1000 = 4000 K.
+          // windDown weight = 6000, pressure weight = 2000 (total = 8000).
+          // windDownImpact = -4000 * 6000 / 8000 = -3000 K.
+          // sleepPressureImpact = -4000 * 2000 / 8000 = -1000 K.
           final result = service.calculateTargetTemperature(
             phases,
             0.0,
@@ -219,14 +219,14 @@ void main() {
           );
 
           expect(result.baseTemperature, 5000);
-          expect(result.sleepPressureImpact, -425);
-          expect(result.windDownImpact, -1275);
-          expect(result.finalTemperature, 3300);
+          expect(result.sleepPressureImpact, -1000);
+          expect(result.windDownImpact, -3000);
+          expect(result.finalTemperature, 1000);
           expect(
             result.baseTemperature +
                 result.sleepPressureImpact +
                 result.windDownImpact,
-            3300,
+            1000,
           );
         },
       );
