@@ -1152,6 +1152,19 @@
   "tapToEnterValue": "Click to type exact value",
   "normalizedNadir": "Night",
   "normalizedHorizon": "Horizon (0°)",
-  "normalizedNoon": "Solar Noon"
+  "normalizedNoon": "Solar Noon",
+  "expandedGammaWarningTooltip": "Extended warmth (1000K–3300K) requires Windows registry activation. Click to configure.",
+  "expandedGammaDialogTitle": "Extended Color Range (1000K–3300K)",
+  "expandedGammaDialogDescription": "By default, Windows restricts color temperature adjustments below 3300K to prevent unreadable displays. To unlock deep warmth down to 1000K, a system parameter (GdiIcmGammaRange) must be enabled in the registry.",
+  "expandedGammaUnlockButton": "Unlock in Registry",
+  "expandedGammaElevating": "Requesting Windows administrator rights...",
+  "expandedGammaRestarting": "Restarting computer...",
+  "expandedGammaSuccessTitle": "Registry Activated",
+  "expandedGammaSuccessDescription": "The registry parameter was successfully configured. A computer restart is required for Windows to apply the changes.",
+  "expandedGammaRestartNow": "Restart Now",
+  "expandedGammaRestartLater": "Restart Later",
+  "expandedGammaFailed": "Failed to update registry. Make sure you accepted the Windows administrator prompt.",
+  "expandedGammaRestartPendingTooltip": "Restart required: Extended warmth (1000K–3300K) will be available after restarting Windows. Click to restart.",
+  "expandedGammaRestartFailed": "Failed to restart computer. Please restart manually to apply changes."
 }
 

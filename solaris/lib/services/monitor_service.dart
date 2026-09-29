@@ -291,4 +291,69 @@ class MonitorService {
 
     return monitors;
   }
+
+  Future<ExpandedGammaStatus> getExpandedGammaStatus() async {
+    try {
+      final int? statusCode = await _channel.invokeMethod<int>(
+        'getExpandedGammaStatus',
+      );
+      return ExpandedGammaStatus.fromInt(statusCode);
+    } catch (e) {
+      debugPrint('Failed to query getExpandedGammaStatus: $e');
+      return ExpandedGammaStatus.disabled;
+    }
+  }
+
+  Future<bool> isExpandedGammaUnlocked() async {
+    try {
+      final bool? isUnlocked = await _channel.invokeMethod<bool>(
+        'isExpandedGammaUnlocked',
+      );
+      return isUnlocked ?? false;
+    } catch (e) {
+      debugPrint('Failed to query isExpandedGammaUnlocked: $e');
+      return false;
+    }
+  }
+
+  Future<bool> unlockExpandedGamma() async {
+    try {
+      final bool? success = await _channel.invokeMethod<bool>(
+        'unlockExpandedGamma',
+      );
+      return success ?? false;
+    } catch (e) {
+      debugPrint('Failed to unlockExpandedGamma: $e');
+      return false;
+    }
+  }
+
+  Future<bool> restartComputer() async {
+    try {
+      final bool? success = await _channel.invokeMethod<bool>(
+        'restartComputer',
+      );
+      return success ?? false;
+    } catch (e) {
+      debugPrint('Failed to restartComputer: $e');
+      return false;
+    }
+  }
+}
+
+enum ExpandedGammaStatus {
+  disabled,
+  pendingRestart,
+  active;
+
+  static ExpandedGammaStatus fromInt(int? value) {
+    switch (value) {
+      case 1:
+        return ExpandedGammaStatus.pendingRestart;
+      case 2:
+        return ExpandedGammaStatus.active;
+      default:
+        return ExpandedGammaStatus.disabled;
+    }
+  }
 }

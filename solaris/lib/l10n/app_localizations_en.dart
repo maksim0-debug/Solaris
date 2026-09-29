@@ -2602,4 +2602,50 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get normalizedNoon => 'Solar Noon';
+
+  @override
+  String get expandedGammaWarningTooltip =>
+      'Extended warmth (1000K–3300K) requires Windows registry activation. Click to configure.';
+
+  @override
+  String get expandedGammaDialogTitle => 'Extended Color Range (1000K–3300K)';
+
+  @override
+  String get expandedGammaDialogDescription =>
+      'By default, Windows restricts color temperature adjustments below 3300K to prevent unreadable displays. To unlock deep warmth down to 1000K, a system parameter (GdiIcmGammaRange) must be enabled in the registry.';
+
+  @override
+  String get expandedGammaUnlockButton => 'Unlock in Registry';
+
+  @override
+  String get expandedGammaElevating =>
+      'Requesting Windows administrator rights...';
+
+  @override
+  String get expandedGammaRestarting => 'Restarting computer...';
+
+  @override
+  String get expandedGammaSuccessTitle => 'Registry Activated';
+
+  @override
+  String get expandedGammaSuccessDescription =>
+      'The registry parameter was successfully configured. A computer restart is required for Windows to apply the changes.';
+
+  @override
+  String get expandedGammaRestartNow => 'Restart Now';
+
+  @override
+  String get expandedGammaRestartLater => 'Restart Later';
+
+  @override
+  String get expandedGammaFailed =>
+      'Failed to update registry. Make sure you accepted the Windows administrator prompt.';
+
+  @override
+  String get expandedGammaRestartPendingTooltip =>
+      'Restart required: Extended warmth (1000K–3300K) will be available after restarting Windows. Click to restart.';
+
+  @override
+  String get expandedGammaRestartFailed =>
+      'Failed to restart computer. Please restart manually to apply changes.';
 }

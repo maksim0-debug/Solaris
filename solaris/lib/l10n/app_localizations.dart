@@ -4503,6 +4503,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Solar Noon'**
   String get normalizedNoon;
+
+  /// No description provided for @expandedGammaWarningTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Extended warmth (1000K–3300K) requires Windows registry activation. Click to configure.'**
+  String get expandedGammaWarningTooltip;
+
+  /// No description provided for @expandedGammaDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Extended Color Range (1000K–3300K)'**
+  String get expandedGammaDialogTitle;
+
+  /// No description provided for @expandedGammaDialogDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'By default, Windows restricts color temperature adjustments below 3300K to prevent unreadable displays. To unlock deep warmth down to 1000K, a system parameter (GdiIcmGammaRange) must be enabled in the registry.'**
+  String get expandedGammaDialogDescription;
+
+  /// No description provided for @expandedGammaUnlockButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock in Registry'**
+  String get expandedGammaUnlockButton;
+
+  /// No description provided for @expandedGammaElevating.
+  ///
+  /// In en, this message translates to:
+  /// **'Requesting Windows administrator rights...'**
+  String get expandedGammaElevating;
+
+  /// No description provided for @expandedGammaRestarting.
+  ///
+  /// In en, this message translates to:
+  /// **'Restarting computer...'**
+  String get expandedGammaRestarting;
+
+  /// No description provided for @expandedGammaSuccessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Registry Activated'**
+  String get expandedGammaSuccessTitle;
+
+  /// No description provided for @expandedGammaSuccessDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The registry parameter was successfully configured. A computer restart is required for Windows to apply the changes.'**
+  String get expandedGammaSuccessDescription;
+
+  /// No description provided for @expandedGammaRestartNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart Now'**
+  String get expandedGammaRestartNow;
+
+  /// No description provided for @expandedGammaRestartLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart Later'**
+  String get expandedGammaRestartLater;
+
+  /// No description provided for @expandedGammaFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update registry. Make sure you accepted the Windows administrator prompt.'**
+  String get expandedGammaFailed;
+
+  /// No description provided for @expandedGammaRestartPendingTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart required: Extended warmth (1000K–3300K) will be available after restarting Windows. Click to restart.'**
+  String get expandedGammaRestartPendingTooltip;
+
+  /// No description provided for @expandedGammaRestartFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to restart computer. Please restart manually to apply changes.'**
+  String get expandedGammaRestartFailed;
 }
 
 class _AppLocalizationsDelegate

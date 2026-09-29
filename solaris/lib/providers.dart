@@ -51,6 +51,7 @@ import 'package:solaris/models/map_health_report.dart';
 export 'package:solaris/providers/update_provider.dart';
 export 'package:solaris/providers/post_update_provider.dart';
 export 'package:solaris/models/post_update_result.dart';
+export 'package:solaris/providers/expanded_gamma_provider.dart';
 import 'package:solaris/services/windows_firewall_service.dart';
 import 'package:solaris/services/websocket_service.dart';
 import 'package:solaris/services/windows_power_listener.dart';

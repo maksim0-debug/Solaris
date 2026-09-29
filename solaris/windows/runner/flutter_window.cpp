@@ -12,6 +12,7 @@
 #include <flutter/event_channel.h>
 #include <flutter/standard_method_codec.h>
 #include <shellapi.h>
+#include <objbase.h>
 
 struct FocusEventData {
   bool is_gaming;
@@ -104,6 +105,137 @@ class SystemEventsStreamHandler : public flutter::StreamHandler<flutter::Encodab
   MonitorManager& manager_;
   std::unique_ptr<flutter::EventSink<flutter::EncodableValue>>& sink_ref_;
 };
+
+namespace {
+
+// Checks the registry status of GdiIcmGammaRange and whether a restart is pending:
+// 0: Disabled (registry value missing, invalid, or != 256)
+// 1: PendingRestart (registry value == 256, but written after current system boot)
+// 2: Active (registry value == 256, written prior to current system boot)
+int CheckExpandedGammaStatus() {
+  HKEY hKey = nullptr;
+  LSTATUS status = RegOpenKeyExW(
+      HKEY_LOCAL_MACHINE,
+      L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\ICM",
+      0,
+      KEY_READ | KEY_WOW64_64KEY,
+      &hKey);
+
+  if (status != ERROR_SUCCESS) {
+    return 0;
+  }
+
+  DWORD value = 0;
+  DWORD size = sizeof(value);
+  DWORD type = 0;
+  status = RegQueryValueExW(
+      hKey,
+      L"GdiIcmGammaRange",
+      nullptr,
+      &type,
+      reinterpret_cast<LPBYTE>(&value),
+      &size);
+
+  if (status != ERROR_SUCCESS || type != REG_DWORD || value != 256) {
+    RegCloseKey(hKey);
+    return 0;
+  }
+
+  FILETIME ftLastWrite;
+  status = RegQueryInfoKeyW(
+      hKey,
+      nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+      nullptr, nullptr, nullptr, nullptr,
+      &ftLastWrite);
+
+  RegCloseKey(hKey);
+
+  if (status != ERROR_SUCCESS) {
+    return 2;
+  }
+
+  FILETIME ftNow;
+  GetSystemTimeAsFileTime(&ftNow);
+  ULARGE_INTEGER nowVal;
+  nowVal.LowPart = ftNow.dwLowDateTime;
+  nowVal.HighPart = ftNow.dwHighDateTime;
+
+  // Retrieve interrupt time in 100-nanosecond intervals.
+  // QueryInterruptTime (available on Windows 10 build 10240+) includes time spent
+  // in system sleep/standby, preventing calculated boot time from drifting into
+  // the future after sleep cycles (which occurs with GetTickCount64).
+  ULONGLONG interruptTimeIntervals = 0;
+  typedef VOID (WINAPI *QueryInterruptTimeFn)(PULONGLONG lpInterruptTime);
+  HMODULE hKernel32 = GetModuleHandleW(L"kernel32.dll");
+  auto pfnQueryInterruptTime = hKernel32 ? reinterpret_cast<QueryInterruptTimeFn>(
+      GetProcAddress(hKernel32, "QueryInterruptTime")) : nullptr;
+
+  if (pfnQueryInterruptTime) {
+    pfnQueryInterruptTime(&interruptTimeIntervals);
+  } else {
+    interruptTimeIntervals = GetTickCount64() * 10000ULL;
+  }
+
+  ULARGE_INTEGER bootTime;
+  if (nowVal.QuadPart > interruptTimeIntervals) {
+    bootTime.QuadPart = nowVal.QuadPart - interruptTimeIntervals;
+  } else {
+    bootTime.QuadPart = 0;
+  }
+
+  ULARGE_INTEGER writeVal;
+  writeVal.LowPart = ftLastWrite.dwLowDateTime;
+  writeVal.HighPart = ftLastWrite.dwHighDateTime;
+
+  const ULONGLONG kGracePeriodIntervals = 20000000ULL; // 2-second grace period for clock skew
+  if (writeVal.QuadPart > bootTime.QuadPart + kGracePeriodIntervals) {
+    return 1; // PendingRestart
+  }
+
+  return 2; // Active
+}
+
+bool CheckExpandedGammaUnlocked() {
+  return CheckExpandedGammaStatus() == 2;
+}
+
+bool PerformUnlockExpandedGammaSync(HWND parent_hwnd = nullptr) {
+  SHELLEXECUTEINFOW sei = {sizeof(sei)};
+  sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+  sei.hwnd = parent_hwnd;
+  sei.lpVerb = L"runas";
+  sei.lpFile = L"reg.exe";
+  sei.lpParameters = L"add \"HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\ICM\" /v GdiIcmGammaRange /t REG_DWORD /d 256 /f /reg:64";
+  sei.nShow = SW_HIDE;
+
+  if (!ShellExecuteExW(&sei)) {
+    return false;
+  }
+
+  if (sei.hProcess) {
+    DWORD waitResult = WaitForSingleObject(sei.hProcess, 10000);
+    DWORD exitCode = 1;
+    if (waitResult == WAIT_OBJECT_0) {
+      GetExitCodeProcess(sei.hProcess, &exitCode);
+    } else {
+      TerminateProcess(sei.hProcess, 1);
+    }
+    CloseHandle(sei.hProcess);
+    return (waitResult == WAIT_OBJECT_0 && exitCode == 0);
+  }
+  return false;
+}
+
+bool PerformRestartComputer() {
+  SHELLEXECUTEINFOW sei = {sizeof(sei)};
+  sei.lpVerb = L"open";
+  sei.lpFile = L"shutdown.exe";
+  sei.lpParameters = L"/r /t 0";
+  sei.nShow = SW_HIDE;
+  return ShellExecuteExW(&sei) != FALSE;
+}
+
+} // namespace
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -303,6 +435,42 @@ bool FlutterWindow::OnCreate() {
           }
           result->Success(flutter::EncodableValue(response));
           return;
+        } else if (call.method_name().compare("getExpandedGammaStatus") == 0) {
+          result->Success(flutter::EncodableValue(CheckExpandedGammaStatus()));
+          return;
+        } else if (call.method_name().compare("isExpandedGammaUnlocked") == 0) {
+          result->Success(flutter::EncodableValue(CheckExpandedGammaUnlocked()));
+          return;
+        } else if (call.method_name().compare("unlockExpandedGamma") == 0) {
+          auto* task = new GammaUnlockTask{GetHandle(), std::move(result), false};
+          BOOL queued = QueueUserWorkItem(
+              [](LPVOID param) -> DWORD {
+                auto* task = reinterpret_cast<GammaUnlockTask*>(param);
+                HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+                bool co_initialized = SUCCEEDED(hr);
+
+                task->success = PerformUnlockExpandedGammaSync(task->window_hwnd);
+
+                if (co_initialized) {
+                  CoUninitialize();
+                }
+
+                if (!PostMessage(task->window_hwnd, WM_SOLARIS_GAMMA_UNLOCK_RESULT, 0, reinterpret_cast<LPARAM>(task))) {
+                  delete task;
+                }
+                return 0;
+              },
+              task,
+              WT_EXECUTEDEFAULT);
+
+          if (!queued) {
+            task->result->Error("QUEUE_FAILED", "Failed to queue unlock work item");
+            delete task;
+          }
+          return;
+        } else if (call.method_name().compare("restartComputer") == 0) {
+          result->Success(flutter::EncodableValue(PerformRestartComputer()));
+          return;
         } else {
           result->NotImplemented();
         }
@@ -384,6 +552,17 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
         } else {
           delete data;
         }
+      }
+      return 0;
+    }
+
+    case WM_SOLARIS_GAMMA_UNLOCK_RESULT: {
+      auto* task = reinterpret_cast<GammaUnlockTask*>(lparam);
+      if (task) {
+        if (flutter_controller_ && task->result) {
+          task->result->Success(flutter::EncodableValue(task->success));
+        }
+        delete task;
       }
       return 0;
     }

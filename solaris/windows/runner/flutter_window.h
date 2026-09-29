@@ -15,6 +15,12 @@
 #include "app_icon_extractor.h"
 
 #define WM_SOLARIS_DISPATCH_EVENT (WM_USER + 101)
+#define WM_SOLARIS_GAMMA_UNLOCK_RESULT (WM_USER + 103)
+struct GammaUnlockTask {
+  HWND window_hwnd;
+  std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result;
+  bool success = false;
+};
 
 class GamingModeStreamHandler;
 

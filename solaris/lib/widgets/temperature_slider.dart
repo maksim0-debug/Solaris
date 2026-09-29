@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/constants/temperature_constants.dart';
+import 'package:solaris/l10n/app_localizations.dart';
+import 'package:solaris/providers/expanded_gamma_provider.dart';
+import 'package:solaris/services/monitor_service.dart';
+import 'package:solaris/widgets/expanded_gamma_dialog.dart';
 
-class TemperatureSlider extends StatelessWidget {
+class TemperatureSlider extends ConsumerWidget {
   const TemperatureSlider({
     required this.value,
     required this.onChanged,
@@ -61,7 +66,8 @@ class TemperatureSlider extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final double minTemp = TemperatureConstants.minDouble;
     final double maxTemp = TemperatureConstants.maxDouble;
 
@@ -69,38 +75,139 @@ class TemperatureSlider extends StatelessWidget {
     final double progress = valueToProgress(value: clampedValue);
     final Color currentColor = progressToColor(progress);
 
+    final gammaStatusAsync = ref.watch(expandedGammaProvider);
+    final ExpandedGammaStatus gammaStatus =
+        gammaStatusAsync.value ?? ExpandedGammaStatus.disabled;
+    final bool isWarmthZone =
+        clampedValue < TemperatureConstants.expandedWarmthThresholdDouble;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Icon(
-                LucideIcons.snowflake,
-                size: 14,
-                color: Color(0xFF60A5FA),
-              ),
-              Text(
-                '${value.round()}K',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: currentColor,
-                  letterSpacing: 1,
+          child: SizedBox(
+            height: 20,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Icon(
+                    LucideIcons.snowflake,
+                    size: 14,
+                    color: Color(0xFF60A5FA),
+                  ),
                 ),
-              ),
-              Icon(
-                LucideIcons.flame,
-                size: 18,
-                color: Color.lerp(
-                  const Color(0xFFFDBA74),
-                  const Color(0xFFEA580C),
-                  ((progress - 0.58) / 0.42).clamp(0.0, 1.0),
+                Center(
+                  child: Text(
+                    '${value.round()}K',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: currentColor,
+                      letterSpacing: 1,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        child:
+                            (l10n != null &&
+                                gammaStatus == ExpandedGammaStatus.disabled)
+                            ? Tooltip(
+                                key: const ValueKey('gamma_status_warning'),
+                                message: l10n.expandedGammaWarningTooltip,
+                                preferBelow: false,
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () {
+                                      debugPrint(
+                                        '🖱️ [TemperatureSlider] Warning icon tapped, opening dialog...',
+                                      );
+                                      showExpandedGammaDialog(context);
+                                    },
+                                    borderRadius: BorderRadius.circular(4),
+                                    hoverColor: const Color(
+                                      0xFFF59E0B,
+                                    ).withValues(alpha: 0.15),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                        vertical: 2,
+                                      ),
+                                      child: Icon(
+                                        LucideIcons.triangleAlert,
+                                        size: 14,
+                                        color: isWarmthZone
+                                            ? const Color(0xFFFBBF24)
+                                            : const Color(0xFFF59E0B),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : (l10n != null &&
+                                  gammaStatus ==
+                                      ExpandedGammaStatus.pendingRestart)
+                            ? Tooltip(
+                                key: const ValueKey('gamma_status_restart'),
+                                message:
+                                    l10n.expandedGammaRestartPendingTooltip,
+                                preferBelow: false,
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () {
+                                      debugPrint(
+                                        '🖱️ [TemperatureSlider] Restart icon tapped, opening dialog...',
+                                      );
+                                      showExpandedGammaDialog(
+                                        context,
+                                        isPendingRestart: true,
+                                      );
+                                    },
+                                    borderRadius: BorderRadius.circular(4),
+                                    hoverColor: const Color(
+                                      0xFF10B981,
+                                    ).withValues(alpha: 0.15),
+                                    child: const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                        vertical: 2,
+                                      ),
+                                      child: Icon(
+                                        LucideIcons.rotateCcw,
+                                        size: 14,
+                                        color: Color(0xFF10B981),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : const SizedBox.shrink(
+                                key: ValueKey('gamma_status_none'),
+                              ),
+                      ),
+                      Icon(
+                        LucideIcons.flame,
+                        size: 18,
+                        color: Color.lerp(
+                          const Color(0xFFFDBA74),
+                          const Color(0xFFEA580C),
+                          ((progress - 0.58) / 0.42).clamp(0.0, 1.0),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 8),

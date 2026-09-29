@@ -9,4 +9,8 @@ abstract final class TemperatureConstants {
   /// Floating point representations for slider ranges and animations.
   static const double minDouble = 1000.0;
   static const double maxDouble = 6500.0;
+
+  /// Threshold in Kelvin below which Windows GDI restricts gamma ramp adjustments without GdiIcmGammaRange registry activation.
+  static const int expandedWarmthThreshold = 3300;
+  static const double expandedWarmthThresholdDouble = 3300.0;
 }

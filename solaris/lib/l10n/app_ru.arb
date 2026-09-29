@@ -1036,7 +1036,20 @@
   "tapToEnterValue": "Нажмите для точного ввода с клавиатуры",
   "normalizedNadir": "Ночь",
   "normalizedHorizon": "Горизонт (0°)",
-  "normalizedNoon": "Полдень"
+  "normalizedNoon": "Полдень",
+  "expandedGammaWarningTooltip": "Расширенное тепло (1000K–3300K) требует активации реестра Windows. Нажмите для настройки.",
+  "expandedGammaDialogTitle": "Расширенный диапазон цвета (1000K–3300K)",
+  "expandedGammaDialogDescription": "По умолчанию Windows ограничивает регулировку температуры ниже 3300K для защиты экрана. Чтобы разблокировать глубокий теплый свет до 1000K, необходимо активировать системный параметр (GdiIcmGammaRange) в реестре.",
+  "expandedGammaUnlockButton": "Активировать в реестре",
+  "expandedGammaElevating": "Запрос прав администратора Windows...",
+  "expandedGammaRestarting": "Перезагрузка компьютера...",
+  "expandedGammaSuccessTitle": "Реестр успешно активирован",
+  "expandedGammaSuccessDescription": "Системный параметр успешно записан. Чтобы Windows применила изменения, необходимо перезагрузить компьютер.",
+  "expandedGammaRestartNow": "Перезагрузить сейчас",
+  "expandedGammaRestartLater": "Перезагрузить позже",
+  "expandedGammaFailed": "Не удалось обновить реестр. Убедитесь, что вы подтвердили запрос прав администратора Windows.",
+  "expandedGammaRestartPendingTooltip": "Требуется перезагрузка: расширенное тепло (1000K–3300K) станет доступно после перезагрузки Windows. Нажмите для перезагрузки.",
+  "expandedGammaRestartFailed": "Не удалось перезагрузить компьютер. Пожалуйста, перезагрузите вручную для применения изменений."
 }
 
 

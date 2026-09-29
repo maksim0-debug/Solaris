@@ -2624,4 +2624,50 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get normalizedNoon => 'Полдень';
+
+  @override
+  String get expandedGammaWarningTooltip =>
+      'Расширенное тепло (1000K–3300K) требует активации реестра Windows. Нажмите для настройки.';
+
+  @override
+  String get expandedGammaDialogTitle =>
+      'Расширенный диапазон цвета (1000K–3300K)';
+
+  @override
+  String get expandedGammaDialogDescription =>
+      'По умолчанию Windows ограничивает регулировку температуры ниже 3300K для защиты экрана. Чтобы разблокировать глубокий теплый свет до 1000K, необходимо активировать системный параметр (GdiIcmGammaRange) в реестре.';
+
+  @override
+  String get expandedGammaUnlockButton => 'Активировать в реестре';
+
+  @override
+  String get expandedGammaElevating => 'Запрос прав администратора Windows...';
+
+  @override
+  String get expandedGammaRestarting => 'Перезагрузка компьютера...';
+
+  @override
+  String get expandedGammaSuccessTitle => 'Реестр успешно активирован';
+
+  @override
+  String get expandedGammaSuccessDescription =>
+      'Системный параметр успешно записан. Чтобы Windows применила изменения, необходимо перезагрузить компьютер.';
+
+  @override
+  String get expandedGammaRestartNow => 'Перезагрузить сейчас';
+
+  @override
+  String get expandedGammaRestartLater => 'Перезагрузить позже';
+
+  @override
+  String get expandedGammaFailed =>
+      'Не удалось обновить реестр. Убедитесь, что вы подтвердили запрос прав администратора Windows.';
+
+  @override
+  String get expandedGammaRestartPendingTooltip =>
+      'Требуется перезагрузка: расширенное тепло (1000K–3300K) станет доступно после перезагрузки Windows. Нажмите для перезагрузки.';
+
+  @override
+  String get expandedGammaRestartFailed =>
+      'Не удалось перезагрузить компьютер. Пожалуйста, перезагрузите вручную для применения изменений.';
 }

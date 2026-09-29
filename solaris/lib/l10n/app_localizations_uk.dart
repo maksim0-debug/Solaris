@@ -2618,4 +2618,50 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get normalizedNoon => 'Полудень';
+
+  @override
+  String get expandedGammaWarningTooltip =>
+      'Розширене тепло (1000K–3300K) потребує активації реєстру Windows. Натисніть для налаштування.';
+
+  @override
+  String get expandedGammaDialogTitle =>
+      'Розширений діапазон кольору (1000K–3300K)';
+
+  @override
+  String get expandedGammaDialogDescription =>
+      'За замовчуванням Windows обмежує регулювання температури нижче 3300K для захисту екрана. Щоб розблокувати глибоке тепле світло до 1000K, необхідно активувати системний параметр (GdiIcmGammaRange) у реєстрі.';
+
+  @override
+  String get expandedGammaUnlockButton => 'Активувати в реєстрі';
+
+  @override
+  String get expandedGammaElevating => 'Запит прав адміністратора Windows...';
+
+  @override
+  String get expandedGammaRestarting => 'Перезавантаження комп\'ютера...';
+
+  @override
+  String get expandedGammaSuccessTitle => 'Реєстр успішно активовано';
+
+  @override
+  String get expandedGammaSuccessDescription =>
+      'Системний параметр успішно записано. Щоб Windows застосувала зміни, необхідно перезавантажити комп\'ютер.';
+
+  @override
+  String get expandedGammaRestartNow => 'Перезавантажити зараз';
+
+  @override
+  String get expandedGammaRestartLater => 'Перезавантажити пізніше';
+
+  @override
+  String get expandedGammaFailed =>
+      'Не вдалося оновити реєстр. Переконайтеся, що ви підтвердили запит прав адміністратора Windows.';
+
+  @override
+  String get expandedGammaRestartPendingTooltip =>
+      'Потрібне перезавантаження: розширене тепло (1000K–3300K) стане доступним після перезавантаження Windows. Натисніть, щоб перезавантажити.';
+
+  @override
+  String get expandedGammaRestartFailed =>
+      'Не вдалося перезавантажити комп\'ютер. Будь ласка, перезавантажте вручну для застосування змін.';
 }
