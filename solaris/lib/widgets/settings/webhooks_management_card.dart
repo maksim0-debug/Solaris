@@ -132,39 +132,40 @@ class _WebhooksManagementCardState
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Container(
-                      height: 200,
-                      decoration: BoxDecoration(
-                        color: Colors.black26,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: ListView(
-                        shrinkWrap: true,
-                        children: WebhookEventType.values.map((ev) {
-                          final isChecked = selectedEvents.contains(ev);
-                          return CheckboxListTile(
-                            dense: true,
-                            activeColor: const Color(0xFFFDBA74),
-                            checkColor: Colors.black,
-                            title: Text(
-                              ev.wireName,
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.87),
-                                fontSize: 13,
+                    Material(
+                      color: Colors.black26,
+                      borderRadius: BorderRadius.circular(8),
+                      clipBehavior: Clip.antiAlias,
+                      child: SizedBox(
+                        height: 200,
+                        child: ListView(
+                          shrinkWrap: true,
+                          children: WebhookEventType.values.map((ev) {
+                            final isChecked = selectedEvents.contains(ev);
+                            return CheckboxListTile(
+                              dense: true,
+                              activeColor: const Color(0xFFFDBA74),
+                              checkColor: Colors.black,
+                              title: Text(
+                                ev.wireName,
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.87),
+                                  fontSize: 13,
+                                ),
                               ),
-                            ),
-                            value: isChecked,
-                            onChanged: (val) {
-                              setDialogState(() {
-                                if (val == true) {
-                                  selectedEvents.add(ev);
-                                } else {
-                                  selectedEvents.remove(ev);
-                                }
-                              });
-                            },
-                          );
-                        }).toList(),
+                              value: isChecked,
+                              onChanged: (val) {
+                                setDialogState(() {
+                                  if (val == true) {
+                                    selectedEvents.add(ev);
+                                  } else {
+                                    selectedEvents.remove(ev);
+                                  }
+                                });
+                              },
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
                   ],
