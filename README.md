@@ -28,9 +28,13 @@ Built with Flutter. Talks to monitors over DDC/CI.
 
 ### Circadian auto-brightness
 
-The app tracks the sun's elevation angle for your coordinates and adjusts brightness along a curve. Transitions are gradual — no abrupt jumps. The curve is editable: drag Bézier control points or pick a preset (Bright, Balanced, Soft). Changes preview on the graph in real time.
+Solaris tracks the sun's elevation for your coordinates and adjusts brightness and color temperature throughout the day. Two circadian modes are available:
 
-![Curve editor with Bézier control points and presets](https://github.com/user-attachments/assets/0fd7fb2d-d0e7-4101-8b2e-470f7dd8a84d)
+**Solar phases** — set brightness and color temperature targets for four milestones (Night, Sunrise, Day, Sunset). Solaris resolves astronomical times for each phase and transitions smoothly between them.
+
+**Adaptive curve** — maps solar elevation to a normalized range that compensates for seasonal variation, so daytime brightness reaches 100% even in winter at high latitudes. The curve is editable with Bézier control points and presets.
+
+<img width="928" height="600" alt="Solar phase cards and 24-hour brightness curve" src="https://github.com/user-attachments/assets/1206ec08-1a23-449e-8ee8-1ff4325fe633" />
 
 ### Multi-monitor control
 
