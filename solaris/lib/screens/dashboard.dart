@@ -1121,43 +1121,42 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
               ),
               const SizedBox(height: 48),
               SizedBox(
-                width: 320,
+                width: 320 + TemperatureSlider.kSideSlotWidth * 2,
                 child: Column(
                   children: [
-                    DeepLinkTarget(
-                      key: _anchorKeys['brightness_control'],
-                      id: 'brightness_control',
-                      child: BrightnessSlider(
-                        value: brightness,
-                        min: minBrightness,
-                        max: 100.0,
-                        isSoftwareDimmingEnabled: isSoftwareDimmingEnabled,
-                        onChanged: (val) => ref
-                            .read(currentBrightnessProvider.notifier)
-                            .setManualBrightness(val),
+                    SizedBox(
+                      width: 320,
+                      child: DeepLinkTarget(
+                        key: _anchorKeys['brightness_control'],
+                        id: 'brightness_control',
+                        child: BrightnessSlider(
+                          value: brightness,
+                          min: minBrightness,
+                          max: 100.0,
+                          isSoftwareDimmingEnabled: isSoftwareDimmingEnabled,
+                          onChanged: (val) => ref
+                              .read(currentBrightnessProvider.notifier)
+                              .setManualBrightness(val),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
-                    DeepLinkTarget(
-                      key: _anchorKeys['color_temperature'],
-                      id: 'color_temperature',
-                      child: TemperatureSlider(
-                        value: tempVal,
-                        onChanged: (val) {
-                          final monitorId = selection.contains('all')
-                              ? 'all'
-                              : (selection.length == 1
-                                    ? selection.first
-                                    : null);
-                          ref
-                              .read(currentTemperatureProvider.notifier)
-                              .setManualTemperature(
-                                val.round(),
-                                monitorId: monitorId,
-                                debounceSave: true,
-                              );
-                        },
-                      ),
+                    TemperatureSlider(
+                      deepLinkKey: _anchorKeys['color_temperature'],
+                      deepLinkId: 'color_temperature',
+                      value: tempVal,
+                      onChanged: (val) {
+                        final monitorId = selection.contains('all')
+                            ? 'all'
+                            : (selection.length == 1 ? selection.first : null);
+                        ref
+                            .read(currentTemperatureProvider.notifier)
+                            .setManualTemperature(
+                              val.round(),
+                              monitorId: monitorId,
+                              debounceSave: true,
+                            );
+                      },
                     ),
                   ],
                 ),

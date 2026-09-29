@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/services/monitor_service.dart';
+import 'package:solaris/widgets/deep_link_target.dart';
 import 'package:solaris/widgets/temperature_slider.dart';
 
 class FakeMonitorService extends MonitorService {
@@ -17,6 +20,17 @@ class FakeMonitorService extends MonitorService {
   @override
   Future<bool> isExpandedGammaUnlocked() async =>
       status == ExpandedGammaStatus.active;
+}
+
+class _AsyncPendingMonitorService extends MonitorService {
+  final Future<ExpandedGammaStatus> future;
+  _AsyncPendingMonitorService(this.future);
+
+  @override
+  Future<ExpandedGammaStatus> getExpandedGammaStatus() => future;
+
+  @override
+  Future<bool> isExpandedGammaUnlocked() async => false;
 }
 
 void main() {
@@ -280,6 +294,268 @@ void main() {
 
         expect(find.byIcon(LucideIcons.triangleAlert), findsOneWidget);
         expect(find.byIcon(LucideIcons.rotateCcw), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'Warning icon is positioned to the right of slider container and vertically centered',
+      (tester) async {
+        final fakeService = FakeMonitorService(
+          status: ExpandedGammaStatus.disabled,
+        );
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [monitorServiceProvider.overrideWithValue(fakeService)],
+            child: MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Scaffold(
+                body: SizedBox(
+                  width: 400,
+                  child: TemperatureSlider(value: 3000.0, onChanged: (_) {}),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final sliderCenter = tester.getCenter(find.byType(Slider));
+        final iconCenter = tester.getCenter(
+          find.byIcon(LucideIcons.triangleAlert),
+        );
+        final flameCenter = tester.getCenter(find.byIcon(LucideIcons.flame));
+
+        // The icon is strictly to the right of the slider center
+        expect(iconCenter.dx, greaterThan(sliderCenter.dx));
+
+        // The icon is below the flame icon (which is in the top header row)
+        expect(iconCenter.dy, greaterThan(flameCenter.dy));
+
+        // The icon is vertically centered on the slider row (within 2 pixels)
+        expect((iconCenter.dy - sliderCenter.dy).abs(), lessThan(2.0));
+
+        // Verify the icon size is 20 (prominent touch/click target for status indicator)
+        final iconWidget = tester.widget<Icon>(
+          find.byIcon(LucideIcons.triangleAlert),
+        );
+        expect(iconWidget.size, equals(20.0));
+      },
+    );
+
+    testWidgets('Tapping warning icon opens expanded gamma dialog', (
+      tester,
+    ) async {
+      final fakeService = FakeMonitorService(
+        status: ExpandedGammaStatus.disabled,
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [monitorServiceProvider.overrideWithValue(fakeService)],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: Center(
+                child: SizedBox(
+                  width: 320 + TemperatureSlider.kSideSlotWidth * 2,
+                  child: TemperatureSlider(value: 3000.0, onChanged: (_) {}),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final warningFinder = find.byIcon(LucideIcons.triangleAlert);
+      expect(warningFinder, findsOneWidget);
+
+      await tester.tap(warningFinder);
+      await tester.pumpAndSettle();
+
+      // Dialog is shown
+      expect(find.byType(Dialog), findsOneWidget);
+    });
+
+    testWidgets(
+      'DeepLinkTarget wraps only slider body when deepLinkId is provided',
+      (tester) async {
+        final fakeService = FakeMonitorService(
+          status: ExpandedGammaStatus.disabled,
+        );
+        final anchorKey = GlobalKey<DeepLinkTargetState>();
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [monitorServiceProvider.overrideWithValue(fakeService)],
+            child: MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Scaffold(
+                body: Center(
+                  child: SizedBox(
+                    width: 320 + TemperatureSlider.kSideSlotWidth * 2,
+                    child: TemperatureSlider(
+                      deepLinkKey: anchorKey,
+                      deepLinkId: 'color_temperature',
+                      value: 3000.0,
+                      onChanged: (_) {},
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final targetFinder = find.byType(DeepLinkTarget);
+        expect(targetFinder, findsOneWidget);
+
+        final targetSize = tester.getSize(targetFinder);
+        // The DeepLinkTarget is exactly 320px wide (matching BrightnessSlider)
+        expect(targetSize.width, equals(320.0));
+
+        // Trigger highlight animation on the target key
+        anchorKey.currentState?.highlight();
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets(
+      'Pulse indicator is wrapped in RepaintBoundary with comfortable hit target',
+      (tester) async {
+        final fakeService = FakeMonitorService(
+          status: ExpandedGammaStatus.disabled,
+        );
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [monitorServiceProvider.overrideWithValue(fakeService)],
+            child: MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Scaffold(
+                body: SizedBox(
+                  width: 400,
+                  child: TemperatureSlider(value: 3000.0, onChanged: (_) {}),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Find InkWell for the status indicator
+        final inkWellFinder = find.ancestor(
+          of: find.byIcon(LucideIcons.triangleAlert),
+          matching: find.byType(InkWell),
+        );
+        expect(inkWellFinder, findsOneWidget);
+
+        final inkWellSize = tester.getSize(inkWellFinder);
+        expect(inkWellSize.width, equals(TemperatureSlider.kSideSlotWidth));
+        expect(inkWellSize.height, equals(40.0));
+
+        // Verify RepaintBoundary is protecting the tree
+        final repaintBoundaries = find.ancestor(
+          of: find.byIcon(LucideIcons.triangleAlert),
+          matching: find.byType(RepaintBoundary),
+        );
+        expect(repaintBoundaries, findsWidgets);
+      },
+    );
+
+    testWidgets(
+      'Hovering and unmounting status indicator does not trigger lifecycle errors',
+      (tester) async {
+        final fakeService = FakeMonitorService(
+          status: ExpandedGammaStatus.disabled,
+        );
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [monitorServiceProvider.overrideWithValue(fakeService)],
+            child: MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Scaffold(
+                body: SizedBox(
+                  width: 400,
+                  child: TemperatureSlider(value: 3000.0, onChanged: (_) {}),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final iconFinder = find.byIcon(LucideIcons.triangleAlert);
+        expect(iconFinder, findsOneWidget);
+
+        // Hover over the indicator
+        final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
+        await gesture.addPointer(location: tester.getCenter(iconFinder));
+        await tester.pump();
+
+        // Unmount the widget while hovered
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [monitorServiceProvider.overrideWithValue(fakeService)],
+            child: const MaterialApp(
+              home: Scaffold(body: SizedBox.shrink()),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Move pointer away after unmount
+        await gesture.moveTo(Offset.zero);
+        await gesture.removePointer();
+        await tester.pump();
+
+        // No exceptions thrown
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets(
+      'Hides status indicator while gammaStatusAsync is loading and has no value',
+      (tester) async {
+        final completer = Completer<ExpandedGammaStatus>();
+        final fakeService = _AsyncPendingMonitorService(completer.future);
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [monitorServiceProvider.overrideWithValue(fakeService)],
+            child: MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Scaffold(
+                body: SizedBox(
+                  width: 400,
+                  child: TemperatureSlider(value: 3000.0, onChanged: (_) {}),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        // First frame while future is pending: gammaStatusAsync.hasValue is false
+        await tester.pump();
+
+        // Indicator should NOT be displayed while loading to prevent micro-flicker
+        expect(find.byIcon(LucideIcons.triangleAlert), findsNothing);
+        expect(find.byIcon(LucideIcons.rotateCcw), findsNothing);
+
+        // Resolve future with disabled
+        completer.complete(ExpandedGammaStatus.disabled);
+        await tester.pumpAndSettle();
+
+        // Now indicator is visible
+        expect(find.byIcon(LucideIcons.triangleAlert), findsOneWidget);
       },
     );
   });

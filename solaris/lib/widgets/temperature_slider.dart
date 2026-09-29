@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -5,14 +7,26 @@ import 'package:solaris/constants/temperature_constants.dart';
 import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers/expanded_gamma_provider.dart';
 import 'package:solaris/services/monitor_service.dart';
+import 'package:solaris/widgets/deep_link_target.dart';
 import 'package:solaris/widgets/expanded_gamma_dialog.dart';
 
 class TemperatureSlider extends ConsumerWidget {
   const TemperatureSlider({
     required this.value,
     required this.onChanged,
+    this.deepLinkKey,
+    this.deepLinkId,
     super.key,
   });
+
+  /// Symmetric side slot width ensuring slider body stays precisely centered
+  /// and aligned with BrightnessSlider, with room for status indicator.
+  static const double kSideSlotWidth = 36.0;
+
+  /// Optional deep link global key and ID to target the inner 320px slider track directly,
+  /// preserving symmetric 320px highlight glow without leaking onto side slots.
+  final Key? deepLinkKey;
+  final String? deepLinkId;
 
   /// Real value: 1000.0 to 6500.0
   final double value;
@@ -80,7 +94,14 @@ class TemperatureSlider extends ConsumerWidget {
         gammaStatusAsync.value ?? ExpandedGammaStatus.disabled;
     final bool isWarmthZone =
         clampedValue < TemperatureConstants.expandedWarmthThresholdDouble;
-    return Column(
+    final bool showStatus =
+        l10n != null &&
+        gammaStatusAsync.hasValue &&
+        (gammaStatus == ExpandedGammaStatus.disabled ||
+            gammaStatus == ExpandedGammaStatus.pendingRestart);
+
+    final Widget sliderBody = Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
@@ -111,99 +132,14 @@ class TemperatureSlider extends ConsumerWidget {
                 ),
                 Align(
                   alignment: Alignment.centerRight,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 200),
-                        child:
-                            (l10n != null &&
-                                gammaStatus == ExpandedGammaStatus.disabled)
-                            ? Tooltip(
-                                key: const ValueKey('gamma_status_warning'),
-                                message: l10n.expandedGammaWarningTooltip,
-                                preferBelow: false,
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () {
-                                      debugPrint(
-                                        '🖱️ [TemperatureSlider] Warning icon tapped, opening dialog...',
-                                      );
-                                      showExpandedGammaDialog(context);
-                                    },
-                                    borderRadius: BorderRadius.circular(4),
-                                    hoverColor: const Color(
-                                      0xFFF59E0B,
-                                    ).withValues(alpha: 0.15),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 4,
-                                        vertical: 2,
-                                      ),
-                                      child: Icon(
-                                        LucideIcons.triangleAlert,
-                                        size: 14,
-                                        color: isWarmthZone
-                                            ? const Color(0xFFFBBF24)
-                                            : const Color(0xFFF59E0B),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              )
-                            : (l10n != null &&
-                                  gammaStatus ==
-                                      ExpandedGammaStatus.pendingRestart)
-                            ? Tooltip(
-                                key: const ValueKey('gamma_status_restart'),
-                                message:
-                                    l10n.expandedGammaRestartPendingTooltip,
-                                preferBelow: false,
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () {
-                                      debugPrint(
-                                        '🖱️ [TemperatureSlider] Restart icon tapped, opening dialog...',
-                                      );
-                                      showExpandedGammaDialog(
-                                        context,
-                                        isPendingRestart: true,
-                                      );
-                                    },
-                                    borderRadius: BorderRadius.circular(4),
-                                    hoverColor: const Color(
-                                      0xFF10B981,
-                                    ).withValues(alpha: 0.15),
-                                    child: const Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 4,
-                                        vertical: 2,
-                                      ),
-                                      child: Icon(
-                                        LucideIcons.rotateCcw,
-                                        size: 14,
-                                        color: Color(0xFF10B981),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              )
-                            : const SizedBox.shrink(
-                                key: ValueKey('gamma_status_none'),
-                              ),
-                      ),
-                      Icon(
-                        LucideIcons.flame,
-                        size: 18,
-                        color: Color.lerp(
-                          const Color(0xFFFDBA74),
-                          const Color(0xFFEA580C),
-                          ((progress - 0.58) / 0.42).clamp(0.0, 1.0),
-                        ),
-                      ),
-                    ],
+                  child: Icon(
+                    LucideIcons.flame,
+                    size: 18,
+                    color: Color.lerp(
+                      const Color(0xFFFDBA74),
+                      const Color(0xFFEA580C),
+                      ((progress - 0.58) / 0.42).clamp(0.0, 1.0),
+                    ),
                   ),
                 ),
               ],
@@ -233,6 +169,51 @@ class TemperatureSlider extends ConsumerWidget {
               min: 0.0,
               max: 1.0,
               onChanged: _handleChanged,
+            ),
+          ),
+        ),
+      ],
+    );
+
+    final Widget effectiveBody = deepLinkId != null
+        ? DeepLinkTarget(key: deepLinkKey, id: deepLinkId!, child: sliderBody)
+        : sliderBody;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        const SizedBox(width: kSideSlotWidth),
+        Expanded(child: effectiveBody),
+        SizedBox(
+          width: kSideSlotWidth,
+          height: 48,
+          child: Center(
+            child: RepaintBoundary(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: showStatus
+                    ? _ExpandedGammaPulseIndicator(
+                        key: ValueKey('gamma_status_${gammaStatus.name}'),
+                        gammaStatus: gammaStatus,
+                        isWarmthZone: isWarmthZone,
+                        tooltipMessage:
+                            gammaStatus == ExpandedGammaStatus.disabled
+                            ? l10n.expandedGammaWarningTooltip
+                            : l10n.expandedGammaRestartPendingTooltip,
+                        onTap: () {
+                          debugPrint(
+                            '🖱️ [TemperatureSlider] Status icon tapped ($gammaStatus), opening dialog...',
+                          );
+                          showExpandedGammaDialog(
+                            context,
+                            isPendingRestart:
+                                gammaStatus ==
+                                ExpandedGammaStatus.pendingRestart,
+                          );
+                        },
+                      )
+                    : const SizedBox.shrink(key: ValueKey('gamma_status_none')),
+              ),
             ),
           ),
         ),
@@ -346,5 +327,128 @@ class _PremiumThumbShape extends SliderComponentShape {
       ..color = currentColor
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center, 7, innerCirclePaint);
+  }
+}
+
+class _ExpandedGammaPulseIndicator extends StatefulWidget {
+  final ExpandedGammaStatus gammaStatus;
+  final bool isWarmthZone;
+  final String tooltipMessage;
+  final VoidCallback onTap;
+
+  const _ExpandedGammaPulseIndicator({
+    super.key,
+    required this.gammaStatus,
+    required this.isWarmthZone,
+    required this.tooltipMessage,
+    required this.onTap,
+  });
+
+  @override
+  State<_ExpandedGammaPulseIndicator> createState() =>
+      _ExpandedGammaPulseIndicatorState();
+}
+
+class _ExpandedGammaPulseIndicatorState
+    extends State<_ExpandedGammaPulseIndicator>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulseController;
+  late final Animation<double> _opacityAnimation;
+  bool _isHovered = false;
+
+  static bool get _isInTest => Platform.environment.containsKey('FLUTTER_TEST');
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    );
+    _opacityAnimation = Tween<double>(begin: 0.35, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    if (_isInTest) {
+      _pulseController.value = 1.0;
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncAnimationState();
+  }
+
+  void _syncAnimationState() {
+    if (!mounted) return;
+    final bool disableAnimations =
+        _isInTest || (MediaQuery.maybeDisableAnimationsOf(context) ?? false);
+    if (disableAnimations || _isHovered) {
+      if (_pulseController.isAnimating) {
+        _pulseController.stop();
+      }
+      _pulseController.value = 1.0;
+    } else if (!_pulseController.isAnimating) {
+      _pulseController.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isWarning = widget.gammaStatus == ExpandedGammaStatus.disabled;
+    final Color accentColor = isWarning
+        ? (widget.isWarmthZone
+              ? const Color(0xFFFBBF24)
+              : const Color(0xFFF59E0B))
+        : const Color(0xFF10B981);
+    final IconData iconData = isWarning
+        ? LucideIcons.triangleAlert
+        : LucideIcons.rotateCcw;
+
+    return Tooltip(
+      message: widget.tooltipMessage,
+      preferBelow: false,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.onTap,
+          onHover: (hovered) {
+            if (!mounted) return;
+            if (_isHovered != hovered) {
+              setState(() => _isHovered = hovered);
+              _syncAnimationState();
+            }
+          },
+          borderRadius: BorderRadius.circular(8),
+          hoverColor: accentColor.withValues(alpha: 0.15),
+          splashColor: accentColor.withValues(alpha: 0.25),
+          child: SizedBox(
+            width: TemperatureSlider.kSideSlotWidth,
+            height: 40,
+            child: Center(
+              child: RepaintBoundary(
+                child: AnimatedBuilder(
+                  animation: _opacityAnimation,
+                  builder: (context, child) {
+                    final double currentOpacity = _isHovered
+                        ? 1.0
+                        : _opacityAnimation.value;
+                    return Opacity(opacity: currentOpacity, child: child);
+                  },
+                  child: Icon(iconData, size: 20, color: accentColor),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

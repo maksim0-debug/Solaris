@@ -4507,7 +4507,7 @@ abstract class AppLocalizations {
   /// No description provided for @expandedGammaWarningTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Extended warmth (1000K–3300K) requires Windows registry activation. Click to configure.'**
+  /// **'Extended range (1000K–3300K) requires Windows registry activation. Click to configure.'**
   String get expandedGammaWarningTooltip;
 
   /// No description provided for @expandedGammaDialogTitle.
@@ -4573,7 +4573,7 @@ abstract class AppLocalizations {
   /// No description provided for @expandedGammaRestartPendingTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Restart required: Extended warmth (1000K–3300K) will be available after restarting Windows. Click to restart.'**
+  /// **'Restart required: Extended range (1000K–3300K) will be available after restarting Windows. Click to restart.'**
   String get expandedGammaRestartPendingTooltip;
 
   /// No description provided for @expandedGammaRestartFailed.

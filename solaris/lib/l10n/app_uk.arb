@@ -1035,7 +1035,7 @@
   "normalizedNadir": "Ніч",
   "normalizedHorizon": "Горизонт (0°)",
   "normalizedNoon": "Полудень",
-  "expandedGammaWarningTooltip": "Розширене тепло (1000K–3300K) потребує активації реєстру Windows. Натисніть для налаштування.",
+  "expandedGammaWarningTooltip": "Розширений діапазон (1000K–3300K) потребує активації реєстру Windows. Натисніть для налаштування.",
   "expandedGammaDialogTitle": "Розширений діапазон кольору (1000K–3300K)",
   "expandedGammaDialogDescription": "За замовчуванням Windows обмежує регулювання температури нижче 3300K для захисту екрана. Щоб розблокувати глибоке тепле світло до 1000K, необхідно активувати системний параметр (GdiIcmGammaRange) у реєстрі.",
   "expandedGammaUnlockButton": "Активувати в реєстрі",
@@ -1046,7 +1046,7 @@
   "expandedGammaRestartNow": "Перезавантажити зараз",
   "expandedGammaRestartLater": "Перезавантажити пізніше",
   "expandedGammaFailed": "Не вдалося оновити реєстр. Переконайтеся, що ви підтвердили запит прав адміністратора Windows.",
-  "expandedGammaRestartPendingTooltip": "Потрібне перезавантаження: розширене тепло (1000K–3300K) стане доступним після перезавантаження Windows. Натисніть, щоб перезавантажити.",
+  "expandedGammaRestartPendingTooltip": "Потрібне перезавантаження: розширений діапазон (1000K–3300K) стане доступним після перезавантаження Windows. Натисніть, щоб перезавантажити.",
   "expandedGammaRestartFailed": "Не вдалося перезавантажити комп'ютер. Будь ласка, перезавантажте вручну для застосування змін."
 }
 

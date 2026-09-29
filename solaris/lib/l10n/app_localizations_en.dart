@@ -2605,7 +2605,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expandedGammaWarningTooltip =>
-      'Extended warmth (1000K–3300K) requires Windows registry activation. Click to configure.';
+      'Extended range (1000K–3300K) requires Windows registry activation. Click to configure.';
 
   @override
   String get expandedGammaDialogTitle => 'Extended Color Range (1000K–3300K)';
@@ -2643,7 +2643,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expandedGammaRestartPendingTooltip =>
-      'Restart required: Extended warmth (1000K–3300K) will be available after restarting Windows. Click to restart.';
+      'Restart required: Extended range (1000K–3300K) will be available after restarting Windows. Click to restart.';
 
   @override
   String get expandedGammaRestartFailed =>

@@ -2627,7 +2627,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get expandedGammaWarningTooltip =>
-      'Расширенное тепло (1000K–3300K) требует активации реестра Windows. Нажмите для настройки.';
+      'Расширенный диапазон (1000K–3300K) требует активации реестра Windows. Нажмите для настройки.';
 
   @override
   String get expandedGammaDialogTitle =>
@@ -2665,7 +2665,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get expandedGammaRestartPendingTooltip =>
-      'Требуется перезагрузка: расширенное тепло (1000K–3300K) станет доступно после перезагрузки Windows. Нажмите для перезагрузки.';
+      'Требуется перезагрузка: расширенный диапазон (1000K–3300K) станет доступен после перезагрузки Windows. Нажмите для перезагрузки.';
 
   @override
   String get expandedGammaRestartFailed =>
