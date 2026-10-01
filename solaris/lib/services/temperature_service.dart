@@ -9,6 +9,8 @@ class TemperatureService {
   final Map<String, int?> _targetTemperatures = {};
 
   final Map<String, int> _lastTempSentTime = {};
+  final Map<String, void Function(String, int)> _activeTemperatureCallbacks =
+      {};
 
   bool _isResetLocked = false;
   bool get isResetLocked => _isResetLocked;
@@ -19,6 +21,10 @@ class TemperatureService {
 
   void unlockTemperatureControl() {
     _isResetLocked = false;
+  }
+
+  void syncHardwareTemperature(String deviceName, int realTemperature) {
+    _currentHardwareTemperature[deviceName] = realTemperature;
   }
 
   final Map<String, Timer?> _throttleTrailingTimers = {};
@@ -170,6 +176,8 @@ class TemperatureService {
           selection == monitor.deviceName ||
           selection == monitor.id) {
         _targetTemperatures[monitor.deviceName] = target;
+        _activeTemperatureCallbacks[monitor.deviceName] =
+            updateTemperatureCallback;
 
         // If no loop is running, start one.
         if (_isLoopRunning[monitor.deviceName] != true) {
@@ -178,7 +186,6 @@ class TemperatureService {
             target,
             monitors,
             monitorService,
-            updateTemperatureCallback,
             isUIVisible: isUIVisible,
           );
         }
@@ -190,8 +197,7 @@ class TemperatureService {
     String deviceName,
     int initialTarget,
     List<MonitorInfo> monitors,
-    MonitorService monitorService,
-    void Function(String, int) updateTemperatureCallback, {
+    MonitorService monitorService, {
     bool isUIVisible = true,
   }) async {
     if (_isLoopRunning[deviceName] == true) return;
@@ -257,12 +263,11 @@ class TemperatureService {
 
         _currentHardwareTemperature[deviceName] = current;
 
-        // Wrap callback to prevent "update during build/notify" errors
         final int valToReport = current;
-        Future.delayed(
-          Duration.zero,
-          () => updateTemperatureCallback(deviceName, valToReport),
-        );
+        final cb = _activeTemperatureCallbacks[deviceName];
+        if (cb != null) {
+          Future.delayed(Duration.zero, () => cb(deviceName, valToReport));
+        }
 
         // Use the hardware command
         if (current == 6500) {
@@ -293,6 +298,7 @@ class TemperatureService {
       }
     } finally {
       _isLoopRunning[deviceName] = false;
+      _activeTemperatureCallbacks.remove(deviceName);
     }
   }
 }

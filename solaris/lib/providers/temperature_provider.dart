@@ -286,9 +286,6 @@ class TemperatureSettingsNotifier
         );
       }
     }
-    // When auto temperature is enabled (value == true), circadianAdjustmentProvider
-    // reactively detects temperatureSettingsProvider change and smoothly applies
-    // the circadian temperature without creating a circular dependency.
   }
 
   void setManualTemperature(

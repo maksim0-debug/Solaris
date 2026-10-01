@@ -7,6 +7,7 @@ import 'package:solaris/models/api_permissions_config.dart';
 import 'package:solaris/models/rfc7807_error.dart';
 import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/providers.dart';
+import 'package:solaris/providers/lifecycle_provider.dart';
 import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/services/api_control_handler.dart';
 import 'package:solaris/services/api_permissions_checker.dart';
@@ -307,12 +308,32 @@ class ApiMonitorsHandler {
       return;
     }
 
+    final target = resolvedId;
     await safeStateMutator(() {
       _container
           .read(autoBrightnessAdjustmentProvider.notifier)
           .setEnabled(false);
       _container.read(manualBrightnessProvider.notifier).update(val);
     });
+
+    final brightnessService = _container.read(brightnessServiceProvider);
+    final monitorService = _container.read(monitorServiceProvider);
+    final monitorListNotifier = _container.read(monitorListProvider.notifier);
+    final offsets = _container.read(brightnessOffsetsProvider);
+    final visibility = _container.read(appLifecycleProvider);
+
+    brightnessService.applyBrightnessSmoothly(
+      selection: target,
+      targetValue: val,
+      monitors: monitors,
+      monitorService: monitorService,
+      offsets: offsets,
+      isManual: true,
+      isUIVisible: visibility == AppVisibilityState.visible,
+      isSoftwareDimmingEnabled: isSoftwareDimmingEnabled,
+      updateBrightnessCallback: (id, b) =>
+          monitorListNotifier.updateBrightness(id, b),
+    );
 
     final responseBody = {
       'status': 'accepted',

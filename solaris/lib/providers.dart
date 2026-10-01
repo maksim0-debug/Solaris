@@ -1177,7 +1177,7 @@ class _DebouncedSolarStateNotifier extends Notifier<AsyncValue<SolarState>> {
             _lastEmitTime == null ||
             now.difference(_lastEmitTime!).inSeconds >= 60;
 
-        if (phaseChanged || elevDelta >= 0.1 || heartbeat) {
+        if (!state.hasValue || phaseChanged || elevDelta >= 0.1 || heartbeat) {
           _lastElevation = solar.sunElevation;
           _lastPhase = solar.currentPhase;
           _lastEmitTime = now;
@@ -1185,6 +1185,14 @@ class _DebouncedSolarStateNotifier extends Notifier<AsyncValue<SolarState>> {
         }
       });
     }, fireImmediately: true);
+
+    final initial = ref.read(solarStateStreamProvider);
+    if (initial.hasValue) {
+      _lastElevation = initial.value!.sunElevation;
+      _lastPhase = initial.value!.currentPhase;
+      _lastEmitTime = DateTime.now();
+      return initial;
+    }
     return const AsyncValue.loading();
   }
 }
@@ -1203,6 +1211,16 @@ class MonitorListNotifier extends AsyncNotifier<List<MonitorInfo>> {
         final newMonitors = await ref
             .read(monitorServiceProvider)
             .getConnectedMonitors();
+        final bService = ref.read(brightnessServiceProvider);
+        final tService = ref.read(temperatureServiceProvider);
+        for (final m in newMonitors) {
+          if (m.realBrightness != null) {
+            bService.syncHardwareBrightness(m.deviceName, m.realBrightness!);
+          }
+          if (m.realTemperature != null) {
+            tService.syncHardwareTemperature(m.deviceName, m.realTemperature!);
+          }
+        }
         if (state.hasValue) {
           state = AsyncData(newMonitors);
         }
@@ -1221,6 +1239,7 @@ class MonitorListNotifier extends AsyncNotifier<List<MonitorInfo>> {
   }
 
   void _updateMonitor(String deviceName, int? brightness, int? temperature) {
+    if (!ref.mounted) return;
     state.whenData((monitors) {
       bool changed = false;
       final newList = monitors.map((m) {
@@ -1261,6 +1280,16 @@ final monitorListProvider =
     AsyncNotifierProvider<MonitorListNotifier, List<MonitorInfo>>(
       MonitorListNotifier.new,
     );
+
+/// Provider that tracks the connected monitor device names.
+/// Only emits when displays are physically connected, disconnected, or re-enumerated,
+/// preventing transition loop feedback cycles when realBrightness/realTemperature changes.
+final connectedMonitorDevicesProvider = Provider<String>((ref) {
+  final monitorsAsync = ref.watch(monitorListProvider);
+  final monitors = monitorsAsync.value ?? [];
+  final names = monitors.map((m) => m.deviceName).toList()..sort();
+  return names.join(';');
+});
 
 /// Provider for the monitor(s) currently being edited or controlled.
 /// Default is {'all'}.
@@ -1421,6 +1450,9 @@ class AutoBrightnessAdjustmentNotifier extends Notifier<bool> {
     ref
         .read(sharedPreferencesProvider)
         ?.setBool(_autoBrightnessEnabledKey, value);
+    if (value) {
+      ref.read(brightnessServiceProvider).invalidateCache();
+    }
     ref.read(settingsProvider.notifier).updateAutoBrightness(value);
   }
 
@@ -2896,17 +2928,20 @@ class CurrentBrightnessNotifier extends Notifier<double> {
     prefs?.setDouble(_lastBrightnessKey, value);
   }
 
-  void setManualBrightness(double value) {
+  void setManualBrightness(double value, {String? monitorId}) {
     ref.read(activeProcessServiceProvider.notifier).suppressActiveApp();
     ref.read(settingsProvider.notifier).updateAutoBrightness(false);
 
+    final settingsMap = ref.read(settingsProvider).value ?? {};
     final isSoftwareDimmingEnabled =
-        ref.read(settingsProvider).value?['all']?.isSoftwareDimmingEnabled ??
-        true;
+        settingsMap['all']?.isSoftwareDimmingEnabled ?? true;
     final minVal = isSoftwareDimmingEnabled ? -100.0 : 0.0;
 
     double baseValue = value;
-    final selection = ref.read(selectedMonitorsProvider);
+    final selection = monitorId != null
+        ? {monitorId}
+        : ref.read(selectedMonitorsProvider);
+
     if (selection.length == 1 && !selection.contains('all')) {
       final id = selection.first;
       final offsets = ref.read(brightnessOffsetsProvider);
@@ -2918,6 +2953,49 @@ class CurrentBrightnessNotifier extends Notifier<double> {
 
     ref.read(manualBrightnessProvider.notifier).update(baseValue);
     _saveBrightness(baseValue);
+    state = baseValue;
+
+    final monitors = ref.read(monitorListProvider).value ?? [];
+    if (monitors.isNotEmpty) {
+      final brightnessService = ref.read(brightnessServiceProvider);
+      final monitorService = ref.read(monitorServiceProvider);
+      final monitorListNotifier = ref.read(monitorListProvider.notifier);
+      final offsets = ref.read(brightnessOffsetsProvider);
+      final isGaming = ref.read(gamingModeProvider);
+      final visibility = ref.read(appLifecycleProvider);
+
+      final targetMonitors = selection.contains('all')
+          ? monitors.map((m) => m.deviceName).toList()
+          : monitors
+                .where(
+                  (m) =>
+                      selection.contains(m.deviceName) ||
+                      selection.contains(m.id),
+                )
+                .map((m) => m.deviceName)
+                .toList();
+
+      for (final id in targetMonitors) {
+        final mSettings =
+            settingsMap[id] ?? settingsMap['all'] ?? SettingsState();
+        if (isGaming && mSettings.isGameModeEnabled) {
+          continue;
+        }
+
+        brightnessService.applyBrightnessSmoothly(
+          selection: id,
+          targetValue: baseValue,
+          monitors: monitors,
+          monitorService: monitorService,
+          offsets: offsets,
+          isManual: true,
+          isUIVisible: visibility == AppVisibilityState.visible,
+          isSoftwareDimmingEnabled: isSoftwareDimmingEnabled,
+          updateBrightnessCallback: (id, val) =>
+              monitorListNotifier.updateBrightness(id, val),
+        );
+      }
+    }
   }
 }
 
@@ -2953,9 +3031,12 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
   final solarStateAsync = ref.watch(debouncedSolarStateProvider);
   final settingsAsync = ref.watch(settingsProvider);
   final tempSettingsAsync = ref.watch(temperatureSettingsProvider);
-  final monitorsAsync = ref.watch(monitorListProvider);
+  final monitorDevices = ref.watch(connectedMonitorDevicesProvider);
   final visibility = ref.watch(appLifecycleProvider);
   final weatherAsync = ref.watch(currentWeatherProvider);
+  final timezoneVal = ref.watch(effectiveTimezoneProvider);
+  ref.watch(autoBrightnessAdjustmentProvider);
+  ref.watch(autoTemperatureAdjustmentProvider);
 
   final isGamingMode = ref.watch<bool>(gamingModeProvider);
   final offsets = ref.watch(brightnessOffsetsProvider);
@@ -2965,7 +3046,18 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
   final tempService = ref.read(temperatureServiceProvider);
   final monitorService = ref.read(monitorServiceProvider);
   final isTempEnabled = ref.watch(isColorTemperatureEnabledProvider);
-  final monitorListNotifier = ref.read(monitorListProvider.notifier);
+
+  void updateBrightnessCallback(String id, int val) {
+    try {
+      ref.read(monitorListProvider.notifier).updateBrightness(id, val);
+    } catch (_) {}
+  }
+
+  void updateTemperatureCallback(String id, int val) {
+    try {
+      ref.read(monitorListProvider.notifier).updateTemperature(id, val);
+    } catch (_) {}
+  }
 
   // Listen to manual brightness changes to apply hardware updates even when window is minimized/hidden in tray
   ref.listen<double>(currentBrightnessProvider, (previous, next) {
@@ -2999,73 +3091,58 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
           isUIVisible: visibility == AppVisibilityState.visible,
           isSoftwareDimmingEnabled:
               settingsMap['all']?.isSoftwareDimmingEnabled ?? true,
-          updateBrightnessCallback: (id, val) =>
-              monitorListNotifier.updateBrightness(id, val),
+          updateBrightnessCallback: updateBrightnessCallback,
         );
       }
     }
   });
 
+  if (monitorDevices.isEmpty) return;
+  final monitors = ref.read(monitorListProvider).value ?? [];
+  if (monitors.isEmpty) return;
+
   solarStateAsync.whenData((state) {
-    monitorsAsync.whenData((monitors) {
-      settingsAsync.whenData((settingsMap) {
-        tempSettingsAsync.whenData((tempSettingsMap) {
-          final timezoneVal = ref.watch(effectiveTimezoneProvider);
-          final now = tz.TZDateTime.now(timezoneVal);
-          for (final monitor in monitors) {
-            final globalSettings = settingsMap['all'] ?? SettingsState();
-            final globalTempSettings =
-                tempSettingsMap['all'] ?? TemperatureState();
+    settingsAsync.whenData((settingsMap) {
+      tempSettingsAsync.whenData((tempSettingsMap) {
+        final now = tz.TZDateTime.now(timezoneVal);
+        for (final monitor in monitors) {
+          final globalSettings = settingsMap['all'] ?? SettingsState();
+          final globalTempSettings =
+              tempSettingsMap['all'] ?? TemperatureState();
 
-            final settings = settingsMap[monitor.deviceName] ?? globalSettings;
-            final tempSettings =
-                tempSettingsMap[monitor.deviceName] ?? globalTempSettings;
+          final settings = settingsMap[monitor.deviceName] ?? globalSettings;
+          final tempSettings =
+              tempSettingsMap[monitor.deviceName] ?? globalTempSettings;
 
-            final monitorSmartData = ref.watch(
-              smartCircadianDataProvider(monitor.deviceName),
+          final monitorSmartData = ref.read(
+            smartCircadianDataProvider(monitor.deviceName),
+          );
+          final monitorSmartTempData = ref.read(
+            smartCircadianTemperatureDataProvider(monitor.deviceName),
+          );
+
+          // Calculate and Apply Brightness
+          final activeProcessName = activeProcessState.activeProcess;
+          final isAppSuppressed = activeProcessState.suppressedPids.isNotEmpty;
+          final appRule = (!isAppSuppressed && activeProcessName.isNotEmpty)
+              ? (settings.appOverrides.firstWhereOrNull(
+                      (r) => r.isEnabled && r.exeName == activeProcessName,
+                    ) ??
+                    globalSettings.appOverrides.firstWhereOrNull(
+                      (r) => r.isEnabled && r.exeName == activeProcessName,
+                    ))
+              : null;
+
+          if (appRule != null &&
+              appRule.brightnessMode != AppOverrideMode.global) {
+            final targetBrightness = ref.read(currentBrightnessProvider);
+            debugPrint(
+              '[CircadianLoop] Device: ${monitor.deviceName} | Per-App Brightness Override ($activeProcessName): ${targetBrightness.toStringAsFixed(1)}%',
             );
-            final monitorSmartTempData = ref.watch(
-              smartCircadianTemperatureDataProvider(monitor.deviceName),
-            );
-
-            // Calculate and Apply Brightness
-            final activeProcessName = activeProcessState.activeProcess;
-            final isAppSuppressed =
-                activeProcessState.suppressedPids.isNotEmpty;
-            final appRule = (!isAppSuppressed && activeProcessName.isNotEmpty)
-                ? (settings.appOverrides.firstWhereOrNull(
-                        (r) => r.isEnabled && r.exeName == activeProcessName,
-                      ) ??
-                      globalSettings.appOverrides.firstWhereOrNull(
-                        (r) => r.isEnabled && r.exeName == activeProcessName,
-                      ))
-                : null;
-
-            if (appRule != null &&
-                appRule.brightnessMode != AppOverrideMode.global) {
-              final targetBrightness = ref.watch(currentBrightnessProvider);
-              debugPrint(
-                '[CircadianLoop] Device: ${monitor.deviceName} | Per-App Brightness Override ($activeProcessName): ${targetBrightness.toStringAsFixed(1)}%',
-              );
-              // Hardware DDC/CI deduplication check
-              final currentVal =
-                  monitor.realBrightness?.toDouble() ?? targetBrightness;
-              if ((targetBrightness - currentVal).abs() >= 0.5) {
-                brightnessService.applyBrightnessSmoothly(
-                  selection: monitor.deviceName,
-                  targetValue: targetBrightness,
-                  monitors: monitors,
-                  monitorService: monitorService,
-                  offsets: offsets,
-                  isUIVisible: visibility == AppVisibilityState.visible,
-                  isSoftwareDimmingEnabled: settings.isSoftwareDimmingEnabled,
-                  updateBrightnessCallback: (id, val) {
-                    monitorListNotifier.updateBrightness(id, val);
-                  },
-                );
-              }
-            } else if (isGamingMode && settings.isGameModeEnabled) {
-              final targetBrightness = settings.gameModeBrightness;
+            // Hardware DDC/CI deduplication check
+            final currentVal =
+                monitor.realBrightness?.toDouble() ?? targetBrightness;
+            if ((targetBrightness - currentVal).abs() >= 0.5) {
               brightnessService.applyBrightnessSmoothly(
                 selection: monitor.deviceName,
                 targetValue: targetBrightness,
@@ -3074,192 +3151,188 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
                 offsets: offsets,
                 isUIVisible: visibility == AppVisibilityState.visible,
                 isSoftwareDimmingEnabled: settings.isSoftwareDimmingEnabled,
-                updateBrightnessCallback: (id, val) {
-                  monitorListNotifier.updateBrightness(id, val);
-                },
+                updateBrightnessCallback: updateBrightnessCallback,
               );
-            } else if (settings.isAutoBrightnessEnabled) {
-              final effectiveSmartData = settings.isSmartCircadianEnabled
-                  ? monitorSmartData
-                  : const SmartCircadianData.neutral();
+            }
+          } else if (isGamingMode && settings.isGameModeEnabled) {
+            final targetBrightness = settings.gameModeBrightness;
+            brightnessService.applyBrightnessSmoothly(
+              selection: monitor.deviceName,
+              targetValue: targetBrightness,
+              monitors: monitors,
+              monitorService: monitorService,
+              offsets: offsets,
+              isUIVisible: visibility == AppVisibilityState.visible,
+              isSoftwareDimmingEnabled: settings.isSoftwareDimmingEnabled,
+              updateBrightnessCallback: updateBrightnessCallback,
+            );
+          } else if (settings.isAutoBrightnessEnabled) {
+            final effectiveSmartData = settings.isSmartCircadianEnabled
+                ? monitorSmartData
+                : const SmartCircadianData.neutral();
 
-              double effectiveElevation = state.sunElevation;
-              if (settings.isSmartCircadianEnabled &&
-                  effectiveSmartData.timeOffset != Duration.zero) {
-                final locationAsync = ref.read(effectiveLocationProvider);
-                final pos = locationAsync.value;
-                if (pos != null) {
-                  final sunService = ref.read(sunCalculatorServiceProvider);
-                  final shiftedTime = now.subtract(
-                    effectiveSmartData.timeOffset,
-                  );
-                  effectiveElevation = sunService.getSunElevation(
-                    pos.latitude,
-                    pos.longitude,
-                    shiftedTime,
-                  );
+            double effectiveElevation = state.sunElevation;
+            if (settings.isSmartCircadianEnabled &&
+                effectiveSmartData.timeOffset != Duration.zero) {
+              final locationAsync = ref.read(effectiveLocationProvider);
+              final pos = locationAsync.value;
+              if (pos != null) {
+                final sunService = ref.read(sunCalculatorServiceProvider);
+                final shiftedTime = now.subtract(effectiveSmartData.timeOffset);
+                effectiveElevation = sunService.getSunElevation(
+                  pos.latitude,
+                  pos.longitude,
+                  shiftedTime,
+                );
 
-                  if (state.sunElevation < 0 && effectiveElevation > 10) {
-                    effectiveElevation = effectiveElevation.clamp(-20.0, 10.0);
-                  }
+                if (state.sunElevation < 0 && effectiveElevation > 10) {
+                  effectiveElevation = effectiveElevation.clamp(-20.0, 10.0);
                 }
               }
-
-              final calculationResult = circadianService
-                  .calculateTargetBrightness(
-                    state.phases,
-                    effectiveElevation,
-                    now,
-                    curveSharpness: settings.curveSharpness,
-                    curvePoints: settings.curvePoints,
-                    weather: settings.isWeatherAdjustmentEnabled
-                        ? weatherAsync.value
-                        : null,
-                    presetSensitivity: settings.activePreset.weatherSensitivity,
-                    weatherIntensity: settings.weatherAdjustmentIntensity,
-                    smartData: effectiveSmartData,
-                    circadianMode: settings.circadianMode,
-                    phasesConfig: settings.phasesConfig,
-                    maxElevation: state.maxElevation,
-                    minElevation: state.minElevation,
-                  );
-              final targetBrightness = calculationResult.finalBrightness;
-
-              debugPrint(
-                '[CircadianLoop] Device: ${monitor.deviceName} | AutoBright: true | ActiveApp: $activeProcessName | Preset: ${settings.activePreset.name} | TargetBrightness: ${targetBrightness.toStringAsFixed(1)}% | Sharpness: ${settings.curveSharpness}',
-              );
-
-              brightnessService.applyBrightnessSmoothly(
-                selection: monitor.deviceName,
-                targetValue: targetBrightness,
-                monitors: monitors,
-                monitorService: monitorService,
-                offsets: offsets,
-                isUIVisible: visibility == AppVisibilityState.visible,
-                isSoftwareDimmingEnabled: settings.isSoftwareDimmingEnabled,
-                updateBrightnessCallback: (id, val) {
-                  monitorListNotifier.updateBrightness(id, val);
-                },
-              );
-            } else {
-              final manualValue = ref.read(currentBrightnessProvider);
-              brightnessService.applyBrightnessSmoothly(
-                selection: monitor.deviceName,
-                targetValue: manualValue,
-                monitors: monitors,
-                monitorService: monitorService,
-                offsets: offsets,
-                isManual: true,
-                isUIVisible: visibility == AppVisibilityState.visible,
-                isSoftwareDimmingEnabled: settings.isSoftwareDimmingEnabled,
-                updateBrightnessCallback: (id, val) {
-                  monitorListNotifier.updateBrightness(id, val);
-                },
-              );
             }
 
-            // Calculate and Apply Temperature for each display individually
-            final isMonitorGaming =
-                isGamingMode &&
-                (settings.isGameModeEnabled ||
-                    globalSettings.isGameModeEnabled) &&
-                (settings.isGameModeTemperatureEnabled ||
-                    globalSettings.isGameModeTemperatureEnabled);
+            final calculationResult = circadianService
+                .calculateTargetBrightness(
+                  state.phases,
+                  effectiveElevation,
+                  now,
+                  curveSharpness: settings.curveSharpness,
+                  curvePoints: settings.curvePoints,
+                  weather: settings.isWeatherAdjustmentEnabled
+                      ? weatherAsync.value
+                      : null,
+                  presetSensitivity: settings.activePreset.weatherSensitivity,
+                  weatherIntensity: settings.weatherAdjustmentIntensity,
+                  smartData: effectiveSmartData,
+                  circadianMode: settings.circadianMode,
+                  phasesConfig: settings.phasesConfig,
+                  maxElevation: state.maxElevation,
+                  minElevation: state.minElevation,
+                );
+            final targetBrightness = calculationResult.finalBrightness;
 
-            if (appRule != null &&
-                appRule.temperatureMode != AppOverrideMode.global &&
-                isTempEnabled) {
-              final targetTemp = ref.watch(currentTemperatureProvider);
-              debugPrint(
-                '[CircadianLoop] Device: ${monitor.deviceName} | Per-App Temperature Override ($activeProcessName): ${targetTemp}K',
-              );
-              tempService.applyTemperatureSmoothly(
-                selection: monitor.deviceName,
-                targetValue: targetTemp.toDouble(),
-                monitors: monitors,
-                monitorService: monitorService,
-                isUIVisible: visibility == AppVisibilityState.visible,
-                updateTemperatureCallback: (id, val) {
-                  monitorListNotifier.updateTemperature(id, val);
-                },
-              );
-            } else if (isMonitorGaming && isTempEnabled) {
-              final targetTemp = settings.isGameModeTemperatureEnabled
-                  ? settings.gameModeTemperature
-                  : globalSettings.gameModeTemperature;
-              tempService.applyTemperatureSmoothly(
-                selection: monitor.deviceName,
-                targetValue: targetTemp,
-                monitors: monitors,
-                monitorService: monitorService,
-                isUIVisible: visibility == AppVisibilityState.visible,
-                updateTemperatureCallback: (id, val) {
-                  monitorListNotifier.updateTemperature(id, val);
-                },
-              );
-            } else if (tempSettings.isEnabled && isTempEnabled) {
-              final isSmart = settings.isSmartCircadianEnabled;
-              final effectiveSmartTempData = isSmart
-                  ? monitorSmartTempData
-                  : const SmartCircadianData.neutral();
+            debugPrint(
+              '[CircadianLoop] Device: ${monitor.deviceName} | AutoBright: true | ActiveApp: $activeProcessName | Preset: ${settings.activePreset.name} | TargetBrightness: ${targetBrightness.toStringAsFixed(1)}% | Sharpness: ${settings.curveSharpness}',
+            );
 
-              final targetTemp = circadianService.calculateTargetTemperature(
-                state.phases,
-                state.sunElevation,
-                now,
-                curvePoints: tempSettings.curvePoints,
-                weather: settings.isWeatherTemperatureAdjustmentEnabled
-                    ? weatherAsync.value
-                    : null,
-                weatherIntensity: settings.weatherAdjustmentIntensity,
-                smartData: effectiveSmartTempData,
-                circadianMode: settings.circadianMode,
-                phasesConfig: settings.phasesConfig,
-                maxElevation: state.maxElevation,
-                minElevation: state.minElevation,
-              );
-
-              final effectiveFinalTemp = targetTemp.finalTemperature
-                  .clamp(TemperatureConstants.min, TemperatureConstants.max)
-                  .toDouble();
-
-              debugPrint(
-                '[CircadianLoop] Device: ${monitor.deviceName} | AutoTemp: true | Preset: ${tempSettings.activePreset.name} | TargetTemp: ${effectiveFinalTemp.round()}K',
-              );
-
-              tempService.applyTemperatureSmoothly(
-                selection: monitor.deviceName,
-                targetValue: effectiveFinalTemp,
-                monitors: monitors,
-                monitorService: monitorService,
-                isUIVisible: visibility == AppVisibilityState.visible,
-                updateTemperatureCallback: (id, val) {
-                  monitorListNotifier.updateTemperature(id, val);
-                },
-              );
-            } else if (isTempEnabled) {
-              final int targetManualTemp =
-                  tempSettings.manualTemperature ??
-                  globalTempSettings.manualTemperature ??
-                  ref.read(manualTemperatureProvider);
-              final effectiveManualTemp = targetManualTemp
-                  .clamp(TemperatureConstants.min, TemperatureConstants.max)
-                  .toDouble();
-              tempService.setTemperatureInstant(
-                selection: monitor.deviceName,
-                targetValue: effectiveManualTemp,
-                monitors: monitors,
-                monitorService: monitorService,
-                updateTemperatureCallback: (id, val) {
-                  monitorListNotifier.updateTemperature(id, val);
-                },
-              );
-            } else {
-              // Disabled means no further temperature writes from circadian loop.
-              tempService.stopTemperatureControlForDevice(monitor.deviceName);
-            }
+            brightnessService.applyBrightnessSmoothly(
+              selection: monitor.deviceName,
+              targetValue: targetBrightness,
+              monitors: monitors,
+              monitorService: monitorService,
+              offsets: offsets,
+              isUIVisible: visibility == AppVisibilityState.visible,
+              isSoftwareDimmingEnabled: settings.isSoftwareDimmingEnabled,
+              updateBrightnessCallback: updateBrightnessCallback,
+            );
+          } else {
+            final manualValue = ref.read(currentBrightnessProvider);
+            brightnessService.applyBrightnessSmoothly(
+              selection: monitor.deviceName,
+              targetValue: manualValue,
+              monitors: monitors,
+              monitorService: monitorService,
+              offsets: offsets,
+              isManual: true,
+              isUIVisible: visibility == AppVisibilityState.visible,
+              isSoftwareDimmingEnabled: settings.isSoftwareDimmingEnabled,
+              updateBrightnessCallback: updateBrightnessCallback,
+            );
           }
-        });
+
+          // Calculate and Apply Temperature for each display individually
+          final isMonitorGaming =
+              isGamingMode &&
+              (settings.isGameModeEnabled ||
+                  globalSettings.isGameModeEnabled) &&
+              (settings.isGameModeTemperatureEnabled ||
+                  globalSettings.isGameModeTemperatureEnabled);
+
+          if (appRule != null &&
+              appRule.temperatureMode != AppOverrideMode.global &&
+              isTempEnabled) {
+            final targetTemp = ref.read(currentTemperatureProvider);
+            debugPrint(
+              '[CircadianLoop] Device: ${monitor.deviceName} | Per-App Temperature Override ($activeProcessName): ${targetTemp}K',
+            );
+            tempService.applyTemperatureSmoothly(
+              selection: monitor.deviceName,
+              targetValue: targetTemp.toDouble(),
+              monitors: monitors,
+              monitorService: monitorService,
+              isUIVisible: visibility == AppVisibilityState.visible,
+              updateTemperatureCallback: updateTemperatureCallback,
+            );
+          } else if (isMonitorGaming && isTempEnabled) {
+            final targetTemp = settings.isGameModeTemperatureEnabled
+                ? settings.gameModeTemperature
+                : globalSettings.gameModeTemperature;
+            tempService.applyTemperatureSmoothly(
+              selection: monitor.deviceName,
+              targetValue: targetTemp,
+              monitors: monitors,
+              monitorService: monitorService,
+              isUIVisible: visibility == AppVisibilityState.visible,
+              updateTemperatureCallback: updateTemperatureCallback,
+            );
+          } else if (tempSettings.isEnabled && isTempEnabled) {
+            final isSmart = settings.isSmartCircadianEnabled;
+            final effectiveSmartTempData = isSmart
+                ? monitorSmartTempData
+                : const SmartCircadianData.neutral();
+
+            final targetTemp = circadianService.calculateTargetTemperature(
+              state.phases,
+              state.sunElevation,
+              now,
+              curvePoints: tempSettings.curvePoints,
+              weather: settings.isWeatherTemperatureAdjustmentEnabled
+                  ? weatherAsync.value
+                  : null,
+              weatherIntensity: settings.weatherAdjustmentIntensity,
+              smartData: effectiveSmartTempData,
+              circadianMode: settings.circadianMode,
+              phasesConfig: settings.phasesConfig,
+              maxElevation: state.maxElevation,
+              minElevation: state.minElevation,
+            );
+
+            final effectiveFinalTemp = targetTemp.finalTemperature
+                .clamp(TemperatureConstants.min, TemperatureConstants.max)
+                .toDouble();
+
+            debugPrint(
+              '[CircadianLoop] Device: ${monitor.deviceName} | AutoTemp: true | Preset: ${tempSettings.activePreset.name} | TargetTemp: ${effectiveFinalTemp.round()}K',
+            );
+
+            tempService.applyTemperatureSmoothly(
+              selection: monitor.deviceName,
+              targetValue: effectiveFinalTemp,
+              monitors: monitors,
+              monitorService: monitorService,
+              isUIVisible: visibility == AppVisibilityState.visible,
+              updateTemperatureCallback: updateTemperatureCallback,
+            );
+          } else if (isTempEnabled) {
+            final int targetManualTemp =
+                tempSettings.manualTemperature ??
+                globalTempSettings.manualTemperature ??
+                ref.read(manualTemperatureProvider);
+            final effectiveManualTemp = targetManualTemp
+                .clamp(TemperatureConstants.min, TemperatureConstants.max)
+                .toDouble();
+            tempService.setTemperatureInstant(
+              selection: monitor.deviceName,
+              targetValue: effectiveManualTemp,
+              monitors: monitors,
+              monitorService: monitorService,
+              updateTemperatureCallback: updateTemperatureCallback,
+            );
+          } else {
+            // Disabled means no further temperature writes from circadian loop.
+            tempService.stopTemperatureControlForDevice(monitor.deviceName);
+          }
+        }
       });
     });
   });

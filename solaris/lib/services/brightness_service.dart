@@ -11,6 +11,20 @@ class BrightnessService {
 
   final Map<String, int> _targetBrightness = {};
   final Map<String, double> _lastCalculatedFloat = {};
+  final Map<String, void Function(String, int)> _activeBrightnessCallbacks = {};
+
+  void syncHardwareBrightness(String deviceName, int realBrightness) {
+    _currentHardwareBrightness[deviceName] = realBrightness;
+    _lastCalculatedFloat[deviceName] = realBrightness.toDouble();
+  }
+
+  void invalidateCache([String? deviceName]) {
+    if (deviceName != null) {
+      _lastCalculatedFloat.remove(deviceName);
+    } else {
+      _lastCalculatedFloat.clear();
+    }
+  }
 
   void applyBrightnessSmoothly({
     required String selection,
@@ -33,9 +47,18 @@ class BrightnessService {
 
         // HYSTERESIS: Filter out noise to prevent flicker.
         // Sentinel -999.0 avoids collision with the valid -100.0 lower bound.
+        // If physical monitor hardware brightness differs from rawTarget by >= 1%,
+        // hardware reality takes precedence over calculation hysteresis!
         final double lastCalculated =
             _lastCalculatedFloat[deviceName] ?? -999.0;
-        if (!isManual && (rawTarget - lastCalculated).abs() < 1.5) {
+        final int? realHardware = monitor.realBrightness;
+        final bool isHardwareDesynced =
+            realHardware != null &&
+            (rawTarget.round() - realHardware).abs() >= 1;
+
+        if (!isManual &&
+            !isHardwareDesynced &&
+            (rawTarget - lastCalculated).abs() < 1.5) {
           continue; // Ignore micro-fluctuations
         }
 
@@ -45,6 +68,7 @@ class BrightnessService {
         _targetBrightness[deviceName] = target;
         _isManualTransition[deviceName] = isManual;
         _canDimSoftware[deviceName] = canDimSoftware;
+        _activeBrightnessCallbacks[deviceName] = updateBrightnessCallback;
 
         if (_adjustmentTimers[deviceName] == null) {
           _runTransitionLoop(
@@ -52,7 +76,6 @@ class BrightnessService {
             target,
             monitors,
             monitorService,
-            updateBrightnessCallback,
             isUIVisible: isUIVisible,
             isManual: isManual,
             canDimSoftware: canDimSoftware,
@@ -66,8 +89,7 @@ class BrightnessService {
     String deviceName,
     int initialTarget,
     List<MonitorInfo> monitors,
-    MonitorService monitorService,
-    void Function(String, int) updateBrightnessCallback, {
+    MonitorService monitorService, {
     bool isUIVisible = true,
     bool isManual = false,
     bool canDimSoftware = false,
@@ -123,10 +145,10 @@ class BrightnessService {
         _currentHardwareBrightness[deviceName] = current;
 
         final int valToReport = current;
-        Future.delayed(
-          Duration.zero,
-          () => updateBrightnessCallback(deviceName, valToReport),
-        );
+        final cb = _activeBrightnessCallbacks[deviceName];
+        if (cb != null) {
+          Future.delayed(Duration.zero, () => cb(deviceName, valToReport));
+        }
 
         await monitorService.setBrightness(deviceName, current);
 
@@ -145,6 +167,7 @@ class BrightnessService {
       _adjustmentTimers.remove(deviceName);
       _isManualTransition.remove(deviceName);
       _canDimSoftware.remove(deviceName);
+      _activeBrightnessCallbacks.remove(deviceName);
     }
   }
 }

@@ -151,8 +151,8 @@ void main(List<String> args) {
       // Initialize Hotkey Service
       await container.read(hotkeyServiceProvider).init();
 
-      // Keep background hardware adjustment provider active
-      container.read(circadianAdjustmentProvider);
+      // Keep background hardware adjustment provider permanently active in background
+      container.listen<void>(circadianAdjustmentProvider, (_, _) {});
 
       // Start Local IPC (HTTP) Server for sleep integration
       container.read(localIpcServiceProvider);
@@ -335,10 +335,8 @@ class _SystemLifecycleObserver extends WidgetsBindingObserver {
       debugPrint('🪟 [Engine Lifecycle Debug] State: $state');
     }
     if (state == AppLifecycleState.hidden ||
-        state == AppLifecycleState.paused) {
-      MemoryUtils.trimMemory();
-      container.read(appLifecycleProvider.notifier).setMinimized();
-    } else if (state == AppLifecycleState.inactive) {
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
       MemoryUtils.trimMemory();
       windowManager
           .isMinimized()

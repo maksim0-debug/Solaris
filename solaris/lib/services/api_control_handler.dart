@@ -8,6 +8,7 @@ import 'package:solaris/models/preset_type.dart';
 import 'package:solaris/models/rfc7807_error.dart';
 import 'package:solaris/models/settings_state.dart';
 import 'package:solaris/providers.dart';
+import 'package:solaris/providers/lifecycle_provider.dart';
 import 'package:solaris/providers/temperature_provider.dart';
 import 'package:solaris/providers/sleep_provider.dart';
 import 'package:solaris/services/api_permissions_checker.dart';
@@ -342,12 +343,35 @@ class ApiControlHandler {
             "Field 'value' must be a number between $minVal and 100.0.",
           );
         }
+        final target = resolvedMonitorId ?? monitorIdInput;
         await safeStateMutator(() {
           _container
               .read(autoBrightnessAdjustmentProvider.notifier)
               .setEnabled(false);
           _container.read(manualBrightnessProvider.notifier).update(val);
         });
+
+        final brightnessService = _container.read(brightnessServiceProvider);
+        final monitorService = _container.read(monitorServiceProvider);
+        final monitorListNotifier = _container.read(
+          monitorListProvider.notifier,
+        );
+        final offsets = _container.read(brightnessOffsetsProvider);
+        final visibility = _container.read(appLifecycleProvider);
+
+        brightnessService.applyBrightnessSmoothly(
+          selection: target,
+          targetValue: val,
+          monitors: monitors,
+          monitorService: monitorService,
+          offsets: offsets,
+          isManual: true,
+          isUIVisible: visibility == AppVisibilityState.visible,
+          isSoftwareDimmingEnabled: isSoftwareDimmingEnabled,
+          updateBrightnessCallback: (id, b) =>
+              monitorListNotifier.updateBrightness(id, b),
+        );
+
         return _ActionResult.accepted('set_brightness', {
           'value': val,
           'monitor_id': monitorIdInput,
