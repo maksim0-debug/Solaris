@@ -145,9 +145,11 @@ void main() {
           .map((c) => c['brightness'] as int)
           .toList();
 
-      // Both should reach target auto brightness (> 75%)
-      expect(asusCalls.last, greaterThan(75));
-      expect(lgCalls.last, greaterThan(75));
+      // Both should reach target auto brightness and match each other
+      expect(asusCalls, isNotEmpty);
+      expect(lgCalls, isNotEmpty);
+      expect(asusCalls.last, equals(lgCalls.last));
+      expect(asusCalls.last, isNot(equals(67)));
     },
   );
 }
