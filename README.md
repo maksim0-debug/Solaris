@@ -18,7 +18,7 @@
 
 Solaris is a Windows desktop app that automatically adjusts monitor brightness and color temperature based on the position of the sun. It calculates solar elevation for your location in real time and maps it to a brightness curve you can customize. Color temperature shifts from daylight (6500 K) to warm (1000 K) as the sun goes down. Works across multiple monitors, supports per-app profiles, integrates with weather data, and exposes a local API for automation.
 
-Built with Flutter. Talks to monitors over DDC/CI.
+Built with Flutter. Talks to monitors over DDC/CI, with software overlay dimming for displays without DDC/CI.
 
 <img width="1221" height="816" alt="Solaris dashboard — brightness curve, sun position, multi-monitor controls" src="https://github.com/user-attachments/assets/1596351e-de2c-4db6-b9fb-859c916d5d18" />
 
@@ -38,17 +38,17 @@ Solaris tracks the sun's elevation for your coordinates and adjusts brightness a
 
 ### Multi-monitor control
 
-Each connected display can have its own brightness offset. You can adjust a specific monitor individually or control all screens at once. Solaris communicates with monitors over DDC/CI for hardware-level brightness control.
+Each connected display can have its own brightness offset. You can adjust a specific monitor individually or control all screens at once. Solaris communicates with monitors over DDC/CI for hardware-level brightness control, falling back to a software overlay on displays without DDC/CI support (laptops, secondary screens).
 
 <img width="308" height="240" alt="Per-monitor brightness offsets" src="https://github.com/user-attachments/assets/67fdd963-d406-4130-88fe-6efde9899b74" />
 
 ### Extra-dark dimming (below 0%)
 
-When your monitor's minimum hardware brightness is still too bright, Solaris can dim further — down to −100% — using a lightweight screen overlay. The overlay is click-through (no input lag), invisible to screenshots and screen sharing (OBS, Discord, Zoom), and capped at 85% opacity so you never accidentally black out the screen.
+When your monitor's minimum hardware brightness is still too bright, Solaris can dim further — down to −100% — using a lightweight screen overlay. For displays without DDC/CI, the overlay also handles standard 0–100% brightness. The overlay is click-through (no input lag), invisible to screenshots and screen sharing (OBS, Discord, Zoom), and capped at 85% opacity so you never accidentally black out the screen.
 
 ### Color temperature
 
-Modifies the display gamma ramp at the GPU level, so it works on all screens — including laptops and monitors without DDC/CI. Range: 6500 K (daylight) → 1000 K (candlelight). Can be set globally or per-monitor.
+Modifies the display gamma ramp at the GPU level, so it works across all connected screens. Range: 6500 K (daylight) → 1000 K (candlelight). Can be set globally or per-monitor.
 
 ### Game mode
 
@@ -176,7 +176,7 @@ Grab the latest `.zip` from [Releases](https://github.com/maksim0-debug/Solaris/
 
 ### Build from source
 
-**Requirements:** Flutter SDK (stable), Windows 10/11. DDC/CI-capable monitors for hardware brightness (color temperature works without it).
+**Requirements:** Flutter SDK (stable), Windows 10/11. Works with all displays (hardware DDC/CI control, or software overlay for screens without DDC/CI).
 
 ```bash
 git clone https://github.com/maksim0-debug/Solaris.git
@@ -199,7 +199,7 @@ flutter build windows
 
 - **Framework:** Flutter (Windows desktop)
 - **State:** Riverpod (AsyncNotifiers, StreamProviders)
-- **Hardware:** Dart FFI + win32 for DDC/CI brightness; Win32 GDI for GPU gamma ramp; native C++ overlay for sub-zero dimming
+- **Hardware:** Dart FFI + win32 for DDC/CI brightness; Win32 GDI for GPU gamma ramp; native C++ overlay for non-DDC screens and sub-zero dimming
 - **Solar math:** Spherical trigonometry (solar_calculator, sunrise_sunset_calc)
 - **APIs:** WeatherAPI.com, Open-Meteo, Mapbox, Google Fit
 - **Updater:** C++17 with miniz, SLSA attestation verification
