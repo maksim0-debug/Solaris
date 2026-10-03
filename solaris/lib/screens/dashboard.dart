@@ -1,9 +1,11 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/providers.dart';
 import 'package:solaris/providers/temperature_provider.dart';
+import 'package:solaris/services/monitor_service.dart';
 import 'package:solaris/services/gaming_mode_service.dart';
 import 'package:solaris/widgets/window_title_bar.dart';
 import 'package:window_manager/window_manager.dart';
@@ -726,8 +728,10 @@ class _Header extends ConsumerWidget {
         // If single monitor selected, sync UI to its current levels
         try {
           final id = next.first;
-          final monitor = monitorValue.firstWhere((m) => m.deviceName == id);
-          if (monitor.realBrightness != null) {
+          final monitor = monitorValue.firstWhereOrNull(
+            (m) => m.deviceName == id || m.id == id,
+          );
+          if (monitor != null && monitor.realBrightness != null) {
             final offsets = ref.read(brightnessOffsetsProvider);
             final offset = offsets[id] ?? 0.0;
             final isDimming =
@@ -736,7 +740,10 @@ class _Header extends ConsumerWidget {
                     .value?['all']
                     ?.isSoftwareDimmingEnabled ??
                 true;
-            final minVal = isDimming ? -100.0 : 0.0;
+            final minVal = MonitorInfo.effectiveMinBrightness(
+              isOverlayOnly: !monitor.isDdcSupported,
+              isSoftwareDimmingEnabled: isDimming,
+            );
             ref
                 .read(manualBrightnessProvider.notifier)
                 .update(
@@ -746,7 +753,8 @@ class _Header extends ConsumerWidget {
                   ),
                 );
           }
-          if (monitor.realTemperature != null &&
+          if (monitor != null &&
+              monitor.realTemperature != null &&
               ref.read(isColorTemperatureEnabledProvider)) {
             ref
                 .read(manualTemperatureProvider.notifier)
@@ -957,7 +965,21 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
     final settingsMap = ref.watch(settingsProvider).value ?? {};
     final isSoftwareDimmingEnabled =
         settingsMap['all']?.isSoftwareDimmingEnabled ?? true;
-    final minBrightness = isSoftwareDimmingEnabled ? -100.0 : 0.0;
+
+    // Determine whether the current selection is overlay-only:
+    // 1. If a single monitor is selected, inspect that specific monitor.
+    // 2. If 'all' or multiple monitors are selected, overlay-only mode is active
+    //    only if ALL selected monitors lack DDC/CI support. If at least one monitor
+    //    supports DDC/CI, hybrid mode remains active so hardware dimming is accessible.
+    final bool isOverlayOnly = MonitorInfo.isSelectionOverlayOnly(
+      selection,
+      monitors,
+    );
+
+    final minBrightness = MonitorInfo.effectiveMinBrightness(
+      isOverlayOnly: isOverlayOnly,
+      isSoftwareDimmingEnabled: isSoftwareDimmingEnabled,
+    );
 
     double targetBrightness = baseBrightness;
     if (selection.length == 1 && !selection.contains('all')) {
@@ -965,6 +987,8 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
       final offsets = ref.watch(brightnessOffsetsProvider);
       final offset = offsets[id] ?? 0.0;
       targetBrightness = (baseBrightness + offset).clamp(minBrightness, 100.0);
+    } else {
+      targetBrightness = baseBrightness.clamp(minBrightness, 100.0);
     }
 
     double brightness = targetBrightness;
@@ -1088,6 +1112,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                       child: CustomPaint(
                         painter: BrightnessDialPainter(
                           brightness: (brightness / 100.0).clamp(0.0, 1.0),
+                          isOverlayOnly: isOverlayOnly,
                         ),
                       ),
                     ),
@@ -1134,6 +1159,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                           min: minBrightness,
                           max: 100.0,
                           isSoftwareDimmingEnabled: isSoftwareDimmingEnabled,
+                          isOverlayOnly: isOverlayOnly,
                           onChanged: (val) => ref
                               .read(currentBrightnessProvider.notifier)
                               .setManualBrightness(val),
@@ -1989,8 +2015,8 @@ class DisplayInfo extends ConsumerWidget {
     final Color contentColor;
     if (!isDdcSupported) {
       contentColor = isSelected
-          ? const Color(0xFFF87171)
-          : const Color(0xFFEF4444).withValues(alpha: 0.85);
+          ? SoftwareDimmingTheme.accent
+          : SoftwareDimmingTheme.accent.withValues(alpha: 0.65);
     } else if (isSelected) {
       contentColor = const Color(0xFFFDBA74);
     } else {
@@ -2006,9 +2032,7 @@ class DisplayInfo extends ConsumerWidget {
           Icon(icon, size: 14, color: contentColor),
           const SizedBox(width: 8),
           Text(
-            isDdcSupported && brightness != null
-                ? '$label: $brightness%'
-                : label,
+            brightness != null ? '$label: $brightness%' : label,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
@@ -2046,7 +2070,9 @@ class DisplayInfo extends ConsumerWidget {
         decoration: BoxDecoration(
           color: const Color(0xFF181825),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.redAccent.withValues(alpha: 0.5)),
+          border: Border.all(
+            color: SoftwareDimmingTheme.primary.withValues(alpha: 0.5),
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.5),

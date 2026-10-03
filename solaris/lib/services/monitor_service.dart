@@ -14,6 +14,7 @@ class MonitorInfo {
   final bool isPrimary;
   final int? realBrightness;
   final int? realTemperature;
+  final bool isDdcSupported;
 
   MonitorInfo({
     required this.id,
@@ -24,9 +25,8 @@ class MonitorInfo {
     required this.isPrimary,
     this.realBrightness,
     this.realTemperature,
-  });
-
-  bool get isDdcSupported => realBrightness != null;
+    bool? isDdcSupported,
+  }) : isDdcSupported = isDdcSupported ?? (realBrightness != null);
 
   MonitorInfo copyWith({
     String? id,
@@ -37,6 +37,7 @@ class MonitorInfo {
     bool? isPrimary,
     int? realBrightness,
     int? realTemperature,
+    bool? isDdcSupported,
     bool overrideBrightnessWithNull = false,
     bool overrideTemperatureWithNull = false,
   }) {
@@ -53,7 +54,39 @@ class MonitorInfo {
       realTemperature: overrideTemperatureWithNull
           ? null
           : (realTemperature ?? this.realTemperature),
+      isDdcSupported: isDdcSupported ?? this.isDdcSupported,
     );
+  }
+
+  /// Determines whether the given [selection] of monitors is overlay-only.
+  /// If 'all' is selected, returns true only if ALL connected monitors lack DDC/CI support.
+  /// If a subset of monitors is selected, returns true only if ALL monitors in that selection lack DDC/CI support.
+  static bool isSelectionOverlayOnly(
+    Set<String> selection,
+    List<MonitorInfo> monitors,
+  ) {
+    if (selection.contains('all')) {
+      return monitors.isNotEmpty && monitors.every((m) => !m.isDdcSupported);
+    }
+    final selectedMonitors = monitors
+        .where(
+          (m) => selection.contains(m.deviceName) || selection.contains(m.id),
+        )
+        .toList();
+    return selectedMonitors.isNotEmpty &&
+        selectedMonitors.every((m) => !m.isDdcSupported);
+  }
+
+  /// Calculates the effective minimum brightness percentage based on whether the
+  /// target monitor(s) are overlay-only and whether software dimming is enabled.
+  /// Overlay-only monitors never dim below 0.0%, whereas hybrid DDC/CI monitors
+  /// can dim down to -100.0% when software dimming is enabled.
+  static double effectiveMinBrightness({
+    required bool isOverlayOnly,
+    required bool isSoftwareDimmingEnabled,
+  }) {
+    if (isOverlayOnly) return 0.0;
+    return isSoftwareDimmingEnabled ? -100.0 : 0.0;
   }
 }
 
@@ -106,21 +139,29 @@ class MonitorService {
     }
   }
 
-  Future<bool> setBrightness(String deviceName, int brightness) async {
+  Future<bool> setBrightness(
+    String deviceName,
+    int brightness, {
+    bool isOverlayOnly = false,
+  }) async {
     // Avoid redundant calls to slow native DDC/CI methods if brightness hasn't changed.
-    if (_lastSentBrightness[deviceName] == brightness) {
+    final cacheKey = '$deviceName:$isOverlayOnly';
+    if (_lastSentBrightness[cacheKey] == brightness) {
       return true;
     }
 
     try {
-      final bool? success = await _channel.invokeMethod<bool>(
-        'setMonitorBrightness',
-        {'devicePath': deviceName, 'brightness': brightness},
-      );
+      final bool? success = await _channel
+          .invokeMethod<bool>('setMonitorBrightness', {
+            'devicePath': deviceName,
+            'brightness': brightness,
+            'isOverlayOnly': isOverlayOnly,
+          });
       if (success == true) {
+        _lastSentBrightness[cacheKey] = brightness;
         _lastSentBrightness[deviceName] = brightness;
 
-        if (kDebugMode) {
+        if (kDebugMode && !isOverlayOnly) {
           _immediateDebugTimers[deviceName]?.cancel();
           _immediateDebugTimers[deviceName] = Timer(
             const Duration(milliseconds: 200),
@@ -145,12 +186,18 @@ class MonitorService {
     }
   }
 
-  Future<int?> getBrightness(String deviceName) async {
+  Future<int?> getBrightness(
+    String deviceName, {
+    bool isOverlayOnly = false,
+    bool probeHardware = false,
+  }) async {
     try {
-      final int? brightness = await _channel.invokeMethod<int?>(
-        'getMonitorBrightness',
-        {'devicePath': deviceName},
-      );
+      final int? brightness = await _channel
+          .invokeMethod<int?>('getMonitorBrightness', {
+            'devicePath': deviceName,
+            'isOverlayOnly': isOverlayOnly,
+            'probeHardware': probeHardware,
+          });
       return brightness;
     } catch (e) {
       debugPrint('Failed to get brightness for $deviceName: $e');
@@ -262,13 +309,35 @@ class MonitorService {
               .toRadixString(16)
               .toLowerCase();
 
-          // Fetch real brightness for this monitor
-          int? realBrightness = await getBrightness(deviceName);
+          // Fetch real physical DDC/CI brightness for this monitor.
+          // Hardware probe: if monitor lacks DDC/CI, physical query returns null.
+          int? realBrightness = await getBrightness(
+            deviceName,
+            probeHardware: true,
+          );
+          if (realBrightness == null) {
+            // Transient retry: DDC/CI I2C bus can occasionally drop first packet on display wake/startup
+            await Future<void>.delayed(const Duration(milliseconds: 50));
+            realBrightness = await getBrightness(
+              deviceName,
+              probeHardware: true,
+            );
+          }
+          final bool isDdcSupported = realBrightness != null;
           if (realBrightness != null &&
               realBrightness >= 0 &&
               realBrightness <= hardwareBrightnessFloorThreshold &&
               (_lastSentBrightness[deviceName] ?? 0) < 0) {
             realBrightness = _lastSentBrightness[deviceName];
+          }
+
+          // If monitor doesn't support DDC/CI, initialize overlay brightness to last sent value,
+          // or query active overlay opacity, or default to 100% (un-dimmed).
+          if (!isDdcSupported) {
+            realBrightness =
+                _lastSentBrightness[deviceName] ??
+                await getBrightness(deviceName, isOverlayOnly: true) ??
+                100;
           }
 
           // 1. Direct lookup by exact SetupAPI device interface path or deviceID
@@ -302,6 +371,7 @@ class MonitorService {
               deviceIdHash: deviceIdHash,
               isPrimary: isPrimary,
               realBrightness: realBrightness,
+              isDdcSupported: isDdcSupported,
             ),
           );
         }
@@ -323,7 +393,8 @@ class MonitorService {
           deviceName: 'DISPLAY1',
           deviceIdHash: 'generic',
           isPrimary: true,
-          realBrightness: null,
+          realBrightness: _lastSentBrightness['DISPLAY1'] ?? 100,
+          isDdcSupported: false,
         ),
       );
     }

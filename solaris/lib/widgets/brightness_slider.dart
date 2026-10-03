@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:solaris/services/monitor_service.dart';
+import 'package:solaris/theme/app_theme.dart';
+
+export 'package:solaris/theme/app_theme.dart' show SoftwareDimmingTheme;
 
 class BrightnessSlider extends StatelessWidget {
   const BrightnessSlider({
@@ -8,6 +12,7 @@ class BrightnessSlider extends StatelessWidget {
     this.min = -100.0,
     this.max = 100.0,
     this.isSoftwareDimmingEnabled = true,
+    this.isOverlayOnly = false,
     super.key,
   });
 
@@ -16,8 +21,11 @@ class BrightnessSlider extends StatelessWidget {
   final double min;
   final double max;
   final bool isSoftwareDimmingEnabled;
+  final bool isOverlayOnly;
 
   /// Piecewise mapping:
+  /// When in overlay-only mode (monitors without DDC/CI):
+  /// - 100% of the slider width is linear [0.0 .. 100.0] overlay dimming.
   /// When software dimming is enabled:
   /// - 25% of the slider width (0.0 .. 0.25) is dedicated to [-100.0 .. 0.0] overlay dimming.
   /// - 75% of the slider width (0.25 .. 1.0) is dedicated to [0.0 .. 100.0] hardware brightness.
@@ -26,8 +34,9 @@ class BrightnessSlider extends StatelessWidget {
   static double valueToProgress({
     required double value,
     required bool isSoftwareDimmingEnabled,
+    bool isOverlayOnly = false,
   }) {
-    if (!isSoftwareDimmingEnabled) {
+    if (isOverlayOnly || !isSoftwareDimmingEnabled) {
       return (value / 100.0).clamp(0.0, 1.0);
     }
     if (value <= 0.0) {
@@ -42,8 +51,9 @@ class BrightnessSlider extends StatelessWidget {
   static double progressToValue({
     required double progress,
     required bool isSoftwareDimmingEnabled,
+    bool isOverlayOnly = false,
   }) {
-    if (!isSoftwareDimmingEnabled) {
+    if (isOverlayOnly || !isSoftwareDimmingEnabled) {
       return (progress * 100.0).clamp(0.0, 100.0);
     }
     if (progress <= 0.25) {
@@ -59,10 +69,11 @@ class BrightnessSlider extends StatelessWidget {
     final rawVal = progressToValue(
       progress: progress,
       isSoftwareDimmingEnabled: isSoftwareDimmingEnabled,
+      isOverlayOnly: isOverlayOnly,
     );
 
-    // Magnetic Snap around 0% (threshold of ±3%) when software dimming is enabled
-    if (isSoftwareDimmingEnabled && rawVal.abs() <= 3.0) {
+    // Magnetic Snap around 0% (threshold of ±3%) when software dimming is enabled in hybrid mode
+    if (!isOverlayOnly && isSoftwareDimmingEnabled && rawVal.abs() <= 3.0) {
       onChanged(0.0);
     } else {
       onChanged(rawVal);
@@ -71,12 +82,17 @@ class BrightnessSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isBelowZero = isSoftwareDimmingEnabled && value < 0.0;
-    final double effectiveMin = isSoftwareDimmingEnabled ? min : 0.0;
+    final bool isPurpleTheme =
+        isOverlayOnly || (isSoftwareDimmingEnabled && value < 0.0);
+    final double effectiveMin = MonitorInfo.effectiveMinBrightness(
+      isOverlayOnly: isOverlayOnly,
+      isSoftwareDimmingEnabled: isSoftwareDimmingEnabled,
+    );
     final double clampedVal = value.clamp(effectiveMin, max);
     final double progress = valueToProgress(
       value: clampedVal,
       isSoftwareDimmingEnabled: isSoftwareDimmingEnabled,
+      isOverlayOnly: isOverlayOnly,
     );
 
     return Column(
@@ -87,11 +103,11 @@ class BrightnessSlider extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              isBelowZero
+              isPurpleTheme
                   ? const Icon(
                       LucideIcons.moon,
                       size: 15,
-                      color: Color(0xFF818CF8),
+                      color: SoftwareDimmingTheme.accent,
                     )
                   : Icon(
                       isSoftwareDimmingEnabled
@@ -100,17 +116,21 @@ class BrightnessSlider extends StatelessWidget {
                       size: 14,
                       color: Colors.white30,
                     ),
-              isBelowZero
+              isPurpleTheme
                   ? Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF6366F1).withValues(alpha: 0.15),
+                        color: SoftwareDimmingTheme.primary.withValues(
+                          alpha: 0.15,
+                        ),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: const Color(0xFF818CF8).withValues(alpha: 0.3),
+                          color: SoftwareDimmingTheme.accent.withValues(
+                            alpha: 0.3,
+                          ),
                         ),
                       ),
                       child: Row(
@@ -119,7 +139,7 @@ class BrightnessSlider extends StatelessWidget {
                           const Icon(
                             LucideIcons.moon,
                             size: 10,
-                            color: Color(0xFF818CF8),
+                            color: SoftwareDimmingTheme.accent,
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -127,7 +147,7 @@ class BrightnessSlider extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFFC4B5FD),
+                              color: SoftwareDimmingTheme.text,
                               letterSpacing: 1,
                             ),
                           ),
@@ -146,7 +166,11 @@ class BrightnessSlider extends StatelessWidget {
               Icon(
                 LucideIcons.sun,
                 size: 18,
-                color: isBelowZero ? Colors.white24 : const Color(0xFFFDBA74),
+                color: isPurpleTheme
+                    ? (isOverlayOnly
+                          ? SoftwareDimmingTheme.accent.withValues(alpha: 0.6)
+                          : Colors.white24)
+                    : const Color(0xFFFDBA74),
               ),
             ],
           ),
@@ -158,8 +182,8 @@ class BrightnessSlider extends StatelessWidget {
             color: Colors.white.withValues(alpha: 0.03),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: isBelowZero
-                  ? const Color(0xFF6366F1).withValues(alpha: 0.2)
+              color: isPurpleTheme
+                  ? SoftwareDimmingTheme.primary.withValues(alpha: 0.25)
                   : Colors.white.withValues(alpha: 0.05),
             ),
           ),
@@ -168,15 +192,16 @@ class BrightnessSlider extends StatelessWidget {
               trackHeight: 12,
               activeTrackColor: Colors.transparent,
               inactiveTrackColor: Colors.white.withValues(alpha: 0.05),
-              thumbColor: isBelowZero
-                  ? const Color(0xFF818CF8)
+              thumbColor: isPurpleTheme
+                  ? SoftwareDimmingTheme.accent
                   : const Color(0xFFFDBA74),
-              overlayColor: isBelowZero
-                  ? const Color(0xFF818CF8).withValues(alpha: 0.1)
+              overlayColor: isPurpleTheme
+                  ? SoftwareDimmingTheme.accent.withValues(alpha: 0.12)
                   : const Color(0xFFFDBA74).withValues(alpha: 0.1),
-              thumbShape: _PremiumThumbShape(isBelowZero: isBelowZero),
+              thumbShape: _PremiumThumbShape(isBelowZero: isPurpleTheme),
               trackShape: _PremiumTrackShape(
                 isSoftwareDimmingEnabled: isSoftwareDimmingEnabled,
+                isOverlayOnly: isOverlayOnly,
               ),
             ),
             child: Slider(
@@ -193,9 +218,13 @@ class BrightnessSlider extends StatelessWidget {
 }
 
 class _PremiumTrackShape extends RoundedRectSliderTrackShape {
-  const _PremiumTrackShape({required this.isSoftwareDimmingEnabled});
+  const _PremiumTrackShape({
+    required this.isSoftwareDimmingEnabled,
+    this.isOverlayOnly = false,
+  });
 
   final bool isSoftwareDimmingEnabled;
+  final bool isOverlayOnly;
 
   @override
   void paint(
@@ -229,6 +258,45 @@ class _PremiumTrackShape extends RoundedRectSliderTrackShape {
       inactivePaint,
     );
 
+    if (isOverlayOnly) {
+      if (thumbCenter.dx > trackRect.left) {
+        final activePaint = Paint()
+          ..shader =
+              const LinearGradient(
+                colors: [
+                  SoftwareDimmingTheme.primary,
+                  SoftwareDimmingTheme.accent,
+                ],
+              ).createShader(
+                Rect.fromLTRB(
+                  trackRect.left,
+                  trackRect.top,
+                  trackRect.right,
+                  trackRect.bottom,
+                ),
+              );
+
+        canvas.drawRRect(
+          RRect.fromLTRBAndCorners(
+            trackRect.left,
+            trackRect.top,
+            thumbCenter.dx,
+            trackRect.bottom,
+            topLeft: trackRadius,
+            bottomLeft: trackRadius,
+            topRight: thumbCenter.dx >= trackRect.right
+                ? trackRadius
+                : Radius.zero,
+            bottomRight: thumbCenter.dx >= trackRect.right
+                ? trackRadius
+                : Radius.zero,
+          ),
+          activePaint,
+        );
+      }
+      return;
+    }
+
     if (isSoftwareDimmingEnabled) {
       // 25% of the slider width is dedicated to the overlay (-100%..0%)
       const zeroRatio = 0.25;
@@ -243,7 +311,10 @@ class _PremiumTrackShape extends RoundedRectSliderTrackShape {
       );
       final lunarDockPaint = Paint()
         ..shader = const LinearGradient(
-          colors: [Color(0xFF1E1B4B), Color(0xFF2E1065)],
+          colors: [
+            SoftwareDimmingTheme.dockStart,
+            SoftwareDimmingTheme.dockEnd,
+          ],
         ).createShader(lunarDockRect);
       canvas.drawRRect(
         RRect.fromLTRBAndCorners(
@@ -343,7 +414,7 @@ class _PremiumTrackShape extends RoundedRectSliderTrackShape {
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
           colors: [
-            Color(0xFF818CF8), // Moon / Overlay Indigo
+            SoftwareDimmingTheme.accent, // Moon / Overlay Indigo
             Color(0xFFFFFFFF), // Pure bright center highlight
             Color(0xFFFDBA74), // Sun / Physical Orange
           ],
@@ -404,10 +475,10 @@ class _PremiumThumbShape extends SliderComponentShape {
     final canvas = context.canvas;
 
     final Color glowColor = isBelowZero
-        ? const Color(0xFF818CF8)
+        ? SoftwareDimmingTheme.accent
         : const Color(0xFFFDBA74);
     final Color innerColor = isBelowZero
-        ? const Color(0xFF6366F1)
+        ? SoftwareDimmingTheme.primary
         : const Color(0xFFFDBA74);
 
     // Draw glow

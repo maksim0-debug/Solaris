@@ -8,6 +8,7 @@ class BrightnessService {
   final Map<String, Timer?> _adjustmentTimers = {};
   final Map<String, bool> _isManualTransition = {};
   final Map<String, bool> _canDimSoftware = {};
+  final Map<String, bool> _isOverlayOnly = {};
 
   final Map<String, int> _targetBrightness = {};
   final Map<String, double> _lastCalculatedFloat = {};
@@ -27,6 +28,9 @@ class BrightnessService {
     _currentHardwareBrightness[deviceName] = realBrightness;
     _lastCalculatedFloat[deviceName] = realBrightness.toDouble();
   }
+
+  int? getCurrentHardwareBrightness(String deviceName) =>
+      _currentHardwareBrightness[deviceName];
 
   void invalidateCache([String? deviceName]) {
     if (deviceName != null) {
@@ -51,8 +55,12 @@ class BrightnessService {
       if (selection == 'all' || selection == monitor.deviceName) {
         final deviceName = monitor.deviceName;
         final offset = offsets?[deviceName] ?? 0.0;
-        final bool canDimSoftware = isSoftwareDimmingEnabled && isManual;
-        final double minVal = canDimSoftware ? -100.0 : 0.0;
+        final bool isOverlayOnly = !monitor.isDdcSupported;
+        final bool canDimSoftware =
+            isOverlayOnly || (isSoftwareDimmingEnabled && isManual);
+        final double minVal = isOverlayOnly
+            ? 0.0
+            : (canDimSoftware ? -100.0 : 0.0);
         final rawTarget = (targetValue + offset).clamp(minVal, 100.0);
 
         // HYSTERESIS: Filter out noise to prevent flicker.
@@ -61,7 +69,10 @@ class BrightnessService {
         // hardware reality takes precedence over calculation hysteresis!
         final double lastCalculated =
             _lastCalculatedFloat[deviceName] ?? -999.0;
-        final int? realHardware = monitor.realBrightness;
+        final int? realHardware = monitor.isDdcSupported
+            ? monitor.realBrightness
+            : (_currentHardwareBrightness[deviceName] ??
+                  monitor.realBrightness);
         final bool isHardwareDesynced =
             realHardware != null &&
             (rawTarget < 0 &&
@@ -89,6 +100,7 @@ class BrightnessService {
         _targetBrightness[deviceName] = target;
         _isManualTransition[deviceName] = isManual;
         _canDimSoftware[deviceName] = canDimSoftware;
+        _isOverlayOnly[deviceName] = isOverlayOnly;
         _activeBrightnessCallbacks[deviceName] = updateBrightnessCallback;
 
         if (_adjustmentTimers[deviceName] == null) {
@@ -100,6 +112,7 @@ class BrightnessService {
             isUIVisible: isUIVisible,
             isManual: isManual,
             canDimSoftware: canDimSoftware,
+            isOverlayOnly: isOverlayOnly,
           );
         }
       }
@@ -114,6 +127,7 @@ class BrightnessService {
     bool isUIVisible = true,
     bool isManual = false,
     bool canDimSoftware = false,
+    bool isOverlayOnly = false,
   }) async {
     if (_adjustmentTimers[deviceName] != null) return;
 
@@ -130,17 +144,21 @@ class BrightnessService {
       int current =
           _currentHardwareBrightness[deviceName] ??
           currentFromList ??
-          initialTarget;
+          (isOverlayOnly ? 100 : initialTarget);
 
       while (true) {
         final target = _targetBrightness[deviceName] ?? initialTarget;
         final currentIsManual = _isManualTransition[deviceName] ?? isManual;
         final currentCanDim = _canDimSoftware[deviceName] ?? canDimSoftware;
+        final currentOverlayOnly = _isOverlayOnly[deviceName] ?? isOverlayOnly;
         final diff = (target - current).abs();
 
-        if (diff == 0) break;
+        if (diff == 0) {
+          _currentHardwareBrightness[deviceName] = current;
+          break;
+        }
 
-        final int minVal = currentCanDim ? -100 : 0;
+        final int minVal = currentOverlayOnly ? 0 : (currentCanDim ? -100 : 0);
         final int safeLower = minVal < target ? minVal : target;
 
         if (!isUIVisible && !currentIsManual) {
@@ -168,14 +186,24 @@ class BrightnessService {
         final int valToReport = current;
         final cb = _activeBrightnessCallbacks[deviceName];
         if (cb != null) {
-          Future.delayed(Duration.zero, () => cb(deviceName, valToReport));
+          Future.delayed(Duration.zero, () {
+            try {
+              cb(deviceName, valToReport);
+            } catch (_) {}
+          });
         }
 
-        await monitorService.setBrightness(deviceName, current);
+        await monitorService.setBrightness(
+          deviceName,
+          current,
+          isOverlayOnly: currentOverlayOnly,
+        );
 
         // ALWAYS check against the most recent target, to avoid race conditions
         // where target updates while we were waiting for setBrightness.
-        if (current == _targetBrightness[deviceName]) break;
+        if (current == _targetBrightness[deviceName]) {
+          break;
+        }
 
         // Wait 100ms for manual changes, 150ms for automatic adjustments
         await Future<void>.delayed(
@@ -188,6 +216,7 @@ class BrightnessService {
       _adjustmentTimers.remove(deviceName);
       _isManualTransition.remove(deviceName);
       _canDimSoftware.remove(deviceName);
+      _isOverlayOnly.remove(deviceName);
       _activeBrightnessCallbacks.remove(deviceName);
     }
   }

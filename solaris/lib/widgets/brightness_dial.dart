@@ -1,11 +1,14 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:solaris/theme/app_theme.dart';
 
 class BrightnessDialPainter extends CustomPainter {
   // 0.0 to 1.0
 
-  BrightnessDialPainter({required this.brightness});
+  BrightnessDialPainter({required this.brightness, this.isOverlayOnly = false});
+
   final double brightness;
+  final bool isOverlayOnly;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -31,8 +34,13 @@ class BrightnessDialPainter extends CustomPainter {
 
     if (clampedBrightness > 0) {
       final progressPaint = Paint()
-        ..shader = const LinearGradient(
-          colors: [Color(0xFFFDBA74), Color(0xFFF97316)],
+        ..shader = LinearGradient(
+          colors: isOverlayOnly
+              ? const [
+                  SoftwareDimmingTheme.primary,
+                  SoftwareDimmingTheme.accent,
+                ]
+              : const [Color(0xFFFDBA74), Color(0xFFF97316)],
         ).createShader(Rect.fromCircle(center: center, radius: radius))
         ..style = PaintingStyle.stroke
         ..strokeWidth = 12
@@ -56,7 +64,11 @@ class BrightnessDialPainter extends CustomPainter {
     );
 
     final glowPaint = Paint()
-      ..color = const Color(0xFFFDBA74).withValues(alpha: 0.5)
+      ..color =
+          (isOverlayOnly
+                  ? SoftwareDimmingTheme.accent
+                  : const Color(0xFFFDBA74))
+              .withValues(alpha: 0.5)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
 
     canvas.drawCircle(endPos, 10, glowPaint);
@@ -64,5 +76,6 @@ class BrightnessDialPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant BrightnessDialPainter oldDelegate) =>
-      oldDelegate.brightness.clamp(0.0, 1.0) != brightness.clamp(0.0, 1.0);
+      oldDelegate.brightness.clamp(0.0, 1.0) != brightness.clamp(0.0, 1.0) ||
+      oldDelegate.isOverlayOnly != isOverlayOnly;
 }

@@ -295,6 +295,26 @@ bool FlutterWindow::OnCreate() {
 
                 std::string device_path = *path_str;
 
+                bool is_overlay_only = false;
+                auto is_overlay_only_it = arguments->find(flutter::EncodableValue("isOverlayOnly"));
+                if (is_overlay_only_it != arguments->end()) {
+                  if (const auto* val_b = std::get_if<bool>(&is_overlay_only_it->second)) {
+                    is_overlay_only = *val_b;
+                  }
+                }
+
+                if (is_overlay_only) {
+                  // For monitors without DDC/CI, 0..100% brightness is controlled purely via software overlay.
+                  // 100% brightness = 0% opacity (no overlay).
+                  // 0% brightness = maximum overlay darkness.
+                  int clamped = std::max(0, std::min(100, brightness));
+                  double opacity = ((100.0 - static_cast<double>(clamped)) / 100.0) *
+                                   OverlayManager::kMaxOverlayDarkness;
+                  overlay_manager_.SetOverlayOpacity(device_path, opacity);
+                  result->Success(flutter::EncodableValue(true));
+                  return;
+                }
+
                 // Software Dimming Overlay is managed instantly on the UI thread
                 if (brightness < 0) {
                   double opacity = (static_cast<double>(std::abs(brightness)) / 100.0) *
@@ -389,8 +409,47 @@ bool FlutterWindow::OnCreate() {
               if (const auto* path_str = std::get_if<std::string>(&device_path_it->second)) {
                 const std::string& device_path = *path_str;
 
-                // 1. Instant non-blocking check: If software dimming overlay is active (> 0),
-                // return calculated negative brightness immediately without blocking the UI thread on slow DDC/CI!
+                bool is_overlay_only = false;
+                auto is_overlay_only_it = arguments->find(flutter::EncodableValue("isOverlayOnly"));
+                if (is_overlay_only_it != arguments->end()) {
+                  if (const auto* val_b = std::get_if<bool>(&is_overlay_only_it->second)) {
+                    is_overlay_only = *val_b;
+                  }
+                }
+
+                bool probe_hardware = false;
+                auto probe_hardware_it = arguments->find(flutter::EncodableValue("probeHardware"));
+                if (probe_hardware_it != arguments->end()) {
+                  if (const auto* val_b = std::get_if<bool>(&probe_hardware_it->second)) {
+                    probe_hardware = *val_b;
+                  }
+                }
+
+                // If explicit physical hardware probing is requested, bypass any active software overlay
+                // to probe true physical DDC/CI communication over the display I2C bus.
+                if (probe_hardware) {
+                  int current = 0;
+                  int maximum = 100;
+                  if (!monitor_manager_.GetBrightness(device_path, current, maximum)) {
+                    result->Success(flutter::EncodableValue());
+                    return;
+                  }
+                  result->Success(flutter::EncodableValue(current));
+                  return;
+                }
+
+                if (is_overlay_only) {
+                  double overlay_opacity = overlay_manager_.GetOverlayOpacity(device_path);
+                  int software_brightness = std::max(
+                      0,
+                      std::min(100, static_cast<int>(std::round(
+                          100.0 - (overlay_opacity / OverlayManager::kMaxOverlayDarkness) * 100.0))));
+                  result->Success(flutter::EncodableValue(software_brightness));
+                  return;
+                }
+
+                // If physical monitor supports DDC/CI, check if it is currently in negative software dimming mode (< 0%).
+                // Returning software brightness immediately prevents blocking the UI message loop with synchronous I2C DDC/CI calls.
                 double overlay_opacity = overlay_manager_.GetOverlayOpacity(device_path);
                 if (overlay_opacity > 0.001) {
                   int software_brightness = std::min(
@@ -401,16 +460,17 @@ bool FlutterWindow::OnCreate() {
                   return;
                 }
 
-                // 2. Hardware query: Only if overlay is inactive, read physical brightness from hardware
+                // Query physical DDC/CI hardware brightness.
+                // If DDC/CI is not supported on this monitor, return null immediately.
                 int current = 0;
                 int maximum = 100;
-                if (monitor_manager_.GetBrightness(device_path, current, maximum)) {
-                  result->Success(flutter::EncodableValue(current));
-                  return;
-                } else {
+                if (!monitor_manager_.GetBrightness(device_path, current, maximum)) {
                   result->Success(flutter::EncodableValue());
                   return;
                 }
+
+                result->Success(flutter::EncodableValue(current));
+                return;
               }
             }
           }

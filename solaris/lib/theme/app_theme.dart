@@ -136,3 +136,14 @@ class AppTheme {
     ),
   );
 }
+
+/// Design system semantic tokens for the Software Dimming & Overlay theme (Indigo / Violet palette).
+class SoftwareDimmingTheme {
+  const SoftwareDimmingTheme._();
+
+  static const Color primary = Color(0xFF6366F1); // Indigo Primary
+  static const Color accent = Color(0xFF818CF8); // Indigo Accent
+  static const Color text = Color(0xFFC4B5FD); // Soft Violet Text
+  static const Color dockStart = Color(0xFF1E1B4B); // Midnight Dock Start
+  static const Color dockEnd = Color(0xFF2E1065); // Midnight Dock End
+}

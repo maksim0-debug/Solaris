@@ -2319,7 +2319,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ddcNotSupportedTooltip =>
-      'This monitor does not support DDC/CI or it is disabled in settings.\nBrightness adjustment is unavailable, but temperature regulation works.';
+      'This monitor does not support DDC/CI or it is disabled in settings.\nStandard brightness adjustment is unavailable — brightness is regulated via software overlay only.';
 
   @override
   String get checkDdcAgain => 'Check DDC/CI again';

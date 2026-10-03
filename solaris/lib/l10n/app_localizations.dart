@@ -4015,7 +4015,7 @@ abstract class AppLocalizations {
   /// No description provided for @ddcNotSupportedTooltip.
   ///
   /// In en, this message translates to:
-  /// **'This monitor does not support DDC/CI or it is disabled in settings.\nBrightness adjustment is unavailable, but temperature regulation works.'**
+  /// **'This monitor does not support DDC/CI or it is disabled in settings.\nStandard brightness adjustment is unavailable — brightness is regulated via software overlay only.'**
   String get ddcNotSupportedTooltip;
 
   /// No description provided for @checkDdcAgain.

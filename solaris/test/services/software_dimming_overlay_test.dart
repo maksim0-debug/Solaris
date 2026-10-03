@@ -11,8 +11,16 @@ class MockMonitorService extends MonitorService {
   final List<Map<String, dynamic>> calls = [];
 
   @override
-  Future<bool> setBrightness(String deviceName, int brightness) async {
-    calls.add({'device': deviceName, 'brightness': brightness});
+  Future<bool> setBrightness(
+    String deviceName,
+    int brightness, {
+    bool isOverlayOnly = false,
+  }) async {
+    calls.add({
+      'device': deviceName,
+      'brightness': brightness,
+      'isOverlayOnly': isOverlayOnly,
+    });
     return true;
   }
 }

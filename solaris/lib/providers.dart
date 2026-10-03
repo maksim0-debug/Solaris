@@ -1271,11 +1271,6 @@ class MonitorListNotifier extends AsyncNotifier<List<MonitorInfo>> {
           final newTemperature = temperature ?? m.realTemperature;
           if (newBrightness != m.realBrightness ||
               newTemperature != m.realTemperature) {
-            debugPrint(
-              '[MonitorListNotifier] State will change for $deviceName. '
-              'Old brightness: ${m.realBrightness}, new: $newBrightness. '
-              'Old temp: ${m.realTemperature}, new: $newTemperature.',
-            );
             changed = true;
             return m.copyWith(
               realBrightness: newBrightness,
@@ -1711,6 +1706,13 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
             newStateMap[id] ?? newStateMap['all'] ?? SettingsState();
         newStateMap[id] = transform(current);
       }
+    }
+
+    if (const MapEquality<String, SettingsState>().equals(
+      currentMap,
+      newStateMap,
+    )) {
+      return;
     }
 
     debugPrint('[SettingsNotifier] Updated settings for monitors $monitorIds');
@@ -2670,14 +2672,24 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   }
 
   void adjustManualBrightness(double delta) {
+    ref.read(activeProcessServiceProvider.notifier).suppressActiveApp();
     updateAutoBrightness(false);
 
     final currentManual = ref.read(manualBrightnessProvider);
     final isSoftwareDimmingEnabled = _getSettings(
       'all',
     ).isSoftwareDimmingEnabled;
-    final minVal = isSoftwareDimmingEnabled ? -100.0 : 0.0;
-    final newVal = (currentManual + delta).clamp(minVal, 100.0);
+    final selection = ref.read(selectedMonitorsProvider);
+    final monitors = ref.read(monitorListProvider).value ?? [];
+    final isOverlayOnly = MonitorInfo.isSelectionOverlayOnly(
+      selection,
+      monitors,
+    );
+    final effectiveMin = MonitorInfo.effectiveMinBrightness(
+      isOverlayOnly: isOverlayOnly,
+      isSoftwareDimmingEnabled: isSoftwareDimmingEnabled,
+    );
+    final newVal = (currentManual + delta).clamp(effectiveMin, 100.0);
     ref.read(manualBrightnessProvider.notifier).update(newVal);
 
     // Save to prefs as well (matches setManualBrightness in CurrentBrightnessNotifier)
@@ -2874,7 +2886,15 @@ class CurrentBrightnessNotifier extends Notifier<double> {
         if (!isAuto || !selectedSettings.isAutoBrightnessEnabled) {
           final isDimming =
               settingsMap['all']?.isSoftwareDimmingEnabled ?? true;
-          final minAllowed = isDimming ? -100.0 : 0.0;
+          final monitors = ref.watch(monitorListProvider).value ?? [];
+          final isOverlayOnly = MonitorInfo.isSelectionOverlayOnly(
+            currentSelection,
+            monitors,
+          );
+          final minAllowed = MonitorInfo.effectiveMinBrightness(
+            isOverlayOnly: isOverlayOnly,
+            isSoftwareDimmingEnabled: isDimming,
+          );
           return manualBrightness.clamp(minAllowed, 100.0);
         }
 
@@ -2947,32 +2967,42 @@ class CurrentBrightnessNotifier extends Notifier<double> {
 
   void setManualBrightness(double value, {String? monitorId}) {
     ref.read(activeProcessServiceProvider.notifier).suppressActiveApp();
-    ref.read(settingsProvider.notifier).updateAutoBrightness(false);
+    if (ref.read(autoBrightnessAdjustmentProvider)) {
+      ref.read(settingsProvider.notifier).updateAutoBrightness(false);
+    }
 
     final settingsMap = ref.read(settingsProvider).value ?? {};
     final isSoftwareDimmingEnabled =
         settingsMap['all']?.isSoftwareDimmingEnabled ?? true;
-    final minVal = isSoftwareDimmingEnabled ? -100.0 : 0.0;
 
-    double baseValue = value;
+    final monitors = ref.read(monitorListProvider).value ?? [];
     final selection = monitorId != null
         ? {monitorId}
         : ref.read(selectedMonitorsProvider);
 
+    final bool isOverlayOnly = MonitorInfo.isSelectionOverlayOnly(
+      selection,
+      monitors,
+    );
+    final effectiveMin = MonitorInfo.effectiveMinBrightness(
+      isOverlayOnly: isOverlayOnly,
+      isSoftwareDimmingEnabled: isSoftwareDimmingEnabled,
+    );
+
+    double baseValue = value;
     if (selection.length == 1 && !selection.contains('all')) {
       final id = selection.first;
       final offsets = ref.read(brightnessOffsetsProvider);
       final offset = offsets[id] ?? 0.0;
-      baseValue = (value - offset).clamp(minVal, 100.0);
+      baseValue = (value - offset).clamp(effectiveMin, 100.0);
     } else {
-      baseValue = value.clamp(minVal, 100.0);
+      baseValue = value.clamp(effectiveMin, 100.0);
     }
 
     ref.read(manualBrightnessProvider.notifier).update(baseValue);
     _saveBrightness(baseValue);
     state = baseValue;
 
-    final monitors = ref.read(monitorListProvider).value ?? [];
     if (monitors.isNotEmpty) {
       final brightnessService = ref.read(brightnessServiceProvider);
       final monitorService = ref.read(monitorServiceProvider);
@@ -3062,17 +3092,18 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
   final brightnessService = ref.read(brightnessServiceProvider);
   final tempService = ref.read(temperatureServiceProvider);
   final monitorService = ref.read(monitorServiceProvider);
+  final monitorListNotifier = ref.read(monitorListProvider.notifier);
   final isTempEnabled = ref.watch(isColorTemperatureEnabledProvider);
 
   void updateBrightnessCallback(String id, int val) {
     try {
-      ref.read(monitorListProvider.notifier).updateBrightness(id, val);
+      monitorListNotifier.updateBrightness(id, val);
     } catch (_) {}
   }
 
   void updateTemperatureCallback(String id, int val) {
     try {
-      ref.read(monitorListProvider.notifier).updateTemperature(id, val);
+      monitorListNotifier.updateTemperature(id, val);
     } catch (_) {}
   }
 
@@ -3089,7 +3120,14 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
 
       final targetMonitors = selection.contains('all')
           ? monitors.map((m) => m.deviceName).toList()
-          : selection.toList();
+          : monitors
+                .where(
+                  (m) =>
+                      selection.contains(m.deviceName) ||
+                      selection.contains(m.id),
+                )
+                .map((m) => m.deviceName)
+                .toList();
 
       for (final id in targetMonitors) {
         final mSettings =
@@ -3243,18 +3281,27 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
               updateBrightnessCallback: updateBrightnessCallback,
             );
           } else {
-            final manualValue = ref.read(currentBrightnessProvider);
-            brightnessService.applyBrightnessSmoothly(
-              selection: monitor.deviceName,
-              targetValue: manualValue,
-              monitors: monitors,
-              monitorService: monitorService,
-              offsets: offsets,
-              isManual: true,
-              isUIVisible: visibility == AppVisibilityState.visible,
-              isSoftwareDimmingEnabled: settings.isSoftwareDimmingEnabled,
-              updateBrightnessCallback: updateBrightnessCallback,
-            );
+            // If auto-brightness is disabled for this monitor, ensure it is synchronized
+            // on initial startup / connection if its brightness state is not yet established.
+            final isUninitialized =
+                brightnessService.getCurrentHardwareBrightness(
+                  monitor.deviceName,
+                ) ==
+                null;
+            if (isUninitialized) {
+              final manualValue = ref.read(currentBrightnessProvider);
+              brightnessService.applyBrightnessSmoothly(
+                selection: monitor.deviceName,
+                targetValue: manualValue,
+                monitors: monitors,
+                monitorService: monitorService,
+                offsets: offsets,
+                isManual: true,
+                isUIVisible: visibility == AppVisibilityState.visible,
+                isSoftwareDimmingEnabled: settings.isSoftwareDimmingEnabled,
+                updateBrightnessCallback: updateBrightnessCallback,
+              );
+            }
           }
 
           // Calculate and Apply Temperature for each display individually

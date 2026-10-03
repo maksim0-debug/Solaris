@@ -27,8 +27,16 @@ class MockMonitorServiceForLifecycle extends MonitorService {
   }
 
   @override
-  Future<bool> setBrightness(String deviceName, int brightness) async {
-    setBrightnessCalls.add({'device': deviceName, 'brightness': brightness});
+  Future<bool> setBrightness(
+    String deviceName,
+    int brightness, {
+    bool isOverlayOnly = false,
+  }) async {
+    setBrightnessCalls.add({
+      'device': deviceName,
+      'brightness': brightness,
+      'isOverlayOnly': isOverlayOnly,
+    });
     return true;
   }
 }

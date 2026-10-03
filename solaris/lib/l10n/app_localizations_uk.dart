@@ -2333,7 +2333,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get ddcNotSupportedTooltip =>
-      'Цей монітор не підтримує DDC/CI або його вимкнено в налаштуваннях.\nЗміна яскравості недоступна, але регулювання температури працює.';
+      'Цей монітор не підтримує DDC/CI або його вимкнено в налаштуваннях.\nСтандартне регулювання яскравості недоступне — регулювання працює лише через програмний оверлей.';
 
   @override
   String get checkDdcAgain => 'Перевірити DDC/CI знову';
