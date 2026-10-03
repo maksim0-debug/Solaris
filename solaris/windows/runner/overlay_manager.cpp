@@ -94,8 +94,17 @@ void OverlayManager::SetOverlayOpacity(const std::string& device_path, double op
   if (!info_ptr) {
     info_ptr = std::make_unique<OverlayInfo>();
   }
-  info_ptr->opacity = std::max(0.0, std::min(0.85, opacity));
+  info_ptr->opacity = std::max(0.0, std::min(kMaxOverlayDarkness, opacity));
   ApplyOpacityLocked(device_path);
+}
+
+double OverlayManager::GetOverlayOpacity(const std::string& device_path) const {
+  std::lock_guard<std::mutex> lock(mutex_);
+  auto it = overlays_.find(device_path);
+  if (it != overlays_.end() && it->second) {
+    return it->second->opacity;
+  }
+  return 0.0;
 }
 
 void OverlayManager::ApplyOpacityLocked(const std::string& device_path) {
@@ -127,8 +136,8 @@ void OverlayManager::ApplyOpacityLocked(const std::string& device_path) {
 
   info.last_rect = rc;
 
-  // Safety Floor: Clamp opacity to a maximum of 85% to ensure the user never gets a completely black screen
-  double clamped_dim = std::max(0.0, std::min(0.85, dim));
+  // Safety Floor: Clamp opacity to kMaxOverlayDarkness to ensure the user never gets a completely black screen
+  double clamped_dim = std::max(0.0, std::min(kMaxOverlayDarkness, dim));
   BYTE alpha = static_cast<BYTE>(std::round(clamped_dim * 255.0));
   info.alpha = alpha;
 

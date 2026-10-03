@@ -280,22 +280,36 @@ bool FlutterWindow::OnCreate() {
             auto brightness_it = arguments->find(flutter::EncodableValue("brightness"));
             
             if (device_path_it != arguments->end() && brightness_it != arguments->end()) {
-              std::string device_path = std::get<std::string>(device_path_it->second);
-              int brightness = std::get<int>(brightness_it->second);
+              if (const auto* path_str = std::get_if<std::string>(&device_path_it->second)) {
+                int brightness = 0;
+                if (const auto* val_i = std::get_if<int>(&brightness_it->second)) {
+                  brightness = *val_i;
+                } else if (const auto* val_i64 = std::get_if<int64_t>(&brightness_it->second)) {
+                  brightness = static_cast<int>(*val_i64);
+                } else if (const auto* val_d = std::get_if<double>(&brightness_it->second)) {
+                  brightness = static_cast<int>(std::round(*val_d));
+                } else {
+                  result->Error("invalid_arguments", "Brightness must be an integer");
+                  return;
+                }
 
-              // Software Dimming Overlay is managed instantly on the UI thread
-              if (brightness < 0) {
-                double opacity = (static_cast<double>(std::abs(brightness)) / 100.0) * 0.85;
-                overlay_manager_.SetOverlayOpacity(device_path, opacity);
-              } else {
-                overlay_manager_.SetOverlayOpacity(device_path, 0.0);
+                std::string device_path = *path_str;
+
+                // Software Dimming Overlay is managed instantly on the UI thread
+                if (brightness < 0) {
+                  double opacity = (static_cast<double>(std::abs(brightness)) / 100.0) *
+                                   OverlayManager::kMaxOverlayDarkness;
+                  overlay_manager_.SetOverlayOpacity(device_path, opacity);
+                } else {
+                  overlay_manager_.SetOverlayOpacity(device_path, 0.0);
+                }
+
+                monitor_manager_.EnqueueTask([this, device_path, brightness]() {
+                  monitor_manager_.SetBrightness(device_path, brightness);
+                });
+                result->Success(flutter::EncodableValue(true));
+                return;
               }
-              
-              monitor_manager_.EnqueueTask([this, device_path, brightness]() {
-                monitor_manager_.SetBrightness(device_path, brightness);
-              });
-              result->Success(flutter::EncodableValue(true));
-              return;
             }
           }
           result->Error("invalid_arguments", "Expected devicePath and brightness");
@@ -372,15 +386,31 @@ bool FlutterWindow::OnCreate() {
           if (arguments) {
             auto device_path_it = arguments->find(flutter::EncodableValue("devicePath"));
             if (device_path_it != arguments->end()) {
-              std::string device_path = std::get<std::string>(device_path_it->second);
-              int current = 0;
-              int maximum = 100;
-              if (monitor_manager_.GetBrightness(device_path, current, maximum)) {
-                result->Success(flutter::EncodableValue(current));
-                return;
-              } else {
-                result->Success(flutter::EncodableValue());
-                return;
+              if (const auto* path_str = std::get_if<std::string>(&device_path_it->second)) {
+                const std::string& device_path = *path_str;
+
+                // 1. Instant non-blocking check: If software dimming overlay is active (> 0),
+                // return calculated negative brightness immediately without blocking the UI thread on slow DDC/CI!
+                double overlay_opacity = overlay_manager_.GetOverlayOpacity(device_path);
+                if (overlay_opacity > 0.001) {
+                  int software_brightness = std::min(
+                      -1,
+                      -static_cast<int>(
+                          std::round((overlay_opacity / OverlayManager::kMaxOverlayDarkness) * 100.0)));
+                  result->Success(flutter::EncodableValue(software_brightness));
+                  return;
+                }
+
+                // 2. Hardware query: Only if overlay is inactive, read physical brightness from hardware
+                int current = 0;
+                int maximum = 100;
+                if (monitor_manager_.GetBrightness(device_path, current, maximum)) {
+                  result->Success(flutter::EncodableValue(current));
+                  return;
+                } else {
+                  result->Success(flutter::EncodableValue());
+                  return;
+                }
               }
             }
           }

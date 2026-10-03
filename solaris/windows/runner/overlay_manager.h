@@ -12,10 +12,16 @@ class OverlayManager {
   OverlayManager();
   ~OverlayManager();
 
+  // Safety maximum opacity: 85% max darkness ensures display is never completely blacked out.
+  static constexpr double kMaxOverlayDarkness = 0.85;
+
   // Sets the software dimming overlay opacity for a specific monitor device path (e.g. \\.\DISPLAY1).
   // Opacity 0.0 disables dimming. Values > 0.0 show a click-through transparent darkened overlay.
-  // Opacity is clamped to a safety floor of 0.85 (85% max darkness) so the display is never completely blacked out.
+  // Opacity is clamped to kMaxOverlayDarkness.
   void SetOverlayOpacity(const std::string& device_path, double opacity);
+
+  // Returns the current software dimming overlay opacity for a specific monitor device path.
+  double GetOverlayOpacity(const std::string& device_path) const;
 
   // Repositions and resizes all active overlay windows when screen layout or resolution changes.
   void UpdateMonitorBounds();
@@ -31,7 +37,7 @@ class OverlayManager {
     RECT last_rect{};
   };
 
-  std::mutex mutex_;
+  mutable std::mutex mutex_;
   std::unordered_map<std::string, std::unique_ptr<OverlayInfo>> overlays_;
   bool class_registered_ = false;
 

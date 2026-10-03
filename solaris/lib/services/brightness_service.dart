@@ -14,6 +14,16 @@ class BrightnessService {
   final Map<String, void Function(String, int)> _activeBrightnessCallbacks = {};
 
   void syncHardwareBrightness(String deviceName, int realBrightness) {
+    // If the monitor is currently in software dimming mode (< 0) and the incoming
+    // reading is at physical floor (0-5% for DDC/CI hardware), preserve the
+    // active negative dimming state to prevent flicker and jumping back to floor.
+    final current = _currentHardwareBrightness[deviceName];
+    if (current != null &&
+        current < 0 &&
+        realBrightness >= 0 &&
+        realBrightness <= MonitorService.hardwareBrightnessFloorThreshold) {
+      return;
+    }
     _currentHardwareBrightness[deviceName] = realBrightness;
     _lastCalculatedFloat[deviceName] = realBrightness.toDouble();
   }
@@ -54,7 +64,12 @@ class BrightnessService {
         final int? realHardware = monitor.realBrightness;
         final bool isHardwareDesynced =
             realHardware != null &&
-            (rawTarget.round() - realHardware).abs() >= 1;
+            (rawTarget < 0 &&
+                    realHardware >= 0 &&
+                    realHardware <=
+                        MonitorService.hardwareBrightnessFloorThreshold
+                ? false
+                : (rawTarget.round() - realHardware).abs() >= 1);
 
         if (!isManual &&
             !isHardwareDesynced &&
@@ -62,8 +77,14 @@ class BrightnessService {
           continue; // Ignore micro-fluctuations
         }
 
-        _lastCalculatedFloat[deviceName] = rawTarget;
         final target = rawTarget.round();
+        if (_currentHardwareBrightness[deviceName] == target &&
+            !isHardwareDesynced &&
+            (rawTarget - lastCalculated).abs() < 1.0) {
+          continue; // Already at target with hardware aligned
+        }
+
+        _lastCalculatedFloat[deviceName] = rawTarget;
 
         _targetBrightness[deviceName] = target;
         _isManualTransition[deviceName] = isManual;

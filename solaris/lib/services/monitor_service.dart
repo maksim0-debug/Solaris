@@ -27,10 +27,43 @@ class MonitorInfo {
   });
 
   bool get isDdcSupported => realBrightness != null;
+
+  MonitorInfo copyWith({
+    String? id,
+    String? name,
+    String? friendlyName,
+    String? deviceName,
+    String? deviceIdHash,
+    bool? isPrimary,
+    int? realBrightness,
+    int? realTemperature,
+    bool overrideBrightnessWithNull = false,
+    bool overrideTemperatureWithNull = false,
+  }) {
+    return MonitorInfo(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      friendlyName: friendlyName ?? this.friendlyName,
+      deviceName: deviceName ?? this.deviceName,
+      deviceIdHash: deviceIdHash ?? this.deviceIdHash,
+      isPrimary: isPrimary ?? this.isPrimary,
+      realBrightness: overrideBrightnessWithNull
+          ? null
+          : (realBrightness ?? this.realBrightness),
+      realTemperature: overrideTemperatureWithNull
+          ? null
+          : (realTemperature ?? this.realTemperature),
+    );
+  }
 }
 
 class MonitorService {
   static const _channel = MethodChannel('com.solaris.monitor/names');
+
+  /// Physical DDC/CI hardware brightness floor threshold (0-5%).
+  /// Many external displays clamp minimum physical backlight to non-zero values (e.g. 1-5%).
+  static const int hardwareBrightnessFloorThreshold = 5;
+
   final Map<String, int> _lastSentBrightness = {};
   final Map<String, Timer> _immediateDebugTimers = {};
   final Map<String, Timer> _delayedDebugTimers = {};
@@ -230,7 +263,13 @@ class MonitorService {
               .toLowerCase();
 
           // Fetch real brightness for this monitor
-          final realBrightness = await getBrightness(deviceName);
+          int? realBrightness = await getBrightness(deviceName);
+          if (realBrightness != null &&
+              realBrightness >= 0 &&
+              realBrightness <= hardwareBrightnessFloorThreshold &&
+              (_lastSentBrightness[deviceName] ?? 0) < 0) {
+            realBrightness = _lastSentBrightness[deviceName];
+          }
 
           // 1. Direct lookup by exact SetupAPI device interface path or deviceID
           String friendly =

@@ -1213,7 +1213,30 @@ class MonitorListNotifier extends AsyncNotifier<List<MonitorInfo>> {
             .getConnectedMonitors();
         final bService = ref.read(brightnessServiceProvider);
         final tService = ref.read(temperatureServiceProvider);
-        for (final m in newMonitors) {
+
+        // Preserve active software dimming state if hardware reports minimum brightness floor (0-5%)
+        final previousMonitors = state.value ?? [];
+        final updatedMonitors = newMonitors.map((m) {
+          int? effectiveBrightness = m.realBrightness;
+          if (effectiveBrightness != null &&
+              effectiveBrightness >= 0 &&
+              effectiveBrightness <=
+                  MonitorService.hardwareBrightnessFloorThreshold) {
+            final prev = previousMonitors
+                .where((p) => p.deviceName == m.deviceName)
+                .firstOrNull;
+            final prevBrightness = prev?.realBrightness;
+            if (prevBrightness != null && prevBrightness < 0) {
+              effectiveBrightness = prevBrightness;
+            }
+          }
+          if (effectiveBrightness != m.realBrightness) {
+            return m.copyWith(realBrightness: effectiveBrightness);
+          }
+          return m;
+        }).toList();
+
+        for (final m in updatedMonitors) {
           if (m.realBrightness != null) {
             bService.syncHardwareBrightness(m.deviceName, m.realBrightness!);
           }
@@ -1222,7 +1245,7 @@ class MonitorListNotifier extends AsyncNotifier<List<MonitorInfo>> {
           }
         }
         if (state.hasValue) {
-          state = AsyncData(newMonitors);
+          state = AsyncData(updatedMonitors);
         }
       }
     });
@@ -1254,13 +1277,7 @@ class MonitorListNotifier extends AsyncNotifier<List<MonitorInfo>> {
               'Old temp: ${m.realTemperature}, new: $newTemperature.',
             );
             changed = true;
-            return MonitorInfo(
-              id: m.id,
-              name: m.name,
-              friendlyName: m.friendlyName,
-              deviceName: m.deviceName,
-              deviceIdHash: m.deviceIdHash,
-              isPrimary: m.isPrimary,
+            return m.copyWith(
               realBrightness: newBrightness,
               realTemperature: newTemperature,
             );
