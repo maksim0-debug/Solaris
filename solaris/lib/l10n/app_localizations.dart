@@ -256,6 +256,12 @@ abstract class AppLocalizations {
   /// **'Golden Hour End'**
   String get eventGoldenHourEnd;
 
+  /// No description provided for @eventTwilightEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Twilight End'**
+  String get eventTwilightEnd;
+
   /// No description provided for @calculating.
   ///
   /// In en, this message translates to:
@@ -499,6 +505,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Middle of the day. Auto-adjust is disabled, brightness set manually.'**
   String get descZenithManual;
+
+  /// No description provided for @descDayAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Daytime. Optimal brightness is set for daytime work.'**
+  String get descDayAuto;
+
+  /// No description provided for @descDayManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Daytime. Auto-adjust is disabled, brightness is set manually.'**
+  String get descDayManual;
 
   /// No description provided for @descGoldenHourMorningBothAuto.
   ///

@@ -92,6 +92,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get eventGoldenHourEnd => 'Конец золотого часа';
 
   @override
+  String get eventTwilightEnd => 'Конец сумерек';
+
+  @override
   String get calculating => 'РАСЧЕТ...';
 
   @override
@@ -239,6 +242,14 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get descZenithManual =>
       'Разгар дня. Автоподстройка отключена, яркость задана вручную.';
+
+  @override
+  String get descDayAuto =>
+      'День. Установлена оптимальная яркость для дневной работы.';
+
+  @override
+  String get descDayManual =>
+      'День. Автоподстройка отключена, яркость задана вручную.';
 
   @override
   String get descGoldenHourMorningBothAuto =>

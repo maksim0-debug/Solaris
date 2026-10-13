@@ -29,6 +29,9 @@ void main() {
       goldenHourEvening: sunset.subtract(const Duration(hours: 1)),
       goldenHourEveningEnd: sunset,
       civilTwilightBegin: sunrise.subtract(const Duration(minutes: 30)),
+      nextDayCivilTwilightBegin: (sunrise.subtract(
+        const Duration(minutes: 30),
+      )).add(const Duration(days: 1)),
       civilTwilightEnd: sunset.add(const Duration(minutes: 30)),
       astronomicalDawn: sunrise.subtract(const Duration(hours: 1)),
       civilDusk: sunset.add(const Duration(minutes: 30)),
@@ -98,6 +101,9 @@ void main() {
         goldenHourEvening: sunset.subtract(const Duration(hours: 1)),
         goldenHourEveningEnd: sunset,
         civilTwilightBegin: sunrise.subtract(const Duration(minutes: 30)),
+        nextDayCivilTwilightBegin: (sunrise.subtract(
+          const Duration(minutes: 30),
+        )).add(const Duration(days: 1)),
         civilTwilightEnd: sunset.add(const Duration(minutes: 30)),
         astronomicalDawn: sunrise.subtract(const Duration(hours: 1)),
         civilDusk: sunset.add(const Duration(minutes: 30)),

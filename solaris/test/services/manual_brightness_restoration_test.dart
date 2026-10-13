@@ -131,6 +131,7 @@ SolarState _solar() {
       goldenHourEvening: hour(17),
       goldenHourEveningEnd: hour(18),
       civilTwilightBegin: hour(6),
+      nextDayCivilTwilightBegin: (hour(6)).add(const Duration(days: 1)),
       civilTwilightEnd: hour(19),
       astronomicalDawn: hour(5),
       civilDusk: hour(19),

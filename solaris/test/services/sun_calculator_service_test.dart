@@ -80,7 +80,7 @@ void main() {
 
         // 2 hours after civilTwilightEnd (deep night before midnight)
         final lateNight = phases.civilTwilightEnd.add(const Duration(hours: 2));
-        final nextEvent = service.getNextEvent(phases, lateNight);
+        final nextEvent = service.getNextEvent(phases, lateNight)!;
 
         expect(nextEvent.type, SolarEventType.civilTwilightBegin);
         expect(nextEvent.duration.isNegative, isFalse);

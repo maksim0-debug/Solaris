@@ -35,6 +35,7 @@
   "eventZenithEnd": "Zenith End",
   "eventSolarNoon": "Solar Noon",
   "eventGoldenHourEnd": "Golden Hour End",
+  "eventTwilightEnd": "Twilight End",
   "calculating": "CALCULATING...",
   "comingIn": "COMING IN {time}",
   "@comingIn": {
@@ -133,6 +134,8 @@
   "descMorningSpikeManual": "Pre-dawn rise. Manual brightness control is active.",
   "descZenithAuto": "Sun is at its zenith. Optimal brightness is set for daytime work.",
   "descZenithManual": "Middle of the day. Auto-adjust is disabled, brightness set manually.",
+  "descDayAuto": "Daytime. Optimal brightness is set for daytime work.",
+  "descDayManual": "Daytime. Auto-adjust is disabled, brightness is set manually.",
   "descGoldenHourMorningBothAuto": "Morning golden hour. Soft warm light and brightness are adjusted for a gentle start to your day.",
   "descGoldenHourMorningTempOnly": "Morning golden hour. The screen is shifted to a warm spectrum for your eyes' comfort.",
   "descGoldenHourMorningBrightOnly": "Morning golden hour. Brightness adapts to the soft light of early morning.",

@@ -20,6 +20,13 @@ void main() {
       goldenHourEvening: DateTime(2026, 3, 19, 17, 30),
       goldenHourEveningEnd: DateTime(2026, 3, 19, 18, 30),
       civilTwilightBegin: DateTime(2026, 3, 19, 5, 30),
+      nextDayCivilTwilightBegin: (DateTime(
+        2026,
+        3,
+        19,
+        5,
+        30,
+      )).add(const Duration(days: 1)),
       civilTwilightEnd: DateTime(2026, 3, 19, 18, 30),
       astronomicalDawn: DateTime(2026, 3, 19, 4, 30),
       civilDusk: DateTime(2026, 3, 19, 18, 30),

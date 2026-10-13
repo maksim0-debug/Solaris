@@ -691,7 +691,11 @@ class _Header extends ConsumerWidget {
     String nextEventTime = l10n.calculating;
 
     solarAsync.whenData((state) {
-      final timeStr = timeService.formatCountdown(state.timeUntilNextEvent);
+      final now = timeAsync.value;
+      if (now == null) return;
+      final nextEvent = StatusHelper.getUpcomingEvent(state, now);
+      if (nextEvent == null) return;
+      final countdownStr = timeService.formatCountdown(nextEvent.duration);
 
       // Helper to get localized event name
       String getEventName(SolarEventType type) {
@@ -717,17 +721,12 @@ class _Header extends ConsumerWidget {
           case SolarEventType.sunset:
             return l10n.sunsetLabel;
           case SolarEventType.civilTwilightEnd:
-            return l10n.phaseTwilight;
+            return l10n.eventTwilightEnd;
         }
       }
 
-      if (state.currentPhase == CurrentDayPhase.goldenHour) {
-        nextEventStatus = l10n.goldenHourActive;
-        nextEventTime = l10n.remaining(timeStr);
-      } else {
-        nextEventStatus = getEventName(state.nextEventType);
-        nextEventTime = l10n.comingIn(timeStr);
-      }
+      nextEventStatus = getEventName(nextEvent.type);
+      nextEventTime = l10n.comingIn(countdownStr);
     });
 
     return Row(
@@ -1152,7 +1151,10 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                         data: (state) {
                                           final timeStr = timeService
                                               .formatCountdown(
-                                                state.timeUntilNextEvent,
+                                                StatusHelper.getRemainingDuration(
+                                                  state,
+                                                  now,
+                                                ),
                                               );
 
                                           return l10n.remainingLower(timeStr);

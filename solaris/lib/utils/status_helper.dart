@@ -3,6 +3,7 @@ import 'package:solaris/l10n/app_localizations.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/models/current_day_phase.dart';
 import 'package:solaris/models/solar_state.dart';
+import 'package:solaris/services/sun_calculator_service.dart';
 
 class StatusConfig {
   final String title;
@@ -21,6 +22,25 @@ class StatusConfig {
 }
 
 class StatusHelper {
+  static ({Duration duration, SolarEventType type})? getUpcomingEvent(
+    SolarState state,
+    DateTime now,
+  ) {
+    if (!state.phases.isForDate(now)) return null;
+    return SunCalculatorService().getNextEvent(state.phases, now);
+  }
+
+  static Duration getRemainingDuration(SolarState state, DateTime now) {
+    final service = SunCalculatorService();
+    // The clock can advance before the solar stream publishes its new phase.
+    if (!state.phases.isForDate(now) ||
+        !now.isBefore(state.phases.nextDayCivilTwilightBegin) ||
+        service.getCurrentPhase(state.phases, now) != state.currentPhase) {
+      return Duration.zero;
+    }
+    return service.getTimeUntilPhaseEnd(state.phases, now);
+  }
+
   static StatusConfig getStatus(
     SolarState state,
     AppLocalizations l10n,
@@ -71,6 +91,13 @@ class StatusHelper {
             : l10n.descZenithManual;
         icon = LucideIcons.sun;
         color = const Color(0xFFFDE047); // Yellow-300
+        break;
+
+      case CurrentDayPhase.day:
+        title = l10n.phaseDay;
+        description = isAutoBright ? l10n.descDayAuto : l10n.descDayManual;
+        icon = LucideIcons.sun;
+        color = const Color(0xFFFDE047);
         break;
 
       case CurrentDayPhase.goldenHour:

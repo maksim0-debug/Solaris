@@ -91,6 +91,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get eventGoldenHourEnd => 'Golden Hour End';
 
   @override
+  String get eventTwilightEnd => 'Twilight End';
+
+  @override
   String get calculating => 'CALCULATING...';
 
   @override
@@ -238,6 +241,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get descZenithManual =>
       'Middle of the day. Auto-adjust is disabled, brightness set manually.';
+
+  @override
+  String get descDayAuto =>
+      'Daytime. Optimal brightness is set for daytime work.';
+
+  @override
+  String get descDayManual =>
+      'Daytime. Auto-adjust is disabled, brightness is set manually.';
 
   @override
   String get descGoldenHourMorningBothAuto =>

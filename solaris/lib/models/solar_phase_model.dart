@@ -23,6 +23,9 @@ class SolarPhaseModel extends Equatable {
   /// The start of the civil twilight (dawn).
   final DateTime civilTwilightBegin;
 
+  /// Civil dawn calculated for the next local calendar date.
+  final DateTime nextDayCivilTwilightBegin;
+
   /// The end of the civil twilight (dusk).
   final DateTime civilTwilightEnd;
 
@@ -46,12 +49,19 @@ class SolarPhaseModel extends Equatable {
     required this.goldenHourEvening,
     required this.goldenHourEveningEnd,
     required this.civilTwilightBegin,
+    required this.nextDayCivilTwilightBegin,
     required this.civilTwilightEnd,
     required this.astronomicalDawn,
     required this.civilDusk,
     required this.solarNoon,
     required this.astronomicalDusk,
   });
+
+  /// Whether these phases belong to the supplied local calendar date.
+  bool isForDate(DateTime time) =>
+      solarNoon.year == time.year &&
+      solarNoon.month == time.month &&
+      solarNoon.day == time.day;
 
   @override
   List<Object?> get props => [
@@ -62,6 +72,7 @@ class SolarPhaseModel extends Equatable {
     goldenHourEvening,
     goldenHourEveningEnd,
     civilTwilightBegin,
+    nextDayCivilTwilightBegin,
     civilTwilightEnd,
     astronomicalDawn,
     civilDusk,

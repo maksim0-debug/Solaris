@@ -56,6 +56,13 @@ class SunCalculatorService {
       lat,
       lon,
     );
+    final nextDayCalc = SolarCalculator(
+      Instant.fromDateTime(
+        DateTime.utc(localDate.year, localDate.month, localDate.day + 1),
+      ),
+      lat,
+      lon,
+    );
 
     // The solar_calculator returns UTC times in Instant objects.
     // We convert them to DateTime (UTC) and then to Local time.
@@ -107,6 +114,9 @@ class SunCalculatorService {
       goldenHourEvening: adjust(eveningGoldenStart),
       goldenHourEveningEnd: adjust(eveningGoldenEnd),
       civilTwilightBegin: adjust(solarCalc.morningCivilTwilight.begining),
+      nextDayCivilTwilightBegin: adjust(
+        nextDayCalc.morningCivilTwilight.begining,
+      ),
       civilTwilightEnd: adjust(solarCalc.eveningCivilTwilight.ending),
       astronomicalDawn: adjust(solarCalc.morningAstronomicalTwilight.begining),
       civilDusk: adjust(solarCalc.eveningCivilTwilight.ending),
@@ -138,29 +148,29 @@ class SunCalculatorService {
     DateTime currentTime,
   ) {
     if (currentTime.isBefore(phases.civilTwilightBegin) ||
-        currentTime.isAfter(phases.civilTwilightEnd)) {
+        !currentTime.isBefore(phases.civilTwilightEnd)) {
       return CurrentDayPhase.deepNight;
     }
 
     // Golden Hour zones (Morning and Evening)
     // Morning Golden Hour: -4 to +6 elevation
-    if (currentTime.isAfter(phases.goldenHourMorning) &&
+    if (!currentTime.isBefore(phases.goldenHourMorning) &&
         currentTime.isBefore(phases.goldenHourMorningEnd)) {
       return CurrentDayPhase.goldenHour;
     }
 
-    if (currentTime.isAfter(phases.goldenHourEvening) &&
+    if (!currentTime.isBefore(phases.goldenHourEvening) &&
         currentTime.isBefore(phases.goldenHourEveningEnd)) {
       return CurrentDayPhase.goldenHour;
     }
 
     // Twilight zones (Civil)
-    if (currentTime.isAfter(phases.civilTwilightBegin) &&
+    if (!currentTime.isBefore(phases.civilTwilightBegin) &&
         currentTime.isBefore(phases.sunrise)) {
       return CurrentDayPhase.dawn;
     }
 
-    if (currentTime.isAfter(phases.sunset) &&
+    if (!currentTime.isBefore(phases.sunset) &&
         currentTime.isBefore(phases.civilTwilightEnd)) {
       return CurrentDayPhase.twilight;
     }
@@ -169,18 +179,17 @@ class SunCalculatorService {
     final zenithStart = phases.solarNoon.subtract(const Duration(hours: 1));
     final zenithEnd = phases.solarNoon.add(const Duration(hours: 1));
 
-    if (currentTime.isAfter(zenithStart) && currentTime.isBefore(zenithEnd)) {
+    if (!currentTime.isBefore(zenithStart) && currentTime.isBefore(zenithEnd)) {
       return CurrentDayPhase.zenith;
     }
 
     // Morning Spike (between morning golden hour and zenith)
-    if (currentTime.isAfter(phases.goldenHourMorningEnd) &&
+    if (!currentTime.isBefore(phases.goldenHourMorningEnd) &&
         currentTime.isBefore(zenithStart)) {
       return CurrentDayPhase.morningSpike;
     }
 
-    // Default to zenith if it's broad daylight and none of the above
-    return CurrentDayPhase.zenith;
+    return CurrentDayPhase.day;
   }
 
   /// Calculates current sun elevation in degrees.
@@ -227,11 +236,33 @@ class SunCalculatorService {
     }
   }
 
-  /// Calculates the duration and type of the next solar event.
-  ({Duration duration, SolarEventType type}) getNextEvent(
+  /// Returns the next event, or null when the supplied timeline is exhausted.
+  ({Duration duration, SolarEventType type})? getNextEvent(
     SolarPhaseModel phases,
     DateTime currentTime,
   ) {
+    for (final event in _events(phases)) {
+      if (event.time.isAfter(currentTime)) {
+        return (duration: event.time.difference(currentTime), type: event.type);
+      }
+    }
+    return null;
+  }
+
+  /// Counts down to a phase transition, excluding events within that phase.
+  Duration getTimeUntilPhaseEnd(SolarPhaseModel phases, DateTime currentTime) {
+    final phase = getCurrentPhase(phases, currentTime);
+    for (final event in _events(phases)) {
+      if (event.time.isAfter(currentTime) &&
+          (event.time == phases.nextDayCivilTwilightBegin ||
+              getCurrentPhase(phases, event.time) != phase)) {
+        return event.time.difference(currentTime);
+      }
+    }
+    return Duration.zero;
+  }
+
+  List<({DateTime time, SolarEventType type})> _events(SolarPhaseModel phases) {
     // Collect all significant transition points with their types
     final events = [
       (
@@ -260,28 +291,21 @@ class SunCalculatorService {
       ),
       (time: phases.sunset, type: SolarEventType.sunset),
       (time: phases.civilTwilightEnd, type: SolarEventType.civilTwilightEnd),
+      (
+        time: phases.nextDayCivilTwilightBegin,
+        type: SolarEventType.civilTwilightBegin,
+      ),
     ];
 
     // Sort by time
     events.sort((a, b) => a.time.compareTo(b.time));
 
-    for (final event in events) {
-      if (event.time.isAfter(currentTime)) {
-        return (duration: event.time.difference(currentTime), type: event.type);
-      }
-    }
-
-    // If all events passed today, calculate time until next day's first event
-    final nextDayDawn = phases.civilTwilightBegin.add(const Duration(days: 1));
-    return (
-      duration: nextDayDawn.difference(currentTime),
-      type: SolarEventType.civilTwilightBegin,
-    );
+    return events;
   }
 
   /// Calculates the duration until the next solar event (backward compatibility).
   Duration getTimeUntilNextEvent(SolarPhaseModel phases, DateTime currentTime) {
-    return getNextEvent(phases, currentTime).duration;
+    return getNextEvent(phases, currentTime)?.duration ?? Duration.zero;
   }
 
   /// Estimates clear-sky UV Index based on sun elevation using empirical approximations.

@@ -958,9 +958,7 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
   final lat = pos?.latitude ?? 50.45;
   final lon = pos?.longitude ?? 30.52;
 
-  // Current day tracker to trigger daily recalculation at midnight
   final initialNow = tz.TZDateTime.now(timezoneVal);
-  int currentDay = initialNow.day;
 
   // Initial calculation
   SolarPhaseModel phases = await service.calculatePhases(
@@ -992,23 +990,31 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
   final roughProgress = service.getSunProgress(phases, initialNow);
   final nextEvent = service.getNextEvent(phases, initialNow);
 
-  yield SolarState(
-    phases: phases,
-    currentPhase: service.getCurrentPhase(phases, initialNow),
-    timeUntilNextEvent: nextEvent.duration,
-    nextEventType: nextEvent.type,
-    sunElevation: roughElevation,
-    sunAzimuth: roughAzimuth,
-    sunZenith: service.getSunZenith(lat, lon, initialNow),
-    sunProgress: roughProgress,
-    uvIndex: service.getUVIndex(roughElevation),
-    spectralIntensity: service.getSpectralIntensity(roughElevation),
-    azimuthTrend: 'constant',
-    elevationTrend: 'constant',
-    zenithTrend: 'constant',
-    maxElevation: maxElevation,
-    minElevation: minElevation,
-  );
+  if (nextEvent != null) {
+    yield SolarState(
+      phases: phases,
+      currentPhase: service.getCurrentPhase(phases, initialNow),
+      timeUntilNextEvent: nextEvent.duration,
+      nextEventType: nextEvent.type,
+      sunElevation: roughElevation,
+      sunAzimuth: roughAzimuth,
+      sunZenith: service.getSunZenith(lat, lon, initialNow),
+      sunProgress: roughProgress,
+      uvIndex: service.getUVIndex(roughElevation),
+      spectralIntensity: service.getSpectralIntensity(roughElevation),
+      azimuthTrend: 'constant',
+      elevationTrend: 'constant',
+      zenithTrend: 'constant',
+      maxElevation: maxElevation,
+      minElevation: minElevation,
+    );
+  } else {
+    ref
+        .read(logServiceProvider)
+        .logWarning(
+          'SolarState: exhausted phase timeline at $initialNow; retrying on the next tick',
+        );
+  }
 
   // In test environments, avoid scheduling an infinite live-ticker timer
   // that would remain pending in FakeAsync after widget disposal.
@@ -1019,13 +1025,12 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
   while (!isDisposed) {
     final now = tz.TZDateTime.now(timezoneVal);
 
-    // Check for day change
-    if (now.day != currentDay) {
+    // Compare the full local date, including jumps to the same day of another month.
+    if (!phases.isForDate(now)) {
       phases = await service.calculatePhases(lat, lon, now, timezoneVal);
       maxElevation = service.getSunElevation(lat, lon, phases.solarNoon);
       final nextNadir = phases.solarNoon.add(const Duration(hours: 12));
       minElevation = service.getSunElevation(lat, lon, nextNadir);
-      currentDay = now.day;
     }
 
     // When hidden to tray, skip expensive trend/UV/spectral calculations.
@@ -1038,23 +1043,31 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
       final nextEvt = service.getNextEvent(phases, now);
       final phase = service.getCurrentPhase(phases, now);
 
-      yield SolarState(
-        sunElevation: elevation,
-        sunAzimuth: prevAzimuth ?? 0,
-        sunZenith: prevZenith ?? 90,
-        sunProgress: progress,
-        currentPhase: phase,
-        nextEventType: nextEvt.type,
-        timeUntilNextEvent: nextEvt.duration,
-        phases: phases,
-        uvIndex: 0,
-        spectralIntensity: 0,
-        elevationTrend: 'constant',
-        azimuthTrend: 'constant',
-        zenithTrend: 'constant',
-        maxElevation: maxElevation,
-        minElevation: minElevation,
-      );
+      if (nextEvt != null) {
+        yield SolarState(
+          sunElevation: elevation,
+          sunAzimuth: prevAzimuth ?? 0,
+          sunZenith: prevZenith ?? 90,
+          sunProgress: progress,
+          currentPhase: phase,
+          nextEventType: nextEvt.type,
+          timeUntilNextEvent: nextEvt.duration,
+          phases: phases,
+          uvIndex: 0,
+          spectralIntensity: 0,
+          elevationTrend: 'constant',
+          azimuthTrend: 'constant',
+          zenithTrend: 'constant',
+          maxElevation: maxElevation,
+          minElevation: minElevation,
+        );
+      } else {
+        ref
+            .read(logServiceProvider)
+            .logWarning(
+              'SolarState: exhausted phase timeline at $now; retrying on the next tick',
+            );
+      }
 
       prevElevation = elevation;
       prevTime = now;
@@ -1125,23 +1138,31 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
 
     final nextEvent = service.getNextEvent(phases, now);
 
-    yield SolarState(
-      phases: phases,
-      currentPhase: service.getCurrentPhase(phases, now),
-      timeUntilNextEvent: nextEvent.duration,
-      nextEventType: nextEvent.type,
-      sunElevation: currentElevation,
-      sunAzimuth: currentAzimuth,
-      sunZenith: currentZenith,
-      sunProgress: service.getSunProgress(phases, now),
-      uvIndex: uv,
-      spectralIntensity: intensity,
-      azimuthTrend: azTrend,
-      elevationTrend: elTrend,
-      zenithTrend: zenTrend,
-      maxElevation: maxElevation,
-      minElevation: minElevation,
-    );
+    if (nextEvent != null) {
+      yield SolarState(
+        phases: phases,
+        currentPhase: service.getCurrentPhase(phases, now),
+        timeUntilNextEvent: nextEvent.duration,
+        nextEventType: nextEvent.type,
+        sunElevation: currentElevation,
+        sunAzimuth: currentAzimuth,
+        sunZenith: currentZenith,
+        sunProgress: service.getSunProgress(phases, now),
+        uvIndex: uv,
+        spectralIntensity: intensity,
+        azimuthTrend: azTrend,
+        elevationTrend: elTrend,
+        zenithTrend: zenTrend,
+        maxElevation: maxElevation,
+        minElevation: minElevation,
+      );
+    } else {
+      ref
+          .read(logServiceProvider)
+          .logWarning(
+            'SolarState: exhausted phase timeline at $now; retrying on the next tick',
+          );
+    }
 
     prevAzimuth = currentAzimuth;
     prevElevation = currentElevation;

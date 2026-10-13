@@ -6,11 +6,14 @@ enum CurrentDayPhase {
   /// Dawn (civil twilight before sunrise).
   dawn,
 
-  /// Morning rise (dawn to sunrise).
+  /// Morning daylight between the golden hour and zenith.
   morningSpike,
 
-  /// Full daylight / Zenith.
+  /// The two-hour interval around solar noon.
   zenith,
+
+  /// Daylight after zenith and before the evening golden hour.
+  day,
 
   /// Golden hour (morning and evening).
   goldenHour,
