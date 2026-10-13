@@ -989,23 +989,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                           height: constraints.maxHeight,
                           child: CustomPaint(
                             painter: SunPathPainter(
-                              progress: solarAsync.maybeWhen(
-                                data: (s) => s.sunProgress,
-                                orElse: () {
-                                  // Safe approximate progress for startup to avoid "sun flash"
-                                  final hour = now.hour;
-                                  if (hour >= 21 || hour < 5) {
-                                    return -0.5; // Night
-                                  }
-                                  if (hour >= 5 && hour < 7) {
-                                    return 0.0; // Sunrise
-                                  }
-                                  if (hour >= 19 && hour < 21) {
-                                    return 1.0; // Sunset
-                                  }
-                                  return 0.5; // Midday
-                                },
-                              ),
+                              progress: solarAsync.value?.sunProgress,
                             ),
                           ),
                         );
@@ -1121,6 +1105,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 solarAsync.when(
+                  skipLoadingOnReload: true,
                   data: (state) {
                     final status = StatusHelper.getStatus(
                       state,
@@ -1163,6 +1148,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                                     const SizedBox(height: 6),
                                     Text(
                                       solarAsync.maybeWhen(
+                                        skipLoadingOnReload: true,
                                         data: (state) {
                                           final timeStr = timeService
                                               .formatCountdown(
@@ -1723,6 +1709,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                         icon: LucideIcons.sunrise,
                         label: l10n.sunriseLabel,
                         value: solarAsync.maybeWhen(
+                          skipLoadingOnReload: true,
                           data: (s) => timeService.formatTime(s.phases.sunrise),
                           orElse: () => '--:--',
                         ),
@@ -1732,6 +1719,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                         icon: LucideIcons.sunset,
                         label: l10n.sunsetLabel,
                         value: solarAsync.maybeWhen(
+                          skipLoadingOnReload: true,
                           data: (s) => timeService.formatTime(s.phases.sunset),
                           orElse: () => '--:--',
                         ),
@@ -1741,6 +1729,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                         icon: LucideIcons.sun,
                         label: l10n.goldenHourMorning,
                         value: solarAsync.maybeWhen(
+                          skipLoadingOnReload: true,
                           data: (s) => timeService.formatTime(
                             s.phases.goldenHourMorning,
                           ),
@@ -1752,6 +1741,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                         icon: LucideIcons.sun,
                         label: l10n.goldenHourEvening,
                         value: solarAsync.maybeWhen(
+                          skipLoadingOnReload: true,
                           data: (s) => timeService.formatTime(
                             s.phases.goldenHourEvening,
                           ),

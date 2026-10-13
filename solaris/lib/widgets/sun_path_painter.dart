@@ -2,10 +2,10 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 class SunPathPainter extends CustomPainter {
-  // 0.0 to 1.0 (Sunrise to Sunset)
+  // 0.0 to 1.0 (Sunrise to Sunset). Null means the position is not known yet.
 
   SunPathPainter({required this.progress});
-  final double progress;
+  final double? progress;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -55,6 +55,8 @@ class SunPathPainter extends CustomPainter {
     }
 
     // Progress mapping logic
+    final progress = this.progress;
+    if (progress == null || !progress.isFinite) return;
     bool isNight = progress < 0 || progress > 1;
     double bodyProgress;
     if (isNight) {

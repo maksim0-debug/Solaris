@@ -417,7 +417,15 @@ class WeatherNotifier extends AsyncNotifier<WeatherData?> {
   Future<WeatherData?> build() async {
     final coordsAvailable = ref.watch(coordinatesAvailableProvider);
     final weatherService = ref.watch(weatherServiceProvider);
-    final settingsAsync = ref.watch(settingsProvider);
+    final (provider, customWeatherApiKey) = ref.watch(
+      settingsProvider.select((settings) {
+        final global = settings.value?['all'];
+        return (
+          global?.weatherProvider ?? WeatherProvider.auto,
+          global?.customWeatherApiKey,
+        );
+      }),
+    );
 
     // Clean up old timer on disposal
     ref.onDispose(() {
@@ -431,16 +439,6 @@ class WeatherNotifier extends AsyncNotifier<WeatherData?> {
     }
 
     final locationAsync = ref.watch(effectiveLocationProvider);
-
-    final provider = settingsAsync.maybeWhen(
-      data: (map) => map['all']?.weatherProvider ?? WeatherProvider.auto,
-      orElse: () => WeatherProvider.auto,
-    );
-
-    final customWeatherApiKey = settingsAsync.maybeWhen(
-      data: (map) => map['all']?.customWeatherApiKey,
-      orElse: () => null,
-    );
 
     // Retrieve current location (preserving previous state during loading)
     final pos = locationAsync.value;
@@ -948,7 +946,10 @@ final solarStateStreamProvider = StreamProvider<SolarState>((ref) async* {
 
   final service = ref.watch(sunCalculatorServiceProvider);
   final locationAsync = ref.watch(effectiveLocationProvider);
-  final weatherAsync = ref.watch(currentWeatherProvider);
+  // Keep weather current without restarting the astronomical ticker on each
+  // weather refresh. Weather affects radiation estimates, not the sun's orbit.
+  var weatherAsync = ref.read(currentWeatherProvider);
+  ref.listen(currentWeatherProvider, (_, next) => weatherAsync = next);
   final visibility = ref.watch(appLifecycleProvider);
   final timezoneVal = ref.watch(effectiveTimezoneProvider);
 
