@@ -98,8 +98,20 @@ class MonitorService {
   static const int hardwareBrightnessFloorThreshold = 5;
 
   final Map<String, int> _lastSentBrightness = {};
+  final Map<String, int> _brightnessWriteRevision = {};
   final Map<String, Timer> _immediateDebugTimers = {};
   final Map<String, Timer> _delayedDebugTimers = {};
+
+  void dispose() {
+    for (final timer in _immediateDebugTimers.values) {
+      timer.cancel();
+    }
+    for (final timer in _delayedDebugTimers.values) {
+      timer.cancel();
+    }
+    _immediateDebugTimers.clear();
+    _delayedDebugTimers.clear();
+  }
 
   Future<bool> setMonitorTemperature(String deviceName, int temperature) async {
     try {
@@ -150,6 +162,12 @@ class MonitorService {
       return true;
     }
 
+    _brightnessWriteRevision.update(
+      deviceName,
+      (revision) => revision + 1,
+      ifAbsent: () => 1,
+    );
+
     try {
       final bool? success = await _channel
           .invokeMethod<bool>('setMonitorBrightness', {
@@ -179,10 +197,22 @@ class MonitorService {
           );
         }
       }
+      if (success != true) {
+        _lastSentBrightness.remove(cacheKey);
+        _lastSentBrightness.remove(deviceName);
+      }
       return success ?? false;
     } catch (e) {
+      _lastSentBrightness.remove(cacheKey);
+      _lastSentBrightness.remove(deviceName);
       debugPrint('Failed to set brightness for $deviceName: $e');
       return false;
+    } finally {
+      _brightnessWriteRevision.update(
+        deviceName,
+        (revision) => revision + 1,
+        ifAbsent: () => 1,
+      );
     }
   }
 
@@ -191,6 +221,7 @@ class MonitorService {
     bool isOverlayOnly = false,
     bool probeHardware = false,
   }) async {
+    final writeRevision = _brightnessWriteRevision[deviceName];
     try {
       final int? brightness = await _channel
           .invokeMethod<int?>('getMonitorBrightness', {
@@ -198,6 +229,24 @@ class MonitorService {
             'isOverlayOnly': isOverlayOnly,
             'probeHardware': probeHardware,
           });
+      final cacheKey = '$deviceName:$isOverlayOnly';
+      final sent = _lastSentBrightness[cacheKey];
+      final isDimmingFloor =
+          !isOverlayOnly &&
+          sent != null &&
+          sent < 0 &&
+          brightness != null &&
+          brightness >= 0 &&
+          brightness <= hardwareBrightnessFloorThreshold;
+      if (brightness != null &&
+          sent != null &&
+          sent != brightness &&
+          !isDimmingFloor &&
+          _brightnessWriteRevision[deviceName] == writeRevision) {
+        // An observed hardware change must not be hidden by write deduplication.
+        _lastSentBrightness.remove(cacheKey);
+        _lastSentBrightness.remove(deviceName);
+      }
       return brightness;
     } catch (e) {
       debugPrint('Failed to get brightness for $deviceName: $e');
@@ -211,7 +260,10 @@ class MonitorService {
     String timing,
   ) {
     Future(() async {
+      if (_lastSentBrightness[deviceName] != targetBrightness) return;
+      final writeRevision = _brightnessWriteRevision[deviceName];
       final real = await getBrightness(deviceName);
+      if (_brightnessWriteRevision[deviceName] != writeRevision) return;
       if (real == null) {
         debugPrint(
           '❌ [DDC/CI Debug] [$timing] Device: $deviceName | Target: $targetBrightness% | Real: Failed to read',

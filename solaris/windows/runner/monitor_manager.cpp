@@ -406,19 +406,7 @@ bool MonitorManager::SetBrightness(const std::string &device_path, int brightnes
       if (it != last_hardware_brightness_.end() && it->second == 0) {
         return true;
       }
-      last_hardware_brightness_[device_path] = 0;
     }
-
-    auto physical_monitors = GetOrCreatePhysicalMonitors(device_path);
-    for (size_t i = 0; i < physical_monitors.size(); i++) {
-      ::SetMonitorBrightness(physical_monitors[i].hPhysicalMonitor, 0);
-    }
-    return true;
-  }
-
-  {
-    std::lock_guard<std::mutex> lock(hardware_brightness_mutex_);
-    last_hardware_brightness_[device_path] = brightness;
   }
 
   auto physical_monitors = GetOrCreatePhysicalMonitors(device_path);
@@ -426,11 +414,11 @@ bool MonitorManager::SetBrightness(const std::string &device_path, int brightnes
     return false;
   }
 
-  bool success = false;
+  const DWORD hardware_brightness = static_cast<DWORD>(std::max(0, brightness));
+  bool success = true;
   for (size_t i = 0; i < physical_monitors.size(); i++) {
-    if (::SetMonitorBrightness(physical_monitors[i].hPhysicalMonitor, (DWORD)brightness)) {
-      success = true;
-    } else {
+    if (!::SetMonitorBrightness(physical_monitors[i].hPhysicalMonitor, hardware_brightness)) {
+      success = false;
       DWORD err = GetLastError();
       if (err == 0xC0262588 /* STATUS_GRAPHICS_MC_INVALID_PHYSICAL_MONITOR_HANDLE */) {
         InvalidateMonitorHandles();
@@ -439,7 +427,13 @@ bool MonitorManager::SetBrightness(const std::string &device_path, int brightnes
       if (on_hardware_error_) {
         on_hardware_error_("DDC/CI SetMonitorBrightness failed for " + device_path);
       }
+      if (err == 0xC0262588) break;
     }
+  }
+
+  if (success) {
+    std::lock_guard<std::mutex> lock(hardware_brightness_mutex_);
+    last_hardware_brightness_[device_path] = static_cast<int>(hardware_brightness);
   }
 
   return success;
@@ -457,6 +451,15 @@ bool MonitorManager::GetBrightness(const std::string &device_path, int &current,
     if (::GetMonitorBrightness(physical_monitors[i].hPhysicalMonitor, &dwMinimum, &dwCurrent, &dwMaximum)) {
       current = static_cast<int>(dwCurrent);
       maximum = static_cast<int>(dwMaximum);
+      // Preserve non-zero monitor floors, but invalidate a floor cache after
+      // an external backlight change so software dimming can restore it.
+      if (current > 5) {
+        std::lock_guard<std::mutex> lock(hardware_brightness_mutex_);
+        auto cached = last_hardware_brightness_.find(device_path);
+        if (cached != last_hardware_brightness_.end() && cached->second == 0) {
+          last_hardware_brightness_.erase(cached);
+        }
+      }
       success = true;
       break;
     }

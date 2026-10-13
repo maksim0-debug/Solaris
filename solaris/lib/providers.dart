@@ -67,9 +67,17 @@ final logServiceProvider = Provider((ref) => LogService.instance);
 final locationServiceProvider = Provider((ref) => LocationService());
 final sunCalculatorServiceProvider = Provider((ref) => SunCalculatorService());
 final timeServiceProvider = Provider((ref) => TimeService());
-final monitorServiceProvider = Provider((ref) => MonitorService());
+final monitorServiceProvider = Provider((ref) {
+  final service = MonitorService();
+  ref.onDispose(service.dispose);
+  return service;
+});
 final circadianServiceProvider = Provider((ref) => CircadianService());
-final brightnessServiceProvider = Provider((ref) => BrightnessService());
+final brightnessServiceProvider = Provider((ref) {
+  final service = BrightnessService();
+  ref.onDispose(service.dispose);
+  return service;
+});
 final storageServiceProvider = Provider((ref) => StorageService());
 final smartCircadianServiceProvider = Provider<SmartCircadianService>(
   (ref) => SmartCircadianService(),
@@ -1211,6 +1219,7 @@ class MonitorListNotifier extends AsyncNotifier<List<MonitorInfo>> {
         final newMonitors = await ref
             .read(monitorServiceProvider)
             .getConnectedMonitors();
+        if (!ref.mounted || next != ref.read(appLifecycleProvider)) return;
         final bService = ref.read(brightnessServiceProvider);
         final tService = ref.read(temperatureServiceProvider);
 
@@ -1246,6 +1255,7 @@ class MonitorListNotifier extends AsyncNotifier<List<MonitorInfo>> {
         }
         if (state.hasValue) {
           state = AsyncData(updatedMonitors);
+          ref.read(manualBrightnessApplierProvider)(selection: {'all'});
         }
       }
     });
@@ -1457,7 +1467,10 @@ class AutoBrightnessAdjustmentNotifier extends Notifier<bool> {
   }
 
   void setEnabled(bool value) {
-    if (state == value) return;
+    if (state == value) {
+      if (!value) ref.read(manualBrightnessApplierProvider)();
+      return;
+    }
     state = value;
     ref
         .read(sharedPreferencesProvider)
@@ -1530,9 +1543,14 @@ class ManualBrightnessNotifier extends Notifier<double> {
     return prefs?.getDouble(_manualBrightnessKey) ?? 100.0;
   }
 
-  void update(double value) {
+  void update(double value, {Set<String>? selection}) {
+    if (!value.isFinite) return;
     state = value;
     ref.read(sharedPreferencesProvider)?.setDouble(_manualBrightnessKey, value);
+    ref.read(manualBrightnessApplierProvider)(
+      selection: selection,
+      targetValue: value,
+    );
   }
 }
 
@@ -2047,12 +2065,17 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
     });
   }
 
-  void updateAutoBrightness(bool enabled) {
-    final ids = ref.read(selectedMonitorsProvider);
+  void updateAutoBrightness(bool enabled, {String? monitorId}) {
+    final ids = monitorId == null
+        ? ref.read(selectedMonitorsProvider)
+        : {monitorId};
     ref
         .read(sharedPreferencesProvider)
         ?.setBool('auto_brightness_enabled', enabled);
     _updateSettings(ids, (s) => s.copyWith(isAutoBrightnessEnabled: enabled));
+    if (!enabled) {
+      ref.read(manualBrightnessApplierProvider)(selection: ids);
+    }
   }
 
   void updateSmartCircadian(bool enabled) {
@@ -2672,15 +2695,40 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
   }
 
   void adjustManualBrightness(double delta) {
-    ref.read(activeProcessServiceProvider.notifier).suppressActiveApp();
-    updateAutoBrightness(false);
-
-    final currentManual = ref.read(manualBrightnessProvider);
+    if (!delta.isFinite) return;
+    var startingBrightness = ref.read(manualBrightnessProvider);
     final isSoftwareDimmingEnabled = _getSettings(
       'all',
     ).isSoftwareDimmingEnabled;
     final selection = ref.read(selectedMonitorsProvider);
     final monitors = ref.read(monitorListProvider).value ?? [];
+    if (_getSettings(
+      selection.isEmpty ? 'all' : selection.first,
+    ).isAutoBrightnessEnabled) {
+      final selected = monitors
+          .where(
+            (m) =>
+                selection.contains('all') || selection.contains(m.deviceName),
+          )
+          .toList();
+      final monitor =
+          selected.firstWhereOrNull((m) => m.isPrimary) ?? selected.firstOrNull;
+      final applied = monitor == null
+          ? null
+          : ref
+                    .read(brightnessServiceProvider)
+                    .getCurrentHardwareBrightness(monitor.deviceName) ??
+                monitor.realBrightness;
+      // Applied values include monitor offsets; manual state stores the base.
+      startingBrightness = applied == null
+          ? ref
+                    .read(sharedPreferencesProvider)
+                    ?.getDouble('last_known_brightness') ??
+                startingBrightness
+          : applied -
+                (_brightnessOffsets(state.value ?? {})[monitor!.deviceName] ??
+                    0.0);
+    }
     final isOverlayOnly = MonitorInfo.isSelectionOverlayOnly(
       selection,
       monitors,
@@ -2689,8 +2737,10 @@ class SettingsNotifier extends AsyncNotifier<Map<String, SettingsState>> {
       isOverlayOnly: isOverlayOnly,
       isSoftwareDimmingEnabled: isSoftwareDimmingEnabled,
     );
-    final newVal = (currentManual + delta).clamp(effectiveMin, 100.0);
+    final newVal = (startingBrightness + delta).clamp(effectiveMin, 100.0);
     ref.read(manualBrightnessProvider.notifier).update(newVal);
+    ref.read(activeProcessServiceProvider.notifier).suppressActiveApp();
+    updateAutoBrightness(false);
 
     // Save to prefs as well (matches setManualBrightness in CurrentBrightnessNotifier)
     ref
@@ -2814,16 +2864,11 @@ class CurrentBrightnessNotifier extends Notifier<double> {
         final selectedSettings = settingsMap[firstId] ?? settingsMap['all']!;
 
         // 1 & 2: Active App Rule Cascade for Brightness
-        final activeAppExe = activeProcessState.activeProcess;
-        final isAppSuppressed = activeProcessState.suppressedPids.isNotEmpty;
-        final appRule = (!isAppSuppressed && activeAppExe.isNotEmpty)
-            ? (selectedSettings.appOverrides.firstWhereOrNull(
-                    (r) => r.isEnabled && r.exeName == activeAppExe,
-                  ) ??
-                  settingsMap['all']?.appOverrides.firstWhereOrNull(
-                    (r) => r.isEnabled && r.exeName == activeAppExe,
-                  ))
-            : null;
+        final appRule = _activeAppRule(
+          selectedSettings,
+          settingsMap['all'],
+          activeProcessState,
+        );
 
         if (appRule != null &&
             appRule.brightnessMode != AppOverrideMode.global) {
@@ -2966,11 +3011,7 @@ class CurrentBrightnessNotifier extends Notifier<double> {
   }
 
   void setManualBrightness(double value, {String? monitorId}) {
-    ref.read(activeProcessServiceProvider.notifier).suppressActiveApp();
-    if (ref.read(autoBrightnessAdjustmentProvider)) {
-      ref.read(settingsProvider.notifier).updateAutoBrightness(false);
-    }
-
+    if (!value.isFinite) return;
     final settingsMap = ref.read(settingsProvider).value ?? {};
     final isSoftwareDimmingEnabled =
         settingsMap['all']?.isSoftwareDimmingEnabled ?? true;
@@ -2999,50 +3040,60 @@ class CurrentBrightnessNotifier extends Notifier<double> {
       baseValue = value.clamp(effectiveMin, 100.0);
     }
 
-    ref.read(manualBrightnessProvider.notifier).update(baseValue);
+    ref
+        .read(manualBrightnessProvider.notifier)
+        .update(baseValue, selection: selection);
     _saveBrightness(baseValue);
+    ref.read(activeProcessServiceProvider.notifier).suppressActiveApp();
+    ref
+        .read(settingsProvider.notifier)
+        .updateAutoBrightness(false, monitorId: monitorId);
     state = baseValue;
 
-    if (monitors.isNotEmpty) {
-      final brightnessService = ref.read(brightnessServiceProvider);
-      final monitorService = ref.read(monitorServiceProvider);
-      final monitorListNotifier = ref.read(monitorListProvider.notifier);
-      final offsets = ref.read(brightnessOffsetsProvider);
-      final isGaming = ref.read(gamingModeProvider);
-      final visibility = ref.read(appLifecycleProvider);
+    ref.read(manualBrightnessApplierProvider)(
+      selection: selection,
+      targetValue: baseValue,
+    );
+  }
 
-      final targetMonitors = selection.contains('all')
-          ? monitors.map((m) => m.deviceName).toList()
-          : monitors
-                .where(
-                  (m) =>
-                      selection.contains(m.deviceName) ||
-                      selection.contains(m.id),
-                )
-                .map((m) => m.deviceName)
-                .toList();
-
-      for (final id in targetMonitors) {
-        final mSettings =
-            settingsMap[id] ?? settingsMap['all'] ?? SettingsState();
-        if (isGaming && mSettings.isGameModeEnabled) {
-          continue;
-        }
-
-        brightnessService.applyBrightnessSmoothly(
-          selection: id,
-          targetValue: baseValue,
-          monitors: monitors,
-          monitorService: monitorService,
-          offsets: offsets,
-          isManual: true,
-          isUIVisible: visibility == AppVisibilityState.visible,
-          isSoftwareDimmingEnabled: isSoftwareDimmingEnabled,
-          updateBrightnessCallback: (id, val) =>
-              monitorListNotifier.updateBrightness(id, val),
+  void syncManualBrightnessFromMonitor(String monitorId) {
+    final settingsMap = ref.read(settingsProvider).value;
+    final monitor = ref
+        .read(monitorListProvider)
+        .value
+        ?.firstWhereOrNull(
+          (monitor) =>
+              monitor.deviceName == monitorId || monitor.id == monitorId,
         );
-      }
+    if (settingsMap == null || monitor?.realBrightness == null) return;
+    final global = settingsMap['all'] ?? SettingsState();
+    final settings = settingsMap[monitor!.deviceName] ?? global;
+    if (settings.isAutoBrightnessEnabled ||
+        (ref.read(gamingModeProvider) && settings.isGameModeEnabled) ||
+        _hasBrightnessOverride(
+          _activeAppRule(
+            settings,
+            global,
+            ref.read(activeProcessServiceProvider),
+          ),
+          settings,
+        ) ||
+        ref
+            .read(brightnessServiceProvider)
+            .isTransitioning(monitor.deviceName)) {
+      return;
     }
+    final offset = _brightnessOffsets(settingsMap)[monitor.deviceName] ?? 0.0;
+    final minimum = MonitorInfo.effectiveMinBrightness(
+      isOverlayOnly: !monitor.isDdcSupported,
+      isSoftwareDimmingEnabled: global.isSoftwareDimmingEnabled,
+    );
+    ref
+        .read(manualBrightnessProvider.notifier)
+        .update(
+          (monitor.realBrightness!.toDouble() - offset).clamp(minimum, 100.0),
+          selection: {monitor.deviceName},
+        );
   }
 }
 
@@ -3053,27 +3104,196 @@ final currentBrightnessProvider =
 
 final brightnessOffsetsProvider = Provider<Map<String, double>>((ref) {
   final settingsAsync = ref.watch(settingsProvider);
-  return settingsAsync.maybeWhen(
-    data: (settingsMap) {
-      final allSettings = settingsMap['all'] ?? SettingsState();
-      if (!allSettings.isMultiMonitorOffsetEnabled) return {};
+  return settingsAsync.maybeWhen(data: _brightnessOffsets, orElse: () => {});
+});
 
-      final Map<String, double> offsets = {};
-      settingsMap.forEach((id, s) {
-        if (id != 'all') {
-          offsets[id] = s.brightnessOffset;
-        }
-      });
-      return offsets;
-    },
-    orElse: () => {},
-  );
+Map<String, double> _brightnessOffsets(Map<String, SettingsState> settingsMap) {
+  if (!(settingsMap['all']?.isMultiMonitorOffsetEnabled ?? false)) return {};
+  return {
+    for (final entry in settingsMap.entries)
+      if (entry.key != 'all') entry.key: entry.value.brightnessOffset,
+  };
+}
+
+typedef ManualBrightnessApplier =
+    void Function({Set<String>? selection, double? targetValue});
+
+final manualBrightnessApplierProvider = Provider<ManualBrightnessApplier>((
+  ref,
+) {
+  return ({Set<String>? selection, double? targetValue}) {
+    _applyManualBrightness(ref, selection: selection, targetValue: targetValue);
+  };
+});
+
+AppOverrideRule? _activeAppRule(
+  SettingsState settings,
+  SettingsState? global,
+  ActiveProcessState process,
+) {
+  if (process.suppressedPids.isNotEmpty || process.activeProcess.isEmpty) {
+    return null;
+  }
+  return settings.appOverrides.firstWhereOrNull(
+        (rule) => rule.isEnabled && rule.exeName == process.activeProcess,
+      ) ??
+      global?.appOverrides.firstWhereOrNull(
+        (rule) => rule.isEnabled && rule.exeName == process.activeProcess,
+      );
+}
+
+bool _hasBrightnessOverride(AppOverrideRule? rule, SettingsState settings) {
+  if (rule == null) return false;
+  if (rule.brightnessMode == AppOverrideMode.fixed) {
+    return rule.fixedBrightness != null;
+  }
+  if (rule.brightnessMode != AppOverrideMode.curve) return false;
+  final id = rule.brightnessCurvePresetId;
+  if (id == null) return false;
+  return settings.userPresets.any((preset) => preset.id == id) ||
+      PresetType.values.any(
+        (preset) => preset.name == id && settings.curvesMap[preset] != null,
+      );
+}
+
+void _applyManualBrightness(
+  Ref ref, {
+  Set<String>? selection,
+  double? targetValue,
+}) {
+  if (!ref.mounted) return;
+  final settingsMap = ref.read(settingsProvider).value;
+  final monitors = ref.read(monitorListProvider).value ?? [];
+  if (settingsMap == null || monitors.isEmpty) return;
+
+  final Set<String> selected = selection ?? ref.read(selectedMonitorsProvider);
+  final globalSettings = settingsMap['all'] ?? SettingsState();
+  final process = ref.read(activeProcessServiceProvider);
+  final isGaming = ref.read(gamingModeProvider);
+  final offsets = _brightnessOffsets(settingsMap);
+  final service = ref.read(brightnessServiceProvider);
+  final hardware = ref.read(monitorServiceProvider);
+  final notifier = ref.read(monitorListProvider.notifier);
+  final double manual = targetValue ?? ref.read(manualBrightnessProvider);
+  final visible = ref.read(appLifecycleProvider) == AppVisibilityState.visible;
+
+  for (final monitor in monitors) {
+    if (!selected.contains('all') &&
+        !selected.contains(monitor.deviceName) &&
+        !selected.contains(monitor.id)) {
+      continue;
+    }
+    final settings = settingsMap[monitor.deviceName] ?? globalSettings;
+    if (settings.isAutoBrightnessEnabled ||
+        (isGaming && settings.isGameModeEnabled)) {
+      continue;
+    }
+    final appRule = _activeAppRule(settings, globalSettings, process);
+    if (_hasBrightnessOverride(appRule, settings)) {
+      continue;
+    }
+
+    service.applyBrightnessSmoothly(
+      selection: monitor.deviceName,
+      targetValue: manual,
+      monitors: monitors,
+      monitorService: hardware,
+      offsets: offsets,
+      isManual: true,
+      isUIVisible: visible,
+      isSoftwareDimmingEnabled: globalSettings.isSoftwareDimmingEnabled,
+      updateBrightnessCallback: notifier.updateBrightness,
+    );
+  }
+}
+
+// Listener lifetime must not depend on the settings changes it applies.
+final manualBrightnessAdjustmentProvider = Provider<void>((ref) {
+  ref.listen<String>(connectedMonitorDevicesProvider, (previous, next) {
+    final previousDevices = previous?.split(';').toSet() ?? <String>{};
+    final added = next
+        .split(';')
+        .where((id) => id.isNotEmpty && !previousDevices.contains(id))
+        .toSet();
+    if (added.isNotEmpty) _applyManualBrightness(ref, selection: added);
+  });
+  ref.listen<AsyncValue<Map<String, SettingsState>>>(settingsProvider, (
+    previous,
+    next,
+  ) {
+    final current = next.value;
+    if (current == null) return;
+    final old = previous?.value;
+    final monitors = ref.read(monitorListProvider).value ?? [];
+    final affected = <String>{};
+    for (final monitor in monitors) {
+      final settings = current[monitor.deviceName] ?? current['all'];
+      final before = old?[monitor.deviceName] ?? old?['all'];
+      if (settings != null &&
+          !settings.isAutoBrightnessEnabled &&
+          (before == null ||
+              before.isAutoBrightnessEnabled ||
+              before.isSoftwareDimmingEnabled !=
+                  settings.isSoftwareDimmingEnabled ||
+              before.brightnessOffset != settings.brightnessOffset ||
+              before.isMultiMonitorOffsetEnabled !=
+                  settings.isMultiMonitorOffsetEnabled ||
+              before.isGameModeEnabled != settings.isGameModeEnabled ||
+              !identical(before.appOverrides, settings.appOverrides))) {
+        affected.add(monitor.deviceName);
+      }
+    }
+    if (affected.isNotEmpty) _applyManualBrightness(ref, selection: affected);
+  });
+  ref.listen<bool>(gamingModeProvider, (previous, next) {
+    if (previous != true || next) return;
+    final settings = ref.read(settingsProvider).value ?? {};
+    final monitors = ref.read(monitorListProvider).value ?? [];
+    final affected = {
+      for (final monitor in monitors)
+        if ((settings[monitor.deviceName] ?? settings['all'])
+                ?.isGameModeEnabled ??
+            false)
+          monitor.deviceName,
+    };
+    if (affected.isNotEmpty) _applyManualBrightness(ref, selection: affected);
+  });
+  ref.listen<ActiveProcessState>(activeProcessServiceProvider, (
+    previous,
+    next,
+  ) {
+    if (previous == null ||
+        (previous.activeProcess == next.activeProcess &&
+            const SetEquality<int>().equals(
+              previous.suppressedPids,
+              next.suppressedPids,
+            ))) {
+      return;
+    }
+    final settingsMap = ref.read(settingsProvider).value ?? {};
+    final monitors = ref.read(monitorListProvider).value ?? [];
+    final affected = <String>{};
+    for (final monitor in monitors) {
+      final global = settingsMap['all'] ?? SettingsState();
+      final settings = settingsMap[monitor.deviceName] ?? global;
+      final previousRule = _activeAppRule(settings, global, previous);
+      if (_hasBrightnessOverride(previousRule, settings)) {
+        affected.add(monitor.deviceName);
+      }
+    }
+    if (affected.isNotEmpty) _applyManualBrightness(ref, selection: affected);
+  });
+  ref.listen<Set<String>>(selectedMonitorsProvider, (previous, next) {
+    if (next.contains('all')) _applyManualBrightness(ref, selection: next);
+  });
+  _applyManualBrightness(ref, selection: {'all'});
 });
 
 /// Background provider that manages monitor brightness and temperature adjustments.
 /// It listens to solar state and applies brightness updates to hardware.
 /// If the app is minimized, it skips UI state updates to save resources.
 final circadianAdjustmentProvider = Provider<void>((ref) {
+  ref.watch(manualBrightnessAdjustmentProvider);
   final activeProcessState = ref.watch(activeProcessServiceProvider);
   final solarStateAsync = ref.watch(debouncedSolarStateProvider);
   final settingsAsync = ref.watch(settingsProvider);
@@ -3096,9 +3316,7 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
   final isTempEnabled = ref.watch(isColorTemperatureEnabledProvider);
 
   void updateBrightnessCallback(String id, int val) {
-    try {
-      monitorListNotifier.updateBrightness(id, val);
-    } catch (_) {}
+    monitorListNotifier.updateBrightness(id, val);
   }
 
   void updateTemperatureCallback(String id, int val) {
@@ -3106,51 +3324,6 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
       monitorListNotifier.updateTemperature(id, val);
     } catch (_) {}
   }
-
-  // Listen to manual brightness changes to apply hardware updates even when window is minimized/hidden in tray
-  ref.listen<double>(currentBrightnessProvider, (previous, next) {
-    if (ref.read(autoBrightnessAdjustmentProvider)) return;
-
-    if (previous != next) {
-      final selection = ref.read(selectedMonitorsProvider);
-      final monitors = ref.read(monitorListProvider).value ?? [];
-      final offsets = ref.read(brightnessOffsetsProvider);
-      final isGaming = ref.read(gamingModeProvider);
-      final settingsMap = ref.read(settingsProvider).value ?? {};
-
-      final targetMonitors = selection.contains('all')
-          ? monitors.map((m) => m.deviceName).toList()
-          : monitors
-                .where(
-                  (m) =>
-                      selection.contains(m.deviceName) ||
-                      selection.contains(m.id),
-                )
-                .map((m) => m.deviceName)
-                .toList();
-
-      for (final id in targetMonitors) {
-        final mSettings =
-            settingsMap[id] ?? settingsMap['all'] ?? SettingsState();
-        if (isGaming && mSettings.isGameModeEnabled) {
-          continue;
-        }
-
-        brightnessService.applyBrightnessSmoothly(
-          selection: id,
-          targetValue: next,
-          monitors: monitors,
-          monitorService: monitorService,
-          offsets: offsets,
-          isManual: true,
-          isUIVisible: visibility == AppVisibilityState.visible,
-          isSoftwareDimmingEnabled:
-              settingsMap['all']?.isSoftwareDimmingEnabled ?? true,
-          updateBrightnessCallback: updateBrightnessCallback,
-        );
-      }
-    }
-  });
 
   if (monitorDevices.isEmpty) return;
   final monitors = ref.read(monitorListProvider).value ?? [];
@@ -3178,18 +3351,13 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
 
           // Calculate and Apply Brightness
           final activeProcessName = activeProcessState.activeProcess;
-          final isAppSuppressed = activeProcessState.suppressedPids.isNotEmpty;
-          final appRule = (!isAppSuppressed && activeProcessName.isNotEmpty)
-              ? (settings.appOverrides.firstWhereOrNull(
-                      (r) => r.isEnabled && r.exeName == activeProcessName,
-                    ) ??
-                    globalSettings.appOverrides.firstWhereOrNull(
-                      (r) => r.isEnabled && r.exeName == activeProcessName,
-                    ))
-              : null;
+          final appRule = _activeAppRule(
+            settings,
+            globalSettings,
+            activeProcessState,
+          );
 
-          if (appRule != null &&
-              appRule.brightnessMode != AppOverrideMode.global) {
+          if (_hasBrightnessOverride(appRule, settings)) {
             final targetBrightness = ref.read(currentBrightnessProvider);
             debugPrint(
               '[CircadianLoop] Device: ${monitor.deviceName} | Per-App Brightness Override ($activeProcessName): ${targetBrightness.toStringAsFixed(1)}%',
@@ -3280,28 +3448,6 @@ final circadianAdjustmentProvider = Provider<void>((ref) {
               isSoftwareDimmingEnabled: settings.isSoftwareDimmingEnabled,
               updateBrightnessCallback: updateBrightnessCallback,
             );
-          } else {
-            // If auto-brightness is disabled for this monitor, ensure it is synchronized
-            // on initial startup / connection if its brightness state is not yet established.
-            final isUninitialized =
-                brightnessService.getCurrentHardwareBrightness(
-                  monitor.deviceName,
-                ) ==
-                null;
-            if (isUninitialized) {
-              final manualValue = ref.read(currentBrightnessProvider);
-              brightnessService.applyBrightnessSmoothly(
-                selection: monitor.deviceName,
-                targetValue: manualValue,
-                monitors: monitors,
-                monitorService: monitorService,
-                offsets: offsets,
-                isManual: true,
-                isUIVisible: visibility == AppVisibilityState.visible,
-                isSoftwareDimmingEnabled: settings.isSoftwareDimmingEnabled,
-                updateBrightnessCallback: updateBrightnessCallback,
-              );
-            }
           }
 
           // Calculate and Apply Temperature for each display individually

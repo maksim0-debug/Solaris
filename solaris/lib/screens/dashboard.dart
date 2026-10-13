@@ -566,7 +566,6 @@ class _Header extends ConsumerWidget {
     final solarAsync = ref.watch(solarStateStreamProvider);
     final timeService = ref.watch(timeServiceProvider);
     final monitorListNotifier = ref.read(monitorListProvider.notifier);
-    final brightnessService = ref.read(brightnessServiceProvider);
     final temperatureService = ref.read(temperatureServiceProvider);
     final monitorService = ref.read(monitorServiceProvider);
 
@@ -594,40 +593,7 @@ class _Header extends ConsumerWidget {
           'HasValue: ${next.hasValue}, IsLoading: ${next.isLoading}. '
           'Previous identity matches next: ${identical(previous?.value, next.value)}',
         );
-        final selection = ref.read(selectedMonitorsProvider);
         final monitors = next.value ?? [];
-
-        // Sync brightness only if auto brightness is disabled
-        if (!ref.read(autoBrightnessAdjustmentProvider)) {
-          final targetBright = ref.read(currentBrightnessProvider);
-          debugPrint('Initial sync: applying brightness $targetBright');
-          final offsets = ref.read(brightnessOffsetsProvider);
-          final isGaming = ref.read(gamingModeProvider);
-          final settingsMap = ref.read(settingsProvider).value ?? {};
-
-          final targetMonitors = selection.contains('all')
-              ? monitors.map((m) => m.deviceName).toList()
-              : selection.toList();
-
-          for (final id in targetMonitors) {
-            final mSettings =
-                settingsMap[id] ?? settingsMap['all'] ?? SettingsState();
-            if (isGaming && mSettings.isGameModeEnabled) continue;
-
-            brightnessService.applyBrightnessSmoothly(
-              selection: id,
-              targetValue: targetBright,
-              monitors: monitors,
-              monitorService: monitorService,
-              offsets: offsets,
-              isManual: true,
-              isSoftwareDimmingEnabled:
-                  settingsMap['all']?.isSoftwareDimmingEnabled ?? true,
-              updateBrightnessCallback: (id, val) =>
-                  monitorListNotifier.updateBrightness(id, val),
-            );
-          }
-        }
 
         // Sync temperature only if color temperature is enabled and auto temperature is disabled and reset lock is inactive
         if (ref.read(isColorTemperatureEnabledProvider) &&
@@ -667,35 +633,6 @@ class _Header extends ConsumerWidget {
       if (monitorValue == null) return;
 
       if (next.contains('all')) {
-        // Apply brightness only if auto brightness is disabled
-        if (!ref.read(autoBrightnessAdjustmentProvider)) {
-          final brightness = ref.read(currentBrightnessProvider);
-          final offsets = ref.read(brightnessOffsetsProvider);
-          final isGaming = ref.read(gamingModeProvider);
-          final settingsMap = ref.read(settingsProvider).value ?? {};
-
-          for (final m in monitorValue) {
-            final mSettings =
-                settingsMap[m.deviceName] ??
-                settingsMap['all'] ??
-                SettingsState();
-            if (isGaming && mSettings.isGameModeEnabled) continue;
-
-            brightnessService.applyBrightnessSmoothly(
-              selection: m.deviceName,
-              targetValue: brightness,
-              monitors: monitorValue,
-              monitorService: monitorService,
-              offsets: offsets,
-              isManual: true,
-              isSoftwareDimmingEnabled:
-                  settingsMap['all']?.isSoftwareDimmingEnabled ?? true,
-              updateBrightnessCallback: (id, val) =>
-                  monitorListNotifier.updateBrightness(id, val),
-            );
-          }
-        }
-
         // Apply temperature only if color temperature is enabled and auto temperature is disabled and reset lock is inactive
         if (ref.read(isColorTemperatureEnabledProvider) &&
             !ref.read(autoTemperatureAdjustmentProvider) &&
@@ -731,28 +668,9 @@ class _Header extends ConsumerWidget {
           final monitor = monitorValue.firstWhereOrNull(
             (m) => m.deviceName == id || m.id == id,
           );
-          if (monitor != null && monitor.realBrightness != null) {
-            final offsets = ref.read(brightnessOffsetsProvider);
-            final offset = offsets[id] ?? 0.0;
-            final isDimming =
-                ref
-                    .read(settingsProvider)
-                    .value?['all']
-                    ?.isSoftwareDimmingEnabled ??
-                true;
-            final minVal = MonitorInfo.effectiveMinBrightness(
-              isOverlayOnly: !monitor.isDdcSupported,
-              isSoftwareDimmingEnabled: isDimming,
-            );
-            ref
-                .read(manualBrightnessProvider.notifier)
-                .update(
-                  (monitor.realBrightness!.toDouble() - offset).clamp(
-                    minVal,
-                    100.0,
-                  ),
-                );
-          }
+          ref
+              .read(currentBrightnessProvider.notifier)
+              .syncManualBrightnessFromMonitor(id);
           if (monitor != null &&
               monitor.realTemperature != null &&
               ref.read(isColorTemperatureEnabledProvider)) {

@@ -345,10 +345,10 @@ class ApiControlHandler {
         }
         final target = resolvedMonitorId ?? monitorIdInput;
         await safeStateMutator(() {
+          _container.read(manualBrightnessProvider.notifier).update(val);
           _container
               .read(autoBrightnessAdjustmentProvider.notifier)
               .setEnabled(false);
-          _container.read(manualBrightnessProvider.notifier).update(val);
         });
 
         final brightnessService = _container.read(brightnessServiceProvider);

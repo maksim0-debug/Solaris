@@ -1,20 +1,26 @@
 import 'dart:async';
+import 'package:solaris/services/log_service.dart';
 import 'package:solaris/services/monitor_service.dart';
 
 // No import of providers.dart to avoid circular dependency
 
 class BrightnessService {
+  static const _automaticStepInterval = Duration(milliseconds: 20);
   final Map<String, int> _currentHardwareBrightness = {};
-  final Map<String, Timer?> _adjustmentTimers = {};
-  final Map<String, bool> _isManualTransition = {};
-  final Map<String, bool> _canDimSoftware = {};
-  final Map<String, bool> _isOverlayOnly = {};
-
-  final Map<String, int> _targetBrightness = {};
+  final Set<String> _runningTransitions = {};
+  final Set<String> _uncertainDevices = {};
+  final Map<String, _BrightnessRequest> _requests = {};
   final Map<String, double> _lastCalculatedFloat = {};
-  final Map<String, void Function(String, int)> _activeBrightnessCallbacks = {};
+  final Map<String, bool> _lastAppliedOverlayOnly = {};
+  bool _disposed = false;
+
+  void dispose() {
+    _disposed = true;
+    _requests.clear();
+  }
 
   void syncHardwareBrightness(String deviceName, int realBrightness) {
+    if (_disposed) return;
     // If the monitor is currently in software dimming mode (< 0) and the incoming
     // reading is at physical floor (0-5% for DDC/CI hardware), preserve the
     // active negative dimming state to prevent flicker and jumping back to floor.
@@ -31,6 +37,9 @@ class BrightnessService {
 
   int? getCurrentHardwareBrightness(String deviceName) =>
       _currentHardwareBrightness[deviceName];
+
+  bool isTransitioning(String deviceName) =>
+      _runningTransitions.contains(deviceName);
 
   void invalidateCache([String? deviceName]) {
     if (deviceName != null) {
@@ -51,6 +60,7 @@ class BrightnessService {
     bool isManual = false,
     bool isSoftwareDimmingEnabled = true,
   }) {
+    if (_disposed || !targetValue.isFinite) return;
     for (final monitor in monitors) {
       if (selection == 'all' || selection == monitor.deviceName) {
         final deviceName = monitor.deviceName;
@@ -62,6 +72,13 @@ class BrightnessService {
             ? 0.0
             : (canDimSoftware ? -100.0 : 0.0);
         final rawTarget = (targetValue + offset).clamp(minVal, 100.0);
+        final target = rawTarget.round();
+        final previousRequest = _requests[deviceName];
+        final modeChanged =
+            previousRequest != null &&
+            (previousRequest.isManual != isManual ||
+                previousRequest.isOverlayOnly != isOverlayOnly ||
+                previousRequest.canDimSoftware != canDimSoftware);
 
         // HYSTERESIS: Filter out noise to prevent flicker.
         // Sentinel -999.0 avoids collision with the valid -100.0 lower bound.
@@ -82,14 +99,19 @@ class BrightnessService {
                 ? false
                 : (rawTarget.round() - realHardware).abs() >= 1);
 
-        if (!isManual &&
+        if (!_uncertainDevices.contains(deviceName) &&
+            !modeChanged &&
+            !isManual &&
             !isHardwareDesynced &&
             (rawTarget - lastCalculated).abs() < 1.5) {
           continue; // Ignore micro-fluctuations
         }
 
-        final target = rawTarget.round();
-        if (_currentHardwareBrightness[deviceName] == target &&
+        if (!_uncertainDevices.contains(deviceName) &&
+            !modeChanged &&
+            !_runningTransitions.contains(deviceName) &&
+            _currentHardwareBrightness[deviceName] == target &&
+            _lastAppliedOverlayOnly[deviceName] == isOverlayOnly &&
             !isHardwareDesynced &&
             (rawTarget - lastCalculated).abs() < 1.0) {
           continue; // Already at target with hardware aligned
@@ -97,23 +119,18 @@ class BrightnessService {
 
         _lastCalculatedFloat[deviceName] = rawTarget;
 
-        _targetBrightness[deviceName] = target;
-        _isManualTransition[deviceName] = isManual;
-        _canDimSoftware[deviceName] = canDimSoftware;
-        _isOverlayOnly[deviceName] = isOverlayOnly;
-        _activeBrightnessCallbacks[deviceName] = updateBrightnessCallback;
+        _requests[deviceName] = _BrightnessRequest(
+          target: target,
+          monitorService: monitorService,
+          callback: updateBrightnessCallback,
+          isManual: isManual,
+          canDimSoftware: canDimSoftware,
+          isOverlayOnly: isOverlayOnly,
+          isUIVisible: isUIVisible,
+        );
 
-        if (_adjustmentTimers[deviceName] == null) {
-          _runTransitionLoop(
-            deviceName,
-            target,
-            monitors,
-            monitorService,
-            isUIVisible: isUIVisible,
-            isManual: isManual,
-            canDimSoftware: canDimSoftware,
-            isOverlayOnly: isOverlayOnly,
-          );
+        if (!_runningTransitions.contains(deviceName)) {
+          unawaited(_runTransitionLoop(deviceName, monitor.realBrightness));
         }
       }
     }
@@ -121,103 +138,152 @@ class BrightnessService {
 
   Future<void> _runTransitionLoop(
     String deviceName,
-    int initialTarget,
-    List<MonitorInfo> monitors,
-    MonitorService monitorService, {
-    bool isUIVisible = true,
-    bool isManual = false,
-    bool canDimSoftware = false,
-    bool isOverlayOnly = false,
-  }) async {
-    if (_adjustmentTimers[deviceName] != null) return;
-
-    _adjustmentTimers[deviceName] = Timer(Duration.zero, () {});
+    int? observedBrightness,
+  ) async {
+    if (!_runningTransitions.add(deviceName)) return;
 
     try {
-      int? currentFromList;
-      try {
-        currentFromList = monitors
-            .firstWhere((m) => m.deviceName == deviceName)
-            .realBrightness;
-      } catch (_) {}
+      int? current =
+          _currentHardwareBrightness[deviceName] ?? observedBrightness;
+      var failures = 0;
+      _BrightnessRequest? failedRequest;
+      var automaticStep = 1;
 
-      int current =
-          _currentHardwareBrightness[deviceName] ??
-          currentFromList ??
-          (isOverlayOnly ? 100 : initialTarget);
-
-      while (true) {
-        final target = _targetBrightness[deviceName] ?? initialTarget;
-        final currentIsManual = _isManualTransition[deviceName] ?? isManual;
-        final currentCanDim = _canDimSoftware[deviceName] ?? canDimSoftware;
-        final currentOverlayOnly = _isOverlayOnly[deviceName] ?? isOverlayOnly;
-        final diff = (target - current).abs();
-
-        if (diff == 0) {
-          _currentHardwareBrightness[deviceName] = current;
+      while (!_disposed) {
+        final request = _requests[deviceName];
+        if (request == null) break;
+        current = _currentHardwareBrightness[deviceName] ?? current;
+        final target = request.target;
+        final diff = current == null ? null : (target - current).abs();
+        final modeNeedsWrite =
+            _lastAppliedOverlayOnly.containsKey(deviceName) &&
+            _lastAppliedOverlayOnly[deviceName] != request.isOverlayOnly;
+        if (diff == 0 &&
+            !modeNeedsWrite &&
+            failures == 0 &&
+            !_uncertainDevices.contains(deviceName)) {
+          _currentHardwareBrightness[deviceName] = current!;
           break;
         }
 
-        final int minVal = currentOverlayOnly ? 0 : (currentCanDim ? -100 : 0);
-        final int safeLower = minVal < target ? minVal : target;
-
-        if (!isUIVisible && !currentIsManual) {
-          current = target;
-        } else if (currentIsManual) {
-          // Manual control or visible UI (fast transition, 60-120%/sec)
-          final step = diff > 20 ? 12 : 6;
-          if (current < target) {
-            current = (current + step).clamp(safeLower, target).toInt();
-          } else {
-            current = (current - step).clamp(target, 100).toInt();
-          }
+        int next;
+        if (current == null ||
+            diff == 0 ||
+            (!request.isUIVisible && !request.isManual)) {
+          next = target;
         } else {
-          // Automatic background adjustment (gradual transition, 3% every 150-200ms)
-          final step = 3;
-          if (current < target) {
-            current = (current + step).clamp(safeLower, target).toInt();
-          } else {
-            current = (current - step).clamp(target, 100).toInt();
+          final step = request.isManual ? (diff! > 20 ? 12 : 6) : automaticStep;
+          next = current < target
+              ? (current + step).clamp(current, target)
+              : (current - step).clamp(target, current);
+        }
+        final minimum = request.isOverlayOnly || !request.canDimSoftware
+            ? 0
+            : -100;
+        next = next.clamp(minimum, 100);
+
+        bool success;
+        final writeTime = Stopwatch()..start();
+        try {
+          success = await request.monitorService.setBrightness(
+            deviceName,
+            next,
+            isOverlayOnly: request.isOverlayOnly,
+          );
+        } catch (error, stack) {
+          success = false;
+          LogService.instance.log(
+            'Brightness write threw: device=$deviceName target=$next error=$error\n$stack',
+            level: 'ERROR',
+          );
+        }
+        writeTime.stop();
+        if (_disposed) break;
+
+        if (!success) {
+          // A rejected write may still have changed an overlay or some handles.
+          _uncertainDevices.add(deviceName);
+          _lastCalculatedFloat.remove(deviceName);
+          if (!request.hasSameTarget(_requests[deviceName])) {
+            failures = 0;
+            continue;
           }
+          if (!request.hasSameTarget(failedRequest)) failures = 0;
+          failedRequest = request;
+          failures++;
+          LogService.instance.log(
+            'Brightness write failed: device=$deviceName target=$next attempt=$failures',
+            level: 'WARNING',
+          );
+          if (failures >= 3) break;
+          await Future<void>.delayed(
+            Duration(milliseconds: 100 * (1 << (failures - 1))),
+          );
+          continue;
         }
 
-        _currentHardwareBrightness[deviceName] = current;
-
-        final int valToReport = current;
-        final cb = _activeBrightnessCallbacks[deviceName];
-        if (cb != null) {
-          Future.delayed(Duration.zero, () {
-            try {
-              cb(deviceName, valToReport);
-            } catch (_) {}
-          });
+        failures = 0;
+        // Slow DDC writes use slightly larger steps without concurrent writes.
+        automaticStep =
+            (writeTime.elapsedMicroseconds /
+                    _automaticStepInterval.inMicroseconds)
+                .ceil()
+                .clamp(1, 5);
+        _uncertainDevices.remove(deviceName);
+        failedRequest = null;
+        current = next;
+        _currentHardwareBrightness[deviceName] = next;
+        _lastAppliedOverlayOnly[deviceName] = request.isOverlayOnly;
+        try {
+          _requests[deviceName]?.callback(deviceName, next);
+        } catch (error, stack) {
+          LogService.instance.log(
+            'Brightness state update failed: device=$deviceName value=$next error=$error\n$stack',
+            level: 'ERROR',
+          );
         }
 
-        await monitorService.setBrightness(
-          deviceName,
-          current,
-          isOverlayOnly: currentOverlayOnly,
-        );
-
-        // ALWAYS check against the most recent target, to avoid race conditions
-        // where target updates while we were waiting for setBrightness.
-        if (current == _targetBrightness[deviceName]) {
+        final latest = _requests[deviceName];
+        if (latest == null ||
+            (next == latest.target &&
+                request.isOverlayOnly == latest.isOverlayOnly)) {
           break;
         }
-
-        // Wait 100ms for manual changes, 150ms for automatic adjustments
-        await Future<void>.delayed(
-          Duration(milliseconds: currentIsManual ? 100 : 150),
-        );
+        if (!request.hasSameTarget(latest)) continue;
+        final pause = request.isManual
+            ? const Duration(milliseconds: 100)
+            : _automaticStepInterval - writeTime.elapsed;
+        if (pause > Duration.zero) await Future<void>.delayed(pause);
       }
     } finally {
-      // Free the timer so it can be restarted if new requests come in
-      _adjustmentTimers[deviceName]?.cancel();
-      _adjustmentTimers.remove(deviceName);
-      _isManualTransition.remove(deviceName);
-      _canDimSoftware.remove(deviceName);
-      _isOverlayOnly.remove(deviceName);
-      _activeBrightnessCallbacks.remove(deviceName);
+      _runningTransitions.remove(deviceName);
     }
   }
+}
+
+class _BrightnessRequest {
+  final int target;
+  final MonitorService monitorService;
+  final void Function(String, int) callback;
+  final bool isManual;
+  final bool canDimSoftware;
+  final bool isOverlayOnly;
+  final bool isUIVisible;
+
+  const _BrightnessRequest({
+    required this.target,
+    required this.monitorService,
+    required this.callback,
+    required this.isManual,
+    required this.canDimSoftware,
+    required this.isOverlayOnly,
+    required this.isUIVisible,
+  });
+
+  bool hasSameTarget(_BrightnessRequest? other) =>
+      other != null &&
+      target == other.target &&
+      isManual == other.isManual &&
+      isOverlayOnly == other.isOverlayOnly &&
+      canDimSoftware == other.canDimSoftware;
 }

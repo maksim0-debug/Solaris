@@ -324,10 +324,13 @@ bool FlutterWindow::OnCreate() {
                   overlay_manager_.SetOverlayOpacity(device_path, 0.0);
                 }
 
-                monitor_manager_.EnqueueTask([this, device_path, brightness]() {
-                  monitor_manager_.SetBrightness(device_path, brightness);
+                // Flutter's Windows reply wrapper supports worker-thread replies
+                // and safely drops them after engine shutdown.
+                auto reply = std::shared_ptr<flutter::MethodResult<flutter::EncodableValue>>(std::move(result));
+                monitor_manager_.EnqueueTask([this, device_path, brightness, reply]() {
+                  const bool success = monitor_manager_.SetBrightness(device_path, brightness);
+                  reply->Success(flutter::EncodableValue(success));
                 });
-                result->Success(flutter::EncodableValue(true));
                 return;
               }
             }
@@ -595,6 +598,7 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  monitor_manager_.SetHardwareErrorCallback(nullptr);
   monitor_manager_.ResetAllMonitorsTemperatureSync();
   overlay_manager_.DestroyAllOverlays();
 
