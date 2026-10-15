@@ -115,7 +115,7 @@ void main() {
   }
 
   test('phases without internal events end at the next event', () {
-    for (final now in [time(4), time(5, 15), time(8), time(12), time(18, 45)]) {
+    for (final now in [time(4), time(5, 15), time(8), time(12), time(19, 45)]) {
       final state = stateAt(now);
       expect(state.currentPhase, isNot(CurrentDayPhase.goldenHour));
       expect(
@@ -123,6 +123,18 @@ void main() {
         state.timeUntilNextEvent,
       );
     }
+  });
+
+  test('civil twilight end is an event within the evening phase', () {
+    final now = time(18, 45);
+    final state = stateAt(now);
+    expect(state.currentPhase, CurrentDayPhase.twilight);
+    expect(state.nextEventType, SolarEventType.civilTwilightEnd);
+    expect(state.timeUntilNextEvent, const Duration(minutes: 15));
+    expect(
+      StatusHelper.getRemainingDuration(state, now),
+      const Duration(hours: 1, minutes: 15),
+    );
   });
 
   test('solar noon does not reset the zenith countdown', () {
@@ -290,7 +302,7 @@ void main() {
         after: CurrentDayPhase.twilight,
       ),
       (
-        at: time(19),
+        at: time(20),
         before: CurrentDayPhase.twilight,
         after: CurrentDayPhase.deepNight,
       ),
@@ -314,6 +326,29 @@ void main() {
     }
   });
 
+  test('civil twilight end does not start night or skip its countdown', () {
+    for (final now in [
+      time(19),
+      time(19, 30),
+      phases.astronomicalDusk.subtract(const Duration(microseconds: 1)),
+    ]) {
+      final state = stateAt(now);
+      expect(state.currentPhase, CurrentDayPhase.twilight);
+      expect(state.nextEventType, SolarEventType.astronomicalDusk);
+      expect(
+        StatusHelper.getRemainingDuration(state, now),
+        phases.astronomicalDusk.difference(now),
+      );
+      expect(
+        StatusHelper.getUpcomingEvent(state, now)!.duration,
+        phases.astronomicalDusk.difference(now),
+      );
+    }
+    final night = stateAt(phases.astronomicalDusk);
+    expect(night.currentPhase, CurrentDayPhase.deepNight);
+    expect(night.nextEventType, SolarEventType.civilTwilightBegin);
+  });
+
   test('every minute counts down to the next actual phase change', () {
     final boundaries = [
       time(5),
@@ -323,7 +358,7 @@ void main() {
       time(13),
       time(17, 30),
       time(18, 30),
-      time(19),
+      time(20),
       phases.nextDayCivilTwilightBegin,
     ];
     for (var minute = 0; minute < 24 * 60; minute++) {
@@ -367,8 +402,8 @@ void main() {
         expect(next.duration, tomorrow.civilTwilightBegin.difference(now));
         expect(service.getTimeUntilPhaseEnd(today, now), next.duration);
         expect(
-          service.getTimeUntilPhaseEnd(today, today.civilTwilightEnd),
-          tomorrow.civilTwilightBegin.difference(today.civilTwilightEnd),
+          service.getTimeUntilPhaseEnd(today, today.astronomicalDusk),
+          tomorrow.civilTwilightBegin.difference(today.astronomicalDusk),
         );
         if (day == 24) {
           expect(

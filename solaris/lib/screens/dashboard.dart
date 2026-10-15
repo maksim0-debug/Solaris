@@ -720,6 +720,8 @@ class _Header extends ConsumerWidget {
             return l10n.sunsetLabel;
           case SolarEventType.civilTwilightEnd:
             return l10n.eventTwilightEnd;
+          case SolarEventType.astronomicalDusk:
+            return l10n.phaseNight;
         }
       }
 

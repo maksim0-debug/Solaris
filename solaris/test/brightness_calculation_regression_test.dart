@@ -195,7 +195,7 @@ void main() {
       () {
         final now = morning
             ? DateTime(2026, 10, 15, 8)
-            : DateTime(2026, 10, 15, 18);
+            : DateTime(2026, 10, 15, 17);
         final expected = <double, int>{
           -6: 2200,
           -3: morning ? 3100 : 2600,

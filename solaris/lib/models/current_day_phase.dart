@@ -18,7 +18,7 @@ enum CurrentDayPhase {
   /// Golden hour (morning and evening).
   goldenHour,
 
-  /// Twilight (civil twilight).
+  /// Evening twilight until astronomical dusk.
   twilight,
 }
 
@@ -35,4 +35,5 @@ enum SolarEventType {
   goldenHourEveningEnd,
   sunset,
   civilTwilightEnd,
+  astronomicalDusk,
 }

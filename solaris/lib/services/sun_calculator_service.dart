@@ -148,7 +148,7 @@ class SunCalculatorService {
     DateTime currentTime,
   ) {
     if (currentTime.isBefore(phases.civilTwilightBegin) ||
-        !currentTime.isBefore(phases.civilTwilightEnd)) {
+        !currentTime.isBefore(phases.astronomicalDusk)) {
       return CurrentDayPhase.deepNight;
     }
 
@@ -164,14 +164,14 @@ class SunCalculatorService {
       return CurrentDayPhase.goldenHour;
     }
 
-    // Twilight zones (Civil)
+    // Morning civil twilight and evening twilight through astronomical dusk.
     if (!currentTime.isBefore(phases.civilTwilightBegin) &&
         currentTime.isBefore(phases.sunrise)) {
       return CurrentDayPhase.dawn;
     }
 
     if (!currentTime.isBefore(phases.sunset) &&
-        currentTime.isBefore(phases.civilTwilightEnd)) {
+        currentTime.isBefore(phases.astronomicalDusk)) {
       return CurrentDayPhase.twilight;
     }
 
@@ -291,6 +291,7 @@ class SunCalculatorService {
       ),
       (time: phases.sunset, type: SolarEventType.sunset),
       (time: phases.civilTwilightEnd, type: SolarEventType.civilTwilightEnd),
+      (time: phases.astronomicalDusk, type: SolarEventType.astronomicalDusk),
       (
         time: phases.nextDayCivilTwilightBegin,
         type: SolarEventType.civilTwilightBegin,

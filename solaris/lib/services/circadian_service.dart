@@ -454,6 +454,16 @@ class CircadianService {
     required DateTime now,
     double plateauRatio = 0.5,
   }) {
+    // The evening target lasts until the same astronomical boundary shown by
+    // the phase cards, including when a sleep adjustment shifts the elevation.
+    if (!now.isBefore(phases.sunset) &&
+        now.isBefore(phases.nextDayCivilTwilightBegin)) {
+      return SolarPhaseBlend.at(
+        now.isBefore(phases.astronomicalDusk)
+            ? SolarTargetPhase.sunset
+            : SolarTargetPhase.night,
+      );
+    }
     if (elevation <= -6) {
       return const SolarPhaseBlend.at(SolarTargetPhase.night);
     }
