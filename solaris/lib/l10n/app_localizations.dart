@@ -936,7 +936,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Weather: brightness reduced by {percent}%'**
-  String weatherBrightnessReduction(int percent);
+  String weatherBrightnessReduction(String percent);
 
   /// No description provided for @selectMonitor.
   ///
@@ -4599,6 +4599,192 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to restart computer. Please restart manually to apply changes.'**
   String get expandedGammaRestartFailed;
+
+  /// No description provided for @brightnessPhasesBase.
+  ///
+  /// In en, this message translates to:
+  /// **'Base day-phase brightness'**
+  String get brightnessPhasesBase;
+
+  /// No description provided for @temperaturePhasesBase.
+  ///
+  /// In en, this message translates to:
+  /// **'Base day-phase temperature'**
+  String get temperaturePhasesBase;
+
+  /// No description provided for @brightnessSourceGame.
+  ///
+  /// In en, this message translates to:
+  /// **'Game mode brightness'**
+  String get brightnessSourceGame;
+
+  /// No description provided for @brightnessSourceManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual brightness'**
+  String get brightnessSourceManual;
+
+  /// No description provided for @brightnessSourceApplication.
+  ///
+  /// In en, this message translates to:
+  /// **'Application rule [{application}]'**
+  String brightnessSourceApplication(String application);
+
+  /// No description provided for @brightnessTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Target brightness'**
+  String get brightnessTarget;
+
+  /// No description provided for @brightnessApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Current monitor brightness'**
+  String get brightnessApplied;
+
+  /// No description provided for @calculationLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Brightness limits'**
+  String get calculationLimit;
+
+  /// No description provided for @monitorBrightnessLimits.
+  ///
+  /// In en, this message translates to:
+  /// **'Monitor brightness limits'**
+  String get monitorBrightnessLimits;
+
+  /// No description provided for @temperatureCalculationLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Temperature limits'**
+  String get temperatureCalculationLimit;
+
+  /// No description provided for @manualRegulationPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual control — automatic adjustments paused'**
+  String get manualRegulationPaused;
+
+  /// No description provided for @calculationRounding.
+  ///
+  /// In en, this message translates to:
+  /// **'Rounding'**
+  String get calculationRounding;
+
+  /// No description provided for @brightnessElevationShift.
+  ///
+  /// In en, this message translates to:
+  /// **'Bio-Morning — rhythm shift'**
+  String get brightnessElevationShift;
+
+  /// No description provided for @brightnessMorningBoost.
+  ///
+  /// In en, this message translates to:
+  /// **'Bio-Morning — morning adjustment'**
+  String get brightnessMorningBoost;
+
+  /// No description provided for @brightnessMonitor.
+  ///
+  /// In en, this message translates to:
+  /// **'Monitor: {monitor}'**
+  String brightnessMonitor(String monitor);
+
+  /// No description provided for @calculationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculation unavailable'**
+  String get calculationUnavailable;
+
+  /// No description provided for @brightnessBaseNight.
+  ///
+  /// In en, this message translates to:
+  /// **'Base night brightness'**
+  String get brightnessBaseNight;
+
+  /// No description provided for @brightnessBaseSunrise.
+  ///
+  /// In en, this message translates to:
+  /// **'Base sunrise brightness'**
+  String get brightnessBaseSunrise;
+
+  /// No description provided for @brightnessBaseDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Base day brightness'**
+  String get brightnessBaseDay;
+
+  /// No description provided for @brightnessBaseSunset.
+  ///
+  /// In en, this message translates to:
+  /// **'Base sunset brightness'**
+  String get brightnessBaseSunset;
+
+  /// No description provided for @brightnessBaseTransition.
+  ///
+  /// In en, this message translates to:
+  /// **'Base brightness ({transition})'**
+  String brightnessBaseTransition(String transition);
+
+  /// No description provided for @temperatureBaseNight.
+  ///
+  /// In en, this message translates to:
+  /// **'Base night temperature'**
+  String get temperatureBaseNight;
+
+  /// No description provided for @temperatureBaseSunrise.
+  ///
+  /// In en, this message translates to:
+  /// **'Base sunrise temperature'**
+  String get temperatureBaseSunrise;
+
+  /// No description provided for @temperatureBaseDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Base day temperature'**
+  String get temperatureBaseDay;
+
+  /// No description provided for @temperatureBaseSunset.
+  ///
+  /// In en, this message translates to:
+  /// **'Base sunset temperature'**
+  String get temperatureBaseSunset;
+
+  /// No description provided for @temperatureBaseTransition.
+  ///
+  /// In en, this message translates to:
+  /// **'Base temperature ({transition})'**
+  String temperatureBaseTransition(String transition);
+
+  /// No description provided for @temperatureSourceApplication.
+  ///
+  /// In en, this message translates to:
+  /// **'Application rule [{application}]'**
+  String temperatureSourceApplication(String application);
+
+  /// No description provided for @temperatureSourceGame.
+  ///
+  /// In en, this message translates to:
+  /// **'Game mode temperature'**
+  String get temperatureSourceGame;
+
+  /// No description provided for @temperatureSourceManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual temperature'**
+  String get temperatureSourceManual;
+
+  /// No description provided for @temperatureSourceDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Temperature control disabled'**
+  String get temperatureSourceDisabled;
+
+  /// No description provided for @temperatureApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Current monitor temperature'**
+  String get temperatureApplied;
 }
 
 class _AppLocalizationsDelegate

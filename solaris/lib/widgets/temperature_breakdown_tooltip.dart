@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:solaris/l10n/app_localizations.dart';
 import 'package:solaris/models/preset_type.dart';
+import 'package:solaris/models/circadian_mode.dart';
 import 'package:solaris/models/smart_circadian_data.dart';
+import 'package:solaris/models/temperature_target.dart';
+import 'package:solaris/widgets/phase_base_label.dart';
 import 'package:solaris/widgets/weather_icon_helper.dart';
 
 class TemperatureBreakdownTooltip extends StatelessWidget {
@@ -12,12 +15,24 @@ class TemperatureBreakdownTooltip extends StatelessWidget {
     required this.smartData,
     required this.currentTemperature,
     required this.isSmartCircadianEnabled,
+    this.circadianMode = CircadianMode.normalizedCurve,
+    this.target,
+    this.monitorName,
+    this.isMonitorGroup = false,
+    this.appliedTemperature,
+    this.appliedValues = const [],
   });
 
   final Widget child;
   final SmartCircadianData smartData;
   final int currentTemperature;
   final bool isSmartCircadianEnabled;
+  final CircadianMode circadianMode;
+  final TemperatureTarget? target;
+  final String? monitorName;
+  final bool isMonitorGroup;
+  final int? appliedTemperature;
+  final List<({String name, num value})> appliedValues;
 
   @override
   Widget build(BuildContext context) {
@@ -41,8 +56,7 @@ class TemperatureBreakdownTooltip extends StatelessWidget {
         ? smartData.sleepDebtTemperatureImpact
         : 0;
 
-    final int displayedFinalTemp =
-        (smartData.finalTemperature > 0 && isSmartCircadianEnabled)
+    final int displayedFinalTemp = smartData.finalTemperature > 0
         ? smartData.finalTemperature
         : currentTemperature;
 
@@ -55,11 +69,14 @@ class TemperatureBreakdownTooltip extends StatelessWidget {
           fontFamily: 'Outfit',
         ),
         children: [
+          if (monitorName != null)
+            TextSpan(
+              text:
+                  '${isMonitorGroup ? monitorName! : l10n.brightnessMonitor(monitorName!)}\n',
+            ),
           _buildRow(
             icon: LucideIcons.sun,
-            label:
-                '${l10n.temperatureBreakdownBase} [${_getPresetName(l10n, smartData)}]'
-                    .toUpperCase(),
+            label: _sourceLabel(l10n).toUpperCase(),
             value: '$baseTemp K',
             iconColor: const Color(0xFF818CF8), // Blue-Indigo for temp base
           ),
@@ -100,6 +117,22 @@ class TemperatureBreakdownTooltip extends StatelessWidget {
               value: '$sleepDebtImpact K',
               iconColor: const Color(0xFFF43F5E),
             ),
+          if (smartData.temperatureLimitImpact != 0)
+            _buildRow(
+              icon: LucideIcons.slidersHorizontal,
+              label: l10n.temperatureCalculationLimit,
+              value:
+                  '${smartData.temperatureLimitImpact > 0 ? '+' : ''}${smartData.temperatureLimitImpact} K',
+              iconColor: const Color(0xFF94A3B8),
+            ),
+          if (smartData.temperatureRoundingImpact != 0)
+            _buildRow(
+              icon: LucideIcons.hash,
+              label: l10n.calculationRounding,
+              value:
+                  '${smartData.temperatureRoundingImpact > 0 ? '+' : ''}${smartData.temperatureRoundingImpact} K',
+              iconColor: const Color(0xFF94A3B8),
+            ),
           const TextSpan(
             text: '\n────────────────────────\n',
             style: TextStyle(color: Colors.white10),
@@ -111,6 +144,22 @@ class TemperatureBreakdownTooltip extends StatelessWidget {
             iconColor: const Color(0xFF34D399),
             isBold: true,
           ),
+          for (final applied in appliedValues)
+            if (applied.value.round() != displayedFinalTemp)
+              _buildRow(
+                icon: LucideIcons.monitor,
+                label: '${l10n.temperatureApplied} [${applied.name}]',
+                value: '${applied.value.round()} K',
+                iconColor: const Color(0xFF94A3B8),
+              ),
+          if (appliedTemperature != null &&
+              appliedTemperature != displayedFinalTemp)
+            _buildRow(
+              icon: LucideIcons.monitor,
+              label: l10n.temperatureApplied,
+              value: '$appliedTemperature K',
+              iconColor: const Color(0xFF94A3B8),
+            ),
         ],
       ),
       padding: const EdgeInsets.all(12),
@@ -132,11 +181,35 @@ class TemperatureBreakdownTooltip extends StatelessWidget {
     );
   }
 
-  String _getPresetName(AppLocalizations l10n, SmartCircadianData data) {
-    if (data.activeUserTemperaturePresetName != null) {
-      return data.activeUserTemperaturePresetName!;
+  String _sourceLabel(AppLocalizations l10n) {
+    final source = target?.source;
+    if (source == TemperatureSource.appFixed) {
+      return l10n.temperatureSourceApplication(target!.applicationName ?? '');
     }
-    switch (data.activeSystemTemperaturePreset) {
+    if (source == TemperatureSource.game) return l10n.temperatureSourceGame;
+    if (source == TemperatureSource.manual) return l10n.temperatureSourceManual;
+    if (source == TemperatureSource.disabled) {
+      return l10n.temperatureSourceDisabled;
+    }
+    if (source == TemperatureSource.solarPhases ||
+        (source == null && circadianMode == CircadianMode.solarPhases)) {
+      return phaseBaseLabel(l10n, smartData.basePhase, temperature: true);
+    }
+    final curve =
+        '${l10n.temperatureBreakdownBase} [${_getPresetName(l10n, smartData)}]';
+    return source == TemperatureSource.appCurve
+        ? '${l10n.temperatureSourceApplication(target!.applicationName ?? '')} / $curve'
+        : curve;
+  }
+
+  String _getPresetName(AppLocalizations l10n, SmartCircadianData data) {
+    final userName = target != null
+        ? target!.userPresetName
+        : data.activeUserTemperaturePresetName;
+    if (userName != null) return userName;
+    switch (target != null
+        ? target!.systemPreset
+        : data.activeSystemTemperaturePreset) {
       case TemperaturePresetType.coolest:
         return l10n.tempCoolest;
       case TemperaturePresetType.cool:

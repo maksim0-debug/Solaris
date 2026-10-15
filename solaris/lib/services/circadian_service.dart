@@ -7,7 +7,10 @@ import 'package:solaris/models/smart_circadian_data.dart';
 import 'package:solaris/constants/temperature_constants.dart';
 import 'package:solaris/models/circadian_mode.dart';
 import 'package:solaris/models/solar_phases_config.dart';
+import 'package:solaris/models/solar_phase_blend.dart';
 
+/// Brightness is base + elevation shift - reductions + morning adjustment + limit.
+/// Reductions are positive magnitudes; the shift, adjustment and limit are signed.
 class CircadianCalculationResult {
   final double finalBrightness;
   final double baseBrightness;
@@ -16,8 +19,11 @@ class CircadianCalculationResult {
   final double sleepDebtImpact;
   final double weatherImpact;
   final double timeShiftImpact;
+  final double elevationShiftImpact;
+  final double limitImpact;
+  final SolarPhaseBlend? basePhase;
 
-  CircadianCalculationResult({
+  const CircadianCalculationResult({
     required this.finalBrightness,
     required this.baseBrightness,
     this.windDownImpact = 0,
@@ -25,9 +31,13 @@ class CircadianCalculationResult {
     this.sleepDebtImpact = 0,
     this.weatherImpact = 0,
     this.timeShiftImpact = 0,
+    this.elevationShiftImpact = 0,
+    this.limitImpact = 0,
+    this.basePhase,
   });
 }
 
+/// All temperature impacts are signed and reconcile with the final integer value.
 class TemperatureCalculationResult {
   final int baseTemperature;
   final int weatherImpact;
@@ -36,8 +46,11 @@ class TemperatureCalculationResult {
   final int windDownImpact;
   final int sleepDebtImpact;
   final int finalTemperature;
+  final int limitImpact;
+  final int roundingImpact;
+  final SolarPhaseBlend? basePhase;
 
-  TemperatureCalculationResult({
+  const TemperatureCalculationResult({
     required this.baseTemperature,
     this.weatherImpact = 0,
     this.timeShiftImpact = 0,
@@ -45,6 +58,9 @@ class TemperatureCalculationResult {
     this.windDownImpact = 0,
     this.sleepDebtImpact = 0,
     required this.finalTemperature,
+    this.limitImpact = 0,
+    this.roundingImpact = 0,
+    this.basePhase,
   });
 }
 
@@ -67,34 +83,33 @@ class CircadianService {
     SolarPhasesConfig? phasesConfig,
     double? maxElevation,
     double? minElevation,
+    double? unshiftedElevation,
   }) {
-    double baseBrightness;
-
-    if (circadianMode == CircadianMode.solarPhases && phasesConfig != null) {
-      baseBrightness = calculateBrightnessFromPhases(
-        config: phasesConfig,
-        phases: phases,
-        elevation: elevation,
-        maxElevation: maxElevation ?? 60.0,
-        minElevation: minElevation ?? -60.0,
-        now: now,
-      );
-    } else if (curvePoints != null && curvePoints.isNotEmpty) {
-      final double effectiveElevation = normalizeElevationToStandardRange(
-        elevation: elevation,
-        minElevation: minElevation ?? -20.0,
-        maxElevation: maxElevation ?? 90.0,
-      );
-      baseBrightness = _calculateFromElevation(curvePoints, effectiveElevation);
-    } else {
-      if (elevation < -6) {
-        baseBrightness = 15.0;
-      } else if (elevation > 20) {
-        baseBrightness = 100.0;
-      } else {
-        baseBrightness = 60.0;
+    double baseAt(double sunElevation) {
+      if (circadianMode == CircadianMode.solarPhases && phasesConfig != null) {
+        return calculateBrightnessFromPhases(
+          config: phasesConfig,
+          phases: phases,
+          elevation: sunElevation,
+          maxElevation: maxElevation ?? 60.0,
+          minElevation: minElevation ?? -60.0,
+          now: now,
+        );
+      } else if (curvePoints != null && curvePoints.isNotEmpty) {
+        final double effectiveElevation = normalizeElevationToStandardRange(
+          elevation: sunElevation,
+          minElevation: minElevation ?? -20.0,
+          maxElevation: maxElevation ?? 90.0,
+        );
+        return interpolateCurve(curvePoints, effectiveElevation).clamp(0, 100);
       }
+      if (sunElevation < -6) return 15;
+      if (sunElevation > 20) return 100;
+      return 60;
     }
+
+    final baseBrightness = baseAt(unshiftedElevation ?? elevation);
+    final shiftedBase = baseAt(elevation);
 
     double weatherFactor = 1.0;
     final bool isWeatherActiveWindow =
@@ -111,17 +126,20 @@ class CircadianService {
 
     final double baselineFloor;
     if (circadianMode == CircadianMode.solarPhases && phasesConfig != null) {
-      baselineFloor = phasesConfig.night.brightness.clamp(0.0, 100.0);
+      baselineFloor = _minimumPhaseBrightness(phasesConfig);
     } else if (curvePoints != null && curvePoints.isNotEmpty) {
-      baselineFloor = curvePoints.first.y;
+      baselineFloor = curvePoints
+          .map((p) => p.y)
+          .reduce(math.min)
+          .clamp(0, 100);
     } else {
       baselineFloor = 15.0;
     }
 
-    // Weather impact should not drop daylight below baseline floor
-    final double weatherAdjustedBase = (baseBrightness * weatherFactor).clamp(
-      baselineFloor,
-      100.0,
+    // A weather floor may limit a reduction, but must never raise the curve.
+    final double weatherAdjustedBase = (shiftedBase * weatherFactor).clamp(
+      math.min(baselineFloor, shiftedBase),
+      shiftedBase,
     );
 
     // Apply smart multipliers (Wind-down, Sleep Pressure, Sleep Debt) to the weather-adjusted base
@@ -150,37 +168,36 @@ class CircadianService {
       theoreticalFinal += timeShiftImpact;
     }
 
-    double finalBrightness = theoreticalFinal.clamp(0.0, 100.0);
-
-    // Proportional distribution logic
-    if (finalBrightness < baseBrightness) {
-      final totalReduction = baseBrightness - finalBrightness;
-
-      // Weights based on reduction "strength" of each factor
-      final wWeather = 1.0 - weatherFactor;
-      final wWindDown = 1.0 - smartData.windDownFactor;
-      final wPressure = 1.0 - smartData.sleepPressureFactor;
-      final wDebt = 1.0 - smartData.sleepDebtFactor;
-
-      final sumOfWeights = wWeather + wWindDown + wPressure + wDebt;
-
-      if (sumOfWeights > 0) {
-        return CircadianCalculationResult(
-          finalBrightness: finalBrightness,
-          baseBrightness: baseBrightness,
-          weatherImpact: totalReduction * (wWeather / sumOfWeights),
-          windDownImpact: totalReduction * (wWindDown / sumOfWeights),
-          sleepPressureImpact: totalReduction * (wPressure / sumOfWeights),
-          sleepDebtImpact: totalReduction * (wDebt / sumOfWeights),
-          timeShiftImpact: timeShiftImpact,
-        );
-      }
-    }
+    final finalBrightness = theoreticalFinal.clamp(0.0, 100.0);
+    // Attribute the actual smart reduction before adding the morning boost.
+    // Weather has its own effective reduction, including its floor.
+    final reduction =
+        weatherAdjustedBase * (1 - smartData.brightnessMultiplier);
+    final wWindDown = math.max(0.0, 1 - smartData.windDownFactor);
+    final wPressure = math.max(0.0, 1 - smartData.sleepPressureFactor);
+    final wDebt = math.max(0.0, 1 - smartData.sleepDebtFactor);
+    final weights = wWindDown + wPressure + wDebt;
 
     return CircadianCalculationResult(
       finalBrightness: finalBrightness,
       baseBrightness: baseBrightness,
+      basePhase:
+          circadianMode == CircadianMode.solarPhases && phasesConfig != null
+          ? resolvePhaseBlend(
+              phases: phases,
+              elevation: unshiftedElevation ?? elevation,
+              maxElevation: maxElevation ?? 60,
+              now: now,
+            )
+          : null,
+      elevationShiftImpact: shiftedBase - baseBrightness,
+      weatherImpact: shiftedBase - weatherAdjustedBase,
+      windDownImpact: weights > 0 ? reduction * wWindDown / weights : 0,
+      sleepPressureImpact: weights > 0 ? reduction * wPressure / weights : 0,
+      sleepDebtImpact: weights > 0 ? reduction * wDebt / weights : 0,
       timeShiftImpact: timeShiftImpact,
+      limitImpact:
+          finalBrightness - theoreticalFinal - (weights == 0 ? reduction : 0),
     );
   }
 
@@ -220,7 +237,7 @@ class CircadianService {
         minElevation: minElevation ?? -20.0,
         maxElevation: maxElevation ?? 90.0,
       );
-      rawBaseTemperature = _calculateFromElevation(
+      rawBaseTemperature = interpolateCurve(
         curvePoints,
         effectiveElevation,
       ).toInt();
@@ -244,14 +261,17 @@ class CircadianService {
 
     final double baselineFloor;
     if (circadianMode == CircadianMode.solarPhases && phasesConfig != null) {
-      baselineFloor = phasesConfig.night.temperature
-          .clamp(minFloor, maxAllowed)
-          .toDouble();
+      baselineFloor = [
+        phasesConfig.night.temperature,
+        phasesConfig.sunrise.temperature,
+        phasesConfig.day.temperature,
+        phasesConfig.sunset.temperature,
+      ].reduce(math.min).clamp(minFloor, maxAllowed).toDouble();
     } else if (curvePoints.isNotEmpty) {
-      baselineFloor = curvePoints.first.y.clamp(
-        minFloor.toDouble(),
-        maxAllowed.toDouble(),
-      );
+      baselineFloor = curvePoints
+          .map((p) => p.y)
+          .reduce(math.min)
+          .clamp(minFloor.toDouble(), maxAllowed.toDouble());
     } else {
       baselineFloor = minFloor.toDouble();
     }
@@ -259,9 +279,10 @@ class CircadianService {
     // Weather impact cannot drop daytime temperature below the baseline night target
     final double weatherAdjustedBase =
         (rawBaseTemperature.toDouble() - weatherDrop).clamp(
-          baselineFloor,
-          maxAllowed.toDouble(),
+          math.min(baselineFloor, rawBaseTemperature.toDouble()),
+          rawBaseTemperature.toDouble(),
         );
+    weatherDrop = rawBaseTemperature - weatherAdjustedBase;
 
     final double netNegativeSmartOffset =
         (smartData.sleepPressureTemperatureOffset < 0
@@ -304,20 +325,7 @@ class CircadianService {
         smartData.windDownTemperatureOffset +
         smartData.sleepDebtTemperatureOffset;
 
-    final int minAllowed;
-    if (circadianMode == CircadianMode.solarPhases && phasesConfig != null) {
-      minAllowed = minFloor;
-    } else if (curvePoints.isNotEmpty) {
-      final hasSmartReduction =
-          smartData.windDownTemperatureOffset < 0 ||
-          smartData.sleepPressureTemperatureOffset < 0 ||
-          smartData.sleepDebtTemperatureOffset < 0;
-      minAllowed = hasSmartReduction
-          ? minFloor
-          : curvePoints.first.y.round().clamp(minFloor, maxAllowed);
-    } else {
-      minAllowed = minFloor;
-    }
+    const minAllowed = minFloor;
 
     final int finalTemperature = theoreticalFinal.round().clamp(
       minAllowed,
@@ -335,10 +343,14 @@ class CircadianService {
     }
 
     // Proportional distribution logic when lower bound (minAllowed) is hit
-    int finalWeatherImpact = weatherDrop > 0 ? -weatherDrop.round() : 0;
-    int finalSleepPressureImpact = smartData.sleepPressureTemperatureOffset;
-    int finalWindDownImpact = smartData.windDownTemperatureOffset;
-    int finalSleepDebtImpact = smartData.sleepDebtTemperatureOffset;
+    double effectiveWeatherImpact = -weatherDrop;
+    double effectiveSleepPressureImpact = smartData
+        .sleepPressureTemperatureOffset
+        .toDouble();
+    double effectiveWindDownImpact = smartData.windDownTemperatureOffset
+        .toDouble();
+    double effectiveSleepDebtImpact = smartData.sleepDebtTemperatureOffset
+        .toDouble();
 
     if (finalTemperature < minAllowed ||
         (theoreticalFinal < minAllowed && finalTemperature <= minAllowed)) {
@@ -348,29 +360,71 @@ class CircadianService {
       final double rawNegativeSum = -weatherDrop + netNegativeSmartOffset;
       if (rawNegativeSum < 0) {
         final double ratio = totalNegativeNeeded / rawNegativeSum;
-        finalWeatherImpact = (-weatherDrop * ratio).round();
-        finalSleepPressureImpact =
-            (smartData.sleepPressureTemperatureOffset * ratio).round();
-        finalWindDownImpact = (smartData.windDownTemperatureOffset * ratio)
-            .round();
-        finalSleepDebtImpact = (smartData.sleepDebtTemperatureOffset * ratio)
-            .round();
+        effectiveWeatherImpact *= ratio;
+        effectiveSleepPressureImpact *= ratio;
+        effectiveWindDownImpact *= ratio;
+        effectiveSleepDebtImpact *= ratio;
       }
     }
 
+    final finalWeatherImpact = effectiveWeatherImpact.round();
+    final finalSleepPressureImpact = effectiveSleepPressureImpact.round();
+    final finalWindDownImpact = effectiveWindDownImpact.round();
+    final finalSleepDebtImpact = effectiveSleepDebtImpact.round();
+    // Effective contributions already absorb proportional lower-bound limiting
+    // and capped morning boosts. Keep their integer rounding separate from any
+    // remaining range correction (e.g. a curve outside the supported range).
+    final unroundedTotal =
+        rawBaseTemperature +
+        effectiveTimeShiftBoost +
+        effectiveWeatherImpact +
+        effectiveSleepPressureImpact +
+        effectiveWindDownImpact +
+        effectiveSleepDebtImpact;
+    final roundedContributions =
+        rawBaseTemperature +
+        effectiveTimeShiftBoost +
+        finalWeatherImpact +
+        finalSleepPressureImpact +
+        finalWindDownImpact +
+        finalSleepDebtImpact;
+
     return TemperatureCalculationResult(
       baseTemperature: rawBaseTemperature,
+      basePhase:
+          circadianMode == CircadianMode.solarPhases && phasesConfig != null
+          ? resolvePhaseBlend(
+              phases: phases,
+              elevation: elevation,
+              maxElevation: maxElevation ?? 60,
+              now: now,
+            )
+          : null,
       weatherImpact: finalWeatherImpact,
       timeShiftImpact: effectiveTimeShiftBoost,
       sleepPressureImpact: finalSleepPressureImpact,
       windDownImpact: finalWindDownImpact,
       sleepDebtImpact: finalSleepDebtImpact,
       finalTemperature: finalTemperature,
+      limitImpact: finalTemperature - unroundedTotal.round(),
+      roundingImpact: unroundedTotal.round() - roundedContributions,
     );
   }
 
-  double _calculateFromElevation(List<FlSpot> points, double currentElevation) {
-    if (points.isEmpty) return 15.0;
+  double _minimumPhaseBrightness(SolarPhasesConfig config) => [
+    config.night.brightness,
+    config.sunrise.brightness,
+    config.day.brightness,
+    config.sunset.brightness,
+  ].reduce(math.min).clamp(0, 100);
+
+  /// Linear interpolation shared by the editor marker and automatic control.
+  /// Callers handle unavailable curves in their own brightness/temperature units.
+  /// Throws [ArgumentError] when [points] is empty.
+  double interpolateCurve(List<FlSpot> points, double currentElevation) {
+    if (points.isEmpty) {
+      throw ArgumentError.value(points, 'points', 'Curve must not be empty');
+    }
 
     // Clamp values if sun elevation falls outside chart boundaries
     if (currentElevation <= points.first.x) return points.first.y;
@@ -392,6 +446,71 @@ class CircadianService {
     return points.last.y;
   }
 
+  /// Shares phase boundaries with the values and their user-facing explanation.
+  SolarPhaseBlend resolvePhaseBlend({
+    required SolarPhaseModel phases,
+    required double elevation,
+    required double maxElevation,
+    required DateTime now,
+    double plateauRatio = 0.5,
+  }) {
+    if (elevation <= -6) {
+      return const SolarPhaseBlend.at(SolarTargetPhase.night);
+    }
+    final effectiveMax = maxElevation > 0 ? maxElevation : 1.0;
+    final threshold = math.max(
+      effectiveMax * plateauRatio,
+      math.min(effectiveMax, 2),
+    );
+    if (elevation >= threshold) {
+      return const SolarPhaseBlend.at(SolarTargetPhase.day);
+    }
+    final nowMinutes = now.hour * 60 + now.minute + now.second / 60.0;
+    final noon = phases.solarNoon;
+    double delta =
+        nowMinutes - (noon.hour * 60 + noon.minute + noon.second / 60.0);
+    while (delta > 720) {
+      delta -= 1440;
+    }
+    while (delta < -720) {
+      delta += 1440;
+    }
+    final morning = delta < 0;
+    if (elevation == 0) {
+      return SolarPhaseBlend.at(
+        morning ? SolarTargetPhase.sunrise : SolarTargetPhase.sunset,
+      );
+    }
+    final t = elevation < 0
+        ? ((elevation + 6) / 6).clamp(0.0, 1.0)
+        : (elevation / threshold).clamp(0.0, 1.0);
+    final progress = t * t * (3 - 2 * t);
+    if (elevation < 0) {
+      return morning
+          ? SolarPhaseBlend(
+              SolarTargetPhase.night,
+              SolarTargetPhase.sunrise,
+              progress,
+            )
+          : SolarPhaseBlend(
+              SolarTargetPhase.sunset,
+              SolarTargetPhase.night,
+              1 - progress,
+            );
+    }
+    return morning
+        ? SolarPhaseBlend(
+            SolarTargetPhase.sunrise,
+            SolarTargetPhase.day,
+            progress,
+          )
+        : SolarPhaseBlend(
+            SolarTargetPhase.day,
+            SolarTargetPhase.sunset,
+            1 - progress,
+          );
+  }
+
   double calculateBrightnessFromPhases({
     required SolarPhasesConfig config,
     required SolarPhaseModel phases,
@@ -400,61 +519,13 @@ class CircadianService {
     double? minElevation,
     required DateTime now,
     double plateauRatio = 0.5,
-  }) {
-    final nowMinutes = now.hour * 60 + now.minute + now.second / 60.0;
-    final noonMinutes =
-        phases.solarNoon.hour * 60 +
-        phases.solarNoon.minute +
-        phases.solarNoon.second / 60.0;
-    // Calculate distance in minutes from solar noon across a 24h cycle [-720..720].
-    // Ascending from nadir to noon is morning/sunrise branch.
-    double deltaFromNoon = nowMinutes - noonMinutes;
-    while (deltaFromNoon > 720.0) {
-      deltaFromNoon -= 1440.0;
-    }
-    while (deltaFromNoon < -720.0) {
-      deltaFromNoon += 1440.0;
-    }
-    final isMorning = deltaFromNoon < 0.0;
-    final effectiveMax = maxElevation > 0 ? maxElevation : 1.0;
-    final plateauThreshold = math.max(
-      effectiveMax * plateauRatio,
-      math.min(effectiveMax, 2.0),
-    );
-
-    // Deep night: sun well below twilight
-    if (elevation <= -6.0) {
-      return config.night.brightness.clamp(0.0, 100.0);
-    }
-
-    // Twilight transition (-6° to 0°)
-    if (elevation < 0.0) {
-      final t = ((elevation + 6.0) / 6.0).clamp(0.0, 1.0);
-      final smoothT = t * t * (3 - 2 * t);
-      final val = isMorning
-          ? config.night.brightness +
-                (config.sunrise.brightness - config.night.brightness) * smoothT
-          : config.night.brightness +
-                (config.sunset.brightness - config.night.brightness) * smoothT;
-      return val.clamp(0.0, 100.0);
-    }
-
-    // Daytime Plateau
-    if (elevation >= plateauThreshold) {
-      return config.day.brightness.clamp(0.0, 100.0);
-    }
-
-    // Ramp from Sunrise/Sunset to Daytime Plateau (0° to plateauThreshold)
-    final t = (elevation / plateauThreshold).clamp(0.0, 1.0);
-    final smoothT = t * t * (3 - 2 * t);
-
-    final val = isMorning
-        ? config.sunrise.brightness +
-              (config.day.brightness - config.sunrise.brightness) * smoothT
-        : config.sunset.brightness +
-              (config.day.brightness - config.sunset.brightness) * smoothT;
-    return val.clamp(0.0, 100.0);
-  }
+  }) => resolvePhaseBlend(
+    phases: phases,
+    elevation: elevation,
+    maxElevation: maxElevation,
+    now: now,
+    plateauRatio: plateauRatio,
+  ).brightness(config).clamp(0, 100);
 
   int calculateTemperatureFromPhases({
     required SolarPhasesConfig config,
@@ -464,71 +535,17 @@ class CircadianService {
     double? minElevation,
     required DateTime now,
     double plateauRatio = 0.5,
-  }) {
-    final nowMinutes = now.hour * 60 + now.minute + now.second / 60.0;
-    final noonMinutes =
-        phases.solarNoon.hour * 60 +
-        phases.solarNoon.minute +
-        phases.solarNoon.second / 60.0;
-    // Calculate distance in minutes from solar noon across a 24h cycle [-720..720].
-    // Ascending from nadir to noon is morning/sunrise branch.
-    double deltaFromNoon = nowMinutes - noonMinutes;
-    while (deltaFromNoon > 720.0) {
-      deltaFromNoon -= 1440.0;
-    }
-    while (deltaFromNoon < -720.0) {
-      deltaFromNoon += 1440.0;
-    }
-    final isMorning = deltaFromNoon < 0.0;
-    final effectiveMax = maxElevation > 0 ? maxElevation : 1.0;
-    final plateauThreshold = math.max(
-      effectiveMax * plateauRatio,
-      math.min(effectiveMax, 2.0),
-    );
-
-    if (elevation <= -6.0) {
-      return config.night.temperature.clamp(
-        TemperatureConstants.min,
-        TemperatureConstants.max,
-      );
-    }
-
-    if (elevation < 0.0) {
-      final t = ((elevation + 6.0) / 6.0).clamp(0.0, 1.0);
-      final smoothT = t * t * (3 - 2 * t);
-      final val = isMorning
-          ? (config.night.temperature +
-                    (config.sunrise.temperature - config.night.temperature) *
-                        smoothT)
-                .round()
-          : (config.night.temperature +
-                    (config.sunset.temperature - config.night.temperature) *
-                        smoothT)
-                .round();
-      return val.clamp(TemperatureConstants.min, TemperatureConstants.max);
-    }
-
-    if (elevation >= plateauThreshold) {
-      return config.day.temperature.clamp(
-        TemperatureConstants.min,
-        TemperatureConstants.max,
-      );
-    }
-
-    final t = (elevation / plateauThreshold).clamp(0.0, 1.0);
-    final smoothT = t * t * (3 - 2 * t);
-
-    final val = isMorning
-        ? (config.sunrise.temperature +
-                  (config.day.temperature - config.sunrise.temperature) *
-                      smoothT)
-              .round()
-        : (config.sunset.temperature +
-                  (config.day.temperature - config.sunset.temperature) *
-                      smoothT)
-              .round();
-    return val.clamp(TemperatureConstants.min, TemperatureConstants.max);
-  }
+  }) =>
+      resolvePhaseBlend(
+            phases: phases,
+            elevation: elevation,
+            maxElevation: maxElevation,
+            now: now,
+            plateauRatio: plateauRatio,
+          )
+          .temperature(config)
+          .round()
+          .clamp(TemperatureConstants.min, TemperatureConstants.max);
 
   double normalizeElevationToStandardRange({
     required double elevation,

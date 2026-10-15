@@ -483,7 +483,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get weatherProviderOpenMeteo => 'Open-Meteo.com';
 
   @override
-  String weatherBrightnessReduction(int percent) {
+  String weatherBrightnessReduction(String percent) {
     return 'Weather: brightness reduced by $percent%';
   }
 
@@ -2659,4 +2659,108 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get expandedGammaRestartFailed =>
       'Failed to restart computer. Please restart manually to apply changes.';
+
+  @override
+  String get brightnessPhasesBase => 'Base day-phase brightness';
+
+  @override
+  String get temperaturePhasesBase => 'Base day-phase temperature';
+
+  @override
+  String get brightnessSourceGame => 'Game mode brightness';
+
+  @override
+  String get brightnessSourceManual => 'Manual brightness';
+
+  @override
+  String brightnessSourceApplication(String application) {
+    return 'Application rule [$application]';
+  }
+
+  @override
+  String get brightnessTarget => 'Target brightness';
+
+  @override
+  String get brightnessApplied => 'Current monitor brightness';
+
+  @override
+  String get calculationLimit => 'Brightness limits';
+
+  @override
+  String get monitorBrightnessLimits => 'Monitor brightness limits';
+
+  @override
+  String get temperatureCalculationLimit => 'Temperature limits';
+
+  @override
+  String get manualRegulationPaused =>
+      'Manual control — automatic adjustments paused';
+
+  @override
+  String get calculationRounding => 'Rounding';
+
+  @override
+  String get brightnessElevationShift => 'Bio-Morning — rhythm shift';
+
+  @override
+  String get brightnessMorningBoost => 'Bio-Morning — morning adjustment';
+
+  @override
+  String brightnessMonitor(String monitor) {
+    return 'Monitor: $monitor';
+  }
+
+  @override
+  String get calculationUnavailable => 'Calculation unavailable';
+
+  @override
+  String get brightnessBaseNight => 'Base night brightness';
+
+  @override
+  String get brightnessBaseSunrise => 'Base sunrise brightness';
+
+  @override
+  String get brightnessBaseDay => 'Base day brightness';
+
+  @override
+  String get brightnessBaseSunset => 'Base sunset brightness';
+
+  @override
+  String brightnessBaseTransition(String transition) {
+    return 'Base brightness ($transition)';
+  }
+
+  @override
+  String get temperatureBaseNight => 'Base night temperature';
+
+  @override
+  String get temperatureBaseSunrise => 'Base sunrise temperature';
+
+  @override
+  String get temperatureBaseDay => 'Base day temperature';
+
+  @override
+  String get temperatureBaseSunset => 'Base sunset temperature';
+
+  @override
+  String temperatureBaseTransition(String transition) {
+    return 'Base temperature ($transition)';
+  }
+
+  @override
+  String temperatureSourceApplication(String application) {
+    return 'Application rule [$application]';
+  }
+
+  @override
+  String get temperatureSourceGame => 'Game mode temperature';
+
+  @override
+  String get temperatureSourceManual => 'Manual temperature';
+
+  @override
+  String get temperatureSourceDisabled => 'Temperature control disabled';
+
+  @override
+  String get temperatureApplied => 'Current monitor temperature';
 }

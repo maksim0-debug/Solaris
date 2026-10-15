@@ -279,12 +279,12 @@ void main() {
     );
 
     testWidgets(
-      'TemperatureBreakdownTooltip falls back to currentTemperature when isSmartCircadianEnabled is false',
+      'TemperatureBreakdownTooltip uses the calculated target when Smart Circadian is off',
       (tester) async {
         const smartData = SmartCircadianData(
           baseTemperature: 3300,
-          timeShiftTemperatureImpact: 960,
-          finalTemperature: 4260,
+          weatherTemperatureImpact: -240,
+          finalTemperature: 3060,
           isTimeShiftActive: true,
         );
 
@@ -307,8 +307,9 @@ void main() {
         expect(tooltipFinder, findsOneWidget);
         final tooltip = tester.widget<Tooltip>(tooltipFinder);
         final plainText = (tooltip.richMessage as TextSpan).toPlainText();
-        expect(plainText, contains('5000 K'));
-        expect(plainText, isNot(contains('4260 K')));
+        expect(plainText, contains('3060 K'));
+        expect(plainText, contains('-240 K'));
+        expect(plainText, isNot(contains('5000 K')));
       },
     );
   });

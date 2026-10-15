@@ -216,7 +216,7 @@
   "@weatherBrightnessReduction": {
     "placeholders": {
       "percent": {
-        "type": "int"
+        "type": "String"
       }
     }
   },
@@ -1052,7 +1052,38 @@
   "expandedGammaRestartLater": "Перезагрузить позже",
   "expandedGammaFailed": "Не удалось обновить реестр. Убедитесь, что вы подтвердили запрос прав администратора Windows.",
   "expandedGammaRestartPendingTooltip": "Требуется перезагрузка: расширенный диапазон (1000K–3300K) станет доступен после перезагрузки Windows. Нажмите для перезагрузки.",
-  "expandedGammaRestartFailed": "Не удалось перезагрузить компьютер. Пожалуйста, перезагрузите вручную для применения изменений."
+  "expandedGammaRestartFailed": "Не удалось перезагрузить компьютер. Пожалуйста, перезагрузите вручную для применения изменений.",
+  "brightnessPhasesBase": "Базовая яркость фаз дня",
+  "temperaturePhasesBase": "Базовая температура фаз дня",
+  "brightnessSourceGame": "Яркость игрового режима",
+  "brightnessSourceManual": "Ручная яркость",
+  "brightnessSourceApplication": "Правило приложения [{application}]",
+  "brightnessTarget": "Целевая яркость",
+  "brightnessApplied": "Текущая яркость монитора",
+  "calculationLimit": "Ограничения яркости",
+  "monitorBrightnessLimits": "Пределы яркости монитора",
+  "temperatureCalculationLimit": "Пределы температуры",
+  "manualRegulationPaused": "Ручное управление — автоматические корректировки приостановлены",
+  "calculationRounding": "Округление",
+  "brightnessElevationShift": "Био-утро — сдвиг ритма",
+  "brightnessMorningBoost": "Био-утро — утренняя поправка",
+  "brightnessMonitor": "Монитор: {monitor}",
+  "calculationUnavailable": "Расчёт недоступен",
+  "brightnessBaseNight": "Базовая яркость ночи",
+  "brightnessBaseSunrise": "Базовая яркость рассвета",
+  "brightnessBaseDay": "Базовая яркость дня",
+  "brightnessBaseSunset": "Базовая яркость заката",
+  "brightnessBaseTransition": "Базовая яркость ({transition})",
+  "temperatureBaseNight": "Базовая температура ночи",
+  "temperatureBaseSunrise": "Базовая температура рассвета",
+  "temperatureBaseDay": "Базовая температура дня",
+  "temperatureBaseSunset": "Базовая температура заката",
+  "temperatureBaseTransition": "Базовая температура ({transition})",
+  "temperatureSourceApplication": "Правило приложения [{application}]",
+  "temperatureSourceGame": "Температура игрового режима",
+  "temperatureSourceManual": "Ручная температура",
+  "temperatureSourceDisabled": "Управление температурой выключено",
+  "temperatureApplied": "Текущая температура монитора"
 }
 
 

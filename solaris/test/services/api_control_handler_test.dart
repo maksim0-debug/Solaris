@@ -18,7 +18,12 @@ void main() {
 
     setUp(() async {
       HttpOverrides.global = null;
-      container = ProviderContainer();
+      container = ProviderContainer(
+        overrides: [
+          // API contracts must not depend on platform GPS availability or retries.
+          locationStreamProvider.overrideWith((ref) => const Stream.empty()),
+        ],
+      );
       server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
       serverUrl = 'http://localhost:${server.port}';
 

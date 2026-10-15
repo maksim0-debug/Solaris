@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:solaris/models/preset_type.dart';
+import 'package:solaris/models/solar_phase_blend.dart';
 
 class SmartCircadianData extends Equatable {
   final double brightnessMultiplier;
@@ -23,7 +24,11 @@ class SmartCircadianData extends Equatable {
   final int? weatherCode;
 
   // Absolute Impacts (as percentage points)
+  final SolarPhaseBlend? basePhase;
   final double baseBrightness;
+  final double? finalBrightness;
+  final double elevationShiftBrightnessImpact;
+  final double brightnessLimitImpact;
   final double windDownAbsoluteImpact;
   final double sleepPressureAbsoluteImpact;
   final double sleepDebtAbsoluteImpact;
@@ -46,6 +51,8 @@ class SmartCircadianData extends Equatable {
   final int windDownTemperatureImpact;
   final int sleepDebtTemperatureImpact;
   final int finalTemperature;
+  final int temperatureLimitImpact;
+  final int temperatureRoundingImpact;
 
   const SmartCircadianData({
     this.brightnessMultiplier = 1.0,
@@ -67,7 +74,11 @@ class SmartCircadianData extends Equatable {
     this.minutesUntilSleep,
     this.minutesUntilWakeUp,
     this.weatherCode,
+    this.basePhase,
     this.baseBrightness = 100.0,
+    this.finalBrightness,
+    this.elevationShiftBrightnessImpact = 0,
+    this.brightnessLimitImpact = 0,
     this.windDownAbsoluteImpact = 0.0,
     this.sleepPressureAbsoluteImpact = 0.0,
     this.sleepDebtAbsoluteImpact = 0.0,
@@ -86,6 +97,8 @@ class SmartCircadianData extends Equatable {
     this.windDownTemperatureImpact = 0,
     this.sleepDebtTemperatureImpact = 0,
     this.finalTemperature = 0,
+    this.temperatureLimitImpact = 0,
+    this.temperatureRoundingImpact = 0,
   });
 
   const SmartCircadianData.neutral()
@@ -108,7 +121,11 @@ class SmartCircadianData extends Equatable {
       minutesUntilSleep = null,
       minutesUntilWakeUp = null,
       weatherCode = null,
+      basePhase = null,
       baseBrightness = 100.0,
+      finalBrightness = null,
+      elevationShiftBrightnessImpact = 0,
+      brightnessLimitImpact = 0,
       windDownAbsoluteImpact = 0.0,
       sleepPressureAbsoluteImpact = 0.0,
       sleepDebtAbsoluteImpact = 0.0,
@@ -126,7 +143,9 @@ class SmartCircadianData extends Equatable {
       sleepPressureTemperatureImpact = 0,
       windDownTemperatureImpact = 0,
       sleepDebtTemperatureImpact = 0,
-      finalTemperature = 0;
+      finalTemperature = 0,
+      temperatureLimitImpact = 0,
+      temperatureRoundingImpact = 0;
 
   @override
   List<Object?> get props => [
@@ -148,7 +167,11 @@ class SmartCircadianData extends Equatable {
     windDownMinutesRemaining,
     minutesUntilSleep,
     minutesUntilWakeUp,
+    basePhase,
     baseBrightness,
+    finalBrightness,
+    elevationShiftBrightnessImpact,
+    brightnessLimitImpact,
     windDownAbsoluteImpact,
     sleepPressureAbsoluteImpact,
     sleepDebtAbsoluteImpact,
@@ -168,6 +191,8 @@ class SmartCircadianData extends Equatable {
     windDownTemperatureImpact,
     sleepDebtTemperatureImpact,
     finalTemperature,
+    temperatureLimitImpact,
+    temperatureRoundingImpact,
   ];
 
   SmartCircadianData copyWith({
@@ -189,7 +214,11 @@ class SmartCircadianData extends Equatable {
     int? windDownMinutesRemaining,
     int? minutesUntilSleep,
     int? minutesUntilWakeUp,
+    SolarPhaseBlend? basePhase,
     double? baseBrightness,
+    double? finalBrightness,
+    double? elevationShiftBrightnessImpact,
+    double? brightnessLimitImpact,
     double? windDownAbsoluteImpact,
     double? sleepPressureAbsoluteImpact,
     double? sleepDebtAbsoluteImpact,
@@ -209,6 +238,8 @@ class SmartCircadianData extends Equatable {
     int? windDownTemperatureImpact,
     int? sleepDebtTemperatureImpact,
     int? finalTemperature,
+    int? temperatureLimitImpact,
+    int? temperatureRoundingImpact,
   }) {
     return SmartCircadianData(
       brightnessMultiplier: brightnessMultiplier ?? this.brightnessMultiplier,
@@ -235,7 +266,13 @@ class SmartCircadianData extends Equatable {
           windDownMinutesRemaining ?? this.windDownMinutesRemaining,
       minutesUntilSleep: minutesUntilSleep ?? this.minutesUntilSleep,
       minutesUntilWakeUp: minutesUntilWakeUp ?? this.minutesUntilWakeUp,
+      basePhase: basePhase ?? this.basePhase,
       baseBrightness: baseBrightness ?? this.baseBrightness,
+      finalBrightness: finalBrightness ?? this.finalBrightness,
+      elevationShiftBrightnessImpact:
+          elevationShiftBrightnessImpact ?? this.elevationShiftBrightnessImpact,
+      brightnessLimitImpact:
+          brightnessLimitImpact ?? this.brightnessLimitImpact,
       windDownAbsoluteImpact:
           windDownAbsoluteImpact ?? this.windDownAbsoluteImpact,
       sleepPressureAbsoluteImpact:
@@ -270,6 +307,10 @@ class SmartCircadianData extends Equatable {
       sleepDebtTemperatureImpact:
           sleepDebtTemperatureImpact ?? this.sleepDebtTemperatureImpact,
       finalTemperature: finalTemperature ?? this.finalTemperature,
+      temperatureLimitImpact:
+          temperatureLimitImpact ?? this.temperatureLimitImpact,
+      temperatureRoundingImpact:
+          temperatureRoundingImpact ?? this.temperatureRoundingImpact,
     );
   }
 }

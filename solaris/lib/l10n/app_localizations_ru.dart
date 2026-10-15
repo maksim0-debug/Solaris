@@ -480,7 +480,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get weatherProviderOpenMeteo => 'Open-Meteo.com';
 
   @override
-  String weatherBrightnessReduction(int percent) {
+  String weatherBrightnessReduction(String percent) {
     return 'Погода: снижение яркости на $percent%';
   }
 
@@ -2681,4 +2681,108 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get expandedGammaRestartFailed =>
       'Не удалось перезагрузить компьютер. Пожалуйста, перезагрузите вручную для применения изменений.';
+
+  @override
+  String get brightnessPhasesBase => 'Базовая яркость фаз дня';
+
+  @override
+  String get temperaturePhasesBase => 'Базовая температура фаз дня';
+
+  @override
+  String get brightnessSourceGame => 'Яркость игрового режима';
+
+  @override
+  String get brightnessSourceManual => 'Ручная яркость';
+
+  @override
+  String brightnessSourceApplication(String application) {
+    return 'Правило приложения [$application]';
+  }
+
+  @override
+  String get brightnessTarget => 'Целевая яркость';
+
+  @override
+  String get brightnessApplied => 'Текущая яркость монитора';
+
+  @override
+  String get calculationLimit => 'Ограничения яркости';
+
+  @override
+  String get monitorBrightnessLimits => 'Пределы яркости монитора';
+
+  @override
+  String get temperatureCalculationLimit => 'Пределы температуры';
+
+  @override
+  String get manualRegulationPaused =>
+      'Ручное управление — автоматические корректировки приостановлены';
+
+  @override
+  String get calculationRounding => 'Округление';
+
+  @override
+  String get brightnessElevationShift => 'Био-утро — сдвиг ритма';
+
+  @override
+  String get brightnessMorningBoost => 'Био-утро — утренняя поправка';
+
+  @override
+  String brightnessMonitor(String monitor) {
+    return 'Монитор: $monitor';
+  }
+
+  @override
+  String get calculationUnavailable => 'Расчёт недоступен';
+
+  @override
+  String get brightnessBaseNight => 'Базовая яркость ночи';
+
+  @override
+  String get brightnessBaseSunrise => 'Базовая яркость рассвета';
+
+  @override
+  String get brightnessBaseDay => 'Базовая яркость дня';
+
+  @override
+  String get brightnessBaseSunset => 'Базовая яркость заката';
+
+  @override
+  String brightnessBaseTransition(String transition) {
+    return 'Базовая яркость ($transition)';
+  }
+
+  @override
+  String get temperatureBaseNight => 'Базовая температура ночи';
+
+  @override
+  String get temperatureBaseSunrise => 'Базовая температура рассвета';
+
+  @override
+  String get temperatureBaseDay => 'Базовая температура дня';
+
+  @override
+  String get temperatureBaseSunset => 'Базовая температура заката';
+
+  @override
+  String temperatureBaseTransition(String transition) {
+    return 'Базовая температура ($transition)';
+  }
+
+  @override
+  String temperatureSourceApplication(String application) {
+    return 'Правило приложения [$application]';
+  }
+
+  @override
+  String get temperatureSourceGame => 'Температура игрового режима';
+
+  @override
+  String get temperatureSourceManual => 'Ручная температура';
+
+  @override
+  String get temperatureSourceDisabled => 'Управление температурой выключено';
+
+  @override
+  String get temperatureApplied => 'Текущая температура монитора';
 }

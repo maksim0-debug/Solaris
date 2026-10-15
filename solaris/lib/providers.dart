@@ -20,7 +20,6 @@ import 'package:solaris/services/brightness_service.dart';
 import 'package:solaris/services/weather_service.dart';
 import 'package:solaris/services/autorun_service.dart';
 import 'package:solaris/providers/temperature_provider.dart';
-import 'package:solaris/constants/temperature_constants.dart';
 import 'package:solaris/models/solar_state.dart';
 import 'package:solaris/models/current_day_phase.dart';
 import 'package:solaris/models/api_key_entry.dart';
@@ -33,6 +32,7 @@ import 'package:solaris/services/webhook_service.dart';
 import 'package:solaris/utils/key_obfuscator.dart';
 import 'package:solaris/models/solar_phase_model.dart';
 import 'package:solaris/models/smart_circadian_data.dart';
+import 'package:solaris/models/brightness_target.dart';
 import 'package:solaris/services/smart_circadian_service.dart';
 import 'package:solaris/providers/sleep_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -147,142 +147,252 @@ final minuteTimeProvider = StreamProvider<DateTime>((ref) {
   return controller.stream;
 });
 
-final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
-  ref,
-  monitorId,
-) {
-  final regimes = ref.watch(sleepRegimesProvider);
-  final service = ref.watch(smartCircadianServiceProvider);
-  final settingsAsync = ref.watch(settingsProvider);
-  final solarStateAsync = ref.watch(debouncedSolarStateProvider);
-  final timezoneVal = ref.watch(effectiveTimezoneProvider);
-  final now =
-      ref.watch(minuteTimeProvider).value ?? tz.TZDateTime.now(timezoneVal);
+final smartCircadianAdjustmentsProvider =
+    Provider.family<SmartCircadianData, String>((ref, monitorId) {
+      final settingsAsync = ref.watch(settingsProvider);
+      final solarStateAsync = ref.watch(debouncedSolarStateProvider);
+      final timezoneVal = ref.watch(effectiveTimezoneProvider);
+      final now =
+          ref.watch(minuteTimeProvider).value ?? tz.TZDateTime.now(timezoneVal);
 
-  // Use 'all' as fallback if monitorId not found
-  final settings = settingsAsync.value;
-  if (settings == null) return const SmartCircadianData.neutral();
+      // Use 'all' as fallback if monitorId not found
+      final settings = settingsAsync.value;
+      if (settings == null) return const SmartCircadianData.neutral();
 
-  final monitorSettings =
-      settings[monitorId] ?? settings['all'] ?? SettingsState();
+      final monitorSettings =
+          settings[monitorId] ?? settings['all'] ?? SettingsState();
 
-  return solarStateAsync.maybeWhen(
-    data: (solar) {
-      final smartData = service.calculateSmartAdjustments(
-        regimes: regimes,
-        now: now,
-        astronomicalSunrise: solar.phases.sunrise,
-        useSleepDebt:
-            monitorSettings.isSleepDebtEnabled &&
-            monitorSettings.isSleepDebtMasterEnabled,
-        useSleepPressure:
-            monitorSettings.isSleepPressureEnabled &&
-            monitorSettings.isSleepPressureMasterEnabled,
-        useTimeShift:
-            monitorSettings.isTimeShiftEnabled &&
-            monitorSettings.isTimeShiftMasterEnabled,
-        useWindDown:
-            monitorSettings.isWindDownEnabled &&
-            monitorSettings.isWindDownMasterEnabled,
-        sleepDebtBrightnessIntensity:
-            monitorSettings.sleepDebtBrightnessIntensity,
-        sleepDebtTemperatureIntensity:
-            monitorSettings.sleepDebtTemperatureIntensity,
-        sleepPressureBrightnessIntensity:
-            monitorSettings.sleepPressureBrightnessIntensity,
-        sleepPressureTemperatureIntensity:
-            monitorSettings.sleepPressureTemperatureIntensity,
-        timeShiftBrightnessIntensity:
-            monitorSettings.timeShiftBrightnessIntensity,
-        timeShiftTemperatureIntensity:
-            monitorSettings.timeShiftTemperatureIntensity,
-        timeShiftIntensity: monitorSettings.timeShiftBrightnessIntensity,
-        windDownBrightnessIntensity:
-            monitorSettings.windDownBrightnessIntensity,
-        windDownTemperatureIntensity:
-            monitorSettings.windDownTemperatureIntensity,
-        windDownDurationMinutes: monitorSettings.windDownDurationMinutes,
-        timeShiftDurationMinutes: monitorSettings.timeShiftDurationMinutes,
-        sleepPressureWakeLimitHours:
-            monitorSettings.sleepPressureWakeLimitHours,
-        sleepDebtThresholdMinutes: monitorSettings.sleepDebtThresholdMinutes,
-      );
-
-      final weatherAsync = ref.watch(currentWeatherProvider);
-      final circadianService = ref.watch(circadianServiceProvider);
-
-      // All smart logic (including morning boost) is now handled via smartData
-      // directly in the circadian service.
-
-      // Calculate Bio-Morning Shifted Elevation
-      double effectiveElevation = solar.sunElevation;
-      if (monitorSettings.isTimeShiftEnabled &&
-          monitorSettings.isTimeShiftMasterEnabled &&
-          smartData.timeOffset != Duration.zero) {
-        final locationAsync = ref.read(effectiveLocationProvider);
-        final pos = locationAsync.value;
-        if (pos != null) {
-          final sunService = ref.read(sunCalculatorServiceProvider);
-          final shiftedTime = now.subtract(smartData.timeOffset);
-          effectiveElevation = sunService.getSunElevation(
-            pos.latitude,
-            pos.longitude,
-            shiftedTime,
+      if (!monitorSettings.isSmartCircadianEnabled) {
+        return const SmartCircadianData.neutral();
+      }
+      final regimes = ref.watch(sleepRegimesProvider);
+      final service = ref.watch(smartCircadianServiceProvider);
+      return solarStateAsync.maybeWhen(
+        data: (solar) {
+          final smartData = service.calculateSmartAdjustments(
+            regimes: regimes,
+            now: now,
+            astronomicalSunrise: solar.phases.sunrise,
+            useSleepDebt:
+                monitorSettings.isSleepDebtEnabled &&
+                monitorSettings.isSleepDebtMasterEnabled,
+            useSleepPressure:
+                monitorSettings.isSleepPressureEnabled &&
+                monitorSettings.isSleepPressureMasterEnabled,
+            useTimeShift:
+                monitorSettings.isTimeShiftEnabled &&
+                monitorSettings.isTimeShiftMasterEnabled,
+            useWindDown:
+                monitorSettings.isWindDownEnabled &&
+                monitorSettings.isWindDownMasterEnabled,
+            sleepDebtBrightnessIntensity:
+                monitorSettings.sleepDebtBrightnessIntensity,
+            sleepDebtTemperatureIntensity:
+                monitorSettings.sleepDebtTemperatureIntensity,
+            sleepPressureBrightnessIntensity:
+                monitorSettings.sleepPressureBrightnessIntensity,
+            sleepPressureTemperatureIntensity:
+                monitorSettings.sleepPressureTemperatureIntensity,
+            timeShiftBrightnessIntensity:
+                monitorSettings.timeShiftBrightnessIntensity,
+            timeShiftTemperatureIntensity:
+                monitorSettings.timeShiftTemperatureIntensity,
+            timeShiftIntensity: monitorSettings.timeShiftBrightnessIntensity,
+            windDownBrightnessIntensity:
+                monitorSettings.windDownBrightnessIntensity,
+            windDownTemperatureIntensity:
+                monitorSettings.windDownTemperatureIntensity,
+            windDownDurationMinutes: monitorSettings.windDownDurationMinutes,
+            timeShiftDurationMinutes: monitorSettings.timeShiftDurationMinutes,
+            sleepPressureWakeLimitHours:
+                monitorSettings.sleepPressureWakeLimitHours,
+            sleepDebtThresholdMinutes:
+                monitorSettings.sleepDebtThresholdMinutes,
           );
 
-          if (solar.sunElevation < 0 && effectiveElevation > 10) {
-            effectiveElevation = effectiveElevation.clamp(-20.0, 10.0);
-          }
-        }
-      }
+          return smartData;
+        },
+        orElse: () => const SmartCircadianData.neutral(),
+      );
+    });
 
-      // Calculate Full Proportional Result
-      final result = circadianService.calculateTargetBrightness(
+SmartCircadianData? _calculateBrightnessData(
+  Ref ref,
+  SettingsState settings,
+  SmartCircadianData smartData, {
+  List<FlSpot>? curvePoints,
+  CircadianMode? mode,
+  double? presetSensitivity,
+}) {
+  final solar = ref.watch(debouncedSolarStateProvider).value;
+  if (solar == null) return null;
+  final timezone = ref.watch(effectiveTimezoneProvider);
+  final now =
+      ref.watch(minuteTimeProvider).value ?? tz.TZDateTime.now(timezone);
+  final effectiveSmart = settings.isSmartCircadianEnabled
+      ? smartData
+      : const SmartCircadianData.neutral();
+  double elevation = solar.sunElevation;
+  if (effectiveSmart.timeOffset != Duration.zero) {
+    final location = ref.watch(effectiveLocationProvider).value;
+    if (location != null) {
+      elevation = ref
+          .watch(sunCalculatorServiceProvider)
+          .getSunElevation(
+            location.latitude,
+            location.longitude,
+            now.subtract(effectiveSmart.timeOffset),
+          );
+      if (solar.sunElevation < 0 && elevation > 10) {
+        elevation = elevation.clamp(-20, 10);
+      }
+    }
+  }
+  final weather = ref.watch(currentWeatherProvider).value;
+  final result = ref
+      .watch(circadianServiceProvider)
+      .calculateTargetBrightness(
         solar.phases,
-        effectiveElevation,
+        elevation,
         now,
-        curvePoints: monitorSettings.curvePoints,
-        weather: monitorSettings.isWeatherAdjustmentEnabled
-            ? weatherAsync.value
-            : null,
-        presetSensitivity: monitorSettings.activePreset.weatherSensitivity,
-        weatherIntensity: monitorSettings.weatherAdjustmentIntensity,
-        smartData: smartData,
-        circadianMode: monitorSettings.circadianMode,
-        phasesConfig: monitorSettings.phasesConfig,
+        unshiftedElevation: solar.sunElevation,
+        curvePoints: curvePoints ?? settings.curvePoints,
+        weather: settings.isWeatherAdjustmentEnabled ? weather : null,
+        presetSensitivity:
+            presetSensitivity ?? settings.activePreset.weatherSensitivity,
+        weatherIntensity: settings.weatherAdjustmentIntensity,
+        smartData: effectiveSmart,
+        circadianMode: mode ?? settings.circadianMode,
+        phasesConfig: settings.phasesConfig,
         maxElevation: solar.maxElevation,
         minElevation: solar.minElevation,
       );
+  return effectiveSmart.copyWith(
+    basePhase: result.basePhase,
+    baseBrightness: result.baseBrightness,
+    finalBrightness: result.finalBrightness,
+    elevationShiftBrightnessImpact: result.elevationShiftImpact,
+    brightnessLimitImpact: result.limitImpact,
+    weatherAbsoluteImpact: result.weatherImpact,
+    windDownAbsoluteImpact: result.windDownImpact,
+    sleepPressureAbsoluteImpact: result.sleepPressureImpact,
+    sleepDebtAbsoluteImpact: result.sleepDebtImpact,
+    timeShiftBrightnessImpact: result.timeShiftImpact,
+    weatherCode: weather?.weatherCode,
+  );
+}
 
-      // Resolve Active Preset Name
-      String? activeUserPresetName;
-      PresetType? activeSystemPreset;
+final smartCircadianDataProvider = Provider.family<SmartCircadianData, String>((
+  ref,
+  id,
+) {
+  final map = ref.watch(settingsProvider).value;
+  if (map == null) return const SmartCircadianData.neutral();
+  final settings = map[id] ?? map['all'] ?? SettingsState();
+  final data = _calculateBrightnessData(
+    ref,
+    settings,
+    ref.watch(smartCircadianAdjustmentsProvider(id)),
+  );
+  final preset = settings.userPresets.firstWhereOrNull(
+    (p) => p.id == settings.activeUserPresetId,
+  );
+  return (data ?? const SmartCircadianData.neutral()).copyWith(
+    activeSystemPreset: preset == null ? settings.activePreset : null,
+    activeUserPresetName: preset?.name,
+  );
+});
 
-      if (monitorSettings.activeUserPresetId != null) {
-        try {
-          activeUserPresetName = monitorSettings.userPresets
-              .firstWhere((p) => p.id == monitorSettings.activeUserPresetId)
-              .name;
-        } catch (_) {
-          activeSystemPreset = monitorSettings.activePreset;
-        }
-      } else {
-        activeSystemPreset = monitorSettings.activePreset;
-      }
+/// Resolves the same priority cascade for the UI and every individual display.
+/// A missing automatic snapshot means wait for solar data, never invent a base.
+final brightnessTargetProvider = Provider.family<BrightnessTarget?, String>((
+  ref,
+  id,
+) {
+  final map = ref.watch(settingsProvider).value;
+  if (map == null) return null;
+  final settings = map[id] ?? map['all'] ?? SettingsState();
+  final rule = resolveActiveAppRule(
+    settings,
+    map['all'],
+    ref.watch(activeProcessServiceProvider),
+  );
 
-      return smartData.copyWith(
-        baseBrightness: result.baseBrightness,
-        windDownAbsoluteImpact: result.windDownImpact,
-        sleepPressureAbsoluteImpact: result.sleepPressureImpact,
-        sleepDebtAbsoluteImpact: result.sleepDebtImpact,
-        weatherAbsoluteImpact: result.weatherImpact,
-        timeShiftBrightnessImpact: result.timeShiftImpact,
-        weatherCode: weatherAsync.value?.weatherCode,
-        activeSystemPreset: activeSystemPreset,
-        activeUserPresetName: activeUserPresetName,
+  BrightnessTarget fixed(
+    BrightnessSource source,
+    double value, {
+    String? application,
+  }) => BrightnessTarget(
+    source: source,
+    data: const SmartCircadianData.neutral().copyWith(
+      baseBrightness: value,
+      finalBrightness: value,
+    ),
+    applicationName: application,
+  );
+
+  if (rule?.brightnessMode == AppOverrideMode.fixed &&
+      rule?.fixedBrightness != null &&
+      rule!.fixedBrightness!.isFinite) {
+    return fixed(
+      BrightnessSource.appFixed,
+      rule.fixedBrightness!.clamp(0, 100),
+      application: rule.appDisplayName,
+    );
+  }
+  if (rule?.brightnessMode == AppOverrideMode.curve) {
+    final presetId = rule!.brightnessCurvePresetId;
+    final user = settings.userPresets.firstWhereOrNull((p) => p.id == presetId);
+    final system = PresetType.values.firstWhereOrNull(
+      (p) => p.name == presetId,
+    );
+    final points = user?.points ?? settings.curvesMap[system];
+    if (points != null && points.isNotEmpty) {
+      final data = _calculateBrightnessData(
+        ref,
+        settings,
+        ref.watch(smartCircadianAdjustmentsProvider(id)),
+        curvePoints: points,
+        mode: CircadianMode.normalizedCurve,
+        presetSensitivity: (system ?? settings.activePreset).weatherSensitivity,
       );
-    },
-    orElse: () => const SmartCircadianData.neutral(),
+      if (data == null) return null;
+      return BrightnessTarget(
+        source: BrightnessSource.appCurve,
+        data: data,
+        systemPreset: user == null ? system : null,
+        userPresetName: user?.name,
+        applicationName: rule.appDisplayName,
+      );
+    }
+  }
+  if (ref.watch(gamingModeProvider) && settings.isGameModeEnabled) {
+    return fixed(
+      BrightnessSource.game,
+      settings.gameModeBrightness.clamp(0, 100),
+    );
+  }
+  if (!settings.isAutoBrightnessEnabled) {
+    final monitors = ref.watch(monitorListProvider).value ?? [];
+    final selection = id == 'all' ? {'all'} : {id};
+    final minimum = MonitorInfo.effectiveMinBrightness(
+      isOverlayOnly: MonitorInfo.isSelectionOverlayOnly(selection, monitors),
+      isSoftwareDimmingEnabled: map['all']?.isSoftwareDimmingEnabled ?? true,
+    );
+    return fixed(
+      BrightnessSource.manual,
+      ref.watch(manualBrightnessProvider).clamp(minimum, 100),
+    );
+  }
+  final data = ref.watch(smartCircadianDataProvider(id));
+  if (data.finalBrightness == null) return null;
+  return BrightnessTarget(
+    source: settings.circadianMode == CircadianMode.solarPhases
+        ? BrightnessSource.solarPhases
+        : BrightnessSource.curve,
+    data: data,
+    systemPreset: data.activeSystemPreset,
+    userPresetName: data.activeUserPresetName,
   );
 });
 
@@ -313,45 +423,53 @@ final smartCircadianTemperatureDataProvider =
 
       return solarStateAsync.maybeWhen(
         data: (solar) {
-          final smartData = service.calculateSmartAdjustments(
-            regimes: regimes,
-            now: now,
-            astronomicalSunrise: solar.phases.sunrise,
-            useSleepDebt:
-                monitorSettings.isSleepDebtEnabled &&
-                globalSettings.isSleepDebtMasterEnabled,
-            useSleepPressure:
-                monitorSettings.isSleepPressureEnabled &&
-                globalSettings.isSleepPressureMasterEnabled,
-            useTimeShift:
-                monitorSettings.isTimeShiftEnabled &&
-                globalSettings.isTimeShiftMasterEnabled,
-            useWindDown:
-                monitorSettings.isWindDownEnabled &&
-                globalSettings.isWindDownMasterEnabled,
-            sleepDebtBrightnessIntensity:
-                globalSettings.sleepDebtBrightnessIntensity,
-            sleepDebtTemperatureIntensity:
-                globalSettings.sleepDebtTemperatureIntensity,
-            sleepPressureBrightnessIntensity:
-                globalSettings.sleepPressureBrightnessIntensity,
-            sleepPressureTemperatureIntensity:
-                globalSettings.sleepPressureTemperatureIntensity,
-            timeShiftBrightnessIntensity:
-                globalSettings.timeShiftBrightnessIntensity,
-            timeShiftTemperatureIntensity:
-                globalSettings.timeShiftTemperatureIntensity,
-            timeShiftIntensity: globalSettings.timeShiftBrightnessIntensity,
-            windDownBrightnessIntensity:
-                globalSettings.windDownBrightnessIntensity,
-            windDownTemperatureIntensity:
-                globalSettings.windDownTemperatureIntensity,
-            windDownDurationMinutes: globalSettings.windDownDurationMinutes,
-            timeShiftDurationMinutes: globalSettings.timeShiftDurationMinutes,
-            sleepPressureWakeLimitHours:
-                globalSettings.sleepPressureWakeLimitHours,
-            sleepDebtThresholdMinutes: globalSettings.sleepDebtThresholdMinutes,
-          );
+          final smartData =
+              !globalSettings.isSmartCircadianEnabled ||
+                  !monitorSettings.isSmartCircadianEnabled
+              ? const SmartCircadianData.neutral()
+              : service.calculateSmartAdjustments(
+                  regimes: regimes,
+                  now: now,
+                  astronomicalSunrise: solar.phases.sunrise,
+                  useSleepDebt:
+                      monitorSettings.isSleepDebtEnabled &&
+                      globalSettings.isSleepDebtMasterEnabled,
+                  useSleepPressure:
+                      monitorSettings.isSleepPressureEnabled &&
+                      globalSettings.isSleepPressureMasterEnabled,
+                  useTimeShift:
+                      monitorSettings.isTimeShiftEnabled &&
+                      globalSettings.isTimeShiftMasterEnabled,
+                  useWindDown:
+                      monitorSettings.isWindDownEnabled &&
+                      globalSettings.isWindDownMasterEnabled,
+                  sleepDebtBrightnessIntensity:
+                      globalSettings.sleepDebtBrightnessIntensity,
+                  sleepDebtTemperatureIntensity:
+                      globalSettings.sleepDebtTemperatureIntensity,
+                  sleepPressureBrightnessIntensity:
+                      globalSettings.sleepPressureBrightnessIntensity,
+                  sleepPressureTemperatureIntensity:
+                      globalSettings.sleepPressureTemperatureIntensity,
+                  timeShiftBrightnessIntensity:
+                      globalSettings.timeShiftBrightnessIntensity,
+                  timeShiftTemperatureIntensity:
+                      globalSettings.timeShiftTemperatureIntensity,
+                  timeShiftIntensity:
+                      globalSettings.timeShiftBrightnessIntensity,
+                  windDownBrightnessIntensity:
+                      globalSettings.windDownBrightnessIntensity,
+                  windDownTemperatureIntensity:
+                      globalSettings.windDownTemperatureIntensity,
+                  windDownDurationMinutes:
+                      globalSettings.windDownDurationMinutes,
+                  timeShiftDurationMinutes:
+                      globalSettings.timeShiftDurationMinutes,
+                  sleepPressureWakeLimitHours:
+                      globalSettings.sleepPressureWakeLimitHours,
+                  sleepDebtThresholdMinutes:
+                      globalSettings.sleepDebtThresholdMinutes,
+                );
 
           // Calculate temperature breakdown for tooltip
           final tempResult = circadianService.calculateTargetTemperature(
@@ -387,6 +505,7 @@ final smartCircadianTemperatureDataProvider =
           }
 
           return smartData.copyWith(
+            basePhase: tempResult.basePhase,
             baseTemperature: tempResult.baseTemperature,
             weatherTemperatureImpact: tempResult.weatherImpact,
             timeShiftTemperatureImpact: tempResult.timeShiftImpact,
@@ -397,6 +516,8 @@ final smartCircadianTemperatureDataProvider =
             activeSystemTemperaturePreset: activeSystemTempPreset,
             activeUserTemperaturePresetName: activeUserTempPresetName,
             finalTemperature: tempResult.finalTemperature,
+            temperatureLimitImpact: tempResult.limitImpact,
+            temperatureRoundingImpact: tempResult.roundingImpact,
           );
         },
         orElse: () => const SmartCircadianData.neutral(),
@@ -2851,180 +2972,18 @@ final webhookServiceProvider =
 class CurrentBrightnessNotifier extends Notifier<double> {
   static const _lastBrightnessKey = 'last_known_brightness';
 
-  List<FlSpot>? _resolveBrightnessCurvePoints(
-    String? presetId,
-    SettingsState settings,
-  ) {
-    if (presetId == null) return null;
-    final userPreset = settings.userPresets.firstWhereOrNull(
-      (p) => p.id == presetId,
-    );
-    if (userPreset != null) return userPreset.points;
-    final systemType = PresetType.values.firstWhereOrNull(
-      (e) => e.name == presetId,
-    );
-    if (systemType != null) return settings.curvesMap[systemType];
-    return null; // Safe Fallback to global circadian curve
-  }
-
   @override
   double build() {
     final prefs = ref.watch(sharedPreferencesProvider);
-    final lastBrightness = prefs?.getDouble(_lastBrightnessKey) ?? 100.0;
-
-    final activeProcessState = ref.watch(activeProcessServiceProvider);
-    final isAuto = ref.watch(autoBrightnessAdjustmentProvider);
-    final currentSelection = ref.watch(selectedMonitorsProvider);
-    final manualBrightness = ref.watch(manualBrightnessProvider);
-    final isGamingMode = ref.watch(gamingModeProvider);
-    final firstId = currentSelection.firstOrNull ?? 'all';
-    final smartData = ref.watch(smartCircadianDataProvider(firstId));
-    final settingsAsync = ref.watch(settingsProvider);
-
-    return settingsAsync.maybeWhen(
-      data: (settingsMap) {
-        final selectedSettings = settingsMap[firstId] ?? settingsMap['all']!;
-
-        // 1 & 2: Active App Rule Cascade for Brightness
-        final appRule = _activeAppRule(
-          selectedSettings,
-          settingsMap['all'],
-          activeProcessState,
-        );
-
-        if (appRule != null &&
-            appRule.brightnessMode != AppOverrideMode.global) {
-          if (appRule.brightnessMode == AppOverrideMode.fixed &&
-              appRule.fixedBrightness != null) {
-            final val = appRule.fixedBrightness!.clamp(0.0, 100.0);
-            _saveBrightness(val);
-            return val;
-          } else if (appRule.brightnessMode == AppOverrideMode.curve) {
-            final curvePoints = _resolveBrightnessCurvePoints(
-              appRule.brightnessCurvePresetId,
-              selectedSettings,
-            );
-            if (curvePoints != null) {
-              final solarStateAsync = ref.watch(solarStateStreamProvider);
-              final circadianService = ref.watch(circadianServiceProvider);
-              final weatherAsync = ref.watch(currentWeatherProvider);
-              final timezoneVal = ref.watch(effectiveTimezoneProvider);
-              final now = tz.TZDateTime.now(timezoneVal);
-              return solarStateAsync.maybeWhen(
-                data: (state) {
-                  final result = circadianService.calculateTargetBrightness(
-                    state.phases,
-                    state.sunElevation,
-                    now,
-                    curveSharpness: selectedSettings.curveSharpness,
-                    curvePoints: curvePoints,
-                    weather: selectedSettings.isWeatherAdjustmentEnabled
-                        ? weatherAsync.value
-                        : null,
-                    presetSensitivity:
-                        selectedSettings.activePreset.weatherSensitivity,
-                    weatherIntensity:
-                        selectedSettings.weatherAdjustmentIntensity,
-                    smartData: selectedSettings.isSmartCircadianEnabled
-                        ? smartData
-                        : const SmartCircadianData.neutral(),
-                    circadianMode: CircadianMode.normalizedCurve,
-                    phasesConfig: null,
-                    maxElevation: state.maxElevation,
-                    minElevation: state.minElevation,
-                  );
-                  final val = result.finalBrightness.clamp(0.0, 100.0);
-                  _saveBrightness(val);
-                  return val;
-                },
-                orElse: () => lastBrightness,
-              );
-            }
-            // Safe Fallback to global circadian curve if preset was deleted
-          }
-        }
-
-        // 3. Game Mode Cascade
-        if (isGamingMode && selectedSettings.isGameModeEnabled) {
-          return selectedSettings.gameModeBrightness;
-        }
-
-        // 4. Global Auto / Circadian Cascade
-        if (!isAuto || !selectedSettings.isAutoBrightnessEnabled) {
-          final isDimming =
-              settingsMap['all']?.isSoftwareDimmingEnabled ?? true;
-          final monitors = ref.watch(monitorListProvider).value ?? [];
-          final isOverlayOnly = MonitorInfo.isSelectionOverlayOnly(
-            currentSelection,
-            monitors,
-          );
-          final minAllowed = MonitorInfo.effectiveMinBrightness(
-            isOverlayOnly: isOverlayOnly,
-            isSoftwareDimmingEnabled: isDimming,
-          );
-          return manualBrightness.clamp(minAllowed, 100.0);
-        }
-
-        final solarStateAsync = ref.watch(solarStateStreamProvider);
-        final circadianService = ref.watch(circadianServiceProvider);
-        final weatherAsync = ref.watch(currentWeatherProvider);
-        final timezoneVal = ref.watch(effectiveTimezoneProvider);
-        final now = tz.TZDateTime.now(timezoneVal);
-
-        return solarStateAsync.maybeWhen(
-          data: (state) {
-            final effectiveSmartData = selectedSettings.isSmartCircadianEnabled
-                ? smartData
-                : const SmartCircadianData.neutral();
-
-            // Calculate Bio-Morning Shift (Shifted Elevation)
-            double effectiveElevation = state.sunElevation;
-            if (selectedSettings.isSmartCircadianEnabled &&
-                effectiveSmartData.timeOffset != Duration.zero) {
-              final locationAsync = ref.read(effectiveLocationProvider);
-              final pos = locationAsync.value;
-              if (pos != null) {
-                final sunService = ref.read(sunCalculatorServiceProvider);
-                final shiftedTime = now.subtract(effectiveSmartData.timeOffset);
-                effectiveElevation = sunService.getSunElevation(
-                  pos.latitude,
-                  pos.longitude,
-                  shiftedTime,
-                );
-
-                // Blinding Protection
-                if (state.sunElevation < 0 && effectiveElevation > 10) {
-                  effectiveElevation = effectiveElevation.clamp(-20.0, 10.0);
-                }
-              }
-            }
-
-            final result = circadianService.calculateTargetBrightness(
-              state.phases,
-              effectiveElevation,
-              now,
-              curveSharpness: selectedSettings.curveSharpness,
-              curvePoints: selectedSettings.curvePoints,
-              weather: selectedSettings.isWeatherAdjustmentEnabled
-                  ? weatherAsync.value
-                  : null,
-              presetSensitivity:
-                  selectedSettings.activePreset.weatherSensitivity,
-              weatherIntensity: selectedSettings.weatherAdjustmentIntensity,
-              smartData: effectiveSmartData,
-              circadianMode: selectedSettings.circadianMode,
-              phasesConfig: selectedSettings.phasesConfig,
-              maxElevation: state.maxElevation,
-              minElevation: state.minElevation,
-            );
-            _saveBrightness(result.finalBrightness);
-            return result.finalBrightness;
-          },
-          orElse: () => lastBrightness,
-        );
-      },
-      orElse: () => lastBrightness,
+    final selection = ref.watch(selectedMonitorsProvider);
+    final target = ref.watch(
+      brightnessTargetProvider(selection.firstOrNull ?? 'all'),
     );
+    if (target == null) return prefs?.getDouble(_lastBrightnessKey) ?? 100;
+    if (!target.isManual && target.source != BrightnessSource.game) {
+      _saveBrightness(target.value);
+    }
+    return target.value;
   }
 
   void _saveBrightness(double value) {
@@ -3093,7 +3052,7 @@ class CurrentBrightnessNotifier extends Notifier<double> {
     if (settings.isAutoBrightnessEnabled ||
         (ref.read(gamingModeProvider) && settings.isGameModeEnabled) ||
         _hasBrightnessOverride(
-          _activeAppRule(
+          resolveActiveAppRule(
             settings,
             global,
             ref.read(activeProcessServiceProvider),
@@ -3124,6 +3083,21 @@ final currentBrightnessProvider =
       CurrentBrightnessNotifier.new,
     );
 
+/// The dashboard's actual value and explanation must identify the same display.
+final brightnessDisplayMonitorProvider = Provider<MonitorInfo?>((ref) {
+  final selection = ref.watch(selectedMonitorsProvider);
+  final monitors = ref.watch(monitorListProvider).value ?? [];
+  final selected = monitors
+      .where(
+        (m) =>
+            selection.contains('all') ||
+            selection.contains(m.deviceName) ||
+            selection.contains(m.id),
+      )
+      .toList();
+  return selected.firstWhereOrNull((m) => m.isPrimary) ?? selected.firstOrNull;
+});
+
 final brightnessOffsetsProvider = Provider<Map<String, double>>((ref) {
   final settingsAsync = ref.watch(settingsProvider);
   return settingsAsync.maybeWhen(data: _brightnessOffsets, orElse: () => {});
@@ -3148,7 +3122,7 @@ final manualBrightnessApplierProvider = Provider<ManualBrightnessApplier>((
   };
 });
 
-AppOverrideRule? _activeAppRule(
+AppOverrideRule? resolveActiveAppRule(
   SettingsState settings,
   SettingsState? global,
   ActiveProcessState process,
@@ -3167,14 +3141,18 @@ AppOverrideRule? _activeAppRule(
 bool _hasBrightnessOverride(AppOverrideRule? rule, SettingsState settings) {
   if (rule == null) return false;
   if (rule.brightnessMode == AppOverrideMode.fixed) {
-    return rule.fixedBrightness != null;
+    return rule.fixedBrightness?.isFinite ?? false;
   }
   if (rule.brightnessMode != AppOverrideMode.curve) return false;
   final id = rule.brightnessCurvePresetId;
   if (id == null) return false;
-  return settings.userPresets.any((preset) => preset.id == id) ||
+  return settings.userPresets.any(
+        (preset) => preset.id == id && preset.points.isNotEmpty,
+      ) ||
       PresetType.values.any(
-        (preset) => preset.name == id && settings.curvesMap[preset] != null,
+        (preset) =>
+            preset.name == id &&
+            (settings.curvesMap[preset]?.isNotEmpty ?? false),
       );
 }
 
@@ -3210,7 +3188,7 @@ void _applyManualBrightness(
         (isGaming && settings.isGameModeEnabled)) {
       continue;
     }
-    final appRule = _activeAppRule(settings, globalSettings, process);
+    final appRule = resolveActiveAppRule(settings, globalSettings, process);
     if (_hasBrightnessOverride(appRule, settings)) {
       continue;
     }
@@ -3298,7 +3276,7 @@ final manualBrightnessAdjustmentProvider = Provider<void>((ref) {
     for (final monitor in monitors) {
       final global = settingsMap['all'] ?? SettingsState();
       final settings = settingsMap[monitor.deviceName] ?? global;
-      final previousRule = _activeAppRule(settings, global, previous);
+      final previousRule = resolveActiveAppRule(settings, global, previous);
       if (_hasBrightnessOverride(previousRule, settings)) {
         affected.add(monitor.deviceName);
       }
@@ -3311,263 +3289,77 @@ final manualBrightnessAdjustmentProvider = Provider<void>((ref) {
   _applyManualBrightness(ref, selection: {'all'});
 });
 
+/// Brightness does not wait for the independent temperature settings to load.
+final automaticBrightnessAdjustmentProvider = Provider<void>((ref) {
+  ref.watch(manualBrightnessAdjustmentProvider);
+  ref.watch(connectedMonitorDevicesProvider);
+  final monitors = ref.read(monitorListProvider).value ?? [];
+  final offsets = ref.watch(brightnessOffsetsProvider);
+  final visibility = ref.watch(appLifecycleProvider);
+  final settings = ref.watch(settingsProvider).value;
+  if (settings == null) return;
+  final service = ref.watch(brightnessServiceProvider);
+  final monitorService = ref.watch(monitorServiceProvider);
+  final notifier = ref.read(monitorListProvider.notifier);
+  for (final monitor in monitors) {
+    final target = ref.watch(brightnessTargetProvider(monitor.deviceName));
+    if (target == null || target.isManual) continue;
+    final config =
+        settings[monitor.deviceName] ?? settings['all'] ?? SettingsState();
+    service.applyBrightnessSmoothly(
+      selection: monitor.deviceName,
+      targetValue: target.value,
+      monitors: monitors,
+      monitorService: monitorService,
+      offsets: offsets,
+      isUIVisible: visibility == AppVisibilityState.visible,
+      isSoftwareDimmingEnabled: config.isSoftwareDimmingEnabled,
+      updateBrightnessCallback: notifier.updateBrightness,
+    );
+  }
+});
+
 /// Background provider that manages monitor brightness and temperature adjustments.
 /// It listens to solar state and applies brightness updates to hardware.
 /// If the app is minimized, it skips UI state updates to save resources.
 final circadianAdjustmentProvider = Provider<void>((ref) {
-  ref.watch(manualBrightnessAdjustmentProvider);
-  final activeProcessState = ref.watch(activeProcessServiceProvider);
-  final solarStateAsync = ref.watch(debouncedSolarStateProvider);
-  final settingsAsync = ref.watch(settingsProvider);
-  final tempSettingsAsync = ref.watch(temperatureSettingsProvider);
-  final monitorDevices = ref.watch(connectedMonitorDevicesProvider);
-  final visibility = ref.watch(appLifecycleProvider);
-  final weatherAsync = ref.watch(currentWeatherProvider);
-  final timezoneVal = ref.watch(effectiveTimezoneProvider);
+  ref.watch(automaticBrightnessAdjustmentProvider);
   ref.watch(autoBrightnessAdjustmentProvider);
   ref.watch(autoTemperatureAdjustmentProvider);
-
-  final isGamingMode = ref.watch<bool>(gamingModeProvider);
-  final offsets = ref.watch(brightnessOffsetsProvider);
-
-  final circadianService = ref.read(circadianServiceProvider);
-  final brightnessService = ref.read(brightnessServiceProvider);
-  final tempService = ref.read(temperatureServiceProvider);
-  final monitorService = ref.read(monitorServiceProvider);
-  final monitorListNotifier = ref.read(monitorListProvider.notifier);
-  final isTempEnabled = ref.watch(isColorTemperatureEnabledProvider);
-
-  void updateBrightnessCallback(String id, int val) {
-    monitorListNotifier.updateBrightness(id, val);
-  }
-
-  void updateTemperatureCallback(String id, int val) {
-    try {
-      monitorListNotifier.updateTemperature(id, val);
-    } catch (_) {}
-  }
-
-  if (monitorDevices.isEmpty) return;
+  ref.watch(connectedMonitorDevicesProvider);
   final monitors = ref.read(monitorListProvider).value ?? [];
-  if (monitors.isEmpty) return;
+  final visible = ref.watch(appLifecycleProvider) == AppVisibilityState.visible;
+  final service = ref.watch(temperatureServiceProvider);
+  final hardware = ref.watch(monitorServiceProvider);
+  final notifier = ref.read(monitorListProvider.notifier);
+  void confirmed(String id, int value) {
+    if (ref.mounted) notifier.updateTemperature(id, value);
+  }
 
-  solarStateAsync.whenData((state) {
-    settingsAsync.whenData((settingsMap) {
-      tempSettingsAsync.whenData((tempSettingsMap) {
-        final now = tz.TZDateTime.now(timezoneVal);
-        for (final monitor in monitors) {
-          final globalSettings = settingsMap['all'] ?? SettingsState();
-          final globalTempSettings =
-              tempSettingsMap['all'] ?? TemperatureState();
-
-          final settings = settingsMap[monitor.deviceName] ?? globalSettings;
-          final tempSettings =
-              tempSettingsMap[monitor.deviceName] ?? globalTempSettings;
-
-          final monitorSmartData = ref.read(
-            smartCircadianDataProvider(monitor.deviceName),
-          );
-          final monitorSmartTempData = ref.read(
-            smartCircadianTemperatureDataProvider(monitor.deviceName),
-          );
-
-          // Calculate and Apply Brightness
-          final activeProcessName = activeProcessState.activeProcess;
-          final appRule = _activeAppRule(
-            settings,
-            globalSettings,
-            activeProcessState,
-          );
-
-          if (_hasBrightnessOverride(appRule, settings)) {
-            final targetBrightness = ref.read(currentBrightnessProvider);
-            debugPrint(
-              '[CircadianLoop] Device: ${monitor.deviceName} | Per-App Brightness Override ($activeProcessName): ${targetBrightness.toStringAsFixed(1)}%',
-            );
-            // Hardware DDC/CI deduplication check
-            final currentVal =
-                monitor.realBrightness?.toDouble() ?? targetBrightness;
-            if ((targetBrightness - currentVal).abs() >= 0.5) {
-              brightnessService.applyBrightnessSmoothly(
-                selection: monitor.deviceName,
-                targetValue: targetBrightness,
-                monitors: monitors,
-                monitorService: monitorService,
-                offsets: offsets,
-                isUIVisible: visibility == AppVisibilityState.visible,
-                isSoftwareDimmingEnabled: settings.isSoftwareDimmingEnabled,
-                updateBrightnessCallback: updateBrightnessCallback,
-              );
-            }
-          } else if (isGamingMode && settings.isGameModeEnabled) {
-            final targetBrightness = settings.gameModeBrightness;
-            brightnessService.applyBrightnessSmoothly(
-              selection: monitor.deviceName,
-              targetValue: targetBrightness,
-              monitors: monitors,
-              monitorService: monitorService,
-              offsets: offsets,
-              isUIVisible: visibility == AppVisibilityState.visible,
-              isSoftwareDimmingEnabled: settings.isSoftwareDimmingEnabled,
-              updateBrightnessCallback: updateBrightnessCallback,
-            );
-          } else if (settings.isAutoBrightnessEnabled) {
-            final effectiveSmartData = settings.isSmartCircadianEnabled
-                ? monitorSmartData
-                : const SmartCircadianData.neutral();
-
-            double effectiveElevation = state.sunElevation;
-            if (settings.isSmartCircadianEnabled &&
-                effectiveSmartData.timeOffset != Duration.zero) {
-              final locationAsync = ref.read(effectiveLocationProvider);
-              final pos = locationAsync.value;
-              if (pos != null) {
-                final sunService = ref.read(sunCalculatorServiceProvider);
-                final shiftedTime = now.subtract(effectiveSmartData.timeOffset);
-                effectiveElevation = sunService.getSunElevation(
-                  pos.latitude,
-                  pos.longitude,
-                  shiftedTime,
-                );
-
-                if (state.sunElevation < 0 && effectiveElevation > 10) {
-                  effectiveElevation = effectiveElevation.clamp(-20.0, 10.0);
-                }
-              }
-            }
-
-            final calculationResult = circadianService
-                .calculateTargetBrightness(
-                  state.phases,
-                  effectiveElevation,
-                  now,
-                  curveSharpness: settings.curveSharpness,
-                  curvePoints: settings.curvePoints,
-                  weather: settings.isWeatherAdjustmentEnabled
-                      ? weatherAsync.value
-                      : null,
-                  presetSensitivity: settings.activePreset.weatherSensitivity,
-                  weatherIntensity: settings.weatherAdjustmentIntensity,
-                  smartData: effectiveSmartData,
-                  circadianMode: settings.circadianMode,
-                  phasesConfig: settings.phasesConfig,
-                  maxElevation: state.maxElevation,
-                  minElevation: state.minElevation,
-                );
-            final targetBrightness = calculationResult.finalBrightness;
-
-            debugPrint(
-              '[CircadianLoop] Device: ${monitor.deviceName} | AutoBright: true | ActiveApp: $activeProcessName | Preset: ${settings.activePreset.name} | TargetBrightness: ${targetBrightness.toStringAsFixed(1)}% | Sharpness: ${settings.curveSharpness}',
-            );
-
-            brightnessService.applyBrightnessSmoothly(
-              selection: monitor.deviceName,
-              targetValue: targetBrightness,
-              monitors: monitors,
-              monitorService: monitorService,
-              offsets: offsets,
-              isUIVisible: visibility == AppVisibilityState.visible,
-              isSoftwareDimmingEnabled: settings.isSoftwareDimmingEnabled,
-              updateBrightnessCallback: updateBrightnessCallback,
-            );
-          }
-
-          // Calculate and Apply Temperature for each display individually
-          final isMonitorGaming =
-              isGamingMode &&
-              (settings.isGameModeEnabled ||
-                  globalSettings.isGameModeEnabled) &&
-              (settings.isGameModeTemperatureEnabled ||
-                  globalSettings.isGameModeTemperatureEnabled);
-
-          if (appRule != null &&
-              appRule.temperatureMode != AppOverrideMode.global &&
-              isTempEnabled) {
-            final targetTemp = ref.read(currentTemperatureProvider);
-            debugPrint(
-              '[CircadianLoop] Device: ${monitor.deviceName} | Per-App Temperature Override ($activeProcessName): ${targetTemp}K',
-            );
-            tempService.applyTemperatureSmoothly(
-              selection: monitor.deviceName,
-              targetValue: targetTemp.toDouble(),
-              monitors: monitors,
-              monitorService: monitorService,
-              isUIVisible: visibility == AppVisibilityState.visible,
-              updateTemperatureCallback: updateTemperatureCallback,
-            );
-          } else if (isMonitorGaming && isTempEnabled) {
-            final targetTemp = settings.isGameModeTemperatureEnabled
-                ? settings.gameModeTemperature
-                : globalSettings.gameModeTemperature;
-            tempService.applyTemperatureSmoothly(
-              selection: monitor.deviceName,
-              targetValue: targetTemp,
-              monitors: monitors,
-              monitorService: monitorService,
-              isUIVisible: visibility == AppVisibilityState.visible,
-              updateTemperatureCallback: updateTemperatureCallback,
-            );
-          } else if (tempSettings.isEnabled && isTempEnabled) {
-            final isSmart = settings.isSmartCircadianEnabled;
-            final effectiveSmartTempData = isSmart
-                ? monitorSmartTempData
-                : const SmartCircadianData.neutral();
-
-            final targetTemp = circadianService.calculateTargetTemperature(
-              state.phases,
-              state.sunElevation,
-              now,
-              curvePoints: tempSettings.curvePoints,
-              weather: settings.isWeatherTemperatureAdjustmentEnabled
-                  ? weatherAsync.value
-                  : null,
-              weatherIntensity: settings.weatherAdjustmentIntensity,
-              smartData: effectiveSmartTempData,
-              circadianMode: settings.circadianMode,
-              phasesConfig: settings.phasesConfig,
-              maxElevation: state.maxElevation,
-              minElevation: state.minElevation,
-            );
-
-            final effectiveFinalTemp = targetTemp.finalTemperature
-                .clamp(TemperatureConstants.min, TemperatureConstants.max)
-                .toDouble();
-
-            debugPrint(
-              '[CircadianLoop] Device: ${monitor.deviceName} | AutoTemp: true | Preset: ${tempSettings.activePreset.name} | TargetTemp: ${effectiveFinalTemp.round()}K',
-            );
-
-            tempService.applyTemperatureSmoothly(
-              selection: monitor.deviceName,
-              targetValue: effectiveFinalTemp,
-              monitors: monitors,
-              monitorService: monitorService,
-              isUIVisible: visibility == AppVisibilityState.visible,
-              updateTemperatureCallback: updateTemperatureCallback,
-            );
-          } else if (isTempEnabled) {
-            final int targetManualTemp =
-                tempSettings.manualTemperature ??
-                globalTempSettings.manualTemperature ??
-                ref.read(manualTemperatureProvider);
-            final effectiveManualTemp = targetManualTemp
-                .clamp(TemperatureConstants.min, TemperatureConstants.max)
-                .toDouble();
-            tempService.setTemperatureInstant(
-              selection: monitor.deviceName,
-              targetValue: effectiveManualTemp,
-              monitors: monitors,
-              monitorService: monitorService,
-              updateTemperatureCallback: updateTemperatureCallback,
-            );
-          } else {
-            // Disabled means no further temperature writes from circadian loop.
-            tempService.stopTemperatureControlForDevice(monitor.deviceName);
-          }
-        }
-      });
-    });
-  });
+  for (final monitor in monitors) {
+    final target = ref.watch(temperatureTargetProvider(monitor.deviceName));
+    if (target == null) continue;
+    if (target.isDisabled) {
+      service.stopTemperatureControlForDevice(monitor.deviceName);
+    } else if (target.isManual) {
+      service.setTemperatureInstant(
+        selection: monitor.deviceName,
+        targetValue: target.value.toDouble(),
+        monitors: monitors,
+        monitorService: hardware,
+        updateTemperatureCallback: confirmed,
+      );
+    } else {
+      service.applyTemperatureSmoothly(
+        selection: monitor.deviceName,
+        targetValue: target.value.toDouble(),
+        monitors: monitors,
+        monitorService: hardware,
+        isUIVisible: visible,
+        updateTemperatureCallback: confirmed,
+      );
+    }
+  }
 });
 
 class NightModeNotifier extends Notifier<bool> {

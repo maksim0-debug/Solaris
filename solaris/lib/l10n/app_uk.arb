@@ -216,7 +216,7 @@
   "@weatherBrightnessReduction": {
     "placeholders": {
       "percent": {
-        "type": "int"
+        "type": "String"
       }
     }
   },
@@ -1050,7 +1050,38 @@
   "expandedGammaRestartLater": "Перезавантажити пізніше",
   "expandedGammaFailed": "Не вдалося оновити реєстр. Переконайтеся, що ви підтвердили запит прав адміністратора Windows.",
   "expandedGammaRestartPendingTooltip": "Потрібне перезавантаження: розширений діапазон (1000K–3300K) стане доступним після перезавантаження Windows. Натисніть, щоб перезавантажити.",
-  "expandedGammaRestartFailed": "Не вдалося перезавантажити комп'ютер. Будь ласка, перезавантажте вручну для застосування змін."
+  "expandedGammaRestartFailed": "Не вдалося перезавантажити комп'ютер. Будь ласка, перезавантажте вручну для застосування змін.",
+  "brightnessPhasesBase": "Базова яскравість фаз дня",
+  "temperaturePhasesBase": "Базова температура фаз дня",
+  "brightnessSourceGame": "Яскравість ігрового режиму",
+  "brightnessSourceManual": "Ручна яскравість",
+  "brightnessSourceApplication": "Правило програми [{application}]",
+  "brightnessTarget": "Цільова яскравість",
+  "brightnessApplied": "Поточна яскравість монітора",
+  "calculationLimit": "Обмеження яскравості",
+  "monitorBrightnessLimits": "Межі яскравості монітора",
+  "temperatureCalculationLimit": "Межі температури",
+  "manualRegulationPaused": "Ручне керування — автоматичні коригування призупинено",
+  "calculationRounding": "Округлення",
+  "brightnessElevationShift": "Біо-ранок — зсув ритму",
+  "brightnessMorningBoost": "Біо-ранок — ранкова поправка",
+  "brightnessMonitor": "Монітор: {monitor}",
+  "calculationUnavailable": "Розрахунок недоступний",
+  "brightnessBaseNight": "Базова яскравість ночі",
+  "brightnessBaseSunrise": "Базова яскравість світанку",
+  "brightnessBaseDay": "Базова яскравість дня",
+  "brightnessBaseSunset": "Базова яскравість заходу",
+  "brightnessBaseTransition": "Базова яскравість ({transition})",
+  "temperatureBaseNight": "Базова температура ночі",
+  "temperatureBaseSunrise": "Базова температура світанку",
+  "temperatureBaseDay": "Базова температура дня",
+  "temperatureBaseSunset": "Базова температура заходу",
+  "temperatureBaseTransition": "Базова температура ({transition})",
+  "temperatureSourceApplication": "Правило програми [{application}]",
+  "temperatureSourceGame": "Температура ігрового режиму",
+  "temperatureSourceManual": "Ручна температура",
+  "temperatureSourceDisabled": "Керування температурою вимкнене",
+  "temperatureApplied": "Поточна температура монітора"
 }
 
 

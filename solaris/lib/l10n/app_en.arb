@@ -216,7 +216,7 @@
   "@weatherBrightnessReduction": {
     "placeholders": {
       "percent": {
-        "type": "int"
+        "type": "String"
       }
     }
   },
@@ -1168,6 +1168,42 @@
   "expandedGammaRestartLater": "Restart Later",
   "expandedGammaFailed": "Failed to update registry. Make sure you accepted the Windows administrator prompt.",
   "expandedGammaRestartPendingTooltip": "Restart required: Extended range (1000K–3300K) will be available after restarting Windows. Click to restart.",
-  "expandedGammaRestartFailed": "Failed to restart computer. Please restart manually to apply changes."
+  "expandedGammaRestartFailed": "Failed to restart computer. Please restart manually to apply changes.",
+  "brightnessPhasesBase": "Base day-phase brightness",
+  "temperaturePhasesBase": "Base day-phase temperature",
+  "brightnessSourceGame": "Game mode brightness",
+  "brightnessSourceManual": "Manual brightness",
+  "brightnessSourceApplication": "Application rule [{application}]",
+  "brightnessTarget": "Target brightness",
+  "brightnessApplied": "Current monitor brightness",
+  "calculationLimit": "Brightness limits",
+  "monitorBrightnessLimits": "Monitor brightness limits",
+  "temperatureCalculationLimit": "Temperature limits",
+  "manualRegulationPaused": "Manual control — automatic adjustments paused",
+  "calculationRounding": "Rounding",
+  "brightnessElevationShift": "Bio-Morning — rhythm shift",
+  "brightnessMorningBoost": "Bio-Morning — morning adjustment",
+  "brightnessMonitor": "Monitor: {monitor}",
+  "calculationUnavailable": "Calculation unavailable",
+  "@brightnessSourceApplication": {"placeholders": {"application": {"type": "String"}}},
+  "@brightnessMonitor": {"placeholders": {"monitor": {"type": "String"}}},
+  "brightnessBaseNight": "Base night brightness",
+  "brightnessBaseSunrise": "Base sunrise brightness",
+  "brightnessBaseDay": "Base day brightness",
+  "brightnessBaseSunset": "Base sunset brightness",
+  "brightnessBaseTransition": "Base brightness ({transition})",
+  "temperatureBaseNight": "Base night temperature",
+  "temperatureBaseSunrise": "Base sunrise temperature",
+  "temperatureBaseDay": "Base day temperature",
+  "temperatureBaseSunset": "Base sunset temperature",
+  "temperatureBaseTransition": "Base temperature ({transition})",
+  "temperatureSourceApplication": "Application rule [{application}]",
+  "temperatureSourceGame": "Game mode temperature",
+  "temperatureSourceManual": "Manual temperature",
+  "temperatureSourceDisabled": "Temperature control disabled",
+  "temperatureApplied": "Current monitor temperature",
+  "@brightnessBaseTransition": {"placeholders": {"transition": {"type": "String"}}},
+  "@temperatureBaseTransition": {"placeholders": {"transition": {"type": "String"}}},
+  "@temperatureSourceApplication": {"placeholders": {"application": {"type": "String"}}}
 }
 

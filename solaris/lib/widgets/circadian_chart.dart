@@ -28,7 +28,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
   int? _touchedIndex;
 
   List<FlSpot>? _cachedPhaseSpots;
-  int? _lastPhaseSpotsDay;
+  DateTime? _lastPhaseSpotsDate;
   SolarPhasesConfig? _lastPhasesConfig;
   bool? _lastIsTemp;
   double? _lastLat;
@@ -95,10 +95,10 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
 
   Widget _buildChart(BuildContext context, List<FlSpot> points, bool isTemp) {
     final l10n = AppLocalizations.of(context)!;
-    final solarAsync = ref.watch(solarStateStreamProvider); // Get solar data
+    final solarAsync = ref.watch(debouncedSolarStateProvider);
     final weatherAsync = ref.watch(currentWeatherProvider);
     final circadianService = ref.read(circadianServiceProvider);
-    final currentTimeAsync = ref.watch(currentTimeProvider);
+    final currentTimeAsync = ref.watch(minuteTimeProvider);
     final timezoneVal = ref.watch(effectiveTimezoneProvider);
     final now = currentTimeAsync.value ?? tz.TZDateTime.now(timezoneVal);
 
@@ -113,14 +113,21 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
     const nightColor = Colors.indigoAccent;
     const twilightColor = Colors.purpleAccent;
 
-    // Current sun elevation from provider (if data still loading, take 0)
-    final currentElevation = solarAsync.maybeWhen(
-      data: (state) => state.sunElevation,
-      orElse: () => 0.0,
-    );
+    final solar = solarAsync.value;
+    if (solar == null) {
+      return Center(
+        child: solarAsync.hasError
+            ? Text(l10n.calculationUnavailable)
+            : const CircularProgressIndicator(),
+      );
+    }
+    final currentElevation = solar.sunElevation;
 
     final mode = currentSettings.circadianMode;
     final isPhasesMode = mode == CircadianMode.solarPhases;
+    if (!isPhasesMode && points.isEmpty) {
+      return Center(child: Text(l10n.calculationUnavailable));
+    }
     final sunService = ref.read(sunCalculatorServiceProvider);
     final locationAsync = ref.watch(effectiveLocationProvider);
     final lat = locationAsync.value?.latitude ?? 50.45;
@@ -143,7 +150,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
 
     List<FlSpot> displaySpots = points;
     double markerX = 0.0;
-    double currentBrightnessY = points.first.y;
+    double currentBrightnessY = points.firstOrNull?.y ?? 0;
 
     if (mode == CircadianMode.solarPhases) {
       displaySpots = _getPhaseSpots(
@@ -197,66 +204,58 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
           )
           .clamp(-20.0, 90.0);
 
-      if (markerX >= points.last.x) {
-        currentBrightnessY = points.last.y;
-      } else if (markerX > points.first.x) {
-        for (int i = 0; i < points.length - 1; i++) {
-          if (markerX >= points[i].x && markerX <= points[i + 1].x) {
-            final t = (markerX - points[i].x) / (points[i + 1].x - points[i].x);
-            currentBrightnessY =
-                points[i].y + (points[i + 1].y - points[i].y) * t;
-            break;
-          }
-        }
-      }
+      currentBrightnessY = circadianService.interpolateCurve(points, markerX);
     }
 
     double? adjustedBrightnessY;
+    final double adjusted;
     if (isTemp) {
-      if (currentSettings.isWeatherTemperatureAdjustmentEnabled &&
-          weatherAsync.value != null &&
-          solarAsync.value != null) {
-        final drop = circadianService.weatherAdjustmentService
-            .calculateWeatherTemperatureDrop(
-              weather: weatherAsync.value!,
-              now: now,
-              phases: solarAsync.value!.phases,
-              intensity: currentSettings.weatherAdjustmentIntensity,
-            );
-        if (drop > 0) {
-          adjustedBrightnessY = (currentBrightnessY - drop).clamp(
-            displaySpots.first.y,
-            6500.0,
-          );
-        }
-      }
+      adjusted = circadianService
+          .calculateTargetTemperature(
+            solar.phases,
+            currentElevation,
+            now,
+            curvePoints: points,
+            weather: currentSettings.isWeatherTemperatureAdjustmentEnabled
+                ? weatherAsync.value
+                : null,
+            weatherIntensity: currentSettings.weatherAdjustmentIntensity,
+            circadianMode: mode,
+            phasesConfig: currentSettings.phasesConfig,
+            maxElevation: maxElev,
+            minElevation: minElev,
+          )
+          .finalTemperature
+          .toDouble();
     } else {
-      if (currentSettings.isWeatherAdjustmentEnabled &&
-          weatherAsync.value != null) {
-        final baseFactor = circadianService.weatherAdjustmentService
-            .calculateWeatherFactor(weatherAsync.value, currentElevation);
-
-        if (baseFactor < 0.99) {
-          final penalty =
-              (1.0 - baseFactor) *
-              currentSettings.activePreset.weatherSensitivity *
-              currentSettings.weatherAdjustmentIntensity;
-          final finalFactor = 1.0 - penalty;
-          adjustedBrightnessY = (currentBrightnessY * finalFactor).clamp(
-            displaySpots.first.y,
-            100.0,
-          );
-        }
-      }
+      adjusted = circadianService
+          .calculateTargetBrightness(
+            solar.phases,
+            currentElevation,
+            now,
+            curvePoints: points,
+            weather: currentSettings.isWeatherAdjustmentEnabled
+                ? weatherAsync.value
+                : null,
+            presetSensitivity: currentSettings.activePreset.weatherSensitivity,
+            weatherIntensity: currentSettings.weatherAdjustmentIntensity,
+            circadianMode: mode,
+            phasesConfig: currentSettings.phasesConfig,
+            maxElevation: maxElev,
+            minElevation: minElev,
+          )
+          .finalBrightness;
+    }
+    if ((adjusted - currentBrightnessY).abs() > 0.01) {
+      adjustedBrightnessY = adjusted;
     }
 
     // Chart bar data
     final List<LineChartBarData> lineBars = [
       LineChartBarData(
         spots: displaySpots,
-        isCurved: !isPhasesMode,
-        curveSmoothness: 0.3,
-        preventCurveOverShooting: true,
+        // The editor must draw the same linear interpolation used by control.
+        isCurved: false,
         gradient: isPhasesMode
             ? const LinearGradient(
                 colors: [
@@ -633,7 +632,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
 
     final isCacheValid =
         _cachedPhaseSpots != null &&
-        _lastPhaseSpotsDay == now.day &&
+        _lastPhaseSpotsDate == DateTime(now.year, now.month, now.day) &&
         _lastPhasesConfig == config &&
         _lastIsTemp == isTemp &&
         _lastLat == lat &&
@@ -687,7 +686,7 @@ class _CircadianChartWidgetState extends ConsumerState<CircadianChartWidget>
     }
 
     _cachedPhaseSpots = spots;
-    _lastPhaseSpotsDay = now.day;
+    _lastPhaseSpotsDate = DateTime(now.year, now.month, now.day);
     _lastPhasesConfig = config;
     _lastIsTemp = isTemp;
     _lastLat = lat;

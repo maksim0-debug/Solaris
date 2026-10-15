@@ -112,39 +112,44 @@ void main() {
       },
     );
 
-    test('Weather adjustment respects minimum preset brightness clamp', () {
-      final now = DateTime(2026, 3, 19, 13, 0);
-      final weather = WeatherData(
-        temperature: 18,
-        humidity: 60,
-        uvIndex: 4,
-        directRadiation: 300,
-        diffuseRadiation: 120,
-        cloudCover: 95,
-        windSpeed: 25,
-        weatherCode: 95, // thunderstorm => strongest penalty
-        lastUpdated: DateTime.now(),
-      );
+    test(
+      'Weather respects the minimum across the entire preset without raising the base',
+      () {
+        final now = DateTime(2026, 3, 19, 13, 0);
+        final weather = WeatherData(
+          temperature: 18,
+          humidity: 60,
+          uvIndex: 4,
+          directRadiation: 300,
+          diffuseRadiation: 120,
+          cloudCover: 95,
+          windSpeed: 25,
+          weatherCode: 95, // thunderstorm => strongest penalty
+          lastUpdated: DateTime.now(),
+        );
 
-      final pointsWithHighMinimum = [
-        const FlSpot(-20, 40),
-        const FlSpot(10, 20),
-        const FlSpot(90, 20),
-      ];
+        final pointsWithHighMinimum = [
+          const FlSpot(-20, 40),
+          const FlSpot(10, 20),
+          const FlSpot(90, 20),
+        ];
 
-      final result = service.calculateTargetBrightness(
-        phases,
-        20.0,
-        now,
-        curvePoints: pointsWithHighMinimum,
-        weather: weather,
-        presetSensitivity: 1.0,
-      );
+        final result = service.calculateTargetBrightness(
+          phases,
+          20.0,
+          now,
+          curvePoints: pointsWithHighMinimum,
+          weather: weather,
+          presetSensitivity: 1.0,
+        );
 
-      // Computed value falls below the configured minimum (first point = 40),
-      // so the result must be clamped.
-      expect(result.finalBrightness, 40.0);
-    });
+        // The daytime value is already the full curve minimum (20).
+        // Weather must not raise it to the first/night point (40).
+        expect(result.baseBrightness, 20.0);
+        expect(result.finalBrightness, 20.0);
+        expect(result.weatherImpact, 0.0);
+      },
+    );
 
     group('calculateTargetTemperature', () {
       final now = DateTime(2026, 3, 19, 12, 0); // Noon

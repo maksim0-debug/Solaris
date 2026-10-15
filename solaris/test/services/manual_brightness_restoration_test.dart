@@ -22,6 +22,8 @@ import 'package:solaris/services/weather_service.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../helpers/wait_until.dart';
+
 class _MemoryStorage implements StorageService {
   final values = <String, String>{};
 
@@ -194,7 +196,7 @@ void main() {
         solarStateStreamProvider.overrideWith(
           (ref) => solarReady ? Stream.value(_solar()) : const Stream.empty(),
         ),
-        smartCircadianDataProvider.overrideWith(
+        smartCircadianAdjustmentsProvider.overrideWith(
           (ref, id) => const SmartCircadianData.neutral(),
         ),
         smartCircadianTemperatureDataProvider.overrideWith(
@@ -216,7 +218,11 @@ void main() {
   Future<void> startAutomaticHotkeyScenario() async {
     await start(automaticBrightness: 100);
     container.read(autoBrightnessAdjustmentProvider.notifier).setEnabled(true);
-    await Future<void>.delayed(const Duration(milliseconds: 650));
+    await waitUntil(
+      () => monitor.physical.values.every((value) => value == 100),
+      reason:
+          'Automatic brightness must settle before the manual hotkey scenario',
+    );
     expect(monitor.physical.values, everyElement(100));
     container.read(manualBrightnessProvider.notifier).update(20);
     expect(prefs.getDouble('manual_brightness'), 20);
@@ -389,7 +395,15 @@ void main() {
       container
           .read(currentBrightnessProvider.notifier)
           .setManualBrightness(50, monitorId: 'DISPLAY2');
-      await Future<void>.delayed(const Duration(milliseconds: 650));
+      await waitUntil(
+        () =>
+            monitor.physical['DISPLAY2'] == 50 &&
+            !container
+                .read(brightnessServiceProvider)
+                .isTransitioning('DISPLAY2'),
+        reason:
+            'The explicitly targeted transition must finish before checking monitor isolation',
+      );
       expect(monitor.physical, {'DISPLAY1': 76, 'DISPLAY2': 50});
       expect(monitor.writes.map((c) => c.device), everyElement('DISPLAY2'));
       expect(

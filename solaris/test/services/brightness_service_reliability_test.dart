@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import '../helpers/wait_until.dart';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:solaris/services/brightness_service.dart';
@@ -139,7 +141,11 @@ void main() {
         hardware.writes.clear();
         hardware.write = null;
         apply(76);
-        await Future<void>.delayed(const Duration(milliseconds: 250));
+        await waitUntil(
+          () => !service.isTransitioning('DISPLAY1'),
+          reason:
+              'The recovery transition must finish after writes become available',
+        );
         expect(hardware.physical, 76);
         expect(hardware.writes.last.value, 76);
         expect(reported.last, 76);

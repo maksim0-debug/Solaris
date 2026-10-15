@@ -4,6 +4,7 @@ import 'package:solaris/providers.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:solaris/models/temperature_state.dart';
+import 'package:solaris/models/temperature_target.dart';
 import 'package:solaris/models/preset_type.dart';
 import 'package:solaris/services/temperature_service.dart';
 import 'package:solaris/models/smart_circadian_data.dart';
@@ -585,213 +586,153 @@ final manualTemperatureProvider =
       ManualTemperatureNotifier.new,
     );
 
+/// Resolves temperature per display so explanation and hardware share its source.
+final temperatureTargetProvider = Provider.family<TemperatureTarget?, String>((
+  ref,
+  id,
+) {
+  TemperatureTarget fixed(
+    TemperatureSource source,
+    int value, {
+    String? application,
+  }) => TemperatureTarget(
+    source: source,
+    applicationName: application,
+    data: const SmartCircadianData.neutral().copyWith(
+      baseTemperature: value,
+      finalTemperature: value,
+    ),
+  );
+  if (!ref.watch(isColorTemperatureEnabledProvider)) {
+    return fixed(TemperatureSource.disabled, 6500);
+  }
+  final map = ref.watch(settingsProvider).value;
+  if (map == null) return null;
+  final global = map['all'] ?? SettingsState();
+  final settings = map[id] ?? global;
+  final rule = resolveActiveAppRule(
+    settings,
+    global,
+    ref.watch(activeProcessServiceProvider),
+  );
+  if (rule?.temperatureMode == AppOverrideMode.fixed &&
+      (rule?.fixedTemperature?.isFinite ?? false)) {
+    return fixed(
+      TemperatureSource.appFixed,
+      rule!.fixedTemperature!.round().clamp(
+        TemperatureConstants.min,
+        TemperatureConstants.max,
+      ),
+      application: rule.appDisplayName,
+    );
+  }
+  final tempMap = ref.watch(temperatureSettingsProvider).value;
+  final temp = tempMap?[id] ?? tempMap?['all'];
+  if (rule?.temperatureMode == AppOverrideMode.curve && temp != null) {
+    final presetId = rule!.temperatureCurvePresetId;
+    final user = temp.userPresets.firstWhereOrNull((p) => p.id == presetId);
+    final system = TemperaturePresetType.values.firstWhereOrNull(
+      (p) => p.name == presetId,
+    );
+    final points = user?.points ?? temp.curvesMap[system];
+    if (points != null && points.isNotEmpty) {
+      final solar = ref.watch(debouncedSolarStateProvider).value;
+      if (solar == null) return null;
+      final timezone = ref.watch(effectiveTimezoneProvider);
+      final now =
+          ref.watch(minuteTimeProvider).value ?? tz.TZDateTime.now(timezone);
+      final smart =
+          settings.isSmartCircadianEnabled && temp.isSmartCircadianEnabled
+          ? ref.watch(smartCircadianTemperatureDataProvider(id))
+          : const SmartCircadianData.neutral();
+      final weather = ref.watch(currentWeatherProvider).value;
+      final result = ref
+          .watch(circadianServiceProvider)
+          .calculateTargetTemperature(
+            solar.phases,
+            solar.sunElevation,
+            now,
+            curvePoints: points,
+            weather: settings.isWeatherTemperatureAdjustmentEnabled
+                ? weather
+                : null,
+            weatherIntensity: settings.weatherAdjustmentIntensity,
+            smartData: smart,
+            circadianMode: CircadianMode.normalizedCurve,
+            maxElevation: solar.maxElevation,
+            minElevation: solar.minElevation,
+          );
+      return TemperatureTarget(
+        source: TemperatureSource.appCurve,
+        systemPreset: user == null ? system : null,
+        userPresetName: user?.name,
+        applicationName: rule.appDisplayName,
+        data: smart.copyWith(
+          baseTemperature: result.baseTemperature,
+          finalTemperature: result.finalTemperature,
+          weatherCode: weather?.weatherCode,
+          weatherTemperatureImpact: result.weatherImpact,
+          timeShiftTemperatureImpact: result.timeShiftImpact,
+          windDownTemperatureImpact: result.windDownImpact,
+          sleepPressureTemperatureImpact: result.sleepPressureImpact,
+          sleepDebtTemperatureImpact: result.sleepDebtImpact,
+          temperatureLimitImpact: result.limitImpact,
+          temperatureRoundingImpact: result.roundingImpact,
+        ),
+      );
+    }
+  }
+  if (ref.watch(gamingModeProvider) &&
+      (settings.isGameModeEnabled || global.isGameModeEnabled) &&
+      (settings.isGameModeTemperatureEnabled ||
+          global.isGameModeTemperatureEnabled)) {
+    return fixed(
+      TemperatureSource.game,
+      (settings.isGameModeTemperatureEnabled
+              ? settings.gameModeTemperature
+              : global.gameModeTemperature)
+          .round()
+          .clamp(TemperatureConstants.min, TemperatureConstants.max),
+    );
+  }
+  if (temp == null) return null;
+  if (!temp.isEnabled) {
+    final int manual =
+        temp.manualTemperature ??
+        tempMap?['all']?.manualTemperature ??
+        ref.watch(manualTemperatureProvider);
+    return fixed(
+      TemperatureSource.manual,
+      manual.clamp(TemperatureConstants.min, TemperatureConstants.max),
+    );
+  }
+  final data = ref.watch(smartCircadianTemperatureDataProvider(id));
+  if (data.finalTemperature == 0) return null;
+  return TemperatureTarget(
+    source: settings.circadianMode == CircadianMode.solarPhases
+        ? TemperatureSource.solarPhases
+        : TemperatureSource.curve,
+    data: data,
+    systemPreset: data.activeSystemTemperaturePreset,
+    userPresetName: data.activeUserTemperaturePresetName,
+  );
+});
+
 class CurrentTemperatureNotifier extends Notifier<int> {
   static const _lastTempKey = 'last_known_temperature';
 
-  List<FlSpot>? _resolveTemperatureCurvePoints(
-    String? presetId,
-    TemperatureState tempSettings,
-  ) {
-    if (presetId == null) return null;
-    final userPreset = tempSettings.userPresets.firstWhereOrNull(
-      (p) => p.id == presetId,
-    );
-    if (userPreset != null) return userPreset.points;
-    final systemType = TemperaturePresetType.values.firstWhereOrNull(
-      (e) => e.name == presetId,
-    );
-    if (systemType != null) {
-      return tempSettings.curvesMap[systemType];
-    }
-    return null; // Safe Fallback to global circadian temperature
-  }
-
   @override
   int build() {
-    final isTempEnabled = ref.watch(isColorTemperatureEnabledProvider);
-    if (!isTempEnabled) {
-      return 6500;
-    }
-
     final prefs = ref.watch(sharedPreferencesProvider);
-    final lastTemp = prefs?.getInt(_lastTempKey) ?? 6500;
-
-    final activeProcessState = ref.watch(activeProcessServiceProvider);
-    final isGamingMode = ref.watch(gamingModeProvider);
-    final monitorIds = ref.watch(selectedMonitorsProvider);
-    final settingsAsync = ref.watch(settingsProvider);
-    final tempSettingsAsync = ref.watch(temperatureSettingsProvider);
-    final id = monitorIds.firstOrNull ?? 'all';
-
-    final allSettings = settingsAsync.maybeWhen(
-      data: (map) => map['all'] ?? SettingsState(),
-      orElse: () => SettingsState(),
-    );
-    final monitorSettings = settingsAsync.maybeWhen(
-      data: (map) => map[id] ?? map['all'] ?? SettingsState(),
-      orElse: () => SettingsState(),
-    );
-
-    // 1 & 2: Active App Rule Cascade for Temperature
-    final activeAppExe = activeProcessState.activeProcess;
-    final isAppSuppressed = activeProcessState.suppressedPids.isNotEmpty;
-    final appRule = (!isAppSuppressed && activeAppExe.isNotEmpty)
-        ? (monitorSettings.appOverrides.firstWhereOrNull(
-                (r) => r.isEnabled && r.exeName == activeAppExe,
-              ) ??
-              allSettings.appOverrides.firstWhereOrNull(
-                (r) => r.isEnabled && r.exeName == activeAppExe,
-              ))
-        : null;
-
-    const minTemp = TemperatureConstants.min;
-    const maxTemp = TemperatureConstants.max;
-
-    if (appRule != null && appRule.temperatureMode != AppOverrideMode.global) {
-      if (appRule.temperatureMode == AppOverrideMode.fixed &&
-          appRule.fixedTemperature != null) {
-        final val = appRule.fixedTemperature!
-            .clamp(minTemp.toDouble(), maxTemp.toDouble())
-            .round();
-        _saveTemperature(val);
-        return val;
-      } else if (appRule.temperatureMode == AppOverrideMode.curve) {
-        final tempSettings = tempSettingsAsync.maybeWhen(
-          data: (map) => map[id] ?? map['all'] ?? TemperatureState(),
-          orElse: () => TemperatureState(),
-        );
-        final curvePoints = _resolveTemperatureCurvePoints(
-          appRule.temperatureCurvePresetId,
-          tempSettings,
-        );
-        if (curvePoints != null) {
-          final solarStateAsync = ref.watch(solarStateStreamProvider);
-          final circadianService = ref.watch(circadianServiceProvider);
-          final weatherAsync = ref.watch(currentWeatherProvider);
-          final timezoneVal = ref.watch(effectiveTimezoneProvider);
-          final now =
-              ref.watch(minuteTimeProvider).value ??
-              tz.TZDateTime.now(timezoneVal);
-
-          return solarStateAsync.maybeWhen(
-            data: (state) {
-              final isSmart = monitorSettings.isSmartCircadianEnabled;
-              final smartData = isSmart
-                  ? ref.watch(smartCircadianTemperatureDataProvider(id))
-                  : const SmartCircadianData.neutral();
-
-              final result = circadianService.calculateTargetTemperature(
-                state.phases,
-                state.sunElevation,
-                now,
-                curvePoints: curvePoints,
-                weather: allSettings.isWeatherTemperatureAdjustmentEnabled
-                    ? weatherAsync.value
-                    : null,
-                weatherIntensity: allSettings.weatherAdjustmentIntensity,
-                smartData: smartData,
-                circadianMode: CircadianMode.normalizedCurve,
-                phasesConfig: null,
-                maxElevation: state.maxElevation,
-                minElevation: state.minElevation,
-              );
-              final val = result.finalTemperature
-                  .clamp(minTemp, maxTemp)
-                  .round();
-              _saveTemperature(val);
-              return val;
-            },
-            orElse: () => lastTemp,
-          );
-        }
-        // Safe Fallback to global circadian temperature if preset was deleted
-      }
+    final id = ref.watch(selectedMonitorsProvider).firstOrNull ?? 'all';
+    final target = ref.watch(temperatureTargetProvider(id));
+    if (target == null) return prefs?.getInt(_lastTempKey) ?? 6500;
+    if (!target.isDisabled &&
+        !target.isManual &&
+        target.source != TemperatureSource.game) {
+      _saveTemperature(target.value);
     }
-
-    // 3. Game Mode Cascade for Temperature
-    final isMonitorGaming =
-        isGamingMode &&
-        (monitorSettings.isGameModeEnabled || allSettings.isGameModeEnabled);
-    final isTempGaming =
-        monitorSettings.isGameModeTemperatureEnabled ||
-        allSettings.isGameModeTemperatureEnabled;
-
-    if (isMonitorGaming && isTempGaming) {
-      final gameTemp = monitorSettings.isGameModeTemperatureEnabled
-          ? monitorSettings.gameModeTemperature
-          : allSettings.gameModeTemperature;
-      return gameTemp.round();
-    }
-
-    // 4. Global Auto / Circadian Cascade for Temperature
-    final isAuto = ref.watch(autoTemperatureAdjustmentProvider);
-
-    if (isAuto) {
-      final solarStateAsync = ref.watch(solarStateStreamProvider);
-      final circadianService = ref.watch(circadianServiceProvider);
-      final tempSettingsAsync = ref.watch(temperatureSettingsProvider);
-      final weatherAsync = ref.watch(currentWeatherProvider);
-
-      final timezoneVal = ref.watch(effectiveTimezoneProvider);
-      final now =
-          ref.watch(minuteTimeProvider).value ?? tz.TZDateTime.now(timezoneVal);
-
-      return solarStateAsync.maybeWhen(
-        data: (state) {
-          return tempSettingsAsync.maybeWhen(
-            data: (tempSettingsMap) {
-              final tempSettings =
-                  tempSettingsMap[id] ??
-                  tempSettingsMap['all'] ??
-                  TemperatureState();
-
-              if (!tempSettings.isEnabled) {
-                return tempSettings.manualTemperature ??
-                    tempSettingsMap['all']?.manualTemperature ??
-                    ref.watch(manualTemperatureProvider);
-              }
-
-              final isSmart = monitorSettings.isSmartCircadianEnabled;
-              final smartData = isSmart
-                  ? ref.watch(smartCircadianTemperatureDataProvider(id))
-                  : const SmartCircadianData.neutral();
-
-              final result = circadianService.calculateTargetTemperature(
-                state.phases,
-                state.sunElevation,
-                now,
-                curvePoints: tempSettings.curvePoints,
-                weather: allSettings.isWeatherTemperatureAdjustmentEnabled
-                    ? weatherAsync.value
-                    : null,
-                weatherIntensity: allSettings.weatherAdjustmentIntensity,
-                smartData: smartData,
-                circadianMode: monitorSettings.circadianMode,
-                phasesConfig: monitorSettings.phasesConfig,
-                maxElevation: state.maxElevation,
-                minElevation: state.minElevation,
-              );
-              final val = result.finalTemperature.clamp(
-                minTemp,
-                TemperatureConstants.max,
-              );
-              _saveTemperature(val);
-              return val;
-            },
-            orElse: () => lastTemp,
-          );
-        },
-        orElse: () => lastTemp,
-      );
-    }
-    final tempSettings = tempSettingsAsync.maybeWhen(
-      data: (map) => map[id] ?? map['all'] ?? TemperatureState(),
-      orElse: () => TemperatureState(),
-    );
-    final globalManual = tempSettingsAsync.value?['all']?.manualTemperature;
-    return tempSettings.manualTemperature ??
-        globalManual ??
-        ref.watch(manualTemperatureProvider);
+    return target.value;
   }
 
   void setManualTemperature(

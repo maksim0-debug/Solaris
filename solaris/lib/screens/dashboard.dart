@@ -23,15 +23,13 @@ import 'package:solaris/screens/sleep_screen.dart';
 import 'package:solaris/screens/app_overrides_screen.dart';
 import 'package:solaris/providers/lifecycle_provider.dart';
 import 'package:solaris/utils/status_helper.dart';
-import 'package:solaris/widgets/circadian_breakdown_tooltip.dart';
-import 'package:solaris/widgets/temperature_breakdown_tooltip.dart';
-import 'package:solaris/widgets/weather_icon_helper.dart';
 import 'package:solaris/widgets/about_dialog.dart';
 import 'package:solaris/models/settings_state.dart';
 import 'package:flutter/services.dart';
 import 'package:solaris/widgets/settings_search_overlay.dart';
 import 'package:solaris/widgets/deep_link_target.dart';
 import 'package:solaris/widgets/update_status_widget.dart';
+import 'package:solaris/widgets/regulation_breakdown_panel.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -908,64 +906,38 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
       targetBrightness = baseBrightness.clamp(minBrightness, 100.0);
     }
 
+    final displayedMonitor = ref.watch(brightnessDisplayMonitorProvider);
+    final displayedTarget = ref.watch(
+      brightnessTargetProvider(
+        displayedMonitor?.deviceName ?? selection.firstOrNull ?? 'all',
+      ),
+    );
+    final hasAutomaticTarget =
+        displayedTarget != null && !displayedTarget.isManual;
+    if (hasAutomaticTarget) {
+      final offset =
+          ref.watch(brightnessOffsetsProvider)[displayedMonitor?.deviceName] ??
+          0;
+      targetBrightness = (displayedTarget.value + offset).clamp(0, 100);
+    }
     double brightness = targetBrightness;
-    if (isAutoBright) {
-      if (selection.length == 1 && !selection.contains('all')) {
-        final id = selection.first;
-        final monitor = monitors.where((m) => m.deviceName == id).firstOrNull;
-        if (monitor != null && monitor.realBrightness != null) {
-          brightness = monitor.realBrightness!.toDouble();
-        }
-      } else {
-        final primaryMonitor = monitors.where((m) => m.isPrimary).firstOrNull;
-        if (primaryMonitor != null && primaryMonitor.realBrightness != null) {
-          brightness = primaryMonitor.realBrightness!.toDouble();
-        } else {
-          final firstWithBrightness = monitors
-              .where((m) => m.realBrightness != null)
-              .firstOrNull;
-          if (firstWithBrightness != null) {
-            brightness = firstWithBrightness.realBrightness!.toDouble();
-          }
-        }
-      }
+    if (isAutoBright || hasAutomaticTarget) {
+      brightness =
+          displayedMonitor?.realBrightness?.toDouble() ?? targetBrightness;
     }
 
-    double tempVal = currentTemperature.toDouble();
-    if (isColorTempEnabled) {
-      if (selection.length == 1 && !selection.contains('all')) {
-        final id = selection.first;
-        final monitor = monitors.where((m) => m.deviceName == id).firstOrNull;
-        final tempSettingsMap =
-            ref.watch(temperatureSettingsProvider).value ?? {};
-        final mTempSettings = tempSettingsMap[id] ?? tempSettingsMap['all'];
-        final isMonitorAuto = mTempSettings?.isEnabled ?? isAutoTemp;
-        if (isMonitorAuto &&
-            monitor != null &&
-            monitor.realTemperature != null) {
-          tempVal = monitor.realTemperature!.toDouble();
-        } else if (!isMonitorAuto && mTempSettings != null) {
-          final manual =
-              mTempSettings.manualTemperature ??
-              tempSettingsMap['all']?.manualTemperature ??
-              currentTemperature;
-          tempVal = manual.toDouble();
-        } else if (monitor != null && monitor.realTemperature != null) {
-          tempVal = monitor.realTemperature!.toDouble();
-        }
-      } else if (isAutoTemp) {
-        final primaryMonitor = monitors.where((m) => m.isPrimary).firstOrNull;
-        if (primaryMonitor != null && primaryMonitor.realTemperature != null) {
-          tempVal = primaryMonitor.realTemperature!.toDouble();
-        } else {
-          final firstWithTemp = monitors
-              .where((m) => m.realTemperature != null)
-              .firstOrNull;
-          if (firstWithTemp != null) {
-            tempVal = firstWithTemp.realTemperature!.toDouble();
-          }
-        }
-      }
+    final displayedTemperatureTarget = ref.watch(
+      temperatureTargetProvider(
+        displayedMonitor?.deviceName ?? selection.firstOrNull ?? 'all',
+      ),
+    );
+    double tempVal = (displayedTemperatureTarget?.value ?? currentTemperature)
+        .toDouble();
+    if (isColorTempEnabled &&
+        displayedTemperatureTarget != null &&
+        !displayedTemperatureTarget.isManual &&
+        !displayedTemperatureTarget.isDisabled) {
+      tempVal = displayedMonitor?.realTemperature?.toDouble() ?? tempVal;
     }
 
     return Row(
@@ -1182,347 +1154,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                               height: 1.4,
                             ),
                           ),
-                          // Smart Circadian Indicators
-                          // Smart Circadian Indicators
-                          Builder(
-                            builder: (context) {
-                              final currentSelection = ref.watch(
-                                selectedMonitorsProvider,
-                              );
-                              final monitorId =
-                                  currentSelection.firstOrNull ?? 'all';
-                              final smartData = ref.watch(
-                                smartCircadianDataProvider(monitorId),
-                              );
-                              final smartDataTemp = ref.watch(
-                                smartCircadianTemperatureDataProvider(
-                                  monitorId,
-                                ),
-                              );
-
-                              final settingsAsync = ref.watch(settingsProvider);
-                              final settings = settingsAsync.maybeWhen(
-                                data: (map) =>
-                                    map[monitorId] ??
-                                    map['all'] ??
-                                    SettingsState(),
-                                orElse: () => SettingsState(),
-                              );
-                              final isSmartEnabled =
-                                  settings.isSmartCircadianEnabled;
-
-                              // 1. Brightness adjustments
-                              final activeAdjustments = <Widget>[];
-
-                              if (smartData.weatherAbsoluteImpact > 0.5) {
-                                final impactPercent = smartData
-                                    .weatherAbsoluteImpact
-                                    .round();
-                                activeAdjustments.add(
-                                  _SmartAdjustmentIndicator(
-                                    icon: getWeatherIcon(smartData.weatherCode),
-                                    label: l10n.weatherBrightnessReduction(
-                                      impactPercent,
-                                    ),
-                                  ),
-                                );
-                              }
-
-                              if (isSmartEnabled &&
-                                  smartData.isWindDownActive) {
-                                final impactPercent = smartData
-                                    .windDownAbsoluteImpact
-                                    .round();
-                                final remaining =
-                                    smartData.windDownMinutesRemaining;
-                                final untilWakeUp =
-                                    smartData.minutesUntilWakeUp;
-                                final impactStr = impactPercent > 0
-                                    ? '-$impactPercent'
-                                    : '$impactPercent';
-
-                                activeAdjustments.add(
-                                  _SmartAdjustmentIndicator(
-                                    icon: LucideIcons.moon,
-                                    label: remaining != null
-                                        ? l10n.circadianImpactWithTime(
-                                            l10n.featureWindDownShort,
-                                            impactStr,
-                                            remaining,
-                                            l10n.minutesAbbreviation,
-                                          )
-                                        : (untilWakeUp != null)
-                                        ? l10n.circadianImpactWithStatus(
-                                            l10n.featureWindDownShort,
-                                            impactStr,
-                                            l10n.remainingUntilWakeUp,
-                                          )
-                                        : l10n.circadianImpact(
-                                            l10n.featureWindDownShort,
-                                            impactStr,
-                                          ),
-                                  ),
-                                );
-                              }
-
-                              if (isSmartEnabled &&
-                                  smartData.isTimeShiftActive) {
-                                final impactPercent = smartData
-                                    .timeShiftBrightnessImpact
-                                    .round();
-                                final remaining =
-                                    smartData.timeShiftMinutesRemaining;
-                                final impactStr = impactPercent > 0
-                                    ? '+$impactPercent'
-                                    : '$impactPercent';
-                                activeAdjustments.add(
-                                  _SmartAdjustmentIndicator(
-                                    icon: LucideIcons.sunrise,
-                                    label: remaining != null
-                                        ? l10n.circadianImpactWithTime(
-                                            l10n.featureTimeShiftShort,
-                                            impactStr,
-                                            remaining,
-                                            l10n.minutesAbbreviation,
-                                          )
-                                        : l10n.circadianImpact(
-                                            l10n.featureTimeShiftShort,
-                                            impactStr,
-                                          ),
-                                  ),
-                                );
-                              }
-
-                              if (isSmartEnabled &&
-                                  smartData.isSleepPressureActive) {
-                                final impactPercent = smartData
-                                    .sleepPressureAbsoluteImpact
-                                    .round();
-                                final impactStr = impactPercent > 0
-                                    ? '-$impactPercent'
-                                    : '$impactPercent';
-                                activeAdjustments.add(
-                                  _SmartAdjustmentIndicator(
-                                    icon: LucideIcons.hourglass,
-                                    label: l10n.circadianImpact(
-                                      l10n.featureSleepPressureShort,
-                                      impactStr,
-                                    ),
-                                  ),
-                                );
-                              }
-
-                              if (isSmartEnabled &&
-                                  smartData.isSleepDebtActive) {
-                                final impactPercent = smartData
-                                    .sleepDebtAbsoluteImpact
-                                    .round();
-                                final impactStr = impactPercent > 0
-                                    ? '-$impactPercent'
-                                    : '$impactPercent';
-                                activeAdjustments.add(
-                                  _SmartAdjustmentIndicator(
-                                    icon: LucideIcons.battery,
-                                    label: l10n.circadianImpact(
-                                      l10n.featureSleepDebtShort,
-                                      impactStr,
-                                    ),
-                                  ),
-                                );
-                              }
-
-                              // 2. Temperature adjustments
-                              final activeTempAdjustments = <Widget>[];
-
-                              if (isSmartEnabled &&
-                                  smartDataTemp.isTimeShiftActive &&
-                                  smartDataTemp.timeShiftTemperatureImpact
-                                          .abs() >
-                                      0.5) {
-                                final impactK = smartDataTemp
-                                    .timeShiftTemperatureImpact
-                                    .round();
-                                final remaining =
-                                    smartDataTemp.timeShiftMinutesRemaining;
-                                activeTempAdjustments.add(
-                                  _SmartAdjustmentIndicator(
-                                    icon: LucideIcons.sunrise,
-                                    label: remaining != null
-                                        ? '${l10n.featureTimeShiftShort} ${impactK > 0 ? '+$impactK' : impactK} K ($remaining${l10n.minutesAbbreviation})'
-                                        : '${l10n.featureTimeShiftShort}: ${impactK > 0 ? '+$impactK' : impactK} K',
-                                    iconColor: const Color(0xFFF59E0B),
-                                  ),
-                                );
-                              }
-
-                              if (smartDataTemp.weatherTemperatureImpact.abs() >
-                                  0.5) {
-                                final impactK = smartDataTemp
-                                    .weatherTemperatureImpact
-                                    .round();
-                                activeTempAdjustments.add(
-                                  _SmartAdjustmentIndicator(
-                                    icon: getWeatherIcon(
-                                      smartDataTemp.weatherCode,
-                                    ),
-                                    label:
-                                        '${l10n.weatherTemperatureAdjustmentTitle}: $impactK K',
-                                    iconColor: const Color(0xFF818CF8),
-                                  ),
-                                );
-                              }
-
-                              if (isSmartEnabled &&
-                                  smartDataTemp.sleepPressureTemperatureImpact
-                                          .abs() >
-                                      0.5) {
-                                final impactK = smartDataTemp
-                                    .sleepPressureTemperatureImpact
-                                    .round();
-                                activeTempAdjustments.add(
-                                  _SmartAdjustmentIndicator(
-                                    icon: LucideIcons.hourglass,
-                                    label:
-                                        '${l10n.featureSleepPressureShort}: $impactK K',
-                                    iconColor: const Color(0xFFA78BFA),
-                                  ),
-                                );
-                              }
-
-                              if (isSmartEnabled &&
-                                  smartDataTemp.windDownTemperatureImpact
-                                          .abs() >
-                                      0.5) {
-                                final impactK = smartDataTemp
-                                    .windDownTemperatureImpact
-                                    .round();
-                                activeTempAdjustments.add(
-                                  _SmartAdjustmentIndicator(
-                                    icon: LucideIcons.moon,
-                                    label:
-                                        '${l10n.featureWindDownShort}: $impactK K',
-                                    iconColor: const Color(0xFF818CF8),
-                                  ),
-                                );
-                              }
-
-                              if (isSmartEnabled &&
-                                  smartDataTemp.sleepDebtTemperatureImpact
-                                          .abs() >
-                                      0.5) {
-                                final impactK = smartDataTemp
-                                    .sleepDebtTemperatureImpact
-                                    .round();
-                                activeTempAdjustments.add(
-                                  _SmartAdjustmentIndicator(
-                                    icon: LucideIcons.battery,
-                                    label:
-                                        '${l10n.featureSleepDebtShort}: $impactK K',
-                                    iconColor: const Color(0xFFF43F5E),
-                                  ),
-                                );
-                              }
-
-                              final bool showBright = isAutoBright;
-                              final bool showTemp =
-                                  isAutoTemp && isColorTempEnabled;
-
-                              if (!showBright && !showTemp) {
-                                return const SizedBox.shrink();
-                              }
-
-                              return Padding(
-                                padding: const EdgeInsets.only(top: 16.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    if (showBright) ...[
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            l10n.brightnessRegulationTitle
-                                                .toUpperCase(),
-                                            style: const TextStyle(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w900,
-                                              color: Colors.white24,
-                                              letterSpacing: 1.2,
-                                            ),
-                                          ),
-                                          CircadianBreakdownTooltip(
-                                            smartData: smartData,
-                                            currentBrightness: targetBrightness,
-                                            isSmartCircadianEnabled:
-                                                isSmartEnabled,
-                                            child: const Icon(
-                                              LucideIcons.info,
-                                              size: 14,
-                                              color: Colors.white24,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      if (activeAdjustments.isNotEmpty) ...[
-                                        const SizedBox(height: 8),
-                                        ...activeAdjustments.map(
-                                          (w) => Padding(
-                                            padding: const EdgeInsets.only(
-                                              bottom: 6.0,
-                                            ),
-                                            child: w,
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                    if (showBright && showTemp)
-                                      const SizedBox(height: 16),
-                                    if (showTemp) ...[
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            l10n.temperatureRegulationTitle
-                                                .toUpperCase(),
-                                            style: const TextStyle(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w900,
-                                              color: Colors.white24,
-                                              letterSpacing: 1.2,
-                                            ),
-                                          ),
-                                          TemperatureBreakdownTooltip(
-                                            smartData: smartDataTemp,
-                                            currentTemperature: tempVal.round(),
-                                            isSmartCircadianEnabled:
-                                                isSmartEnabled,
-                                            child: const Icon(
-                                              LucideIcons.info,
-                                              size: 14,
-                                              color: Colors.white24,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      if (activeTempAdjustments.isNotEmpty) ...[
-                                        const SizedBox(height: 8),
-                                        ...activeTempAdjustments.map(
-                                          (w) => Padding(
-                                            padding: const EdgeInsets.only(
-                                              bottom: 6.0,
-                                            ),
-                                            child: w,
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
+                          const RegulationBreakdownPanel(),
                         ],
                       ),
                     );
@@ -2237,38 +1869,6 @@ class _MultiMonitorOffsetPopover extends ConsumerWidget {
                   error: (e, _) => Text('Error: $e'),
                 ),
               ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SmartAdjustmentIndicator extends StatelessWidget {
-  const _SmartAdjustmentIndicator({
-    required this.icon,
-    required this.label,
-    this.iconColor = const Color(0xFF818CF8),
-  });
-
-  final IconData icon;
-  final String label;
-  final Color iconColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: iconColor),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFFC4B5FD),
-              fontWeight: FontWeight.w500,
             ),
           ),
         ),
