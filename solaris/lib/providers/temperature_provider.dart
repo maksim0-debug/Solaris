@@ -615,14 +615,10 @@ final temperatureTargetProvider = Provider.family<TemperatureTarget?, String>((
     global,
     ref.watch(activeProcessServiceProvider),
   );
-  if (rule?.temperatureMode == AppOverrideMode.fixed &&
-      (rule?.fixedTemperature?.isFinite ?? false)) {
+  if (rule?.temperatureMode == AppOverrideMode.fixed) {
     return fixed(
       TemperatureSource.appFixed,
-      rule!.fixedTemperature!.round().clamp(
-        TemperatureConstants.min,
-        TemperatureConstants.max,
-      ),
+      rule!.effectiveFixedTemperature.round(),
       application: rule.appDisplayName,
     );
   }

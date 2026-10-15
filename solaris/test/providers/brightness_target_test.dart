@@ -27,6 +27,7 @@ import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../helpers/brightness_fixtures.dart';
+import '../helpers/wait_until.dart';
 
 class _Settings extends SettingsNotifier {
   _Settings(this.initial);
@@ -56,6 +57,8 @@ class _Process extends ActiveProcessService {
     windowTitle: 'Editor',
     suppressedPids: suppressed ? {1} : {},
   );
+  void deactivate() =>
+      state = const ActiveProcessState(activeProcess: '', windowTitle: '');
 }
 
 class _Gaming extends GamingModeService {
@@ -81,6 +84,7 @@ class _Monitor extends MonitorService {
   final physical = {'DISPLAY1': 60, 'DISPLAY2': 60};
   final temperatures = {'DISPLAY1': 6500, 'DISPLAY2': 6500};
   final writes = <({String device, int value})>[];
+  final temperatureWrites = <({String device, int value})>[];
   bool rejectWrites = false;
   @override
   Future<List<MonitorInfo>> getConnectedMonitors() async => [
@@ -99,7 +103,18 @@ class _Monitor extends MonitorService {
   ];
   @override
   Future<bool> setMonitorTemperature(String deviceName, int value) async {
+    temperatureWrites.add((device: deviceName, value: value));
     temperatures[deviceName] = value;
+    return true;
+  }
+
+  @override
+  Future<bool> resetMonitorTemperature(String deviceName) async {
+    for (final id
+        in deviceName == 'all' ? temperatures.keys.toList() : [deviceName]) {
+      temperatureWrites.add((device: id, value: 6500));
+      temperatures[id] = 6500;
+    }
     return true;
   }
 
@@ -465,6 +480,95 @@ void main() {
     );
     expect(container.read(currentBrightnessProvider), 100);
   });
+
+  for (final pending in [false, true]) {
+    test(
+      'a saved fixed temperature without a value resolves to the displayed default (pending: $pending)',
+      () async {
+        final rule = AppOverrideRule.fromJson({
+          'exeName': 'editor.exe',
+          'appDisplayName': 'Editor',
+          'brightnessMode': 'fixed',
+          'fixedBrightness': 100.0,
+          'temperatureMode': 'fixed',
+          'fixedTemperature': null,
+        });
+        await start(
+          settings: {
+            'all': config().copyWith(
+              appOverrides: [rule],
+              isWeatherTemperatureAdjustmentEnabled: true,
+            ),
+          },
+          colorEnabled: true,
+          solarReady: !pending,
+          temperaturePending: pending,
+          temperatureSettings: {'all': TemperatureState(isEnabled: true)},
+        );
+        (container.read(activeProcessServiceProvider.notifier) as _Process)
+            .activate();
+        await container.pump();
+        for (final id in ['all', 'DISPLAY1', 'DISPLAY2']) {
+          expect(container.read(brightnessTargetProvider(id))!.value, 100);
+          final target = container.read(temperatureTargetProvider(id))!;
+          expect(target.source, TemperatureSource.appFixed);
+          expect(target.value, 6500);
+          expect(target.data.weatherTemperatureImpact, 0);
+          expect(target.data.timeShiftTemperatureImpact, 0);
+        }
+      },
+    );
+  }
+
+  test(
+    'fixed defaults override manual modes and are applied to both monitors',
+    () async {
+      await start(
+        settings: {
+          'all': config().copyWith(
+            isAutoBrightnessEnabled: false,
+            appOverrides: const [
+              AppOverrideRule(
+                exeName: 'editor.exe',
+                appDisplayName: 'Editor',
+                brightnessMode: AppOverrideMode.fixed,
+                temperatureMode: AppOverrideMode.fixed,
+              ),
+            ],
+          ),
+        },
+        colorEnabled: true,
+        temperatureSettings: {
+          'all': TemperatureState(isEnabled: false, manualTemperature: 3500),
+        },
+        apply: true,
+      );
+      await waitUntil(
+        () => monitor.temperatures.values.every((value) => value == 3500),
+      );
+      final process =
+          container.read(activeProcessServiceProvider.notifier) as _Process;
+      process.activate();
+      await container.pump();
+      await settles({'DISPLAY1': 80, 'DISPLAY2': 80});
+      await waitUntil(
+        () => monitor.temperatures.values.every((value) => value == 6500),
+      );
+      expect(
+        monitor.temperatureWrites
+            .where((write) => write.value == 6500)
+            .map((write) => write.device)
+            .toSet(),
+        {'DISPLAY1', 'DISPLAY2'},
+      );
+      process.deactivate();
+      await container.pump();
+      await settles({'DISPLAY1': 60, 'DISPLAY2': 60});
+      await waitUntil(
+        () => monitor.temperatures.values.every((value) => value == 3500),
+      );
+    },
+  );
 
   test(
     'monitor offsets apply once and never replace the saved manual base',

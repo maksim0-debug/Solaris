@@ -17,6 +17,9 @@ enum AppOverrideMode {
 }
 
 class AppOverrideRule {
+  static const double defaultFixedBrightness = 80.0;
+  static const double defaultFixedTemperature = TemperatureConstants.maxDouble;
+
   final String exeName;
   final String appDisplayName;
   final bool isEnabled;
@@ -42,6 +45,20 @@ class AppOverrideRule {
     this.fixedTemperature,
     this.temperatureCurvePresetId,
   });
+
+  /// Missing fixed values in existing rules use the same defaults as the editor.
+  double get effectiveFixedBrightness =>
+      fixedBrightness != null && fixedBrightness!.isFinite
+      ? fixedBrightness!.clamp(0.0, 100.0)
+      : defaultFixedBrightness;
+
+  double get effectiveFixedTemperature =>
+      fixedTemperature != null && fixedTemperature!.isFinite
+      ? fixedTemperature!.clamp(
+          TemperatureConstants.minDouble,
+          TemperatureConstants.maxDouble,
+        )
+      : defaultFixedTemperature;
 
   static List<AppOverrideRule> get defaultBuiltInRules => const [
     AppOverrideRule(
@@ -247,10 +264,14 @@ class AppOverrideRule {
     'isEnabled': isEnabled,
     'isBuiltIn': isBuiltIn,
     'brightnessMode': brightnessMode.toJson(),
-    'fixedBrightness': fixedBrightness,
+    'fixedBrightness': brightnessMode == AppOverrideMode.fixed
+        ? effectiveFixedBrightness
+        : fixedBrightness,
     'brightnessCurvePresetId': brightnessCurvePresetId,
     'temperatureMode': temperatureMode.toJson(),
-    'fixedTemperature': fixedTemperature,
+    'fixedTemperature': temperatureMode == AppOverrideMode.fixed
+        ? effectiveFixedTemperature
+        : fixedTemperature,
     'temperatureCurvePresetId': temperatureCurvePresetId,
   };
 
@@ -306,6 +327,8 @@ class AppOverrideRule {
           ? null
           : (fixedBrightness != null && fixedBrightness.isFinite
                 ? fixedBrightness.clamp(0.0, 100.0)
+                : brightnessMode == AppOverrideMode.fixed
+                ? effectiveFixedBrightness
                 : this.fixedBrightness),
       brightnessCurvePresetId: clearBrightnessCurvePresetId
           ? null
@@ -318,6 +341,8 @@ class AppOverrideRule {
                     TemperatureConstants.minDouble,
                     TemperatureConstants.maxDouble,
                   )
+                : temperatureMode == AppOverrideMode.fixed
+                ? effectiveFixedTemperature
                 : this.fixedTemperature),
       temperatureCurvePresetId: clearTemperatureCurvePresetId
           ? null

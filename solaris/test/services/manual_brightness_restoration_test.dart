@@ -218,8 +218,14 @@ void main() {
   Future<void> startAutomaticHotkeyScenario() async {
     await start(automaticBrightness: 100);
     container.read(autoBrightnessAdjustmentProvider.notifier).setEnabled(true);
+    final brightness = container.read(brightnessServiceProvider);
     await waitUntil(
-      () => monitor.physical.values.every((value) => value == 100),
+      () => monitor.physical.entries.every(
+        (entry) =>
+            entry.value == 100 &&
+            brightness.getCurrentHardwareBrightness(entry.key) == 100 &&
+            !brightness.isTransitioning(entry.key),
+      ),
       reason:
           'Automatic brightness must settle before the manual hotkey scenario',
     );

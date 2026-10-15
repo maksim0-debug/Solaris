@@ -47,7 +47,7 @@ abstract class AppOverrideRuleFormatter {
     // 1. Temperature descriptor
     switch (rule.temperatureMode) {
       case AppOverrideMode.fixed:
-        final tempVal = (rule.fixedTemperature ?? 6500.0).round();
+        final tempVal = rule.effectiveFixedTemperature.round();
         descriptors.add(
           BuiltInRuleDescriptor(
             category: RuleDescriptorCategory.temperature,
@@ -84,7 +84,7 @@ abstract class AppOverrideRuleFormatter {
     // 2. Brightness descriptor
     switch (rule.brightnessMode) {
       case AppOverrideMode.fixed:
-        final brightnessVal = (rule.fixedBrightness ?? 100.0).round();
+        final brightnessVal = rule.effectiveFixedBrightness.round();
         descriptors.add(
           BuiltInRuleDescriptor(
             category: RuleDescriptorCategory.brightness,

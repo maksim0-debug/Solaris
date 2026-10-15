@@ -1003,7 +1003,7 @@ class _AppOverrideRuleCard extends ConsumerWidget {
         if (rule.brightnessMode == AppOverrideMode.fixed) ...[
           const SizedBox(height: 8),
           _AppRuleBrightnessSlider(
-            value: (rule.fixedBrightness ?? 80.0).clamp(0.0, 100.0),
+            value: rule.effectiveFixedBrightness,
             onChanged: (val) {
               final updated = rule.copyWith(fixedBrightness: val);
               ref.read(settingsProvider.notifier).updateAppOverride(updated);
@@ -1061,11 +1061,7 @@ class _AppOverrideRuleCard extends ConsumerWidget {
         if (rule.temperatureMode == AppOverrideMode.fixed) ...[
           const SizedBox(height: 8),
           _AppRuleTemperatureSlider(
-            value: (rule.fixedTemperature ?? TemperatureConstants.maxDouble)
-                .clamp(
-                  TemperatureConstants.minDouble,
-                  TemperatureConstants.maxDouble,
-                ),
+            value: rule.effectiveFixedTemperature,
             onChanged: (val) {
               final updated = rule.copyWith(fixedTemperature: val);
               ref.read(settingsProvider.notifier).updateAppOverride(updated);

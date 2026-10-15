@@ -331,12 +331,10 @@ final brightnessTargetProvider = Provider.family<BrightnessTarget?, String>((
     applicationName: application,
   );
 
-  if (rule?.brightnessMode == AppOverrideMode.fixed &&
-      rule?.fixedBrightness != null &&
-      rule!.fixedBrightness!.isFinite) {
+  if (rule?.brightnessMode == AppOverrideMode.fixed) {
     return fixed(
       BrightnessSource.appFixed,
-      rule.fixedBrightness!.clamp(0, 100),
+      rule!.effectiveFixedBrightness,
       application: rule.appDisplayName,
     );
   }
@@ -3141,7 +3139,7 @@ AppOverrideRule? resolveActiveAppRule(
 bool _hasBrightnessOverride(AppOverrideRule? rule, SettingsState settings) {
   if (rule == null) return false;
   if (rule.brightnessMode == AppOverrideMode.fixed) {
-    return rule.fixedBrightness?.isFinite ?? false;
+    return true;
   }
   if (rule.brightnessMode != AppOverrideMode.curve) return false;
   final id = rule.brightnessCurvePresetId;
